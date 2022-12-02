@@ -104,14 +104,10 @@ var getRatingInvitations = function(invitationsById, number) {
 }
 
 var getRatingReplies = function(submission, ratingInvitations) {
-  var replies = [];
-  ratingInvitations.forEach(function(invitation) {
-    var ratingReplies = submission.details.replies.filter(function(reply) {
-      return reply.invitations.includes(invitation.id);
-    });
-    replies = replies.concat(ratingReplies);
-  })
-  return replies;
+  var ratingReplies = submission.details.replies.filter(function(reply) {
+    return reply.invitations[0].includes('/-/Rating');
+  });
+  return ratingReplies;
 }
 
 // Main function is the entry point to the webfield code
@@ -133,6 +129,11 @@ var main = function() {
     referrer: args && args.referrer,
     fullWidth: true
   });
+  
+  if (!user || user.isGuest) {
+    Webfield2.ui.errorMessage('You must be logged in to access this page.');
+    return;
+  }  
 
   loadData()
     .then(formatData)

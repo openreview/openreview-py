@@ -20,10 +20,24 @@ class GroupBuilder(object):
             web = web
         ))
 
+    def get_update_content(self, current_content, new_content):
+        update_content = {}
+
+        for key, value in current_content.items():
+            if key in new_content and value != new_content[key]:
+                update_content[key] = new_content[key]
+            
+            if key not in new_content:
+                update_content[key] = { 'delete': True }
+
+        for key, value in new_content.items():
+            if key not in current_content:
+                update_content[key] = new_content[key]
+        return update_content
 
     def post_group(self, group):
         self.client.post_group_edit(
-            invitation = self.venue.get_meta_invitation_id() if group.id.startswith(self.venue_id) else 'openreview.net/-/Edit',
+            invitation = self.venue.get_meta_invitation_id(),
             readers = [self.venue_id],
             writers = [self.venue_id],
             signatures = ['~Super_User1' if group.id == self.venue_id else self.venue_id],
@@ -40,7 +54,7 @@ class GroupBuilder(object):
             group = tools.get_group(self.client, id = p)
             if group is None:
                 self.client.post_group_edit(
-                    invitation = self.venue.get_meta_invitation_id() if venue_id == p else 'openreview.net/-/Edit',
+                    invitation = 'openreview.net/-/Edit',
                     readers = ['everyone'],
                     writers = ['~Super_User1'],
                     signatures = ['~Super_User1'],
@@ -84,7 +98,13 @@ class GroupBuilder(object):
                     content = content.replace("var PARENT_GROUP_ID = '';", "var PARENT_GROUP_ID = '" + parentGroup.id + "';")
                 content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
                 content = content.replace("var VENUE_LINKS = [];", "var VENUE_LINKS = " + json.dumps(links) + ";")
-                return self.update_web_field(group.id, content)
+                return self.client.post_group_edit(
+                    invitation = 'openreview.net/-/Edit',
+                    readers = [group.id],
+                    writers = [group.id],
+                    signatures = ['~Super_User1'],
+                    group = openreview.api.Group(id = group.id, web = content)
+                )
 
         elif links:
             # parse existing webfield and add new links
@@ -92,7 +112,13 @@ class GroupBuilder(object):
             link_str = json.dumps(links)
             link_str = link_str[1:-1]
             start_pos = group.web.find('VENUE_LINKS = [') + len('VENUE_LINKS = [')
-            return self.update_web_field(group.id, group.web[:start_pos] +link_str + ','+ group.web[start_pos:])
+            return self.client.post_group_edit(
+                invitation = 'openreview.net/-/Edit',
+                readers = [group.id],
+                writers = [group.id],
+                signatures = ['~Super_User1'],
+                group = openreview.api.Group(id = group.id, web = group.web[:start_pos] +link_str + ','+ group.web[start_pos:])
+            )            
 
     
     def get_reviewer_identity_readers(self, number):
@@ -139,53 +165,76 @@ class GroupBuilder(object):
         for i, g in enumerate(groups[:-1]):
             self.set_landing_page(g, groups[i-1] if i > 0 else None)
 
-        venue_group = openreview.api.Group(id = venue_id,
-            readers = ['everyone'],
-            writers = [venue_id],
-            signatures = ['~Super_User1'],
-            signatories = [venue_id],
-            members = [],
-            host = venue_id
-        )
+        venue_group = groups[-1]
 
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
-            content = f.read()
-            venue_group.web = content
-            self.post_group(venue_group)
+        if venue_group.web is None:
 
-        self.client_v1.add_members_to_group('venues', venue_id)
-        root_id = groups[0].id
-        if root_id == root_id.lower():
-            root_id = groups[1].id        
-        self.client_v1.add_members_to_group('host', root_id)
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
+                content = f.read()
+                self.post_group(openreview.api.Group(
+                    id = venue_group.id,
+                    web = content
+                ))
 
+            self.client_v1.add_members_to_group('venues', venue_id)
+            root_id = groups[0].id
+            if root_id == root_id.lower():
+                root_id = groups[1].id        
+            self.client_v1.add_members_to_group('host', root_id)
+
+        ## Update settings
         content = {
             'submission_id': { 'value': self.venue.get_submission_id() },
+            'meta_invitation_id': { 'value': self.venue.get_meta_invitation_id() },
             'submission_name': { 'value': self.venue.submission_stage.name },
             'submission_venue_id': { 'value': self.venue.get_submission_venue_id() },
             'withdrawn_venue_id': { 'value': self.venue.get_withdrawn_submission_venue_id() },
             'desk_rejected_venue_id': { 'value': self.venue.get_desk_rejected_submission_venue_id() },
-            'public_submissions': { 'value': 'Yes' if self.venue.submission_stage.public else 'No' },
-            'public_withdrawn_submissions': { 'value': 'Yes' if self.venue.submission_stage.withdrawn_submission_public else 'No'},
-            'public_desk_rejected_submissions': { 'value': 'Yes' if self.venue.submission_stage.desk_rejected_submission_public else 'No' },
+            'rejected_venue_id': { 'value': self.venue.get_rejected_submission_venue_id() },
+            'public_submissions': { 'value': self.venue.submission_stage.public },
+            'public_withdrawn_submissions': { 'value': self.venue.submission_stage.withdrawn_submission_public },
+            'public_desk_rejected_submissions': { 'value': self.venue.submission_stage.desk_rejected_submission_public },
             'title': { 'value': self.venue.name if self.venue.name else '' },
             'subtitle': { 'value': self.venue.short_name if self.venue.short_name else '' },
             'website': { 'value': self.venue.website if self.venue.website else '' },
             'contact': { 'value': self.venue.contact if self.venue.contact else '' },
             'program_chairs_id': { 'value': self.venue.get_program_chairs_id() },
             'reviewers_id': { 'value': self.venue.get_reviewers_id() },
+            'reviewers_name': { 'value': self.venue.reviewers_name },
+            'reviewers_anon_name': { 'value': 'Reviewer_' },
+            'reviewers_submitted_name': { 'value': f'{self.venue.reviewers_name}/Submitted' },
             'reviewers_custom_max_papers_id': { 'value': self.venue.get_custom_max_papers_id(self.venue.get_reviewers_id()) },
             'reviewers_affinity_score_id': { 'value': self.venue.get_affinity_score_id(self.venue.get_reviewers_id()) },
             'reviewers_conflict_id': { 'value': self.venue.get_conflict_score_id(self.venue.get_reviewers_id()) },
             'reviewers_recruitment_id': { 'value': self.venue.get_recruitment_id(self.venue.get_reviewers_id()) },
             'authors_id': { 'value': self.venue.get_authors_id() },
+            'authors_accepted_id': { 'value': f'{self.venue.get_authors_id()}/Accepted' },
+            'authors_name': { 'value': self.venue.authors_name },
+            'withdrawn_submission_id': { 'value': self.venue.get_withdrawn_id() },
+            'withdraw_expiration_id': { 'value': self.venue.get_invitation_id('Withdraw_Expiration') },
+            'withdraw_reversion_id': { 'value': self.venue.get_invitation_id('Withdrawal_Reversion') },
+            'withdraw_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
+            'withdrawal_name': { 'value': 'Withdrawal'},
+            'desk_rejected_submission_id': { 'value': self.venue.get_desk_rejected_id() },
+            'desk_reject_expiration_id': { 'value': self.venue.get_invitation_id('Desk_Reject_Expiration') },
+            'desk_rejection_reversion_id': { 'value': self.venue.get_invitation_id('Desk_Rejection_Reversion') },
+            'desk_reject_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
+            'desk_rejection_name': { 'value': 'Desk_Rejection'}
         }
 
         if self.venue.use_area_chairs:
             content['area_chairs_id'] = { 'value': self.venue.get_area_chairs_id() }
+            content['area_chairs_custom_max_papers_id'] = { 'value': self.venue.get_custom_max_papers_id(self.venue.get_area_chairs_id()) }
+            content['area_chairs_affinity_score_id'] = { 'value': self.venue.get_affinity_score_id(self.venue.get_area_chairs_id()) }
+            content['area_chairs_conflict_id'] = { 'value': self.venue.get_conflict_score_id(self.venue.get_area_chairs_id()) }
+            content['area_chairs_recruitment_id'] = { 'value': self.venue.get_recruitment_id(self.venue.get_area_chairs_id()) }
+            content['area_chairs_assignment_id'] = { 'value': self.venue.get_assignment_id(self.venue.get_area_chairs_id(), deployed=True) }
+
 
         if self.venue.use_senior_area_chairs:
-            content['area_chairs_id'] = { 'value': self.venue.get_senior_area_chairs_id() }
+            content['senior_area_chairs_id'] = { 'value': self.venue.get_senior_area_chairs_id() }
+            content['senior_area_chairs_assignment_id'] = { 'value': self.venue.get_assignment_id(self.venue.get_senior_area_chairs_id(), deployed=True) }
+            content['senior_area_chairs_name'] = { 'value': self.venue.senior_area_chairs_name }
 
         if self.venue.bid_stages:
             content['bid_name'] = { 'value': self.venue.bid_stages[0].name }
@@ -194,26 +243,37 @@ class GroupBuilder(object):
             content['review_name'] = { 'value': self.venue.review_stage.name }
             content['review_rating'] = { 'value': self.venue.review_stage.rating_field_name }
             content['review_confidence'] = { 'value': self.venue.review_stage.confidence_field_name }
+            content['review_email_pcs'] = { 'value': self.venue.review_stage.email_pcs }
 
         if self.venue.meta_review_stage:
             content['meta_review_name'] = { 'value': self.venue.meta_review_stage.name }
 
         if self.venue.decision_stage:
             content['decision_name'] = { 'value': self.venue.decision_stage.name }
+            content['decision_email_authors'] = { 'value': self.venue.decision_stage.email_authors }
+
+        if self.venue.submission_revision_stage:
+            content['submission_revision_accepted'] = { 'value': self.venue.submission_revision_stage.only_accepted }            
 
         if self.venue.request_form_id:
             content['request_form_id'] = { 'value': self.venue.request_form_id }
 
-        self.client.post_group_edit(
-            invitation = self.venue.get_meta_invitation_id(),
-            readers = [self.venue.venue_id],
-            writers = [self.venue.venue_id],
-            signatures = [self.venue.venue_id],
-            group = openreview.api.Group(
-                id = self.venue_id,
-                content = content
-            )
-        )        
+        if self.venue.comment_stage:
+            content['comment_mandatory_readers'] = { 'value': self.venue.comment_stage.get_mandatory_readers(self.venue, '{number}') }
+            content['comment_email_pcs'] = { 'value': self.venue.comment_stage.email_pcs }
+
+        update_content = self.get_update_content(venue_group.content if venue_group.content else {}, content)
+        if update_content:
+            self.client.post_group_edit(
+                invitation = self.venue.get_meta_invitation_id(),
+                readers = [self.venue.venue_id],
+                writers = [self.venue.venue_id],
+                signatures = [self.venue.venue_id],
+                group = openreview.api.Group(
+                    id = self.venue_id,
+                    content = update_content
+                )
+            )        
        
     def create_program_chairs_group(self, program_chair_ids=[]):
 
@@ -321,7 +381,7 @@ class GroupBuilder(object):
                             members=[]
                         )
 
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/areachairsWebfield.js')) as f:
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/seniorAreaChairsWebfield.js')) as f:
                 content = f.read()
                 senior_area_chairs_group.web = content
                 self.post_group(senior_area_chairs_group)

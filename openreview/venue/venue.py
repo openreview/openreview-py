@@ -39,7 +39,8 @@ class Venue(object):
         self.ethics_reviewers_name = 'Ethics_Reviewers'
         self.authors_name = 'Authors'
         self.use_ethics_chairs = False
-        self.use_ethics_reviewers = False        
+        self.use_ethics_reviewers = False 
+        self.expertise_selection_stage = None       
         self.submission_stage = None
         self.review_stage = None
         self.ethics_review_stage = None
@@ -106,7 +107,7 @@ class Venue(object):
     def get_bid_id(self, committee_id):
         return self.get_invitation_id('Bid', prefix=committee_id)
 
-    def get_paper_assignment_id(self, committee_id, deployed=False, invite=False):
+    def get_assignment_id(self, committee_id, deployed=False, invite=False):
         if deployed:
             return self.get_invitation_id('Assignment', prefix=committee_id)
         if invite:
@@ -279,6 +280,13 @@ class Venue(object):
             return f'{self.venue_id}/Desk_Rejected_{self.submission_stage.name}'
         return f'{self.venue_id}/Desk_Rejected_Submission'                
 
+    def get_rejected_submission_venue_id(self, submission_invitation_name=None):
+        if submission_invitation_name:
+            return f'{self.venue_id}/Rejected_{submission_invitation_name}'
+        if self.submission_stage:
+            return f'{self.venue_id}/Rejected_{self.submission_stage.name}'
+        return f'{self.venue_id}/Rejected_Submission' 
+
     def get_submissions(self, venueid=None, accepted=False, sort=None, details=None):
         if accepted:
             accepted_notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort)
@@ -358,6 +366,8 @@ class Venue(object):
         self.invitation_builder.set_submission_invitation()
         self.invitation_builder.set_withdrawal_invitation()
         self.invitation_builder.set_desk_rejection_invitation()
+        if self.expertise_selection_stage:
+            self.invitation_builder.set_expertise_selection_invitations()
 
     def create_review_stage(self):
         invitation = self.invitation_builder.set_review_invitation()

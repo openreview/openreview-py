@@ -1478,7 +1478,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
     def test_venue_comment_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
-        submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='number')
+        submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='number:asc')
         assert submissions and len(submissions) == 2
 
         # Assert that official comment invitation is not available already
@@ -1530,6 +1530,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         official_comment_note = author_client.post_note_edit(invitation='V2.cc/2030/Conference/Submission1/-/Official_Comment',
         signatures=['V2.cc/2030/Conference/Submission1/Authors'],
         note=Note(
+            replyto=submissions[0].id,
             readers=[
                 'V2.cc/2030/Conference/Program_Chairs',
                 'V2.cc/2030/Conference/Submission1/Area_Chairs',

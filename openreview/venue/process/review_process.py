@@ -1,40 +1,40 @@
 def process(client, edit, invitation):
-    SHORT_PHRASE = ''
-    OFFICIAL_REVIEW_NAME = ''
-    PROGRAM_CHAIRS_ID = ''
-    USE_AREA_CHAIRS = False
-    PAPER_AUTHORS_ID = ''
-    PAPER_REVIEWERS_ID = ''
-    PAPER_REVIEWERS_SUBMITTED_ID = ''
-    PAPER_AREA_CHAIRS_ID = ''
+
+    domain = client.get_group(edit.domain)
+    venue_id = domain.id
+    short_name = domain.get_content_value('subtitle')
+    authors_name = domain.get_content_value('authors_name')
+    submission_name = domain.get_content_value('submission_name')
+    reviewers_name = domain.get_content_value('reviewers_name')
+    reviewers_submitted_name = domain.get_content_value('reviewers_submitted_name')
+    review_name = domain.get_content_value('review_name')
 
     submission = client.get_note(edit.note.forum)
+    paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
     review = client.get_note(edit.note.id)
-    PAPER_REVIEWERS_ID = PAPER_REVIEWERS_ID.replace('{number}', str(submission.number))
-    PAPER_REVIEWERS_SUBMITTED_ID = PAPER_REVIEWERS_SUBMITTED_ID.replace('{number}', str(submission.number))
-    PAPER_AREA_CHAIRS_ID = PAPER_AREA_CHAIRS_ID.replace('{number}', str(submission.number))
 
-
-    capital_review_name = OFFICIAL_REVIEW_NAME.replace('_', ' ')
+    capital_review_name = review_name.replace('_', ' ')
     review_name = capital_review_name.lower()
 
     content = f'To view the {review_name}, click here: https://openreview.net/forum?id={submission.id}&noteId={edit.note.id}'
 
-    if PROGRAM_CHAIRS_ID:
+    if domain.get_content_value('review_email_pcs'):
         client.post_message(
-            recipients=[PROGRAM_CHAIRS_ID],
-            subject=f'''[{SHORT_PHRASE}] A {review_name} has been received on Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
-            message=f''''We have received a review on a submission to {SHORT_PHRASE}.
+            recipients=[domain.get_content_value('program_chairs_id')],
+            subject=f'''[{short_name}] A {review_name} has been received on Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
+            message=f''''We have received a review on a submission to {short_name}.
             
 {content}
 '''
         )        
 
-    if USE_AREA_CHAIRS and 'everyone' in review.readers or PAPER_AREA_CHAIRS_ID in review.readers:
+    area_chairs_name = domain.get_content_value('area_chairs_name')
+    paper_area_chairs_id = f'{paper_group_id}/{area_chairs_name}'
+    if area_chairs_name and ('everyone' in review.readers or paper_area_chairs_id in review.readers):
         client.post_message(
-            recipients=[PAPER_AREA_CHAIRS_ID],
-            subject=f'''[{SHORT_PHRASE}] {capital_review_name} posted to your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
-            message=f''''A submission to {SHORT_PHRASE}, for which you are an official area chair, has received a review.
+            recipients=[paper_area_chairs_id],
+            subject=f'''[{short_name}] {capital_review_name} posted to your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
+            message=f''''A submission to {short_name}, for which you are an official area chair, has received a review.
 
 Paper number: {submission.number}
 
@@ -44,11 +44,13 @@ Paper title: {submission.content['title']['value']}
 '''
         )
 
-    if 'everyone' in review.readers or PAPER_REVIEWERS_ID in review.readers:
+    paper_reviewers_id = f'{paper_group_id}/{reviewers_name}'
+    paper_reviewers_submitted_id = f'{paper_group_id}/{reviewers_submitted_name}'
+    if 'everyone' in review.readers or paper_reviewers_id in review.readers:
         client.post_message(
-            recipients=[PAPER_REVIEWERS_ID],
-            subject=f'''[{SHORT_PHRASE}] {capital_review_name} posted to your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
-            message=f''''A submission to {SHORT_PHRASE}, for which you are a reviewer, has received a review.
+            recipients=[paper_reviewers_id],
+            subject=f'''[{short_name}] {capital_review_name} posted to your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
+            message=f''''A submission to {short_name}, for which you are a reviewer, has received a review.
 
 Paper number: {submission.number}
 
@@ -57,11 +59,11 @@ Paper title: {submission.content['title']['value']}
 {content}
 '''
         )
-    elif PAPER_REVIEWERS_SUBMITTED_ID in review.readers:
+    elif paper_reviewers_submitted_id in review.readers:
         client.post_message(
-            recipients=[PAPER_REVIEWERS_SUBMITTED_ID],
-            subject=f'''[{SHORT_PHRASE}] {capital_review_name} posted to your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
-            message=f''''A submission to {SHORT_PHRASE}, for which you are a reviewer, has received a review.
+            recipients=[paper_reviewers_submitted_id],
+            subject=f'''[{short_name}] {capital_review_name} posted to your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
+            message=f''''A submission to {short_name}, for which you are a reviewer, has received a review.
 
 Paper number: {submission.number}
 
@@ -71,17 +73,18 @@ Paper title: {submission.content['title']['value']}
 '''
         )
 
-    if 'everyone' in  review.readers or PAPER_AUTHORS_ID in review.readers:
+    paper_authors_id = f'{paper_group_id}/{authors_name}'
+    if 'everyone' in  review.readers or paper_authors_id in review.readers:
         client.post_message(
-            recipients=[PAPER_AUTHORS_ID],
-            subject=f'''[{SHORT_PHRASE}] {capital_review_name} posted to your submission - Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
-            message=f''''Your submission to {SHORT_PHRASE} has received a review.
+            recipients=[paper_authors_id],
+            subject=f'''[{short_name}] {capital_review_name} posted to your submission - Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
+            message=f''''Your submission to {short_name} has received a review.
 
 {content}
 '''
         )
 
-    if PAPER_REVIEWERS_SUBMITTED_ID:
-        client.add_members_to_group(PAPER_REVIEWERS_SUBMITTED_ID, review.signatures[0])
+    if paper_reviewers_submitted_id:
+        client.add_members_to_group(paper_reviewers_submitted_id, review.signatures[0])
     
 

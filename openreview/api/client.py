@@ -1877,6 +1877,7 @@ class Edit(object):
     """
     def __init__(self,
         id = None,
+        domain = None,
         invitations = None,
         readers = None,
         writers = None,
@@ -1889,6 +1890,7 @@ class Edit(object):
         tauthor = None):
 
         self.id = id
+        self.domain = domain
         self.invitations = invitations
         self.cdate = cdate
         self.ddate = ddate
@@ -1952,6 +1954,7 @@ class Edit(object):
         :rtype: Edit
         """
         edit = Edit(e.get('id'),
+            domain = e.get('domain'),
             invitations = e.get('invitations'),
             cdate = e.get('cdate'),
             ddate = e.get('ddate'),
@@ -2294,9 +2297,10 @@ class Invitation(object):
         return invitation
 
 class Edge(object):
-    def __init__(self, head, tail, invitation, readers=None, writers=None, signatures=None, id=None, weight=None, label=None, cdate=None, ddate=None, nonreaders=None, tcdate=None, tmdate=None, tddate=None, tauthor=None):
+    def __init__(self, head, tail, invitation, domain=None, readers=None, writers=None, signatures=None, id=None, weight=None, label=None, cdate=None, ddate=None, nonreaders=None, tcdate=None, tmdate=None, tddate=None, tauthor=None):
         self.id = id
         self.invitation = invitation
+        self.domain = domain
         self.head = head
         self.tail = tail
         self.weight = weight
@@ -2349,6 +2353,7 @@ class Edge(object):
         '''
         edge = Edge(
             id = e.get('id'),
+            domain = e.get('domain'),
             cdate = e.get('cdate'),
             tcdate = e.get('tcdate'),
             tmdate = e.get('tmdate'),
@@ -2434,6 +2439,11 @@ class Group(object):
         self.anonids = anonids
         self.deanonymizers = deanonymizers
         self.details = details
+
+    def get_content_value(self, field_name, default_value=None):
+        if self.content:
+            return self.content.get(field_name, {}).get('value')
+        return default_value
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
