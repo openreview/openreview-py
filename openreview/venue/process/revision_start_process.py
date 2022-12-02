@@ -1,18 +1,19 @@
 def process(client, invitation):
-    VENUE_ID = ''
-    ## TODO: read this from the group.content
-    UNDER_SUBMISSION_ID = ''
-    SUBMISSION_NAME = ''
-    DECISION_NAME = 'Decision'
-    ACCEPTED = False
+
+    domain = client.get_group(invitation.domain)
+    venue_id = domain.id
+    submission_venue_id = domain.content['submission_venue_id']['value']
+    rejected_venue_id = domain.content['rejected_venue_id']['value']
+    submission_name = domain.content['submission_name']['value']
+    submission_revision_accepted = domain.content['submission_revision_accepted']['value']
 
     print(f'create paper invitation for {invitation.id}')
 
     def post_invitation(note):
         return client.post_invitation_edit(invitations=invitation.id,
-            readers=[VENUE_ID],
-            writers=[VENUE_ID],
-            signatures=[VENUE_ID],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
             content={
                 'noteId': {
                     'value': note.id
@@ -24,22 +25,22 @@ def process(client, invitation):
             invitation=openreview.api.Invitation()
         )
 
-    if ACCEPTED:
+    if submission_revision_accepted:
         # get only accepted
-        notes = client.get_all_notes(content={ 'venueid': VENUE_ID}, sort='number:asc')
+        notes = client.get_all_notes(content={ 'venueid': venue_id}, sort='number:asc')
         if not len(notes):
-            all_notes = client.get_all_notes(content={ 'venueid': UNDER_SUBMISSION_ID}, sort='number:asc', details='directReplies')
+            all_notes = client.get_all_notes(content={ 'venueid': submission_venue_id}, sort='number:asc', details='directReplies')
             notes = []
             for note in all_notes:
                 for reply in note.details['directReplies']:
-                    if f'{VENUE_ID}/{SUBMISSION_NAME}{note.number}/-/{DECISION_NAME}' in reply['invitations']:
+                    if f'{venue_id}/{submission_name}{note.number}/-/{domain.content["decision_name"]["value"]}' in reply['invitations']:
                         if 'Accept' in reply['content']['decision']['value']:
                             notes.append(note)
     else:
-        notes = client.get_all_notes(content= { 'venueid': UNDER_SUBMISSION_ID }, sort='number:asc')
+        notes = client.get_all_notes(content= { 'venueid': submission_venue_id }, sort='number:asc')
         if len(notes) == 0:
-            notes = client.get_all_notes(content={ 'venueid': VENUE_ID}, sort='number:asc')
-            rejected = client.get_all_notes(content={ 'venueid': f'{VENUE_ID}/Rejected'}, sort='number:as')
+            notes = client.get_all_notes(content={ 'venueid': venue_id}, sort='number:asc')
+            rejected = client.get_all_notes(content={ 'venueid': rejected_venue_id}, sort='number:as')
             if rejected:
                 notes.extend(rejected)
     

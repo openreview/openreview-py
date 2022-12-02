@@ -438,6 +438,10 @@ class ReviewStage(object):
 
         readers.append(self._get_reviewer_readers(conference, number, review_signature))
 
+        ## Workaround to make the reviews visible to the author of the review when reviewers submitted is selected
+        if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_SUBMITTED and review_signature:
+            readers.append(review_signature)
+
         if conference.ethics_review_stage and number in conference.ethics_review_stage.submission_numbers:
             if conference.use_ethics_chairs:
                 readers.append(conference.get_ethics_chairs_id())
@@ -769,6 +773,12 @@ class CommentStage(object):
             invitees.append(conference.get_authors_id(number))
 
         return invitees
+
+    def get_mandatory_readers(self, conference, number):
+        readers = [conference.get_program_chairs_id()]
+        if conference.use_senior_area_chairs:
+            readers.append(conference.get_senior_area_chairs_id(number))
+        return readers
 
 
 class MetaReviewStage(object):
