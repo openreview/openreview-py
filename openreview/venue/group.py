@@ -114,7 +114,6 @@ class GroupBuilder(object):
     def create_venue_group(self):
 
         venue_id = self.venue_id
-
         groups = self.build_groups(venue_id)
         venue_group = groups[-1]
 
