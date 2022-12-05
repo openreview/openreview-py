@@ -22,7 +22,7 @@ class TestVenueSubmission():
     def venue(self, openreview_client):
         conference_id = 'TestVenue.cc'
 
-        venue = Venue(openreview_client, conference_id)
+        venue = Venue(openreview_client, conference_id, 'openreview.net/Support')
         venue.use_area_chairs = True
         venue.name = 'Test Venue V2'
         venue.short_name = 'TV 22'
