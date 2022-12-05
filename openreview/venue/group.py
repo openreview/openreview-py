@@ -75,53 +75,6 @@ class GroupBuilder(object):
 
         return groups
 
-    def set_landing_page(self, group, parentGroup):
-        # sets webfield to show links to child groups
-
-        children_groups = self.client_v1.get_groups(regex = group.id + '/[^/]+/?$')
-
-        links = []
-        for children in children_groups:
-            if not group.web or (group.web and children.id not in group.web):
-                links.append({ 'url': '/group?id=' + children.id, 'name': children.id})
-
-        if not group.web:
-            # create new webfield using template
-            header = {
-                'title': group.id,
-                'description': ''
-            }
-
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/landingWebfield.js')) as f:
-                content = f.read()
-                content = content.replace("var GROUP_ID = '';", "var GROUP_ID = '" + group.id + "';")
-                if parentGroup:
-                    content = content.replace("var PARENT_GROUP_ID = '';", "var PARENT_GROUP_ID = '" + parentGroup.id + "';")
-                content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-                content = content.replace("var VENUE_LINKS = [];", "var VENUE_LINKS = " + json.dumps(links) + ";")
-                return self.client.post_group_edit(
-                    invitation = self.super_meta_invitation_id,
-                    readers = [group.id],
-                    writers = [group.id],
-                    signatures = ['~Super_User1'],
-                    group = openreview.api.Group(id = group.id, web = content)
-                )
-
-        elif links:
-            # parse existing webfield and add new links
-            # get links array without square brackets
-            link_str = json.dumps(links)
-            link_str = link_str[1:-1]
-            start_pos = group.web.find('VENUE_LINKS = [') + len('VENUE_LINKS = [')
-            return self.client.post_group_edit(
-                invitation = self.super_meta_invitation_id,
-                readers = [group.id],
-                writers = [group.id],
-                signatures = ['~Super_User1'],
-                group = openreview.api.Group(id = group.id, web = group.web[:start_pos] +link_str + ','+ group.web[start_pos:])
-            )            
-
-    
     def get_reviewer_identity_readers(self, number):
         return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.reviewer_identity_readers)
 
@@ -163,9 +116,6 @@ class GroupBuilder(object):
         venue_id = self.venue_id
 
         groups = self.build_groups(venue_id)
-        for i, g in enumerate(groups[:-1]):
-            self.set_landing_page(g, groups[i-1] if i > 0 else None)
-
         venue_group = groups[-1]
 
         if venue_group.web is None:
