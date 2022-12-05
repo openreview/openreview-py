@@ -18,7 +18,7 @@ from . import matching
 
 class Venue(object):
 
-    def __init__(self, client, venue_id):
+    def __init__(self, client, venue_id, support_user):
 
         self.client = client
         self.request_form_id = None
@@ -53,7 +53,7 @@ class Venue(object):
         self.use_senior_area_chairs = False
         self.use_ethics_chairs = False
         self.use_recruitment_template = True
-        self.support_user = 'OpenReview.net/Support'
+        self.support_user = support_user
         self.invitation_builder = InvitationBuilder(self)
         self.group_builder = GroupBuilder(self)
         self.recruitment = Recruitment(self)

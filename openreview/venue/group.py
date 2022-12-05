@@ -13,6 +13,7 @@ class GroupBuilder(object):
         self.client = venue.client
         self.client_v1 = openreview.Client(baseurl=openreview.tools.get_base_urls(self.client)[0], token=self.client.token)
         self.venue_id = venue.id
+        self.super_meta_invitation_id = venue.support_user.split('/')[0] + '/-/Edit'
 
     def update_web_field(self, group_id, web):
         return self.post_group(openreview.api.Group(
@@ -54,7 +55,7 @@ class GroupBuilder(object):
             group = tools.get_group(self.client, id = p)
             if group is None:
                 self.client.post_group_edit(
-                    invitation = 'openreview.net/-/Edit',
+                    invitation = self.super_meta_invitation_id,
                     readers = ['everyone'],
                     writers = ['~Super_User1'],
                     signatures = ['~Super_User1'],
@@ -99,7 +100,7 @@ class GroupBuilder(object):
                 content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
                 content = content.replace("var VENUE_LINKS = [];", "var VENUE_LINKS = " + json.dumps(links) + ";")
                 return self.client.post_group_edit(
-                    invitation = 'openreview.net/-/Edit',
+                    invitation = self.super_meta_invitation_id,
                     readers = [group.id],
                     writers = [group.id],
                     signatures = ['~Super_User1'],
@@ -113,7 +114,7 @@ class GroupBuilder(object):
             link_str = link_str[1:-1]
             start_pos = group.web.find('VENUE_LINKS = [') + len('VENUE_LINKS = [')
             return self.client.post_group_edit(
-                invitation = 'openreview.net/-/Edit',
+                invitation = self.super_meta_invitation_id,
                 readers = [group.id],
                 writers = [group.id],
                 signatures = ['~Super_User1'],
