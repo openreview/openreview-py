@@ -1353,7 +1353,7 @@ class Matching(object):
         assignment_edges = []
         assignment_invitation_id = self.conference.get_paper_assignment_id(self.match_group.id, deployed=True)
 
-        ac_groups = {g.id:g for g in self.client.get_all_groups(regex=self.conference.get_area_chairs_id('.*'))}
+        ac_groups = {g.id:g for g in self.client.get_all_groups(regex=f'{self.conference.id}/Paper.*') if g.id.endswith(self.conference.area_chairs_name)}
 
         if not papers:
             raise openreview.OpenReviewException('No submissions to deploy SAC assignment')
