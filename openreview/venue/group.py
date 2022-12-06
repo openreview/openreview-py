@@ -144,8 +144,8 @@ class GroupBuilder(object):
             'public_submissions': { 'value': self.venue.submission_stage.public },
             'public_withdrawn_submissions': { 'value': self.venue.submission_stage.withdrawn_submission_public },
             'public_desk_rejected_submissions': { 'value': self.venue.submission_stage.desk_rejected_submission_public },
-            'submission_email_template': { 'value': '' },
-            'email_pcs_on_submission': { 'value': self.venue.submission_stage.email_pcs },
+            'submission_email_template': { 'value': self.venue.submission_stage.submission_email if self.venue.submission_stage.submission_email else '' },
+            'submission_email_pcs': { 'value': self.venue.submission_stage.email_pcs },
             'title': { 'value': self.venue.name if self.venue.name else '' },
             'subtitle': { 'value': self.venue.short_name if self.venue.short_name else '' },
             'website': { 'value': self.venue.website if self.venue.website else '' },
@@ -173,16 +173,6 @@ class GroupBuilder(object):
             'desk_reject_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
             'desk_rejection_name': { 'value': 'Desk_Rejection'}
         }
-
-        if self.venue.submission_stage.submission_email:
-            email_template = self.venue.submission_stage.submission_email
-            email_template = email_template.replace('{{Abbreviated_Venue_Name}}', self.venue.get_short_name())
-            email_template = email_template.replace('{{action}}', 'posted')
-            email_template = email_template.replace('{{note_title}}', '{title}')
-            email_template = email_template.replace('{{note_abstract}}', '{abstract}')
-            email_template = email_template.replace('{{note_number}}', '{number}')
-            email_template = email_template.replace('{{note_forum}}', '{forum}')
-            content['submission_email_template'] = { 'value': email_template}
 
         if self.venue.use_area_chairs:
             content['area_chairs_id'] = { 'value': self.venue.get_area_chairs_id() }

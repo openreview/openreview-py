@@ -8,7 +8,7 @@ def process(client, edit, invitation):
     submission_name = domain.content['submission_name']['value']
     short_phrase = domain.content['subtitle']['value']
     submission_email = domain.content['submission_email_template']['value']
-    email_pcs = domain.content['email_pcs_on_submission']['value']
+    email_pcs = domain.content['submission_email_pcs']['value']
     program_chairs_id = domain.content['program_chairs_id']['value']
 
     note = client.get_note(edit.note.id)
@@ -17,13 +17,12 @@ def process(client, edit, invitation):
     note_abstract = f'''\n\nAbstract: {note.content['abstract']['value']}''' if 'abstract' in note.content else ''
 
     if submission_email:
-        author_message=submission_email.format(
-            short_phrase=short_phrase,
-            title=note.content['title']['value'],
-            number=note.number,
-            abstract=note_abstract,
-            forum=note.forum
-        )
+        author_message=submission_email.replace('{{Abbreviated_Venue_Name}}', short_phrase)
+        author_message=author_message.replace('{{action}}', 'posted')
+        author_message=author_message.replace('{{note_title}}', note.content['title']['value'])
+        author_message=author_message.replace('{{note_abstract}}', note_abstract)
+        author_message=author_message.replace('{{note_number}}', str(note.number))
+        author_message=author_message.replace('{{note_forum}}', note.forum)
     else:
         author_message = f'''Your submission to {short_phrase} has been posted.
 
