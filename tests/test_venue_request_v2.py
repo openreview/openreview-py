@@ -367,76 +367,58 @@ class TestVenueRequest():
 #         assert 'InvalidFieldError' in error
 #         assert 'The field value-regexx is not allowed' in error
 
-#     def test_venue_revision(self, client, test_client, selenium, request_page, venue, helpers):
+    def test_venue_revision(self, client, test_client, selenium, request_page, venue, helpers):
 
-#         # Test Revision
-#         request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token, wait_for_element='header')
-#         header_div = selenium.find_element_by_id('header')
-#         assert header_div
-#         title_tag = header_div.find_element_by_tag_name('h1')
-#         assert title_tag
-#         assert title_tag.text == venue['request_form_note'].content['title']
+        # Test Revision
+        request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token, wait_for_element='header')
+        header_div = selenium.find_element_by_id('header')
+        assert header_div
+        title_tag = header_div.find_element_by_tag_name('h1')
+        assert title_tag
+        assert title_tag.text == venue['request_form_note'].content['title']
 
-#         messages = client.get_messages(subject='Comment posted to your request for service: {}'.format(venue['request_form_note'].content['title']))
-#         assert messages and len(messages) == 2
-#         recipients = [msg['content']['to'] for msg in messages]
-#         assert 'test@mail.com' in recipients
-#         assert 'tom_venue@mail.com' in recipients
-#         assert 'Venue home page: <a href=\"https://openreview.net/group?id=TEST.cc/2030/Conference\">https://openreview.net/group?id=TEST.cc/2030/Conference</a>' in messages[0]['content']['text']
-#         assert 'Venue Program Chairs console: <a href=\"https://openreview.net/group?id=TEST.cc/2030/Conference/Program_Chairs\">https://openreview.net/group?id=TEST.cc/2030/Conference/Program_Chairs</a>' in messages[0]['content']['text']
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
 
-#         now = datetime.datetime.utcnow()
-#         start_date = now - datetime.timedelta(days=2)
-#         due_date = now + datetime.timedelta(days=3)
+        venue_revision_note = test_client.post_note(openreview.Note(
+            content={
+                'title': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Official Venue Name': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Abbreviated Venue Name': venue['request_form_note'].content['Abbreviated Venue Name'],
+                'Official Website URL': venue['request_form_note'].content['Official Website URL'],
+                'program_chair_emails': venue['request_form_note'].content['program_chair_emails'],
+                'Expected Submissions': '100',
+                'How did you hear about us?': 'ML conferences',
+                'Location': 'Virtual',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
+                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'contact_email': venue['request_form_note'].content['contact_email'],
+                'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
+                'submission_email': 'Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}} \n\nIf you have any questions, please contact the PCs at test@mail.com'
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert venue_revision_note
 
-#         venue_revision_note = test_client.post_note(openreview.Note(
-#             content={
-#                 'title': '{} Updated'.format(venue['request_form_note'].content['title']),
-#                 'Official Venue Name': '{} Updated'.format(venue['request_form_note'].content['title']),
-#                 'Abbreviated Venue Name': venue['request_form_note'].content['Abbreviated Venue Name'],
-#                 'Official Website URL': venue['request_form_note'].content['Official Website URL'],
-#                 'program_chair_emails': venue['request_form_note'].content['program_chair_emails'],
-#                 'Expected Submissions': '100',
-#                 'How did you hear about us?': 'ML conferences',
-#                 'Location': 'Virtual',
-#                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
-#                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
-#                 'contact_email': venue['request_form_note'].content['contact_email'],
-#                 'remove_submission_options': ['pdf'],
-#                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
-#                 'Additional Submission Options': {
-#                     'preprint': {
-#                         'value-regex': '.*'
-#                     }
-#                 }
-#             },
-#             forum=venue['request_form_note'].forum,
-#             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
-#             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-#             referent=venue['request_form_note'].forum,
-#             replyto=venue['request_form_note'].forum,
-#             signatures=['~SomeFirstName_User1'],
-#             writers=[]
-#         ))
-#         assert venue_revision_note
+        helpers.await_queue()
+        process_logs = client.get_process_logs(id=venue_revision_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[0]['invitation'] == '{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number)
 
-#         helpers.await_queue()
-#         process_logs = client.get_process_logs(id=venue_revision_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
-#         assert process_logs[0]['invitation'] == '{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number)
-
-#         request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token, wait_for_element='header')
-#         header_div = selenium.find_element_by_id('header')
-#         assert header_div
-#         title_tag = header_div.find_element_by_tag_name('h1')
-#         assert title_tag
-#         assert title_tag.text == '{} Updated'.format(venue['request_form_note'].content['title'])
-
-#         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-#         submission_due_date_str = due_date.strftime('%b %d %Y %I:%M%p')
-#         assert conference.homepage_header['deadline'] == 'Submission Start:  UTC-0, End: ' + submission_due_date_str + ' UTC-0'
-#         assert openreview.tools.get_invitation(client, conference.submission_stage.get_withdrawn_submission_id(conference)) is None
+        request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token, wait_for_element='header')
+        header_div = selenium.find_element_by_id('header')
+        assert header_div
+        title_tag = header_div.find_element_by_tag_name('h1')
+        assert title_tag
+        assert title_tag.text == '{} Updated'.format(venue['request_form_note'].content['title'])
 
     def test_venue_recruitment_email_error(self, client, test_client, selenium, request_page, venue, helpers):
 
@@ -855,13 +837,6 @@ class TestVenueRequest():
 
         venue_id = venue['venue_id']
 
-        # messages = client.get_messages(subject='{} has received a new submission titled {}'.format(venue['request_form_note'].content['Abbreviated Venue Name'], submission.content['title']))
-        # assert messages and len(messages) == 3
-        # recipients = [msg['content']['to'] for msg in messages]
-        # assert 'test@mail.com' in recipients
-        # assert 'tom_venue@mail.com' in recipients
-        # assert 'pc@test.com' in recipients
-
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
 
         ## activate matching setup invitation
@@ -911,6 +886,18 @@ class TestVenueRequest():
             ))
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id']) 
+
+        messages = client.get_messages(subject="TestVenue@OR'2030V2 has received your submission titled test submission")
+        assert messages and len(messages) == 1
+        assert 'venue_author_v2@mail.com' in messages[0]['content']['to']
+        assert 'If you have any questions, please contact the PCs at test@mail.com' in messages[0]['content']['text']
+
+        messages = client.get_messages(subject="TestVenue@OR'2030V2 has received a new submission titled test submission")
+        assert messages and len(messages) == 3
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'test@mail.com' in recipients
+        assert 'tom_venue@mail.com' in recipients
+        assert 'pc@test.com' in recipients
 
         helpers.create_user('venue_author_v2_2@mail.com', 'VenueThree', 'Author')
         author_client2 = OpenReviewClient(username='venue_author_v2_2@mail.com', password='1234')
