@@ -67,12 +67,22 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
     )    
     client.add_members_to_group(authors_id, authors_group_id)
 
-    # send author emails
+    #send tauthor email
     client.post_message(
         subject=author_subject,
         message=author_message,
-        recipients=note.signatures
+        recipients=[edit.tauthor]
     )
+
+    # send co-author emails
+    if ('authorids' in note.content and len(note.content['authorids']['value'])):
+        author_message += f'''\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at {edit.tauthor}'''
+        client.post_message(
+            subject=author_subject,
+            message=author_message,
+            recipients=note.signatures,
+            ignoreRecipients=[edit.tauthor]
+        )
 
     if email_pcs:
         client.post_message(

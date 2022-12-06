@@ -909,14 +909,26 @@ class TestVenueRequest():
                 content={
                     'title': { 'value': 'test submission 2' },
                     'abstract': { 'value': 'test abstract' },
-                    'authors': { 'value': ['VenueThree Author']},
-                    'authorids': { 'value': ['~VenueThree_Author1']},
+                    'authors': { 'value': ['VenueThree Author', 'VenueTwo Author']},
+                    'authorids': { 'value': ['~VenueThree_Author1', '~VenueTwo_Author1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'keywords': {'value': ['aa'] }
                 }
         ))
         
-        helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id']) 
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id'])
+
+        #check co-author email
+        messages = client.get_messages(to='venue_author_v2@mail.com', subject="TestVenue@OR'2030V2 has received your submission titled test submission 2")
+        assert messages and len(messages) == 1
+        assert 'If you have any questions, please contact the PCs at test@mail.com' in messages[0]['content']['text']
+        assert 'If you are not an author of this submission and would like to be removed, please contact the author who added you at venue_author_v2_2@mail.com' in messages[0]['content']['text']
+
+        #check tauthor email
+        messages = client.get_messages(to='venue_author_v2_2@mail.com', subject="TestVenue@OR'2030V2 has received your submission titled test submission 2")
+        assert messages and len(messages) == 1
+        assert 'If you have any questions, please contact the PCs at test@mail.com' in messages[0]['content']['text']
+        assert 'If you are not an author of this submission and would like to be removed, please contact the author who added you at venue_author_v2_2@mail.com' not in messages[0]['content']['text']
 
         conference.setup_post_submission_stage(force=True)
 
