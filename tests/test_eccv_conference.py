@@ -1657,7 +1657,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         buttons = notes[1].find_elements_by_class_name('btn')
         assert len(buttons) == 5
 
-        reviews = ac_client.get_notes(forum=blinded_notes[2].id, invitation='thecvf.com/ECCV/2020/Conference/Paper.*/-/Official_Review')
+        reviews = ac_client.get_notes(forum=blinded_notes[2].id, invitation=f'thecvf.com/ECCV/2020/Conference/Paper{blinded_notes[2].number}/-/Official_Review')
         assert len(reviews) == 2
 
         signatory = ac_client.get_groups(regex='thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair_.*', signatory='ac1@eccv.org')[0].id

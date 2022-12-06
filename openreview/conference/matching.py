@@ -1264,8 +1264,8 @@ class Matching(object):
             reviewer_name = self.conference.area_chairs_name
             review_name = 'Meta_Review'
 
-        papers = self.client.get_all_notes(invitation=self.conference.get_blind_submission_id())
-        reviews = self.client.get_notes(invitation=self.conference.get_invitation_id(review_name, number='.*'), limit=1)
+        papers = self.client.get_all_notes(invitation=self.conference.get_blind_submission_id(), details='directReplies')
+        reviews = [reply for paper in papers for reply in paper.details['directReplies'] if review_name in reply['invitation']]
         proposed_assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
             label=assignment_title, groupby='head', select=None)}
         assignment_edges = []
