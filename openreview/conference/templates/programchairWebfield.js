@@ -518,12 +518,14 @@ var getUserProfiles = function(userIds, reviewerBidCounts, areaChairBidCounts, a
         profileMap[profile.id] = {
           id: profile.id,
           name: name,
+          gender: profile.content.gender,
           allNames: _.map(_.filter(profile.content.names, function(name) { return name.username; }), 'username'),
           email: profile.content.preferredEmail || profile.content.emailsConfirmed[0],
           allEmails: profile.content.emailsConfirmed,
           bidCount: reviewerBidCounts[profile.id] || areaChairBidCounts[profile.id] || 0,
           acRecommendationCount: areaChairRecommendationCounts[profile.id] || 0,
-          affiliation: profile.content.history && profile.content.history[0]
+          affiliation: profile.content.history && profile.content.history[0],	
+          expertise: profile.content.expertise
         };
         return profileMap;
       }, {});
@@ -3166,6 +3168,7 @@ var buildCSV = function(){
       "min confidence",
       "max confidence",
       "average confidence",
+      "metareview present",
       "ac recommendation",
       "ac1 profile id",
       "ac1 name",
@@ -3248,6 +3251,7 @@ var buildCSV = function(){
           paperTableRow.reviewProgressData.minConfidence,
           paperTableRow.reviewProgressData.maxConfidence,
           paperTableRow.reviewProgressData.averageConfidence,
+          paperTableRow.areachairProgressData.metaReview ? 'Yes' : 'No',
           paperTableRow.areachairProgressData.metaReview &&
           paperTableRow.areachairProgressData.metaReview.content.recommendation,
           areachairProfileOne.id,
@@ -3272,7 +3276,10 @@ var buildReviewersCSV = function(){
   var rowData = [];
   rowData.push(['id',
   'name',
-  'email',
+  'email',	
+  'gender',	
+  'position or title',	
+  'expertise',
   'institution name',
   'institution domain',
   'num assigned papers',
@@ -3316,16 +3323,31 @@ var buildReviewersCSV = function(){
     var institution = (reviewerProfile.affiliation && reviewerProfile.affiliation.institution) || {};
     var institutionName = institution && institution.name;
     var institutionDomain = institution && institution.domain;
+    var affiliationTitle = reviewerProfile.affiliation && reviewerProfile.affiliation.position;	
+    var gender = reviewerProfile.gender;	
+    var allExpertise = reviewerProfile.expertise && reviewerProfile.expertise	
+      .filter(e => !e.end)	
+      .reduce(	
+        (previousValue, currentValue) => {	
+          previousValue.push(...currentValue.keywords);	
+          return previousValue;	
+        },	
+        []	
+      )	
+      .join(',');	
 
-
-    rowData.push([
-      reviewerProfile.id,
-      '"' + reviewerProfile.name + '"',
-      reviewerProfile.email,
-      '"' + (institutionName || '') + '"',
-      institutionDomain,
-      reviewerPapers.length,
-      reviewerReviews.length
+    rowData.push([	
+      reviewerProfile.id,	
+      '"' + reviewerProfile.name + '"',	
+      reviewerProfile.email,	
+      gender,	
+      affiliationTitle,	
+      '"' + allExpertise + '"',	
+      '"' + (institutionName || '') + '"',	
+      institutionDomain,	
+      '"' + tracks + '"',	
+      reviewerPapers.length,	
+      reviewerReviews.length	
     ].join(',') + '\n');
   });
 
@@ -3333,7 +3355,7 @@ var buildReviewersCSV = function(){
 };
 
 var buildAreaChairsCSV = function(){
-  var columnNames = ['id','name','email','assigned papers','reviews completed','meta reviews completed']
+  var columnNames = ['id','name','email','gender','position or title','expertise','institution name','institution domain','assigned papers','reviews completed','meta reviews completed']
   if(SENIOR_AREA_CHAIRS_ID) columnNames=columnNames.concat(['sac id','sac name','sac email'])
   var rowData = [];
   rowData.push(columnNames.join(',') + '\n');
@@ -3348,10 +3370,26 @@ var buildAreaChairsCSV = function(){
     var sacName = ac.seniorSummary && ac.seniorSummary.name
     var sacEmail = ac.seniorSummary && ac.seniorSummary.email
 
+    var gender = conferenceStatusData.profiles[id].gender;	
+    var institution = (conferenceStatusData.profiles[id].affiliation && conferenceStatusData.profiles[id].affiliation.institution) || {};	
+    var institutionName = institution && institution.name;	
+    var institutionDomain = institution && institution.domain;	
+    var affiliationTitle = conferenceStatusData.profiles[id].affiliation && conferenceStatusData.profiles[id].affiliation.position;	
+    var allExpertise = conferenceStatusData.profiles[id].expertise && conferenceStatusData.profiles[id].expertise	
+      .filter(e => !e.end)	
+      .reduce(	
+        (previousValue, currentValue) => {	
+          previousValue.push(...currentValue.keywords);	
+          return previousValue;	
+        },	
+        []	
+      )	
+      .join(',');	
+
     if(SENIOR_AREA_CHAIRS_ID){
-      rowData.push([id,name,email,assignedPapers,reviewsCompleted,metaReviewsCompleted,sacId,sacName,sacEmail].join(',') + '\n');
+      rowData.push([id,name,email,gender,affiliationTitle,'"'+allExpertise+'"','"'+institutionName+'"', institutionDomain,assignedPapers,reviewsCompleted,metaReviewsCompleted,sacId,sacName,sacEmail].join(',') + '\n');
     } else {
-      rowData.push([id,name,email,assignedPapers,reviewsCompleted,metaReviewsCompleted].join(',') + '\n');
+      rowData.push([id,name,email,gender,affiliationTitle,'"'+allExpertise+'"','"'+institutionName+'"', institutionDomain,assignedPapers,reviewsCompleted,metaReviewsCompleted].join(',') + '\n');
     }
   });
 
