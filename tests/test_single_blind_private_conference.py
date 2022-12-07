@@ -99,13 +99,15 @@ class TestSingleBlindPrivateConference():
         assert len(notes) == 5
 
         comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS]
-        conference.set_comment_stage(openreview.stages.CommentStage(reader_selection=True, email_pcs=True, allow_public_comments=True, invitees=comment_invitees, readers=comment_invitees + [openreview.stages.CommentStage.Readers.EVERYONE]))
+        conference.comment_stage = openreview.stages.CommentStage(reader_selection=True, email_pcs=True, allow_public_comments=True, invitees=comment_invitees, readers=comment_invitees + [openreview.stages.CommentStage.Readers.EVERYONE])
+        conference.create_comment_stage()
         public_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Public_Comment', number=1))
         assert public_comment_invitation is None
 
     def test_decisions(self, conference, helpers, test_client, client):
 
-        conference.set_decision_stage(openreview.stages.DecisionStage(release_to_area_chairs=True))
+        conference.decision_stage = openreview.stages.DecisionStage(release_to_area_chairs=True)
+        conference.create_decision_stage()
 
         submissions=conference.get_submissions(sort='tmdate')
         assert len(submissions) == 5
@@ -188,7 +190,8 @@ class TestSingleBlindPrivateConference():
 
         conference.submission_stage.papers_released=True
         comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS]
-        conference.set_comment_stage(openreview.stages.CommentStage(reader_selection=True, email_pcs=True, allow_public_comments=True, invitees=comment_invitees, readers=comment_invitees + [openreview.stages.CommentStage.Readers.EVERYONE]))
+        conference.comment_stage = openreview.stages.CommentStage(reader_selection=True, email_pcs=True, allow_public_comments=True, invitees=comment_invitees, readers=comment_invitees + [openreview.stages.CommentStage.Readers.EVERYONE])
+        conference.create_comment_stage()
         public_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Public_Comment', number=4))
         assert public_comment_invitation
 

@@ -51,8 +51,6 @@ class TestOpenSubmissions():
 
     def test_post_submission(self, client, conference, test_client, helpers):
 
-        assert not conference.legacy_anonids
-
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['everyone'],
             writers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@mail.com'],
@@ -146,7 +144,7 @@ class TestOpenSubmissions():
         submissions = conference.get_submissions(sort='tmdate')
         assert submissions
 
-        conference.open_comments()
+        conference.create_comment_stage()
 
         assert openreview.tools.get_invitation(client, conference.get_invitation_id(name = 'Public_Comment', number = 1))
         assert openreview.tools.get_invitation(client, conference.get_invitation_id(name = 'Official_Comment', number = 1))
@@ -177,7 +175,7 @@ class TestOpenSubmissions():
         submissions = conference.get_submissions(sort='tmdate')
         assert submissions
 
-        conference.open_decisions()
+        conference.create_decision_stage()
 
         assert openreview.tools.get_invitation(client, conference.get_invitation_id(name = 'Decision', number = 1))
 

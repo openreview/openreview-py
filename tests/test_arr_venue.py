@@ -1008,12 +1008,12 @@ OpenReview Team'''
         ## ethics chairs should be able to add ethics reviewers manually
         ethics_chair_client.add_members_to_group('aclweb.org/ACL/ARR/2021/September/Ethics_Reviewers', 'another@ethics_reviewer.org')
 
-        groups = client.get_groups(regex='aclweb.org/ACL/ARR/2021/September/Paper.*/Ethics_Reviewers')
+        groups = [ g for g in client.get_groups(regex='aclweb.org/ACL/ARR/2021/September/Paper.*') if 'Ethics_Reviewers' in g.id]
         assert len(groups) == 2
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Paper1/Ethics_Reviewers')
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewers')
 
-        invitations = client.get_invitations(regex='aclweb.org/ACL/ARR/2021/September/Paper.*/-/Ethics_Review')     
+        invitations = [ i for i in client.get_invitations(regex='aclweb.org/ACL/ARR/2021/September/Paper.*') if 'Ethics_Review' in i.id]      
         assert len(invitations) == 2
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper1/-/Ethics_Review')
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper5/-/Ethics_Review')
@@ -1097,14 +1097,14 @@ OpenReview Team'''
 
         helpers.await_queue()
 
-        groups = client.get_groups(regex='aclweb.org/ACL/ARR/2021/September/Paper.*/Ethics_Reviewers')
+        groups = [ g for g in client.get_groups(regex='aclweb.org/ACL/ARR/2021/September/Paper.*') if 'Ethics_Reviewers' in g.id]
         assert len(groups) == 3
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Paper3/Ethics_Reviewers')
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Paper4/Ethics_Reviewers')
         ## Paper 5 stays because there is already an assigned reviewer and a review
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewers')
 
-        invitations = client.get_invitations(regex='aclweb.org/ACL/ARR/2021/September/Paper.*/-/Ethics_Review')     
+        invitations = [ i for i in client.get_invitations(regex='aclweb.org/ACL/ARR/2021/September/Paper.*') if 'Ethics_Review' in i.id]      
         assert len(invitations) == 3
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper3/-/Ethics_Review')
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper4/-/Ethics_Review')               
