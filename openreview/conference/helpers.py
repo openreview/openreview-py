@@ -345,6 +345,9 @@ def get_submission_stage(request_forum):
     author_names_revealed = 'Reveal author identities of all submissions to the public' in request_forum.content.get('reveal_authors', '') or 'Reveal author identities of only accepted submissions to the public' in request_forum.content.get('reveal_authors', '')
     papers_released = 'Release all submissions to the public'in request_forum.content.get('release_submissions', '') or 'Release only accepted submission to the public' in request_forum.content.get('release_submissions', '') or 'Make accepted submissions public and hide rejected submissions' in request_forum.content.get('submission_readers', '')
 
+    email_pcs = 'Yes' in request_forum.content.get('email_pcs_for_new_submissions', '')
+    submission_email = request_forum.content.get('submission_email', None)
+
     return openreview.stages.SubmissionStage(name = name,
         double_blind=double_blind,
         start_date=submission_start_date,
@@ -355,7 +358,9 @@ def get_submission_stage(request_forum):
         create_groups=create_groups,
         author_names_revealed=author_names_revealed,
         papers_released=papers_released,
-        readers=readers)
+        readers=readers,
+        email_pcs=email_pcs,
+        submission_email=submission_email)
 
 def get_bid_stages(request_forum):
     bid_start_date = request_forum.content.get('bid_start_date', '').strip()
