@@ -1549,10 +1549,15 @@ var registerEventHandlers = function() {
   });
 
   $("#group-container").on("click", "button.btn.btn-export-pdf", function (e) {
-    Webfield.get("/attachment", {
-      ids: _.flatMap(conferenceStatusData.blindedNotes, function (note) {
+    const ids = _.flatMap(conferenceStatusData.blindedNotes, function (note) {
         return note.content.pdf ? note.id : [];
-      }),
+      })
+    if(!ids.length) {
+        promptError('No submission contains PDF');
+        return
+    }
+    Webfield.get("/attachment", {
+      ids,
       name: "pdf"
     }, {
       isBlob: true,
