@@ -1558,7 +1558,7 @@ var registerEventHandlers = function() {
       isBlob: true,
       handleErrors: false
     }).then(function (result) {
-      saveAs(result, SHORT_PHRASE.replace(/\s/g, "_") + "pdfs.zip");
+      saveAs(result, SHORT_PHRASE.replace(/\s/g, "_") + "_pdfs.zip");
     }, function () {
       promptError('PDF download failed');
     });
