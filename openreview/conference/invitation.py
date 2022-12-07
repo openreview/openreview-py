@@ -37,7 +37,6 @@ class SubmissionInvitation(openreview.Invitation):
                     # Only supported for public reviews
                     if submission_stage.create_review_invitation:
                         file_content = file_content.replace("OFFICIAL_REVIEW_NAME = ''", "OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "'")
-                    if not conference.legacy_anonids:
                         file_content = file_content.replace("ANON_IDS = False", "ANON_IDS = True")
                         file_content = file_content.replace("DEANONYMIZERS = []", "DEANONYMIZERS = " + json.dumps(conference.get_reviewer_identity_readers('{number}')))
 
@@ -1731,11 +1730,17 @@ class InvitationBuilder(object):
         return invitations        
 
     def set_review_rebuttal_invitation(self, conference):
-        note_iterator = conference.get_submissions() if conference.review_rebuttal_stage.single_rebuttal else self.client.get_all_notes(invitation = conference.get_invitation_id(conference.review_stage.name, '.*'))        
+        submissions = conference.get_submissions(details='directReplies')
+        notes = []
+        if conference.review_rebuttal_stage.single_rebuttal:
+            notes = submissions 
+        else:
+            notes = [openreview.Note.from_json(reply) for submission in submissions for reply in submission.details['directReplies'] if conference.review_stage.name in reply['invitation']]
+
         invitations = []
         regex=conference.get_anon_reviewer_id(number='.*', anon_id='.*')
         self.client.post_invitation(RebuttalInvitation(conference))
-        for note in tqdm(note_iterator, desc='set_review_rebuttal_invitation'):
+        for note in tqdm(notes, desc='set_review_rebuttal_invitation'):
             if conference.review_rebuttal_stage.single_rebuttal:
                 invitation = self.client.post_invitation(PaperRebuttalInvitation(conference, note))
                 self.__update_readers(note, invitation)
@@ -1914,7 +1919,8 @@ class InvitationBuilder(object):
             with open(os.path.join(os.path.dirname(__file__), 'templates/' + post_proces_template)) as post:
                 pre_content = pre.read()
                 post_content = post.read()
-                pre_content = pre_content.replace("REVIEWERS_REGEX = ''", "REVIEWERS_REGEX = '" + conference.get_committee_id(name=options.get('reviewers_name', 'Reviewers'), number='.*') + "'")
+                pre_content = pre_content.replace("PAPER_REGEX = ''", f"PAPER_REGEX = '{conference.id}/Paper'")
+                pre_content = pre_content.replace("REVIEWERS_NAME = ''", "REVIEWERS_NAME = '" + options.get('reviewers_name', 'Reviewers') + "'")
                 pre_content = pre_content.replace("CHECK_DECLINE = False", "CHECK_DECLINE = True")
                 post_content = post_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{conference.get_short_name()}"')
                 post_content = post_content.replace("CONFERENCE_NAME = ''", f'CONFERENCE_NAME = "{conference.get_id()}"')

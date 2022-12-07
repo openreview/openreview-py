@@ -279,9 +279,8 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
             </li>
         </ul>
         <br>'''
-        builder.set_bid_stage(openreview.stages.BidStage('thecvf.com/ECCV/2020/Conference/Reviewers', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 40, score_ids=['thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score'], instructions = instructions))
-        builder.set_bid_stage(openreview.stages.BidStage('thecvf.com/ECCV/2020/Conference/Area_Chairs', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 60, score_ids=['thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Affinity_Score'], instructions = instructions))
-        #builder.use_legacy_anonids(True)
+        builder.set_bid_stages([openreview.stages.BidStage('thecvf.com/ECCV/2020/Conference/Reviewers', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 40, score_ids=['thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score'], instructions = instructions), 
+            openreview.stages.BidStage('thecvf.com/ECCV/2020/Conference/Area_Chairs', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 60, score_ids=['thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Affinity_Score'], instructions = instructions)])
         conference = builder.get_result()
         conference.set_program_chairs(['pc@eccv.org'])
         conference.create_bid_stages()
@@ -295,7 +294,6 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
         builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
         builder.has_area_chairs(True)
-        #builder.use_legacy_anonids(True)
         conference = builder.get_result()
         assert conference, 'conference is None'
         conference.set_program_chairs(['pc@eccv.org'])
@@ -1100,7 +1098,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         now = datetime.datetime.utcnow()
 
-        conference.set_review_stage(openreview.stages.ReviewStage(due_date=now + datetime.timedelta(minutes = 40),
+        conference.review_stage = openreview.stages.ReviewStage(due_date=now + datetime.timedelta(minutes = 40),
             additional_fields = {
                 'summary_of_contributions': {
                     'order': 1,
@@ -1156,7 +1154,9 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
                 }
             },
             remove_fields = ['title', 'rating', 'review'],
-            rating_field_name = 'preliminary_rating'))
+            rating_field_name = 'preliminary_rating')
+
+        conference.create_review_stage()
 
         r1_client = openreview.Client(username='reviewer1@fb.com', password='1234')
         r2_client = openreview.Client(username='reviewer2@google.com', password='1234')
@@ -1282,7 +1282,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
     def test_comment_stage(self, conference, client, test_client, selenium, request_page, helpers):
         comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED]
-        conference.set_comment_stage(openreview.stages.CommentStage(official_comment_name='Confidential_Comment', reader_selection=True, invitees=comment_invitees, readers=comment_invitees))
+        conference.comment_stage = openreview.stages.CommentStage(official_comment_name='Confidential_Comment', reader_selection=True, invitees=comment_invitees, readers=comment_invitees)
+        conference.create_comment_stage()
 
         r2_client = openreview.Client(username='reviewer2@google.com', password='1234')
 
@@ -1328,7 +1329,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         now = datetime.datetime.utcnow()
 
         ## Release reviews to authors and reviewers
-        conference.set_review_stage(openreview.stages.ReviewStage(due_date=now + datetime.timedelta(minutes = 40),
+        conference.review_stage = openreview.stages.ReviewStage(due_date=now + datetime.timedelta(minutes = 40),
             additional_fields = {
                 'summary_of_contributions': {
                     'order': 1,
@@ -1383,7 +1384,9 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
                     'required': True
                 }
             },
-            remove_fields = ['title', 'rating', 'review'], release_to_reviewers = openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED, release_to_authors = True ))
+            remove_fields = ['title', 'rating', 'review'], release_to_reviewers = openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED, release_to_authors = True )
+
+        conference.create_review_stage()
 
 
         request_page(selenium, 'http://localhost:3030/forum?id=' + blinded_notes[2].id , test_client.token, by=By.CLASS_NAME, wait_for_element='note_with_children')
@@ -1545,7 +1548,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         now = datetime.datetime.utcnow()
 
-        conference.set_review_revision_stage(openreview.ReviewRevisionStage(due_date = now + datetime.timedelta(minutes = 40), additional_fields = {
+        conference.review_revision_stage = openreview.ReviewRevisionStage(due_date = now + datetime.timedelta(minutes = 40), additional_fields = {
             'final_rating': {
                 'order': 1,
                 'value-dropdown': [
@@ -1564,7 +1567,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
                 'description': 'Indicate that you have read the author rebuttal and argue in which sense the rebuttal or the discussion with the other reviewers has changed your initial rating or why you want to keep your rating. Max length: 1000',
                 'required': True
             }
-        }, remove_fields = ['title', 'rating', 'review', 'confidence']))
+        }, remove_fields = ['title', 'rating', 'review', 'confidence'])
+        conference.create_review_revision_stage()
 
         reviewer_client = openreview.Client(username='reviewer2@google.com', password='1234')
 
@@ -1653,7 +1657,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         buttons = notes[1].find_elements_by_class_name('btn')
         assert len(buttons) == 5
 
-        reviews = ac_client.get_notes(forum=blinded_notes[2].id, invitation='thecvf.com/ECCV/2020/Conference/Paper.*/-/Official_Review')
+        reviews = ac_client.get_notes(forum=blinded_notes[2].id, invitation=f'thecvf.com/ECCV/2020/Conference/Paper{blinded_notes[2].number}/-/Official_Review')
         assert len(reviews) == 2
 
         signatory = ac_client.get_groups(regex='thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair_.*', signatory='ac1@eccv.org')[0].id
@@ -1677,7 +1681,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         now = datetime.datetime.utcnow()
 
-        conference.set_meta_review_stage(openreview.stages.MetaReviewStage(due_date =  now + datetime.timedelta(minutes = 1440)))
+        conference.meta_review_stage = openreview.stages.MetaReviewStage(due_date =  now + datetime.timedelta(minutes = 1440))
+        conference.create_meta_review_stage()
 
         ac_client = openreview.Client(username='ac1@eccv.org', password='1234')
         ac_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'
