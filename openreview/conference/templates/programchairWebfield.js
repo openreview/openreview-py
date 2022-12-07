@@ -226,6 +226,7 @@ var main = function() {
       reviewsCount: officialReviews.length,
       assignedReviewsCount: calcAssignedReviewsCount(reviewerGroupMaps.byReviewers),
       reviewersWithAssignmentsCount: Object.keys(reviewerGroupMaps.byReviewers).length,
+      metaReviewersWithAssignmentsCount: Object.keys(areaChairGroupMaps.byAreaChairs).length,
       reviewersComplete: calcReviewersComplete(reviewerGroupMaps, officialReviews),
       paperReviewsComplete: calcPaperReviewsComplete(blindedNotes),
       metaReviewsCount: calcMetaReviewCount(blindedNotes),
@@ -1100,7 +1101,7 @@ var displayStatsAndConfiguration = function(conferenceStats) {
     );
     html += renderStatContainer(
       'AC Meta-Review Progress:',
-      renderProgressStat(conferenceStats.metaReviewersComplete, conferenceStats.areaChairsCount),
+      renderProgressStat(conferenceStats.metaReviewersComplete, conferenceStats.metaReviewersWithAssignmentsCount),
       '% of area chairs who have completed meta reviews for all their assigned papers'
     );
     html += '</div>';
