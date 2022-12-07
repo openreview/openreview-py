@@ -1549,27 +1549,19 @@ var registerEventHandlers = function() {
   });
 
   $("#group-container").on("click", "button.btn.btn-export-pdf", function (e) {
-    Webfield.get(
-      "/attachment",
-      {
-        ids: _.map(conferenceStatusData.blindedNotes, function (note) {
-          return note.id;
-        }),
-        name: "pdf"
-      },
-      {
-        isBlob: true,
-        handleErrors: false
-      }
-    ).then(
-      function (result) {
-        saveAs(result, SHORT_PHRASE.replace(/\s/g, "_") + "_pdfs.zip");
-      },
-      function (jqXhr, textStatus) {
-        var errorText = Webfield.getErrorFromJqXhr(jqXhr, textStatus)
-        promptError(errorText)
-      }
-    );
+    Webfield.get("/attachment", {
+      ids: _.flatMap(conferenceStatusData.blindedNotes, function (note) {
+        return note.content.pdf ? note.id : [];
+      }),
+      name: "pdf"
+    }, {
+      isBlob: true,
+      handleErrors: false
+    }).then(function (result) {
+      saveAs(result, SHORT_PHRASE.replace(/\s/g, "_") + "pdfs.zip");
+    }, function () {
+      promptError('PDF download failed');
+    });
     return false;
   });
 };
