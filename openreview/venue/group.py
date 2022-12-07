@@ -144,6 +144,8 @@ class GroupBuilder(object):
             'public_submissions': { 'value': self.venue.submission_stage.public },
             'public_withdrawn_submissions': { 'value': self.venue.submission_stage.withdrawn_submission_public },
             'public_desk_rejected_submissions': { 'value': self.venue.submission_stage.desk_rejected_submission_public },
+            'submission_email_template': { 'value': self.venue.submission_stage.submission_email if self.venue.submission_stage.submission_email else '' },
+            'submission_email_pcs': { 'value': self.venue.submission_stage.email_pcs },
             'title': { 'value': self.venue.name if self.venue.name else '' },
             'subtitle': { 'value': self.venue.short_name if self.venue.short_name else '' },
             'website': { 'value': self.venue.website if self.venue.website else '' },
