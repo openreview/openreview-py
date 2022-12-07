@@ -31,7 +31,7 @@ class TestBibtex():
         note.content['pdf'] = url
         posted_note = test_client.post_note(note)
 
-        bibtex = openreview.tools.get_bibtex(posted_note, conference.id, '2020', accepted=True, anonymous=False, baseurl=client.baseurl )
+        bibtex = openreview.tools.generate_bibtex(posted_note, conference.id, '2020', paper_status='accepted', anonymous=False, baseurl=client.baseurl )
         valid_bibtex = '''@inproceedings{
 user2020paper,
 title={Paper title has {GAN}s and an \^O},
@@ -45,7 +45,7 @@ url={'''
         assert bibtex == valid_bibtex
 
         # test accepted False and names reversed
-        bibtex = openreview.tools.get_bibtex(posted_note, conference.id, '2020', accepted=False, anonymous=False, names_reversed=True)
+        bibtex = openreview.tools.generate_bibtex(posted_note, conference.id, '2020', paper_status='rejected', anonymous=False, names_reversed=True)
 
         valid_bibtex = '''@misc{
 user2020paper,
@@ -60,7 +60,7 @@ url={https://openreview.net/forum?id='''
         assert bibtex == valid_bibtex
 
         # test accepted paper with editors
-        bibtex = openreview.tools.get_bibtex(posted_note, conference.id, '2020', accepted=True, anonymous=False, baseurl=client.baseurl, editor='A. Beygelzimer and Y. Dauphin and P. Liang and J. Wortman Vaughan' )
+        bibtex = openreview.tools.generate_bibtex(posted_note, conference.id, '2020', paper_status='accepted', anonymous=False, baseurl=client.baseurl, editor='A. Beygelzimer and Y. Dauphin and P. Liang and J. Wortman Vaughan' )
         valid_bibtex = '''@inproceedings{
 user2020paper,
 title={Paper title has {GAN}s and an \^O},

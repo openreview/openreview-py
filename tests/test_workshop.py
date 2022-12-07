@@ -33,7 +33,6 @@ class TestWorkshop():
         'location': 'Berkeley, CA, USA'
         })
         builder.has_area_chairs(False)
-        builder.use_legacy_anonids(True)
         builder.set_submission_stage(double_blind = True, public = True, due_date = now + datetime.timedelta(minutes = 10))
 
         conference = builder.get_result()
@@ -165,7 +164,7 @@ class TestWorkshop():
         assert group
         assert len(group.members) == 0
 
-        groups = client.get_groups(id = conference.get_authors_id(number = '.*'))
+        groups = [ g for g in client.get_groups(id = conference.id + '/Paper.*') if '/Authors' in g.id]
         assert len(groups) == 0
 
         conference.setup_post_submission_stage(force=True)
@@ -234,13 +233,14 @@ class TestWorkshop():
     def test_set_authors(self, client, conference, test_client, selenium, request_page, helpers):
 
         now = datetime.datetime.utcnow()
-        conference.set_review_stage(openreview.stages.ReviewStage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=openreview.stages.ReviewStage.Readers.REVIEWERS_ASSIGNED))
+        conference.review_stage = openreview.stages.ReviewStage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=openreview.stages.ReviewStage.Readers.REVIEWERS_ASSIGNED)
+        conference.create_review_stage()
 
         group = client.get_group(id = conference.get_authors_id())
         assert group
         assert len(group.members) == 3
 
-        groups = client.get_groups(id = conference.get_authors_id(number = '.*'))
+        groups = [ g for g in client.get_groups(id = conference.id + '/Paper.*') if '/Authors' in g.id]
         assert len(groups) == 3
 
         for group in groups:
@@ -276,14 +276,16 @@ class TestWorkshop():
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
         assert 'Withdraw' == reply_row.find_elements_by_class_name('btn')[0].text
 
+        anon_reviewers_group_id = reviewer_client.get_groups(regex=f'{conference.id}/Paper1/Reviewer_', signatory='reviewer4@mail.com')[0].id
+
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review',
             forum = submission.id,
             replyto = submission.id,
             readers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Reviewers',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors'],
-            writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/AnonReviewer1'],
-            signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/AnonReviewer1'],
+            writers = [anon_reviewers_group_id],
+            signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'Review title',
                 'review': 'Paper is very good!',
@@ -315,7 +317,8 @@ class TestWorkshop():
 
     def test_open_comments(self, client, conference, test_client, selenium, request_page, helpers):
         comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS]
-        conference.set_comment_stage(openreview.stages.CommentStage(email_pcs = True, reader_selection=True, allow_public_comments = True, invitees=comment_invitees, readers=comment_invitees + [openreview.stages.CommentStage.Readers.EVERYONE]))
+        conference.comment_stage = openreview.stages.CommentStage(email_pcs = True, reader_selection=True, allow_public_comments = True, invitees=comment_invitees, readers=comment_invitees + [openreview.stages.CommentStage.Readers.EVERYONE])
+        conference.create_comment_stage()
 
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
@@ -324,6 +327,11 @@ class TestWorkshop():
         assert reviews
         review = reviews[0]
 
+        reviewer_client = openreview.Client(username='reviewer4@mail.com', password='1234')
+        anon_reviewers_group_id = reviewer_client.get_groups(regex=f'{conference.id}/Paper1/Reviewer_', signatory='reviewer4@mail.com')[0].id
+        anon_reviewer_id = anon_reviewers_group_id.split('/')[-1]
+        pretty_anon_reviewer_id = anon_reviewer_id.replace('_', ' ')
+
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Comment',
             forum = submission.id,
             replyto = review.id,
@@ -331,14 +339,13 @@ class TestWorkshop():
                 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors',
                 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Reviewers',
                 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
-            writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/AnonReviewer1'],
-            signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/AnonReviewer1'],
+            writers = [anon_reviewers_group_id],
+            signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'Comment title',
                 'comment': 'Paper is very good!'
             }
         )
-        reviewer_client = openreview.Client(username='reviewer4@mail.com', password='1234')
         review_note = reviewer_client.post_note(note)
         assert review_note
 
@@ -348,20 +355,20 @@ class TestWorkshop():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title')
+        messages = client.get_messages(subject = f'.*ICAPS HSDIP 2019.*{pretty_anon_reviewer_id} commented on your submission. Paper Number: 1, Paper Title')
         assert len(messages) == 3
         recipients = [m['content']['to'] for m in messages]
         assert 'test@mail.com' in recipients
         assert 'peter@mail.com' in recipients
         assert 'andrew@mail.com' in recipients
 
-        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*AnonReviewer1 commented on a paper you are reviewing. Paper Number: 1, Paper Number')
+        messages = client.get_messages(subject = f'.*ICAPS HSDIP 2019.*{pretty_anon_reviewer_id} commented on a paper you are reviewing. Paper Number: 1, Paper Number')
         assert len(messages) == 0
 
-        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Number')
+        messages = client.get_messages(subject = f'.*ICAPS HSDIP 2019.*{pretty_anon_reviewer_id} commented on a paper in your area. Paper Number: 1, Paper Number')
         assert len(messages) == 0
 
-        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*AnonReviewer1 commented on a paper. Paper Number')
+        messages = client.get_messages(subject = f'.*ICAPS HSDIP 2019.*{pretty_anon_reviewer_id} commented on a paper. Paper Number')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'program_chairs@hsdip.org' in recipients
@@ -397,17 +404,21 @@ class TestWorkshop():
         review = reviews[0]
 
         now = datetime.datetime.utcnow()
-        conference.open_revise_reviews(due_date = now + datetime.timedelta(minutes = 10))
+        conference.review_revision_stage = openreview.ReviewRevisionStage(due_date = now + datetime.timedelta(minutes = 10))
+        conference.create_review_revision_stage()
 
-        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/AnonReviewer1/-/Review_Revision',
+        reviewer_client = openreview.Client(username='reviewer4@mail.com', password='1234')
+        anon_reviewers_group_id = reviewer_client.get_groups(regex=f'{conference.id}/Paper1/Reviewer_', signatory='reviewer4@mail.com')[0].id
+
+        note = openreview.Note(invitation = f'{anon_reviewers_group_id}/-/Review_Revision',
             forum = submission.id,
             referent = review.id,
             replyto=review.replyto,
             readers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Reviewers',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors'],
-            writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/AnonReviewer1'],
-            signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/AnonReviewer1'],
+            writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP', anon_reviewers_group_id],
+            signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'UPDATED Review title',
                 'review': 'Paper is very good!',
@@ -415,7 +426,6 @@ class TestWorkshop():
                 'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
             }
         )
-        reviewer_client = openreview.Client(username='reviewer4@mail.com', password='1234')
         review_note = reviewer_client.post_note(note)
         assert review_note
 
@@ -439,7 +449,8 @@ class TestWorkshop():
 
     def test_open_meta_reviews(self, client, conference, test_client, helpers):
 
-        conference.open_meta_reviews()
+        conference.meta_review_stage = openreview.MetaReviewStage()
+        conference.create_meta_review_stage()
 
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
@@ -463,7 +474,8 @@ class TestWorkshop():
 
     def test_open_decisions(self, client, conference, helpers):
 
-        conference.open_decisions()
+        conference.decision_stage = openreview.DecisionStage()
+        conference.create_decision_stage()
 
         pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = '1234')
 
