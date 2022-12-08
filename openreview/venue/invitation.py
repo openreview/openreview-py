@@ -145,10 +145,20 @@ class InvitationBuilder(object):
             content['pdf']['value']['param']['optional'] = True
 
         content['venue'] = {
-            'value': tools.pretty_id(self.venue.get_submission_venue_id())
+            'value': {
+                'param': {
+                    'const': tools.pretty_id(self.venue.get_submission_venue_id()),
+                    'hidden': True
+                }
+            }
         }
         content['venueid'] = {
-            'value': self.venue.get_submission_venue_id()
+            'value': {
+                'param': {
+                    'const': self.venue.get_submission_venue_id(),
+                    'hidden': True
+                }
+            }
         }
 
         edit_readers = ['everyone'] if submission_stage.create_groups else [venue_id, self.venue.get_authors_id('${2/note/number}')]
