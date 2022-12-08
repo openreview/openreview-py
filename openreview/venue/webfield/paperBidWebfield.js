@@ -7,8 +7,8 @@ return {
   version: 1,
   properties: {
     header: {
-      "title": `${committee_name.endsWith('s') ? committee_name.slice(0, -1) : committee_name} Bidding Console`,
-      "instructions": `**Instructions:**
+      title: `${committee_name.endsWith('s') ? committee_name.slice(0, -1) : committee_name} Bidding Console`,
+      instructions: `**Instructions:**
       
 - Please indicate your **level of interest** in reviewing the submitted papers below, on a scale from "Very Low" interest to "Very High" interest.   
 - Please bid on as many papers as possible to ensure that your preferences are taken into account.
