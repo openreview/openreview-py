@@ -3337,7 +3337,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         }
 
         if self.journal.get_certifications():
-            invitation.edit['note']['content']['certification_recommendations'] = {
+            invitation['edit']['note']['content']['certification_recommendations'] = {
                 'order': 4,
                 'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation. See certification details here: https://jmlr.org/tmlr/editorial-policies.html',
                 'value': {

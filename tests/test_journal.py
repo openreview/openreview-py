@@ -96,7 +96,9 @@ class TestJournal():
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
         venue_id = 'TMLR'
-        journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions on Machine Learning Research', short_name='TMLR', submission_name='Submission')
+        request_notes = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content= { 'venue_id': 'TMLR' })
+        request_note_id = request_notes[0].id
+        journal = JournalRequest.get_journal(openreview_client, request_note_id)
 
         recruitment_status = journal.invite_action_editors(message='Test {{fullname}},  {{accept_url}}, {{decline_url}}', subject='Invitation to be an Action Editor', invitees=['User@mail.com', 'joelle@mailseven.com', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
         assert len(recruitment_status['invited']) == 9
@@ -137,7 +139,10 @@ class TestJournal():
     def test_invite_reviewers(self, journal, openreview_client, request_page, selenium, helpers):
 
         venue_id = 'TMLR'
-        journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions on Machine Learning Research', short_name='TMLR', submission_name='Submission')
+
+        request_notes = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content= { 'venue_id': 'TMLR' })
+        request_note_id = request_notes[0].id
+        journal = JournalRequest.get_journal(openreview_client, request_note_id)
 
         journal.invite_reviewers(message='Test {{fullname}},  {{accept_url}}, {{decline_url}}', subject='Invitation to be an Reviewer', invitees=['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1'])
         invited_group = openreview_client.get_group('TMLR/Reviewers/Invited')

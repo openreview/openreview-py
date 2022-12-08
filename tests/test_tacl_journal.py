@@ -46,7 +46,12 @@ class TestTACLJournal():
                     'settings': {
                         'value': {
                             'submission_public': False,
-                            'assignment_delay': 0
+                            'assignment_delay': 0,
+                            'certifications': [
+                                'Featured Certification',
+                                'Reproducibility Certification',
+                                'Survey Certification'
+                            ]                            
                         }
                     }
                 }
