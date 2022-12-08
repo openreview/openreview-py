@@ -834,7 +834,7 @@ def replace_members_with_ids(client, group):
             signatures = [group.domain],
             group = openreview.api.Group(
                 id = group.id, 
-                members = group.members
+                members = list(set(group.members))
             )
         )
         return client.get_group(group.id)
