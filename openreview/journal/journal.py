@@ -364,6 +364,9 @@ class Journal(object):
     def are_authors_anonymous(self):
         return self.settings.get('author_anonymity', True)
 
+    def get_certifications(self):
+        return self.settings.get('certifications', [])        
+
     def should_release_authors(self):
         return self.is_submission_public() and self.are_authors_anonymous()
 

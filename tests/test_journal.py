@@ -9,19 +9,23 @@ import re
 from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.journal import Journal
+from openreview.journal import JournalRequest
 
 class TestJournal():
 
 
     @pytest.fixture(scope="class")
-    def journal(self):
+    def journal(self, openreview_client):
+
         venue_id = 'TMLR'
         fabian_client=OpenReviewClient(username='fabian@mail.com', password='1234')
         fabian_client.impersonate('TMLR/Editors_In_Chief')
-        journal=Journal(fabian_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions on Machine Learning Research', short_name='TMLR', submission_name='Submission')
-        return journal
 
-    def test_setup(self, openreview_client, request_page, selenium, helpers):
+        requests = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': venue_id })
+
+        return JournalRequest.get_journal(fabian_client, requests[0].id)
+
+    def test_setup(self, openreview_client, request_page, selenium, helpers, journal_request):
 
         venue_id = 'TMLR'
 
@@ -55,16 +59,38 @@ class TestJournal():
         melisa_client = helpers.create_user('melissa@maileight.com', 'Melissa', 'Bok')
         celeste_client = helpers.create_user('celeste@mailnine.com', 'Celeste Ana', 'Martinez')
 
-        journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions on Machine Learning Research', short_name='TMLR', submission_name='Submission')
-        journal.setup(support_role='fabian@mail.com', editors=['~Raia_Hadsell1', '~Kyunghyun_Cho1'])
+        #post journal request form
+        request_form = openreview_client.post_note_edit(invitation= 'openreview.net/Support/-/Journal_Request',
+            signatures = ['openreview.net/Support'],
+            note = Note(
+                signatures = ['openreview.net/Support'],
+                content = {
+                    'official_venue_name': {'value': 'Transactions on Machine Learning Research'},
+                    'abbreviated_venue_name' : {'value': 'TMLR'},
+                    'venue_id': {'value': 'TMLR'},
+                    'contact_info': {'value': 'tmlr@jmlr.org'},
+                    'secret_key': {'value': '1234'},
+                    'support_role': {'value': '~Fabian_Pedregosa1' },
+                    'editors': {'value': ['~Raia_Hadsell1', '~Kyunghyun_Cho1'] },
+                    'website': {'value': 'jmlr.org/tmlr' },
+                    'settings': {
+                        'value': {
+                            'submission_public': True,
+                            'assignment_delay': 5,
+                            'submission_name': 'Submission',
+                            'certifications': [
+                                'Featured Certification',
+                                'Reproducibility Certification',
+                                'Survey Certification'
+                            ]
+                        }
+                    }
+                }
+            ))
 
-        request_page(selenium, "http://localhost:3030/group?id=TMLR/Action_Editors", ryan_client.token, wait_for_element='group-container')
-        header = selenium.find_element_by_id('header')
-        assert header
-        titles = header.find_elements_by_tag_name('strong')
-        assert 'Reviewer Assignment Browser:' in titles[0].text
-        assert 'Reviewer Report:' in titles[1].text
+        helpers.await_queue_edit(openreview_client, request_form['id'])
 
+        assert openreview_client.get_group('TMLR')
 
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
@@ -98,6 +124,15 @@ class TestJournal():
         group = openreview_client.get_group('TMLR/Action_Editors')
         assert len(group.members) == 9
         assert '~Joelle_Pineau1' in group.members
+
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password='1234')
+        request_page(selenium, "http://localhost:3030/group?id=TMLR/Action_Editors", joelle_client.token, wait_for_element='group-container')
+        header = selenium.find_element_by_id('header')
+        assert header
+        titles = header.find_elements_by_tag_name('strong')
+        assert 'Reviewer Assignment Browser:' in titles[0].text
+        assert 'Journal Recruitment:' in titles[1].text        
+        assert 'Reviewer Report:' in titles[2].text        
 
     def test_invite_reviewers(self, journal, openreview_client, request_page, selenium, helpers):
 

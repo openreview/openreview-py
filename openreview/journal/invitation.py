@@ -2745,22 +2745,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': self.journal.accepted_venue_id,
                             'order': 2
                         },
-                        'certifications': {
-                            'order': 3,
-                            'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.',
-                            'value': {
-                                'param': {
-                                    'type': 'string[]',
-                                    'enum': [
-                                        'Featured Certification',
-                                        'Reproducibility Certification',
-                                        'Survey Certification'
-                                    ],
-                                    'optional': True,
-                                    'input': 'select'
-                                }
-                            }
-                        },
                         'license': {
                             'value': 'Creative Commons Attribution 4.0 International (CC BY 4.0)',
                             'order': 4
@@ -2778,6 +2762,20 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             invitation.edit['note']['content']['authorids'] = {
                 'readers': ['everyone']
             }
+
+        if self.journal.get_certifications():
+            invitation.edit['note']['content']['certifications'] = {
+                'order': 3,
+                'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.',
+                'value': {
+                    'param': {
+                        'type': 'string[]',
+                        'enum': self.journal.get_certifications(),
+                        'optional': True,
+                        'input': 'select'
+                    }
+                }
+            }            
 
 
         self.save_invitation(invitation)
@@ -3320,22 +3318,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                 }
                             }
                         },
-                        'certification_recommendations': {
-                            'order': 4,
-                            'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation. See certification details here: https://jmlr.org/tmlr/editorial-policies.html',
-                            'value': {
-                                'param': {
-                                    'type': 'string[]',
-                                    'enum': [
-                                        'Featured Certification',
-                                        'Reproducibility Certification',
-                                        'Survey Certification'
-                                    ],
-                                    'optional': True,
-                                    'input': 'checkbox'
-                                }
-                            }
-                        },
                         'comment': {
                             'order': 5,
                             'description': 'Briefly explain your recommendation, including justification for certification recommendation (if applicable). Refer to TMLR acceptance criteria here: https://jmlr.org/tmlr/reviewer-guide.html',
@@ -3353,6 +3335,20 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 }
             }
         }
+
+        if self.journal.get_certifications():
+            invitation.edit['note']['content']['certification_recommendations'] = {
+                'order': 4,
+                'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation. See certification details here: https://jmlr.org/tmlr/editorial-policies.html',
+                'value': {
+                    'param': {
+                        'type': 'string[]',
+                        'enum': self.journal.get_certifications(),
+                        'optional': True,
+                        'input': 'checkbox'
+                    }
+                }
+            }        
 
         self.save_super_invitation(self.journal.get_reviewer_recommendation_id(), invitation_content, edit_content, invitation)
 
@@ -4236,22 +4232,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                     'markdown': True
                                 }
                             }
-                        },
-                        'certifications': {
-                            'order': 6,
-                            'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE and will be reviewed by the Editors-in-Chief. See certification details here: https://jmlr.org/tmlr/editorial-policies.html',
-                            'value': {
-                                'param': {
-                                    'type': 'string[]',
-                                    'enum': [
-                                        'Featured Certification',
-                                        'Reproducibility Certification',
-                                        'Survey Certification'
-                                    ],
-                                    'optional': True,
-                                    'input': 'checkbox'
-                                }
-                            }
                         }
                     }
                 }
@@ -4260,6 +4240,20 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'process': self.process_script,
             'dateprocesses': [self.ae_reminder_process]
         }
+
+        if self.journal.get_certifications():
+            invitation['edit']['note']['content']['certifications'] = {
+                'order': 6,
+                'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE and will be reviewed by the Editors-in-Chief. See certification details here: https://jmlr.org/tmlr/editorial-policies.html',
+                'value': {
+                    'param': {
+                        'type': 'string[]',
+                        'enum': self.journal.get_certifications(),
+                        'optional': True,
+                        'input': 'checkbox'
+                    }
+                }
+            }
 
         self.save_super_invitation(self.journal.get_ae_decision_id(), invitation_content, edit_content, invitation)
 
