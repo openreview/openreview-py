@@ -1,7 +1,6 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function, unicode_literals
 from datetime import date
-from deprecated.sphinx import deprecated
 import sys
 if sys.version_info[0] < 3:
     string_types = [str, unicode]

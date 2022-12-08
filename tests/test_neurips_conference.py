@@ -309,7 +309,8 @@ If you would like to change your decision, please follow the link in the previou
 
         conference.setup_matching(committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', build_conflicts=False, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/sac_affinity_scores.csv'))
         now = datetime.datetime.utcnow()
-        conference.set_bid_stage(openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score']))
+        conference.bid_stages['NeurIPS.cc/2021/Conference/Senior_Area_Chairs'] = openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score'])
+        conference.create_bid_stages()
 
         edges=pc_client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score')
         assert edges == 6
@@ -1095,8 +1096,9 @@ If you would like to change your decision, please follow the link in the previou
 
         conference.setup_matching(committee_id=conference.get_reviewers_id(), build_conflicts='neurips', affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
 
-        conference.set_bid_stage(openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Area_Chairs/-/Affinity_Score'], allow_conflicts_bids=True))
-        conference.set_bid_stage(openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Reviewers', score_ids=['NeurIPS.cc/2021/Conference/Reviewers/-/Affinity_Score'], allow_conflicts_bids=True))
+        conference.bid_stages['NeurIPS.cc/2021/Conference/Area_Chairs'] = openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Area_Chairs/-/Affinity_Score'], allow_conflicts_bids=True)
+        conference.bid_stages['NeurIPS.cc/2021/Conference/Reviewers'] = openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Reviewers', score_ids=['NeurIPS.cc/2021/Conference/Reviewers/-/Affinity_Score'], allow_conflicts_bids=True)
+        conference.create_bid_stages()
 
         assert client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Custom_Max_Papers') == 1
         ac_quotas=client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Custom_Max_Papers', head='NeurIPS.cc/2021/Conference/Area_Chairs')
@@ -2427,7 +2429,8 @@ NeurIPS 2021 Conference Program Chairs'''
         due_date = now + datetime.timedelta(days=3)
         comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
                             openreview.stages.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED]
-        conference.set_comment_stage(openreview.stages.CommentStage(reader_selection=True, check_mandatory_readers=True, invitees=comment_invitees, readers=comment_invitees))
+        conference.comment_stage = openreview.stages.CommentStage(reader_selection=True, check_mandatory_readers=True, invitees=comment_invitees, readers=comment_invitees)
+        conference.create_comment_stage()
 
         reviewer_client=openreview.Client(username='reviewer1@umass.edu', password='1234')
 
@@ -2547,7 +2550,7 @@ NeurIPS 2021 Conference Program Chairs'''
 
         helpers.await_queue()
 
-        reviews=client.get_notes(invitation='NeurIPS.cc/2021/Conference/Paper.*/-/Official_Review', sort='tmdate')
+        reviews=client.get_notes(invitation='NeurIPS.cc/2021/Conference/Paper5/-/Official_Review', sort='tmdate')
         assert len(reviews) == 1
         reviews[0].readers = [
             'NeurIPS.cc/2021/Conference/Program_Chairs',
@@ -2561,7 +2564,8 @@ NeurIPS 2021 Conference Program Chairs'''
         due_date = now + datetime.timedelta(days=3)
         comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_SUBMITTED, openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
                             openreview.stages.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS]
-        conference.set_comment_stage(openreview.stages.CommentStage(reader_selection=True, invitees=comment_invitees, readers=comment_invitees))
+        conference.comment_stage = openreview.stages.CommentStage(reader_selection=True, invitees=comment_invitees, readers=comment_invitees)
+        conference.create_comment_stage()
 
         submissions=conference.get_submissions(number=5)
         assert len(submissions) == 1
@@ -2593,7 +2597,8 @@ NeurIPS 2021 Conference Program Chairs'''
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
-        conference.set_meta_review_stage(openreview.stages.MetaReviewStage(due_date=due_date))
+        conference.meta_review_stage = openreview.stages.MetaReviewStage(due_date=due_date)
+        conference.create_meta_review_stage()
 
         ac_client=openreview.Client(username='ac1@mit.edu', password='1234')
 
@@ -2728,7 +2733,7 @@ NeurIPS 2021 Conference Program Chairs'''
 
         submissions = conference.get_submissions(number=5)
 
-        reviews = ac_client.get_notes(forum=submissions[0].id, invitation='NeurIPS.cc/2021/Conference/Paper.*/-/Official_Review')
+        reviews = ac_client.get_notes(forum=submissions[0].id, invitation='NeurIPS.cc/2021/Conference/Paper5/-/Official_Review')
         assert len(reviews) == 1
 
         review_rating_note = ac_client.post_note(openreview.Note(
