@@ -8,8 +8,16 @@ import time
 class TestClient():
 
     def test_get_groups(self, client):
-        groups = client.get_groups()
-        assert groups, 'missing groups'
+        groups = client.get_groups(ids=[
+            '(anonymous)',
+            'everyone',
+            '~',
+            '(guest)',
+            '~Super_User1',
+            'openreview.net',
+            'active_venues',
+            'host'
+        ])
         group_names = [g.id for g in groups]
         assert '(anonymous)' in group_names
         assert 'everyone' in group_names
