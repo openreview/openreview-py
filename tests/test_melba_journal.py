@@ -34,7 +34,7 @@ class TestJournal():
 
         ## Action Editors
         hoel_client = helpers.create_user('hoel@mail.com', 'Hoel', 'Hervadec')
-        aasa_client = helpers.create_user('aasa@mail.com', 'Aasa', 'Feragen')
+        aasa_client = helpers.create_user('aasa@mailtwo.com', 'Aasa', 'Feragen')
         xukun_client = helpers.create_user('xukun@mail.com', 'Xukun', 'Liu')
         melisa_client = helpers.create_user('ana@mail.com', 'Ana', 'Martinez')
         celeste_client = helpers.create_user('celesste@mail.com', 'Celeste', 'Martinez')
@@ -81,7 +81,7 @@ class TestJournal():
         request_note_id = request_notes[0].id
         journal = JournalRequest.get_journal(openreview_client, request_note_id)
         
-        journal.invite_action_editors(message='Test {{fullname}},  {{accept_url}}, {{decline_url}}', subject='[MELBA] Invitation to be an Action Editor', invitees=['new_user@mail.com', 'hoel@mail.com', '~Xukun_Liu1', 'aasa@mail.com', '~Ana_Martinez1'])
+        journal.invite_action_editors(message='Test {{fullname}},  {{accept_url}}, {{decline_url}}', subject='[MELBA] Invitation to be an Action Editor', invitees=['new_user@mail.com', 'hoel@mail.com', '~Xukun_Liu1', 'aasa@mailtwo.com', '~Ana_Martinez1'])
         invited_group = openreview_client.get_group(f'{venue_id}/Action_Editors/Invited')
         assert invited_group.members == ['new_user@mail.com', '~Hoel_Hervadec1', '~Xukun_Liu1', '~Aasa_Feragen1', '~Ana_Martinez1']
 
@@ -136,6 +136,8 @@ class TestJournal():
 
         venue_id = journal.venue_id
         test_client = OpenReviewClient(username='test@mail.com', password='1234')
+        aasa_client = OpenReviewClient(username='aasa@mailtwo.com', password='1234')
+        eic_client = OpenReviewClient(username='adalca@mit.edu', password='1234')
 
         ## Post the submission 1
         submission_note_1 = test_client.post_note_edit(invitation=f'{venue_id}/-/Submission',
@@ -154,6 +156,7 @@ class TestJournal():
             ))
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
+        note_id_1 = submission_note_1['note']['id']
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[MELBA] Suggest candidate Action Editor for your new MELBA submission')
         assert len(messages) == 1
@@ -171,4 +174,38 @@ The MELBA Editors-in-Chief
 '''
 
         note = openreview_client.get_note(submission_note_1['note']['id'])
-        journal.invitation_builder.expire_paper_invitations(note)
+        #journal.invitation_builder.expire_paper_invitations(note)
+
+        # Assign Action Editor
+        editor_in_chief_group_id = 'MELBA/Editors_In_Chief'
+        paper_assignment_edge = eic_client.post_edge(openreview.Edge(invitation='MELBA/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Aasa_Feragen1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_1,
+            tail='~Aasa_Feragen1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        ## Accept the submission 1
+        under_review_note = aasa_client.post_note_edit(invitation= 'MELBA/Paper1/-/Review_Approval',
+                                    signatures=[f'{venue_id}/Paper1/Action_Editors'],
+                                    note=Note(content={
+                                        'under_review': { 'value': 'Appropriate for Review' }
+                                    }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
+
+        # Assign reviewer 1
+        paper_assignment_edge = aasa_client.post_edge(openreview.Edge(invitation='MELBA/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~MELBARev_One1'],
+            nonreaders=[f"{venue_id}/Paper1/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            head=note_id_1,
+            tail='~MELBARev_One1',
+            weight=1
+        ))
+        
