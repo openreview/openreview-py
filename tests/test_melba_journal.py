@@ -209,3 +209,144 @@ The MELBA Editors-in-Chief
             weight=1
         ))
         
+        # Assign reviewer 2
+        paper_assignment_edge = aasa_client.post_edge(openreview.Edge(invitation='MELBA/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~MELBARev_Two1'],
+            nonreaders=[f"{venue_id}/Paper1/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            head=note_id_1,
+            tail='~MELBARev_Two1',
+            weight=1
+        ))
+
+        # Assign reviewer 3
+        paper_assignment_edge = aasa_client.post_edge(openreview.Edge(invitation='MELBA/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~MELBARev_Three1'],
+            nonreaders=[f"{venue_id}/Paper1/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            head=note_id_1,
+            tail='~MELBARev_Three1',
+            weight=1
+        ))
+
+        ## Post a review edit
+        reviewer_one_client = OpenReviewClient(username='rev1@mailone.com', password='1234')
+        reviewer_one_anon_groups=reviewer_one_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~MELBARev_One1')
+        
+        review_note = reviewer_one_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
+            signatures=[reviewer_one_anon_groups[0].id],
+            note=Note(
+                content={
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+
+        reviewer_two_client = OpenReviewClient(username='rev2@mailtwo.com', password='1234')
+        reviewer_two_anon_groups=reviewer_two_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~MELBARev_Two1')
+    
+        review_note = reviewer_two_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
+            signatures=[reviewer_two_anon_groups[0].id],
+            note=Note(
+                content={
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+
+        reviewer_three_client = OpenReviewClient(username='rev3@mailthree.com', password='1234')
+        reviewer_three_anon_groups=reviewer_two_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~MELBARev_Three1')
+
+        review_note = reviewer_three_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
+            signatures=[reviewer_three_anon_groups[0].id],
+            note=Note(
+                content={
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+
+        reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort='number:desc')
+        assert len(reviews) == 3
+        assert reviews[0].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+        assert reviews[1].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+        assert reviews[2].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+
+        invitation = eic_client.get_invitation(f'{venue_id}/Paper1/-/Official_Recommendation')
+        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
+        eic_client.post_invitation_edit(
+            invitations='MELBA/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Official_Recommendation',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 1000,
+                signatures=['MELBA/Editors_In_Chief']
+            )
+        )
+
+        time.sleep(5) ## wait until the process function runs
+
+        ## Post a review recommendation
+        official_recommendation_note = reviewer_one_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
+            signatures=[reviewer_one_anon_groups[0].id],
+            note=Note(
+                content={
+                    'decision_recommendation': { 'value': 'Accept' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
+
+        official_recommendation_note = reviewer_two_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
+            signatures=[reviewer_two_anon_groups[0].id],
+            note=Note(
+                content={
+                    'decision_recommendation': { 'value': 'Accept' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id']) 
+
+        official_recommendation_note = reviewer_three_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
+            signatures=[reviewer_three_anon_groups[0].id],
+            note=Note(
+                content={
+                    'decision_recommendation': { 'value': 'Accept' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])                
