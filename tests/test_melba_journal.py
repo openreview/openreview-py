@@ -64,7 +64,8 @@ class TestJournal():
                         'value': {
                             'submission_public': False,
                             'author_anonymity': True,
-                            'assignment_delay': 0
+                            'assignment_delay': 0,
+                            'show_conflict_details': True
                         }
                     }
                 }
@@ -136,8 +137,6 @@ class TestJournal():
 
         venue_id = journal.venue_id
         test_client = OpenReviewClient(username='test@mail.com', password='1234')
-        aasa_client = OpenReviewClient(username='aasa@mailtwo.com', password='1234')
-        eic_client = OpenReviewClient(username='adalca@mit.edu', password='1234')
 
         ## Post the submission 1
         submission_note_1 = test_client.post_note_edit(invitation=f'{venue_id}/-/Submission',
@@ -173,8 +172,22 @@ For more details and guidelines on the MELBA review process, visit melba-journal
 The MELBA Editors-in-Chief
 '''
 
-        note = openreview_client.get_note(submission_note_1['note']['id'])
+    def test_ae_assignment(self, journal, openreview_client, test_client, helpers):
+
+        venue_id = journal.venue_id
+        
+        aasa_client = OpenReviewClient(username='aasa@mailtwo.com', password='1234')
+        eic_client = OpenReviewClient(username='adalca@mit.edu', password='1234')
+        
+        note = openreview_client.get_notes(invitation='MELBA/-/Submission')[0]
+        note_id_1 = note.id
         #journal.invitation_builder.expire_paper_invitations(note)
+
+        journal.setup_ae_assignment(note)
+
+        conflicts = openreview_client.get_edges(invitation='MELBA/Action_Editors/-/Conflict')
+        assert conflicts
+        assert conflicts[0].label == 'mail.com'
 
         # Assign Action Editor
         editor_in_chief_group_id = 'MELBA/Editors_In_Chief'
