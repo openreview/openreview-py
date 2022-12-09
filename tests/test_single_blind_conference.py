@@ -323,7 +323,8 @@ class TestSingleBlindConference():
         conference = builder.get_result()
 
         comment_invitees = [openreview.stages.CommentStage.Readers.AUTHORS]
-        conference.set_comment_stage(openreview.stages.CommentStage(invitees=comment_invitees, readers=comment_invitees))
+        conference.comment_stage = openreview.stages.CommentStage(invitees=comment_invitees, readers=comment_invitees)
+        conference.create_comment_stage()
 
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
         submission = notes[0]
@@ -343,7 +344,8 @@ class TestSingleBlindConference():
         builder.has_area_chairs(True)
         conference = builder.get_result()
 
-        conference.close_comments('Official_Comment')
+        conference.comment_stage = openreview.CommentStage(end_date=datetime.datetime.utcnow())
+        conference.create_comment_stage()
 
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
         submission = notes[0]
@@ -351,7 +353,7 @@ class TestSingleBlindConference():
 
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
-        assert 'Withdraw' == reply_row.find_elements_by_class_name('btn')[0].text
+        assert 'Withdraw' == reply_row.find_elements_by_class_name('btn')[0].text        
 
     def test_open_reviews(self, client, test_client, selenium, request_page, helpers):
 
@@ -744,7 +746,8 @@ class TestSingleBlindConference():
                 'value-regex': '.*'
             }
         }
-        conference.set_decision_stage(openreview.stages.DecisionStage(public=True, additional_fields=decision_additional_fields))
+        conference.decision_stage = openreview.stages.DecisionStage(public=True, additional_fields=decision_additional_fields)
+        conference.create_decision_stage()
 
         submissions = conference.get_submissions(sort='tmdate')
         assert len(submissions) == 1
@@ -791,7 +794,8 @@ url={https://openreview.net/forum?id='''
         builder.set_conference_name('NIPS Workshop MLITS')
         conference = builder.get_result()
 
-        conference.set_submission_revision_stage(openreview.stages.SubmissionRevisionStage(name='Camera_Ready_Revision', only_accepted=True))
+        conference.submission_revision_stage = openreview.stages.SubmissionRevisionStage(name='Camera_Ready_Revision', only_accepted=True)
+        conference.create_submission_revision_stage()
 
         notes = conference.get_submissions(sort='tmdate')
         assert notes

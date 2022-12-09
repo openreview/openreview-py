@@ -45,7 +45,7 @@ class WebfieldBuilder(object):
     def set_landing_page(self, group, parentGroup, options = {}):
         # sets webfield to show links to child groups
 
-        children_groups = self.client.get_groups(regex = group.id + '/[^/]+/?$')
+        children_groups = self.client.get_groups(parent = group.id)
 
         links = []
         for children in children_groups:
@@ -384,7 +384,7 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, conference.get_authorpage_header())
 
-        template_file = 'legacyAuthorWebfield' if conference.legacy_anonids else 'webfield/authorWebfield'
+        template_file = 'webfield/authorWebfield'
 
         with open(os.path.join(os.path.dirname(__file__), f'templates/{template_file}.js')) as f:
             content = f.read()
@@ -411,7 +411,7 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, conference.get_reviewerpage_header())
 
-        template_file = 'legacyReviewerWebfield' if conference.legacy_anonids else 'reviewerWebfield'
+        template_file = 'reviewerWebfield'
 
         # Build reduced load invitation ID
         conf_id = conference.get_id()
@@ -427,10 +427,7 @@ class WebfieldBuilder(object):
             content = content.replace("var AREACHAIR_NAME = '';", "var AREACHAIR_NAME = '" + conference.area_chairs_name + "';")
             content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
             content = content.replace("var CUSTOM_LOAD_INVITATION = '';", "var CUSTOM_LOAD_INVITATION = '" + reduced_load_id + "';")
-            content = content.replace("var LEGACY_INVITATION_ID = false;", "var LEGACY_INVITATION_ID = true;" if conference.legacy_invitation_id else "var LEGACY_INVITATION_ID = false;")
-            if conference.legacy_anonids:
-                content = content.replace("var REVIEW_LOAD = 0;", "var REVIEW_LOAD = " + str(conference.default_reviewer_load.get(reviewers_name, 0)) + ";")
-            elif conference.default_reviewer_load.get(reviewers_name, 0):
+            if conference.default_reviewer_load.get(reviewers_name, 0):
                 content = content.replace("var REVIEW_LOAD = '';", "var REVIEW_LOAD = '" + str(conference.default_reviewer_load[reviewers_name]) + "';")
             return self.__update_group(group, content)
 
@@ -478,7 +475,7 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, conference.get_areachairpage_header())
 
-        template_file = 'legacyAreachairWebfield' if conference.legacy_anonids else 'areachairWebfield'
+        template_file = 'areachairWebfield'
 
         with open(os.path.join(os.path.dirname(__file__), f'templates/{template_file}.js')) as f:
             content = f.read()
@@ -491,7 +488,6 @@ class WebfieldBuilder(object):
             content = content.replace("var REVIEWER_NAME = '';", "var REVIEWER_NAME = '" + conference.reviewers_name + "';")
             content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
             content = content.replace("var OFFICIAL_META_REVIEW_NAME = '';", "var OFFICIAL_META_REVIEW_NAME = '" + conference.meta_review_stage.name + "';")
-            content = content.replace("var LEGACY_INVITATION_ID = false;", "var LEGACY_INVITATION_ID = true;" if conference.legacy_invitation_id else "var LEGACY_INVITATION_ID = false;")
             content = content.replace("var ENABLE_REVIEWER_REASSIGNMENT = false;", "var ENABLE_REVIEWER_REASSIGNMENT = true;" if conference.enable_reviewer_reassignment else "var ENABLE_REVIEWER_REASSIGNMENT = false;")
             if conference.use_secondary_area_chairs:
                 content = content.replace("var SECONDARY_AREA_CHAIR_NAME = '';", "var SECONDARY_AREA_CHAIR_NAME = '" + conference.secondary_area_chairs_name + "';")
@@ -577,7 +573,7 @@ class WebfieldBuilder(object):
         if conference.get_submissions():
             submission_id = conference.get_blind_submission_id()
 
-        template_file = 'legacyProgramchairWebfield' if conference.legacy_anonids else 'programchairWebfield'
+        template_file = 'programchairWebfield'
 
         with open(os.path.join(os.path.dirname(__file__), f'templates/{template_file}.js')) as f:
             content = f.read()
@@ -596,7 +592,6 @@ class WebfieldBuilder(object):
             content = content.replace("var BID_NAME = '';", "var BID_NAME = 'Bid';")
             content = content.replace("var RECOMMENDATION_NAME = '';", "var RECOMMENDATION_NAME = '" + conference.recommendation_name + "';")
             content = content.replace("var SCORES_NAME = '';", "var SCORES_NAME = 'Affinity_Score';")
-            content = content.replace("var LEGACY_INVITATION_ID = false;", "var LEGACY_INVITATION_ID = true;" if conference.legacy_invitation_id else "var LEGACY_INVITATION_ID = false;")
             content = content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + conference.get_authors_id() + "';")
             content = content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + conference.get_reviewers_id() + "';")
             content = content.replace("var ENABLE_REVIEWER_REASSIGNMENT = false;", "var ENABLE_REVIEWER_REASSIGNMENT = true;" if conference.enable_reviewer_reassignment else "var ENABLE_REVIEWER_REASSIGNMENT = false;")
