@@ -79,6 +79,9 @@ class Journal(object):
     def get_editors_in_chief_id(self):
         return f'{self.venue_id}/{self.editors_in_chief_name}'
 
+    def get_publication_chairs_id(self):
+        return f'{self.venue_id}/Publication_Chairs'
+
     def get_action_editors_id(self, number=None):
         return self.__get_group_id(self.action_editors_name, number)
 
@@ -368,7 +371,10 @@ class Journal(object):
         return self.settings.get('certifications', [])        
 
     def should_show_conflict_details(self):
-        return self.settings.get('show_conflict_details', False)        
+        return self.settings.get('show_conflict_details', False)
+
+    def has_publication_chairs(self):
+        return self.settings.get('has_publication_chairs', False)     
 
     def should_release_authors(self):
         return self.is_submission_public() and self.are_authors_anonymous()

@@ -4811,6 +4811,13 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'dateprocesses': [self.ae_reminder_process]
         }
 
+        if self.journal.has_publication_chairs():
+            invitation['invitees'] = [venue_id, self.journal.get_publication_chairs_id()]
+            invitation['edit']['signatures'] = [self.journal.get_publication_chairs_id()]
+            invitation['edit']['note']['signatures'] = [self.journal.get_publication_chairs_id()]
+            invitation['edit']['readers'] = [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), self.journal.get_publication_chairs_id()]
+            invitation['edit']['writers'] = [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), self.journal.get_publication_chairs_id()]
+
         self.save_super_invitation(self.journal.get_camera_ready_verification_id(), invitation_content, edit_content, invitation)
 
     def set_note_camera_ready_verification_invitation(self, note, duedate):

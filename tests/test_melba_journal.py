@@ -32,6 +32,10 @@ class TestJournal():
         ## Editors in Chief
         helpers.create_user('msabuncu@cornell.edu', 'Mert', 'Sabuncu')
 
+        ## Publication Chair
+        helpers.create_user('publication@melba.com', 'Publication', 'Chair')
+
+
         ## Action Editors
         hoel_client = helpers.create_user('hoel@mail.com', 'Hoel', 'Hervadec')
         aasa_client = helpers.create_user('aasa@mailtwo.com', 'Aasa', 'Feragen')
@@ -65,7 +69,8 @@ class TestJournal():
                             'submission_public': False,
                             'author_anonymity': True,
                             'assignment_delay': 0,
-                            'show_conflict_details': True
+                            'show_conflict_details': True,
+                            'has_publication_chairs': True
                         }
                     }
                 }
@@ -178,6 +183,7 @@ The MELBA Editors-in-Chief
         
         aasa_client = OpenReviewClient(username='aasa@mailtwo.com', password='1234')
         eic_client = OpenReviewClient(username='adalca@mit.edu', password='1234')
+        test_client = OpenReviewClient(username='test@mail.com', password='1234')
         
         note = openreview_client.get_notes(invitation='MELBA/-/Submission')[0]
         note_id_1 = note.id
@@ -362,4 +368,90 @@ The MELBA Editors-in-Chief
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])                
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
+
+        reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort= 'number:asc')
+        
+        for review in reviews:
+            signature=review.signatures[0]
+            rating_note=aasa_client.post_note_edit(invitation=f'{signature}/-/Rating',
+                signatures=[f"{venue_id}/Paper1/Action_Editors"],
+                note=Note(
+                    content={
+                        'rating': { 'value': 'Exceeds expectations' }
+                    }
+                )
+            )
+            helpers.await_queue_edit(openreview_client, edit_id=rating_note['id'])
+            process_logs = openreview_client.get_process_logs(id = rating_note['id'])
+            assert len(process_logs) == 1
+            assert process_logs[0]['status'] == 'ok'
+
+        decision_note = aasa_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            note=Note(
+                content={
+                    'claims_and_evidence': { 'value': 'Accept as is' },
+                    'audience': { 'value': 'Accept as is' },
+                    'recommendation': { 'value': 'Accept as is' },
+                    'comment': { 'value': 'This is a nice paper!' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
+
+        decision_note = aasa_client.get_note(decision_note['note']['id'])
+        assert decision_note.readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors"]
+
+        ## EIC approves the decision
+        approval_note = eic_client.post_note_edit(invitation='MELBA/Paper1/-/Decision_Approval',
+                            signatures=['MELBA/Editors_In_Chief'],
+                            note=Note(
+                                content= {
+                                    'approval': { 'value': 'I approve the AE\'s decision.' },
+                                    'comment_to_the_AE': { 'value': 'I agree with the AE' }
+                                }
+                            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
+
+        decision_note = eic_client.get_note(decision_note.id)
+        assert decision_note.readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+        assert decision_note.nonreaders == []
+
+        ## post a revision
+        revision_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Camera_Ready_Revision',
+            signatures=[f"{venue_id}/Paper1/Authors"],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title VERSION 2' },
+                    'authors': { 'value': ['Test User', 'Celeste Martinez']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Celeste_Martinez1']},
+                    'abstract': { 'value': 'Paper abstract' },
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'video': { 'value': 'https://youtube.com/dfenxkw'}
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
+
+        ## AE verifies the camera ready revision
+        openreview_client.add_members_to_group('MELBA/Publication_Chairs', 'publication@melba.com')
+        publication_chair_client = OpenReviewClient(username='publication@melba.com', password='1234')
+        verification_note = publication_chair_client.post_note_edit(invitation='MELBA/Paper1/-/Camera_Ready_Verification',
+                            signatures=[f"{venue_id}/Publication_Chairs"],
+                            note=Note(
+                                signatures=[f"{venue_id}/Publication_Chairs"],
+                                content= {
+                                    'verification': { 'value': 'I confirm that camera ready manuscript complies with the MELBA stylefile and, if appropriate, includes the minor revisions that were requested.' }
+                                 }
+                            ))        
+
+
+
+
