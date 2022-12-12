@@ -43,7 +43,6 @@ class TestVenueSubmissionARR():
         venue.create_submission_stage()
         venue.create_review_stage()
         venue.create_meta_review_stage()
-        venue.create_submission_revision_stage()
         assert openreview_client.get_group('ARR')
         assert openreview_client.get_group('ARR/Authors')
 
