@@ -16,6 +16,7 @@ var UNDER_REVIEW_ID = '';
 var DESK_REJECTED_ID = '';
 var WITHDRAWN_ID = '';
 var REJECTED_ID = '';
+var CERTIFICATIONS = [];
 var HEADER = {};
 
 var WILDCARD_INVITATION = VENUE_ID + '/.*';
@@ -46,12 +47,7 @@ function main() {
       'Accepted Papers',
       'Under Review Submissions',
       'All Submissions',
-      'Outstanding Certification',
-      'Featured Certification',
-      'Expert Reviewer Certification',
-      'Reproducibility Certification',
-      'Survey Certification'
-    ],
+    ].concat(CERTIFICATIONS),
     referrer: args && args.referrer,
     showBanner: false
   })
@@ -82,30 +78,17 @@ function load() {
     sort: 'tmdate:desc'
   });
 
-  var featuredAcceptedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
-    'content.venueid': VENUE_ID,
-    'content.certifications': 'Featured Certification',
-    pageSize: PAGE_SIZE,
-    details: 'replyCount',
-    includeCount: true,
-    sort: 'tmdate:desc'
-  });
-
-  var reproducibilityAcceptedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
-    'content.venueid': VENUE_ID,
-    'content.certifications': 'Reproducibility Certification',
-    pageSize: PAGE_SIZE,
-    details: 'replyCount',
-    includeCount: true,
-    sort: 'tmdate:desc'
-  });
-
-  var surveyAcceptedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
-    'content.venueid': VENUE_ID,
-    'content.certifications': 'Survey Certification',
-    pageSize: PAGE_SIZE,
-    details: 'replyCount',
-    includeCount: true
+  var certificationsP = $.when.apply($, CERTIFICATIONS.map(function(certification) {
+    return Webfield2.api.getSubmissions(SUBMISSION_ID, {
+      'content.venueid': VENUE_ID,
+      'content.certifications': certification,
+      pageSize: PAGE_SIZE,
+      details: 'replyCount',
+      includeCount: true,
+      sort: 'tmdate:desc'
+    });
+  })).then(function() {
+    return _.toArray(arguments);
   });
 
   var underReviewNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
@@ -126,7 +109,7 @@ function load() {
     userGroupsP = Webfield2.getAll('/groups', { prefix: VENUE_ID + '/.*', member: user.id, web: true });
   }
 
-  return $.when(acceptedNotesP, featuredAcceptedNotesP, reproducibilityAcceptedNotesP, surveyAcceptedNotesP, underReviewNotesP, allNotesP, userGroupsP);
+  return $.when(acceptedNotesP, certificationsP, underReviewNotesP, allNotesP, userGroupsP);
 }
 
 function createConsoleLinks(allGroups) {
@@ -150,7 +133,7 @@ function createConsoleLinks(allGroups) {
 }
 
 // Render functions
-function renderContent(acceptedResponse, featuredResponse, reproducibilityResponse, surveyResponse, underReviewResponse, allResponse, userGroups) {
+function renderContent(acceptedResponse, certificationsResponse, underReviewResponse, allResponse, userGroups) {
 
   // Your Consoles tab
   if (userGroups.length) {
@@ -184,18 +167,12 @@ function renderContent(acceptedResponse, featuredResponse, reproducibilityRespon
 
   Webfield2.ui.renderSubmissionList('#all-submissions', SUBMISSION_ID, allResponse.notes, allResponse.count, options);
 
-  Webfield2.ui.renderSubmissionList('#outstanding-certification', SUBMISSION_ID, [], 0, options);
-
-  Webfield2.ui.renderSubmissionList('#featured-certification', SUBMISSION_ID, featuredResponse.notes, featuredResponse.count,
-  Object.assign({}, options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Featured Certification' }}));
-
-  Webfield2.ui.renderSubmissionList('#expert-reviewer-certification', SUBMISSION_ID, [], 0, options);
-
-  Webfield2.ui.renderSubmissionList('#reproducibility-certification', SUBMISSION_ID, reproducibilityResponse.notes, reproducibilityResponse.count,
-  Object.assign({}, options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Reproducibility Certification' }}));
-
-  Webfield2.ui.renderSubmissionList('#survey-certification', SUBMISSION_ID, surveyResponse.notes, surveyResponse.count,
-  Object.assign({}, options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Survey Certification' }}));
+  CERTIFICATIONS.forEach(function(certification, index) {
+    var response = certificationsResponse[index];
+    var key = certification.toLowerCase().replace(' ', '-');
+    Webfield2.ui.renderSubmissionList('#' + key, SUBMISSION_ID, response.notes, response.count,
+    Object.assign({}, options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': certification }}));
+  })
 
   $('#notes .spinner-container').remove();
   $('.tabs-container').show();

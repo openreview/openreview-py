@@ -117,11 +117,24 @@ class GroupBuilder(object):
             content = content.replace("var DESK_REJECTED_ID = '';", "var DESK_REJECTED_ID = '" + venue_id + "/Desk_Rejection';")
             content = content.replace("var WITHDRAWN_ID = '';", "var WITHDRAWN_ID = '" + venue_id + "/Withdrawn_Submission';")
             content = content.replace("var REJECTED_ID = '';", "var REJECTED_ID = '" + venue_id + "/Rejection';")
+            content = content.replace("var CERTIFICATIONS = [];", "var CERTIFICATIONS = " + json.dumps(self.journal.get_certifications()) + ";")
             venue_group.web = content
             self.post_group(venue_group)
 
         ## Add editors in chief to have all the permissions
         self.client.add_members_to_group(venue_group, editor_in_chief_id)
+
+        ## publication editors group
+        if self.journal.has_publication_chairs():
+            publication_chairs_id = self.journal.get_publication_chairs_id()
+            publication_chairs_group = openreview.tools.get_group(self.client, publication_chairs_id)
+            if not publication_chairs_group:
+                action_editor_group=self.post_group(Group(id=publication_chairs_id,
+                                readers=['everyone'],
+                                writers=[venue_id],
+                                signatures=[venue_id],
+                                signatories=[venue_id],
+                                members=[]))
 
         ## action editors group
         action_editors_id = self.journal.get_action_editors_id()

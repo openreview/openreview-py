@@ -18,7 +18,7 @@ from pylatexenc.latexencode import utf8tolatex, UnicodeToLatexConversionRule, Un
 
 class Journal(object):
 
-    def __init__(self, client, venue_id, secret_key, contact_info, full_name, short_name, website='jmlr.org/tmlr', submission_name='Submission'):
+    def __init__(self, client, venue_id, secret_key, contact_info, full_name, short_name, website='jmlr.org/tmlr', submission_name='Submission', settings={}):
 
         self.client = client
         self.venue_id = venue_id
@@ -28,7 +28,7 @@ class Journal(object):
         self.full_name = full_name
         self.website = website
         self.submission_name = submission_name
-        self.settings = {}
+        self.settings = settings
         self.request_form_id = None
         self.editors_in_chief_name = 'Editors_In_Chief'
         self.action_editors_name = 'Action_Editors'
@@ -78,6 +78,9 @@ class Journal(object):
 
     def get_editors_in_chief_id(self):
         return f'{self.venue_id}/{self.editors_in_chief_name}'
+
+    def get_publication_chairs_id(self):
+        return f'{self.venue_id}/Publication_Chairs'
 
     def get_action_editors_id(self, number=None):
         return self.__get_group_id(self.action_editors_name, number)
@@ -364,6 +367,15 @@ class Journal(object):
     def are_authors_anonymous(self):
         return self.settings.get('author_anonymity', True)
 
+    def get_certifications(self):
+        return self.settings.get('certifications', [])        
+
+    def should_show_conflict_details(self):
+        return self.settings.get('show_conflict_details', False)
+
+    def has_publication_chairs(self):
+        return self.settings.get('has_publication_chairs', False)     
+
     def should_release_authors(self):
         return self.is_submission_public() and self.are_authors_anonymous()
 
@@ -546,7 +558,8 @@ class Journal(object):
                     profile = self.client.get_profile(invitee)
                     invitee_members.append(profile.id)
                 elif '@' in invitee:
-                    invitee_members.append(invitee)
+                    profile = openreview.tools.get_profile(self.client, invitee)
+                    invitee_members.append(profile.id)
                 else:
                     invitee_members = invitee_members + self.client.get_group(invitee).members
 

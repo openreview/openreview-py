@@ -1748,7 +1748,18 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_messages(self, to = None, subject = None, status = None, offset = None, limit = None):
+    def get_all_messages(self, to = None, subject = None, status = None):
+        
+        params = {
+            'to': to,
+            'subject': subject,
+            'status': status
+       }
+
+        return tools.concurrent_get(self, self.get_messages, **params)
+
+
+    def get_messages(self, to = None, subject = None, status = None, offset = None, limit = None, with_count = False):
         """
         **Only for Super User**. Retrieves all the messages sent to a list of usernames or emails and/or a particular e-mail subject
 
@@ -1763,9 +1774,16 @@ class Client(object):
         :rtype: dict
         """
 
-        response = self.session.get(self.messages_url, params = { 'to': to, 'subject': subject, 'status': status, 'offset': offset, 'limit': limit }, headers = self.headers)
+        params = { 'to': to, 'subject': subject, 'status': status, 'offset': offset, 'limit': limit }
+        response = self.session.get(self.messages_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
-        return response.json()['messages']
+
+        messages = response.json()['messages']
+
+        if with_count and params.get('offset') is None:
+            return messages, response.json()['count']
+
+        return messages
 
     def get_process_logs(self, id = None, invitation = None, status = None):
         """

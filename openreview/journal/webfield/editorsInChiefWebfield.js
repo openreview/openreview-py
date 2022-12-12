@@ -78,7 +78,8 @@ var reviewers_url = '/edges/browse?traverse=' + REVIEWERS_ASSIGNMENT_ID +
   '&version=2&referrer=' + referrerUrl;
 HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Assignments Browser:</strong></li>' +
   '<li><a href="' + ae_url + '">Modify Action Editor Assignments</a></li>' +
-  '<li><a href="' + reviewers_url + '">Modify Reviewer Assignments</a></li></ul>' +
+  '<li><a href="' + reviewers_url + '">Modify Reviewer Assignments</a></li>' +
+  '<li><a href="/assignments?group=' + ACTION_EDITOR_ID + '">Action Editor Proposed Assignments</a></li></ul>' +
   '<ul class="list-inline mb-0"><li><strong>Journal Request Forum:</strong></li>' +
   '<li><a href="/forum?id=' + JOURNAL_REQUEST_ID + '&referrer=' + referrerUrl + '">Recruit Reviewers/Action Editors</a></li></ul>' +
   '<ul class="list-inline mb-0"><li><strong>Reviewers Report:</strong></li>' +
