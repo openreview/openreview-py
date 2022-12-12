@@ -536,8 +536,6 @@ class InvitationBuilder(object):
 
             with open(os.path.join(os.path.dirname(__file__), 'webfield/paperBidWebfield.js')) as webfield_reader:
                 webfield_content = webfield_reader.read()
-                webfield_content = webfield_content.replace("const BID_INSTRUCTIONS = ''", f"const BID_INSTRUCTIONS = `{bid_stage.get_instructions()}`")
-        
 
             bid_invitation = Invitation(
                 id=bid_invitation_id,
