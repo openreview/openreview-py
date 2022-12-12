@@ -81,18 +81,18 @@ class TestVenueSubmissionARR():
 
         assert openreview_client.get_invitation('ARR/-/Submission')
 
-        helpers.create_user('celeste@maileleven.com', 'Celeste', 'MartinezEleven')
-        author_client = OpenReviewClient(username='celeste@maileleven.com', password='1234')
+        helpers.create_user('harold@maileleven.com', 'Harold', 'Eleven')
+        author_client = OpenReviewClient(username='harold@maileleven.com', password='1234')
 
         submission_note_1 = author_client.post_note_edit(
             invitation='ARR/-/Submission',
-            signatures= ['~Celeste_MartinezEleven1'],
+            signatures= ['~Harold_Eleven1'],
             note=Note(
                 content={
                     'title': { 'value': 'Paper 1 Title' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['Celeste MartinezEleven']},
-                    'authorids': { 'value': ['~Celeste_MartinezEleven1']},
+                    'authors': { 'value': ['Harold Eleven']},
+                    'authorids': { 'value': ['~Harold_Eleven1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'keywords': {'value': ['aa'] }
                 }
@@ -109,13 +109,13 @@ class TestVenueSubmissionARR():
 
         submission_note_2 = author_client.post_note_edit(
             invitation='ARR/-/Submission',
-            signatures= ['~Celeste_MartinezEleven1'],
+            signatures= ['~Harold_Eleven1'],
             note=Note(
                 content={
                     'title': { 'value': 'Paper 2 Title' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['Celeste MartinezEleven']},
-                    'authorids': { 'value': ['~Celeste_MartinezEleven1']},
+                    'authors': { 'value': ['Harold Eleven']},
+                    'authorids': { 'value': ['~Harold_Eleven1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'keywords': {'value': ['aa'] }
                 }
