@@ -217,6 +217,13 @@ The MELBA Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
 
+        note = aasa_client.get_note(note_id_1)
+        assert note
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review']
+
+        edits = openreview_client.get_note_edits(note.id, invitation='TMLR/-/Under_Review')
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)        
+
         assert aasa_client.get_invitation('MELBA/Paper1/Reviewers/-/Assignment')
 
         # Assign reviewer 1
