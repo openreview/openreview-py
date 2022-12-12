@@ -631,12 +631,14 @@ class Client(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())        
 
-    def get_groups(self, id = None, parent = None, regex = None, member = None, members = None, signatory = None, web = None, limit = None, offset = None, with_count=False, select=None):
+    def get_groups(self, id=None, ids=None, parent=None, regex=None, member=None, members=None, signatory=None, web=None, limit=None, offset=None, with_count=False, select=None):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
         :param id: id of the Group
         :type id: str, optional
+        :param ids: Group ids
+        :type id: list, optional
         :param regex: Regex that matches several Group ids
         :type regex: str, optional
         :param member: Groups that contain this member
@@ -657,6 +659,7 @@ class Client(object):
         """
         params = {}
         if id is not None: params['id'] = id
+        if ids is not None: params['ids'] = ids
         if parent is not None: params['parent'] = parent
         if regex is not None: params['regex'] = regex
         if member is not None: params['member'] = member
