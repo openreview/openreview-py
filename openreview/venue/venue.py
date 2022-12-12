@@ -362,8 +362,8 @@ class Venue(object):
             # default_load, ##can this be removed? We never get it from the request form
             allow_overlap_official_committee)
 
-    def create_submission_stage(self):
-        self.invitation_builder.set_submission_invitation()
+    def create_submission_stage(self, venueid=None):
+        self.invitation_builder.set_submission_invitation(venueid)
         self.invitation_builder.set_withdrawal_invitation()
         self.invitation_builder.set_desk_rejection_invitation()
         if self.expertise_selection_stage:

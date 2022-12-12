@@ -122,7 +122,7 @@ class InvitationBuilder(object):
             )
         )
        
-    def set_submission_invitation(self):
+    def set_submission_invitation(self, venueid=None):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
         submission_name = submission_stage.name
@@ -155,7 +155,7 @@ class InvitationBuilder(object):
         content['venueid'] = {
             'value': {
                 'param': {
-                    'const': self.venue.get_submission_venue_id(),
+                    'const': self.venue.get_submission_venue_id() if not venueid else venueid,
                     'hidden': True
                 }
             }
