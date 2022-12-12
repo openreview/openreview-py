@@ -155,7 +155,7 @@ class InvitationBuilder(object):
         content['venueid'] = {
             'value': {
                 'param': {
-                    'const': self.venue.get_submission_venue_id() if not venueid else venueid,
+                    'const': self.venue.get_submission_venue_id(venueid),
                     'hidden': True
                 }
             }
@@ -929,7 +929,7 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_withdrawal_invitation(self):
+    def set_withdrawal_invitation(self, venueid=None):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
         exp_date = tools.datetime_millis(self.venue.submission_stage.withdraw_submission_exp_date) if self.venue.submission_stage.withdraw_submission_exp_date else None
@@ -1034,7 +1034,7 @@ class InvitationBuilder(object):
                 'value': tools.pretty_id(self.venue.get_withdrawn_submission_venue_id())
             },
             'venueid': {
-                'value': self.venue.get_withdrawn_submission_venue_id()
+                'value': self.venue.get_withdrawn_submission_venue_id(venueid)
             }
         }
         if submission_stage.withdrawn_submission_reveal_authors:
@@ -1209,7 +1209,7 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=True)
 
-    def set_desk_rejection_invitation(self):
+    def set_desk_rejection_invitation(self, venueid=None):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
         exp_date = tools.datetime_millis(self.venue.submission_stage.due_date + datetime.timedelta(days = 90)) if self.venue.submission_stage.due_date else None
@@ -1288,7 +1288,7 @@ class InvitationBuilder(object):
                 'value': tools.pretty_id(self.venue.get_desk_rejected_submission_venue_id())
             },
             'venueid': {
-                'value': self.venue.get_desk_rejected_submission_venue_id()
+                'value': self.venue.get_desk_rejected_submission_venue_id(venueid)
             }
         }
         if submission_stage.desk_rejected_submission_reveal_authors:
