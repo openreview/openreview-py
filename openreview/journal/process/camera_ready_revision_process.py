@@ -7,6 +7,21 @@ def process(client, edit, invitation):
 
     submission = client.get_note(edit.note.id)
 
+    ## if there are publication chairs add them as readers
+    if journal.has_publication_chairs():
+        client.post_note_edit(
+            invitation = journal.get_meta_invitation_id(),
+            readers = [venue_id],
+            writers = [venue_id],
+            signatures = [venue_id],
+            note = openreview.api.Note(
+                id = submission.id,
+                readers = {
+                    'append': [journal.get_publication_chairs_id()]
+                }
+            )
+        )
+
     ## Enable Camera Ready Verification
     print('Enable Camera Ready Verification')
     journal.invitation_builder.set_note_camera_ready_verification_invitation(submission, duedate)

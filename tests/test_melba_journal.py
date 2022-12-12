@@ -452,6 +452,7 @@ The MELBA Editors-in-Chief
         ## AE verifies the camera ready revision
         openreview_client.add_members_to_group('MELBA/Publication_Chairs', 'publication@melba.com')
         publication_chair_client = OpenReviewClient(username='publication@melba.com', password='1234')
+        submission_note = publication_chair_client.get_note(note_id_1)
         verification_note = publication_chair_client.post_note_edit(invitation='MELBA/Paper1/-/Camera_Ready_Verification',
                             signatures=[f"{venue_id}/Publication_Chairs"],
                             note=Note(
