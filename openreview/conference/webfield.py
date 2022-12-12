@@ -50,8 +50,6 @@ class WebfieldBuilder(object):
 
         return group
 
-
-
     def set_home_page(self, conference, group, layout, options = {}):
 
         default_header = {

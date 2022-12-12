@@ -308,7 +308,7 @@ class TestTools():
         assert invitations_iterator
 
     def test_get_all_groups(self, client):
-        group_iterator = openreview.tools.iterget_groups(client)
+        group_iterator = openreview.tools.iterget_groups(client, id='~')
         assert group_iterator
 
     def test_get_grouped_edges(self, client):
