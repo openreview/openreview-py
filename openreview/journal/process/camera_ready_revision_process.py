@@ -8,7 +8,7 @@ def process(client, edit, invitation):
     submission = client.get_note(edit.note.id)
 
     ## if there are publication chairs add them as readers
-    if journal.has_publication_chairs():
+    if not journal.is_submission_public() and journal.has_publication_chairs():
         client.post_note_edit(
             invitation = journal.get_meta_invitation_id(),
             readers = [venue_id],
