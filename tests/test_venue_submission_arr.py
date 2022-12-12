@@ -32,19 +32,9 @@ class TestVenueSubmission():
 
         now = datetime.datetime.utcnow()
         venue.submission_stage = SubmissionStage(double_blind=True, readers=[SubmissionStage.Readers.EVERYONE], withdrawn_submission_public=True, withdrawn_submission_reveal_authors=True, desk_rejected_submission_public=True)
-
-        venue.bid_stages = [
-            BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_reviewers_id()),
-            BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_area_chairs_id())
-        ]        
+    
         venue.review_stage = openreview.stages.ReviewStage(start_date=now + datetime.timedelta(minutes = 4), due_date=now + datetime.timedelta(minutes = 40))
         venue.meta_review_stage = openreview.stages.MetaReviewStage(start_date=now + datetime.timedelta(minutes = 10), due_date=now + datetime.timedelta(minutes = 40))
-        venue.submission_revision_stage = openreview.SubmissionRevisionStage(
-            name='Camera_Ready_Revision',
-            due_date=now + datetime.timedelta(minutes = 40),
-            only_accepted=True
-        )
-
         return venue
 
     def test_setup(self, venue, openreview_client, helpers):
