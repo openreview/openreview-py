@@ -217,6 +217,8 @@ The MELBA Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
 
+        assert aasa_client.get_invitation('MELBA/Paper1/Reviewers/-/Assignment')
+
         # Assign reviewer 1
         paper_assignment_edge = aasa_client.post_edge(openreview.Edge(invitation='MELBA/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~MELBARev_One1'],
