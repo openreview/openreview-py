@@ -155,6 +155,11 @@ var getAreaChairGroups = function(noteNumbers) {
   var ids = _.map(noteNumbers, function(noteNumber) {
     return CONFERENCE_ID + '/Paper' + noteNumber + '/Area_Chairs';
   });
+  
+  if (!ids.length) {
+    return $.Deferred().resolve({});
+  }
+
   var allAreaChairGroupsP = Webfield.getAll('/groups', {
     ids: ids,
     select: 'id,members'
