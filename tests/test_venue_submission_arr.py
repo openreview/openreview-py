@@ -44,7 +44,7 @@ class TestVenueSubmissionARR():
         venue.setup(program_chair_ids=['editors@aclrollingreview.org'], venueid=cycleid)
         venue.create_submission_stage(f'{cycle}/Submission')
         venue.create_review_stage(f'{cycle}/Submission')
-        venue.create_meta_review_stage()
+        venue.create_meta_review_stage(f'{cycle}/Submission')
         assert openreview_client.get_group('ARR')
         assert openreview_client.get_group('ARR/Authors')
 

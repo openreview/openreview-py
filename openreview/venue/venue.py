@@ -373,9 +373,9 @@ class Venue(object):
         invitation = self.invitation_builder.set_review_invitation()
         self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions(venueid=self.get_submission_venue_id(venueid)))
 
-    def create_meta_review_stage(self):
+    def create_meta_review_stage(self, venueid=None):
         invitation = self.invitation_builder.set_meta_review_invitation()
-        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions())
+        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions(venueid=self.get_submission_venue_id(venueid)))
 
     def setup_post_submission_stage(self, force=False, hide_fields=[], venueid=None):
         venue_id = self.venue_id
