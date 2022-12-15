@@ -318,11 +318,11 @@ class Venue(object):
             invitation = f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{invitation_name}'
             self.invitation_builder.expire_invitation(invitation)
 
-    def setup(self, program_chair_ids=[]):
+    def setup(self, program_chair_ids=[], venueid=None):
     
         self.invitation_builder.set_meta_invitation()
 
-        self.group_builder.create_venue_group()
+        self.group_builder.create_venue_group(venueid)
 
         self.group_builder.create_program_chairs_group(program_chair_ids)
 
@@ -369,9 +369,9 @@ class Venue(object):
         if self.expertise_selection_stage:
             self.invitation_builder.set_expertise_selection_invitations()
 
-    def create_review_stage(self):
+    def create_review_stage(self, venueid=None):
         invitation = self.invitation_builder.set_review_invitation()
-        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions())
+        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions(venueid=self.get_submission_venue_id(venueid)))
 
     def create_meta_review_stage(self):
         invitation = self.invitation_builder.set_meta_review_invitation()
@@ -379,12 +379,12 @@ class Venue(object):
 
     def setup_post_submission_stage(self, force=False, hide_fields=[], venueid=None):
         venue_id = self.venue_id
-        submissions = self.get_submissions(venueid=venueid)
+        submissions = self.get_submissions(venueid=self.get_submission_venue_id(venueid))
         
         self.group_builder.create_paper_committee_groups(submissions)
         
         def update_submission_readers(submission):
-            if submission.content['venueid']['value'] == venueid if venueid else self.get_submission_venue_id():
+            if submission.content['venueid']['value'] == self.get_submission_venue_id(venueid):
                 return self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
                     readers=[venue_id],
                     writers=[venue_id],

@@ -111,7 +111,7 @@ class GroupBuilder(object):
             readers.append(self.venue.get_reviewers_id(number))
         return readers
 
-    def create_venue_group(self):
+    def create_venue_group(self, venueid=None):
 
         venue_id = self.venue_id
         groups = self.build_groups(venue_id)
@@ -137,9 +137,9 @@ class GroupBuilder(object):
             'submission_id': { 'value': self.venue.get_submission_id() },
             'meta_invitation_id': { 'value': self.venue.get_meta_invitation_id() },
             'submission_name': { 'value': self.venue.submission_stage.name },
-            'submission_venue_id': { 'value': self.venue.get_submission_venue_id() },
-            'withdrawn_venue_id': { 'value': self.venue.get_withdrawn_submission_venue_id() },
-            'desk_rejected_venue_id': { 'value': self.venue.get_desk_rejected_submission_venue_id() },
+            'submission_venue_id': { 'value': self.venue.get_submission_venue_id(venueid) },
+            'withdrawn_venue_id': { 'value': self.venue.get_withdrawn_submission_venue_id(venueid) },
+            'desk_rejected_venue_id': { 'value': self.venue.get_desk_rejected_submission_venue_id(venueid) },
             'rejected_venue_id': { 'value': self.venue.get_rejected_submission_venue_id() },
             'public_submissions': { 'value': self.venue.submission_stage.public },
             'public_withdrawn_submissions': { 'value': self.venue.submission_stage.withdrawn_submission_public },

@@ -39,10 +39,11 @@ class TestVenueSubmissionARR():
 
     def test_setup(self, venue, openreview_client, helpers):
         cycle = '2023/March'
+        cycleid = f"{cycle}/Submission"
 
-        venue.setup(program_chair_ids=['editors@aclrollingreview.org'])
+        venue.setup(program_chair_ids=['editors@aclrollingreview.org'], venueid=cycleid)
         venue.create_submission_stage(f'{cycle}/Submission')
-        venue.create_review_stage()
+        venue.create_review_stage(f'{cycle}/Submission')
         venue.create_meta_review_stage()
         assert openreview_client.get_group('ARR')
         assert openreview_client.get_group('ARR/Authors')
@@ -125,14 +126,15 @@ class TestVenueSubmissionARR():
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id']) 
 
     def test_post_submission_stage(self, venue, openreview_client):
-        cycleid = 'ARR/2023/March/Submission'
+        cycle = '2023/March'
+    
         venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS, SubmissionStage.Readers.AREA_CHAIRS]
-        venue.setup_post_submission_stage(venueid=cycleid)
+        venue.setup_post_submission_stage(venueid=f'{cycle}/Submission')
         assert openreview_client.get_group('ARR/Submission1/Authors')
         assert openreview_client.get_group('ARR/Submission1/Reviewers')
         assert openreview_client.get_group('ARR/Submission1/Area_Chairs')
 
-        submissions = venue.get_submissions(sort='number:asc', venueid=cycleid)
+        submissions = venue.get_submissions(sort='number:asc', venueid=venue.get_submission_venue_id(f'{cycle}/Submission'))
         assert len(submissions) == 2
         submission = submissions[0]
         assert len(submission.readers) == 4
