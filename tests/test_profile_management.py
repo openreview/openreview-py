@@ -867,8 +867,7 @@ The OpenReview Team.
                 content= {
                     '_bibtex': {
                         'value': journal.get_bibtex(submission, journal.accepted_venue_id, certifications=[])
-                    },
-                    'certifications': { 'value': [] }
+                    }
                 }
             )
         )

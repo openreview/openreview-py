@@ -10,8 +10,8 @@ def process(client, edit, invitation):
     journal.notify_readers(edit)
 
     ## Decrease pending reviews counter
-    profile = openreview.tools.get_profile(client, edit.tauthor)
-    edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=profile.id)
+    signature_group = client.get_group(id=note.signatures[0])
+    edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=signature_group.members[0])
     if edges and edges[0].weight > 0:
         pending_review_edge = edges[0]
         if note.ddate:
@@ -26,7 +26,7 @@ def process(client, edit, invitation):
         return
 
     ## Expire ack task
-    journal.invitation_builder.expire_invitation(journal.get_reviewer_assignment_acknowledgement_id(number=submission.number, reviewer_id=profile.id))
+    journal.invitation_builder.expire_invitation(journal.get_reviewer_assignment_acknowledgement_id(number=submission.number, reviewer_id=signature_group.members[0]))
 
     review_note=client.get_note(note.id)
     if journal.get_release_review_id(number=note.number) in review_note.invitations:

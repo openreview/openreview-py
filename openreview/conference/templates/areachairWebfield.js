@@ -694,7 +694,7 @@ var renderStatusTable = function(conferenceStatusData, container) {
       '</ul>' +
     '</div>' +
     '<div class="btn-group"><button class="btn btn-export-data" type="button">Export</button></div>' +
-    '<div class="btn-group"><button class="btn btn-export-pdf" type="button">Download PDF</button></div>' +
+    // '<div class="btn-group"><button class="btn btn-export-pdf" type="button">Download PDF</button></div>' +
     '<div class="pull-right">' +
       '<strong style="vertical-align: middle;">Search:</strong>' +
       '<input type="text" class="form-search form-control" class="form-control" placeholder="Enter search term or type + to start a query and press enter" style="width:380px; margin-right: 0.5rem; line-height: 34px;">' +
