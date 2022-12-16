@@ -1,6 +1,6 @@
 def process(client, edit, invitation):
 
-    domain = client.get_group(edit.domain)
+    domain = client.get_group(invitation.domain)
 
     note = edit.note
     
