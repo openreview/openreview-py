@@ -127,7 +127,7 @@ class InvitationBuilder(object):
         submission_stage = self.venue.submission_stage
         submission_name = submission_stage.name
 
-        content = default_content.submission_v2
+        content = default_content.submission_v2.copy()
         
         if submission_stage.double_blind:
             content['authors']['readers'] = [venue_id, self.venue.get_authors_id('${4/number}')]
