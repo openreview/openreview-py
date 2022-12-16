@@ -1680,3 +1680,153 @@ class InvitationBuilder(object):
         if self.venue.use_senior_area_chairs:
             build_expertise_selection(self.venue.get_senior_area_chairs_id())
 
+    def set_registration_invitations(self):
+
+        venue = self.venue
+        venue_id = self.venue_id
+
+        for registration_stage in venue.registration_stages:
+            committee_id = registration_stage.committee_id
+
+        readers = [venue_id, committee_id]
+
+        registration_parent_invitation_id = venue.get_invitation_id(name=f'{registration_stage.name}_Form', prefix=committee_id)
+        invitation = Invitation(
+            id = registration_parent_invitation_id,
+            readers = ['everyone'],
+            writers = [venue_id],
+            signatures = [venue_id],
+            invitees = [venue_id, venue.support_user],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': registration_parent_invitation_id,
+                            'optional': True
+                        }
+                    },
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },                    
+                    'readers': readers,
+                    'writers': [venue_id],
+                    'signatures': [venue_id],
+                    'content': {
+                        'title': {
+                            'order': 1,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 250
+                                }
+                            }
+                        },
+                        'instructions': {
+                            'order': 2,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 250000,
+                                    'markdown': True,
+                                    'input': 'textarea'                                    
+                                }
+                            }
+                        }
+                    }                    
+                }
+            }
+        )
+        self.save_invitation(invitation, replacement=True)
+
+        forum_edit = self.client.post_note_edit(invitation=invitation.id,
+            signatures=[venue_id],
+            note = Note(
+                signatures = [venue_id],
+                content = {
+                    'instructions': { 'value': registration_stage.instructions },
+                    'title': { 'value': registration_stage.title}
+                }
+            )
+        )
+        forum_note_id = forum_edit['note']['id']
+        start_date = registration_stage.start_date
+        due_date = registration_stage.due_date
+
+        registration_content = {
+            'profile_confirmed': {
+                'description': 'In order to avoid conflicts of interest in reviewing, we ask that all reviewers take a moment to update their OpenReview profiles (link in instructions above) with their latest information regarding email addresses, work history and professional relationships. Please confirm that your OpenReview profile is up-to-date by selecting "Yes".\n\n',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': ['Yes'],
+                        'input': 'checkbox'
+                    }
+                },
+                'order': 1
+            },
+            'expertise_confirmed': {
+                'description': 'We will be using OpenReview\'s Expertise System as a factor in calculating paper-reviewer affinity scores. Please take a moment to ensure that your latest papers are visible at the Expertise Selection (link in instructions above). Please confirm finishing this step by selecting "Yes".\n\n',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': ['Yes'],
+                        'input': 'checkbox'
+                    }
+                },
+                'order': 2
+            }
+        }
+
+        for content_key in registration_stage.additional_fields:
+            registration_content[content_key] = registration_stage.additional_fields[content_key]
+
+        for field in registration_stage.remove_fields:
+            if field in registration_content:
+                del registration_content[field]        
+
+        registration_invitation_id = venue.get_invitation_id(name=f'{registration_stage.name}', prefix=committee_id)
+        invitation=Invitation(id=registration_invitation_id,
+            invitees=[committee_id],
+            readers=readers,
+            writers=[venue_id],
+            signatures=[venue_id],
+            cdate = tools.datetime_millis(start_date) if start_date else None,
+            duedate = tools.datetime_millis(due_date) if due_date else None,
+            expdate = tools.datetime_millis(due_date),
+            maxReplies = 1,
+            minReplies = 1,       
+            edit={
+                'signatures': { 'param': { 'regex': '~.*' }},
+                'readers': [venue_id, '${2/signatures}'],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': registration_invitation_id,
+                            'optional': True
+                        }
+                    },
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },                    
+                    'forum': forum_note_id,
+                    'replyto': forum_note_id,
+                    'signatures': ['${3/signatures}'],
+                    'readers': [venue_id, '${3/signatures}'],
+                    'writers': [venue_id, '${3/signatures}'],
+                    'content': registration_content
+                }
+            }        
+        )
+        self.save_invitation(invitation)                           
+
