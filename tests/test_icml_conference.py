@@ -346,6 +346,92 @@ reviewer6@icml.cc, Reviewer ICMLSix
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers/Invited').members) == 6
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers/Declined').members) == 1
 
+    def test_registrations(self, client, openreview_client, helpers, test_client):
+
+        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        venue.registration_stages.append(openreview.stages.RegistrationStage(committee_id = venue.get_senior_area_chairs_id(), 
+            name = 'Registration', 
+            start_date = None, 
+            due_date = due_date, 
+            instructions = 'TODO: instructions',
+            title = 'ICML 2023 Conference - Senior Area Chair registration'))
+
+        venue.registration_stages.append(openreview.stages.RegistrationStage(committee_id = venue.get_area_chairs_id(), 
+            name = 'Registration', 
+            start_date = None, 
+            due_date = due_date, 
+            instructions = 'TODO: instructions',
+            title = 'ICML 2023 Conference - Area Chair registration',
+            additional_fields = {
+                'statement': {
+                    'description': 'Please write a short (1-2 sentence) statement about why you think peer review is important to the advancement of science.',
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'input': 'textarea',
+                            'maxLength': 200000
+                        }
+                    },
+                    'order': 3
+                }                
+            }))
+
+        venue.registration_stages.append(openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(), 
+            name = 'Registration', 
+            start_date = None, 
+            due_date = due_date, 
+            instructions = 'TODO: instructions',
+            title = 'ICML 2023 Conference - Reviewer registration',
+            additional_fields = {
+                'statement': {
+                    'description': 'Please write a short (1-2 sentence) statement about why you think peer review is important to the advancement of science.',
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'input': 'textarea',
+                            'maxLength': 200000
+                        }
+                    },
+                    'order': 3
+                }                
+            },
+            remove_fields = ['profile_confirmed', 'expertise_confirmed']))                      
+
+        venue.create_registration_stages()
+
+        sac_client = openreview.api.OpenReviewClient(username = 'sac1@icml.cc', password='1234')
+
+        registration_forum = sac_client.get_notes(invitation='ICML.cc/2023/Conference/Senior_Area_Chairs/-/Registration_Form')
+        assert len(registration_forum) == 1
+
+        sac_client.post_note_edit(invitation='ICML.cc/2023/Conference/Senior_Area_Chairs/-/Registration',
+                signatures=['~SAC_ICMLOne1'],
+                note=openreview.api.Note(
+                    content = {
+                        'profile_confirmed': { 'value': 'Yes' },
+                        'expertise_confirmed': { 'value': 'Yes' }
+                    }
+                ))
+
+        ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password='1234')
+
+        invitation = ac_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Registration')
+        assert 'statement' in invitation.edit['note']['content']
+        assert 'profile_confirmed' in invitation.edit['note']['content']
+        assert 'expertise_confirmed' in invitation.edit['note']['content']
+
+        reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@icml.cc', password='1234')
+
+        invitation = reviewer_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Registration')
+        assert 'statement' in invitation.edit['note']['content']
+        assert 'profile_confirmed' not in invitation.edit['note']['content']
+        assert 'expertise_confirmed' not in invitation.edit['note']['content']
+    
     def test_submissions(self, client, openreview_client, helpers, test_client):
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
