@@ -3786,13 +3786,13 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         )
 
         ## Change the edit readers
-        for edit in self.client.get_note_edits(note.id, invitation=revision_invitation_id, sort='tcdate:asc'):
+        for edit in self.client.get_note_edits(note.id, invitation=revision_invitation_id, sort='tmdate:asc'):
             edit.readers = self.journal.get_under_review_submission_readers(note.number)
             edit.note.mdate = None
             self.client.post_edit(edit)
 
         ## Change first edit readers
-        for edit in self.client.get_note_edits(note.id, invitation=self.journal.get_author_submission_id(), sort='tcdate:asc'):
+        for edit in self.client.get_note_edits(note.id, invitation=self.journal.get_author_submission_id(), sort='tmdate:asc'):
             edit.invitation = self.journal.get_meta_invitation_id()
             edit.signatures = [self.journal.venue_id]
             edit.readers = self.journal.get_under_review_submission_readers(note.number)
@@ -5015,6 +5015,20 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             },
             'process': self.process_script
         }
+
+        if self.journal.get_certifications():
+            invitation['edit']['note']['content']['certifications'] = {
+                "order": 13,
+                "description": "Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.",
+                "value": {
+                    "param": {
+                        "type": "string[]",
+                        "enum": self.journal.get_certifications(),
+                        "optional": True,
+                        "input": "select"
+                    }
+                }
+            }            
 
         self.save_super_invitation(self.journal.get_eic_revision_id(), invitation_content, edit_content, invitation)
 

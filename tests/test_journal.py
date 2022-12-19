@@ -501,7 +501,7 @@ note={Under review}
 
         ## Check the edit history is public
         #edits = openreview_client.get_note_edits(note.id, invitation='TMLR/Paper1/-/Revision', sort='tcdate:asc')
-        edits = openreview_client.get_note_edits(note.id, sort='tcdate:asc')
+        edits = openreview_client.get_note_edits(note.id, sort='tmdate:asc')
         assert edits
         for edit in edits:
             assert 'everyone' in edit.readers
