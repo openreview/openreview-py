@@ -31,6 +31,17 @@ class Matching(object):
         readers.append(tail)
         return readers
 
+    def get_committee_name(self):
+        if self.is_reviewer:
+            return 'Reviewers'
+        if self.is_area_chair:
+            return 'Area_Chairs'
+        if self.is_senior_area_chair:
+            return 'Senior_Area_Chairs'
+        if self.is_ethics_reviewer:
+            return 'Ethics_Reviewers'
+        return self.match_group.id.split('/')[-1]
+
     def _create_edge_invitation(self, edge_id, any_tail=False, default_label=None):
 
         venue = self.venue
@@ -644,7 +655,7 @@ class Matching(object):
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'const': venue.get_paper_assignment_id(self.match_group.id),
+                                    'const': venue.get_assignment_id(self.match_group.id),
                                     'hidden': True
                                 }
                             }
@@ -655,7 +666,7 @@ class Matching(object):
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'const': venue.get_paper_assignment_id(self.match_group.id, deployed=True),
+                                    'const': venue.get_assignment_id(self.match_group.id, deployed=True),
                                     'hidden': True
                                 }
                             }
@@ -666,7 +677,7 @@ class Matching(object):
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'const': venue.get_paper_assignment_id(self.match_group.id, invite=True),
+                                    'const': venue.get_assignment_id(self.match_group.id, invite=True),
                                     'hidden': True
                                 }
                             }
@@ -839,17 +850,18 @@ class Matching(object):
 
         user_profiles = openreview.tools.get_profiles(client, self.match_group.members, with_publications=compute_conflicts)
 
-        invitation = self._create_edge_invitation(venue.get_paper_assignment_id(self.match_group.id))
-
+        invitation = self._create_edge_invitation(venue.get_assignment_id(self.match_group.id))
+        
         if not self.is_senior_area_chair:
             with open(os.path.join(os.path.dirname(__file__), 'process/proposed_assignment_pre_process.py')) as f:
                 content = f.read()
-                content = content.replace("CUSTOM_MAX_PAPERS_INVITATION_ID = ''", "CUSTOM_MAX_PAPERS_INVITATION_ID = '" + venue.get_custom_max_papers_id(self.match_group.id) + "'")
+                invitation.content = { 'committee_name': { 'value': self.get_committee_name() }}
                 invitation.preprocess = content
                 venue.invitation_builder.save_invitation(invitation)
 
-        self._create_edge_invitation(venue.get_paper_assignment_id(self.match_group.id, deployed=True))
+        self._create_edge_invitation(venue.get_assignment_id(self.match_group.id, deployed=True))
         venue.invitation_builder.set_assignment_invitation(self.match_group.id)
+
         self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
         self._build_custom_max_papers(user_profiles)
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))
@@ -913,10 +925,10 @@ class Matching(object):
 
         papers = venue.get_submissions()
         reviews = client.get_notes(invitation=venue.get_invitation_id(review_name, number='.*'), limit=1)
-        proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_paper_assignment_id(self.match_group.id),
+        proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id),
             label=assignment_title, groupby='head', select=None)}
         assignment_edges = []
-        assignment_invitation_id = venue.get_paper_assignment_id(self.match_group.id, deployed=True)
+        assignment_invitation_id = venue.get_assignment_id(self.match_group.id, deployed=True)
         current_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None)}
 
         sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_paper_assignment_id(venue.get_senior_area_chairs_id()), groupby='head', select=None)}
@@ -982,10 +994,10 @@ class Matching(object):
 
         papers = venue.get_submissions()
 
-        proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_paper_assignment_id(self.match_group.id),
+        proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id),
             label=assignment_title, groupby='head', select=None)}
         assignment_edges = []
-        assignment_invitation_id = venue.get_paper_assignment_id(self.match_group.id, deployed=True)
+        assignment_invitation_id = venue.get_assignment_id(self.match_group.id, deployed=True)
 
         if not papers:
             raise openreview.OpenReviewException('No submissions to deploy SAC assignment')
@@ -1020,4 +1032,4 @@ class Matching(object):
         #     hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
         #     self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=f'''Emergency_{self.venue.reviewers_name}''')
 
-        # self.venue.invitation_builder.expire_invitation(self.venue.get_paper_assignment_id(self.match_group.id))
+        # self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id))

@@ -4,7 +4,7 @@ def process(client, note, invitation):
     GROUP_PREFIX = ''
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
     request_form = client.get_note(note.forum)
-    conference = openreview.helpers.get_conference(client, note.forum)
+    conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP)
 
     compute_conflicts = note.content.get('compute_conflicts') == 'Yes'
 

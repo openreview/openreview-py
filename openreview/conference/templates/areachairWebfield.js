@@ -694,11 +694,12 @@ var renderStatusTable = function(conferenceStatusData, container) {
       '</ul>' +
     '</div>' +
     '<div class="btn-group"><button class="btn btn-export-data" type="button">Export</button></div>' +
+    // '<div class="btn-group"><button class="btn btn-export-pdf" type="button">Download PDF</button></div>' +
     '<div class="pull-right">' +
       '<strong style="vertical-align: middle;">Search:</strong>' +
-      '<input type="text" class="form-search form-control" class="form-control" placeholder="Enter search term or type + to start a query and press enter" style="width:440px; margin-right: 1.5rem; line-height: 34px;">' +
+      '<input type="text" class="form-search form-control" class="form-control" placeholder="Enter search term or type + to start a query and press enter" style="width:380px; margin-right: 0.5rem; line-height: 34px;">' +
       '<strong>Sort By:</strong> ' +
-      '<select id="form-sort" class="form-control" style="width: 250px; line-height: 1rem;">' + sortOptionHtml + '</select>' +
+      '<select id="form-sort" class="form-control" style="width: 200px; line-height: 1rem;">' + sortOptionHtml + '</select>' +
       '<button id="form-order" class="btn btn-icon" type="button"><span class="glyphicon glyphicon-sort"></span></button>' +
     '</div>' +
   '</form>';
@@ -1544,6 +1545,28 @@ var registerEventHandlers = function() {
   $('#group-container').on('click', 'button.btn.btn-export-data', function(e) {
     var blob = new Blob(buildCSV(), {type: 'text/csv'});
     saveAs(blob, SHORT_PHRASE.replace(/\s/g, '_').concat(conferenceStatusData.filteredNotes ? '_AC_paper_status(Filtered).csv' : '_AC_paper_status.csv'));
+    return false;
+  });
+
+  $("#group-container").on("click", "button.btn.btn-export-pdf", function (e) {
+    const ids = _.flatMap(conferenceStatusData.blindedNotes, function (note) {
+        return note.content.pdf ? note.id : [];
+      })
+    if(!ids.length) {
+        promptError('No submission contains PDF');
+        return
+    }
+    Webfield.get("/attachment", {
+      ids,
+      name: "pdf"
+    }, {
+      isBlob: true,
+      handleErrors: false
+    }).then(function (result) {
+      saveAs(result, SHORT_PHRASE.replace(/\s/g, "_") + "_pdfs.zip");
+    }, function () {
+      promptError('PDF download failed');
+    });
     return false;
   });
 };

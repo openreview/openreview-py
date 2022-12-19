@@ -141,9 +141,9 @@ class TestTools():
         assert 'test_subject_a@mail.com' in posted_group.members
         assert 'test_subject_b@mail.com' in posted_group.members
 
-    def test_get_all_venues(self, client):
-        venues = openreview.tools.get_all_venues(client)
-        assert venues, "Venues could not be retrieved"
+    # def test_get_all_venues(self, client):
+    #     venues = openreview.tools.get_all_venues(client)
+    #     assert venues, "Venues could not be retrieved"
 
     def test_iterget_notes(self, client):
         iter_group = client.post_group(
@@ -308,18 +308,18 @@ class TestTools():
         assert invitations_iterator
 
     def test_get_all_groups(self, client):
-        group_iterator = openreview.tools.iterget_groups(client)
+        group_iterator = openreview.tools.iterget_groups(client, id='~')
         assert group_iterator
 
     def test_get_grouped_edges(self, client):
         group_iterator = openreview.tools.iterget_grouped_edges(client)
         assert group_iterator
 
-    def test_get_preferred_name(self, client):
-        superuser_profile = client.get_profile('openreview.net')
+    def test_get_preferred_name(self, client, test_client):
+        superuser_profile = client.get_profile('test@mail.com')
         preferred_name = openreview.tools.get_preferred_name(superuser_profile)
         assert preferred_name, "preferred name not found"
-        assert preferred_name == 'Super User'
+        assert preferred_name == 'SomeFirstName User'
 
     def test_create_authorid_profiles(self, client):
         authors = [
@@ -511,18 +511,6 @@ class TestTools():
         neurips_conflicts = openreview.tools.get_conflicts([intern_profile], profile2, policy='neurips')
         assert len(neurips_conflicts) == 1
         assert 'cmu.edu' in conflicts
-
-    def test_add_assignments(self, client):
-
-        groups = client.get_groups(regex = 'auai.org/UAI/2020/Conference/Paper1/AnonReviewer.*')
-        assert len(groups) == 2
-
-        for n in range(0, 10):
-            result = openreview.tools.add_assignment(client, 1, 'auai.org/UAI/2020/Conference', 'reviewer{}@mail.com'.format(n))
-            assert result
-
-        groups = client.get_groups(regex = 'auai.org/UAI/2020/Conference/Paper1/AnonReviewer.*')
-        assert len(groups) == 12
 
     def test_group(self, client):
 

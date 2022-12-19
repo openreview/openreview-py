@@ -673,7 +673,8 @@ Naila, Katja, Alice, and Ivan
     def test_revision_stage(self, conference, helpers, test_client, client):
 
         now = datetime.datetime.utcnow()
-        conference.set_submission_revision_stage(openreview.stages.SubmissionRevisionStage(due_date=now + datetime.timedelta(minutes = 40), allow_author_reorder=True))
+        conference.submission_revision_stage = openreview.stages.SubmissionRevisionStage(due_date=now + datetime.timedelta(minutes = 40), allow_author_reorder=True)
+        conference.create_submission_revision_stage()
 
         submissions = conference.get_submissions(sort='tmdate')
 

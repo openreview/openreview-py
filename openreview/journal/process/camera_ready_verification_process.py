@@ -16,15 +16,19 @@ def process(client, edit, invitation):
     decision = decisions[0]
     certifications = decision.content.get('certifications', {}).get('value', [])
 
+    content= {
+        '_bibtex': {
+            'value': journal.get_bibtex(submission, journal.accepted_venue_id, certifications=certifications)
+        }
+    }
+
+    if journal.get_certifications():
+        content['certifications'] = { 'value': certifications }
+
     acceptance_note = client.post_note_edit(invitation=journal.get_accepted_id(),
                         signatures=[venue_id],
                         note=openreview.api.Note(id=submission.id,
-                            content= {
-                                '_bibtex': {
-                                    'value': journal.get_bibtex(submission, journal.accepted_venue_id, certifications=certifications)
-                                },
-                                'certifications': { 'value': certifications }
-                            }
+                            content= content
                         )
                     )
 

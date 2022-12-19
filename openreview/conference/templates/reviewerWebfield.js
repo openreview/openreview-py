@@ -151,9 +151,17 @@ var getReviewerNoteNumbers = function() {
   });
 };
 
-var getAreaChairGroups = function() {
+var getAreaChairGroups = function(noteNumbers) {
+  var ids = _.map(noteNumbers, function(noteNumber) {
+    return CONFERENCE_ID + '/Paper' + noteNumber + '/Area_Chairs';
+  });
+  
+  if (!ids.length) {
+    return $.Deferred().resolve({});
+  }
+
   var allAreaChairGroupsP = Webfield.getAll('/groups', {
-    regex: CONFERENCE_ID + '/Paper.*/Area_Chairs',
+    ids: ids,
     select: 'id,members'
   })
   .then(function(groups) {
@@ -283,7 +291,7 @@ var loadReviewerData = function() {
         getAllInvitations(),
         getCustomLoad(userIds),
         groupByNumber,
-        getAreaChairGroups()
+        getAreaChairGroups(noteNumbers)
       );
     });
 };

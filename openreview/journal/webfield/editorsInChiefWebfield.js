@@ -78,7 +78,8 @@ var reviewers_url = '/edges/browse?traverse=' + REVIEWERS_ASSIGNMENT_ID +
   '&version=2&referrer=' + referrerUrl;
 HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Assignments Browser:</strong></li>' +
   '<li><a href="' + ae_url + '">Modify Action Editor Assignments</a></li>' +
-  '<li><a href="' + reviewers_url + '">Modify Reviewer Assignments</a></li></ul>' +
+  '<li><a href="' + reviewers_url + '">Modify Reviewer Assignments</a></li>' +
+  '<li><a href="/assignments?group=' + ACTION_EDITOR_ID + '">Action Editor Proposed Assignments</a></li></ul>' +
   '<ul class="list-inline mb-0"><li><strong>Journal Request Forum:</strong></li>' +
   '<li><a href="/forum?id=' + JOURNAL_REQUEST_ID + '&referrer=' + referrerUrl + '">Recruit Reviewers/Action Editors</a></li></ul>' +
   '<ul class="list-inline mb-0"><li><strong>Reviewers Report:</strong></li>' +
@@ -104,14 +105,10 @@ var getRatingInvitations = function(invitationsById, number) {
 }
 
 var getRatingReplies = function(submission, ratingInvitations) {
-  var replies = [];
-  ratingInvitations.forEach(function(invitation) {
-    var ratingReplies = submission.details.replies.filter(function(reply) {
-      return reply.invitations.includes(invitation.id);
-    });
-    replies = replies.concat(ratingReplies);
-  })
-  return replies;
+  var ratingReplies = submission.details.replies.filter(function(reply) {
+    return reply.invitations[0].includes('/-/Rating');
+  });
+  return ratingReplies;
 }
 
 // Main function is the entry point to the webfield code
@@ -133,6 +130,11 @@ var main = function() {
     referrer: args && args.referrer,
     fullWidth: true
   });
+  
+  if (!user || user.isGuest) {
+    Webfield2.ui.errorMessage('You must be logged in to access this page.');
+    return;
+  }  
 
   loadData()
     .then(formatData)

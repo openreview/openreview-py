@@ -26,7 +26,7 @@ class TestMatching():
     def venue(self, openreview_client, helpers):
         pc_client = helpers.create_user('pc1_venue@mail.com', 'PCFirstName', 'UAI')
         venue_id = 'VenueV2.cc'
-        venue = Venue(openreview_client, venue_id)
+        venue = Venue(openreview_client, venue_id, 'openreview.net/Support')
         venue.short_name = 'VV2 2022'
         venue.website = 'www.venuev2.com'
         venue.contact = 'pc_venue@mail.com'
@@ -159,7 +159,7 @@ class TestMatching():
         venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
 
         #check assignment process is set when invitation is created
-        assignment_inv = openreview_client.get_invitation(venue.get_paper_assignment_id(committee_id=venue.get_reviewers_id(), deployed=True))
+        assignment_inv = openreview_client.get_invitation(venue.get_assignment_id(committee_id=venue.get_reviewers_id(), deployed=True))
         assert assignment_inv
         assert assignment_inv.process
         assert 'def process_update(client, edge, invitation, existing_edge):' in assignment_inv.process
@@ -297,7 +297,7 @@ class TestMatching():
         assert 0 == edges
 
         #Reviewer assignments
-        pc_client.post_edge(Edge(invitation = venue.get_paper_assignment_id(venue.get_reviewers_id()),
+        pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[0].number}/Senior_Program_Committee', '~Reviewer_Venue1'],
             nonreaders = [f'{venue.id}/Submission{notes[0].number}/Authors'],
             writers = [venue.id, f'{venue.id}/Submission{notes[0].number}/Senior_Program_Committee'],
@@ -308,7 +308,7 @@ class TestMatching():
             weight = 0.98
         ))
 
-        pc_client.post_edge(Edge(invitation = venue.get_paper_assignment_id(venue.get_reviewers_id()),
+        pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[0].number}/Senior_Program_Committee', 'r2_venue@google.com'],
             nonreaders = [f'{venue.id}/Submission{notes[0].number}/Authors'],
             writers = [venue.id, f'{venue.id}/Submission{notes[0].number}/Senior_Program_Committee'],
@@ -319,7 +319,7 @@ class TestMatching():
             weight = 0.87
         ))
 
-        pc_client.post_edge(Edge(invitation = venue.get_paper_assignment_id(venue.get_reviewers_id()),
+        pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[1].number}/Senior_Program_Committee', 'r2_venue@google.com'],
             nonreaders = [f'{venue.id}/Submission{notes[1].number}/Authors'],
             writers = [venue.id, f'{venue.id}/Submission{notes[1].number}/Senior_Program_Committee'],
@@ -330,7 +330,7 @@ class TestMatching():
             weight = 0.87
         ))
 
-        pc_client.post_edge(Edge(invitation = venue.get_paper_assignment_id(venue.get_reviewers_id()),
+        pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[1].number}/Senior_Program_Committee', 'r3_venue@fb.com'],
             nonreaders = [f'{venue.id}/Submission{notes[1].number}/Authors'],
             writers = [venue.id, f'{venue.id}/Submission{notes[1].number}/Senior_Program_Committee'],
@@ -341,7 +341,7 @@ class TestMatching():
             weight = 0.94
         ))
 
-        pc_client.post_edge(Edge(invitation = venue.get_paper_assignment_id(venue.get_reviewers_id()),
+        pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[2].number}/Senior_Program_Committee', 'r3_venue@fb.com'],
             nonreaders = [f'{venue.id}/Submission{notes[2].number}/Authors'],
             writers = [venue.id, f'{venue.id}/Submission{notes[2].number}/Senior_Program_Committee'],
@@ -352,7 +352,7 @@ class TestMatching():
             weight = 0.94
         ))
 
-        pc_client.post_edge(Edge(invitation = venue.get_paper_assignment_id(venue.get_reviewers_id()),
+        pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[2].number}/Senior_Program_Committee', '~Reviewer_Venue1'],
             nonreaders = [f'{venue.id}/Submission{notes[2].number}/Authors'],
             writers = [venue.id, f'{venue.id}/Submission{notes[2].number}/Senior_Program_Committee'],
@@ -395,7 +395,7 @@ class TestMatching():
         # venue.setup_matching(committee_id=venue.get_reviewers_id(), build_conflicts=True)
 
         # #check assignment process is still set after deployment and setting up matching again
-        # assignment_inv = openreview_client.get_invitation(venue.get_paper_assignment_id(committee_id=venue.get_reviewers_id(), deployed=True))
+        # assignment_inv = openreview_client.get_invitation(venue.get_assignment_id(committee_id=venue.get_reviewers_id(), deployed=True))
         # assert assignment_inv
         # assert assignment_inv.process
         # assert 'def process_update(client, edge, invitation, existing_edge):' in assignment_inv.process
@@ -405,7 +405,7 @@ class TestMatching():
         notes = venue.get_submissions(sort='number:asc')
 
         #Reviewer assignments
-        pc_client.post_edge(Edge(invitation = venue.get_paper_assignment_id(venue.get_reviewers_id()),
+        pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[0].number}/Senior_Program_Committee', 'r3_venue@fb.com'],
             nonreaders = [f'{venue.id}/Submission{notes[0].number}/Authors'],
             writers = [venue.id, f'{venue.id}/Submission{notes[0].number}/Senior_Program_Committee'],
@@ -416,7 +416,7 @@ class TestMatching():
             weight = 0.98
         ))
 
-        pc_client.post_edge(Edge(invitation = venue.get_paper_assignment_id(venue.get_reviewers_id()),
+        pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[1].number}/Senior_Program_Committee', '~Reviewer_Venue1'],
             nonreaders = [f'{venue.id}/Submission{notes[1].number}/Authors'],
             writers = [venue.id, f'{venue.id}/Submission{notes[1].number}/Senior_Program_Committee'],
@@ -427,7 +427,7 @@ class TestMatching():
             weight = 0.98
         ))
 
-        pc_client.post_edge(Edge(invitation = venue.get_paper_assignment_id(venue.get_reviewers_id()),
+        pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[2].number}/Senior_Program_Committee', 'r2_venue@google.com'],
             nonreaders = [f'{venue.id}/Submission{notes[2].number}/Authors'],
             writers = [venue.id, f'{venue.id}/Submission{notes[2].number}/Senior_Program_Committee'],
@@ -463,7 +463,7 @@ class TestMatching():
         reviewer_group = openreview_client.get_group(venue.id + '/Program_Committee')
         openreview_client.add_members_to_group(reviewer_group, ['r2_venue@mit.edu'])
 
-        pc_client.post_edge(Edge(invitation = venue.get_paper_assignment_id(venue.get_reviewers_id()),
+        pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[0].number}/Senior_Program_Committee', '~Reviewer_Venue1'],
             nonreaders = [f'{venue.id}/Submission{notes[0].number}/Authors'],
             writers = [venue.id, f'{venue.id}/Submission{notes[0].number}/Senior_Program_Committee'],
@@ -474,7 +474,7 @@ class TestMatching():
             weight = 0.98
         ))
 
-        pc_client.post_edge(Edge(invitation = venue.get_paper_assignment_id(venue.get_reviewers_id()),
+        pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[0].number}/Senior_Program_Committee', 'r2_venue@mit.edu'],
             nonreaders = [f'{venue.id}/Submission{notes[0].number}/Authors'],
             writers = [venue.id, f'{venue.id}/Submission{notes[0].number}/Senior_Program_Committee'],
@@ -485,7 +485,7 @@ class TestMatching():
             weight = 0.98
         ))
 
-        pc_client.post_edge(Edge(invitation = venue.get_paper_assignment_id(venue.get_reviewers_id()),
+        pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[1].number}/Senior_Program_Committee', 'r2_venue@google.com'],
             nonreaders = [f'{venue.id}/Submission{notes[1].number}/Authors'],
             writers = [venue.id, f'{venue.id}/Submission{notes[1].number}/Senior_Program_Committee'],
@@ -510,7 +510,7 @@ class TestMatching():
     #     pc_client.remove_members_from_group(f'{venue.id}/Submission3/AnonReviewer2', ['~Reviewer_Venue1'])
         pc_client.remove_members_from_group(f'{venue.id}/Submission1/Program_Committee', ['~Reviewer_Venue1'])
 
-        pc_client.post_edge(Edge(invitation = venue.get_paper_assignment_id(venue.get_reviewers_id()),
+        pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[0].number}/Senior_Program_Committee', 'r2_venue@google.com'],
             nonreaders = [f'{venue.id}/Submission{notes[0].number}/Authors'],
             writers = [venue.id, f'{venue.id}/Submission{notes[0].number}/Senior_Program_Committee'],
@@ -532,7 +532,7 @@ class TestMatching():
         revs_paper2 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[2].number))
         assert ['r2_venue@google.com'] == revs_paper2.members
 
-        pc_client.post_edge(Edge(invitation = venue.get_paper_assignment_id(venue.get_reviewers_id()),
+        pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[2].number}/Senior_Program_Committee', 'r2_venue@google.com'],
             nonreaders = [f'{venue.id}/Submission{notes[2].number}/Authors'],
             writers = [venue.id, f'{venue.id}/Submission{notes[2].number}/Senior_Program_Committee'],
@@ -616,7 +616,7 @@ class TestMatching():
     #     assert len(process_logs) == 1
     #     assert process_logs[0]['status'] == 'ok'
 
-    #     pc_client.post_edge(Edge(invitation = venue.get_paper_assignment_id(venue.get_reviewers_id()),
+    #     pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
     #         readers = [venue.id, '~Reviewer_Venue1'],
     #         nonreaders = [f'{venue.id}/Paper{notes[2].number}/Authors'],
     #         writers = [venue.id, f'{venue.id}/Paper{notes[2].number}/Senior_Program_Committee'],
@@ -639,7 +639,7 @@ class TestMatching():
 
         notes = venue.get_submissions(sort='number:asc')
 
-        pc3_client.post_edge(Edge(invitation = venue.get_paper_assignment_id(venue.get_reviewers_id()),
+        pc3_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[1].number}/Senior_Program_Committee', '~Reviewer_Venue1'],
             nonreaders = [f'{venue.id}/Submission{notes[1].number}/Authors'],
             writers = [venue.id, f'{venue.id}/Submission{notes[1].number}/Senior_Program_Committee'],
@@ -650,7 +650,7 @@ class TestMatching():
             weight = 0.98
         ))
 
-        pc3_client.post_edge(Edge(invitation = venue.get_paper_assignment_id(venue.get_reviewers_id()),
+        pc3_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[0].number}/Senior_Program_Committee', 'r3_venue@fb.com'],
             nonreaders = [f'{venue.id}/Submission{notes[0].number}/Authors'],
             writers = [venue.id, f'{venue.id}/Submission{notes[0].number}/Senior_Program_Committee'],

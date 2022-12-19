@@ -1,8 +1,4 @@
 // Webfield component
-const COMMITTEE_NAME = ''
-const reducedLoad = entity.edit.note.content.reduced_load
-console.log('reducedLoad', reducedLoad)
-
 return {
   component: 'RecruitmentForm',
   version: 2,
@@ -14,12 +10,12 @@ return {
       contact: domain.content.contact.value,
     },
     invitationMessage: `
-#### You have been invited by the organizers of ${domain.content.title.value} to serve as a *${COMMITTEE_NAME}*.
+#### You have been invited by the organizers of ${domain.content.subtitle.value} to serve as a *${entity.content.committee_name.value}*.
 
-##### Please respond to this invitation below:
+##### Please respond to this invitation by choosing one of the options below:
 `,
     acceptMessage: `
-#### Thank you for accepting this invitation from ${domain.content.title.value}.
+#### Thank you for accepting this invitation from ${domain.content.subtitle.value}.
 
 ##### Next steps:
 
@@ -28,9 +24,9 @@ return {
 - Complete your [pending tasks](/tasks) (if any) for ${domain.content.subtitle.value}.
 `,
     declineMessage: `
-#### You have declined the invitation from ${domain.content.title.value}.
+#### You have declined the invitation from ${domain.content.subtitle.value}.
 `,
-    reducedLoadMessage: reducedLoad && `
+    reducedLoadMessage: entity.edit.note.content.reduced_load && `
 If you chose to decline the invitation because the paper load is too high, you can request to reduce your load.
 You can request a reduced reviewer load below:
 `

@@ -3,7 +3,7 @@ def process(client, note, invitation):
     GROUP_PREFIX = ''
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
     request_form = client.get_note(note.forum)
-    conference = openreview.helpers.get_conference(client, note.forum)
+    conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP)
     print('Conference: ', conference.get_id())
 
     reduced_load=note.content.get('invitee_reduced_load', None)

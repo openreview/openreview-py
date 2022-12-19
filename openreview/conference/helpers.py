@@ -6,10 +6,10 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
 
     note = client.get_note(request_form_id)
     if note.content.get('api_version') == '2':
-        openreview_client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', token=client.token)
-        venue = openreview.venue.Venue(openreview_client, note.content['venue_id'])
+        urls = openreview.tools.get_base_urls(client)
+        openreview_client = openreview.api.OpenReviewClient(baseurl = urls[1], token=client.token)
+        venue = openreview.venue.Venue(openreview_client, note.content['venue_id'], support_user)
         venue.request_form_id = request_form_id
-        venue.support_user = support_user
         venue.use_area_chairs = note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs'
         venue.use_senior_area_chairs = note.content.get('senior_area_chairs') == 'Yes, our venue has Senior Area Chairs'
         venue.short_name = note.content.get('Abbreviated Venue Name')
@@ -26,6 +26,13 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.meta_review_stage = get_meta_review_stage(note)
         venue.comment_stage = get_comment_stage(note)
         venue.decision_stage = get_decision_stage(note)
+        venue.submission_revision_stage = get_submission_revision_stage(note)
+
+
+        paper_matching_options = note.content.get('Paper Matching', [])
+        include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
+        if 'OpenReview Affinity' in paper_matching_options:
+            venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date, include_option=include_expertise_selection)
 
         venue.setup(note.content.get('program_chair_emails'))
         venue.create_submission_stage()
@@ -225,7 +232,6 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     ## Contact Emails is deprecated
     program_chair_ids = note.content.get('Contact Emails', []) + note.content.get('program_chair_emails', [])
     builder.set_conference_program_chairs_ids(program_chair_ids)
-    builder.use_legacy_anonids(note.content.get('reviewer_identity') is None)
     builder.use_recruitment_template(note.content.get('use_recruitment_template', 'No') == 'Yes')
 
     readers_map = {
@@ -271,7 +277,7 @@ def get_identity_readers(request_forum, field_name):
         'Assigned Reviewers': openreview.stages.IdentityReaders.REVIEWERS_ASSIGNED
     }
 
-    return [readers_map[r] for r in request_forum.content.get(field_name, [])]    
+    return [readers_map[r] for r in request_forum.content.get(field_name, [])]
 
 def get_submission_stage(request_forum):
 
@@ -335,6 +341,12 @@ def get_submission_stage(request_forum):
     submission_release=(request_forum.content.get('submissions_visibility', '') == 'Yes, submissions should be immediately revealed to the public.')
     create_groups=(not double_blind) and public and submission_release
 
+    author_names_revealed = 'Reveal author identities of all submissions to the public' in request_forum.content.get('reveal_authors', '') or 'Reveal author identities of only accepted submissions to the public' in request_forum.content.get('reveal_authors', '')
+    papers_released = 'Release all submissions to the public'in request_forum.content.get('release_submissions', '') or 'Release only accepted submission to the public' in request_forum.content.get('release_submissions', '') or 'Make accepted submissions public and hide rejected submissions' in request_forum.content.get('submission_readers', '')
+
+    email_pcs = 'Yes' in request_forum.content.get('email_pcs_for_new_submissions', '')
+    submission_email = request_forum.content.get('submission_email', None)
+
     return openreview.stages.SubmissionStage(name = name,
         double_blind=double_blind,
         start_date=submission_start_date,
@@ -343,7 +355,11 @@ def get_submission_stage(request_forum):
         additional_fields=submission_additional_options,
         remove_fields=submission_remove_options,
         create_groups=create_groups,
-        readers=readers)
+        author_names_revealed=author_names_revealed,
+        papers_released=papers_released,
+        readers=readers,
+        email_pcs=email_pcs,
+        submission_email=submission_email)
 
 def get_bid_stages(request_forum):
     bid_start_date = request_forum.content.get('bid_start_date', '').strip()

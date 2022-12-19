@@ -1272,7 +1272,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        openreview.tools.add_assignment(client, paper_number=1, conference=venue['venue_id'], reviewer='~Venue_Reviewer2')
+        client.add_members_to_group(f'{venue["venue_id"]}/Paper1/Reviewers', '~Venue_Reviewer2')
 
         reviewer_client = openreview.Client(username='venue_reviewer2@mail.com', password='1234')
         reviewer_group = client.get_group('{}/Reviewers'.format(venue['venue_id']))
@@ -1285,14 +1285,14 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert note_div
         assert 'test submission' == note_div.find_element_by_link_text('test submission').text
 
-        review_invitations = client.get_invitations(regex='{}/Paper[0-9]*/-/Official_Review$'.format(venue['venue_id']))
+        review_invitations = client.get_invitations(super='{}/-/Official_Review'.format(venue['venue_id']))
         assert review_invitations and len(review_invitations) == 2
         assert 'title' not in review_invitations[0].reply['content']
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
         assert conference.review_stage.rating_field_name == 'review_rating'
 
-        reviewer_groups = client.get_groups('TEST.cc/2030/Conference/Paper.*/Reviewers$')
+        reviewer_groups = [ g for g in client.get_groups('TEST.cc/2030/Conference/Paper.*') if g.id.endswith('/Reviewers')]
         assert len(reviewer_groups) == 2
         assert 'TEST.cc/2030/Conference' in reviewer_groups[0].readers
         assert 'TEST.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_groups[0].readers
@@ -1302,7 +1302,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'TEST.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_groups[0].deanonymizers
         assert 'TEST.cc/2030/Conference/Paper1/Reviewers' not in reviewer_groups[0].deanonymizers
 
-        ac_groups = client.get_groups('TEST.cc/2030/Conference/Paper.*/Area_Chairs$')
+        ac_groups = [ g for g in client.get_groups('TEST.cc/2030/Conference/Paper.*') if '/Area_Chairs' in g.id ]
         assert len(ac_groups) == 2
         assert 'TEST.cc/2030/Conference' in ac_groups[0].readers
         assert 'TEST.cc/2030/Conference/Paper1/Area_Chairs' in ac_groups[0].readers
@@ -1313,7 +1313,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'TEST.cc/2030/Conference/Paper1/Reviewers' not in ac_groups[0].deanonymizers
         assert 'TEST.cc/2030/Conference/Paper1/Senior_Area_Chairs' in ac_groups[0].deanonymizers
 
-        sac_groups = client.get_groups('TEST.cc/2030/Conference/Paper.*/Senior_Area_Chairs$')
+        sac_groups = [ g for g in client.get_groups('TEST.cc/2030/Conference/Paper.*') if 'Senior_Area_Chairs' in g.id ]
         assert len(sac_groups) == 2
         assert 'TEST.cc/2030/Conference/Paper1/Senior_Area_Chairs' in sac_groups[0].readers
         assert 'TEST.cc/2030/Conference/Program_Chairs' in sac_groups[0].readers
@@ -1332,8 +1332,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         meta_reviewer_group = client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
         client.add_members_to_group(meta_reviewer_group, '~Venue_Ac1')
 
-        openreview.tools.add_assignment(client, paper_number=1, conference=venue['venue_id'], reviewer='~Venue_Ac1', parent_label='Area_Chairs', individual_label='Area_Chair')
-        openreview.tools.add_assignment(client, paper_number=2, conference=venue['venue_id'], reviewer='~Venue_Ac1', parent_label='Area_Chairs', individual_label='Area_Chair')
+        client.add_members_to_group(f'{venue["venue_id"]}/Paper1/Area_Chairs', '~Venue_Ac1')
+        client.add_members_to_group(f'{venue["venue_id"]}/Paper2/Area_Chairs', '~Venue_Ac1')
 
         ac_group = client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
         assert ac_group and len(ac_group.members) == 1
@@ -1401,7 +1401,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         submit_div_2 = selenium.find_element_by_id('2-metareview-status')
         assert submit_div_2.find_element_by_link_text('Submit')
 
-        meta_review_invitations = client.get_invitations(regex='{}/Paper[0-9]*/-/Meta_Review$'.format(venue['venue_id']))
+        meta_review_invitations = client.get_invitations(super='{}/-/Meta_Review'.format(venue['venue_id']))
         assert meta_review_invitations and len(meta_review_invitations) == 2
         assert 'confidence' not in meta_review_invitations[0].reply['content']
         assert 'suggestions' in meta_review_invitations[0].reply['content']
@@ -1888,7 +1888,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert process_logs[0]['status'] == 'ok'
 
         decision_note = test_client.get_notes(
-            invitation='{venue_id}/Paper.*/-/Decision'.format(venue_id=venue['venue_id'])
+            invitation='{venue_id}/Paper1/-/Decision'.format(venue_id=venue['venue_id'])
         )[0]
 
         assert f'TEST.cc/2030/Conference/Paper1/Authors' in decision_note.readers
@@ -2240,7 +2240,7 @@ Best,
         assert process_logs[0]['status'] == 'ok'
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        recruitment_invitations = client.get_invitations(regex=conference.get_invitation_id('Recruit_*'), expired=True)
+        recruitment_invitations = client.get_invitations(regex=conference.get_invitation_id('Recruit_.*'), expired=True)
         assert recruitment_invitations
         for inv in recruitment_invitations:
             assert inv.duedate < round(time.time() * 1000)
@@ -2323,7 +2323,7 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        revision_invitations = client.get_all_invitations(regex='{}/Paper.*/-/Revision'.format(venue['venue_id']))
+        revision_invitations = client.get_all_invitations(super='{}/-/Revision'.format(venue['venue_id']))
         for invitation in revision_invitations:
             assert invitation.expdate < round(time.time() * 1000)
 
@@ -2501,7 +2501,7 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
         assert blind_submissions and len(blind_submissions) == 3
 
-        revision_invitations = client.get_invitations(regex='{}/Paper[0-9]*/-/Supplementary_Material$'.format(venue['venue_id']))
+        revision_invitations = client.get_invitations(super='{}/-/Supplementary_Material'.format(venue['venue_id']))
         assert revision_invitations and len(revision_invitations) == 3
         assert len(revision_invitations[0].reply['content'].keys()) == 2
         assert 'supplementary_material' in revision_invitations[0].reply['content']

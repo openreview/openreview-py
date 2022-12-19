@@ -8,8 +8,16 @@ import time
 class TestClient():
 
     def test_get_groups(self, client):
-        groups = client.get_groups()
-        assert groups, 'missing groups'
+        groups = client.get_groups(ids=[
+            '(anonymous)',
+            'everyone',
+            '~',
+            '(guest)',
+            '~Super_User1',
+            'openreview.net',
+            'active_venues',
+            'host'
+        ])
         group_names = [g.id for g in groups]
         assert '(anonymous)' in group_names
         assert 'everyone' in group_names
@@ -110,11 +118,11 @@ class TestClient():
         notes = client.get_notes(invitation = 'ICLR.cc/2018/Conference/-/Blind_Submission', details='all')
         assert len(notes) == 0, 'notes is empty'
 
-    def test_get_profile(self, client):
-        profile = client.get_profile('openreview.net')
+    def test_get_profile(self, client, test_client):
+        profile = client.get_profile('test@mail.com')
         assert profile, "Could not get the profile by email"
         assert isinstance(profile, openreview.Profile)
-        assert profile.id == '~Super_User1'
+        assert profile.id == '~SomeFirstName_User1'
 
         profile = client.get_profile('~Super_User1')
         assert profile, "Could not get the profile by id"
@@ -188,18 +196,18 @@ class TestClient():
         assert group
         assert group.members == ['~Melisa_Bok1']
 
-    def test_get_invitations_by_invitee(self, client):
-        invitations = client.get_invitations(invitee = '~', pastdue = False)
-        assert len(invitations) == 5
+    # def test_get_invitations_by_invitee(self, client):
+    #     invitations = client.get_invitations(invitee = '~', pastdue = False)
+    #     assert len(invitations) == 5
 
-        invitations = client.get_invitations(invitee = True, duedate = True, details = 'replytoNote,repliedNotes')
-        assert invitations
+    #     invitations = client.get_invitations(invitee = True, duedate = True, details = 'replytoNote,repliedNotes')
+    #     assert invitations
 
-        invitations = client.get_invitations(invitee = True, duedate = True, replyto = True, details = 'replytoNote,repliedNotes')
-        assert invitations
+    #     invitations = client.get_invitations(invitee = True, duedate = True, replyto = True, details = 'replytoNote,repliedNotes')
+    #     assert invitations
 
-        invitations = client.get_invitations(invitee = True, duedate = True, tags = True, details = 'repliedTags')
-        assert len(invitations) == 0
+    #     invitations = client.get_invitations(invitee = True, duedate = True, tags = True, details = 'repliedTags')
+    #     assert len(invitations) == 0
 
     def test_get_notes_by_content(self, client, test_client):
 
@@ -386,9 +394,9 @@ class TestClient():
         notes = client.get_notes_by_ids(ids = [notes[0].id])
         assert len(notes) == 1, 'notes is not empty'
 
-    def test_infer_notes(self, client):
-        notes = client.get_notes(signature='openreview.net/Support')
-        assert notes
-        note = client.infer_note(notes[0].id)
-        assert note
+    # def test_infer_notes(self, client):
+    #     notes = client.get_notes(signature='openreview.net/Support')
+    #     assert notes
+    #     note = client.infer_note(notes[0].id)
+    #     assert note
 

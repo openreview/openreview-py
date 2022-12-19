@@ -1,6 +1,5 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function, unicode_literals
-from deprecated.sphinx import deprecated
 import sys
 if sys.version_info[0] < 3:
     string_types = [str, unicode]
@@ -632,12 +631,14 @@ class Client(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())        
 
-    def get_groups(self, id = None, regex = None, member = None, members = None, signatory = None, web = None, limit = None, offset = None, with_count=False, select=None):
+    def get_groups(self, id=None, ids=None, parent=None, regex=None, member=None, members=None, signatory=None, web=None, limit=None, offset=None, with_count=False, select=None):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
         :param id: id of the Group
         :type id: str, optional
+        :param ids: Group ids
+        :type id: list, optional
         :param regex: Regex that matches several Group ids
         :type regex: str, optional
         :param member: Groups that contain this member
@@ -658,6 +659,8 @@ class Client(object):
         """
         params = {}
         if id is not None: params['id'] = id
+        if ids is not None: params['ids'] = ids
+        if parent is not None: params['parent'] = parent
         if regex is not None: params['regex'] = regex
         if member is not None: params['member'] = member
         if members is not None: params['members'] = members
@@ -678,7 +681,7 @@ class Client(object):
 
         return groups
 
-    def get_all_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
+    def get_all_groups(self, id = None, parent = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -703,6 +706,7 @@ class Client(object):
 
         params = {
             'id': id,
+            'parent': parent,
             'regex': regex,
             'member': member,
             'signatory': signatory,
@@ -1633,26 +1637,6 @@ class Client(object):
 
         return response.json()
 
-    @deprecated(version='1.0.6', reason="Use post_message instead")
-    def send_mail(self, subject, recipients, message):
-        """
-        Posts a message to the recipients and consequently sends them emails as well
-
-        :param subject: Subject of the e-mail
-        :type subject: str
-        :param recipients: Recipients of the e-mail. Valid inputs would be tilde username or emails registered in OpenReview
-        :type recipients: list[str]
-        :param message: Message in the e-mail
-        :type message: str
-
-        :return: Contains the message that was sent to each Group
-        :rtype: dict
-        """
-        response = self.session.post(self.mail_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers = self.headers)
-        response = self.__handle_response(response)
-
-        return response.json()
-
     def add_members_to_group(self, group, members):
         """
         Adds members to a group
@@ -1764,7 +1748,18 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_messages(self, to = None, subject = None, status = None, offset = None, limit = None):
+    def get_all_messages(self, to = None, subject = None, status = None):
+        
+        params = {
+            'to': to,
+            'subject': subject,
+            'status': status
+       }
+
+        return tools.concurrent_get(self, self.get_messages, **params)
+
+
+    def get_messages(self, to = None, subject = None, status = None, offset = None, limit = None, with_count = False):
         """
         **Only for Super User**. Retrieves all the messages sent to a list of usernames or emails and/or a particular e-mail subject
 
@@ -1779,9 +1774,16 @@ class Client(object):
         :rtype: dict
         """
 
-        response = self.session.get(self.messages_url, params = { 'to': to, 'subject': subject, 'status': status, 'offset': offset, 'limit': limit }, headers = self.headers)
+        params = { 'to': to, 'subject': subject, 'status': status, 'offset': offset, 'limit': limit }
+        response = self.session.get(self.messages_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
-        return response.json()['messages']
+
+        messages = response.json()['messages']
+
+        if with_count and params.get('offset') is None:
+            return messages, response.json()['count']
+
+        return messages
 
     def get_process_logs(self, id = None, invitation = None, status = None):
         """
@@ -1903,9 +1905,10 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, host=None, domain=None, details = None):
+    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, parent=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, host=None, domain=None, details = None):
         # post attributes
         self.id=id
+        self.parent = parent
         self.invitation=invitation
         self.cdate = cdate
         self.ddate = ddate
@@ -1982,6 +1985,7 @@ class Group(object):
         :rtype: Group
         """
         group = Group(g['id'],
+            parent = g.get('parent'),
             invitation=g.get('invitation'),
             cdate = g.get('cdate'),
             ddate = g.get('ddate'),

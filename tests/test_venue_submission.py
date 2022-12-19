@@ -22,7 +22,7 @@ class TestVenueSubmission():
     def venue(self, openreview_client):
         conference_id = 'TestVenue.cc'
 
-        venue = Venue(openreview_client, conference_id)
+        venue = Venue(openreview_client, conference_id, 'openreview.net/Support')
         venue.use_area_chairs = True
         venue.name = 'Test Venue V2'
         venue.short_name = 'TV 22'
@@ -39,6 +39,11 @@ class TestVenueSubmission():
         ]        
         venue.review_stage = openreview.stages.ReviewStage(start_date=now + datetime.timedelta(minutes = 4), due_date=now + datetime.timedelta(minutes = 40))
         venue.meta_review_stage = openreview.stages.MetaReviewStage(start_date=now + datetime.timedelta(minutes = 10), due_date=now + datetime.timedelta(minutes = 40))
+        venue.submission_revision_stage = openreview.SubmissionRevisionStage(
+            name='Camera_Ready_Revision',
+            due_date=now + datetime.timedelta(minutes = 40),
+            only_accepted=True
+        )
 
         return venue
 
@@ -48,6 +53,7 @@ class TestVenueSubmission():
         venue.create_submission_stage()
         venue.create_review_stage()
         venue.create_meta_review_stage()
+        venue.create_submission_revision_stage()
         assert openreview_client.get_group('TestVenue.cc')
         assert openreview_client.get_group('TestVenue.cc/Authors')
 
@@ -386,8 +392,8 @@ class TestVenueSubmission():
         assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
 
         messages = openreview_client.get_messages(to='venue_pc@mail.com', subject='[TV 22]: Paper #2 restored by venue organizers')
-        assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'The desk-rejected TV 22 paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
+        assert len(messages) == 2
+        assert messages[1]['content']['text'] == f'The desk-rejected TV 22 paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
 
     def test_comment_stage(self, venue, openreview_client, helpers):
 
@@ -440,3 +446,26 @@ class TestVenueSubmission():
     def test_post_decision_stage(self, venue, openreview_client):
 
         venue.post_decision_stage()
+
+    def test_submission_revision_stage(self, venue, openreview_client, helpers):
+
+        assert openreview_client.get_invitation('TestVenue.cc/-/Camera_Ready_Revision')
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation TestVenue.cc/Submission1/-/Camera_Ready_Revision was not found'):
+            assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Camera_Ready_Revision')
+
+        openreview_client.post_invitation_edit(
+            invitations='TestVenue.cc/-/Edit',
+            readers=['TestVenue.cc'],
+            writers=['TestVenue.cc'],
+            signatures=['TestVenue.cc'],
+            invitation=openreview.api.Invitation(id='TestVenue.cc/-/Camera_Ready_Revision',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
+                signatures=['TestVenue.cc']
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Camera_Ready_Revision-0-0')
+
+        assert openreview_client.get_invitation('TestVenue.cc/-/Camera_Ready_Revision')
+        assert openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Submission1/-/Camera_Ready_Revision')
+        assert not openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Submission2/-/Camera_Ready_Revision')
