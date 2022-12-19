@@ -12,6 +12,7 @@ class Assignment(object):
     def __init__(self, journal):
         self.client = journal.client
         self.journal = journal
+        self.show_conflict_details = journal.should_show_conflict_details()
 
     def post_submission_edges(self, edges):
         if edges:
@@ -68,7 +69,7 @@ class Assignment(object):
                     head = note.id,
                     tail = action_editor_profile.id,
                     weight = -1,
-                    label =  'Conflict'
+                    label =  ','.join(conflicts) if self.show_conflict_details else 'Conflict'
                 )
                 conflict_edges.append(edge)
 
@@ -123,7 +124,7 @@ class Assignment(object):
                     head = note.id,
                     tail = reviewer_profile.id,
                     weight = -1,
-                    label =  'Conflict'
+                    label = ','.join(conflicts) if self.show_conflict_details else 'Conflict'
                 )
                 conflict_edges.append(edge)
 

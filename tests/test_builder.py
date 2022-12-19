@@ -38,31 +38,6 @@ class TestBuilder():
         assert selenium.find_element_by_tag_name('h3').text == 'TEST 2019'
 
 
-    def test_web_set_landing_page(self, client):
-        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
-        builder.set_conference_id("ds.cs.umass.edu/Test_I/2019/Conference")
-        conference = builder.get_result()
-        group = client.get_group(id='ds.cs.umass.edu/Test_I/2019')
-        assert group.web,'Venue parent group missing webfield'
-
-        # check webfield contains 'Conference'
-        assert 'ds.cs.umass.edu/Test_I/2019/Conference' in group.web, 'Venue parent group missing child group'
-
-        # add 'Party'
-        child_str = ''', {'url': '/group?id=Party', 'name': 'Party'}'''
-        start_pos = group.web.find('VENUE_LINKS')
-        insert_pos = group.web.find('];', start_pos)
-        group.web = group.web[:insert_pos] + child_str + group.web[insert_pos:]
-        client.post_group(group)
-
-        builder.set_conference_id("ds.cs.umass.edu/Test_I/2019/Workshop/WS_1")
-        conference = builder.get_result()
-        # check webfield contains 'Conference', 'Party' and 'Workshop'
-        group = client.get_group(id='ds.cs.umass.edu/Test_I/2019')
-        assert 'ds.cs.umass.edu/Test_I/2019/Conference' in group.web, 'Venue parent group missing child conference group'
-        assert 'ds.cs.umass.edu/Test_I/2019/Workshop' in group.web, 'Venue parent group missing child workshop group'
-        assert 'Party' in group.web, 'Venue parent group missing child inserted group'
-
     def test_modify_review_form(self, client, test_client, selenium, request_page, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
