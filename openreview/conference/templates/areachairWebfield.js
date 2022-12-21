@@ -1549,11 +1549,17 @@ var registerEventHandlers = function() {
   });
 
   $("#group-container").on("click", "button.btn.btn-export-pdf", function (e) {
+    $("button.btn.btn-export-pdf")
+      .prop("disabled", true)
+      .html(
+        "<div class='spinner-small'><div class='rect1'></div><div class='rect2'></div><div class='rect3'></div><div class='rect4'></div><div class='rect5'></div></div>"
+      );
     const ids = _.flatMap(conferenceStatusData.blindedNotes, function (note) {
         return note.content.pdf ? note.id : [];
       })
     if(!ids.length) {
         promptError('No submission contains PDF');
+        $("button.btn.btn-export-pdf").prop("disabled", false).html("Download PDF");
         return
     }
     Webfield.get("/attachment", {
@@ -1564,8 +1570,10 @@ var registerEventHandlers = function() {
       handleErrors: false
     }).then(function (result) {
       saveAs(result, SHORT_PHRASE.replace(/\s/g, "_") + "_pdfs.zip");
+      $("button.btn.btn-export-pdf").prop("disabled", false).html("Download PDF");
     }, function () {
       promptError('PDF download failed');
+      $("button.btn.btn-export-pdf").prop("disabled", false).html("Download PDF");
     });
     return false;
   });
