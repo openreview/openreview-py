@@ -218,21 +218,68 @@ class TestVenueSubmission():
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation TestVenue.cc/Submission1/-/Official_Review was not found'):
             assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
 
+        new_cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000
         openreview_client.post_invitation_edit(
             invitations='TestVenue.cc/-/Edit',
             readers=['TestVenue.cc'],
             writers=['TestVenue.cc'],
             signatures=['TestVenue.cc'],
             invitation=openreview.api.Invitation(id='TestVenue.cc/-/Official_Review',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
+                cdate=new_cdate,
                 signatures=['TestVenue.cc']
             )
         )
 
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Official_Review-0-0')
 
-        assert openreview_client.get_invitation('TestVenue.cc/-/Official_Review')
-        assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
+        invitation = openreview_client.get_invitation('TestVenue.cc/-/Official_Review')
+        assert invitation.cdate == new_cdate
+        invitation = openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
+        ##assert invitation.cdate == new_cdate
+        assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/Submission1/Area_Chairs", "${3/signatures}"]
+
+        now = datetime.datetime.utcnow()
+        venue.review_stage = openreview.stages.ReviewStage(start_date=now + datetime.timedelta(minutes = 4), due_date=now + datetime.timedelta(minutes = 40), release_to_authors=True)
+        venue.create_review_stage()
+
+        invitation = openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
+        assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/Submission1/Area_Chairs", "${3/signatures}", "TestVenue.cc/Submission1/Authors"]
+
+        ## If I change the super invitation, let's propagate the changes to the children
+        openreview_client.post_invitation_edit(
+            invitations='TestVenue.cc/-/Edit',
+            readers=['TestVenue.cc'],
+            writers=['TestVenue.cc'],
+            signatures=['TestVenue.cc'],
+            invitation=openreview.api.Invitation(id='TestVenue.cc/-/Official_Review',
+                signatures=['TestVenue.cc'],
+                edit={
+                    'invitation': {
+                        'edit': {
+                            'note': {
+                                'content': {
+                                    "private_comment_to_acs": {
+                                        "order": 11,
+                                        "description": "Leave a comment to the ACs.",
+                                        "value": {
+                                            "param": {
+                                                "type": "string",
+                                                "regex": ".{0,500}"
+                                            }
+                                        },
+                                        "readers": ['TestVenue.cc', "TestVenue.cc/Submission${4/number}/Area_Chairs"]
+                                    },
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )        
+
+        invitation = openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
+        assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/Submission1/Area_Chairs", "${3/signatures}", "TestVenue.cc/Submission1/Authors"]
+        assert 'private_comment_to_acs' in invitation.edit['note']['content']
 
     def test_meta_review_stage(self, venue, openreview_client, helpers):
 

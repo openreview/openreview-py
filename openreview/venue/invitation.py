@@ -28,6 +28,18 @@ class InvitationBuilder(object):
     funcs['process'](client, invitation)
 '''
 
+        self.tmdate_invitation_process = '''def process(client, invitation):
+    meta_invitation = client.get_invitation("''' + self.venue.get_meta_invitation_id() + '''")
+    script = meta_invitation.content["tmdate_invitation_script"]['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime,
+        'date_index': date_index
+    }
+    exec(script, funcs)
+    funcs['process'](client, invitation)
+'''
+
     def save_invitation(self, invitation, replacement=None):
         self.client.post_invitation_edit(invitations=self.venue.get_meta_invitation_id(),
             readers=[self.venue_id],
@@ -104,6 +116,7 @@ class InvitationBuilder(object):
         venue_id=self.venue_id
 
         invitation_start_process = self.get_process_content('process/invitation_start_process.py')
+        invitation_tmdate_process = self.get_process_content('process/invitation_tmdate_process.py')
 
         self.client.post_invitation_edit(invitations=None,
             readers=[venue_id],
@@ -116,7 +129,10 @@ class InvitationBuilder(object):
                 content={
                     'cdate_invitation_script': {
                         'value': invitation_start_process
-                    }
+                    },
+                    'tmdate_invitation_script': {
+                        'value': invitation_tmdate_process
+                    }                    
                 },
                 edit=True
             )
@@ -230,10 +246,11 @@ class InvitationBuilder(object):
             cdate=review_cdate,
             duedate=review_duedate,
             expdate = review_expdate,
-            date_processes=[{ 
-                'dates': ["#{4/cdate}"],
-                'script': self.cdate_invitation_process              
-            }],
+            process = self.get_process_content('process/invitation_post_process.py'),
+            # date_processes=[{ 
+            #     'dates': ["#{4/mdate}"],
+            #     'script': self.tmdate_invitation_process              
+            # }],
             content={
                 'review_process_script': {
                     'value': self.get_process_content('process/review_process.py')
