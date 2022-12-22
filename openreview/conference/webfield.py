@@ -545,36 +545,51 @@ class WebfieldBuilder(object):
         if conference.get_submissions():
             submission_id = conference.get_blind_submission_id()
 
-        template_file = 'programchairWebfield'
+        template_file = 'webfield/programChairWebfield'
 
         with open(os.path.join(os.path.dirname(__file__), f'templates/{template_file}.js')) as f:
             content = f.read()
-            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
-            content = content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{conference.get_short_name()}";')
-            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
-            content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + submission_id + "';")
-            content = content.replace("var WITHDRAWN_SUBMISSION_ID = '';", "var WITHDRAWN_SUBMISSION_ID = '" + conference.submission_stage.get_withdrawn_submission_id(conference) + "';")
-            content = content.replace("var DESK_REJECTED_SUBMISSION_ID = '';", "var DESK_REJECTED_SUBMISSION_ID = '" + conference.submission_stage.get_desk_rejected_submission_id(conference) + "';")
-            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
-            content = content.replace("var OFFICIAL_META_REVIEW_NAME = '';", "var OFFICIAL_META_REVIEW_NAME = '" + conference.meta_review_stage.name + "';")
-            content = content.replace("var DECISION_NAME = '';", "var DECISION_NAME = '" + conference.decision_stage.name + "';")
-            if conference.comment_stage:
-                content = content.replace("var COMMENT_NAME = '';", "var COMMENT_NAME = '" + conference.comment_stage.official_comment_name + "';")
-            content = content.replace("var BID_NAME = '';", "var BID_NAME = 'Bid';")
-            content = content.replace("var RECOMMENDATION_NAME = '';", "var RECOMMENDATION_NAME = '" + conference.recommendation_name + "';")
-            content = content.replace("var SCORES_NAME = '';", "var SCORES_NAME = 'Affinity_Score';")
-            content = content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + conference.get_authors_id() + "';")
-            content = content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + conference.get_reviewers_id() + "';")
-            content = content.replace("var ENABLE_REVIEWER_REASSIGNMENT = false;", "var ENABLE_REVIEWER_REASSIGNMENT = true;" if conference.enable_reviewer_reassignment else "var ENABLE_REVIEWER_REASSIGNMENT = false;")
-            if conference.use_area_chairs:
-                content = content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id() + "';")
-            if conference.use_senior_area_chairs:
-                content = content.replace("var SENIOR_AREA_CHAIRS_ID = '';", "var SENIOR_AREA_CHAIRS_ID = '" + conference.get_senior_area_chairs_id() + "';")
-            content = content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
+            content = content.replace("const venueId = ''", "const venueId = '" + conference.id + "'")
             if conference.request_form_id:
-                content = content.replace("var REQUEST_FORM_ID = '';", "var REQUEST_FORM_ID = '" + conference.request_form_id + "';")
-            return self.__update_group(group, content)
+                content = content.replace("const requestFormId = ''", "const requestFormId = '" + conference.request_form_id + "'")
+            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
+            content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
+            content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
+            content = content.replace("var DECISION_NAME = '';", "var DECISION_NAME = '" + conference.decision_stage.name + "';")
+            content = content.replace("var AUTHOR_SUBMISSION_FIELD = '';", "var AUTHOR_SUBMISSION_FIELD = '" + ('content.authorids' if 'authorids' in conference.submission_stage.get_content() else 'signature') + "';")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            return self.__update_group(group, content)            
+
+        # template_file = 'programchairWebfield'
+
+        # with open(os.path.join(os.path.dirname(__file__), f'templates/{template_file}.js')) as f:
+        #     content = f.read()
+        #     content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
+        #     content = content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{conference.get_short_name()}";')
+        #     content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
+        #     content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + submission_id + "';")
+        #     content = content.replace("var WITHDRAWN_SUBMISSION_ID = '';", "var WITHDRAWN_SUBMISSION_ID = '" + conference.submission_stage.get_withdrawn_submission_id(conference) + "';")
+        #     content = content.replace("var DESK_REJECTED_SUBMISSION_ID = '';", "var DESK_REJECTED_SUBMISSION_ID = '" + conference.submission_stage.get_desk_rejected_submission_id(conference) + "';")
+        #     content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+        #     content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
+        #     content = content.replace("var OFFICIAL_META_REVIEW_NAME = '';", "var OFFICIAL_META_REVIEW_NAME = '" + conference.meta_review_stage.name + "';")
+        #     content = content.replace("var DECISION_NAME = '';", "var DECISION_NAME = '" + conference.decision_stage.name + "';")
+        #     if conference.comment_stage:
+        #         content = content.replace("var COMMENT_NAME = '';", "var COMMENT_NAME = '" + conference.comment_stage.official_comment_name + "';")
+        #     content = content.replace("var BID_NAME = '';", "var BID_NAME = 'Bid';")
+        #     content = content.replace("var RECOMMENDATION_NAME = '';", "var RECOMMENDATION_NAME = '" + conference.recommendation_name + "';")
+        #     content = content.replace("var SCORES_NAME = '';", "var SCORES_NAME = 'Affinity_Score';")
+        #     content = content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + conference.get_authors_id() + "';")
+        #     content = content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + conference.get_reviewers_id() + "';")
+        #     content = content.replace("var ENABLE_REVIEWER_REASSIGNMENT = false;", "var ENABLE_REVIEWER_REASSIGNMENT = true;" if conference.enable_reviewer_reassignment else "var ENABLE_REVIEWER_REASSIGNMENT = false;")
+        #     if conference.use_area_chairs:
+        #         content = content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id() + "';")
+        #     if conference.use_senior_area_chairs:
+        #         content = content.replace("var SENIOR_AREA_CHAIRS_ID = '';", "var SENIOR_AREA_CHAIRS_ID = '" + conference.get_senior_area_chairs_id() + "';")
+        #     content = content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
+        #     if conference.request_form_id:
+        #         content = content.replace("var REQUEST_FORM_ID = '';", "var REQUEST_FORM_ID = '" + conference.request_form_id + "';")
+        #     return self.__update_group(group, content)
 
 
     def edit_web_value(self, group, global_name, new_value):
@@ -586,5 +601,11 @@ class WebfieldBuilder(object):
     def edit_web_string_value(self, group, global_name, new_value):
         # replaces a string by adding the quotes
         old_value = re.search("var "+global_name+" = .*;", group.web)
-        group.web = group.web.replace(old_value.group(),"var " + global_name + " = '" + new_value + "';")
+        if old_value:
+            group.web = group.web.replace(old_value.group(),"var " + global_name + " = '" + new_value + "';")
+        
+        old_value = re.search("const "+global_name+" = .*", group.web)
+        if old_value:
+            group.web = group.web.replace(old_value.group(),"const " + global_name + " = '" + new_value + "'")
+    
         return self.client.post_group(group)
