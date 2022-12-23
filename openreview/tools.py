@@ -344,8 +344,7 @@ def create_profile(client, email, first, last, middle=None, allow_duplicates=Fal
                         'last': last,
                         'username': tilde_id
                     }
-                ],
-                'homepage': 'http://no_url'
+                ]
             }
             client.post_group(tilde_group)
             client.post_group(email_group)
