@@ -7,8 +7,8 @@ return {
   version: 1,
   properties: {
     header: {
-      "title": `${commitee_name.endsWith('s') ? commitee_name.slice(0, -1) : commitee_name} Bidding Console`,
-      "instructions": BID_INSTRUCTIONS
+      title: `${commitee_name.endsWith('s') ? commitee_name.slice(0, -1) : commitee_name} Bidding Console`,
+      instructions: BID_INSTRUCTIONS
     },
     apiVersion: 2,
     venueId: domain.id,

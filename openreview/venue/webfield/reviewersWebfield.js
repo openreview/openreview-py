@@ -4,8 +4,8 @@ return {
   version: 1,
   properties: {
     header: {
-      "title": "Reviewer Console",
-      "instructions": "<div><p>some instructions</p></div>"
+      title: 'Reviewer Console',
+      instructions: '<div><p>some instructions</p></div>'
     },
     apiVersion: 2,
     venueId: domain.id,
