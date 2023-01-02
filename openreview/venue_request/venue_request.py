@@ -1148,10 +1148,10 @@ class VenueRequest():
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'api_version': {
+                'description': 'Which API version would you like to use? API 2 is still in the experimental phase, contact us if you would like more information.',
                 'value-dropdown': ['1', '2'],
                 'default': ['1'],
-                'order': 39,
-                'hidden': True
+                'order': 39
             },
             'include_expertise_selection': {
                 'value-radio': ['Yes', 'No'],

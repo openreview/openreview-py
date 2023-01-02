@@ -43,40 +43,12 @@ class WebfieldBuilder(object):
             return current_group
 
     def set_landing_page(self, group, parentGroup, options = {}):
-        # sets webfield to show links to child groups
+        ## Remove existing webfield to the UI renders the groups directory
+        if group.web:
+            group.web = None
+            self.client.post_group(group)
 
-        children_groups = self.client.get_groups(parent = group.id)
-
-        links = []
-        for children in children_groups:
-            if not group.web or (group.web and children.id not in group.web):
-                links.append({ 'url': '/group?id=' + children.id, 'name': children.id})
-
-        if not group.web:
-            # create new webfield using template
-            default_header = {
-                'title': group.id,
-                'description': ''
-            }
-            header = self.__build_options(default_header, options)
-
-            with open(os.path.join(os.path.dirname(__file__), 'templates/landingWebfield.js')) as f:
-                content = f.read()
-                content = content.replace("var GROUP_ID = '';", "var GROUP_ID = '" + group.id + "';")
-                if parentGroup:
-                    content = content.replace("var PARENT_GROUP_ID = '';", "var PARENT_GROUP_ID = '" + parentGroup.id + "';")
-                content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-                content = content.replace("var VENUE_LINKS = [];", "var VENUE_LINKS = " + json.dumps(links) + ";")
-                return self.__update_group(group, content)
-
-        elif links:
-            # parse existing webfield and add new links
-            # get links array without square brackets
-            link_str = json.dumps(links)
-            link_str = link_str[1:-1]
-            start_pos = group.web.find('VENUE_LINKS = [') + len('VENUE_LINKS = [')
-            return self.__update_group(group, group.web[:start_pos] +link_str + ','+ group.web[start_pos:])
-
+        return group
 
     def set_home_page(self, conference, group, layout, options = {}):
 
