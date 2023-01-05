@@ -1251,6 +1251,61 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         self.save_invitation(invitation)
 
         invitation = Invitation(
+            id=self.journal.get_ae_assignment_id(archived=True),
+            invitees=[venue_id, editor_in_chief_id],
+            readers=[venue_id, action_editors_id],
+            writers=[venue_id],
+            signatures=[editor_in_chief_id], ## EIC have permission to check conflicts
+            minReplies=1,
+            maxReplies=1,
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_assignment_id(archived=True),
+                        'optional': True
+                    }
+                },                
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [venue_id, editor_in_chief_id, '${2/tail}'],
+                'nonreaders': [],
+                'writers': [venue_id, editor_in_chief_id],
+                'signatures': [editor_in_chief_id],
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': author_submission_id
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : action_editors_id
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': -1
+                    }
+                },
+                'label': {
+                    'param': {
+                        'optional': True,
+                        'minLength': 1
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)        
+
+        invitation = Invitation(
             id=self.journal.get_ae_assignment_id(proposed=True),
             invitees=[venue_id, editor_in_chief_id],
             readers=[venue_id, action_editors_id],
@@ -1696,6 +1751,66 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         )
 
         self.save_invitation(invitation)
+
+        invitation = Invitation(
+            id=self.journal.get_reviewer_assignment_id(archived=True),
+            invitees=[venue_id],
+            readers=[venue_id, action_editors_id],
+            writers=[venue_id],
+            signatures=[self.journal.get_editors_in_chief_id()],
+            minReplies=1,
+            maxReplies=1,
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_reviewer_assignment_id(archived=True),
+                        'optional': True
+                    }
+                },                 
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}'), '${2/tail}'],
+                'nonreaders': [self.journal.get_authors_id(number='${{2/head}/number}')],
+                'writers': [venue_id],
+                'signatures': {
+                    'param': {
+                        'regex': venue_id + '|' + editor_in_chief_id
+                    }
+                },
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': author_submission_id
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        #'inGroup' : reviewers_id,
+                         'options': { 'group': reviewers_id }
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': -1
+                    }
+                },
+                'label': {
+                    'param': {
+                        'optional': True,
+                        'minLength': 1
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)        
 
         invitation = Invitation(
             id=self.journal.get_reviewer_custom_max_papers_id(),

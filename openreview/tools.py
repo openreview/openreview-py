@@ -276,7 +276,7 @@ def get_invitation(client, id):
         print('Can not retrieve invitation', e)
     return invitation
 
-def create_profile(client, email, first, last, middle=None, allow_duplicates=False):
+def create_profile(client, email, first, last, middle=None, url='http://no_url', allow_duplicates=False):
 
     """
     Given email, first name, last name, and middle name (optional), creates a new profile.
@@ -291,6 +291,8 @@ def create_profile(client, email, first, last, middle=None, allow_duplicates=Fal
     :type last: str
     :param middle: Middle name of the user
     :type middle: str, optional
+    :param url: Homepage url
+    :type url: str, optional
     :param allow_duplicates: If a profile with the same name exists, and allow_duplicates is False, an exception is raised. If a profile with the same name exists and allow_duplicates is True, a profile is created with the next largest number (e.g. if ~Michael_Spector1 exists, ~Michael_Spector2 will be created)
     :type allow_duplicates: bool, optional
 
@@ -345,7 +347,7 @@ def create_profile(client, email, first, last, middle=None, allow_duplicates=Fal
                         'username': tilde_id
                     }
                 ],
-                'homepage': 'http://no_url'
+                'homepage': url
             }
             client.post_group(tilde_group)
             client.post_group(email_group)
