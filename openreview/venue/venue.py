@@ -49,6 +49,7 @@ class Venue(object):
         self.comment_stage = None
         self.decision_stage = None
         self.submission_revision_stage = None
+        self.registration_stages = []
         self.use_area_chairs = False
         self.use_senior_area_chairs = False
         self.use_ethics_chairs = False
@@ -377,6 +378,9 @@ class Venue(object):
         invitation = self.invitation_builder.set_meta_review_invitation()
         self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions())
 
+    def create_registration_stages(self):
+        self.invitation_builder.set_registration_invitations()
+    
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
         venue_id = self.venue_id
         submissions = self.get_submissions()
