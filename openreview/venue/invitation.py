@@ -205,11 +205,12 @@ class InvitationBuilder(object):
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=True)
 
-    def set_review_invitation(self):
+    def set_review_invitation(self, venueid=None):
 
         venue_id = self.venue_id
         review_stage = self.venue.review_stage
-        review_invitation_id = self.venue.get_invitation_id(review_stage.name)
+        review_stage_name = review_stage.name if venueid is None else f"{venueid}/{review_stage.name}"
+        review_invitation_id = self.venue.get_invitation_id(review_stage_name)
         review_cdate = tools.datetime_millis(review_stage.start_date if review_stage.start_date else datetime.datetime.utcnow())
         review_duedate = tools.datetime_millis(review_stage.due_date) if review_stage.due_date else None
         review_expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None
@@ -260,7 +261,7 @@ class InvitationBuilder(object):
                     }
                 },
                 'invitation': {
-                    'id': self.venue.get_invitation_id(review_stage.name, '${2/content/noteNumber/value}'),
+                    'id': self.venue.get_invitation_id(review_stage_name, '${2/content/noteNumber/value}'),
                     'signatures': [ venue_id ],
                     'readers': ['everyone'],
                     'writers': [venue_id],
@@ -282,7 +283,7 @@ class InvitationBuilder(object):
                         'note': {
                             'id': {
                                 'param': {
-                                    'withInvitation': self.venue.get_invitation_id(review_stage.name, '${6/content/noteNumber/value}'),
+                                    'withInvitation': self.venue.get_invitation_id(review_stage_name, '${6/content/noteNumber/value}'),
                                     'optional': True
                                 }
                             },

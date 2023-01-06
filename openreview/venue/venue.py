@@ -371,7 +371,7 @@ class Venue(object):
             self.invitation_builder.set_expertise_selection_invitations()
 
     def create_review_stage(self, venueid=None):
-        invitation = self.invitation_builder.set_review_invitation()
+        invitation = self.invitation_builder.set_review_invitation(venueid=venueid)
         self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions(venueid=self.get_submission_venue_id(f"{venueid}/Submission")))
 
     def create_meta_review_stage(self, venueid=None):
