@@ -364,31 +364,31 @@ class Venue(object):
             allow_overlap_official_committee)
 
     def create_submission_stage(self, venueid=None):
-        self.invitation_builder.set_submission_invitation(venueid)
-        self.invitation_builder.set_withdrawal_invitation(venueid)
-        self.invitation_builder.set_desk_rejection_invitation(venueid)
+        self.invitation_builder.set_submission_invitation(f"{venueid}/Submission")
+        self.invitation_builder.set_withdrawal_invitation(f"{venueid}/Submission")
+        self.invitation_builder.set_desk_rejection_invitation(f"{venueid}/Submission")
         if self.expertise_selection_stage:
             self.invitation_builder.set_expertise_selection_invitations()
 
     def create_review_stage(self, venueid=None):
         invitation = self.invitation_builder.set_review_invitation()
-        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions(venueid=self.get_submission_venue_id(venueid)))
+        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions(venueid=self.get_submission_venue_id(f"{venueid}/Submission")))
 
     def create_meta_review_stage(self, venueid=None):
         invitation = self.invitation_builder.set_meta_review_invitation()
-        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions(venueid=self.get_submission_venue_id(venueid)))
+        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions(venueid=self.get_submission_venue_id(f"{venueid}/Submission")))
 
     def create_registration_stages(self):
         self.invitation_builder.set_registration_invitations()
     
     def setup_post_submission_stage(self, force=False, hide_fields=[], venueid=None):
         venue_id = self.venue_id
-        submissions = self.get_submissions(venueid=self.get_submission_venue_id(venueid))
+        submissions = self.get_submissions(venueid=self.get_submission_venue_id(f"{venueid}/Submission"))
         
         self.group_builder.create_paper_committee_groups(submissions)
         
         def update_submission_readers(submission):
-            if submission.content['venueid']['value'] == self.get_submission_venue_id(venueid):
+            if submission.content['venueid']['value'] == self.get_submission_venue_id(f"{venueid}/Submission"):
                 return self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
                     readers=[venue_id],
                     writers=[venue_id],

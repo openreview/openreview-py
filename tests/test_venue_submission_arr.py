@@ -42,9 +42,9 @@ class TestVenueSubmissionARR():
         cycleid = f"{cycle}/Submission"
 
         venue.setup(program_chair_ids=['editors@aclrollingreview.org'], venueid=cycleid)
-        venue.create_submission_stage(f'{cycle}/Submission')
-        venue.create_review_stage(f'{cycle}/Submission')
-        venue.create_meta_review_stage(f'{cycle}/Submission')
+        venue.create_submission_stage(venueid=cycle)
+        venue.create_review_stage(venueid=cycle)
+        venue.create_meta_review_stage(venueid=cycle)
         assert openreview_client.get_group('ARR')
         assert openreview_client.get_group('ARR/Authors')
 
@@ -129,7 +129,7 @@ class TestVenueSubmissionARR():
         cycle = '2023/March'
     
         venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS, SubmissionStage.Readers.AREA_CHAIRS]
-        venue.setup_post_submission_stage(venueid=f'{cycle}/Submission')
+        venue.setup_post_submission_stage(venueid=cycle)
         assert openreview_client.get_group('ARR/Submission1/Authors')
         assert openreview_client.get_group('ARR/Submission1/Reviewers')
         assert openreview_client.get_group('ARR/Submission1/Area_Chairs')
