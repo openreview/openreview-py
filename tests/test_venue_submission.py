@@ -114,7 +114,7 @@ class TestVenueSubmission():
         submission = openreview_client.get_note(submission_note_1['note']['id'])
         assert len(submission.readers) == 2
         assert 'TestVenue.cc' in submission.readers
-        assert 'TestVenue.cc/Submission1/Authors' in submission.readers
+        assert ['TestVenue.cc', '~Celeste_MartinezEleven1'] == submission.readers
 
         #TODO: check emails, check author console
 

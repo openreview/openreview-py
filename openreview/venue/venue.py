@@ -389,22 +389,19 @@ class Venue(object):
         self.group_builder.create_paper_committee_groups(submissions)
         
         def update_submission_readers(submission):
-            note_content = {}
-            note_readers = None
-            note_writers = None
-            note_signatures = None
-
-            for field in final_hide_fields:
-                note_content[field] = {
-                    'readers': [venue_id, self.get_authors_id(submission.number)]
-                }
 
             if submission.content['venueid']['value'] == self.get_submission_venue_id():
+
+                note_content = {}
+                for field in final_hide_fields:
+                    note_content[field] = {
+                        'readers': [venue_id, self.get_authors_id(submission.number)]
+                    }
+
                 note_readers = self.submission_stage.get_readers(self, submission.number)
-                note_writers = self.submission_stage.get_readers(self, submission.number)
+                note_writers = [venue_id,self.get_authors_id(submission.number)]
                 note_signatures = [self.get_authors_id(submission.number)]
 
-            if note_content or note_readers:
                 return self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
                     readers=[venue_id],
                     writers=[venue_id],

@@ -490,9 +490,6 @@ reviewer6@icml.cc, Reviewer ICMLSix
         'ICML.cc/2023/Conference/Reviewers',
         'ICML.cc/2023/Conference/Submission1/Authors'] == submissions[0].readers
         assert ['ICML.cc/2023/Conference', 
-        'ICML.cc/2023/Conference/Senior_Area_Chairs',
-        'ICML.cc/2023/Conference/Area_Chairs',
-        'ICML.cc/2023/Conference/Reviewers',
         'ICML.cc/2023/Conference/Submission1/Authors'] == submissions[0].writers
         assert ['ICML.cc/2023/Conference/Submission1/Authors'] == submissions[0].signatures        
         assert 'authorids' not in submissions[0].content
