@@ -315,11 +315,12 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_meta_review_invitation(self):
+    def set_meta_review_invitation(self, venueid=None):
 
         venue_id = self.venue_id
         meta_review_stage = self.venue.meta_review_stage
-        meta_review_invitation_id = self.venue.get_invitation_id(meta_review_stage.name)
+        meta_review_stage_name = meta_review_stage.name if venueid is None else f"{venueid}/{meta_review_stage.name}"
+        meta_review_invitation_id = self.venue.get_invitation_id(meta_review_stage_name)
         meta_review_cdate = tools.datetime_millis(meta_review_stage.start_date if meta_review_stage.start_date else datetime.datetime.utcnow())
         meta_review_duedate = tools.datetime_millis(meta_review_stage.due_date) if meta_review_stage.due_date else None
         meta_review_expdate = tools.datetime_millis(meta_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if meta_review_stage.due_date else None
@@ -366,7 +367,7 @@ class InvitationBuilder(object):
                     }
                 },
                 'invitation': {
-                    'id': self.venue.get_invitation_id(meta_review_stage.name, '${2/content/noteNumber/value}'),
+                    'id': self.venue.get_invitation_id(meta_review_stage_name, '${2/content/noteNumber/value}'),
                     'signatures': [ venue_id ],
                     'readers': ['everyone'],
                     'writers': [venue_id],
@@ -381,7 +382,7 @@ class InvitationBuilder(object):
                         'note': {
                             'id': {
                                 'param': {
-                                    'withInvitation': self.venue.get_invitation_id(meta_review_stage.name, '${6/content/noteNumber/value}'),
+                                    'withInvitation': self.venue.get_invitation_id(meta_review_stage_name, '${6/content/noteNumber/value}'),
                                     'optional': True
                                 }
                             },
