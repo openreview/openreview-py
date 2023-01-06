@@ -18,7 +18,7 @@ from pylatexenc.latexencode import utf8tolatex, UnicodeToLatexConversionRule, Un
 
 class Journal(object):
 
-    def __init__(self, client, venue_id, secret_key, contact_info, full_name, short_name, website='jmlr.org/tmlr', submission_name='Submission'):
+    def __init__(self, client, venue_id, secret_key, contact_info, full_name, short_name, website='jmlr.org/tmlr', submission_name='Submission', settings={}):
 
         self.client = client
         self.venue_id = venue_id
@@ -28,7 +28,7 @@ class Journal(object):
         self.full_name = full_name
         self.website = website
         self.submission_name = submission_name
-        self.settings = {}
+        self.settings = settings
         self.request_form_id = None
         self.editors_in_chief_name = 'Editors_In_Chief'
         self.action_editors_name = 'Action_Editors'
@@ -78,6 +78,9 @@ class Journal(object):
 
     def get_editors_in_chief_id(self):
         return f'{self.venue_id}/{self.editors_in_chief_name}'
+
+    def get_publication_chairs_id(self):
+        return f'{self.venue_id}/Publication_Chairs'
 
     def get_action_editors_id(self, number=None):
         return self.__get_group_id(self.action_editors_name, number)
@@ -175,8 +178,13 @@ class Journal(object):
     def get_ae_assignment_configuration_id(self):
         return self.__get_invitation_id(name='Assignment_Configuration', prefix=self.get_action_editors_id())
 
-    def get_ae_assignment_id(self, proposed=False):
-        return self.__get_invitation_id(name='Proposed_Assignment' if proposed else 'Assignment', prefix=self.get_action_editors_id())
+    def get_ae_assignment_id(self, proposed=False, archived=False):
+        name = 'Assignment'
+        if archived:
+            name = 'Archived_Assignment'
+        if proposed:
+            name = 'Proposed_Assignment'
+        return self.__get_invitation_id(name=name, prefix=self.get_action_editors_id())    
 
     def get_ae_recommendation_id(self, number=None):
         return self.__get_invitation_id(name='Recommendation', prefix=self.get_action_editors_id(number=number))
@@ -225,8 +233,11 @@ class Journal(object):
     def get_reviewer_affinity_score_id(self):
         return self.__get_invitation_id(name='Affinity_Score', prefix=self.get_reviewers_id())
 
-    def get_reviewer_assignment_id(self, number=None):
-        return self.__get_invitation_id(name='Assignment', prefix=self.get_reviewers_id(number))
+    def get_reviewer_assignment_id(self, number=None, archived=False):
+        name = 'Assignment'
+        if archived:
+            name = 'Archived_Assignment'
+        return self.__get_invitation_id(name=name, prefix=self.get_reviewers_id(number))
 
     def get_reviewer_assignment_acknowledgement_id(self, number=None, reviewer_id=None):
         if reviewer_id:
@@ -363,6 +374,15 @@ class Journal(object):
 
     def are_authors_anonymous(self):
         return self.settings.get('author_anonymity', True)
+
+    def get_certifications(self):
+        return self.settings.get('certifications', [])        
+
+    def should_show_conflict_details(self):
+        return self.settings.get('show_conflict_details', False)
+
+    def has_publication_chairs(self):
+        return self.settings.get('has_publication_chairs', False)     
 
     def should_release_authors(self):
         return self.is_submission_public() and self.are_authors_anonymous()
@@ -546,7 +566,8 @@ class Journal(object):
                     profile = self.client.get_profile(invitee)
                     invitee_members.append(profile.id)
                 elif '@' in invitee:
-                    invitee_members.append(invitee)
+                    profile = openreview.tools.get_profile(self.client, invitee)
+                    invitee_members.append(profile.id)
                 else:
                     invitee_members = invitee_members + self.client.get_group(invitee).members
 
@@ -882,3 +903,46 @@ Your {lower_formatted_invitation} on a submission has been {action}
         invitation.domain = None
         invitation.invitations = None
         self.invitation_builder.post_invitation_edit(invitation, replacement=True)
+
+
+    def archive_assignments(self):
+
+        submissions = self.client.get_all_notes(invitation=self.get_author_submission_id())
+
+        ae_assignments = { e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='head')}
+        reviewer_assignments = { e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(), groupby='head')}
+
+        ## Archive papers done
+        for submission in tqdm(submissions):
+            venueid = submission.content['venueid']['value']
+            if venueid in [self.accepted_venue_id, self.rejected_venue_id, self.desk_rejected_venue_id, self.withdrawn_venue_id, self.retracted_venue_id]:
+                submission_ae_assignments = ae_assignments.get(submission.id, [])
+                for ae_assignment in submission_ae_assignments:
+                    ae_assignment_edge = openreview.api.Edge.from_json(ae_assignment)
+                    archived_edge = openreview.api.Edge(
+                        invitation=self.get_ae_assignment_id(archived=True),
+                        head=ae_assignment_edge.head,
+                        tail=ae_assignment_edge.tail,
+                        weight=ae_assignment_edge.weight,
+                        label=ae_assignment_edge.label
+                    )
+                    self.client.post_edge(archived_edge)
+                    ## avoid process function execution
+                    self.client.delete_edges(invitation=ae_assignment_edge.invitation, head=ae_assignment_edge.head, tail=ae_assignment_edge.tail, soft_delete=True, wait_to_finish=True)
+
+                    
+                submission_reviewer_assignments = reviewer_assignments.get(submission.id, [])
+                for reviewer_assignment in submission_reviewer_assignments:
+                    reviewer_assignment_edge = openreview.api.Edge.from_json(reviewer_assignment)
+                    archived_edge = openreview.api.Edge(
+                        invitation=self.get_reviewer_assignment_id(archived=True),
+                        head=reviewer_assignment_edge.head,
+                        tail=reviewer_assignment_edge.tail,
+                        weight=reviewer_assignment_edge.weight,
+                        label=reviewer_assignment_edge.label,
+                        signatures=[self.venue_id]
+                    )
+                    self.client.post_edge(archived_edge)
+                    ## avoid process function execution
+                    self.client.delete_edges(invitation=reviewer_assignment_edge.invitation, head=reviewer_assignment_edge.head, tail=reviewer_assignment_edge.tail, soft_delete=True, wait_to_finish=True)
+                    

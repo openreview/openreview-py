@@ -1251,6 +1251,61 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         self.save_invitation(invitation)
 
         invitation = Invitation(
+            id=self.journal.get_ae_assignment_id(archived=True),
+            invitees=[venue_id, editor_in_chief_id],
+            readers=[venue_id, action_editors_id],
+            writers=[venue_id],
+            signatures=[editor_in_chief_id], ## EIC have permission to check conflicts
+            minReplies=1,
+            maxReplies=1,
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_assignment_id(archived=True),
+                        'optional': True
+                    }
+                },                
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [venue_id, editor_in_chief_id, '${2/tail}'],
+                'nonreaders': [],
+                'writers': [venue_id, editor_in_chief_id],
+                'signatures': [editor_in_chief_id],
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': author_submission_id
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : action_editors_id
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': -1
+                    }
+                },
+                'label': {
+                    'param': {
+                        'optional': True,
+                        'minLength': 1
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)        
+
+        invitation = Invitation(
             id=self.journal.get_ae_assignment_id(proposed=True),
             invitees=[venue_id, editor_in_chief_id],
             readers=[venue_id, action_editors_id],
@@ -1696,6 +1751,66 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         )
 
         self.save_invitation(invitation)
+
+        invitation = Invitation(
+            id=self.journal.get_reviewer_assignment_id(archived=True),
+            invitees=[venue_id],
+            readers=[venue_id, action_editors_id],
+            writers=[venue_id],
+            signatures=[self.journal.get_editors_in_chief_id()],
+            minReplies=1,
+            maxReplies=1,
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_reviewer_assignment_id(archived=True),
+                        'optional': True
+                    }
+                },                 
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}'), '${2/tail}'],
+                'nonreaders': [self.journal.get_authors_id(number='${{2/head}/number}')],
+                'writers': [venue_id],
+                'signatures': {
+                    'param': {
+                        'regex': venue_id + '|' + editor_in_chief_id
+                    }
+                },
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': author_submission_id
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        #'inGroup' : reviewers_id,
+                         'options': { 'group': reviewers_id }
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': -1
+                    }
+                },
+                'label': {
+                    'param': {
+                        'optional': True,
+                        'minLength': 1
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)        
 
         invitation = Invitation(
             id=self.journal.get_reviewer_custom_max_papers_id(),
@@ -2745,22 +2860,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': self.journal.accepted_venue_id,
                             'order': 2
                         },
-                        'certifications': {
-                            'order': 3,
-                            'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.',
-                            'value': {
-                                'param': {
-                                    'type': 'string[]',
-                                    'enum': [
-                                        'Featured Certification',
-                                        'Reproducibility Certification',
-                                        'Survey Certification'
-                                    ],
-                                    'optional': True,
-                                    'input': 'select'
-                                }
-                            }
-                        },
                         'license': {
                             'value': 'Creative Commons Attribution 4.0 International (CC BY 4.0)',
                             'order': 4
@@ -2778,6 +2877,20 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             invitation.edit['note']['content']['authorids'] = {
                 'readers': ['everyone']
             }
+
+        if self.journal.get_certifications():
+            invitation.edit['note']['content']['certifications'] = {
+                'order': 3,
+                'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.',
+                'value': {
+                    'param': {
+                        'type': 'string[]',
+                        'enum': self.journal.get_certifications(),
+                        'optional': True,
+                        'input': 'select'
+                    }
+                }
+            }            
 
 
         self.save_invitation(invitation)
@@ -3320,22 +3433,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                 }
                             }
                         },
-                        'certification_recommendations': {
-                            'order': 4,
-                            'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation. See certification details here: https://jmlr.org/tmlr/editorial-policies.html',
-                            'value': {
-                                'param': {
-                                    'type': 'string[]',
-                                    'enum': [
-                                        'Featured Certification',
-                                        'Reproducibility Certification',
-                                        'Survey Certification'
-                                    ],
-                                    'optional': True,
-                                    'input': 'checkbox'
-                                }
-                            }
-                        },
                         'comment': {
                             'order': 5,
                             'description': 'Briefly explain your recommendation, including justification for certification recommendation (if applicable). Refer to TMLR acceptance criteria here: https://jmlr.org/tmlr/reviewer-guide.html',
@@ -3353,6 +3450,20 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 }
             }
         }
+
+        if self.journal.get_certifications():
+            invitation['edit']['note']['content']['certification_recommendations'] = {
+                'order': 4,
+                'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation. See certification details here: https://jmlr.org/tmlr/editorial-policies.html',
+                'value': {
+                    'param': {
+                        'type': 'string[]',
+                        'enum': self.journal.get_certifications(),
+                        'optional': True,
+                        'input': 'checkbox'
+                    }
+                }
+            }        
 
         self.save_super_invitation(self.journal.get_reviewer_recommendation_id(), invitation_content, edit_content, invitation)
 
@@ -3790,13 +3901,13 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         )
 
         ## Change the edit readers
-        for edit in self.client.get_note_edits(note.id, invitation=revision_invitation_id, sort='tcdate:asc'):
+        for edit in self.client.get_note_edits(note.id, invitation=revision_invitation_id, sort='tmdate:asc'):
             edit.readers = self.journal.get_under_review_submission_readers(note.number)
             edit.note.mdate = None
             self.client.post_edit(edit)
 
         ## Change first edit readers
-        for edit in self.client.get_note_edits(note.id, invitation=self.journal.get_author_submission_id(), sort='tcdate:asc'):
+        for edit in self.client.get_note_edits(note.id, invitation=self.journal.get_author_submission_id(), sort='tmdate:asc'):
             edit.invitation = self.journal.get_meta_invitation_id()
             edit.signatures = [self.journal.venue_id]
             edit.readers = self.journal.get_under_review_submission_readers(note.number)
@@ -4236,22 +4347,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                     'markdown': True
                                 }
                             }
-                        },
-                        'certifications': {
-                            'order': 6,
-                            'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE and will be reviewed by the Editors-in-Chief. See certification details here: https://jmlr.org/tmlr/editorial-policies.html',
-                            'value': {
-                                'param': {
-                                    'type': 'string[]',
-                                    'enum': [
-                                        'Featured Certification',
-                                        'Reproducibility Certification',
-                                        'Survey Certification'
-                                    ],
-                                    'optional': True,
-                                    'input': 'checkbox'
-                                }
-                            }
                         }
                     }
                 }
@@ -4260,6 +4355,20 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'process': self.process_script,
             'dateprocesses': [self.ae_reminder_process]
         }
+
+        if self.journal.get_certifications():
+            invitation['edit']['note']['content']['certifications'] = {
+                'order': 6,
+                'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE and will be reviewed by the Editors-in-Chief. See certification details here: https://jmlr.org/tmlr/editorial-policies.html',
+                'value': {
+                    'param': {
+                        'type': 'string[]',
+                        'enum': self.journal.get_certifications(),
+                        'optional': True,
+                        'input': 'checkbox'
+                    }
+                }
+            }
 
         self.save_super_invitation(self.journal.get_ae_decision_id(), invitation_content, edit_content, invitation)
 
@@ -4817,6 +4926,13 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'dateprocesses': [self.ae_reminder_process]
         }
 
+        if self.journal.has_publication_chairs():
+            invitation['invitees'] = [venue_id, self.journal.get_publication_chairs_id()]
+            invitation['edit']['signatures'] = [self.journal.get_publication_chairs_id()]
+            invitation['edit']['note']['signatures'] = [self.journal.get_publication_chairs_id()]
+            invitation['edit']['readers'] = [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), self.journal.get_publication_chairs_id()]
+            invitation['edit']['writers'] = [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), self.journal.get_publication_chairs_id()]
+
         self.save_super_invitation(self.journal.get_camera_ready_verification_id(), invitation_content, edit_content, invitation)
 
     def set_note_camera_ready_verification_invitation(self, note, duedate):
@@ -5014,6 +5130,20 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             },
             'process': self.process_script
         }
+
+        if self.journal.get_certifications():
+            invitation['edit']['note']['content']['certifications'] = {
+                "order": 13,
+                "description": "Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.",
+                "value": {
+                    "param": {
+                        "type": "string[]",
+                        "enum": self.journal.get_certifications(),
+                        "optional": True,
+                        "input": "select"
+                    }
+                }
+            }            
 
         self.save_super_invitation(self.journal.get_eic_revision_id(), invitation_content, edit_content, invitation)
 
