@@ -129,10 +129,6 @@ class InvitationBuilder(object):
 
         content = default_content.submission_v2.copy()
         
-        if submission_stage.double_blind:
-            content['authors']['readers'] = [venue_id, self.venue.get_authors_id('${4/number}')]
-            content['authorids']['readers'] = [venue_id, self.venue.get_authors_id('${4/number}')]
-
         for field in submission_stage.remove_fields:
             del content[field]
 
@@ -161,8 +157,8 @@ class InvitationBuilder(object):
             }
         }
 
-        edit_readers = ['everyone'] if submission_stage.create_groups else [venue_id, self.venue.get_authors_id('${2/note/number}')]
-        note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, self.venue.get_authors_id('${2/number}')]
+        edit_readers = ['everyone'] if submission_stage.create_groups else [venue_id, '${2/note/content/authorids/value}']
+        note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, '${2/content/authorids/value}']
 
         submission_id = submission_stage.get_submission_id(self.venue)
         submission_cdate = tools.datetime_millis(submission_stage.start_date if submission_stage.start_date else datetime.datetime.utcnow())
@@ -179,7 +175,7 @@ class InvitationBuilder(object):
             edit = {
                 'signatures': { 'param': { 'regex': '~.*' } },
                 'readers': edit_readers,
-                'writers': [venue_id, self.venue.get_authors_id('${2/note/number}')],
+                'writers': [venue_id, '${2/note/content/authorids/value}'],
                 'note': {
                     'id': {
                         'param': {
@@ -194,9 +190,9 @@ class InvitationBuilder(object):
                             'deletable': True
                         }
                     },                    
-                    'signatures': [ self.venue.get_authors_id('${2/number}') ],
+                    'signatures': [ '${3/signatures}' ],
                     'readers': note_readers,
-                    'writers': [venue_id, self.venue.get_authors_id('${2/number}')],
+                    'writers': [venue_id, '${2/content/authorids/value}'],
                     'content': content
                 }
             },
