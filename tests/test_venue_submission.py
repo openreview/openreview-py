@@ -114,9 +114,33 @@ class TestVenueSubmission():
         submission = openreview_client.get_note(submission_note_1['note']['id'])
         assert len(submission.readers) == 2
         assert 'TestVenue.cc' in submission.readers
-        assert 'TestVenue.cc/Submission1/Authors' in submission.readers
+        assert ['TestVenue.cc', '~Celeste_MartinezEleven1'] == submission.readers
 
-        #TODO: check emails, check author console
+        messages = openreview_client.get_messages(subject = 'TV 22 has received your submission titled Paper 1 Title')
+        assert len(messages) == 1
+        assert 'Your submission to TV 22 has been posted.' in messages[0]['content']['text']
+
+        #update submission 1
+        updated_submission_note_1 = author_client.post_note_edit(invitation='TestVenue.cc/-/Submission',
+            signatures=['~Celeste_MartinezEleven1'],
+            note=Note(id=submission.id,
+                content={
+                    'title': { 'value': 'Paper 1 Title UPDATED' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['Celeste MartinezEleven']},
+                    'authorids': { 'value': ['~Celeste_MartinezEleven1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'keywords': {'value': ['aa'] }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=updated_submission_note_1['id'])
+
+        messages = openreview_client.get_messages(subject = 'TV 22 has received your submission titled Paper 1 Title UPDATED')
+        assert len(messages) == 1
+        assert 'Your submission to TV 22 has been updated.' in messages[0]['content']['text']
+
+        #TODO: check author console
 
         submission_note_2 = author_client.post_note_edit(
             invitation='TestVenue.cc/-/Submission',
