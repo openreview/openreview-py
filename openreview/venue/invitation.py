@@ -1574,7 +1574,7 @@ class InvitationBuilder(object):
                 post_content = post.read()
                 post_content = post_content.replace("VENUE_ID = ''", "VENUE_ID = '" + venue.id + "'")
                 post_content = post_content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + venue.get_senior_area_chairs_id(number='{number}') + "'")
-                post_content = post_content.replace("AC_ASSIGNMENT_INVITATION_ID = ''", "AC_ASSIGNMENT_INVITATION_ID = '" + venue.get_paper_assignment_id(venue.get_area_chairs_id(), deployed=True) + "'")
+                post_content = post_content.replace("AC_ASSIGNMENT_INVITATION_ID = ''", "AC_ASSIGNMENT_INVITATION_ID = '" + venue.get_assignment_id(venue.get_area_chairs_id(), deployed=True) + "'")
                 invitation.process=post_content
                 invitation.signatures=[venue.get_program_chairs_id()] ## Program Chairs can see the reviews
                 return self.save_invitation(invitation)
@@ -1592,7 +1592,7 @@ class InvitationBuilder(object):
                 post_content = post_content.replace("GROUP_ID = ''", "GROUP_ID = '" + committee_id + "'")
                 if venue.use_senior_area_chairs and is_area_chair:
                     post_content = post_content.replace("SYNC_SAC_ID = ''", "SYNC_SAC_ID = '" + venue.get_senior_area_chairs_id(number='{number}') + "'")
-                    post_content = post_content.replace("SAC_ASSIGNMENT_INVITATION_ID = ''", "SAC_ASSIGNMENT_INVITATION_ID = '" + venue.get_paper_assignment_id(venue.get_senior_area_chairs_id(), deployed=True) + "'")
+                    post_content = post_content.replace("SAC_ASSIGNMENT_INVITATION_ID = ''", "SAC_ASSIGNMENT_INVITATION_ID = '" + venue.get_assignment_id(venue.get_senior_area_chairs_id(), deployed=True) + "'")
                 invitation.process=post_content
                 invitation.preprocess=pre_content
                 invitation.signatures=[venue.get_program_chairs_id()] ## Program Chairs can see the reviews
