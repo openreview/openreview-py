@@ -4,8 +4,8 @@ return {
   version: 1,
   properties: {
     header: {
-      "title": "Program Chairs Console",
-      "instructions": "<p class=\"dark\">This page provides information and status updates for the NeurIPS 2022. It will be regularly updated as the conference progresses, so please check back frequently.</p>"
+      title: 'Program Chairs Console',
+      instructions: `<p class="dark">This page provides information and status updates for the ${domain.content.subtitle.value}. It will be regularly updated as the conference progresses, so please check back frequently.</p>`
     },
     apiVersion: 2,
     venueId: domain.id,
@@ -25,8 +25,8 @@ return {
     commentName: domain.content.comment_name?.value || 'Official_Comment',
     officialMetaReviewName: domain.content.meta_review_name?.value,
     decisionName: domain.content.decision_name?.value,
-    areaChairName:'Area_Chairs',
-    reviewerName:'Reviewers',
+    areaChairName: 'Area_Chairs',
+    reviewerName: 'Reviewers',
     anonReviewerName: 'Reviewer_',
     anonAreaChairName: 'Area_Chair_',
     scoresName: 'Affinity_Score',

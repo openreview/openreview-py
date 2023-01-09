@@ -4,8 +4,8 @@ return {
   version: 1,
   properties: {
     header: {
-      "title": "Senior Area Chairs Console",
-      "instructions": `<p class=\"dark\">This page provides information and status updates for the ${domain.content.subtitle.value}. It will be regularly updated as the conference progresses, so please check back frequently.</p>`
+      title: 'Senior Area Chairs Console',
+      instructions: `<p class=\"dark\">This page provides information and status updates for the ${domain.content.subtitle.value}. It will be regularly updated as the conference progresses, so please check back frequently.</p>`
     },
     apiVersion: 2,
     venueId: domain.id,
@@ -13,7 +13,7 @@ return {
     submissionId: domain.content.submission_id.value,
     submissionVenueId: domain.content.submission_venue_id.value,
     submissionName: domain.content.submission_name?.value,
-    reviewerName: "Reviewers",
+    reviewerName: 'Reviewers',
     anonReviewerName: 'Reviewer_',
     areaChairName: 'Area_Chairs',
     anonAreaChairName: 'Area_Chair_',
@@ -25,6 +25,6 @@ return {
     decisionName: domain.content.decision_name?.value,
     recommendationName: domain.content.recommendation_id?.value || 'Recommendation',
     shortPhrase: domain.content.subtitle.value,
-    enableQuerySearch: true        
+    enableQuerySearch: true
   }
 }
