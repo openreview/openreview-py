@@ -133,8 +133,8 @@ class TestJournal():
         assert header
         titles = header.find_elements_by_tag_name('strong')
         assert 'Reviewer Assignment Browser:' in titles[0].text
-        assert 'Journal Recruitment:' in titles[1].text        
-        assert 'Reviewer Report:' in titles[2].text        
+        assert 'Journal Recruitment:' in titles[1].text
+        assert 'Reviewer Report:' in titles[2].text
 
     def test_invite_reviewers(self, journal, openreview_client, request_page, selenium, helpers):
 
@@ -491,7 +491,7 @@ anonymous''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''p
 title={Paper title {UPDATED}},
 author={Anonymous},
 journal={Submitted to Transactions on Machine Learning Research},
-year={2022},
+year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Under review}
 }'''
@@ -677,7 +677,7 @@ anonymous''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''p
 title={Paper title 3},
 author={Anonymous},
 journal={Submitted to Transactions on Machine Learning Research},
-year={2022},
+year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_3 + '''},
 note={Withdrawn}
 }'''
@@ -901,7 +901,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Create the user
-        helpers.create_user('antony@irobot.com', 'Antony', 'Bal')   
+        helpers.create_user('antony@irobot.com', 'Antony', 'Bal')
         antony_client = OpenReviewClient(username='antony@irobot.com', password='1234')
 
 
@@ -1452,7 +1452,7 @@ The TMLR Editors-in-Chief
                     'requested_changes': { 'value': 'requested_changes V2' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns V2' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                     
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -1572,7 +1572,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'decision_recommendation': { 'value': 'Accept' },
                     'certification_recommendations': { 'value': ['Featured Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                  
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -1597,7 +1597,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'decision_recommendation': { 'value': 'Accept' },
                     'certification_recommendations': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                  
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -1622,7 +1622,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'decision_recommendation': { 'value': 'Accept' },
                     'certification_recommendations': { 'value': ['Survey Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                  
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -1636,12 +1636,12 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'decision_recommendation': { 'value': 'Accept' },
                     'certification_recommendations': { 'value': ['Survey Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                  
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=antony_official_recommendation_note['id'])        
+        helpers.await_queue_edit(openreview_client, edit_id=antony_official_recommendation_note['id'])
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
@@ -1694,7 +1694,7 @@ The TMLR Editors-in-Chief
                     'decision_recommendation': { 'value': 'Leaning Accept' },
                     'certification_recommendations': { 'value': ['Survey Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                  
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -1972,7 +1972,7 @@ bok''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
 author={Melissa Bok and SomeFirstName User},
 journal={Transactions on Machine Learning Research},
-year={2022},
+year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Featured Certification, Reproducibility Certification}
 }'''
@@ -2030,7 +2030,7 @@ bok''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
 author={Melissa Bok and SomeFirstName User and Celeste Ana Martinez},
 journal={Transactions on Machine Learning Research},
-year={2022},
+year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Featured Certification, Reproducibility Certification}
 }'''
@@ -2108,7 +2108,7 @@ bok''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
 author={Melissa Bok and SomeFirstName User and Celeste Ana Martinez},
 journal={Submitted to Transactions on Machine Learning Research},
-year={2022},
+year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Retracted after acceptance}
 }'''
@@ -2243,7 +2243,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
         ## Check pending review edges
         edges = joelle_client.get_grouped_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', groupby='weight')
         assert len(edges) == 2
-    
+
         if len(edges[0]['values']) == 3:
             assert edges[0]['id']['weight'] == 1
             assert edges[1]['id']['weight'] == 0
@@ -2257,7 +2257,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
         if len(edges[0]['values']) == 2:
             assert edges[0]['id']['weight'] == 0
             assert edges[1]['id']['weight'] == 1
-            assert len(edges[1]['values']) == 3            
+            assert len(edges[1]['values']) == 3
         else:
             assert edges[0]['id']['weight'] == 1
             assert len(edges[0]['values']) == 3
@@ -2467,7 +2467,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                    
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -2481,7 +2481,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                  
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -2495,7 +2495,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                  
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -2522,7 +2522,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
                 note=Note(
                     content={
                         'claims_and_evidence': { 'value': 'Accept as is' },
-                        'audience': { 'value': 'Accept as is' },                        
+                        'audience': { 'value': 'Accept as is' },
                         'recommendation': { 'value': 'Reject' },
                         'comment': { 'value': 'This is not a good paper' },
                         'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] }
@@ -2535,7 +2535,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
             note=Note(
                 content={
                     'claims_and_evidence': { 'value': 'Accept as is' },
-                    'audience': { 'value': 'Accept as is' },                    
+                    'audience': { 'value': 'Accept as is' },
                     'recommendation': { 'value': 'Reject' },
                     'comment': { 'value': 'This is not a good paper' }
                 }
@@ -2598,7 +2598,7 @@ anonymous''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''p
 title={Paper title 4},
 author={Anonymous},
 journal={Submitted to Transactions on Machine Learning Research},
-year={2022},
+year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_4 + '''},
 note={Rejected}
 }'''
@@ -2632,7 +2632,7 @@ user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title 4},
 author={SomeFirstName User and Melissa Bok},
 journal={Submitted to Transactions on Machine Learning Research},
-year={2022},
+year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_4 + '''},
 note={Rejected}
 }'''
@@ -2840,7 +2840,7 @@ note={Rejected}
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                  
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -2854,7 +2854,7 @@ note={Rejected}
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                  
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -2868,7 +2868,7 @@ note={Rejected}
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                  
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -3138,7 +3138,7 @@ The TMLR Editors-in-Chief
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                  
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -3152,7 +3152,7 @@ The TMLR Editors-in-Chief
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                  
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -3166,7 +3166,7 @@ The TMLR Editors-in-Chief
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                  
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -3255,7 +3255,7 @@ user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title 6},
 author={SomeFirstName User and Melissa Bok},
 journal={Submitted to Transactions on Machine Learning Research},
-year={2022},
+year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_6 + '''},
 note={Withdrawn}
 }'''

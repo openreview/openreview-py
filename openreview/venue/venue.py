@@ -384,17 +384,34 @@ class Venue(object):
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
         venue_id = self.venue_id
         submissions = self.get_submissions()
+        hide_author_fields = ['authors', 'authorids'] if self.submission_stage.double_blind else []
+        final_hide_fields = hide_author_fields + hide_fields
         
         self.group_builder.create_paper_committee_groups(submissions)
         
         def update_submission_readers(submission):
+
             if submission.content['venueid']['value'] == self.get_submission_venue_id():
+
+                note_content = {}
+                for field in final_hide_fields:
+                    note_content[field] = {
+                        'readers': [venue_id, self.get_authors_id(submission.number)]
+                    }
+
+                note_readers = self.submission_stage.get_readers(self, submission.number)
+                note_writers = [venue_id,self.get_authors_id(submission.number)]
+                note_signatures = [self.get_authors_id(submission.number)]
+
                 return self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
                     readers=[venue_id],
                     writers=[venue_id],
                     signatures=[venue_id],
                     note=openreview.api.Note(id=submission.id,
-                            readers = self.submission_stage.get_readers(self, submission.number)
+                            readers = note_readers,
+                            writers = note_writers,
+                            signatures = note_signatures,
+                            content = note_content 
                         )
                     )
         ## Release the submissions to specified readers if venueid is still submission
