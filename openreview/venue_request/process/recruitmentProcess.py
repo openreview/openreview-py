@@ -27,7 +27,7 @@ def process(client, note, invitation):
     note.content['invitation_email_subject'] = note.content['invitation_email_subject'].replace('{{invitee_role}}', pretty_role)
     note.content['invitation_email_content'] = note.content['invitation_email_content'].replace('{{invitee_role}}', pretty_role)
 
-    invitee_details_str = note.content.get('invitee_details', None)
+    invitee_details_str = note.content.get('invitee_details', None).strip()
     invitee_emails = []
     invitee_names = []
     if invitee_details_str:
@@ -36,11 +36,11 @@ def process(client, note, invitation):
             if invitee:
                 details = [i.strip() for i in invitee.split(',') if i]
                 if len(details) == 1:
-                    email = details[0]
+                    email = details[0][1:] if details[0].startswith('(') else details[0]
                     name = None
                 else:
-                    email = details[0]
-                    name = details[1]
+                    email = details[0][1:] if details[0].startswith('(') else details[0]
+                    name = details[1][:-1] if details[1].endswith(')') else details[1]
                 invitee_emails.append(email)
                 invitee_names.append(name)
 
