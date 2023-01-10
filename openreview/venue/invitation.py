@@ -175,7 +175,14 @@ class InvitationBuilder(object):
             edit = {
                 'signatures': { 'param': { 'regex': '~.*' } },
                 'readers': edit_readers,
-                'writers': [venue_id, '${2/note/content/authorids/value}'],
+                'writers': [venue_id],
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },                
                 'note': {
                     'id': {
                         'param': {
