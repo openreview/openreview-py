@@ -18,6 +18,7 @@ var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
 var PAPER_RANKING_ID = CONFERENCE_ID + '/' + REVIEWER_NAME + '/-/Paper_Ranking';
 var CUSTOM_MAX_PAPERS_ID = CONFERENCE_ID + '/' + REVIEWER_NAME + '/-/Custom_Max_Papers';
 
+var notes = []
 var main = function() {
   // In the future this should not be necessary as the group's readers
   // will prevent unauthenticated users
@@ -42,6 +43,7 @@ var main = function() {
     .then(function(
       blindedNotes, officialReviews, invitations, customLoad, groupByNumber, areaChairMap
     ) {
+      notes = blindedNotes;
       if (customLoad) {
         $('#header .description').append(
           '<p class="dark">You have agreed to review up to <strong>' + customLoad + ' papers</strong>.</p>'
@@ -342,7 +344,7 @@ var displayStatusTable = function(notes, officialReviews, invitations) {
     extraClasses: 'console-table'
   });
 
-  $container.empty().append(tableHTML);
+  $container.empty().append(tableHTML).append('<button class="btn btn-export-pdf" type="button" style="margin-top: 0.5rem; margin-left: -1rem">Download all PDF</button>');
 };
 
 var buildTableRow = function(note, officialReview, officialReviewInvitation) {
@@ -468,4 +470,33 @@ $('#group-container').on('click', 'a.note-contents-toggle', function(e) {
   var visibleText = 'Hide paper details';
   var updated = $(this).text() === hiddenText ? visibleText : hiddenText;
   $(this).text(updated);
+});
+
+$("#group-container").on("click", "button.btn.btn-export-pdf", function (e) {
+  const ids = _.flatMap(notes, function (note) {
+      return note.content.pdf ? note.id : [];
+    })
+  if(!ids.length) {
+      promptError('No submission contains PDF');
+      return
+  }
+  $("button.btn.btn-export-pdf")
+    .prop("disabled", true)
+    .html(
+      "<div class='spinner-small'><div class='rect1'></div><div class='rect2'></div><div class='rect3'></div><div class='rect4'></div><div class='rect5'></div></div>"
+    );
+  Webfield.get("/attachment", {
+    ids,
+    name: "pdf"
+  }, {
+    isBlob: true,
+    handleErrors: false
+  }).then(function (result) {
+    saveAs(result, SHORT_PHRASE.replace(/\s/g, "_") + "_pdfs.zip");
+    $("button.btn.btn-export-pdf").prop("disabled", false).html("Download PDF");
+  }, function () {
+    promptError('PDF download failed');
+    $("button.btn.btn-export-pdf").prop("disabled", false).html("Download PDF");
+  });
+  return false;
 });
