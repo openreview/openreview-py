@@ -1252,7 +1252,7 @@ The TMLR Editors-in-Chief
         assert len(messages) == 5
 
         messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
-        assert len(messages) == 6
+        assert len(messages) == 8
 
         messages = journal.client.get_messages(to= 'raia@mail.com', subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
         assert len(messages) == 2
@@ -1267,6 +1267,25 @@ Submission: Paper title UPDATED
 Link: https://openreview.net/forum?id={note_id_1}
 
 OpenReview Team
+'''
+
+        messages = journal.client.get_messages(to= 'joelle@mailseven.com', subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 4
+
+        assert messages[2]['content']['text'] == f'''Hi Joelle Pineau,
+
+Our records show that a reviewer on a paper you are the AE for is *one month* late on a reviewing task:
+
+Task: Review
+Reviewer: Carlos Mondragon
+Submission: Paper title UPDATED
+Link: https://openreview.net/forum?id={note_id_1}
+
+Please follow up directly with the reviewer in question to ensure they complete their task ASAP.
+
+We thank you for your cooperation.
+
+The TMLR Editors-in-Chief
 '''
 
 

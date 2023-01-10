@@ -45,15 +45,15 @@ class TestMatching():
         assert openreview_client.get_invitation('VenueV2.cc/-/Submission')
 
         message = 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of VV2 2022 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
-        venue.recruit_reviewers(title='[VV2 2022] Invitation to serve as Reviewer',
-            message=message,
+        venue.recruit_reviewers(title='[VV2 2022] Invitation to serve as Program Committee',
+            message=message.replace('{{invitee_role}}', 'Program Committee'),
             invitees = ['r1_venue@mit.edu'],
             reviewers_name = 'Program_Committee',
             contact_info='testvenue@contact.com',
             reduced_load_on_decline = ['1','2','3'])
 
-        venue.recruit_reviewers(title='[VV2 2022] Invitation to serve as Action Editor',
-            message=message,
+        venue.recruit_reviewers(title='[VV2 2022] Invitation to serve as Senior Program Committee',
+            message=message.replace('{{invitee_role}}', 'Senior Program Committee'),
             invitees = ['r1_venue@mit.edu'],
             reviewers_name = 'Senior_Program_Committee',
             contact_info='testvenue@contact.com',
@@ -161,8 +161,8 @@ class TestMatching():
         #check assignment process is set when invitation is created
         assignment_inv = openreview_client.get_invitation(venue.get_assignment_id(committee_id=venue.get_reviewers_id(), deployed=True))
         assert assignment_inv
-    #     assert assignment_inv.process
-    #     assert 'def process_update(client, edge, invitation, existing_edge):' in assignment_inv.process
+        assert assignment_inv.process
+        assert 'def process_update(client, edge, invitation, existing_edge):' in assignment_inv.process
 
         notes = venue.get_submissions(sort='number:asc')
 
@@ -284,155 +284,6 @@ class TestMatching():
         assert ac2_conflicts[0].label == 'Conflict'
 
 
-    # def test_setup_matching_with_recommendations(self, conference, pc_client, test_client, helpers):
-
-    #     notes = list(venue.get_submissions(sort='tmdate'))
-
-    #     ## Open reviewer recommendations
-    #     now = datetime.datetime.utcnow()
-    #     venue.open_recommendations(assignment_title='', due_date = now + datetime.timedelta(minutes = 40))
-
-    #     ## Recommend reviewers
-    #     ac1_client = helpers.get_user('ac1_venue@cmu.edu')
-    #     ac1_client.post_edge(Edge(invitation = venue.get_recommendation_id(),
-    #         readers = [f'{venue.id}', '~AreaChair_One1'],
-    #         signatures = ['~AreaChair_One1'],
-    #         writers = ['~AreaChair_One1'],
-    #         head = notes[0].id,
-    #         tail = '~Reviewer_Venue1',
-    #         weight = 1
-    #     ))
-    #     ac1_client.post_edge(Edge(invitation = venue.get_recommendation_id(),
-    #         readers = [f'{venue.id}', '~AreaChair_One1'],
-    #         signatures = ['~AreaChair_One1'],
-    #         writers = ['~AreaChair_One1'],
-    #         head = notes[1].id,
-    #         tail = 'r2_venue@google.com',
-    #         weight = 2
-    #     ))
-    #     ac1_client.post_edge(Edge(invitation = venue.get_recommendation_id(),
-    #         readers = [f'{venue.id}', '~AreaChair_One1'],
-    #         signatures = ['~AreaChair_One1'],
-    #         writers = ['~AreaChair_One1'],
-    #         head = notes[1].id,
-    #         tail = 'r3_venue@fb.com',
-    #         weight = 3
-    #     ))
-
-    #    # Set up reviewer matching
-    #     venue.setup_matching(tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_tpms_scores.csv'), build_conflicts=True)
-
-    #     print(venue.get_reviewers_id())
-
-    #     invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Assignment_Configuration')
-    #     assert invitation
-    #     assert 'scores_specification' in invitation.reply['content']
-    #     assert f'{venue.id}/Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
-    #     assert f'{venue.id}/Program_Committee/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
-    #     assert f'{venue.id}/Program_Committee/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
-    #     assert pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Custom_Max_Papers')
-    #     assert pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Conflict')
-
-    #     # Set up ac matching
-    #     venue.setup_matching(
-    #         committee_id=venue.get_area_chairs_id(),
-    #         tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores.csv'),
-    #         build_conflicts=True)
-
-    #     invitation = pc_client.get_invitation(id=f'{venue.id}/Senior_Program_Committee/-/Assignment_Configuration')
-    #     assert invitation
-    #     assert 'scores_specification' in invitation.reply['content']
-    #     assert f'{venue.id}/Senior_Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
-    #     assert f'{venue.id}/Senior_Program_Committee/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
-    #     assert f'{venue.id}/Senior_Program_Committee/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
-    #     assert f'{venue.id}/Program_Committee/-/Recommendation' in invitation.reply['content']['scores_specification']['default']
-
-    #     assert pc_client.get_invitation(id=f'{venue.id}/Senior_Program_Committee/-/Custom_Max_Papers')
-    #     assert pc_client.get_invitation(id=f'{venue.id}/Senior_Program_Committee/-/Conflict')
-
-    #     bids = pc_client.get_edges(invitation = venue.get_bid_id(venue.get_area_chairs_id()))
-    #     assert bids
-    #     assert 3 == len(bids)
-
-    #     bids = pc_client.get_edges(invitation = venue.get_bid_id(venue.get_reviewers_id()))
-    #     assert bids
-    #     assert 3 == len(bids)
-
-    #     recommendations = pc_client.get_edges(invitation = venue.get_recommendation_id())
-    #     assert recommendations
-    #     assert 3 == len(recommendations)
-
-    #     reviewer_custom_loads = pc_client.get_edges(
-    #         invitation=f'{venue.id}/Program_Committee/-/Custom_Max_Papers')
-    #     assert not reviewer_custom_loads
-
-    #     ac_custom_loads = pc_client.get_edges(
-    #         invitation=f'{venue.id}/Senior_Program_Committee/-/Custom_Max_Papers')
-    #     assert not ac_custom_loads
-
-    #     reviewer_conflicts = pc_client.get_edges(
-    #         invitation=f'{venue.id}/Program_Committee/-/Conflict')
-    #     assert 1 == len(reviewer_conflicts)
-
-    #     ac_conflicts = pc_client.get_edges(
-    #         invitation=f'{venue.id}/Senior_Program_Committee/-/Conflict')
-    #     assert 2 == len(ac_conflicts)
-
-    #     ac1_conflicts = pc_client.get_edges(
-    #         invitation=f'{venue.id}/Senior_Program_Committee/-/Conflict', tail='~AreaChair_One1')
-    #     assert ac1_conflicts
-    #     assert len(ac1_conflicts)
-    #     assert ac1_conflicts[0].label == 'Conflict'
-
-    #     r1_conflicts = pc_client.get_edges(
-    #         invitation=f'{venue.id}/Program_Committee/-/Conflict', tail='~Reviewer_Venue1')
-    #     assert r1_conflicts
-    #     assert len(r1_conflicts)
-    #     assert r1_conflicts[0].label == 'Conflict'
-
-    #     ac2_conflicts = pc_client.get_edges(
-    #         invitation=f'{venue.id}/Senior_Program_Committee/-/Conflict', tail='ac2_venue@umass.edu')
-    #     assert ac2_conflicts
-    #     assert len(ac2_conflicts)
-    #     assert ac2_conflicts[0].label == 'Conflict'
-
-    #     submissions = venue.get_submissions(sort='tmdate')
-    #     assert submissions
-    #     assert 3 == len(submissions)
-
-    #     reviewer_tpms_scores = pc_client.get_edges(
-    #         invitation=f'{venue.id}/Program_Committee/-/TPMS_Score')
-    #     assert 9 == len(reviewer_tpms_scores)
-
-    #     ac_tpms_scores = pc_client.get_edges(
-    #         invitation=f'{venue.id}/Senior_Program_Committee/-/TPMS_Score')
-    #     assert 6 == len(ac_tpms_scores)
-
-    #     r3_s0_tpms_scores = pc_client.get_edges(
-    #         invitation=f'{venue.id}/Program_Committee/-/TPMS_Score',
-    #         tail='r3_venue@fb.com',
-    #         head=submissions[0].id)
-    #     assert r3_s0_tpms_scores
-    #     assert 1 == len(r3_s0_tpms_scores)
-    #     assert r3_s0_tpms_scores[0].weight == 0.21
-
-    #     r3_s1_tpms_scores = pc_client.get_edges(
-    #         invitation=f'{venue.id}/Program_Committee/-/TPMS_Score',
-    #         tail='r3_venue@fb.com',
-    #         head=submissions[1].id)
-    #     assert r3_s1_tpms_scores
-    #     assert 1 == len(r3_s1_tpms_scores)
-    #     assert r3_s1_tpms_scores[0].weight == 0.31
-
-    #     r3_s2_tpms_scores = pc_client.get_edges(
-    #         invitation=f'{venue.id}/Program_Committee/-/TPMS_Score',
-    #         tail='r3_venue@fb.com',
-    #         head=submissions[2].id)
-    #     assert r3_s2_tpms_scores
-    #     assert 1 == len(r3_s2_tpms_scores)
-    #     assert r3_s2_tpms_scores[0].weight == 0.51
-
-
     def test_set_assigments(self, venue, openreview_client, pc_client, test_client, helpers):
 
         venue.client = pc_client
@@ -518,7 +369,7 @@ class TestMatching():
         )
         assert 6 == edges
 
-        venue.set_assignments(assignment_title='rev-matching', committee_id=f'{venue.id}/Program_Committee')
+        venue.set_assignments(assignment_title='rev-matching', committee_id=f'{venue.id}/Program_Committee', enable_reviewer_reassignment=True)
 
         revs_paper0 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[0].number))
         assert 2 == len(revs_paper0.members)
