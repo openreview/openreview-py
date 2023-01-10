@@ -1149,7 +1149,7 @@ class VenueRequest():
             },
             'api_version': {
                 'description': 'Which API version would you like to use? API 2 is still in the experimental phase, contact us if you would like more information.',
-                'value-checkbox': ['1', '2'],
+                'value-radio': ['1', '2'],
                 'default': '1',
                 'order': 39
             },
