@@ -37,9 +37,10 @@ The {journal.short_name} Editors-in-Chief
             replyTo=assigned_action_editor if assigned_action_editor else journal.contact_info
         )
 
-    if date_index == 1:
+    if date_index == 1 or date_index == 2:
         ## get preferred names
         profiles = openreview.tools.get_profiles(client, late_invitees)
+        days_late = 'one week' if date_index == 1 else 'one month'
         ## send email to action editors
         print('send email to action editors')
         for profile in profiles:
@@ -48,7 +49,7 @@ The {journal.short_name} Editors-in-Chief
                 subject=f'''[{journal.short_name}] Reviewer is late in performing a task for assigned paper {submission.content['title']['value']}''',
                 message=f'''Hi {{{{fullname}}}},
 
-Our records show that a reviewer on a paper you are the AE for is *one week* late on a reviewing task:
+Our records show that a reviewer on a paper you are the AE for is *{days_late}* late on a reviewing task:
 
 Task: {task}
 Reviewer: {profile.get_preferred_name(pretty=True)}

@@ -5,7 +5,7 @@ def process_update(client, edge, invitation, existing_edge):
     submission_name = domain.content['submission_name']['value']
     review_name = domain.content['review_name']['value']
     reviewers_anon_name = domain.content['reviewers_anon_name']['value']
-
+    
     if edge.ddate:
         paper=client.get_note(edge.head)
 
