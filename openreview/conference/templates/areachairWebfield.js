@@ -1556,6 +1556,11 @@ var registerEventHandlers = function() {
         promptError('No submission contains PDF');
         return
     }
+    $("button.btn.btn-export-pdf")
+      .prop("disabled", true)
+      .html(
+        "<div class='spinner-small'><div class='rect1'></div><div class='rect2'></div><div class='rect3'></div><div class='rect4'></div><div class='rect5'></div></div>"
+      );
     Webfield.get("/attachment", {
       ids,
       name: "pdf"
@@ -1564,8 +1569,10 @@ var registerEventHandlers = function() {
       handleErrors: false
     }).then(function (result) {
       saveAs(result, SHORT_PHRASE.replace(/\s/g, "_") + "_pdfs.zip");
+      $("button.btn.btn-export-pdf").prop("disabled", false).html("Download PDF");
     }, function () {
       promptError('PDF download failed');
+      $("button.btn.btn-export-pdf").prop("disabled", false).html("Download PDF");
     });
     return false;
   });
