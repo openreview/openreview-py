@@ -97,4 +97,7 @@ To view the submission, click here: https://openreview.net/forum?id={note.forum}
             members=note.content['authorids']['value'] ## always update authors
         )
     )    
-    client.add_members_to_group(authors_id, authors_group_id)
+    if action == 'posted' or action == 'updated':
+        client.add_members_to_group(authors_id, authors_group_id)
+    if action == 'deleted':
+        client.remove_members_from_group(authors_id, authors_group_id)
