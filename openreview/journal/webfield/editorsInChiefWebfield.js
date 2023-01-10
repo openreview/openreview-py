@@ -71,12 +71,12 @@ var DESK_REJECTED_STATUS = VENUE_ID + '/Desk_Rejected'
 
 var referrerUrl = encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')');
 var ae_url = '/edges/browse?traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
-  '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' +
-  '&browse=' + ACTION_EDITORS_ARCHIVED_ASSIGNMENT_ID + ';' + ACTION_EDITORS_AFFINITY_SCORE_ID +';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID + ';' + ACTION_EDITORS_AVAILABILITY_ID + ',head:ignore' +
+  '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' + ';' + ACTION_EDITORS_AVAILABILITY_ID + ',head:ignore' +
+  '&browse=' + ACTION_EDITORS_ARCHIVED_ASSIGNMENT_ID + ';' + ACTION_EDITORS_AFFINITY_SCORE_ID +';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID + 
   '&version=2&referrer=' + referrerUrl;
 var reviewers_url = '/edges/browse?traverse=' + REVIEWERS_ASSIGNMENT_ID +
-  '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
-  '&browse=' + REVIEWERS_ARCHIVED_ASSIGNMENT_ID + ';' + REVIEWERS_AFFINITY_SCORE_ID+ ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
+  '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
+  '&browse=' + REVIEWERS_ARCHIVED_ASSIGNMENT_ID + ';' + REVIEWERS_AFFINITY_SCORE_ID+ ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + 
   '&version=2&referrer=' + referrerUrl;
 HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Assignments Browser:</strong></li>' +
   '<li><a href="' + ae_url + '">Modify Action Editor Assignments</a></li>' +
@@ -677,8 +677,8 @@ var formatData = function(
         name: 'Edit Assignments',
         url: '/edges/browse?start=staticList,type:head,ids:' + submission.id +
         '&traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
-        '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' +
-        '&browse=' + ACTION_EDITORS_ARCHIVED_ASSIGNMENT_ID + ';' + ACTION_EDITORS_AFFINITY_SCORE_ID + ';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID + ';' + ACTION_EDITORS_AVAILABILITY_ID + ',head:ignore' +
+        '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' + ACTION_EDITORS_AVAILABILITY_ID + ',head:ignore' +
+        '&browse=' + ACTION_EDITORS_ARCHIVED_ASSIGNMENT_ID + ';' + ACTION_EDITORS_AFFINITY_SCORE_ID + ';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID + ';' + 
         '&version=2'
       }
     ] : [];
@@ -708,8 +708,8 @@ var formatData = function(
             name: 'Edit Assignments',
             url: '/edges/browse?start=staticList,type:head,ids:' + submission.id +
             '&traverse='+ REVIEWERS_ASSIGNMENT_ID +
-            '&edit='+ REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
-            '&browse=' + REVIEWERS_ARCHIVED_ASSIGNMENT_ID + ';' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
+            '&edit='+ REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
+            '&browse=' + REVIEWERS_ARCHIVED_ASSIGNMENT_ID + ';' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + 
             '&version=2'
           }
         ] : [],

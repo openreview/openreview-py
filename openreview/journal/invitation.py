@@ -1454,7 +1454,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 },
                 'weight': {
                     'param': {
-                        'enum': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                        'enum': [6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
                         'default': self.journal.ae_custom_max_papers
                     }
                 }

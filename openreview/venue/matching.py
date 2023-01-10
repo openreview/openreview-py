@@ -1,6 +1,4 @@
 import os
-import random
-import string
 import openreview
 from openreview.api import Edge
 from openreview.api import Invitation
@@ -834,7 +832,7 @@ class Matching(object):
             print('Bid invitation not found')
 
         try:
-            invitation = self.client.get_invitation(self.conference.get_recommendation_id())
+            invitation = self.client.get_invitation(venue.get_recommendation_id())
             score_spec[invitation.id] = {
                 'weight': 1,
                 'default': 0
@@ -854,7 +852,6 @@ class Matching(object):
 
         invitation = self._create_edge_invitation(venue.get_assignment_id(self.match_group.id))
         
-        ## is there better way to do this?
         if not self.is_senior_area_chair:
             with open(os.path.join(os.path.dirname(__file__), 'process/proposed_assignment_pre_process.py')) as f:
                 content = f.read()
@@ -863,7 +860,8 @@ class Matching(object):
                 venue.invitation_builder.save_invitation(invitation)
 
         self._create_edge_invitation(venue.get_assignment_id(self.match_group.id, deployed=True))
-        # venue.invitation_builder.set_assignment_invitation(self.match_group.id)
+        venue.invitation_builder.set_assignment_invitation(self.match_group.id)
+
         self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
         self._build_custom_max_papers(user_profiles)
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))
@@ -933,6 +931,8 @@ class Matching(object):
         assignment_invitation_id = venue.get_assignment_id(self.match_group.id, deployed=True)
         current_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None)}
 
+        sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(venue.get_senior_area_chairs_id()), groupby='head', select=None)}
+
         if overwrite:
             if reviews:
                 raise openreview.OpenReviewException('Can not overwrite assignments when there are reviews posted.')
@@ -953,11 +953,27 @@ class Matching(object):
                 paper_committee_id = venue.get_committee_id(name=reviewer_name, number=paper.number)
                 proposed_edges=proposed_assignment_edges[paper.id]
                 for proposed_edge in proposed_edges:
-                    client.add_members_to_group(paper_committee_id, proposed_edge['tail'])
+                    assigned_user = proposed_edge['tail']
+                    client.add_members_to_group(paper_committee_id, assigned_user)
+                    if self.is_area_chair and sac_assignment_edges:
+                        sac_assignments = sac_assignment_edges.get(assigned_user, [])
+                        for sac_assignment in sac_assignments:
+                            assigned_sac = sac_assignment['tail']
+                            sac_group_id = venue.get_committee_id(name=venue.senior_area_chairs_name, number=paper.number)
+                            client.post_group_edit(
+                                invitation = venue.get_meta_invitation_id(),
+                                readers = [venue.venue_id],
+                                writers = [venue.venue_id],
+                                signatures = [venue.venue_id],
+                                group = openreview.api.Group(
+                                    id = sac_group_id,
+                                    members = [assigned_sac]
+                                )
+                            )
                     assignment_edges.append(Edge(
                         invitation=assignment_invitation_id,
                         head=paper.id,
-                        tail=proposed_edge['tail'],
+                        tail=assigned_user,
                         readers=proposed_edge['readers'],
                         writers=proposed_edge['writers'],
                         signatures=proposed_edge['signatures'],
@@ -983,38 +999,8 @@ class Matching(object):
         assignment_edges = []
         assignment_invitation_id = venue.get_assignment_id(self.match_group.id, deployed=True)
 
-        ac_groups = {g.id:g for g in client.get_all_groups(regex=venue.get_area_chairs_id('.*'))}
-
         if not papers:
             raise openreview.OpenReviewException('No submissions to deploy SAC assignment')
-
-        for paper in tqdm(papers):
-
-            ac_group_id=venue.get_area_chairs_id(paper.number)
-            ac_group=ac_groups.get(ac_group_id)
-            if ac_group:
-                if len(ac_group.members) == 0:
-                    raise openreview.OpenReviewException('AC assignments must be deployed first')
-
-                for ac in ac_group.members:
-                    sac_assignments = proposed_assignment_edges.get(ac, [])
-
-                    for sac_assignment in sac_assignments:
-                        sac=sac_assignment['tail']
-                        sac_group_id=ac_group.id.replace(venue.area_chairs_name, venue.senior_area_chairs_name)
-                        sac_group=client.get_group(sac_group_id)
-                        if overwrite:
-                            sac_group.members=[]
-                        client.post_group_edit(
-                            invitation = venue.get_meta_invitation_id(),
-                            readers = [venue.venue_id],
-                            writers = [venue.venue_id],
-                            signatures = [venue.venue_id],
-                            group = openreview.api.Group(
-                                id = sac_group_id,
-                                members = [sac]
-                            )
-                        )
 
         for head, sac_assignments in proposed_assignment_edges.items():
             for sac_assignment in sac_assignments:
@@ -1040,11 +1026,10 @@ class Matching(object):
             self.deploy_assignments(assignment_title, overwrite)
 
         # ## Add sync process function
-        # self.venue.invitation_builder.set_paper_group_invitation(self.venue, self.match_group.id)
-        # self.venue.invitation_builder.set_assignment_invitation(self.venue, self.match_group.id)
+        self.venue.invitation_builder.set_assignment_invitation(self.match_group.id)
 
         # if self.match_group.id == self.venue.get_reviewers_id() and enable_reviewer_reassignment:
         #     hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
-        #     self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name='Emergency_Reviewers')
+        #     self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=f'''Emergency_{self.venue.reviewers_name}''')
 
         # self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id))
