@@ -494,10 +494,10 @@ $("#group-container").on("click", "button.btn.btn-export-pdf", function (e) {
     handleErrors: false
   }).then(function (result) {
     saveAs(result, CONFERENCE_ID + "_pdfs.zip");
-    $("button.btn.btn-export-pdf").prop("disabled", false).html("Download PDF");
+    $("button.btn.btn-export-pdf").prop("disabled", false).html("Download all PDFs");
   }, function () {
     promptError('PDF download failed');
-    $("button.btn.btn-export-pdf").prop("disabled", false).html("Download PDF");
+    $("button.btn.btn-export-pdf").prop("disabled", false).html("Download all PDFs");
   });
   return false;
 });
