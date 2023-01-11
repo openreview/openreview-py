@@ -504,7 +504,8 @@ var renderTable = function(rows, container, secondary_meta) {
 }
 
 var renderStatusTable = function(conferenceStatusData, container) {
-  var rows = _.map(conferenceStatusData.blindedNotes, function(note) {
+  var assignedNotes = _.filter(conferenceStatusData.blindedNotes, function(note) { return conferenceStatusData.acPapers.indexOf(note.number) > -1; });
+  var rows = _.map(assignedNotes, function(note) {
     var reviewersById = conferenceStatusData.noteToReviewerIds[note.number] || Object.create(null);
 
     var metaReview = _.find(note.details.directReplies, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
@@ -799,7 +800,8 @@ var renderStatusTable = function(conferenceStatusData, container) {
 };
 
 var renderSecondaryStatusTable = function(conferenceStatusData, container) {
-  var rows = _.map(conferenceStatusData.blindedNotes, function(note) {
+  var assignedNotes = _.filter(conferenceStatusData.blindedNotes, function(note) { return conferenceStatusData.secondaryAcPapers.indexOf(note.number) > -1; })
+  var rows = _.map(assignedNotes, function(note) {
     var revIds = conferenceStatusData.noteToReviewerIds[note.number] || Object.create(null);
     var metaReview = _.find(note.details.directReplies, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
     var noteCompletedReviews = getOfficialReviews((note.details.directReplies || []).filter(function(reply) { return reply.invitation === getInvitationId(OFFICIAL_REVIEW_NAME, note.number); }));

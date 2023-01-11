@@ -1905,6 +1905,9 @@ class ConferenceBuilder(object):
     def has_ethics_reviewers(self, has_ethics_reviewers):
         self.conference.use_ethics_reviewers = has_ethics_reviewers
 
+    def has_secondary_area_chairs(self, has_secondary_area_chairs):
+        self.conference.has_secondary_area_chairs(has_secondary_area_chairs)
+
     def enable_reviewer_reassignment(self, enable):
         self.conference.enable_reviewer_reassignment = enable
 
