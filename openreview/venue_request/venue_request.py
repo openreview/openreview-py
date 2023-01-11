@@ -908,7 +908,7 @@ class VenueRequest():
                 'order': 9
             },
             'secondary_area_chairs': {
-                'description': 'Are you going to have secondary area chairs?.',
+                'description': 'Does your venue have Secondary Area Chairs?',
                 'value-radio': [
                     'Yes, our venue has Secondary Area Chairs',
                     'No, our venue does not have Secondary Area Chairs'
