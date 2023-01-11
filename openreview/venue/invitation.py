@@ -173,9 +173,16 @@ class InvitationBuilder(object):
             duedate=tools.datetime_millis(submission_stage.due_date) if submission_stage.due_date else None,
             expdate = tools.datetime_millis(submission_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if submission_stage.due_date else None,
             edit = {
-                'signatures': { 'param': { 'regex': '~.*' } },
+                'signatures': { 'param': { 'regex': f'~.*|{self.venue.get_program_chairs_id()}' } },
                 'readers': edit_readers,
-                'writers': [venue_id, '${2/note/content/authorids/value}'],
+                'writers': [venue_id],
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },                
                 'note': {
                     'id': {
                         'param': {
@@ -1042,6 +1049,7 @@ class InvitationBuilder(object):
         withdrawn_invitation = Invitation (
             id=self.venue.get_withdrawn_id(),
             invitees = [venue_id],
+            noninvitees = [self.venue.get_program_chairs_id()],
             signatures = [venue_id],
             readers = ['everyone'],
             writers = [venue_id],
@@ -1296,6 +1304,7 @@ class InvitationBuilder(object):
         desk_rejected_invitation = Invitation (
             id=self.venue.get_desk_rejected_id(),
             invitees = [venue_id],
+            noninvitees = [self.venue.get_program_chairs_id()],
             signatures = [venue_id],
             readers = ['everyone'],
             writers = [venue_id],
