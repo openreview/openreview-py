@@ -481,7 +481,7 @@ class TestVenueRequest():
         assert reply_row
         buttons = reply_row.find_elements_by_class_name('btn-xs')
         assert [btn for btn in buttons if btn.text == 'Recruitment']
-        reviewer_details = '''reviewer_candidate1@email.com, Reviewer One\nreviewer_candidate2@email.com, Reviewer Two'''
+        reviewer_details = '''(reviewer_candidate1@email.com, Reviewer One)\nreviewer_candidate2@email.com, Reviewer Two\n '''
         recruitment_note = test_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
