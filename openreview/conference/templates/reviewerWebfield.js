@@ -18,6 +18,7 @@ var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
 var PAPER_RANKING_ID = CONFERENCE_ID + '/' + REVIEWER_NAME + '/-/Paper_Ranking';
 var CUSTOM_MAX_PAPERS_ID = CONFERENCE_ID + '/' + REVIEWER_NAME + '/-/Custom_Max_Papers';
 
+$.getScript('https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.2/FileSaver.min.js')
 var notes = []
 var main = function() {
   // In the future this should not be necessary as the group's readers
@@ -344,7 +345,7 @@ var displayStatusTable = function(notes, officialReviews, invitations) {
     extraClasses: 'console-table'
   });
 
-  $container.empty().append(tableHTML).append('<button class="btn btn-export-pdf" type="button" style="margin-top: 0.5rem; margin-left: -1rem">Download all PDF</button>');
+  $container.empty().append(tableHTML).append('<button class="btn btn-export-pdf" type="button" style="margin-top: 0.5rem; margin-left: -1rem">Download all PDFs</button>');
 };
 
 var buildTableRow = function(note, officialReview, officialReviewInvitation) {
@@ -492,7 +493,7 @@ $("#group-container").on("click", "button.btn.btn-export-pdf", function (e) {
     isBlob: true,
     handleErrors: false
   }).then(function (result) {
-    saveAs(result, SHORT_PHRASE.replace(/\s/g, "_") + "_pdfs.zip");
+    saveAs(result, CONFERENCE_ID + "_pdfs.zip");
     $("button.btn.btn-export-pdf").prop("disabled", false).html("Download PDF");
   }, function () {
     promptError('PDF download failed');
