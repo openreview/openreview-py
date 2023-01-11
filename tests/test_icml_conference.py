@@ -458,6 +458,65 @@ reviewer6@icml.cc, Reviewer ICMLSix
         assert ['ICML.cc/2023/Conference', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1'] == submissions[0].readers    
         assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1'] == submissions[0].content['authorids']['value']
 
+        authors_group = openreview_client.get_group(id='ICML.cc/2023/Conference/Authors')
+
+        for i in range(1,101):
+            assert f'ICML.cc/2023/Conference/Submission{i}/Authors' in authors_group.members
+
+        ## delete a submission and update authors group
+        submission = submissions[0]
+        test_client.post_note_edit(invitation='ICML.cc/2023/Conference/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=openreview.api.Note(
+                id = submission.id,
+                ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                content = {
+                    'title': submission.content['title'],
+                    'abstract': submission.content['abstract'],
+                    'authorids': submission.content['authorids'],
+                    'authors': submission.content['authors'],
+                    'keywords': submission.content['keywords'],
+                    'pdf': submission.content['pdf'],
+                    'supplementary_material': submission.content['supplementary_material'],
+                    'financial_aid': submission.content['financial_aid'],                    
+                }
+            ))
+
+        helpers.await_queue(openreview_client)
+
+        authors_group = openreview_client.get_group(id='ICML.cc/2023/Conference/Authors')
+
+        assert f'ICML.cc/2023/Conference/Submission1/Authors' not in authors_group.members
+        for i in range(2,101):
+            assert f'ICML.cc/2023/Conference/Submission{i}/Authors' in authors_group.members
+
+        ## restore the submission and update the authors group
+        submission = submissions[0]
+        test_client.post_note_edit(invitation='ICML.cc/2023/Conference/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=openreview.api.Note(
+                id = submission.id,
+                ddate = { 'delete': True },
+                content = {
+                    'title': submission.content['title'],
+                    'abstract': submission.content['abstract'],
+                    'authorids': submission.content['authorids'],
+                    'authors': submission.content['authors'],
+                    'keywords': submission.content['keywords'],
+                    'pdf': submission.content['pdf'],
+                    'supplementary_material': submission.content['supplementary_material'],
+                    'financial_aid': submission.content['financial_aid'],                    
+                }
+            ))
+
+        helpers.await_queue(openreview_client)
+
+        authors_group = openreview_client.get_group(id='ICML.cc/2023/Conference/Authors')
+
+        for i in range(1,101):
+            assert f'ICML.cc/2023/Conference/Submission{i}/Authors' in authors_group.members        
+
+
     def test_ac_bidding(self, client, openreview_client, helpers, test_client):
 
         pc_client=openreview.Client(username='pc@icml.cc', password='1234')
