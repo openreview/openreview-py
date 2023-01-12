@@ -150,41 +150,34 @@ class TestICMLConference():
                 'use_recruitment_template': 'Yes',
                 'Additional Submission Options': {
                     "supplementary_material": {
-                        'value': {
-                            'param': {
-                                'type': 'file',
-                                'extensions': ['zip', 'pdf'],
-                                'maxSize': 100,
+                        "value": {
+                            "param": {
+                                "type": "file",
+                                "extensions": [
+                                    "zip",
+                                    "pdf",
+                                    "tgz",
+                                    "gz"
+                                ],
+                                "maxSize": 500,
                                 "optional": True
                             }
                         },
-                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                        "order": 7,
-                        'readers': [ 
-                            'ICML.cc/2023/Conference', 
-                            'ICML.cc/2023/Conference/Submission${4/number}/Senior_Area_Chairs', 
-                            'ICML.cc/2023/Conference/Submission${4/number}/Area_Chairs', 
-                            'ICML.cc/2023/Conference/Submission${4/number}/Authors'
-                        ]
+                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 500MB.",
+                        "order": 8
                     },
-                    "student_paper": {
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'enum': ['Yes', 'No'],
-                                'input': 'radio'
+                    "financial_aid": {
+                        "order": 9,
+                        "description": "Each paper may designate up to one (1) icml.cc account email address of a corresponding student author who confirms that they would need the support to attend the conference, and agrees to volunteer if they get selected.",
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "maxLength": 100,
+                                "optional": True
                             }
-                        },
-                        "description": "Indicate if the submission is from a student.",
-                        "order": 7,
-                        'readers': [ 
-                            'ICML.cc/2023/Conference', 
-                            'ICML.cc/2023/Conference/Submission${4/number}/Authors'
-                        ]
+                        }
                     }
-
                 }
-  
             }
         ))
         helpers.await_queue()
@@ -192,7 +185,7 @@ class TestICMLConference():
         submission_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Submission')
         assert submission_invitation
         assert 'supplementary_material' in submission_invitation.edit['note']['content']
-        assert 'student_paper' in submission_invitation.edit['note']['content']
+        assert 'financial_aid' in submission_invitation.edit['note']['content']
 
 
 
@@ -447,7 +440,7 @@ reviewer6@icml.cc, Reviewer ICMLSix
                     'keywords': { 'value': ['machine learning', 'nlp'] },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
-                    'student_paper': { 'value': 'Yes' }
+                    'financial_aid': { 'value': 'Yes' }
                 }
             )
             if i == 1:
@@ -458,11 +451,70 @@ reviewer6@icml.cc, Reviewer ICMLSix
                 signatures=['~SomeFirstName_User1'],
                 note=note)
 
-        helpers.await_queue()
+        helpers.await_queue(openreview_client)
 
         submissions = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 100
-        assert ['ICML.cc/2023/Conference', 'ICML.cc/2023/Conference/Submission1/Authors'] == submissions[0].readers    
+        assert ['ICML.cc/2023/Conference', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1'] == submissions[0].readers    
+        assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1'] == submissions[0].content['authorids']['value']
+
+        authors_group = openreview_client.get_group(id='ICML.cc/2023/Conference/Authors')
+
+        for i in range(1,101):
+            assert f'ICML.cc/2023/Conference/Submission{i}/Authors' in authors_group.members
+
+        ## delete a submission and update authors group
+        submission = submissions[0]
+        test_client.post_note_edit(invitation='ICML.cc/2023/Conference/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=openreview.api.Note(
+                id = submission.id,
+                ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                content = {
+                    'title': submission.content['title'],
+                    'abstract': submission.content['abstract'],
+                    'authorids': submission.content['authorids'],
+                    'authors': submission.content['authors'],
+                    'keywords': submission.content['keywords'],
+                    'pdf': submission.content['pdf'],
+                    'supplementary_material': submission.content['supplementary_material'],
+                    'financial_aid': submission.content['financial_aid'],                    
+                }
+            ))
+
+        helpers.await_queue(openreview_client)
+
+        authors_group = openreview_client.get_group(id='ICML.cc/2023/Conference/Authors')
+
+        assert f'ICML.cc/2023/Conference/Submission1/Authors' not in authors_group.members
+        for i in range(2,101):
+            assert f'ICML.cc/2023/Conference/Submission{i}/Authors' in authors_group.members
+
+        ## restore the submission and update the authors group
+        submission = submissions[0]
+        test_client.post_note_edit(invitation='ICML.cc/2023/Conference/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=openreview.api.Note(
+                id = submission.id,
+                ddate = { 'delete': True },
+                content = {
+                    'title': submission.content['title'],
+                    'abstract': submission.content['abstract'],
+                    'authorids': submission.content['authorids'],
+                    'authors': submission.content['authors'],
+                    'keywords': submission.content['keywords'],
+                    'pdf': submission.content['pdf'],
+                    'supplementary_material': submission.content['supplementary_material'],
+                    'financial_aid': submission.content['financial_aid'],                    
+                }
+            ))
+
+        helpers.await_queue(openreview_client)
+
+        authors_group = openreview_client.get_group(id='ICML.cc/2023/Conference/Authors')
+
+        for i in range(1,101):
+            assert f'ICML.cc/2023/Conference/Submission{i}/Authors' in authors_group.members        
 
 
     def test_ac_bidding(self, client, openreview_client, helpers, test_client):
@@ -474,7 +526,8 @@ reviewer6@icml.cc, Reviewer ICMLSix
         pc_client.post_note(openreview.Note(
             content= {
                 'force': 'Yes',
-                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)'
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                'hide_fields': ['financial_aid']
             },
             forum= request_form.id,
             invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
@@ -487,13 +540,20 @@ reviewer6@icml.cc, Reviewer ICMLSix
 
         helpers.await_queue()
 
-        submissions = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
+        ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password='1234')
+        submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 100
         assert ['ICML.cc/2023/Conference', 
         'ICML.cc/2023/Conference/Senior_Area_Chairs',
         'ICML.cc/2023/Conference/Area_Chairs',
         'ICML.cc/2023/Conference/Reviewers',
         'ICML.cc/2023/Conference/Submission1/Authors'] == submissions[0].readers
+        assert ['ICML.cc/2023/Conference', 
+        'ICML.cc/2023/Conference/Submission1/Authors'] == submissions[0].writers
+        assert ['ICML.cc/2023/Conference/Submission1/Authors'] == submissions[0].signatures        
+        assert 'authorids' not in submissions[0].content
+        assert 'authors' not in submissions[0].content
+        assert 'financial_aid'not in submissions[0].content
 
         with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)

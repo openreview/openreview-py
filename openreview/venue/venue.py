@@ -205,7 +205,8 @@ class Venue(object):
         return self.area_chairs_name
     
     def get_reviewers_id(self, number = None, anon=False, submitted=False):
-        reviewers_id = self.get_committee_id('Reviewer_.*' if anon else self.reviewers_name, number)
+        rev_name = self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
+        reviewers_id = self.get_committee_id(f'{rev_name}_.*' if anon else self.reviewers_name, number)
         if submitted:
             return reviewers_id + '/Submitted'
         return reviewers_id
@@ -220,7 +221,8 @@ class Venue(object):
         return self.get_committee_id(self.program_chairs_name)
 
     def get_area_chairs_id(self, number = None, anon=False):
-        return self.get_committee_id('Area_Chair_.*' if anon else self.area_chairs_name, number)
+        ac_name = self.area_chairs_name[:-1] if self.area_chairs_name.endswith('s') else self.area_chairs_name
+        return self.get_committee_id(f'{ac_name}_.*' if anon else self.area_chairs_name, number)
 
     ## Compatibility with Conference, refactor conference references to use get_area_chairs_id
     def get_anon_area_chair_id(self, number, anon_id):
@@ -386,18 +388,35 @@ class Venue(object):
     
     def setup_post_submission_stage(self, force=False, hide_fields=[], venueid=None):
         venue_id = self.venue_id
-        submissions = self.get_submissions(venueid=self.get_submission_venue_id(f"{venueid}/Submission"))
+        #submissions = self.get_submissions(venueid=self.get_submission_venue_id(f"{venueid}/Submission"))
+        submissions = self.get_submissions()
+        hide_author_fields = ['authors', 'authorids'] if self.submission_stage.double_blind else []
+        final_hide_fields = hide_author_fields + hide_fields
         
         self.group_builder.create_paper_committee_groups(submissions)
         
         def update_submission_readers(submission):
-            if submission.content['venueid']['value'] == self.get_submission_venue_id(f"{venueid}/Submission"):
+            #if submission.content['venueid']['value'] == self.get_submission_venue_id(f"{venueid}/Submission"):
+            if submission.content['venueid']['value'] == self.get_submission_venue_id():
+                note_content = {}
+                for field in final_hide_fields:
+                    note_content[field] = {
+                        'readers': [venue_id, self.get_authors_id(submission.number)]
+                    }
+
+                note_readers = self.submission_stage.get_readers(self, submission.number)
+                note_writers = [venue_id,self.get_authors_id(submission.number)]
+                note_signatures = [self.get_authors_id(submission.number)]
+
                 return self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
                     readers=[venue_id],
                     writers=[venue_id],
                     signatures=[venue_id],
                     note=openreview.api.Note(id=submission.id,
-                            readers = self.submission_stage.get_readers(self, submission.number)
+                            readers = note_readers,
+                            writers = note_writers,
+                            signatures = note_signatures,
+                            content = note_content 
                         )
                     )
         ## Release the submissions to specified readers if venueid is still submission

@@ -129,10 +129,6 @@ class InvitationBuilder(object):
 
         content = default_content.submission_v2.copy()
         
-        if submission_stage.double_blind:
-            content['authors']['readers'] = [venue_id, self.venue.get_authors_id('${4/number}')]
-            content['authorids']['readers'] = [venue_id, self.venue.get_authors_id('${4/number}')]
-
         for field in submission_stage.remove_fields:
             del content[field]
 
@@ -161,8 +157,8 @@ class InvitationBuilder(object):
             }
         }
 
-        edit_readers = ['everyone'] if submission_stage.create_groups else [venue_id, self.venue.get_authors_id('${2/note/number}')]
-        note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, self.venue.get_authors_id('${2/number}')]
+        edit_readers = ['everyone'] if submission_stage.create_groups else [venue_id, '${2/note/content/authorids/value}']
+        note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, '${2/content/authorids/value}']
 
         submission_id = submission_stage.get_submission_id(self.venue)
         submission_cdate = tools.datetime_millis(submission_stage.start_date if submission_stage.start_date else datetime.datetime.utcnow())
@@ -177,9 +173,16 @@ class InvitationBuilder(object):
             duedate=tools.datetime_millis(submission_stage.due_date) if submission_stage.due_date else None,
             expdate = tools.datetime_millis(submission_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if submission_stage.due_date else None,
             edit = {
-                'signatures': { 'param': { 'regex': '~.*' } },
+                'signatures': { 'param': { 'regex': f'~.*|{self.venue.get_program_chairs_id()}' } },
                 'readers': edit_readers,
-                'writers': [venue_id, self.venue.get_authors_id('${2/note/number}')],
+                'writers': [venue_id],
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },                
                 'note': {
                     'id': {
                         'param': {
@@ -194,9 +197,9 @@ class InvitationBuilder(object):
                             'deletable': True
                         }
                     },                    
-                    'signatures': [ self.venue.get_authors_id('${2/number}') ],
+                    'signatures': [ '${3/signatures}' ],
                     'readers': note_readers,
-                    'writers': [venue_id, self.venue.get_authors_id('${2/number}')],
+                    'writers': [venue_id, '${2/content/authorids/value}'],
                     'content': content
                 }
             },
@@ -1189,6 +1192,7 @@ class InvitationBuilder(object):
         withdrawn_invitation = Invitation (
             id=self.venue.get_withdrawn_id(),
             invitees = [venue_id],
+            noninvitees = [self.venue.get_program_chairs_id()],
             signatures = [venue_id],
             readers = ['everyone'],
             writers = [venue_id],
@@ -1443,6 +1447,7 @@ class InvitationBuilder(object):
         desk_rejected_invitation = Invitation (
             id=self.venue.get_desk_rejected_id(),
             invitees = [venue_id],
+            noninvitees = [self.venue.get_program_chairs_id()],
             signatures = [venue_id],
             readers = ['everyone'],
             writers = [venue_id],
@@ -1704,53 +1709,47 @@ class InvitationBuilder(object):
         invitation = client.get_invitation(venue.get_assignment_id(committee_id, deployed=True))
         is_area_chair = committee_id == venue.get_area_chairs_id()
         is_senior_area_chair = committee_id == venue.get_senior_area_chairs_id()
-        is_ethics_reviewer = committee_id == venue.get_ethics_reviewers_id()
 
-        review_invitation_name = venue.review_stage.name
-        anon_regex = venue.get_reviewers_id('{number}', True)
+        review_invitation_name = venue.review_stage.name if venue.review_stage else 'Official_Review'
+        anon_prefix = venue.get_reviewers_id('{number}', True)
         paper_group_id = venue.get_reviewers_id(number='{number}')
         group_name = venue.get_reviewers_name(pretty=True)
 
         if is_area_chair:
-            review_invitation_name = venue.meta_review_stage.name
-            anon_regex = venue.get_area_chairs_id('{number}', '.*', True)
+            review_invitation_name = venue.meta_review_stage.name if venue.meta_review_stage else 'Meta_Review'
+            anon_prefix = venue.get_area_chairs_id('{number}', True)
             paper_group_id = venue.get_area_chairs_id(number='{number}')
             group_name = venue.get_area_chairs_name(pretty=True)
-        if is_ethics_reviewer:
-            review_invitation_name = venue.ethics_review_stage.name
-            anon_regex = venue.get_ethics_reviewers_id('{number}', '.*', True)
-            paper_group_id = venue.get_ethics_reviewers_id(number='{number}')
-            group_name = venue.get_ethics_reviewers_name(pretty=True)
 
-        # if is_senior_area_chair:
-        #     with open(os.path.join(os.path.dirname(__file__), 'process/sac_assignment_post_process.py')) as post:
-        #         post_content = post.read()
-        #         post_content = post_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + venue.id + "'")
-        #         post_content = post_content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + venue.get_senior_area_chairs_id(number='{number}') + "'")
-        #         post_content = post_content.replace("AC_ASSIGNMENT_INVITATION_ID = ''", "AC_ASSIGNMENT_INVITATION_ID = '" + venue.get_paper_assignment_id(venue.get_area_chairs_id(), deployed=True) + "'")
-        #         invitation.process=post_content
-        #         invitation.signatures=[venue.get_program_chairs_id()] ## Program Chairs can see the reviews
-        #         return self.save_invitation(invitation)
+        if is_senior_area_chair:
+            with open(os.path.join(os.path.dirname(__file__), 'process/sac_assignment_post_process.py')) as post:
+                post_content = post.read()
+                post_content = post_content.replace("VENUE_ID = ''", "VENUE_ID = '" + venue.id + "'")
+                post_content = post_content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + venue.get_senior_area_chairs_id(number='{number}') + "'")
+                post_content = post_content.replace("AC_ASSIGNMENT_INVITATION_ID = ''", "AC_ASSIGNMENT_INVITATION_ID = '" + venue.get_assignment_id(venue.get_area_chairs_id(), deployed=True) + "'")
+                invitation.process=post_content
+                invitation.signatures=[venue.get_program_chairs_id()] ## Program Chairs can see the reviews
+                return self.save_invitation(invitation)
 
-        # with open(os.path.join(os.path.dirname(__file__), 'process/assignment_pre_process.py')) as pre:
-        #     pre_content = pre.read()
-        #     pre_content = pre_content.replace("REVIEW_INVITATION_ID = ''", "REVIEW_INVITATION_ID = '" + venue.get_invitation_id(review_invitation_name, '{number}') + "'")
-        #     pre_content = pre_content.replace("ANON_REVIEWER_REGEX = ''", "ANON_REVIEWER_REGEX = '" + anon_regex + "'")
-        #     with open(os.path.join(os.path.dirname(__file__), 'process/assignment_post_process.py')) as post:
-        #         post_content = post.read()
-        #         post_content = post_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + venue.id + "'")
-        #         post_content = post_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{venue.get_short_name()}"')
-        #         post_content = post_content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + paper_group_id + "'")
-        #         post_content = post_content.replace("GROUP_NAME = ''", "GROUP_NAME = '" + group_name + "'")
-        #         post_content = post_content.replace("GROUP_ID = ''", "GROUP_ID = '" + committee_id + "'")
-        #         if venue.use_senior_area_chairs and is_area_chair:
-        #             post_content = post_content.replace("SYNC_SAC_ID = ''", "SYNC_SAC_ID = '" + venue.get_senior_area_chairs_id(number='{number}') + "'")
-        #             post_content = post_content.replace("SAC_ASSIGNMENT_INVITATION_ID = ''", "SAC_ASSIGNMENT_INVITATION_ID = '" + venue.get_paper_assignment_id(venue.get_senior_area_chairs_id(), deployed=True) + "'")
-        #         invitation.process=post_content
-        #         invitation.preprocess=pre_content
-        #         invitation.signatures=[venue.get_program_chairs_id()] ## Program Chairs can see the reviews
-        #         return self.save_invitation(invitation)
-    
+        with open(os.path.join(os.path.dirname(__file__), 'process/assignment_pre_process.py')) as pre:
+            pre_content = pre.read()
+            pre_content = pre_content.replace("REVIEW_INVITATION_ID = ''", "REVIEW_INVITATION_ID = '" + venue.get_invitation_id(review_invitation_name, '{number}') + "'")
+            pre_content = pre_content.replace("ANON_REVIEWER_PREFIX = ''", "ANON_REVIEWER_PREFIX = '" + anon_prefix + "'")
+            with open(os.path.join(os.path.dirname(__file__), 'process/assignment_post_process.py')) as post:
+                post_content = post.read()
+                post_content = post_content.replace("VENUE_ID = ''", "VENUE_ID = '" + venue.id + "'")
+                post_content = post_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{venue.get_short_name()}"')
+                post_content = post_content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + paper_group_id + "'")
+                post_content = post_content.replace("GROUP_NAME = ''", "GROUP_NAME = '" + group_name + "'")
+                post_content = post_content.replace("GROUP_ID = ''", "GROUP_ID = '" + committee_id + "'")
+                if venue.use_senior_area_chairs and is_area_chair:
+                    post_content = post_content.replace("SYNC_SAC_ID = ''", "SYNC_SAC_ID = '" + venue.get_senior_area_chairs_id(number='{number}') + "'")
+                    post_content = post_content.replace("SAC_ASSIGNMENT_INVITATION_ID = ''", "SAC_ASSIGNMENT_INVITATION_ID = '" + venue.get_assignment_id(venue.get_senior_area_chairs_id(), deployed=True) + "'")
+                invitation.process=post_content
+                invitation.preprocess=pre_content
+                invitation.signatures=[venue.get_program_chairs_id()] ## Program Chairs can see the reviews
+                return self.save_invitation(invitation)
+
     def set_expertise_selection_invitations(self):
 
         venue_id = self.venue_id

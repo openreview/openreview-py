@@ -6,6 +6,7 @@ import datetime
 import random
 import os
 import re
+from string import ascii_lowercase as alc
 from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.journal import Journal
@@ -1252,7 +1253,7 @@ The TMLR Editors-in-Chief
         assert len(messages) == 5
 
         messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
-        assert len(messages) == 6
+        assert len(messages) == 8
 
         messages = journal.client.get_messages(to= 'raia@mail.com', subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
         assert len(messages) == 2
@@ -1267,6 +1268,25 @@ Submission: Paper title UPDATED
 Link: https://openreview.net/forum?id={note_id_1}
 
 OpenReview Team
+'''
+
+        messages = journal.client.get_messages(to= 'joelle@mailseven.com', subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 4
+
+        assert messages[2]['content']['text'] == f'''Hi Joelle Pineau,
+
+Our records show that a reviewer on a paper you are the AE for is *one month* late on a reviewing task:
+
+Task: Review
+Reviewer: Carlos Mondragon
+Submission: Paper title UPDATED
+Link: https://openreview.net/forum?id={note_id_1}
+
+Please follow up directly with the reviewer in question to ensure they complete their task ASAP.
+
+We thank you for your cooperation.
+
+The TMLR Editors-in-Chief
 '''
 
 
@@ -3683,8 +3703,6 @@ The TMLR Editors-in-Chief
 
         note = openreview_client.get_note(note_id_10)
         journal.invitation_builder.expire_paper_invitations(note)
-        journal.invitation_builder.expire_reviewer_responsibility_invitations()
-        journal.invitation_builder.expire_assignment_availability_invitations()
 
         ## Check pending review edges
         edges = joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews')
@@ -3696,5 +3714,64 @@ The TMLR Editors-in-Chief
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 0
 
 
+    def test_submission_with_many_authors(self, journal, openreview_client, test_client, helpers):
 
+        test_client = OpenReviewClient(username='test@mail.com', password='1234')
+        venue_id = journal.venue_id
+        raia_client = OpenReviewClient(username='raia@mail.com', password='1234')
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password='1234')
+        editor_in_chief_group_id = journal.get_editors_in_chief_id()
 
+        authors = ['SomeFirstName User']
+        authorids = ['~SomeFirstName_User1']
+        for i in alc:
+            for j in alc[:5]:
+                profile_client = helpers.create_user(f'author_{i}{j}@mail.com', 'Author', f'TMLR {i}{j}')
+                authors.append(f'Author TMLR {i}{j}')
+                authorids.append(f'~Author_TMLR_{i}{j}1')
+        
+        submission_note_11 = test_client.post_note_edit(invitation='TMLR/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title 4' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': authors},
+                    'authorids': { 'value': authorids},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Long submission (more than 12 pages of main content)'},
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_11['id'])
+        note_id_11 = submission_note_11['note']['id']
+
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_11,
+            tail='~Joelle_Pineau1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        note = openreview_client.get_note(note_id_11)
+
+        ## Accept the submission 8
+        under_review_note = joelle_client.post_note_edit(invitation= f'TMLR/Paper{note.number}/-/Review_Approval',
+                                    signatures=[f'{venue_id}/Paper{note.number}/Action_Editors'],
+                                    note=Note(content={
+                                        'under_review': { 'value': 'Appropriate for Review' }
+                                    }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
+              
+        note = openreview_client.get_note(note_id_11)
+        journal.invitation_builder.expire_paper_invitations(note)
+        journal.invitation_builder.expire_reviewer_responsibility_invitations()
+        journal.invitation_builder.expire_assignment_availability_invitations()
