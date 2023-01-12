@@ -249,22 +249,32 @@ class TestVenueSubmission():
             writers=['TestVenue.cc'],
             signatures=['TestVenue.cc'],
             invitation=openreview.api.Invitation(id='TestVenue.cc/-/Official_Review',
-                cdate=new_cdate,
-                signatures=['TestVenue.cc']
+                signatures=['TestVenue.cc'],
+                edit = {
+                    'invitation': {
+                        'cdate': new_cdate
+                    }
+                }
             )
         )
 
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Official_Review-0-0')
 
-        invitation = openreview_client.get_invitation('TestVenue.cc/-/Official_Review')
-        assert invitation.cdate == new_cdate
+        invitations = openreview_client.get_invitations(invitation='TestVenue.cc/-/Official_Review')
+        assert len(invitations) == 2
+        #assert invitation.cdate == new_cdate
         invitation = openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
-        ##assert invitation.cdate == new_cdate
+        assert invitation.cdate == new_cdate
         assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/Submission1/Area_Chairs", "${3/signatures}"]
 
         now = datetime.datetime.utcnow()
         venue.review_stage = openreview.stages.ReviewStage(start_date=now + datetime.timedelta(minutes = 4), due_date=now + datetime.timedelta(minutes = 40), release_to_authors=True)
         venue.create_review_stage()
+
+        invitation = openreview_client.get_invitation('TestVenue.cc/-/Official_Review')
+        assert invitation.edit['invitation']['edit']['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/Submission${5/content/noteNumber/value}/Area_Chairs", "${3/signatures}", "TestVenue.cc/Submission${5/content/noteNumber/value}/Authors"]
+
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Official_Review-1-0', count=2)
 
         invitation = openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
         assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/Submission1/Area_Chairs", "${3/signatures}", "TestVenue.cc/Submission1/Authors"]
@@ -300,6 +310,8 @@ class TestVenueSubmission():
                 }
             )
         )        
+
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Official_Review-1-0', count=3)
 
         invitation = openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
         assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/Submission1/Area_Chairs", "${3/signatures}", "TestVenue.cc/Submission1/Authors"]

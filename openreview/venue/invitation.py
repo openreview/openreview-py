@@ -246,14 +246,13 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            cdate=review_cdate,
-            duedate=review_duedate,
-            expdate = review_expdate,
-            process = self.get_process_content('process/invitation_post_process.py'),
-            # date_processes=[{ 
-            #     'dates': ["#{4/mdate}"],
-            #     'script': self.tmdate_invitation_process              
-            # }],
+            date_processes=[{ 
+                'dates': ["#{4/edit/invitation/cdate}"],
+                'script': self.cdate_invitation_process              
+            }, { 
+                'dates': ["#{4/mdate} + 10000"],
+                'script': self.get_process_content('process/review_invitation_process.py')              
+            }],
             content={
                 'review_process_script': {
                     'value': self.get_process_content('process/review_process.py')
