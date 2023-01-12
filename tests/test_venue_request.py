@@ -481,7 +481,7 @@ class TestVenueRequest():
         assert reply_row
         buttons = reply_row.find_elements_by_class_name('btn-xs')
         assert [btn for btn in buttons if btn.text == 'Recruitment']
-        reviewer_details = '''reviewer_candidate1@email.com, Reviewer One\nreviewer_candidate2@email.com, Reviewer Two'''
+        reviewer_details = '''(reviewer_candidate1@email.com, Reviewer One)\nreviewer_candidate2@email.com, Reviewer Two\n '''
         recruitment_note = test_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
@@ -2288,10 +2288,10 @@ TestVenue@OR'2030 Program Chairs
 
         note_id = submissions[0].id
         assert '_bibtex' in submissions[0].content and submissions[0].content['_bibtex'] == '''@misc{
-anonymous2022test,
+anonymous''' + str(datetime.datetime.today().year) + '''test,
 title={test submission},
 author={Anonymous},
-year={2022},
+year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id='''+ note_id + '''}
 }'''
 
@@ -2356,10 +2356,10 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
 
         note_id = submissions[0].id
         assert '_bibtex' in submissions[0].content and submissions[0].content['_bibtex'] == '''@misc{
-anonymous2022test,
+anonymous''' + str(datetime.datetime.today().year) + '''test,
 title={test submission},
 author={Anonymous},
-year={2022},
+year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id='''+ note_id + '''}
 }'''
 

@@ -51,7 +51,7 @@ class TestTACLJournal():
                                 'Featured Certification',
                                 'Reproducibility Certification',
                                 'Survey Certification'
-                            ]                            
+                            ]
                         }
                     }
                 }
@@ -67,10 +67,10 @@ class TestTACLJournal():
         ## Reviewers
         david_client=helpers.create_user('david@taclone.com', 'David', 'Bensusan')
         javier_client=helpers.create_user('javier@tacltwo.com', 'Javier', 'Barden')
-        carlos_client=helpers.create_user('carlos@taclthree.com', 'Carlos', 'Gardel')        
+        carlos_client=helpers.create_user('carlos@taclthree.com', 'Carlos', 'Gardel')
 
         ## Authors
-        melisa_client=helpers.create_user('melisa@taclfour.com', 'Melisa', 'Andersen')        
+        melisa_client=helpers.create_user('melisa@taclfour.com', 'Melisa', 'Andersen')
 
         openreview_client.add_members_to_group('TACL/Reviewers', ['~David_Bensusan1', '~Carlos_Gardel1', '~Javier_Barden1'])
 
@@ -198,7 +198,7 @@ If you think the submission can continue through TACL's review process, click th
 We thank you for your essential contribution to TACL!
 
 The TACL Editors-in-Chief
-'''        
+'''
 
         ## Accept the submission 1
         under_review_note = graham_client.post_note_edit(invitation= 'TACL/Paper1/-/Review_Approval',
@@ -224,14 +224,14 @@ anonymous''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''p
 title={Paper title {UPDATED}},
 author={Anonymous},
 journal={Submitted to Transactions of the Association for Computational Linguistics},
-year={2022},
+year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Under review}
 }'''
 
         edits = openreview_client.get_note_edits(note.id, invitation='TACL/-/Under_Review')
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
-        
+
         invitations = openreview_client.get_invitations(prefix='TACL/Paper', replyForum=note_id_1)
         assert "TACL/Paper1/-/Revision"  in [i.id for i in invitations]
         assert "TACL/Paper1/-/Withdrawal"  in [i.id for i in invitations]
@@ -239,7 +239,7 @@ note={Under review}
         assert "TACL/Paper1/-/Volunteer_to_Review" not in [i.id for i in invitations]
         assert "TACL/Paper1/-/Public_Comment" not in [i.id for i in invitations]
         assert "TACL/Paper1/-/Official_Comment" in [i.id for i in invitations]
-        assert "TACL/Paper1/-/Moderation" not in [i.id for i in invitations] 
+        assert "TACL/Paper1/-/Moderation" not in [i.id for i in invitations]
 
         edits = openreview_client.get_note_edits(note.id)
         assert len(edits) == 3
@@ -312,7 +312,7 @@ note: replies to this email will go to the AE, Graham Neubig.
             weight=1
         ))
 
-        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id) 
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         reviewerrs_group = brian_client.get_group('TACL/Paper1/Reviewers')
         assert reviewerrs_group.members == ['~David_Bensusan1', '~Carlos_Gardel1', '~Javier_Barden1']
@@ -330,10 +330,10 @@ note: replies to this email will go to the AE, Graham Neubig.
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                    
+                    'audience': { 'value': 'Yes' }
                 }
             )
-        )        
+        )
 
         helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'])
 
@@ -356,7 +356,7 @@ note: replies to this email will go to the AE, Graham Neubig.
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'])
-        
+
         javier_anon_groups=javier_client.get_groups(prefix='TACL/Paper1/Reviewer_.*', signatory='~Javier_Barden1')
         assert len(javier_anon_groups) == 1
 
@@ -370,7 +370,7 @@ note: replies to this email will go to the AE, Graham Neubig.
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                    
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -390,10 +390,10 @@ note: replies to this email will go to the AE, Graham Neubig.
         invitations = openreview_client.get_invitations(replyForum=note_id_1, prefix='TACL/Paper1')
         assert len(invitations) == 6
         assert "TACL/Paper1/-/Official_Comment" in [i.id for i in invitations]
-        assert "TACL/Paper1/-/Review" in [i.id for i in invitations]        
-        assert "TACL/Paper1/-/Revision" in [i.id for i in invitations]        
-        assert "TACL/Paper1/-/Withdrawal" in [i.id for i in invitations]        
-        assert "TACL/Paper1/-/Desk_Rejection" in [i.id for i in invitations]        
+        assert "TACL/Paper1/-/Review" in [i.id for i in invitations]
+        assert "TACL/Paper1/-/Revision" in [i.id for i in invitations]
+        assert "TACL/Paper1/-/Withdrawal" in [i.id for i in invitations]
+        assert "TACL/Paper1/-/Desk_Rejection" in [i.id for i in invitations]
         assert "TACL/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
 
         official_comment_invitation = openreview_client.get_invitation("TACL/Paper1/-/Official_Comment")
@@ -446,7 +446,7 @@ The TACL Editors-in-Chief
 note: replies to this email will go to the AE, Graham Neubig.
 '''
         messages = journal.client.get_messages(subject = '[TACL] Reviewers must submit official recommendation for TACL submission Paper title UPDATED')
-        assert len(messages) == 1 
+        assert len(messages) == 1
 
         david_anon_groups=david_client.get_groups(prefix='TACL/Paper1/Reviewer_.*', signatory='~David_Bensusan1')
 
@@ -457,7 +457,7 @@ note: replies to this email will go to the AE, Graham Neubig.
                     'decision_recommendation': { 'value': 'Leaning Accept' },
                     'certification_recommendations': { 'value': ['Survey Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                  
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -473,7 +473,7 @@ note: replies to this email will go to the AE, Graham Neubig.
                     'decision_recommendation': { 'value': 'Leaning Accept' },
                     'certification_recommendations': { 'value': ['Survey Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                  
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -481,7 +481,7 @@ note: replies to this email will go to the AE, Graham Neubig.
         helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
 
         javier_anon_groups=javier_client.get_groups(prefix='TACL/Paper1/Reviewer_.*', signatory='~Javier_Barden1')
-        
+
         official_recommendation_note = javier_client.post_note_edit(invitation='TACL/Paper1/-/Official_Recommendation',
             signatures=[javier_anon_groups[0].id],
             note=Note(
@@ -489,7 +489,7 @@ note: replies to this email will go to the AE, Graham Neubig.
                     'decision_recommendation': { 'value': 'Leaning Accept' },
                     'certification_recommendations': { 'value': ['Survey Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                  
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -636,7 +636,7 @@ anonymous''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''p
 title={Paper title {VERSION} 2},
 author={Anonymous},
 journal={Transactions of the Association for Computational Linguistics},
-year={2022},
+year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Featured Certification, Reproducibility Certification}
 }'''
@@ -651,7 +651,7 @@ note={Featured Certification, Reproducibility Certification}
         test_client = OpenReviewClient(username='test@mail.com', password='1234')
         brian_client = OpenReviewClient(username='brian@mail.com', password='1234')
         graham_client = OpenReviewClient(username='graham@mailseven.com', password='1234')
-                
+
 
         ## Post the submission 2
         submission_note_2 = test_client.post_note_edit(invitation='TACL/-/Submission',
@@ -719,12 +719,11 @@ anonymous''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''p
 title={Paper title 2},
 author={Anonymous},
 journal={Submitted to Transactions of the Association for Computational Linguistics},
-year={2022},
+year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_2 + '''},
 note={Withdrawn}
 }'''
 
-        
         helpers.await_queue_edit(openreview_client, invitation='TACL/-/Withdrawn')
 
         edits = openreview_client.get_note_edits(note.id)

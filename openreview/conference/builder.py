@@ -1340,7 +1340,7 @@ class Conference(object):
         reviewers_invited_id = reviewers_id + '/Invited'
         reviewers_accepted_id = reviewers_id
         hash_seed = '1234'
-        invitees = [e.lower() if '@' in e else e for e in invitees]
+        invitees = [e.lower() if '@' in e else e for e in invitees if len(e) > 0]
         self.set_default_load(default_load, reviewers_name)
 
         reviewers_accepted_group = self.__create_group(reviewers_accepted_id, pcs_id)
