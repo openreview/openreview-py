@@ -38,7 +38,7 @@ class TestVenueSubmissionARR():
         return venue
 
     def test_setup(self, venue, openreview_client, helpers):
-        cycle = '2023/March'
+        cycle = '2023_March'
         cycleid = f"{cycle}/Submission"
 
         venue.setup(program_chair_ids=['editors@aclrollingreview.org'], venueid=cycleid)
@@ -126,7 +126,7 @@ class TestVenueSubmissionARR():
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id']) 
 
     def test_post_submission_stage(self, venue, openreview_client):
-        cycle = '2023/March'
+        cycle = '2023_March'
     
         venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS, SubmissionStage.Readers.AREA_CHAIRS]
         venue.setup_post_submission_stage(venueid=cycle)
@@ -150,47 +150,51 @@ class TestVenueSubmissionARR():
         assert openreview_client.get_invitation('ARR/Submission2/-/Desk_Rejection')
 
     def test_review_stage(self, venue, openreview_client, helpers):
-        cycle = '2023/March'
+        cycle = '2023_March'
 
-        assert openreview_client.get_invitation('ARR/-/2023/March/Official_Review')
-        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation ARR/Submission1/-/2023/March/Official_Review was not found'):
-            assert openreview_client.get_invitation('ARR/Submission1/-/2023/March/Official_Review')
+        assert openreview_client.get_invitation(f'ARR/-/{cycle}/Official_Review')
+        with pytest.raises(openreview.OpenReviewException, match=rf'The Invitation ARR/Submission1/-/{cycle}/Official_Review was not found'):
+            assert openreview_client.get_invitation(f'ARR/Submission1/-/{cycle}/Official_Review')
 
         openreview_client.post_invitation_edit(
-            invitations='ARR/-/Edit',
+            invitations='ARR/-/Official_Review',
             readers=['ARR'],
             writers=['ARR'],
             signatures=['ARR'],
-            invitation=openreview.api.Invitation(id='ARR/-/2023/March/Official_Review',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
+            content={
+                'cycleId': {
+                    'value': cycle
+                }
+            },
+            invitation=openreview.api.Invitation(id=f'ARR/-/{cycle}/Official_Review',
                 signatures=['ARR']
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'ARR/-/2023/March/Official_Review-0-0')
+        helpers.await_queue_edit(openreview_client, f'ARR/-/{cycle}/Official_Review-0-0')
 
-        assert openreview_client.get_invitation('ARR/-/2023/March/Official_Review')
-        assert openreview_client.get_invitation('ARR/Submission1/-/2023/March/Official_Review')
+        assert openreview_client.get_invitation(f'ARR/-/{cycle}/Official_Review')
+        assert openreview_client.get_invitation(f'ARR/Submission1/-/{cycle}/Official_Review')
 
     def test_meta_review_stage(self, venue, openreview_client, helpers):
-        cycle = '2023/March'
+        cycle = '2023_March'
 
-        assert openreview_client.get_invitation('ARR/-/2023/March/Meta_Review')
-        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation ARR/Submission1/-/2023/March/Meta_Review was not found'):
-            assert openreview_client.get_invitation('ARR/Submission1/-/2023/March/Meta_Review')
+        assert openreview_client.get_invitation(f'ARR/-/{cycle}/Meta_Review')
+        with pytest.raises(openreview.OpenReviewException, match=rf'The Invitation ARR/Submission1/-/{cycle}/Meta_Review was not found'):
+            assert openreview_client.get_invitation(f'ARR/Submission1/-/{cycle}/Meta_Review')
 
         openreview_client.post_invitation_edit(
             invitations='ARR/-/Edit',
             readers=['ARR'],
             writers=['ARR'],
             signatures=['ARR'],
-            invitation=openreview.api.Invitation(id='ARR/-/2023/March/Meta_Review',
+            invitation=openreview.api.Invitation(id=f'ARR/-/{cycle}/Meta_Review',
                 cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
                 signatures=['ARR']
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'ARR/-/2023/March/Meta_Review-0-0')
+        helpers.await_queue_edit(openreview_client, f'ARR/-/{cycle}/Meta_Review-0-0')
         
-        assert openreview_client.get_invitation('ARR/-/2023/March/Meta_Review')
-        assert openreview_client.get_invitation('ARR/Submission1/-/2023/March/Meta_Review')
+        assert openreview_client.get_invitation(f'ARR/-/{cycle}/Meta_Review')
+        assert openreview_client.get_invitation(f'ARR/Submission1/-/{cycle}/Meta_Review')

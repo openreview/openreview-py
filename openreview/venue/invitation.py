@@ -28,8 +28,8 @@ class InvitationBuilder(object):
     funcs['process'](client, invitation)
 '''
 
-    def save_invitation(self, invitation, replacement=None):
-        self.client.post_invitation_edit(invitations=self.venue.get_meta_invitation_id(),
+    def save_invitation(self, invitation, invitations=None, replacement=None):
+        self.client.post_invitation_edit(invitations=self.venue.get_meta_invitation_id() if invitations is None else invitations,
             readers=[self.venue_id],
             writers=[self.venue_id],
             signatures=[self.venue_id],
@@ -205,7 +205,146 @@ class InvitationBuilder(object):
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=True)
 
-    def set_review_invitation(self, venueid=None):
+    def set_cycle_review_invitation(self, venueid=None):
+
+        venue_id = self.venue_id
+        review_stage = self.venue.review_stage
+        review_invitation_id = self.venue.get_invitation_id(review_stage.name)
+        review_cdate = tools.datetime_millis(review_stage.start_date if review_stage.start_date else datetime.datetime.utcnow())
+        review_duedate = tools.datetime_millis(review_stage.due_date) if review_stage.due_date else None
+        review_expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None
+        content = default_content.review_v2.copy()
+
+        for key in review_stage.additional_fields:
+            content[key] = review_stage.additional_fields[key]
+
+        for field in review_stage.remove_fields:
+            if field in content:
+                del content[field]
+
+        invitation = Invitation(
+            id=self.venue.get_invitation_id(review_stage.name),
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'cycleId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string' 
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': self.venue.get_invitation_id('${2/content/cycleId/value}' + f"/{review_stage.name}"),
+                    'invitees': [venue_id],
+                    'signatures': [ venue_id ],
+                    'readers': [venue_id],
+                    'writers': [venue_id],
+                    'cdate': review_cdate,
+                    'duedate': review_duedate,
+                    'expdate': review_expdate,
+                    'content': {
+                        'review_process_script': {
+                            'value': self.get_process_content('process/review_process.py')
+                        }
+                    },
+                    'dateprocesses': [{ 
+                        'dates': ["#{4/cdate}"],
+                        'script': self.cdate_invitation_process              
+                    }],
+                    'edit': {
+                        'signatures': [venue_id],
+                        'readers': [venue_id],
+                        'writers': [venue_id],
+                        'content': {
+                            'noteNumber': { 
+                                'value': {
+                                    'param': {
+                                        'regex': '.*', 'type': 'integer' 
+                                    }
+                                }
+                            },
+                            'noteId': {
+                                'value': {
+                                    'param': {
+                                        'regex': '.*', 'type': 'string' 
+                                    }
+                                }
+                            }
+                        },
+                        'invitation': {
+                            'id': self.venue.get_invitation_id('${4/content/cycleId/value}' + f"/{review_stage.name}", '${2/content/noteNumber/value}'),
+                            'signatures': [ venue_id ],
+                            'readers': ['everyone'],
+                            'writers': [venue_id],
+                            'invitees': [venue_id, self.venue.get_reviewers_id(number='${3/content/noteNumber/value}')],
+                            'maxReplies': 1,
+                            'cdate': review_cdate,
+                            'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['review_process_script']['value']
+    funcs = {}
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
+                            'edit': {
+                                'signatures': { 'param': { 'regex': review_stage.get_signatures(self.venue, '${5/content/noteNumber/value}') }},
+                                'readers': review_stage.get_readers(self.venue, '${4/content/noteNumber/value}', '${2/signatures}'),
+                                'nonreaders': review_stage.get_nonreaders(self.venue, '${4/content/noteNumber/value}'),
+                                'writers': [venue_id],
+                                'note': {
+                                    'id': {
+                                        'param': {
+                                            'withInvitation': self.venue.get_invitation_id('${8/content/cycleId/value}' + f"/{review_stage.name}", '${6/content/noteNumber/value}'),
+                                            'optional': True
+                                        }
+                                    },
+                                    'forum': '${4/content/noteId/value}',
+                                    'replyto': '${4/content/noteId/value}',
+                                    'ddate': {
+                                        'param': {
+                                            'range': [ 0, 9999999999999 ],
+                                            'optional': True,
+                                            'deletable': True                                 
+                                        }
+                                    },
+                                    'signatures': ['${3/signatures}'],
+                                    'readers': review_stage.get_readers(self.venue, '${5/content/noteNumber/value}', '${3/signatures}'),
+                                    'nonreaders': review_stage.get_nonreaders(self.venue, '${5/content/noteNumber/value}'),
+                                    'writers': [venue_id, '${3/signatures}'],
+                                    'content': content
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)
+        return invitation
+
+    def set_review_invitation(self, venueid=None, cycle_invitation=None):
+        if venueid is not None and cycle_invitation is not None:
+            edit = self.client.post_invitation_edit(invitations=cycle_invitation.id,
+                readers=[self.venue_id],
+                writers=[self.venue_id],
+                signatures=[self.venue_id],
+                content={
+                    'cycleId': {
+                        'value': venueid
+                    }
+                },
+                invitation=Invitation()
+            )
+            return self.client.get_invitation(edit['invitation']['id'])
 
         venue_id = self.venue_id
         review_stage = self.venue.review_stage
@@ -312,7 +451,9 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['duedate'] = review_duedate
             invitation.edit['invitation']['expdate'] = review_expdate
 
-        self.save_invitation(invitation, replacement=True)
+        self.save_invitation(invitation,
+            invitations=cycle_invitation.id if cycle_invitation is not None else None,
+            replacement=None if cycle_invitation is not None else True)
         return invitation
 
     def set_meta_review_invitation(self, venueid=None):
