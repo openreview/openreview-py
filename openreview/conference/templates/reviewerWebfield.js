@@ -345,7 +345,8 @@ var displayStatusTable = function(notes, officialReviews, invitations) {
     extraClasses: 'console-table'
   });
 
-  $container.empty().append(tableHTML).append('<button class="btn btn-export-pdf" type="button" style="margin-top: 0.5rem; margin-left: -1rem">Download all PDFs</button>');
+  $container.empty()
+    .append('<form class="search-form"><button class="btn btn-export-pdf" type="button">Download all PDFs</button></form>').append(tableHTML);
 };
 
 var buildTableRow = function(note, officialReview, officialReviewInvitation) {
