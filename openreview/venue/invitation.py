@@ -28,12 +28,13 @@ class InvitationBuilder(object):
     funcs['process'](client, invitation)
 '''
 
-    def save_invitation(self, invitation, invitations=None, replacement=None):
+    def save_invitation(self, invitation, invitations=None, content=None, replacement=None):
         self.client.post_invitation_edit(invitations=self.venue.get_meta_invitation_id() if invitations is None else invitations,
             readers=[self.venue_id],
             writers=[self.venue_id],
             signatures=[self.venue_id],
             replacement=replacement,
+            content=content,
             invitation=invitation
         )
         return self.client.get_invitation(invitation.id)
@@ -151,7 +152,7 @@ class InvitationBuilder(object):
         content['venueid'] = {
             'value': {
                 'param': {
-                    'const': self.venue.get_submission_venue_id(venueid),
+                    'const': self.venue.get_submission_venue_id(venueid) if venueid is not None else self.venue.get_submission_venue_id(),
                     'hidden': True
                 }
             }
@@ -331,23 +332,17 @@ class InvitationBuilder(object):
             }
         )
 
-        self.save_invitation(invitation)
+        print(f"activation date: {review_cdate}")
+        print(f"due date: {review_duedate}")
+        print(f"exp date: {review_expdate}")
+        if review_duedate:
+            invitation.edit['invitation']['edit']['invitation']['duedate'] = review_duedate
+            invitation.edit['invitation']['edit']['invitation']['expdate'] = review_expdate
+
+        self.save_invitation(invitation, replacement=True)
         return invitation
 
     def set_review_invitation(self, venueid=None, cycle_invitation=None):
-        if venueid is not None and cycle_invitation is not None:
-            edit = self.client.post_invitation_edit(invitations=cycle_invitation.id,
-                readers=[self.venue_id],
-                writers=[self.venue_id],
-                signatures=[self.venue_id],
-                content={
-                    'cycleId': {
-                        'value': venueid
-                    }
-                },
-                invitation=Invitation()
-            )
-            return self.client.get_invitation(edit['invitation']['id'])
 
         venue_id = self.venue_id
         review_stage = self.venue.review_stage
@@ -364,6 +359,21 @@ class InvitationBuilder(object):
         for field in review_stage.remove_fields:
             if field in content:
                 del content[field]
+
+        if venueid is not None and cycle_invitation is not None:
+            invitation=Invitation(id=review_invitation_id,
+                    cdate=review_cdate,
+                    duedate=review_duedate,
+                    expdate=review_expdate,
+                    signatures=['ARR']
+                )
+            content = {
+                'cycleId': {
+                    'value': venueid
+                }
+            }
+            self.save_invitation(invitation, invitations=cycle_invitation.id, content=content)
+            return invitation
 
         invitation = Invitation(id=review_invitation_id,
             invitees=[venue_id],

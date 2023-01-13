@@ -55,29 +55,29 @@ class TestVenueSubmissionARR():
         #recruit reviewers and area chairs to create groups
         message = 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of ARR to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
         
-        helpers.create_user('reviewer_venue_one@mail.com', 'Reviewer Venue', 'One')
+        helpers.create_user('arr_reviewer_venue_one@mail.com', 'ARR Reviewer Venue', 'One')
         
         venue.recruit_reviewers(title='[ARR] Invitation to serve as Reviewer',
             message=message,
-            invitees = ['~Reviewer_Venue_One1'],
+            invitees = ['~ARR_Reviewer_Venue_One1'],
             contact_info='editors@aclrollingreview.org',
             reduced_load_on_decline = ['1','2','3'])
 
         venue.recruit_reviewers(title='[ARR] Invitation to serve as Area Chair',
             message=message,
-            invitees = ['~Reviewer_Venue_One1'],
+            invitees = ['~ARR_Reviewer_Venue_One1'],
             reviewers_name = 'Area_Chairs',
             contact_info='editors@aclrollingreview.org',
             allow_overlap_official_committee = True)
 
-        messages = openreview_client.get_messages(to='reviewer_venue_one@mail.com')
+        messages = openreview_client.get_messages(to='arr_reviewer_venue_one@mail.com')
         assert messages
         invitation_url = re.search('https://.*\n', messages[1]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True, quota=1)
 
         reviewer_group = openreview_client.get_group('ARR/Reviewers')
         assert reviewer_group
-        assert '~Reviewer_Venue_One1' in reviewer_group.members    
+        assert '~ARR_Reviewer_Venue_One1' in reviewer_group.members    
     
     def test_submission_stage(self, venue, openreview_client, helpers):
 
@@ -105,7 +105,7 @@ class TestVenueSubmissionARR():
         submission = openreview_client.get_note(submission_note_1['note']['id'])
         assert len(submission.readers) == 2
         assert 'ARR' in submission.readers
-        assert 'ARR/Submission1/Authors' in submission.readers
+        assert ['ARR', '~Harold_Eleven1'] == submission.readers
 
         #TODO: check emails, check author console
 
@@ -167,6 +167,7 @@ class TestVenueSubmissionARR():
                 }
             },
             invitation=openreview.api.Invitation(id=f'ARR/-/{cycle}/Official_Review',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
                 signatures=['ARR']
             )
         )

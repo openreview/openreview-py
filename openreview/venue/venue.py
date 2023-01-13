@@ -366,9 +366,9 @@ class Venue(object):
             allow_overlap_official_committee)
 
     def create_submission_stage(self, venueid=None):
-        self.invitation_builder.set_submission_invitation(f"{venueid}/Submission")
-        self.invitation_builder.set_withdrawal_invitation(f"{venueid}/Submission")
-        self.invitation_builder.set_desk_rejection_invitation(f"{venueid}/Submission")
+        self.invitation_builder.set_submission_invitation(f"{venueid}/Submission" if venueid is not None else None)
+        self.invitation_builder.set_withdrawal_invitation(f"{venueid}/Submission" if venueid is not None else None)
+        self.invitation_builder.set_desk_rejection_invitation(f"{venueid}/Submission" if venueid is not None else None)
         if self.expertise_selection_stage:
             self.invitation_builder.set_expertise_selection_invitations()
 
@@ -388,8 +388,7 @@ class Venue(object):
     
     def setup_post_submission_stage(self, force=False, hide_fields=[], venueid=None):
         venue_id = self.venue_id
-        #submissions = self.get_submissions(venueid=self.get_submission_venue_id(f"{venueid}/Submission"))
-        submissions = self.get_submissions()
+        submissions = self.get_submissions(venueid=self.get_submission_venue_id(f"{venueid}/Submission")) if venueid else self.get_submissions()
         hide_author_fields = ['authors', 'authorids'] if self.submission_stage.double_blind else []
         final_hide_fields = hide_author_fields + hide_fields
         
@@ -397,7 +396,7 @@ class Venue(object):
         
         def update_submission_readers(submission):
             #if submission.content['venueid']['value'] == self.get_submission_venue_id(f"{venueid}/Submission"):
-            if submission.content['venueid']['value'] == self.get_submission_venue_id():
+            if submission.content['venueid']['value'] == self.get_submission_venue_id(f"{venueid}/Submission" if venueid else None):
                 note_content = {}
                 for field in final_hide_fields:
                     note_content[field] = {
