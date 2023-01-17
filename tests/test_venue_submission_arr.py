@@ -168,6 +168,8 @@ class TestVenueSubmissionARR():
             },
             invitation=openreview.api.Invitation(id=f'ARR/-/{cycle}/Official_Review',
                 cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
+                #duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 10000,
+                #expdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 30000,
                 signatures=['ARR']
             )
         )

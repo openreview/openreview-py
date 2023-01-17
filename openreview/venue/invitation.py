@@ -251,9 +251,24 @@ class InvitationBuilder(object):
                     'signatures': [ venue_id ],
                     'readers': [venue_id],
                     'writers': [venue_id],
-                    'cdate': review_cdate,
-                    'duedate': review_duedate,
-                    'expdate': review_expdate,
+                    'cdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True, 
+                        }
+                    },
+                    'duedate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True, 
+                        }
+                    },
+                    'expdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True, 
+                        }
+                    },
                     'content': {
                         'review_process_script': {
                             'value': self.get_process_content('process/review_process.py')
@@ -459,10 +474,16 @@ class InvitationBuilder(object):
 
             }
         )
+        
+        print(f"activation date: {review_cdate}")
+        print(f"due date: {review_duedate}")
+        print(f"exp date: {review_expdate}")
 
         if review_duedate:
             invitation.edit['invitation']['duedate'] = review_duedate
             invitation.edit['invitation']['expdate'] = review_expdate
+        
+        print(invitation)
 
         self.save_invitation(invitation,
             invitations=cycle_invitation.id if cycle_invitation is not None else None,
