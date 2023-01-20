@@ -482,12 +482,8 @@ class InvitationBuilder(object):
         if review_duedate:
             invitation.edit['invitation']['duedate'] = review_duedate
             invitation.edit['invitation']['expdate'] = review_expdate
-        
-        print(invitation)
 
-        self.save_invitation(invitation,
-            invitations=cycle_invitation.id if cycle_invitation is not None else None,
-            replacement=None if cycle_invitation is not None else True)
+        self.save_invitation(invitation, replacement=True)
         return invitation
 
     def set_meta_review_invitation(self, venueid=None):
