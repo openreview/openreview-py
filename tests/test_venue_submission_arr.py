@@ -168,8 +168,6 @@ class TestVenueSubmissionARR():
             },
             invitation=openreview.api.Invitation(id=f'ARR/-/{cycle}/Official_Review',
                 cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
-                #duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 10000,
-                #expdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 30000,
                 signatures=['ARR']
             )
         )
@@ -187,10 +185,15 @@ class TestVenueSubmissionARR():
             assert openreview_client.get_invitation(f'ARR/Submission1/-/{cycle}/Meta_Review')
 
         openreview_client.post_invitation_edit(
-            invitations='ARR/-/Edit',
+            invitations='ARR/-/Meta_Review',
             readers=['ARR'],
             writers=['ARR'],
             signatures=['ARR'],
+            content={
+                'cycleId': {
+                    'value': cycle
+                }
+            },
             invitation=openreview.api.Invitation(id=f'ARR/-/{cycle}/Meta_Review',
                 cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
                 signatures=['ARR']
