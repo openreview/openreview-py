@@ -4,6 +4,8 @@ from openreview.api import Edge
 from openreview.api import Invitation
 from tqdm import tqdm
 import time
+import random
+import string
 from .. import tools
 
 class Matching(object):
@@ -910,6 +912,65 @@ class Matching(object):
         self._build_config_invitation(score_spec)
         return matching_status
 
+    def setup_invite_assignment(self, hash_seed, assignment_title=None, due_date=None, invitation_labels={}, invited_committee_name='External_Reviewers', email_template=None, proposed=False):
+        invite_label=invitation_labels.get('Invite', 'Invitation Sent')
+        invited_label=invitation_labels.get('Invited', 'Invitation Sent')
+        accepted_label=invitation_labels.get('Accepted', 'Accepted')
+        declined_label=invitation_labels.get('Declined', 'Declined')
+
+        recruitment_invitation_id=self.venue.get_invitation_id('Proposed_Assignment_Recruitment' if assignment_title else 'Assignment_Recruitment', prefix=self.match_group.id)
+        invitation=self._create_edge_invitation(self.venue.get_assignment_id(self.match_group.id, invite=True), any_tail=True, default_label=invite_label)
+        print(invitation)
+        print()
+
+        # set invite assignment invitation
+        with open(os.path.join(os.path.dirname(__file__), 'process/invite_assignment_pre_process.py')) as pre:
+            with open(os.path.join(os.path.dirname(__file__), 'process/invite_assignment_post_process.py')) as post:
+                pre_content = pre.read()
+                post_content = post.read()
+                pre_content = pre_content.replace("REVIEWERS_ID = ''", "REVIEWERS_ID = '" + self.match_group.id + "'")
+                post_content = post_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.venue.get_short_name()}"')
+                post_content = post_content.replace("RECRUITMENT_INVITATION_ID = ''", "RECRUITMENT_INVITATION_ID = '" + recruitment_invitation_id + "'")
+                post_content = post_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + self.venue.get_committee_id(name=invited_committee_name + '/Invited')  + "'")
+                if email_template:
+                    post_content = post_content.replace("EMAIL_TEMPLATE = ''", "EMAIL_TEMPLATE = '''" + email_template  + "'''")
+                if assignment_title:
+                    pre_content = pre_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.venue.get_assignment_id(self.match_group.id) + "'")
+                    pre_content = pre_content.replace("ASSIGNMENT_LABEL = None", "ASSIGNMENT_LABEL = '" + assignment_title + "'")
+                    post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.venue.get_assignment_id(self.match_group.id) + "'")
+                    post_content = post_content.replace("ASSIGNMENT_LABEL = None", "ASSIGNMENT_LABEL = '" + assignment_title + "'")
+                    post_content = post_content.replace("PAPER_REVIEWER_INVITED_ID = ''", "PAPER_REVIEWER_INVITED_ID = '" + self.venue.get_committee_id(name=invited_committee_name + '/Invited', number='{number}')  + "'")
+                else:
+                    pre_content = pre_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.venue.get_assignment_id(self.match_group.id, deployed=True) + "'")
+                    post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.venue.get_assignment_id(self.match_group.id, deployed=True) + "'")
+                
+                post_content = post_content.replace("HASH_SEED = ''", "HASH_SEED = '" + hash_seed + "'")
+                post_content = post_content.replace("INVITED_LABEL = ''", "INVITED_LABEL = '" + invited_label + "'")
+                pre_content = pre_content.replace("INVITE_LABEL = ''", "INVITE_LABEL = '" + invite_label + "'")
+                post_content = post_content.replace("INVITE_LABEL = ''", "INVITE_LABEL = '" + invite_label + "'")
+
+                invitation.preprocess = pre_content
+                invitation.process = post_content
+                invitation.minReplies = 1
+                invitation.maxReplies = 1
+                invitation.signatures = [self.venue.get_program_chairs_id()]
+                invite_assignment_invitation=self.venue.invitation_builder.save_invitation(invitation, replacement=True)
+
+                print(invite_assignment_invitation)
+
+        # set assignment recruitment invitation
+        invitation = self.venue.invitation_builder.set_paper_recruitment_invitation(recruitment_invitation_id,
+            self.match_group.id,
+            invited_committee_name,
+            hash_seed,
+            assignment_title,
+            due_date,
+            invited_label=invited_label,
+            accepted_label=accepted_label,
+            declined_label=declined_label,
+            proposed=proposed
+        )
+
     def deploy_assignments(self, assignment_title, overwrite):
 
         venue = self.venue
@@ -1028,8 +1089,8 @@ class Matching(object):
         # ## Add sync process function
         self.venue.invitation_builder.set_assignment_invitation(self.match_group.id)
 
-        # if self.match_group.id == self.venue.get_reviewers_id() and enable_reviewer_reassignment:
-        #     hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
-        #     self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=f'''Emergency_{self.venue.reviewers_name}''')
+        if self.match_group.id == self.venue.get_reviewers_id() and enable_reviewer_reassignment:
+            hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
+            self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=f'''Emergency_{self.venue.reviewers_name}''')
 
-        # self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id))
+        self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id))

@@ -1829,3 +1829,7 @@ class InvitationBuilder(object):
             )
             self.save_invitation(invitation)                           
 
+    def set_paper_recruitment_invitation(self, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title=None, due_date=None, invited_label='Invited', accepted_label='Accepted', declined_label='Declined', proposed=False):
+        current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
+        process_file='process/simple_paper_recruitment_process.py' if proposed else 'process/paper_recruitment_process.py'
+        web = current_invitation.web if current_invitation else None
