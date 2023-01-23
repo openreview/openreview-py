@@ -247,7 +247,9 @@ class GroupBuilder(object):
                 self.post_group(pc_group)
 
             ## Add pcs to have all the permissions
-            self.client.add_members_to_group(venue_id, pc_group_id)        
+            self.client.add_members_to_group(venue_id, pc_group_id)
+        elif pc_group.members != program_chair_ids:
+            self.client.add_members_to_group(pc_group_id, list(set(program_chair_ids) - set(pc_group.members)))   
     
     def create_authors_group(self):
 

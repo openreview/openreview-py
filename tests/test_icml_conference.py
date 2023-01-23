@@ -188,7 +188,74 @@ class TestICMLConference():
         assert 'financial_aid' in submission_invitation.edit['note']['content']
 
 
+    def test_add_pcs(self, client, openreview_client, helpers):
 
+        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
+        pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Thirty-ninth International Conference on Machine Learning',
+                'Official Venue Name': 'Thirty-ninth International Conference on Machine Learning',
+                'Abbreviated Venue Name': 'ICML 2023',
+                'Official Website URL': 'https://icml.cc',
+                'program_chair_emails': ['pc@icml.cc', 'pc2@icml.cc'],
+                'contact_email': 'pc@icml.cc',
+                'Venue Start Date': '2023/07/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'Additional Submission Options': {
+                    "supplementary_material": {
+                        "value": {
+                            "param": {
+                                "type": "file",
+                                "extensions": [
+                                    "zip",
+                                    "pdf",
+                                    "tgz",
+                                    "gz"
+                                ],
+                                "maxSize": 500,
+                                "optional": True
+                            }
+                        },
+                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 500MB.",
+                        "order": 8
+                    },
+                    "financial_aid": {
+                        "order": 9,
+                        "description": "Each paper may designate up to one (1) icml.cc account email address of a corresponding student author who confirms that they would need the support to attend the conference, and agrees to volunteer if they get selected.",
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "maxLength": 100,
+                                "optional": True
+                            }
+                        }
+                    }
+                }
+
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        pc_group = pc_client.get_group('ICML.cc/2023/Conference/Program_Chairs')
+        assert ['pc@icml.cc', 'pc2@icml.cc'] == pc_group.members
+    
+    
     def test_sac_recruitment(self, client, openreview_client, helpers, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@icml.cc', password='1234')
