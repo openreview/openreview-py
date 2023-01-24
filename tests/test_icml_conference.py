@@ -772,16 +772,17 @@ reviewer6@icml.cc, Reviewer ICMLSix
         assert ['ICML.cc/2023/Conference', 
         'ICML.cc/2023/Conference/Submission1/Authors'] == submission.writers
         assert ['ICML.cc/2023/Conference/Submission1/Authors'] == submission.signatures        
-        assert 'authorids' not in submissions.content
-        assert 'authors' not in submissions.content
-        assert 'financial_aid'not in submissions.content
+        assert 'authorids' not in submission.content
+        assert 'authors' not in submission.content
+        assert 'financial_aid'not in submission.content
 
     def test_ac_bidding(self, client, openreview_client, helpers, test_client):
 
         pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-        submissions = pc_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
+        submissions = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
 
         with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
