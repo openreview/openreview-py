@@ -641,11 +641,73 @@ reviewer6@icml.cc, Reviewer ICMLSix
         for i in range(1,101):
             assert f'ICML.cc/2023/Conference/Submission{i}/Authors' in authors_group.members        
 
-
-    def test_ac_bidding(self, client, openreview_client, helpers, test_client):
+    def test_post_submission(self, client, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password='1234')
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        ## close the submissions
+        now = datetime.datetime.utcnow()
+        due_date = now - datetime.timedelta(days=1)        
+        pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Thirty-ninth International Conference on Machine Learning',
+                'Official Venue Name': 'Thirty-ninth International Conference on Machine Learning',
+                'Abbreviated Venue Name': 'ICML 2023',
+                'Official Website URL': 'https://icml.cc',
+                'program_chair_emails': ['pc@icml.cc', 'pc3@icml.cc'],
+                'contact_email': 'pc@icml.cc',
+                'Venue Start Date': '2023/07/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'Additional Submission Options': {
+                    "supplementary_material": {
+                        "value": {
+                            "param": {
+                                "type": "file",
+                                "extensions": [
+                                    "zip",
+                                    "pdf",
+                                    "tgz",
+                                    "gz"
+                                ],
+                                "maxSize": 500,
+                                "optional": True
+                            }
+                        },
+                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 500MB.",
+                        "order": 8
+                    },
+                    "financial_aid": {
+                        "order": 9,
+                        "description": "Each paper may designate up to one (1) icml.cc account email address of a corresponding student author who confirms that they would need the support to attend the conference, and agrees to volunteer if they get selected.",
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "maxLength": 100,
+                                "optional": True
+                            }
+                        }
+                    }
+                }
+
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+        submission_invitation = pc_client_v2.get_invitation('ICML.cc/2023/Conference/-/Submission')
+        assert submission_invitation.expdate < openreview.tools.datetime_millis(now)      
 
         ## make submissions visible to the committee
         pc_client.post_note(openreview.Note(
@@ -679,6 +741,47 @@ reviewer6@icml.cc, Reviewer ICMLSix
         assert 'authorids' not in submissions[0].content
         assert 'authors' not in submissions[0].content
         assert 'financial_aid'not in submissions[0].content
+
+        ## try to edit a submission as a PC
+        submissions = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
+        submission = submissions[0]
+        pc_client_v2.post_note_edit(invitation='ICML.cc/2023/Conference/-/PC_Revision',
+            signatures=['ICML.cc/2023/Conference/Program_Chairs'],
+            note=openreview.api.Note(
+                id = submission.id,
+                content = {
+                    'title': { 'value': submission.content['title']['value'] + 'Version 2' },
+                    'abstract': submission.content['abstract'],
+                    'authorids': { 'value': submission.content['authorids']['value'] },
+                    'authors': { 'value': submission.content['authors']['value'] },
+                    'keywords': submission.content['keywords'],
+                    'pdf': submission.content['pdf'],
+                    'supplementary_material': submission.content['supplementary_material'],
+                    'financial_aid': { 'value': submission.content['financial_aid']['value'] },                    
+                }
+            ))
+
+        helpers.await_queue(openreview_client)
+
+        submission = ac_client.get_note(submission.id)      
+        assert ['ICML.cc/2023/Conference', 
+        'ICML.cc/2023/Conference/Senior_Area_Chairs',
+        'ICML.cc/2023/Conference/Area_Chairs',
+        'ICML.cc/2023/Conference/Reviewers',
+        'ICML.cc/2023/Conference/Submission1/Authors'] == submission.readers
+        assert ['ICML.cc/2023/Conference', 
+        'ICML.cc/2023/Conference/Submission1/Authors'] == submission.writers
+        assert ['ICML.cc/2023/Conference/Submission1/Authors'] == submission.signatures        
+        assert 'authorids' not in submissions.content
+        assert 'authors' not in submissions.content
+        assert 'financial_aid'not in submissions.content
+
+    def test_ac_bidding(self, client, openreview_client, helpers, test_client):
+
+        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        submissions = pc_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
 
         with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
