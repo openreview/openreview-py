@@ -827,9 +827,6 @@ class TestVenueRequest():
         # assert selenium.find_element_by_link_text('Reviewer Bid')
 
     def test_venue_matching_setup(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
-        # add a member to PC group
-        pc_group = openreview_client.get_group('{}/Program_Chairs'.format(venue['venue_id']))
-        openreview_client.add_members_to_group(group=pc_group, members=['pc@test.com'])
 
         helpers.create_user('venue_author_v2@mail.com', 'VenueTwo', 'Author')
         author_client = OpenReviewClient(username='venue_author_v2@mail.com', password='1234')
@@ -893,11 +890,10 @@ class TestVenueRequest():
         assert 'If you have any questions, please contact the PCs at test@mail.com' in messages[0]['content']['text']
 
         messages = client.get_messages(subject="TestVenue@OR'2030V2 has received a new submission titled test submission")
-        assert messages and len(messages) == 3
+        assert messages and len(messages) == 2
         recipients = [msg['content']['to'] for msg in messages]
         assert 'test@mail.com' in recipients
         assert 'tom_venue@mail.com' in recipients
-        assert 'pc@test.com' in recipients
 
         helpers.create_user('venue_author_v2_2@mail.com', 'VenueThree', 'Author')
         author_client2 = OpenReviewClient(username='venue_author_v2_2@mail.com', password='1234')
