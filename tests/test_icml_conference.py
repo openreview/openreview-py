@@ -855,11 +855,17 @@ To view your submission, click here: https://openreview.net/forum?id={submission
             writers=[]
         ))
         helpers.await_queue()
+
+        submissions = venue.get_submissions(sort='number:asc')
+        ac_group = openreview_client.get_group(venue.get_area_chairs_id())
         
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Conflict')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Affinity_Score')
 
-        assert openreview_client.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Affinity_Score')
+        affinity_scores =  openreview_client.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Affinity_Score')
+        assert affinity_scores
+        assert len(affinity_scores) == len(submissions) * len(ac_group.members)
+
         assert openreview_client.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Conflict')
 
         client.post_note(openreview.Note(
