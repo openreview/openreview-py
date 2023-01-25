@@ -753,11 +753,12 @@ reviewer6@icml.cc, Reviewer ICMLSix
             writers=[]
         ))
         helpers.await_queue()
+        
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Conflict')
 
         edges = openreview_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Conflict', head=submissions[0].id)
         assert edges
-        
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Conflict')
+
         edges = openreview_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Conflict', head=submissions[-1].id)
         assert not edges
         
