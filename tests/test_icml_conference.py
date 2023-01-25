@@ -707,7 +707,7 @@ reviewer6@icml.cc, Reviewer ICMLSix
 
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
         submission_invitation = pc_client_v2.get_invitation('ICML.cc/2023/Conference/-/Submission')
-        assert submission_invitation.expdate < openreview.tools.datetime_millis(now)      
+        assert submission_invitation.expdate < openreview.tools.datetime_millis(now)
 
         ## make submissions visible to the committee
         pc_client.post_note(openreview.Note(
@@ -741,6 +741,13 @@ reviewer6@icml.cc, Reviewer ICMLSix
         assert 'authorids' not in submissions[0].content
         assert 'authors' not in submissions[0].content
         assert 'financial_aid'not in submissions[0].content
+
+        assert client.get_group('ICML.cc/2023/Conference/Submission1/Reviewers')
+        assert client.get_group('ICML.cc/2023/Conference/Submission1/Area_Chairs')
+        assert client.get_group('ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs')
+
+        active_venues = pc_client.get_group('active_venues')
+        assert 'ICML.cc/2023/Conference' in active_venues.members        
 
         ## try to edit a submission as a PC
         submissions = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')

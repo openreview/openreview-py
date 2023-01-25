@@ -416,6 +416,9 @@ class GroupBuilder(object):
 
         openreview.tools.concurrent_requests(create_paper_commmitee_group, submissions, desc='create_paper_committee_groups')
 
+        active_venues = self.client_v1.get_group('active_venues')
+        self.client_v1.add_members_to_group(active_venues, self.venue_id)
+
     def create_recruitment_committee_groups(self, committee_name):
 
         venue_id = self.venue.venue_id
