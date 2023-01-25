@@ -779,7 +779,7 @@ reviewer6@icml.cc, Reviewer ICMLSix
         author_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Authors')
         assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1', 'melisa@icml.cc'] == author_group.members
 
-        messages = openreview_client.get_messages(to = 'melisa@icml.cc', subject = '[ICML 2023] has received a new revision of your submission titled Paper title 1 Version 2')
+        messages = openreview_client.get_messages(to = 'melisa@icml.cc', subject = 'ICML 2023 has received a new revision of your submission titled Paper title 1 Version 2')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Your new revision of the submission to ICML 2023 has been posted.
 
