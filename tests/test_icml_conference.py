@@ -750,10 +750,10 @@ reviewer6@icml.cc, Reviewer ICMLSix
             note=openreview.api.Note(
                 id = submission.id,
                 content = {
-                    'title': { 'value': submission.content['title']['value'] + 'Version 2' },
+                    'title': { 'value': submission.content['title']['value'] + ' Version 2' },
                     'abstract': submission.content['abstract'],
-                    'authorids': { 'value': submission.content['authorids']['value'] },
-                    'authors': { 'value': submission.content['authors']['value'] },
+                    'authorids': { 'value': submission.content['authorids']['value'] + ['melisa@icml.cc'] },
+                    'authors': { 'value': submission.content['authors']['value'] + ['Melisa ICML'] },
                     'keywords': submission.content['keywords'],
                     'pdf': submission.content['pdf'],
                     'supplementary_material': submission.content['supplementary_material'],
@@ -775,6 +775,19 @@ reviewer6@icml.cc, Reviewer ICMLSix
         assert 'authorids' not in submission.content
         assert 'authors' not in submission.content
         assert 'financial_aid'not in submission.content
+
+        author_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Authors')
+        assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1', 'melisa@icml.cc'] == author_group.members
+
+        messages = openreview_client.get_messages(to = 'melisa@icml.cc', subject = '[ICML 2023] has received a new revision of your submission titled Paper title 1 Version 2')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Your new revision of the submission to ICML 2023 has been posted.
+        
+Title: Paper title 1Version 2
+
+Abstract This is an abstract 1
+
+To view your submission, click here: https://openreview.net/forum?id={submission.id}'''        
 
     def test_ac_bidding(self, client, openreview_client, helpers, test_client):
 

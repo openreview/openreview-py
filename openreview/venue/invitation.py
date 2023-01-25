@@ -225,7 +225,7 @@ class InvitationBuilder(object):
         submission_id = submission_stage.get_submission_id(self.venue)
 
         submission_invitation = Invitation(
-            id=self.venue.get_invitation_id('PC_Revision'),
+            id=self.venue.get_pc_submission_revision_id(),
             invitees = [venue_id],
             signatures = [venue_id],
             readers = ['everyone'],
@@ -252,7 +252,7 @@ class InvitationBuilder(object):
                     'signatures': [self.venue.get_authors_id('${2/number}')]
                 }
             },
-            process=self.get_process_content('process/submission_process.py')
+            process=self.get_process_content('process/pc_submission_revision_process.py')
         )
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=True)

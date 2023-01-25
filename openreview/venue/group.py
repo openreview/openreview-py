@@ -135,6 +135,7 @@ class GroupBuilder(object):
         ## Update settings
         content = {
             'submission_id': { 'value': self.venue.get_submission_id() },
+            'pc_submission_revision_id': { 'value': self.venue.get_pc_submission_revision_id() },
             'meta_invitation_id': { 'value': self.venue.get_meta_invitation_id() },
             'submission_name': { 'value': self.venue.submission_stage.name },
             'submission_venue_id': { 'value': self.venue.get_submission_venue_id() },

@@ -102,6 +102,9 @@ class Venue(object):
     def get_submission_id(self):
         return self.submission_stage.get_submission_id(self)
 
+    def get_pc_submission_revision_id(self):
+        return self.get_invitation_id('PC_Revision')
+
     def get_recruitment_id(self, committee_id):
         return self.get_invitation_id('Recruitment', prefix=committee_id)
 
