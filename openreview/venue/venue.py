@@ -367,8 +367,8 @@ class Venue(object):
 
     def create_submission_stage(self, venueid=None):
         self.invitation_builder.set_submission_invitation(f"{venueid}/Submission" if venueid is not None else None)
-        self.invitation_builder.set_withdrawal_invitation(f"{venueid}/Submission" if venueid is not None else None)
-        self.invitation_builder.set_desk_rejection_invitation(f"{venueid}/Submission" if venueid is not None else None)
+        self.invitation_builder.set_withdrawal_invitation(f"{venueid}_Submission" if venueid is not None else None)
+        self.invitation_builder.set_desk_rejection_invitation(f"{venueid}_Submission" if venueid is not None else None)
         if self.expertise_selection_stage:
             self.invitation_builder.set_expertise_selection_invitations()
 

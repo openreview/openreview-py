@@ -204,3 +204,69 @@ class TestVenueSubmissionARR():
         
         assert openreview_client.get_invitation(f'ARR/-/{cycle}/Meta_Review')
         assert openreview_client.get_invitation(f'ARR/Submission1/-/{cycle}/Meta_Review')
+
+    def test_withdraw_submission(self, venue, openreview_client, helpers):
+        cycle = '2023_March'
+
+        author_client = OpenReviewClient(username='harold@maileleven.com', password='1234')
+
+        withdraw_note = author_client.post_note_edit(invitation='ARR/Submission2/-/Withdrawal',
+                                    signatures=['ARR/Submission2/Authors'],
+                                    note=Note(
+                                        content={
+                                            'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
+
+        note = author_client.get_note(withdraw_note['note']['forum'])
+        assert note
+        assert note.invitations == ['ARR/-/Submission', 'ARR/-/Edit', 'ARR/-/Withdrawn_Submission']
+        assert note.readers == ['ARR', 'ARR/Area_Chairs', 'ARR/Reviewers', 'ARR/Submission2/Authors']
+        assert note.writers == ['ARR', 'ARR/Submission2/Authors']
+        assert note.signatures == ['ARR/Submission2/Authors']
+        assert note.content['venue']['value'] == 'ARR Withdrawn Submission'
+        assert note.content['venueid']['value'] == 'ARR/Withdrawn_2023_March_Submission'
+        assert 'readers' not in note.content['authors']
+        assert 'readers' not in note.content['authorids']
+
+        helpers.await_queue_edit(openreview_client, invitation='ARR/-/Withdrawn_Submission')
+
+        invitation = openreview_client.get_invitation(f'ARR/Submission2/-/2023_March/Meta_Review')
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        invitation =  openreview_client.get_invitation('ARR/Submission2/-/2023_March/Official_Review')
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
+        messages = openreview_client.get_messages(to='harold@maileleven.com', subject='[ARR]: Paper #2 withdrawn by paper authors')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'The ARR paper \"Paper 2 Title\" has been withdrawn by the paper authors.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
+
+        assert openreview_client.get_invitation('ARR/Submission2/-/Withdrawal_Reversion')
+
+        withdrawal_reversion_note = openreview_client.post_note_edit(invitation='ARR/Submission2/-/Withdrawal_Reversion',
+                                    signatures=['ARR/Program_Chairs'],
+                                    note=Note(
+                                        content={
+                                            'revert_withdrawal_confirmation': { 'value': 'We approve the reversion of withdrawn submission.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=withdrawal_reversion_note['id'])
+
+        invitation = openreview_client.get_invitation('ARR/Submission2/-/2023_March/Meta_Review')
+        assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
+        invitation =  openreview_client.get_invitation('ARR/Submission2/-/2023_March/Official_Review')
+        assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
+        note = author_client.get_note(withdraw_note['note']['forum'])
+        assert note
+        assert note.invitations == ['ARR/-/Submission', 'ARR/-/Edit']
+        assert note.content['venue']['value'] == 'ARR Submission'
+        assert note.content['venueid']['value'] == 'ARR/2023_March/Submission'
+
+
+        messages = openreview_client.get_messages(to='harold@maileleven.com', subject='[ARR]: Paper #2 restored by venue organizers')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'The ARR paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
