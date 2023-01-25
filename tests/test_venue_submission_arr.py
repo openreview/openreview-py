@@ -270,3 +270,77 @@ class TestVenueSubmissionARR():
         messages = openreview_client.get_messages(to='harold@maileleven.com', subject='[ARR]: Paper #2 restored by venue organizers')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'The ARR paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
+
+    def test_desk_reject_submission(self, venue, openreview_client, helpers):
+
+        pc_client = OpenReviewClient(username='editors@aclrollingreview.org', password='1234')
+
+        desk_reject_note = pc_client.post_note_edit(invitation='ARR/Submission2/-/Desk_Rejection',
+                                    signatures=['ARR/Program_Chairs'],
+                                    note=Note(
+                                        content={
+                                            'desk_reject_comments': { 'value': 'No PDF' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
+
+        note = pc_client.get_note(desk_reject_note['note']['forum'])
+        assert note
+        assert note.invitations == ['ARR/-/Submission', 'ARR/-/Edit', 'ARR/-/Desk_Rejected_Submission']
+        assert note.readers == ['ARR', 'ARR/Area_Chairs', 'ARR/Reviewers', 'ARR/Submission2/Authors']
+        assert note.writers == ['ARR', 'ARR/Submission2/Authors']
+        assert note.signatures == ['ARR/Submission2/Authors']
+        assert note.content['venue']['value'] == 'ARR Desk Rejected Submission'
+        assert note.content['venueid']['value'] == 'ARR/Desk_Rejected_2023_March_Submission'
+        assert 'readers' in note.content['authors']
+        assert 'readers' in note.content['authorids']
+        assert note.content['authors']['readers'] == ["ARR", "ARR/Submission2/Authors"]
+        assert note.content['authorids']['readers'] == ["ARR", "ARR/Submission2/Authors"]
+
+        helpers.await_queue_edit(openreview_client, invitation='ARR/-/Desk_Rejected_Submission')
+
+        invitation = openreview_client.get_invitation('ARR/Submission2/-/2023_March/Meta_Review')
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        invitation =  openreview_client.get_invitation('ARR/Submission2/-/2023_March/Official_Review')
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
+        messages = openreview_client.get_messages(to='harold@maileleven.com', subject='[ARR]: Paper #2 desk-rejected by program chairs')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'The ARR paper \"Paper 2 Title\" has been desk-rejected by the program chairs.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
+
+        messages = openreview_client.get_messages(to='editors@aclrollingreview.org', subject='[ARR]: Paper #2 desk-rejected by program chairs')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'The ARR paper \"Paper 2 Title\" has been desk-rejected by the program chairs.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
+
+        assert openreview_client.get_invitation('ARR/Submission2/-/Desk_Rejection_Reversion')
+
+        desk_rejection_reversion_note = openreview_client.post_note_edit(invitation='ARR/Submission2/-/Desk_Rejection_Reversion',
+                                    signatures=['ARR/Program_Chairs'],
+                                    note=Note(
+                                        content={
+                                            'revert_desk_rejection_confirmation': { 'value': 'We approve the reversion of desk-rejected submission.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_reversion_note['id'])
+
+        invitation = openreview_client.get_invitation('ARR/Submission2/-/2023_March/Meta_Review')
+        assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
+        invitation =  openreview_client.get_invitation('ARR/Submission2/-/2023_March/Official_Review')
+        assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
+        note = pc_client.get_note(desk_reject_note['note']['forum'])
+        assert note
+        assert note.invitations == ['ARR/-/Submission', 'ARR/-/Edit']
+        assert note.content['venue']['value'] == 'ARR Submission'
+        assert note.content['venueid']['value'] == 'ARR/2023_March/Submission'
+
+        messages = openreview_client.get_messages(to='harold@maileleven.com', subject='[ARR]: Paper #2 restored by venue organizers')
+        assert len(messages) == 2
+        assert messages[0]['content']['text'] == f'The ARR paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
+
+        messages = openreview_client.get_messages(to='editors@aclrollingreview.org', subject='[ARR]: Paper #2 restored by venue organizers')
+        assert len(messages) == 2
+        assert messages[1]['content']['text'] == f'The desk-rejected ARR paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
