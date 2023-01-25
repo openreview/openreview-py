@@ -782,8 +782,8 @@ reviewer6@icml.cc, Reviewer ICMLSix
         messages = openreview_client.get_messages(to = 'melisa@icml.cc', subject = '[ICML 2023] has received a new revision of your submission titled Paper title 1 Version 2')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Your new revision of the submission to ICML 2023 has been posted.
-        
-Title: Paper title 1Version 2
+
+Title: Paper title 1 Version 2
 
 Abstract This is an abstract 1
 
