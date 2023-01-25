@@ -102,6 +102,9 @@ class Venue(object):
     def get_submission_id(self):
         return self.submission_stage.get_submission_id(self)
 
+    def get_pc_submission_revision_id(self):
+        return self.get_invitation_id('PC_Revision')
+
     def get_recruitment_id(self, committee_id):
         return self.get_invitation_id('Recruitment', prefix=committee_id)
 
@@ -418,6 +421,9 @@ class Venue(object):
                     )
         ## Release the submissions to specified readers if venueid is still submission
         openreview.tools.concurrent_requests(update_submission_readers, submissions, desc='update_submission_readers')
+
+        ## Open PC Revision
+        self.invitation_builder.set_pc_submission_revision_invitation()
              
         ## Create revision invitation if there is a second deadline?
         ## Create withdraw and desk reject invitations
