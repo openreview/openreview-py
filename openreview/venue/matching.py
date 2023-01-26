@@ -866,7 +866,7 @@ class Matching(object):
         self._build_custom_max_papers(user_profiles)
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))
 
-        submissions = client.get_all_notes(invitation=venue.get_submission_id())
+        submissions = venue.get_submissions(sort='number:asc')
 
         if not self.match_group.members:
             raise openreview.OpenReviewException(f'The match group is empty: {self.match_group.id}')
