@@ -952,24 +952,24 @@ class Matching(object):
             if paper.id in proposed_assignment_edges:
                 paper_committee_id = venue.get_committee_id(name=reviewer_name, number=paper.number)
                 proposed_edges=proposed_assignment_edges[paper.id]
+                assigned_users = []
                 for proposed_edge in proposed_edges:
                     assigned_user = proposed_edge['tail']
-                    client.add_members_to_group(paper_committee_id, assigned_user)
-                    if self.is_area_chair and sac_assignment_edges:
-                        sac_assignments = sac_assignment_edges.get(assigned_user, [])
-                        for sac_assignment in sac_assignments:
-                            assigned_sac = sac_assignment['tail']
-                            sac_group_id = venue.get_committee_id(name=venue.senior_area_chairs_name, number=paper.number)
-                            client.post_group_edit(
-                                invitation = venue.get_meta_invitation_id(),
-                                readers = [venue.venue_id],
-                                writers = [venue.venue_id],
-                                signatures = [venue.venue_id],
-                                group = openreview.api.Group(
-                                    id = sac_group_id,
-                                    members = [assigned_sac]
-                                )
-                            )
+                    # if self.is_area_chair and sac_assignment_edges:
+                    #     sac_assignments = sac_assignment_edges.get(assigned_user, [])
+                    #     for sac_assignment in sac_assignments:
+                    #         assigned_sac = sac_assignment['tail']
+                    #         sac_group_id = venue.get_committee_id(name=venue.senior_area_chairs_name, number=paper.number)
+                    #         client.post_group_edit(
+                    #             invitation = venue.get_meta_invitation_id(),
+                    #             readers = [venue.venue_id],
+                    #             writers = [venue.venue_id],
+                    #             signatures = [venue.venue_id],
+                    #             group = openreview.api.Group(
+                    #                 id = sac_group_id,
+                    #                 members = [assigned_sac]
+                    #             )
+                    #         )
                     assignment_edges.append(Edge(
                         invitation=assignment_invitation_id,
                         head=paper.id,
@@ -979,6 +979,8 @@ class Matching(object):
                         signatures=proposed_edge['signatures'],
                         weight=proposed_edge.get('weight')
                     ))
+                    assigned_users.append(assigned_user)
+                client.add_members_to_group(paper_committee_id, assigned_users)
             else:
                 print('assignment not found', paper.id)
 

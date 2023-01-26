@@ -2,7 +2,7 @@ import openreview
 import datetime
 import json
 
-def get_conference(client, request_form_id, support_user='OpenReview.net/Support'):
+def get_conference(client, request_form_id, support_user='OpenReview.net/Support', setup=True):
 
     note = client.get_note(request_form_id)
     if note.content.get('api_version') == '2':
@@ -34,8 +34,9 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         if 'OpenReview Affinity' in paper_matching_options:
             venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date, include_option=include_expertise_selection)
 
-        venue.setup(note.content.get('program_chair_emails'))
-        venue.create_submission_stage()
+        if setup:
+            venue.setup(note.content.get('program_chair_emails'))
+            venue.create_submission_stage()
         return venue
 
     builder = get_conference_builder(client, request_form_id, support_user)

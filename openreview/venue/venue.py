@@ -430,6 +430,8 @@ class Venue(object):
         self.invitation_builder.create_paper_invitations(self.get_withdrawal_id(), submissions)
         self.invitation_builder.create_paper_invitations(self.get_desk_rejection_id(), submissions)
 
+        self.group_builder.add_to_active_venues()
+
     def create_bid_stages(self):
         self.invitation_builder.set_bid_invitations()
 
