@@ -160,7 +160,8 @@ class TestICMLConference():
                                     "gz"
                                 ],
                                 "maxSize": 500,
-                                "optional": True
+                                "optional": True,
+                                "deletable": True
                             }
                         },
                         "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 500MB.",
@@ -221,7 +222,8 @@ class TestICMLConference():
                                     "gz"
                                 ],
                                 "maxSize": 500,
-                                "optional": True
+                                "optional": True,
+                                "deletable": True
                             }
                         },
                         "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 500MB.",
@@ -280,7 +282,8 @@ class TestICMLConference():
                                     "gz"
                                 ],
                                 "maxSize": 500,
-                                "optional": True
+                                "optional": True,
+                                "deletable": True
                             }
                         },
                         "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 500MB.",
@@ -675,7 +678,8 @@ reviewer6@gmail.com, Reviewer ICMLSix
                                     "gz"
                                 ],
                                 "maxSize": 500,
-                                "optional": True
+                                "optional": True,
+                                "deletable": True
                             }
                         },
                         "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 500MB.",
@@ -789,7 +793,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
                     'authors': { 'value': submission.content['authors']['value'] + ['Melisa ICML'] },
                     'keywords': submission.content['keywords'],
                     'pdf': submission.content['pdf'],
-                    'supplementary_material': submission.content['supplementary_material'],
+                    'supplementary_material': { 'value': { 'delete': True } },
                     'financial_aid': { 'value': submission.content['financial_aid']['value'] },                    
                 }
             ))
@@ -808,6 +812,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
         assert 'authorids' not in submission.content
         assert 'authors' not in submission.content
         assert 'financial_aid'not in submission.content
+        assert 'supplementary_material'not in submission.content
 
         author_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Authors')
         assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1', 'melisa@yahoo.com'] == author_group.members
