@@ -2241,18 +2241,21 @@ Best,
         # Assert accepted submission is public and rejected submission and submission with no decision are private
         assert submissions[0].readers == ['everyone']
         assert submissions[0].pdate
+        assert submissions[0].odate
         assert submissions[1].readers == ['V2.cc/2030/Conference',
             'V2.cc/2030/Conference/Submission2/Senior_Area_Chairs',
             'V2.cc/2030/Conference/Submission2/Area_Chairs',
             'V2.cc/2030/Conference/Submission2/Reviewers',
             'V2.cc/2030/Conference/Submission2/Authors']
         assert not submissions[1].pdate
+        assert not submissions[1].odate
         assert submissions[2].readers == ['V2.cc/2030/Conference',
             'V2.cc/2030/Conference/Submission3/Senior_Area_Chairs',
             'V2.cc/2030/Conference/Submission3/Area_Chairs',
             'V2.cc/2030/Conference/Submission3/Reviewers',
             'V2.cc/2030/Conference/Submission3/Authors']
         assert not submissions[2].pdate
+        assert not submissions[2].odate
 
         # assert authors of accepted paper were released
         assert submissions[0].content['venue']['value'] == 'TestVenue@OR\'2030V2'
