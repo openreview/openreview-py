@@ -108,6 +108,9 @@ class Venue(object):
     def get_recruitment_id(self, committee_id):
         return self.get_invitation_id('Recruitment', prefix=committee_id)
 
+    def get_expertise_selection_id(self, committee_id):
+        return self.get_invitation_id(self.expertise_selection_stage.name if self.expertise_selection_stage else 'Expertise_Selection', prefix=committee_id)    
+
     def get_bid_id(self, committee_id):
         return self.get_invitation_id('Bid', prefix=committee_id)
 

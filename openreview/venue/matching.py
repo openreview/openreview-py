@@ -478,9 +478,9 @@ class Matching(object):
             job_id = client.request_expertise(
                 name=venue.get_short_name(),
                 group_id=self.match_group.id,
-                paper_invitation=venue.get_submission_id(),
+                venue_id=venue.get_submission_venue_id(),
                 alternate_match_group=self.alternate_matching_group,
-                # exclusion_inv=venue.get_expertise_selection_id(),
+                expertise_selection_id=venue.get_expertise_selection_id(self.match_group.id),
                 model='specter+mfr'
             )
             status = ''
