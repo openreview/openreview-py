@@ -32,9 +32,9 @@ class TestICMLConference():
         helpers.create_user('reviewer1@icml.cc', 'Reviewer', 'ICMLOne')
         helpers.create_user('reviewer2@icml.cc', 'Reviewer', 'ICMLTwo')
         helpers.create_user('reviewer3@icml.cc', 'Reviewer', 'ICMLThree')
-        helpers.create_user('reviewer4@icml.cc', 'Reviewer', 'ICMLFour')
-        helpers.create_user('reviewer5@icml.cc', 'Reviewer', 'ICMLFive')
-        helpers.create_user('reviewer6@icml.cc', 'Reviewer', 'ICMLSix')
+        helpers.create_user('reviewer4@gmail.com', 'Reviewer', 'ICMLFour')
+        helpers.create_user('reviewer5@gmail.com', 'Reviewer', 'ICMLFive')
+        helpers.create_user('reviewer6@gmail.com', 'Reviewer', 'ICMLSix')
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
@@ -410,9 +410,9 @@ class TestICMLConference():
         reviewer_details = '''reviewer1@icml.cc, Reviewer ICMLOne
 reviewer2@icml.cc, Reviewer ICMLTwo
 reviewer3@icml.cc, Reviewer ICMLThree
-reviewer4@icml.cc, Reviewer ICMLFour
-reviewer5@icml.cc, Reviewer ICMLFive
-reviewer6@icml.cc, Reviewer ICMLSix
+reviewer4@gmail.com, Reviewer ICMLFour
+reviewer5@gmail.com, Reviewer ICMLFive
+reviewer6@gmail.com, Reviewer ICMLSix
 '''
         pc_client.post_note(openreview.Note(
             content={
@@ -454,7 +454,7 @@ reviewer6@icml.cc, Reviewer ICMLSix
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers/Invited').members) == 6
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers/Declined').members) == 0
 
-        messages = openreview_client.get_messages(to = 'reviewer6@icml.cc', subject = '[ICML 2023] Invitation to serve as Reviewer')
+        messages = openreview_client.get_messages(to = 'reviewer6@gmail.com', subject = '[ICML 2023] Invitation to serve as Reviewer')
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
 
@@ -785,7 +785,7 @@ reviewer6@icml.cc, Reviewer ICMLSix
                 content = {
                     'title': { 'value': submission.content['title']['value'] + ' Version 2' },
                     'abstract': submission.content['abstract'],
-                    'authorids': { 'value': submission.content['authorids']['value'] + ['melisa@icml.cc'] },
+                    'authorids': { 'value': submission.content['authorids']['value'] + ['melisa@yahoo.com'] },
                     'authors': { 'value': submission.content['authors']['value'] + ['Melisa ICML'] },
                     'keywords': submission.content['keywords'],
                     'pdf': submission.content['pdf'],
@@ -810,9 +810,9 @@ reviewer6@icml.cc, Reviewer ICMLSix
         assert 'financial_aid'not in submission.content
 
         author_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Authors')
-        assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1', 'melisa@icml.cc'] == author_group.members
+        assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1', 'melisa@yahoo.com'] == author_group.members
 
-        messages = openreview_client.get_messages(to = 'melisa@icml.cc', subject = 'ICML 2023 has received a new revision of your submission titled Paper title 1 Version 2')
+        messages = openreview_client.get_messages(to = 'melisa@yahoo.com', subject = 'ICML 2023 has received a new revision of your submission titled Paper title 1 Version 2')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Your new revision of the submission to ICML 2023 has been posted.
 
@@ -830,10 +830,12 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
         submissions = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
 
+        openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group('ICML.cc/2023/Conference/Area_Chairs'))
+
         with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
             for submission in submissions:
-                for ac in client.get_group('ICML.cc/2023/Conference/Area_Chairs').members:
+                for ac in openreview_client.get_group('ICML.cc/2023/Conference/Area_Chairs').members:
                     writer.writerow([submission.id, ac, round(random.random(), 2)])
 
         affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
@@ -866,10 +868,12 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
         assert openreview_client.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Conflict')
 
+        openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group('ICML.cc/2023/Conference/Reviewers'))
+
         with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
             for submission in submissions:
-                for ac in client.get_group('ICML.cc/2023/Conference/Reviewers').members:
+                for ac in openreview_client.get_group('ICML.cc/2023/Conference/Reviewers').members:
                     writer.writerow([submission.id, ac, round(random.random(), 2)])
 
         affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
@@ -902,7 +906,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         affinity_scores =  openreview_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Affinity_Score')
         assert affinity_scores
         assert len(affinity_scores) == 100 * 5 ## submissions * reviewers
-        
+
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
 
@@ -933,10 +937,12 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
+        openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group('ICML.cc/2023/Conference/Senior_Area_Chairs'))
+
         with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
-            for sac in client.get_group('ICML.cc/2023/Conference/Senior_Area_Chairs').members:
-                for ac in client.get_group('ICML.cc/2023/Conference/Area_Chairs').members:
+            for sac in openreview_client.get_group('ICML.cc/2023/Conference/Senior_Area_Chairs').members:
+                for ac in openreview_client.get_group('ICML.cc/2023/Conference/Area_Chairs').members:
                     writer.writerow([ac, sac, round(random.random(), 2)])
 
         affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
