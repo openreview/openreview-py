@@ -1,8 +1,7 @@
 import csv
 import json
 from json import tool
-import os
-import time
+import datetime
 from io import StringIO
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
@@ -625,7 +624,8 @@ Total Errors: {len(errors)}
                 signatures=[venue_id],
                 note=openreview.api.Note(id=submission.id,
                         readers = submission_readers,
-                        content = content
+                        content = content,
+                        pdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if (submission.pdate is None and note_accepted) else None
                     )
                 )
 
