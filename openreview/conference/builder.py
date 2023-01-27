@@ -1580,6 +1580,8 @@ Program Chairs
             result = future.result()
 
     def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None):
+        
+        publication_date = openreview.tools.datetime_millis(datetime.datetime.utcnow())
         submissions = self.get_submissions(details='original,directReplies')
 
         def is_release_authors(is_note_accepted):
@@ -1639,7 +1641,8 @@ Program Chairs
                     'venue': venue,
                     'venueid': self.id,
                     '_bibtex': bibtex
-                }
+                },
+                pdate = publication_date if (note_accepted and submission.pdate is None) else None
             ))
 
         venue_heading_map = {}

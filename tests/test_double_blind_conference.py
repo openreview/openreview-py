@@ -2034,6 +2034,7 @@ url={'''
         assert note.content['_bibtex'] == valid_bibtex
         assert 'venue' in note.content and not note.content['venue']
         assert 'venueid' in note.content and not note.content['venueid']
+        assert note.pdate is None
 
     def test_release_accepted_notes_without_revealing_authors(self, client, request_page, selenium):
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
@@ -2090,6 +2091,7 @@ url={'''
         assert note.content['venueid'] == 'AKBC.ws/2019/Conference'
         assert note.content['authors'] == ['Anonymous']
         assert note.content['authorids'] == ['AKBC.ws/2019/Conference/Paper1/Authors']
+        assert note.pdate is None
 
         accepted_authors = client.get_group('AKBC.ws/2019/Conference/Authors/Accepted')
         assert accepted_authors
@@ -2148,6 +2150,7 @@ url={'''
         assert note.content['_bibtex'] == valid_bibtex
         assert note.content['venue'] == 'AKBC 2019 Oral'
         assert note.content['venueid'] == 'AKBC.ws/2019/Conference'
+        assert note.pdate
 
         accepted_authors = client.get_group('AKBC.ws/2019/Conference/Authors/Accepted')
         assert accepted_authors
@@ -2248,6 +2251,7 @@ url={'''
         assert note.content['_bibtex'] == valid_bibtex
         assert note.content['venue'] == 'AKBC 2019 Oral'
         assert note.content['venueid'] == 'AKBC.ws/2019/Conference'
+        assert note.pdate
 
         accepted_authors = client.get_group('AKBC.ws/2019/Conference/Authors/Accepted')
         assert accepted_authors
