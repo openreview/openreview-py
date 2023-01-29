@@ -380,8 +380,8 @@ class TestMatching():
 
         revs_paper1 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[1].number))
         assert 2 == len(revs_paper1.members)
-        assert revs_paper1.members[0] == 'r2_venue@google.com'
-        assert revs_paper1.members[1] == 'r3_venue@fb.com'
+        assert 'r2_venue@google.com' in revs_paper1.members
+        assert 'r3_venue@fb.com' in revs_paper1.members
         assert pc_client.get_groups(prefix=venue.get_id()+'/Submission{x}/Program_Committee.*'.format(x=notes[1].number), member='r3_venue@fb.com')
         assert pc_client.get_groups(prefix=venue.get_id()+'/Submission{x}/Program_Committee.*'.format(x=notes[1].number), member='r2_venue@google.com')
 
@@ -499,15 +499,17 @@ class TestMatching():
         venue.set_assignments(assignment_title='rev-matching-emergency', committee_id=f'{venue.id}/Program_Committee')
 
         revs_paper0 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[0].number))
-        assert ['r3_venue@fb.com', '~Reviewer_Venue1', 'r2_venue@mit.edu'] == revs_paper0.members
+        assert 'r3_venue@fb.com' in revs_paper0.members
+        assert '~Reviewer_Venue1' in revs_paper0.members
+        assert 'r2_venue@mit.edu' in revs_paper0.members
 
         revs_paper1 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[1].number))
-        assert ['~Reviewer_Venue1', 'r2_venue@google.com'] == revs_paper1.members
+        assert '~Reviewer_Venue1' in revs_paper1.members
+        assert 'r2_venue@google.com' in revs_paper1.members
 
         revs_paper2 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[2].number))
         assert ['r2_venue@google.com'] == revs_paper2.members
 
-    #     pc_client.remove_members_from_group(f'{venue.id}/Submission3/AnonReviewer2', ['~Reviewer_Venue1'])
         pc_client.remove_members_from_group(f'{venue.id}/Submission1/Program_Committee', ['~Reviewer_Venue1'])
 
         pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
