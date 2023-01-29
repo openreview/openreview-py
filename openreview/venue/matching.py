@@ -1,3 +1,4 @@
+import csv
 import os
 import openreview
 from openreview.api import Edge
@@ -389,19 +390,35 @@ class Matching(object):
 
         return invitation
 
+    def _build_scores_from_file(self, score_invitation_id, score_file, submissions):
+        if self.alternate_matching_group:
+            return self._build_profile_scores(score_invitation_id, score_file=score_file)
+        scores = []
+        with open(score_file) as file_handle:
+            scores = [row for row in csv.reader(file_handle)]
+        return self._build_note_scores(score_invitation_id, scores, submissions)
+
     def _build_scores_from_stream(self, score_invitation_id, scores_stream, submissions):
         scores = [input_line.split(',') for input_line in scores_stream.decode().strip().split('\n')]
         if self.alternate_matching_group:
-            return self._build_profile_scores(score_invitation_id, scores)
+            return self._build_profile_scores(score_invitation_id, scores=scores)
         return self._build_note_scores(score_invitation_id, scores, submissions)
 
-    def _build_profile_scores(self, score_invitation_id, scores):
+    def _build_profile_scores(self, score_invitation_id, score_file=None, scores=None):
 
         invitation = self._create_edge_invitation(score_invitation_id)
         invitation_id = invitation.id
         edges = []
 
-        for row in tqdm(scores, desc='_build_scores'):
+        # Validate and select scores
+        if not scores and not score_file:
+            raise openreview.OpenReviewException('No profile scores provided')
+        if scores:
+            score_handle = scores
+        elif score_file:
+            score_handle = csv.reader(open(score_file))
+
+        for row in tqdm(score_handle, desc='_build_scores'):
 
             score = str(max(round(float(row[2]), 4), 0))
             edges.append(Edge(
@@ -878,6 +895,19 @@ class Matching(object):
             raise openreview.OpenReviewException('Submissions not found.')
 
         type_affinity_scores = type(compute_affinity_scores)
+
+        if type_affinity_scores == str:
+            invitation = self._build_scores_from_file(
+                venue.get_affinity_score_id(self.match_group.id),
+                compute_affinity_scores,
+                submissions
+            )
+            if invitation:
+                invitation_id = invitation.id
+                score_spec[invitation_id] = {
+                    'weight': 1,
+                    'default': 0
+                }
 
         if type_affinity_scores == bytes:
             invitation = self._build_scores_from_stream(
