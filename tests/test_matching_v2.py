@@ -499,11 +499,13 @@ class TestMatching():
         venue.set_assignments(assignment_title='rev-matching-emergency', committee_id=f'{venue.id}/Program_Committee')
 
         revs_paper0 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[0].number))
+        assert len(revs_paper0.members) == 3
         assert 'r3_venue@fb.com' in revs_paper0.members
         assert '~Reviewer_Venue1' in revs_paper0.members
         assert 'r2_venue@mit.edu' in revs_paper0.members
 
         revs_paper1 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[1].number))
+        assert len(revs_paper1.members) == 2
         assert '~Reviewer_Venue1' in revs_paper1.members
         assert 'r2_venue@google.com' in revs_paper1.members
 
@@ -526,10 +528,15 @@ class TestMatching():
         venue.set_assignments(assignment_title='rev-matching-emergency-2', committee_id=f'{venue.id}/Program_Committee')
 
         revs_paper0 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[0].number))
-        assert ['r3_venue@fb.com', 'r2_venue@mit.edu', 'r2_venue@google.com'] == revs_paper0.members
+        assert len(revs_paper0.members) == 3
+        assert 'r3_venue@fb.com' in revs_paper0.members
+        assert 'r2_venue@mit.edu' in revs_paper0.members
+        assert 'r2_venue@google.com' in revs_paper0.members
 
         revs_paper1 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[1].number))
-        assert ['~Reviewer_Venue1', 'r2_venue@google.com'] == revs_paper1.members
+        assert len(revs_paper1.members) == 2
+        assert '~Reviewer_Venue1' in revs_paper1.members
+        assert 'r2_venue@google.com' in revs_paper1.members
 
         revs_paper2 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[2].number))
         assert ['r2_venue@google.com'] == revs_paper2.members
