@@ -512,7 +512,6 @@ class TestMatching():
         revs_paper2 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[2].number))
         assert ['r2_venue@google.com'] == revs_paper2.members
 
-    #     pc_client.remove_members_from_group(f'{venue.id}/Submission3/AnonReviewer2', ['~Reviewer_Venue1'])
         pc_client.remove_members_from_group(f'{venue.id}/Submission1/Program_Committee', ['~Reviewer_Venue1'])
 
         pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
