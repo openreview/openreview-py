@@ -885,6 +885,7 @@ class TestDoubleBlindConference():
         assert len(blind_submissions_3) == 3
         assert blind_submissions[0].id == blind_submissions_3[2].id
         assert blind_submissions_3[2].readers == ['everyone']
+        assert blind_submissions_3[2].odate
 
         assert client.get_group('AKBC.ws/2019/Conference/Paper1/Authors')
         assert client.get_group('AKBC.ws/2019/Conference/Paper2/Authors')
@@ -2035,6 +2036,7 @@ url={'''
         assert 'venue' in note.content and not note.content['venue']
         assert 'venueid' in note.content and not note.content['venueid']
         assert note.pdate is None
+        assert note.odate
 
     def test_release_accepted_notes_without_revealing_authors(self, client, request_page, selenium):
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
@@ -2091,7 +2093,8 @@ url={'''
         assert note.content['venueid'] == 'AKBC.ws/2019/Conference'
         assert note.content['authors'] == ['Anonymous']
         assert note.content['authorids'] == ['AKBC.ws/2019/Conference/Paper1/Authors']
-        assert note.pdate is None
+        assert note.pdate
+        assert note.odate
 
         accepted_authors = client.get_group('AKBC.ws/2019/Conference/Authors/Accepted')
         assert accepted_authors
