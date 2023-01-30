@@ -231,6 +231,7 @@ function (note) {
     }
     
     note.cdate = data.cdate;
+    note.pdate = new Date(data.year, 0, 1).getTime();
     note.content = newContent;
     note.content.title = data.title;
     return note;
