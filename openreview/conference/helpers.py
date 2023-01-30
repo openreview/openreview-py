@@ -2,7 +2,7 @@ import openreview
 import datetime
 import json
 
-def get_conference(client, request_form_id, support_user='OpenReview.net/Support'):
+def get_conference(client, request_form_id, support_user='OpenReview.net/Support', setup=True):
 
     note = client.get_note(request_form_id)
     if note.content.get('api_version') == '2':
@@ -34,8 +34,9 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         if 'OpenReview Affinity' in paper_matching_options:
             venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date, include_option=include_expertise_selection)
 
-        venue.setup(note.content.get('program_chair_emails'))
-        venue.create_submission_stage()
+        if setup:
+            venue.setup(note.content.get('program_chair_emails'))
+            venue.create_submission_stage()
         return venue
 
     builder = get_conference_builder(client, request_form_id, support_user)
@@ -286,6 +287,7 @@ def get_submission_stage(request_forum):
 
     readers_map = {
         'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)': [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.REVIEWERS],
+        'All area chairs only': [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS],
         'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)': [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.REVIEWERS_ASSIGNED],
         'Program chairs and paper authors only': [],
         'Everyone (submissions are public)': [openreview.stages.SubmissionStage.Readers.EVERYONE],
