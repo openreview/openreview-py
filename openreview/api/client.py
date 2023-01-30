@@ -1728,15 +1728,15 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def request_expertise(self, name, group_id, paper_invitation, alternate_match_group = None, exclusion_inv=None, model=None, baseurl=None):
+    def request_expertise(self, name, group_id, venue_id, alternate_match_group = None, expertise_selection_id=None, model=None, baseurl=None):
 
         # Build entityA from group_id
         entityA = {
             'type': 'Group',
             'memberOf': group_id
         }
-        if exclusion_inv:
-            expertise = { 'invitation': exclusion_inv }
+        if expertise_selection_id:
+            expertise = { 'invitation': expertise_selection_id }
             entityA['expertise'] = expertise
 
         # Build entityB from alternate_match_group or paper_invitation
@@ -1745,13 +1745,13 @@ class OpenReviewClient(object):
                 'type': 'Group',
                 'memberOf': alternate_match_group
             }
-            if exclusion_inv:
-                expertise = { 'invitation': exclusion_inv }
+            if expertise_selection_id:
+                expertise = { 'invitation': expertise_selection_id }
                 entityB['expertise'] = expertise
         else:
             entityB = {
                 'type': 'Note',
-                'invitation': paper_invitation
+                'withVenueid': venue_id
             }
 
         expertise_request = {

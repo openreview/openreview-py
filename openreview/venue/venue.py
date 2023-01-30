@@ -107,6 +107,9 @@ class Venue(object):
     def get_recruitment_id(self, committee_id):
         return self.get_invitation_id('Recruitment', prefix=committee_id)
 
+    def get_expertise_selection_id(self, committee_id):
+        return self.get_invitation_id(self.expertise_selection_stage.name if self.expertise_selection_stage else 'Expertise_Selection', prefix=committee_id)    
+
     def get_bid_id(self, committee_id):
         return self.get_invitation_id('Bid', prefix=committee_id)
 
@@ -432,6 +435,8 @@ class Venue(object):
         ## Create withdraw and desk reject invitations
         self.invitation_builder.create_paper_invitations(self.get_withdrawal_id(), submissions)
         self.invitation_builder.create_paper_invitations(self.get_desk_rejection_id(), submissions)
+
+        self.group_builder.add_to_active_venues()
 
     def create_bid_stages(self):
         self.invitation_builder.set_bid_invitations()
