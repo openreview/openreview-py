@@ -953,6 +953,7 @@ class Conference(object):
 
                 revision_note = self.client.post_note(openreview.Note(
                     invitation = f'{self.support_user}/-/{self.venue_revision_name}',
+                    odate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if note.odate is None else None,
                     forum = note.id,
                     referent = note.id,
                     readers = ['everyone'],
@@ -981,6 +982,7 @@ class Conference(object):
                 final_readers =  self.submission_stage.get_readers(conference=self, number=s.number)
                 if s.readers != final_readers:
                     s.readers = final_readers
+                    s.odate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if ('everyone' in s.readers and s.odate is None) else None
                     self.client.post_note(s)
 
         self.create_paper_groups(authors=True, reviewers=True, area_chairs=True, senior_area_chairs=True)
