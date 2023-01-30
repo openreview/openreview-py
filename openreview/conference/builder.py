@@ -1642,7 +1642,8 @@ Program Chairs
                     'venueid': self.id,
                     '_bibtex': bibtex
                 },
-                pdate = publication_date if (note_accepted and submission.pdate is None) else None
+                pdate = publication_date if (note_accepted and submission.pdate is None) else None,
+                odate = publication_date if ('everyone' in submission.readers and submission.odate is None) else None
             ))
 
         venue_heading_map = {}
