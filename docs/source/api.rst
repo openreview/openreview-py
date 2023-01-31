@@ -25,6 +25,26 @@ Client
 .. autoclass:: Profile
    :members:
 
+API 2 Client
+-------
+
+.. automodule:: openreview.api
+
+.. autoclass:: OpenReviewClient
+   :members:
+
+.. autoclass:: Group
+   :members:
+
+.. autoclass:: Invitation
+   :members:
+
+.. autoclass:: Note
+   :members:
+
+.. autoclass:: Edit
+   :members:
+
 
 Tools
 -------
