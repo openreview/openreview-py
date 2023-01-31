@@ -2218,7 +2218,7 @@ class Invitation(object):
             body['signatures'] = self.signatures
 
         if self.reply_forum_views:
-            body['reply_forum_views'] = self.reply_forum_views
+            body['replyForumViews'] = self.reply_forum_views
 
         if self.content:
             body['content'] = self.content

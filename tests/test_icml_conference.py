@@ -1171,7 +1171,26 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Official_Review')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Official_Review')
 
+        openreview_client.add_members_to_group(f'ICML.cc/2023/Conference/Submission1/Reviewers', '~Reviewer_ICMLOne1') 
+        openreview_client.add_members_to_group(f'ICML.cc/2023/Conference/Submission1/Reviewers', '~Reviewer_ICMLTwo1') 
+        openreview_client.add_members_to_group(f'ICML.cc/2023/Conference/Submission1/Reviewers', '~Reviewer_ICMLThree1')
 
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password='1234')
+
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLOne1')
+        anon_group_id = anon_groups[0].id
+
+        reviewer_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission1/-/Official_Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'review': { 'value': 'good paper' },
+                    'review_rating': { 'value': '7: Good paper, accept'},
+                    'confidence': { 'value': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'}
+                }
+            )
+        )
 
     def test_comment_stage(self, openreview_client, helpers):
 
@@ -1309,3 +1328,113 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission3/-/Decision')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Decision')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Decision')
+
+    def test_forum_chat(self, openreview_client, helpers):
+
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            readers = ['ICML.cc/2023/Conference'],
+            writers = ['ICML.cc/2023/Conference'],
+            signatures = ['ICML.cc/2023/Conference'],
+            invitation = openreview.api.Invitation(
+                id = 'ICML.cc/2023/Conference/-/Submission',
+                reply_forum_views = [
+                    {
+                        "id": "all",
+                        "label": "All"
+                    },
+                    {
+                        "id": "reviewers-chat",
+                        "label": "Reviewers Chat",
+                        "filter": "invitation:ICML.cc/2023/Conference/Submission${note.number}/-/Chat,ICML.cc/2023/Conference/Submission${note.number}/-/Official_Review",
+                        "nesting": 2,
+                        "sort": "date-asc",
+                        "layout": "chat",
+                        "live": True,
+                        "expandedInvitations": ["invitation:ICML.cc/2023/Conference/Submission${note.number}/-/Chat"]
+                    }
+                ]
+            )
+        )
+
+        submission_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Submission')
+        assert len(submission_invitation.reply_forum_views)
+
+        submission = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', number=1)[0]
+
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            readers = ['ICML.cc/2023/Conference'],
+            writers = ['ICML.cc/2023/Conference'],
+            signatures = ['ICML.cc/2023/Conference'],
+            invitation = openreview.api.Invitation(
+                id = 'ICML.cc/2023/Conference/Submission1/-/Chat',
+                readers = ['everyone'],
+                writers = ['ICML.cc/2023/Conference'],
+                signatures = ['ICML.cc/2023/Conference'],
+                invitees = ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission1/Reviewers'],
+                edit = {
+                    'readers': ['ICML.cc/2023/Conference', '${2/signatures}'],
+                    'writers': ['ICML.cc/2023/Conference'],
+                    'signatures': {
+                        'param': {
+                            'enum': [
+                                'ICML.cc/2023/Conference/Program_Chairs',
+                                'ICML.cc/2023/Conference/Submission1/Reviewer_.*'
+                            ]
+                        }
+                    },
+                    'note': {
+                        'readers': ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission1/Reviewers'],
+                        'writers': ['ICML.cc/2023/Conference'],
+                        'signatures': ['${3/signatures}'],
+                        'forum': submission.id,
+                        "replyto": {
+                            "param": {
+                                "withForum": submission.id
+                            }
+                        },                        
+                        'content': {
+                            'message': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 50000,
+                                        'markdown': True
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                }
+            )          
+        )
+
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password='1234')
+
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLOne1')
+        anon_group_id = anon_groups[0].id
+
+        note_edit = reviewer_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission1/-/Chat',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'message': { 'value': 'Hi reviewers, I would like to discuss this paper with you.' }
+                }
+            )
+        )
+
+        pc_client=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+
+        note_edit = pc_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission1/-/Chat',
+            signatures=['ICML.cc/2023/Conference/Program_Chairs'],
+            note=openreview.api.Note(
+                replyto=note_edit['note']['id'],
+                content={
+                    'message': { 'value': 'Please start the conversation.' }
+                }
+            )
+        )        
