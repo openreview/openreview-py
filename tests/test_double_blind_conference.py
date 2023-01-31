@@ -2116,6 +2116,13 @@ url={'''
         conference = builder.get_result()
         conference.create_decision_stage()
 
+        notes = conference.get_submissions(sort='tmdate')
+        assert notes
+        assert len(notes) == 1
+        note = notes[0]
+        original_pdate = note.pdate
+        orignal_odate = note.odate
+
         conference.post_decision_stage(reveal_authors_accepted=True, decision_heading_map={'Accept (Poster)': 'Accepted poster papers', 'Accept (Oral)': 'Accepted oral papers', 'Reject': 'Reject'})
 
         request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference", wait_for_element='reject')
@@ -2153,7 +2160,8 @@ url={'''
         assert note.content['_bibtex'] == valid_bibtex
         assert note.content['venue'] == 'AKBC 2019 Oral'
         assert note.content['venueid'] == 'AKBC.ws/2019/Conference'
-        assert note.pdate
+        assert note.pdate == original_pdate
+        assert note.odate == orignal_odate
 
         accepted_authors = client.get_group('AKBC.ws/2019/Conference/Authors/Accepted')
         assert accepted_authors
