@@ -985,21 +985,21 @@ class Matching(object):
                 assigned_users = []
                 for proposed_edge in proposed_edges:
                     assigned_user = proposed_edge['tail']
-                    # if self.is_area_chair and sac_assignment_edges:
-                    #     sac_assignments = sac_assignment_edges.get(assigned_user, [])
-                    #     for sac_assignment in sac_assignments:
-                    #         assigned_sac = sac_assignment['tail']
-                    #         sac_group_id = venue.get_committee_id(name=venue.senior_area_chairs_name, number=paper.number)
-                    #         client.post_group_edit(
-                    #             invitation = venue.get_meta_invitation_id(),
-                    #             readers = [venue.venue_id],
-                    #             writers = [venue.venue_id],
-                    #             signatures = [venue.venue_id],
-                    #             group = openreview.api.Group(
-                    #                 id = sac_group_id,
-                    #                 members = [assigned_sac]
-                    #             )
-                    #         )
+                    if self.is_area_chair and sac_assignment_edges:
+                        sac_assignments = sac_assignment_edges.get(assigned_user, [])
+                        for sac_assignment in sac_assignments:
+                            assigned_sac = sac_assignment['tail']
+                            sac_group_id = venue.get_senior_area_chairs_id(number=paper.number)
+                            client.post_group_edit(
+                                invitation = venue.get_meta_invitation_id(),
+                                readers = [venue.venue_id],
+                                writers = [venue.venue_id],
+                                signatures = [venue.venue_id],
+                                group = openreview.api.Group(
+                                    id = sac_group_id,
+                                    members = [assigned_sac]
+                                )
+                            )
                     assignment_edges.append(Edge(
                         invitation=assignment_invitation_id,
                         head=paper.id,
@@ -1024,15 +1024,10 @@ class Matching(object):
 
         print('deploy_sac_assignments', assignment_title)
 
-        papers = venue.get_submissions()
-
         proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id),
             label=assignment_title, groupby='head', select=None)}
         assignment_edges = []
         assignment_invitation_id = venue.get_assignment_id(self.match_group.id, deployed=True)
-
-        if not papers:
-            raise openreview.OpenReviewException('No submissions to deploy SAC assignment')
 
         for head, sac_assignments in proposed_assignment_edges.items():
             for sac_assignment in sac_assignments:
@@ -1064,4 +1059,4 @@ class Matching(object):
         #     hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
         #     self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=f'''Emergency_{self.venue.reviewers_name}''')
 
-        # self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id))
+        self.venue.expire_invitation(self.venue.get_assignment_id(self.match_group.id))
