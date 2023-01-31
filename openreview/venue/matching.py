@@ -1,3 +1,4 @@
+import csv
 import os
 import openreview
 from openreview.api import Edge
@@ -389,19 +390,35 @@ class Matching(object):
 
         return invitation
 
+    def _build_scores_from_file(self, score_invitation_id, score_file, submissions):
+        if self.alternate_matching_group:
+            return self._build_profile_scores(score_invitation_id, score_file=score_file)
+        scores = []
+        with open(score_file) as file_handle:
+            scores = [row for row in csv.reader(file_handle)]
+        return self._build_note_scores(score_invitation_id, scores, submissions)
+
     def _build_scores_from_stream(self, score_invitation_id, scores_stream, submissions):
         scores = [input_line.split(',') for input_line in scores_stream.decode().strip().split('\n')]
         if self.alternate_matching_group:
-            return self._build_profile_scores(score_invitation_id, scores)
+            return self._build_profile_scores(score_invitation_id, scores=scores)
         return self._build_note_scores(score_invitation_id, scores, submissions)
 
-    def _build_profile_scores(self, score_invitation_id, scores):
+    def _build_profile_scores(self, score_invitation_id, score_file=None, scores=None):
 
         invitation = self._create_edge_invitation(score_invitation_id)
         invitation_id = invitation.id
         edges = []
 
-        for row in tqdm(scores, desc='_build_scores'):
+        # Validate and select scores
+        if not scores and not score_file:
+            raise openreview.OpenReviewException('No profile scores provided')
+        if scores:
+            score_handle = scores
+        elif score_file:
+            score_handle = csv.reader(open(score_file))
+
+        for row in tqdm(score_handle, desc='_build_scores'):
 
             score = str(max(round(float(row[2]), 4), 0))
             edges.append(Edge(
@@ -478,9 +495,9 @@ class Matching(object):
             job_id = client.request_expertise(
                 name=venue.get_short_name(),
                 group_id=self.match_group.id,
-                paper_invitation=venue.get_submission_id(),
+                venue_id=venue.get_submission_venue_id(),
                 alternate_match_group=self.alternate_matching_group,
-                # exclusion_inv=venue.get_expertise_selection_id(),
+                expertise_selection_id=venue.get_expertise_selection_id(self.match_group.id),
                 model='specter+mfr'
             )
             status = ''
@@ -600,7 +617,7 @@ class Matching(object):
                                 'param': {
                                     'type': 'string',
                                     'regex': self.alternate_matching_group if self.alternate_matching_group else venue.get_submission_id() + '.*',
-                                    'default': self.alternate_matching_group if self.alternate_matching_group else venue.get_submission_id(),
+                                    'default': self.alternate_matching_group if self.alternate_matching_group else f'{venue.get_submission_id()}&content.venueid={venue.get_submission_venue_id()}',
                                 }
                             }
                         },
@@ -866,7 +883,7 @@ class Matching(object):
         self._build_custom_max_papers(user_profiles)
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))
 
-        submissions = client.get_all_notes(invitation=venue.get_submission_id())
+        submissions = venue.get_submissions(sort='number:asc')
 
         if not self.match_group.members:
             raise openreview.OpenReviewException(f'The match group is empty: {self.match_group.id}')
@@ -878,6 +895,19 @@ class Matching(object):
             raise openreview.OpenReviewException('Submissions not found.')
 
         type_affinity_scores = type(compute_affinity_scores)
+
+        if type_affinity_scores == str:
+            invitation = self._build_scores_from_file(
+                venue.get_affinity_score_id(self.match_group.id),
+                compute_affinity_scores,
+                submissions
+            )
+            if invitation:
+                invitation_id = invitation.id
+                score_spec[invitation_id] = {
+                    'weight': 1,
+                    'default': 0
+                }
 
         if type_affinity_scores == bytes:
             invitation = self._build_scores_from_stream(
@@ -952,24 +982,24 @@ class Matching(object):
             if paper.id in proposed_assignment_edges:
                 paper_committee_id = venue.get_committee_id(name=reviewer_name, number=paper.number)
                 proposed_edges=proposed_assignment_edges[paper.id]
+                assigned_users = []
                 for proposed_edge in proposed_edges:
                     assigned_user = proposed_edge['tail']
-                    client.add_members_to_group(paper_committee_id, assigned_user)
-                    if self.is_area_chair and sac_assignment_edges:
-                        sac_assignments = sac_assignment_edges.get(assigned_user, [])
-                        for sac_assignment in sac_assignments:
-                            assigned_sac = sac_assignment['tail']
-                            sac_group_id = venue.get_committee_id(name=venue.senior_area_chairs_name, number=paper.number)
-                            client.post_group_edit(
-                                invitation = venue.get_meta_invitation_id(),
-                                readers = [venue.venue_id],
-                                writers = [venue.venue_id],
-                                signatures = [venue.venue_id],
-                                group = openreview.api.Group(
-                                    id = sac_group_id,
-                                    members = [assigned_sac]
-                                )
-                            )
+                    # if self.is_area_chair and sac_assignment_edges:
+                    #     sac_assignments = sac_assignment_edges.get(assigned_user, [])
+                    #     for sac_assignment in sac_assignments:
+                    #         assigned_sac = sac_assignment['tail']
+                    #         sac_group_id = venue.get_committee_id(name=venue.senior_area_chairs_name, number=paper.number)
+                    #         client.post_group_edit(
+                    #             invitation = venue.get_meta_invitation_id(),
+                    #             readers = [venue.venue_id],
+                    #             writers = [venue.venue_id],
+                    #             signatures = [venue.venue_id],
+                    #             group = openreview.api.Group(
+                    #                 id = sac_group_id,
+                    #                 members = [assigned_sac]
+                    #             )
+                    #         )
                     assignment_edges.append(Edge(
                         invitation=assignment_invitation_id,
                         head=paper.id,
@@ -979,6 +1009,8 @@ class Matching(object):
                         signatures=proposed_edge['signatures'],
                         weight=proposed_edge.get('weight')
                     ))
+                    assigned_users.append(assigned_user)
+                client.add_members_to_group(paper_committee_id, assigned_users)
             else:
                 print('assignment not found', paper.id)
 

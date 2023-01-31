@@ -83,7 +83,8 @@ class TestJournal():
                                 'Featured Certification',
                                 'Reproducibility Certification',
                                 'Survey Certification'
-                            ]
+                            ],
+                            'issn': '2835-8856'
                         }
                     }
                 }
@@ -1992,6 +1993,7 @@ bok''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
 author={Melissa Bok and SomeFirstName User},
 journal={Transactions on Machine Learning Research},
+issn={2835-8856},
 year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Featured Certification, Reproducibility Certification}
@@ -2050,6 +2052,7 @@ bok''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
 author={Melissa Bok and SomeFirstName User and Celeste Ana Martinez},
 journal={Transactions on Machine Learning Research},
+issn={2835-8856},
 year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Featured Certification, Reproducibility Certification}

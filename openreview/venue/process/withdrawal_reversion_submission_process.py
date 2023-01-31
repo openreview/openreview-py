@@ -14,6 +14,7 @@ def process(client, edit, invitation):
         print(f'remove edit {submission_edit.id}')
         submission_edit.ddate = now
         submission_edit.note.mdate = None
+        submission_edit.note.forum = None
         client.post_edit(submission_edit)             
     
     invitations = client.get_invitations(replyForum=submission.id, invitation=withdraw_expiration_id, expired=True)

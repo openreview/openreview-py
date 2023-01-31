@@ -1,5 +1,5 @@
 // Webfield component
-const committeeName = entity.content.committeeName.value
+const committeeName = entity.content.committee_name.value
 const affinityScoreId = domain.content[`${committeeName.toLowerCase()}_affinity_score_id`]?.value
 
 return {
@@ -7,7 +7,7 @@ return {
   version: 1,
   properties: {
     header: {
-      title: `${committeeName.endsWith('s') ? committeeName.slice(0, -1) : committeeName} Bidding Console`,
+      title: `${(committeeName.endsWith('s') ? committeeName.slice(0, -1) : committeeName).replace('_', ' ')} Bidding Console`,
       instructions: `**Instructions:**
 
 - Please indicate your **level of interest** in reviewing the submitted papers below, on a scale from "Very Low" interest to "Very High" interest.

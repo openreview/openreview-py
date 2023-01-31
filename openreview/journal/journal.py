@@ -372,6 +372,9 @@ class Journal(object):
     def is_submission_public(self):
         return self.settings.get('submission_public', True)
 
+    def get_issn(self):
+        return self.settings.get('issn', None)
+
     def are_authors_anonymous(self):
         return self.settings.get('author_anonymity', True)
 
@@ -519,12 +522,19 @@ class Journal(object):
                 first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
                 authors = ' and '.join(note.content['authors']['value'])
 
+            issn = self.get_issn()
+
             bibtex = [
                 '@article{',
                 utf8tolatex(first_author_last_name + str(year) + first_word + ','),
                 'title={' + bibtex_title + '},',
                 'author={' + utf8tolatex(authors) + '},',
                 'journal={' + self.full_name + '},',
+            ]
+            if issn:
+                bibtex.append('issn={' + issn + '},')
+            
+            bibtex = bibtex + [
                 'year={' + str(year) + '},',
                 'url={https://openreview.net/forum?id=' + note.forum + '},',
                 'note={' + ', '.join(certifications) + '}',

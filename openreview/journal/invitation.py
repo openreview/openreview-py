@@ -3904,6 +3904,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         for edit in self.client.get_note_edits(note.id, invitation=revision_invitation_id, sort='tmdate:asc'):
             edit.readers = self.journal.get_under_review_submission_readers(note.number)
             edit.note.mdate = None
+            edit.note.forum = None
             self.client.post_edit(edit)
 
         ## Change first edit readers
