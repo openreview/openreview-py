@@ -1491,7 +1491,9 @@ class PaperGroupInvitation(openreview.Invitation):
             signatures = [conference.id],
             reply = {
                 'content': {
-                    'dummy': 'dummy'
+                    'dummy': {
+                        'value': 'dummy'
+                    }
                 }
             },
             process_string=file_content if with_process_function else None
