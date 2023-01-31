@@ -1420,6 +1420,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
             invitation='ICML.cc/2023/Conference/Submission1/-/Chat',
             signatures=[anon_group_id],
             note=openreview.api.Note(
+                replyto=submission.id,
                 content={
                     'message': { 'value': 'Hi reviewers, I would like to discuss this paper with you.' }
                 }
