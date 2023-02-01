@@ -208,6 +208,57 @@ class InvitationBuilder(object):
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=True)
 
+    def set_pc_submission_revision_invitation(self):
+        venue_id = self.venue_id
+        submission_stage = self.venue.submission_stage
+
+        content = default_content.submission_v2.copy()
+        
+        for field in submission_stage.remove_fields:
+            del content[field]
+
+        for order, key in enumerate(submission_stage.additional_fields, start=10):
+            value = submission_stage.additional_fields[key]
+            value['order'] = order
+            content[key] = value
+
+        submission_id = submission_stage.get_submission_id(self.venue)
+
+        submission_invitation = Invitation(
+            id=self.venue.get_pc_submission_revision_id(),
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = ['everyone'],
+            writers = [venue_id],
+            edit = {
+                'signatures': [self.venue.get_program_chairs_id()],
+                'readers': [self.venue.get_program_chairs_id(), self.venue.get_authors_id('${2/note/number}')],
+                'writers': [venue_id],
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },                
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': submission_id,
+                            'optional': True
+                        }
+                    },                   
+                    'content': content,
+                    'signatures': [self.venue.get_authors_id('${2/number}')]
+                }
+            },
+            process=self.get_process_content('process/pc_submission_revision_process.py')
+        )
+
+        submission_invitation = self.save_invitation(submission_invitation, replacement=True)
+    
+    
+    
     def set_review_invitation(self):
 
         venue_id = self.venue_id
