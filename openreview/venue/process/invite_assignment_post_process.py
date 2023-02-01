@@ -1,20 +1,20 @@
 def process(client, edge, invitation):
 
-    SHORT_PHRASE = ''
-    RECRUITMENT_INVITATION_ID = ''
-    ASSIGNMENT_INVITATION_ID = ''
-    ASSIGNMENT_LABEL = None
-    HASH_SEED = ''
-    REVIEWERS_INVITED_ID = ''
-    PAPER_REVIEWER_INVITED_ID = ''
-    INVITED_LABEL = ''
-    INVITE_LABEL = ''
-    EMAIL_TEMPLATE = ''
-    IS_REVIEWER = 'Reviewers' in ASSIGNMENT_INVITATION_ID
-    ACTION_STRING = 'to review' if IS_REVIEWER else 'to serve as area chair for'
+    domain = client.get_group(invitation.domain)
+    short_phrase = domain.content['subtitle']['value']
+    recruitment_invitation_id = invitation.content['recruitment_invitation_id']['value']
+    committee_invited_id = invitation.content['committee_invited_id']['value']
+    invite_label = invitation.content['invite_label']['value']
+    invited_label = invitation.content['invited_label']['value']
+    hash_seed = invitation.content['hash_seed']['value']
+    assignment_invitation_id = invitation.content['assignment_invitation_id']['value']
+    paper_reviewer_invited_id = invitation.content['paper_reviewer_invited_id']['value']
+    email_template = invitation.content['email_template']['value']
+    is_reviewer = 'Reviewers' in assignment_invitation_id
+    action_string = 'to review' if is_reviewer else 'to serve as area chair for'
     print(edge.id)
 
-    if edge.ddate is None and edge.label == INVITE_LABEL:
+    if edge.ddate is None and edge.label == invite_label:
 
         ## Get the submission
         notes=client.get_notes(id=edge.head, details='original')
@@ -43,11 +43,11 @@ def process(client, edge, invitation):
         ## - Build invitation link
         print(f'Send invitation to {user_profile.id}')
         from Crypto.Hash import HMAC, SHA256
-        hashkey = HMAC.new(HASH_SEED.encode('utf-8'), msg=user_profile.id.encode('utf-8'), digestmod=SHA256).hexdigest()
+        hashkey = HMAC.new(hash_seed.encode('utf-8'), msg=user_profile.id.encode('utf-8'), digestmod=SHA256).hexdigest()
         baseurl = 'https://openreview.net' #Always pointing to the live site so we don't send more invitations with localhost
 
         # build the URL to send in the message
-        invitation_url = f'{baseurl}/invitation?id={RECRUITMENT_INVITATION_ID}&user={user_profile.id}&key={hashkey}&submission_id={submission.id}&inviter={edge.tauthor}'
+        invitation_url = f'{baseurl}/invitation?id={recruitment_invitation_id}&user={user_profile.id}&key={hashkey}&submission_id={submission.id}&inviter={edge.tauthor}'
 
         invitation_links = f'''Please respond the invitation clicking the following link:
 
@@ -55,9 +55,9 @@ def process(client, edge, invitation):
 
 
         # format the message defined above
-        subject=f'[{SHORT_PHRASE}] Invitation {ACTION_STRING} paper titled {submission.content["title"]["value"]}'
-        if EMAIL_TEMPLATE:
-            message=EMAIL_TEMPLATE.format(
+        subject=f'[{short_phrase}] Invitation {action_string} paper titled {submission.content["title"]["value"]}'
+        if email_template:
+            message=email_template.format(
                 title=submission.content['title']['value'],
                 number=submission.number,
                 abstract=submission.content['abstract']['value'],
@@ -68,7 +68,7 @@ def process(client, edge, invitation):
             )
         else:
             message=f'''Hi {preferred_name},
-You were invited {ACTION_STRING} the paper number: {submission.number}, title: {submission.content['title']['value']}.
+You were invited {action_string} the paper number: {submission.number}, title: {submission.content['title']['value']}.
 Abstract: {submission.content['abstract']['value']}
 
 {invitation_links}
@@ -79,20 +79,20 @@ Thanks,
 {inviter_preferred_name} ({edge.tauthor})'''
 
         
-        if PAPER_REVIEWER_INVITED_ID:
-            paper_reviewers_invited_id=PAPER_REVIEWER_INVITED_ID.replace('{number}', str(submission.number))
+        if paper_reviewer_invited_id:
+            paper_reviewers_invited_id=paper_reviewer_invited_id.replace('{number}', str(submission.number))
             ## Paper invited group
             client.add_members_to_group(paper_reviewers_invited_id, [user_profile.id])
 
-        if REVIEWERS_INVITED_ID:
+        if committee_invited_id:
             ## General invited group
-            client.add_members_to_group(REVIEWERS_INVITED_ID, [user_profile.id])
+            client.add_members_to_group(committee_invited_id, [user_profile.id])
 
         ## - Send email
-        response = client.post_message(subject, [user_profile.id], message, parentGroup=REVIEWERS_INVITED_ID)
+        response = client.post_message(subject, [user_profile.id], message, parentGroup=committee_invited_id)
 
         ## - Update edge to INVITED_LABEL
-        edge.label=INVITED_LABEL
+        edge.label=invited_label
         edge.readers=[r if r != edge.tail else user_profile.id for r in edge.readers]
         edge.tail=user_profile.id
         client.post_edge(edge)

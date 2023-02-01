@@ -1,12 +1,12 @@
 def process(client, edge, invitation):
 
-    REVIEWERS_ID = ''
-    ASSIGNMENT_INVITATION_ID = ''
-    ASSIGNMENT_LABEL = None
-    INVITE_LABEL = ''
+    reviewers_id = invitation.content['match_group']['value']
+    assignment_invitation_id = invitation.content['assignment_invitation_id']['value']
+    assignment_label = invitation.content['assignment_label']['value']
+    invite_label = invitation.content['invite_label']['value']
     print(edge.id)
 
-    if edge.ddate is None and edge.label == INVITE_LABEL:
+    if edge.ddate is None and edge.label == invite_label:
 
         ## Get the submission
         notes=client.get_notes(id=edge.head, details='original')
@@ -27,20 +27,20 @@ def process(client, edge, invitation):
                     raise openreview.OpenReviewException(f'Already invited as {edges[0].tail}')
 
             ## - Check if the user is already assigned
-            edges=client.get_edges(invitation=ASSIGNMENT_INVITATION_ID, head=edge.head, tail=user_profile.id, label=ASSIGNMENT_LABEL)
+            edges=client.get_edges(invitation=assignment_invitation_id, head=edge.head, tail=user_profile.id, label=assignment_label)
             if edges:
                 raise openreview.OpenReviewException(f'Already assigned as {edges[0].tail}')
 
             ## - Check if the user is an official reviewer
-            if user_profile.id.startswith('~') and client.get_groups(id=REVIEWERS_ID, member=user_profile.id):
+            if user_profile.id.startswith('~') and client.get_groups(id=reviewers_id, member=user_profile.id):
 
                 ## - Check if the user has a conflict
-                edges=client.get_edges(invitation=REVIEWERS_ID + '/-/Conflict', head=edge.head, tail=user_profile.id)
+                edges=client.get_edges(invitation=reviewers_id + '/-/Conflict', head=edge.head, tail=user_profile.id)
                 if edges:
                     raise openreview.OpenReviewException(f'Conflict detected for {user_profile.get_preferred_name(pretty=True)}')
 
                 ## Only check this when there are proposed assignments
-                if ASSIGNMENT_LABEL:
+                if assignment_label:
                     raise openreview.OpenReviewException(f'Reviewer {user_profile.get_preferred_name(pretty=True)} is an official reviewer, please use the "Assign" button to make the assignment.')
 
 

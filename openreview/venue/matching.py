@@ -943,53 +943,43 @@ class Matching(object):
         return matching_status
 
     def setup_invite_assignment(self, hash_seed, assignment_title=None, due_date=None, invitation_labels={}, invited_committee_name='External_Reviewers', email_template=None, proposed=False):
+        venue = self.venue
+
         invite_label=invitation_labels.get('Invite', 'Invitation Sent')
         invited_label=invitation_labels.get('Invited', 'Invitation Sent')
         accepted_label=invitation_labels.get('Accepted', 'Accepted')
         declined_label=invitation_labels.get('Declined', 'Declined')
 
-        recruitment_invitation_id=self.venue.get_invitation_id('Proposed_Assignment_Recruitment' if assignment_title else 'Assignment_Recruitment', prefix=self.match_group.id)
-        invitation=self._create_edge_invitation(self.venue.get_assignment_id(self.match_group.id, invite=True), any_tail=True, default_label=invite_label)
-        print(invitation)
-        print()
+        recruitment_invitation_id=venue.get_invitation_id('Proposed_Assignment_Recruitment' if assignment_title else 'Assignment_Recruitment', prefix=self.match_group.id)
+        invitation=self._create_edge_invitation(venue.get_assignment_id(self.match_group.id, invite=True), any_tail=True, default_label=invite_label)
+
+        invitation_content = {
+            'match_group': { 'value':  self.match_group.id },
+            'assignment_invitation_id': { 'value': venue.get_assignment_id(self.match_group.id) if assignment_title else venue.get_assignment_id(self.match_group.id, deployed=True)},
+            'assignment_label': { 'value': assignment_title if assignment_title else '' },
+            'invite_label': { 'value': invite_label },
+            'invited_label': { 'value': invited_label },
+            'recruitment_invitation_id': { 'value': recruitment_invitation_id },
+            'committee_invited_id': { 'value': venue.get_committee_id(name=invited_committee_name + '/Invited') },
+            'paper_reviewer_invited_id': { 'value': venue.get_committee_id(name=invited_committee_name + '/Invited', number='{number}') if assignment_title else ''},
+            'hash_seed': { 'value': hash_seed, 'readers': [ venue.venue_id ]},
+            'email_template': { 'value': email_template if email_template else ''}
+        }
 
         # set invite assignment invitation
-        with open(os.path.join(os.path.dirname(__file__), 'process/invite_assignment_pre_process.py')) as pre:
-            with open(os.path.join(os.path.dirname(__file__), 'process/invite_assignment_post_process.py')) as post:
-                pre_content = pre.read()
-                post_content = post.read()
-                pre_content = pre_content.replace("REVIEWERS_ID = ''", "REVIEWERS_ID = '" + self.match_group.id + "'")
-                post_content = post_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.venue.get_short_name()}"')
-                post_content = post_content.replace("RECRUITMENT_INVITATION_ID = ''", "RECRUITMENT_INVITATION_ID = '" + recruitment_invitation_id + "'")
-                post_content = post_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + self.venue.get_committee_id(name=invited_committee_name + '/Invited')  + "'")
-                if email_template:
-                    post_content = post_content.replace("EMAIL_TEMPLATE = ''", "EMAIL_TEMPLATE = '''" + email_template  + "'''")
-                if assignment_title:
-                    pre_content = pre_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.venue.get_assignment_id(self.match_group.id) + "'")
-                    pre_content = pre_content.replace("ASSIGNMENT_LABEL = None", "ASSIGNMENT_LABEL = '" + assignment_title + "'")
-                    post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.venue.get_assignment_id(self.match_group.id) + "'")
-                    post_content = post_content.replace("ASSIGNMENT_LABEL = None", "ASSIGNMENT_LABEL = '" + assignment_title + "'")
-                    post_content = post_content.replace("PAPER_REVIEWER_INVITED_ID = ''", "PAPER_REVIEWER_INVITED_ID = '" + self.venue.get_committee_id(name=invited_committee_name + '/Invited', number='{number}')  + "'")
-                else:
-                    pre_content = pre_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.venue.get_assignment_id(self.match_group.id, deployed=True) + "'")
-                    post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.venue.get_assignment_id(self.match_group.id, deployed=True) + "'")
-                
-                post_content = post_content.replace("HASH_SEED = ''", "HASH_SEED = '" + hash_seed + "'")
-                post_content = post_content.replace("INVITED_LABEL = ''", "INVITED_LABEL = '" + invited_label + "'")
-                pre_content = pre_content.replace("INVITE_LABEL = ''", "INVITE_LABEL = '" + invite_label + "'")
-                post_content = post_content.replace("INVITE_LABEL = ''", "INVITE_LABEL = '" + invite_label + "'")
+        pre_process_content = venue.invitation_builder.get_process_content('process/invite_assignment_pre_process.py')
+        post_process_content = venue.invitation_builder.get_process_content('process/invite_assignment_post_process.py')
 
-                invitation.preprocess = pre_content
-                invitation.process = post_content
-                invitation.minReplies = 1
-                invitation.maxReplies = 1
-                invitation.signatures = [self.venue.get_program_chairs_id()]
-                invite_assignment_invitation=self.venue.invitation_builder.save_invitation(invitation, replacement=True)
-
-                print(invite_assignment_invitation)
+        invitation.preprocess = pre_process_content
+        invitation.process = post_process_content
+        invitation.content = invitation_content
+        invitation.minReplies = 1
+        invitation.maxReplies = 1
+        invitation.signatures = [venue.get_program_chairs_id()]
+        invite_assignment_invitation=venue.invitation_builder.save_invitation(invitation, replacement=True)
 
         # set assignment recruitment invitation
-        invitation = self.venue.invitation_builder.set_paper_recruitment_invitation(recruitment_invitation_id,
+        invitation = venue.invitation_builder.set_paper_recruitment_invitation(recruitment_invitation_id,
             self.match_group.id,
             invited_committee_name,
             hash_seed,
