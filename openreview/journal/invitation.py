@@ -1086,8 +1086,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            minReplies=1,
-            maxReplies=1,            
             type='Edge',
             edit={
                 'id': {
@@ -1311,8 +1309,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
             signatures=[venue_id], 
-            minReplies=1,
-            maxReplies=1,
             type='Edge',
             edit={
                 'id': {
