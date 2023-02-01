@@ -23,6 +23,14 @@ class TestVenueSubmissionARR():
         conference_id = 'ARR'
 
         venue = Venue(openreview_client, conference_id, 'openreview.net/Support')
+
+        # Set journal names
+        venue.program_chairs_name = 'Editors_In_Chief'
+        venue.area_chair_roles = ['Action_Editors']
+        venue.senior_area_chair_roles = ['Senior_Action_Editors']
+        venue.area_chairs_name = 'Action_Editors'
+        venue.senior_area_chairs_name = 'Senior_Action_Editors'
+
         venue.use_area_chairs = True
         venue.name = 'ARR'
         venue.short_name = 'ARR'
@@ -130,9 +138,11 @@ class TestVenueSubmissionARR():
     
         venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS, SubmissionStage.Readers.AREA_CHAIRS]
         venue.setup_post_submission_stage(venueid=cycle)
+
+        #print(openreview_client.get_all_groups(prefix='ARR/Submission1/.*'))
         assert openreview_client.get_group('ARR/Submission1/Authors')
         assert openreview_client.get_group('ARR/Submission1/Reviewers')
-        assert openreview_client.get_group('ARR/Submission1/Area_Chairs')
+        assert openreview_client.get_group('ARR/Submission1/Action_Editors')
 
         submissions = venue.get_submissions(sort='number:asc', venueid=venue.get_submission_venue_id(f'{cycle}/Submission'))
         assert len(submissions) == 2
@@ -141,7 +151,7 @@ class TestVenueSubmissionARR():
         assert 'ARR' in submission.readers
         assert 'ARR/Submission1/Authors' in submission.readers        
         assert 'ARR/Reviewers' in submission.readers
-        assert 'ARR/Area_Chairs' in submission.readers
+        assert 'ARR/Action_Editors' in submission.readers
 
         assert openreview_client.get_invitation('ARR/Submission1/-/Withdrawal')
         assert openreview_client.get_invitation('ARR/Submission2/-/Withdrawal')
@@ -223,7 +233,7 @@ class TestVenueSubmissionARR():
         note = author_client.get_note(withdraw_note['note']['forum'])
         assert note
         assert note.invitations == ['ARR/-/Submission', 'ARR/-/Edit', 'ARR/-/Withdrawn_Submission']
-        assert note.readers == ['ARR', 'ARR/Area_Chairs', 'ARR/Reviewers', 'ARR/Submission2/Authors']
+        assert note.readers == ['ARR', 'ARR/Action_Editors', 'ARR/Reviewers', 'ARR/Submission2/Authors']
         assert note.writers == ['ARR', 'ARR/Submission2/Authors']
         assert note.signatures == ['ARR/Submission2/Authors']
         assert note.content['venue']['value'] == 'ARR Withdrawn Submission'
@@ -245,7 +255,7 @@ class TestVenueSubmissionARR():
         assert openreview_client.get_invitation('ARR/Submission2/-/Withdrawal_Reversion')
 
         withdrawal_reversion_note = openreview_client.post_note_edit(invitation='ARR/Submission2/-/Withdrawal_Reversion',
-                                    signatures=['ARR/Program_Chairs'],
+                                    signatures=['ARR/Editors_In_Chief'],
                                     note=Note(
                                         content={
                                             'revert_withdrawal_confirmation': { 'value': 'We approve the reversion of withdrawn submission.' },
@@ -276,7 +286,7 @@ class TestVenueSubmissionARR():
         pc_client = OpenReviewClient(username='editors@aclrollingreview.org', password='1234')
 
         desk_reject_note = pc_client.post_note_edit(invitation='ARR/Submission2/-/Desk_Rejection',
-                                    signatures=['ARR/Program_Chairs'],
+                                    signatures=['ARR/Editors_In_Chief'],
                                     note=Note(
                                         content={
                                             'desk_reject_comments': { 'value': 'No PDF' },
@@ -288,7 +298,7 @@ class TestVenueSubmissionARR():
         note = pc_client.get_note(desk_reject_note['note']['forum'])
         assert note
         assert note.invitations == ['ARR/-/Submission', 'ARR/-/Edit', 'ARR/-/Desk_Rejected_Submission']
-        assert note.readers == ['ARR', 'ARR/Area_Chairs', 'ARR/Reviewers', 'ARR/Submission2/Authors']
+        assert note.readers == ['ARR', 'ARR/Action_Editors', 'ARR/Reviewers', 'ARR/Submission2/Authors']
         assert note.writers == ['ARR', 'ARR/Submission2/Authors']
         assert note.signatures == ['ARR/Submission2/Authors']
         assert note.content['venue']['value'] == 'ARR Desk Rejected Submission'
@@ -316,7 +326,7 @@ class TestVenueSubmissionARR():
         assert openreview_client.get_invitation('ARR/Submission2/-/Desk_Rejection_Reversion')
 
         desk_rejection_reversion_note = openreview_client.post_note_edit(invitation='ARR/Submission2/-/Desk_Rejection_Reversion',
-                                    signatures=['ARR/Program_Chairs'],
+                                    signatures=['ARR/Editors_In_Chief'],
                                     note=Note(
                                         content={
                                             'revert_desk_rejection_confirmation': { 'value': 'We approve the reversion of desk-rejected submission.' },
