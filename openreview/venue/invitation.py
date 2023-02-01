@@ -1881,6 +1881,49 @@ class InvitationBuilder(object):
             self.save_invitation(invitation)                           
 
     def set_paper_recruitment_invitation(self, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title=None, due_date=None, invited_label='Invited', accepted_label='Accepted', declined_label='Declined', proposed=False):
+        venue = self.venue
+
         current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
         process_file='process/simple_paper_recruitment_process.py' if proposed else 'process/paper_recruitment_process.py'
         web = current_invitation.web if current_invitation else None
+
+        edge_readers = []
+        edge_writers = []
+        if committee_id.endswith(venue.area_chairs_name):
+            if venue.use_senior_area_chairs:
+                edge_readers.append(venue.get_senior_area_chairs_id(number='{number}'))
+                edge_writers.append(venue.get_senior_area_chairs_id(number='{number}'))
+
+        if committee_id.endswith(venue.reviewers_name):
+            if venue.use_senior_area_chairs:
+                edge_readers.append(venue.get_senior_area_chairs_id(number='{number}'))
+                edge_writers.append(venue.get_senior_area_chairs_id(number='{number}'))
+
+            if venue.use_area_chairs:
+                edge_readers.append(venue.get_area_chairs_id(number='{number}'))
+                edge_writers.append(venue.get_area_chairs_id(number='{number}'))
+
+        content = default_content.paper_recruitment_v2.copy()
+
+        paper_recruitment_invitation = Invitation(
+                id = invitation_id,
+                invitees = ['everyone'],
+                signatures = [venue.get_program_chairs_id()],
+                readers = ['everyone'],
+                writers = [venue.id],
+                # content = invitation_content,
+                edit = {
+                    'signatures': ['(anonymous)'],
+                    'readers': [venue.id],
+                    'note' : {
+                        'signatures':['${3/signatures}'],
+                        'readers': [venue.id, '${2/content/user}', '${2/content/inviter}'],
+                        'writers': [venue.id, '${3/signatures}'],
+                        'content': content
+                    }
+                },
+                process = process_file,
+                # preprocess = pre_process_content,
+                web = web
+            )
+        self.save_invitation(paper_recruitment_invitation, replacement=True)
