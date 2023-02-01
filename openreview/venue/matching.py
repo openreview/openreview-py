@@ -245,6 +245,15 @@ class Matching(object):
 
         author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, as_dict=True)
 
+        ## for AC conflicts, check SAC conflicts too
+        sac_user_info_by_id = {}
+        sac_assignment_edges = {}
+        if self.is_area_chair:
+            sacs_by_ac =  { g['id']['head']: [v['tail'] for v in g['values']] for g in self.client.get_grouped_edges(invitation=self.venue.get_assignment_id(self.venue.get_senior_area_chairs_id()), groupby='head', select=None)}
+            if sacs_by_ac:
+                sac_user_profiles = openreview.tools.get_profiles(self.client, self.client.get_group(self.venue.get_senior_area_chairs_id()).members, with_publications=True)
+                sac_user_info_by_id = { p.id: get_profile_info(p) for p in sac_user_profiles }
+
         edges = []
 
         for submission in tqdm(submissions, total=len(submissions), desc='_build_conflicts'):
@@ -274,6 +283,18 @@ class Matching(object):
                 conflicts.update(author_emails.intersection(user_info['relations']))
                 conflicts.update(author_emails.intersection(user_info['emails']))
                 conflicts.update(author_publications.intersection(user_info['publications']))
+
+                ## Transfer SAC conflicts
+                if len(conflicts) == 0 and self.is_area_chair:
+                    assigned_sacs = sacs_by_ac.get(user_info['id'], [])
+                    for sac in assigned_sacs:
+                        sac_info = sac_user_info_by_id.get(sac)
+                        if sac_info:
+                            conflicts.update(author_domains.intersection(sac_info['domains']))
+                            conflicts.update(author_relations.intersection(sac_info['emails']))
+                            conflicts.update(author_emails.intersection(sac_info['relations']))
+                            conflicts.update(author_emails.intersection(sac_info['emails']))
+                            conflicts.update(author_publications.intersection(sac_info['publications']))                            
 
                 if conflicts:
                     edges.append(Edge(
