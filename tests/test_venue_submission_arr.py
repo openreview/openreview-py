@@ -71,10 +71,10 @@ class TestVenueSubmissionARR():
             contact_info='editors@aclrollingreview.org',
             reduced_load_on_decline = ['1','2','3'])
 
-        venue.recruit_reviewers(title='[ARR] Invitation to serve as Area Chair',
+        venue.recruit_reviewers(title='[ARR] Invitation to serve as Action Editor',
             message=message,
             invitees = ['~ARR_Reviewer_Venue_One1'],
-            reviewers_name = 'Area_Chairs',
+            reviewers_name = 'Action_Editors',
             contact_info='editors@aclrollingreview.org',
             allow_overlap_official_committee = True)
 
