@@ -49,10 +49,10 @@ class TestVenueSubmissionARR():
         cycle = '2023_March'
         cycleid = f"{cycle}/Submission"
 
-        venue.setup(program_chair_ids=['editors@aclrollingreview.org'], venueid=cycleid)
-        venue.create_submission_stage(venueid=cycle)
-        venue.create_review_stage(venueid=cycle)
-        venue.create_meta_review_stage(venueid=cycle)
+        venue.setup(program_chair_ids=['editors@aclrollingreview.org'], partial_submission_venue_id=cycleid)
+        venue.create_submission_stage(sub_venue_id=cycle)
+        venue.create_review_stage(sub_venue_id=cycle)
+        venue.create_meta_review_stage(sub_venue_id=cycle)
         assert openreview_client.get_group('ARR')
         assert openreview_client.get_group('ARR/Authors')
 
@@ -137,14 +137,14 @@ class TestVenueSubmissionARR():
         cycle = '2023_March'
     
         venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS, SubmissionStage.Readers.AREA_CHAIRS]
-        venue.setup_post_submission_stage(venueid=cycle)
+        venue.setup_post_submission_stage(sub_venue_id=cycle)
 
         #print(openreview_client.get_all_groups(prefix='ARR/Submission1/.*'))
         assert openreview_client.get_group('ARR/Submission1/Authors')
         assert openreview_client.get_group('ARR/Submission1/Reviewers')
         assert openreview_client.get_group('ARR/Submission1/Action_Editors')
 
-        submissions = venue.get_submissions(sort='number:asc', venueid=venue.get_submission_venue_id(f'{cycle}/Submission'))
+        submissions = venue.get_submissions(sort='number:asc', submission_venue_id=venue.get_submission_venue_id(f'{cycle}/Submission'))
         assert len(submissions) == 2
         submission = submissions[0]
         assert len(submission.readers) == 4
@@ -172,7 +172,7 @@ class TestVenueSubmissionARR():
             writers=['ARR'],
             signatures=['ARR'],
             content={
-                'cycleId': {
+                'subvenueid': {
                     'value': cycle
                 }
             },
@@ -200,7 +200,7 @@ class TestVenueSubmissionARR():
             writers=['ARR'],
             signatures=['ARR'],
             content={
-                'cycleId': {
+                'subvenueid': {
                     'value': cycle
                 }
             },

@@ -290,7 +290,7 @@ class Venue(object):
             return f'{self.venue_id}/Rejected_{self.submission_stage.name}'
         return f'{self.venue_id}/Rejected_Submission' 
 
-    def get_submissions(self, venueid=None, accepted=False, sort=None, details=None):
+    def get_submissions(self, submission_venue_id=None, accepted=False, sort=None, details=None):
         if accepted:
             accepted_notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort)
             if len(accepted_notes) == 0:
@@ -303,7 +303,7 @@ class Venue(object):
                                 accepted_notes.append(note)
             return accepted_notes
         else:
-            notes = self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.get_submission_venue_id()}'}, sort=sort, details=details)
+            notes = self.client.get_all_notes(content={ 'venueid': submission_venue_id if submission_venue_id else f'{self.get_submission_venue_id()}'}, sort=sort, details=details)
             if len(notes) == 0:
                 notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort, details=details)
                 rejected = self.client.get_all_notes(content={ 'venueid': f'{self.venue_id}/Rejected'}, sort=sort, details=details)
@@ -321,11 +321,11 @@ class Venue(object):
             invitation = f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{invitation_name}'
             self.invitation_builder.expire_invitation(invitation)
 
-    def setup(self, program_chair_ids=[], venueid=None):
+    def setup(self, program_chair_ids=[], partial_submission_venue_id=None):
     
         self.invitation_builder.set_meta_invitation()
 
-        self.group_builder.create_venue_group(venueid)
+        self.group_builder.create_venue_group(partial_submission_venue_id)
 
         self.group_builder.create_program_chairs_group(program_chair_ids)
 
@@ -365,33 +365,33 @@ class Venue(object):
             # default_load, ##can this be removed? We never get it from the request form
             allow_overlap_official_committee)
 
-    def create_submission_stage(self, venueid=None):
-        self.invitation_builder.set_submission_invitation(f"{venueid}/Submission" if venueid is not None else None)
-        self.invitation_builder.set_withdrawal_invitation(f"{venueid}_Submission" if venueid is not None else None)
-        self.invitation_builder.set_desk_rejection_invitation(f"{venueid}_Submission" if venueid is not None else None)
+    def create_submission_stage(self, sub_venue_id=None):
+        self.invitation_builder.set_submission_invitation(f"{sub_venue_id}/Submission" if sub_venue_id is not None else None)
+        self.invitation_builder.set_withdrawal_invitation(f"{sub_venue_id}_Submission" if sub_venue_id is not None else None)
+        self.invitation_builder.set_desk_rejection_invitation(f"{sub_venue_id}_Submission" if sub_venue_id is not None else None)
         if self.expertise_selection_stage:
             self.invitation_builder.set_expertise_selection_invitations()
 
-    def create_review_stage(self, venueid=None):
-        cycle_invitation = None
-        if venueid is not None:
-            cycle_invitation = self.invitation_builder.set_cycle_review_invitation(venueid=venueid)
-        invitation = self.invitation_builder.set_review_invitation(venueid=venueid, cycle_invitation=cycle_invitation)
-        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions(venueid=self.get_submission_venue_id(f"{venueid}/Submission")))
+    def create_review_stage(self, sub_venue_id=None):
+        sub_venue_invitation = None
+        if sub_venue_id is not None:
+            sub_venue_invitation = self.invitation_builder.set_sub_venue_review_invitation(sub_venue_id=sub_venue_id)
+        invitation = self.invitation_builder.set_review_invitation(sub_venue_id=sub_venue_id, sub_venue_invitation=sub_venue_invitation)
+        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions(submission_venue_id=self.get_submission_venue_id(f"{sub_venue_id}/Submission")))
 
-    def create_meta_review_stage(self, venueid=None):
-        cycle_invitation = None
-        if venueid is not None:
-            cycle_invitation = self.invitation_builder.set_cycle_meta_review_invitation(venueid=venueid)
-        invitation = self.invitation_builder.set_meta_review_invitation(venueid=venueid, cycle_invitation=cycle_invitation)
-        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions(venueid=self.get_submission_venue_id(f"{venueid}/Submission")))
+    def create_meta_review_stage(self, sub_venue_id=None):
+        sub_venue_invitation = None
+        if sub_venue_id is not None:
+            sub_venue_invitation = self.invitation_builder.set_sub_venue_meta_review_invitation(sub_venue_id=sub_venue_id)
+        invitation = self.invitation_builder.set_meta_review_invitation(sub_venue_id=sub_venue_id, sub_venue_invitation=sub_venue_invitation)
+        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions(submission_venue_id=self.get_submission_venue_id(f"{sub_venue_id}/Submission")))
 
     def create_registration_stages(self):
         self.invitation_builder.set_registration_invitations()
     
-    def setup_post_submission_stage(self, force=False, hide_fields=[], venueid=None):
+    def setup_post_submission_stage(self, force=False, hide_fields=[], sub_venue_id=None):
         venue_id = self.venue_id
-        submissions = self.get_submissions(venueid=self.get_submission_venue_id(f"{venueid}/Submission")) if venueid else self.get_submissions()
+        submissions = self.get_submissions(submission_venue_id=self.get_submission_venue_id(f"{sub_venue_id}/Submission")) if sub_venue_id else self.get_submissions()
         hide_author_fields = ['authors', 'authorids'] if self.submission_stage.double_blind else []
         final_hide_fields = hide_author_fields + hide_fields
         
@@ -399,7 +399,7 @@ class Venue(object):
         
         def update_submission_readers(submission):
             #if submission.content['venueid']['value'] == self.get_submission_venue_id(f"{venueid}/Submission"):
-            if submission.content['venueid']['value'] == self.get_submission_venue_id(f"{venueid}/Submission" if venueid else None):
+            if submission.content['venueid']['value'] == self.get_submission_venue_id(f"{sub_venue_id}/Submission" if sub_venue_id else None):
                 note_content = {}
                 for field in final_hide_fields:
                     note_content[field] = {

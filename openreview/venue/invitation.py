@@ -123,7 +123,7 @@ class InvitationBuilder(object):
             )
         )
        
-    def set_submission_invitation(self, venueid=None):
+    def set_submission_invitation(self, sub_venue_id=None):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
         submission_name = submission_stage.name
@@ -152,7 +152,7 @@ class InvitationBuilder(object):
         content['venueid'] = {
             'value': {
                 'param': {
-                    'const': self.venue.get_submission_venue_id(venueid) if venueid is not None else self.venue.get_submission_venue_id(),
+                    'const': self.venue.get_submission_venue_id(sub_venue_id) if sub_venue_id is not None else self.venue.get_submission_venue_id(),
                     'hidden': True
                 }
             }
@@ -209,7 +209,7 @@ class InvitationBuilder(object):
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=True)
 
-    def set_cycle_review_invitation(self, venueid=None):
+    def set_sub_venue_review_invitation(self, sub_venue_id=None):
 
         venue_id = self.venue_id
         review_stage = self.venue.review_stage
@@ -237,7 +237,7 @@ class InvitationBuilder(object):
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'content': {
-                    'cycleId': {
+                    'subvenueid': {
                         'value': {
                             'param': {
                                 'regex': '.*', 'type': 'string' 
@@ -246,7 +246,7 @@ class InvitationBuilder(object):
                     }
                 },
                 'invitation': {
-                    'id': self.venue.get_invitation_id('${2/content/cycleId/value}' + f"/{review_stage.name}"),
+                    'id': self.venue.get_invitation_id('${2/content/subvenueid/value}' + f"/{review_stage.name}"),
                     'invitees': [venue_id],
                     'signatures': [ venue_id ],
                     'readers': [venue_id],
@@ -299,7 +299,7 @@ class InvitationBuilder(object):
                             }
                         },
                         'invitation': {
-                            'id': self.venue.get_invitation_id('${4/content/cycleId/value}' + f"/{review_stage.name}", '${2/content/noteNumber/value}'),
+                            'id': self.venue.get_invitation_id('${4/content/subvenueid/value}' + f"/{review_stage.name}", '${2/content/noteNumber/value}'),
                             'signatures': [ venue_id ],
                             'readers': ['everyone'],
                             'writers': [venue_id],
@@ -321,7 +321,7 @@ class InvitationBuilder(object):
                                 'note': {
                                     'id': {
                                         'param': {
-                                            'withInvitation': self.venue.get_invitation_id('${8/content/cycleId/value}' + f"/{review_stage.name}", '${6/content/noteNumber/value}'),
+                                            'withInvitation': self.venue.get_invitation_id('${8/content/subvenueid/value}' + f"/{review_stage.name}", '${6/content/noteNumber/value}'),
                                             'optional': True
                                         }
                                     },
@@ -357,11 +357,11 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_review_invitation(self, venueid=None, cycle_invitation=None):
+    def set_review_invitation(self, sub_venue_id=None, sub_venue_invitation=None):
 
         venue_id = self.venue_id
         review_stage = self.venue.review_stage
-        review_stage_name = review_stage.name if venueid is None else f"{venueid}/{review_stage.name}"
+        review_stage_name = review_stage.name if sub_venue_id is None else f"{sub_venue_id}/{review_stage.name}"
         review_invitation_id = self.venue.get_invitation_id(review_stage_name)
         review_cdate = tools.datetime_millis(review_stage.start_date if review_stage.start_date else datetime.datetime.utcnow())
         review_duedate = tools.datetime_millis(review_stage.due_date) if review_stage.due_date else None
@@ -375,7 +375,7 @@ class InvitationBuilder(object):
             if field in content:
                 del content[field]
 
-        if venueid is not None and cycle_invitation is not None:
+        if sub_venue_id is not None and sub_venue_invitation is not None:
             invitation=Invitation(id=review_invitation_id,
                     cdate=review_cdate,
                     duedate=review_duedate,
@@ -383,11 +383,11 @@ class InvitationBuilder(object):
                     signatures=[venue_id]
                 )
             content = {
-                'cycleId': {
-                    'value': venueid
+                'subvenueid': {
+                    'value': sub_venue_id
                 }
             }
-            self.save_invitation(invitation, invitations=cycle_invitation.id, content=content)
+            self.save_invitation(invitation, invitations=sub_venue_invitation.id, content=content)
             return invitation
 
         invitation = Invitation(id=review_invitation_id,
@@ -486,7 +486,7 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_cycle_meta_review_invitation(self, venueid=None):
+    def set_sub_venue_meta_review_invitation(self, sub_venue_id=None):
 
         venue_id = self.venue_id
         meta_review_stage = self.venue.meta_review_stage
@@ -515,7 +515,7 @@ class InvitationBuilder(object):
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'content': {
-                    'cycleId': {
+                    'subvenueid': {
                         'value': {
                             'param': {
                                 'regex': '.*', 'type': 'string' 
@@ -524,7 +524,7 @@ class InvitationBuilder(object):
                     }
                 },
                 'invitation': {
-                    'id': self.venue.get_invitation_id('${2/content/cycleId/value}' + f"/{meta_review_stage.name}"),
+                    'id': self.venue.get_invitation_id('${2/content/subvenueid/value}' + f"/{meta_review_stage.name}"),
                     'invitees': [venue_id],
                     'signatures': [ venue_id ],
                     'readers': [venue_id],
@@ -572,7 +572,7 @@ class InvitationBuilder(object):
                             }
                         },
                         'invitation': {
-                            'id': self.venue.get_invitation_id('${4/content/cycleId/value}' + f"/{meta_review_stage.name}", '${2/content/noteNumber/value}'),
+                            'id': self.venue.get_invitation_id('${4/content/subvenueid/value}' + f"/{meta_review_stage.name}", '${2/content/noteNumber/value}'),
                             'signatures': [ venue_id ],
                             'readers': ['everyone'],
                             'writers': [venue_id],
@@ -587,7 +587,7 @@ class InvitationBuilder(object):
                                 'note': {
                                     'id': {
                                         'param': {
-                                            'withInvitation': self.venue.get_invitation_id('${8/content/cycleId/value}' + f"/{meta_review_stage.name}", '${6/content/noteNumber/value}'),
+                                            'withInvitation': self.venue.get_invitation_id('${8/content/subvenueid/value}' + f"/{meta_review_stage.name}", '${6/content/noteNumber/value}'),
                                             'optional': True
                                         }
                                     },
@@ -620,11 +620,11 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_meta_review_invitation(self, venueid=None, cycle_invitation=None):
+    def set_meta_review_invitation(self, sub_venue_id=None, sub_venue_invitation=None):
 
         venue_id = self.venue_id
         meta_review_stage = self.venue.meta_review_stage
-        meta_review_stage_name = meta_review_stage.name if venueid is None else f"{venueid}/{meta_review_stage.name}"
+        meta_review_stage_name = meta_review_stage.name if sub_venue_id is None else f"{sub_venue_id}/{meta_review_stage.name}"
         meta_review_invitation_id = self.venue.get_invitation_id(meta_review_stage_name)
         meta_review_cdate = tools.datetime_millis(meta_review_stage.start_date if meta_review_stage.start_date else datetime.datetime.utcnow())
         meta_review_duedate = tools.datetime_millis(meta_review_stage.due_date) if meta_review_stage.due_date else None
@@ -639,7 +639,7 @@ class InvitationBuilder(object):
             if field in content:
                 del content[field]
 
-        if venueid is not None and cycle_invitation is not None:
+        if sub_venue_id is not None and sub_venue_id is not None:
             invitation=Invitation(id=meta_review_invitation_id,
                     cdate=meta_review_cdate,
                     duedate=meta_review_duedate,
@@ -647,11 +647,11 @@ class InvitationBuilder(object):
                     signatures=[venue_id]
                 )
             content = {
-                'cycleId': {
-                    'value': venueid
+                'subvenueid': {
+                    'value': sub_venue_id
                 }
             }
-            self.save_invitation(invitation, invitations=cycle_invitation.id, content=content)
+            self.save_invitation(invitation, invitations=sub_venue_invitation.id, content=content)
             return invitation
 
         invitation = Invitation(id=meta_review_invitation_id,
@@ -1249,7 +1249,7 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_withdrawal_invitation(self, venueid=None):
+    def set_withdrawal_invitation(self, sub_venue_id=None):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
         exp_date = tools.datetime_millis(self.venue.submission_stage.withdraw_submission_exp_date) if self.venue.submission_stage.withdraw_submission_exp_date else None
@@ -1354,7 +1354,7 @@ class InvitationBuilder(object):
                 'value': tools.pretty_id(self.venue.get_withdrawn_submission_venue_id())
             },
             'venueid': {
-                'value': self.venue.get_withdrawn_submission_venue_id(venueid)
+                'value': self.venue.get_withdrawn_submission_venue_id(sub_venue_id)
             }
         }
         if submission_stage.withdrawn_submission_reveal_authors:
@@ -1530,7 +1530,7 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=True)
 
-    def set_desk_rejection_invitation(self, venueid=None):
+    def set_desk_rejection_invitation(self, sub_venue_id=None):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
         exp_date = tools.datetime_millis(self.venue.submission_stage.due_date + datetime.timedelta(days = 90)) if self.venue.submission_stage.due_date else None
@@ -1609,7 +1609,7 @@ class InvitationBuilder(object):
                 'value': tools.pretty_id(self.venue.get_desk_rejected_submission_venue_id())
             },
             'venueid': {
-                'value': self.venue.get_desk_rejected_submission_venue_id(venueid)
+                'value': self.venue.get_desk_rejected_submission_venue_id(sub_venue_id)
             }
         }
         if submission_stage.desk_rejected_submission_reveal_authors:
