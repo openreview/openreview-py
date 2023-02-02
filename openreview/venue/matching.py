@@ -162,7 +162,7 @@ class Matching(object):
                 }
             }
 
-            edge_readers.append('${{2/head}}')
+            edge_readers.append('${2/head}')
             edge_nonreaders = []
 
         edge_tail = {

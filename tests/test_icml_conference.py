@@ -1178,7 +1178,31 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         assert len(reviewers_group.members) == 3
         assert '~Reviewer_ICMLOne1' in reviewers_group.members    
         assert '~Reviewer_ICMLTwo1' in reviewers_group.members    
-        assert '~Reviewer_ICMLFive1' in reviewers_group.members    
+        assert '~Reviewer_ICMLFive1' in reviewers_group.members 
+
+
+        ## Change assigned SAC
+        assignment_edge = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Senior_Area_Chairs/-/Assignment', head='~AC_ICMLTwo1', tail='~SAC_ICMLOne1')[0]
+        assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        pc_client_v2.post_edge(assignment_edge)
+
+        helpers.await_queue(openreview_client)
+
+        sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission100/Senior_Area_Chairs')
+        assert [] == sac_group.members        
+
+        openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'ICML.cc/2023/Conference/Senior_Area_Chairs/-/Assignment',
+            head = '~AC_ICMLTwo1',
+            tail = '~SAC_ICMLTwo1',
+            signatures = ['ICML.cc/2023/Conference/Program_Chairs'],
+            weight = 1
+        ))
+
+        helpers.await_queue(openreview_client)
+
+        sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission100/Senior_Area_Chairs')
+        assert ['~SAC_ICMLTwo1'] == sac_group.members        
 
     def test_review_stage(self, openreview_client, helpers):
 
