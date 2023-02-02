@@ -1026,6 +1026,7 @@ class Matching(object):
                         head=paper.id,
                         tail=assigned_user,
                         readers=proposed_edge['readers'],
+                        nonreaders=proposed_edge.get('nonreaders'),
                         writers=proposed_edge['writers'],
                         signatures=proposed_edge['signatures'],
                         weight=proposed_edge.get('weight')
@@ -1057,6 +1058,7 @@ class Matching(object):
                     head=head,
                     tail=sac_assignment['tail'],
                     readers=sac_assignment['readers'],
+                    nonreaders=sac_assignment.get('nonreaders'),
                     writers=sac_assignment['writers'],
                     signatures=sac_assignment['signatures'],
                     weight=sac_assignment.get('weight')
