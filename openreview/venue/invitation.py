@@ -530,7 +530,7 @@ class InvitationBuilder(object):
                     'readers': [venue.id],
                     'note' : {
                         'signatures':['${3/signatures}'],
-                        'readers': [venue.id],
+                        'readers': [venue.id, '${2/content/user/value}'],
                         'writers': [venue.id],
                         'content': content
                     }

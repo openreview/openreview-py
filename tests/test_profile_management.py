@@ -864,6 +864,7 @@ The OpenReview Team.
         acceptance_note = openreview_client.post_note_edit(invitation=journal.get_accepted_id(),
             signatures=['CABJ'],
             note=openreview.api.Note(id=submission.id,
+                pdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()),
                 content= {
                     '_bibtex': {
                         'value': journal.get_bibtex(submission, journal.accepted_venue_id, certifications=[])

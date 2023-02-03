@@ -28,6 +28,7 @@ def process(client, edit, invitation):
     acceptance_note = client.post_note_edit(invitation=journal.get_accepted_id(),
                         signatures=[venue_id],
                         note=openreview.api.Note(id=submission.id,
+                            pdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()),
                             content= content
                         )
                     )

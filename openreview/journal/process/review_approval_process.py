@@ -25,6 +25,7 @@ def process(client, edit, invitation):
         return client.post_note_edit(invitation= journal.get_under_review_id(),
                                 signatures=[venue_id],
                                 note=openreview.api.Note(id=edit.note.forum,
+                                odate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if journal.is_submission_public() else None,
                                 content={
                                     '_bibtex': {
                                         'value': journal.get_bibtex(submission, journal.under_review_venue_id)

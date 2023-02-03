@@ -1,8 +1,7 @@
 import csv
 import json
 from json import tool
-import os
-import time
+import datetime
 from io import StringIO
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
@@ -409,20 +408,24 @@ class Venue(object):
                     }
 
                 note_readers = self.submission_stage.get_readers(self, submission.number)
-                note_writers = [venue_id,self.get_authors_id(submission.number)]
+                note_writers = [venue_id, self.get_authors_id(submission.number)]
                 note_signatures = [self.get_authors_id(submission.number)]
 
-                return self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
-                    readers=[venue_id],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    note=openreview.api.Note(id=submission.id,
-                            readers = note_readers,
-                            writers = note_writers,
-                            signatures = note_signatures,
-                            content = note_content 
+                if submission.readers != note_readers:
+                    return self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
+                        readers=[venue_id, self.get_authors_id(submission.number)],
+                        writers=[venue_id],
+                        signatures=[venue_id],
+                        note=openreview.api.Note(id=submission.id,
+                                odate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if (submission.odate is None and 'everyone' in note_readers) else None,
+                                readers = note_readers,
+                                writers = note_writers,
+                                signatures = note_signatures,
+                                content = note_content 
+                            )
                         )
-                    )
+                else:
+                    return submission
         ## Release the submissions to specified readers if venueid is still submission
         openreview.tools.concurrent_requests(update_submission_readers, submissions, desc='update_submission_readers')
 
@@ -626,12 +629,14 @@ Total Errors: {len(errors)}
                 }
 
             self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
-                readers=[venue_id],
+                readers=[venue_id, self.get_authors_id(submission.number)],
                 writers=[venue_id],
                 signatures=[venue_id],
                 note=openreview.api.Note(id=submission.id,
                         readers = submission_readers,
-                        content = content
+                        content = content,
+                        odate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if (submission.odate is None and 'everyone' in submission_readers) else None,
+                        pdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if (submission.pdate is None and note_accepted) else None
                     )
                 )
 

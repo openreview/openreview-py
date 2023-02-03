@@ -2329,6 +2329,7 @@ class Note(object):
         number=None,
         cdate=None,
         pdate=None,
+        odate=None,
         mdate=None,
         tcdate=None,
         tmdate=None,
@@ -2345,6 +2346,7 @@ class Note(object):
         self.number = number
         self.cdate = cdate
         self.pdate = pdate
+        self.odate = odate
         self.mdate = mdate
         self.tcdate = tcdate
         self.tmdate = tmdate
@@ -2382,6 +2384,7 @@ class Note(object):
             'original': self.original,
             'cdate': self.cdate,
             'pdate': self.pdate,
+            'odate': self.odate,
             'mdate': self.mdate,
             'tcdate': self.tcdate,
             'tmdate': self.tmdate,
@@ -2415,6 +2418,8 @@ class Note(object):
         id = n.get('id'),
         original = n.get('original'),
         number = n.get('number'),
+        pdate = n.get('pdate'),
+        odate = n.get('odate'),
         cdate = n.get('cdate'),
         mdate = n.get('mdate'),
         tcdate = n.get('tcdate'),

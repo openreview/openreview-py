@@ -916,6 +916,7 @@ class Conference(object):
         desk_rejected_submissions_by_original = {note.original: note for note in self.get_desk_rejected_submissions()}
 
         self.invitation_builder.set_blind_submission_invitation(self, hide_fields)
+        online_date = openreview.tools.datetime_millis(datetime.datetime.utcnow())
         blinded_notes = []
 
         for note in tqdm(self.client.get_all_notes(invitation=self.get_submission_id(), sort='number:asc', number=number), desc='create_blind_submissions'):
@@ -957,6 +958,7 @@ class Conference(object):
 
                 revision_note = self.client.post_note(openreview.Note(
                     invitation = f'{self.support_user}/-/{self.venue_revision_name}',
+                    odate = online_date if note.odate is None else note.odate,
                     forum = note.id,
                     referent = note.id,
                     readers = ['everyone'],
@@ -981,10 +983,12 @@ class Conference(object):
         else:
             self.invitation_builder.set_submission_invitation(conference=self)
             submissions = self.get_submissions()
+            online_date = openreview.tools.datetime_millis(datetime.datetime.utcnow())
             for s in submissions:
                 final_readers =  self.submission_stage.get_readers(conference=self, number=s.number)
                 if s.readers != final_readers:
                     s.readers = final_readers
+                    s.odate = online_date if ('everyone' in s.readers and s.odate is None) else s.odate
                     self.client.post_note(s)
 
         self.create_paper_groups(authors=True, reviewers=True, area_chairs=True, senior_area_chairs=True)
@@ -1023,10 +1027,12 @@ class Conference(object):
 
         if not self.submission_stage.double_blind and not self.submission_stage.papers_released and not self.submission_stage.create_groups:
             self.invitation_builder.set_submission_invitation(self)
+            online_date = openreview.tools.datetime_millis(datetime.datetime.utcnow())
             for note in tqdm(self.client.get_all_notes(invitation=self.get_submission_id(), sort='number:asc'), desc='set_final_readers'):
                 final_readers =  self.submission_stage.get_readers(conference=self, number=note.number)
                 if note.readers != final_readers:
                     note.readers = final_readers
+                    note.odate =  online_date if ('everyone' in note.readers and note.odate is None) else note.odate
                     self.client.post_note(note)
 
         self.create_paper_groups(authors=True, reviewers=True, area_chairs=True, senior_area_chairs=True)
@@ -1584,6 +1590,8 @@ Program Chairs
             result = future.result()
 
     def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None):
+        
+        publication_date = openreview.tools.datetime_millis(datetime.datetime.utcnow())
         submissions = self.get_submissions(details='original,directReplies')
 
         def is_release_authors(is_note_accepted):
@@ -1643,7 +1651,9 @@ Program Chairs
                     'venue': venue,
                     'venueid': self.id,
                     '_bibtex': bibtex
-                }
+                },
+                pdate = publication_date if (note_accepted and submission.pdate is None) else submission.pdate,
+                odate = publication_date if ('everyone' in submission.readers and submission.odate is None) else submission.odate
             ))
 
         venue_heading_map = {}
