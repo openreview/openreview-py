@@ -162,7 +162,7 @@ class Matching(object):
                 }
             }
 
-            edge_readers.append('${{2/head}}')
+            edge_readers.append('${2/head}')
             edge_nonreaders = []
 
         edge_tail = {
@@ -245,6 +245,15 @@ class Matching(object):
 
         author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, as_dict=True)
 
+        ## for AC conflicts, check SAC conflicts too
+        sac_user_info_by_id = {}
+        sac_assignment_edges = {}
+        if self.is_area_chair:
+            sacs_by_ac =  { g['id']['head']: [v['tail'] for v in g['values']] for g in self.client.get_grouped_edges(invitation=self.venue.get_assignment_id(self.venue.get_senior_area_chairs_id()), groupby='head', select=None)}
+            if sacs_by_ac:
+                sac_user_profiles = openreview.tools.get_profiles(self.client, self.client.get_group(self.venue.get_senior_area_chairs_id()).members, with_publications=True)
+                sac_user_info_by_id = { p.id: get_profile_info(p) for p in sac_user_profiles }
+
         edges = []
 
         for submission in tqdm(submissions, total=len(submissions), desc='_build_conflicts'):
@@ -274,6 +283,18 @@ class Matching(object):
                 conflicts.update(author_emails.intersection(user_info['relations']))
                 conflicts.update(author_emails.intersection(user_info['emails']))
                 conflicts.update(author_publications.intersection(user_info['publications']))
+
+                ## Transfer SAC conflicts
+                if len(conflicts) == 0 and self.is_area_chair:
+                    assigned_sacs = sacs_by_ac.get(user_info['id'], [])
+                    for sac in assigned_sacs:
+                        sac_info = sac_user_info_by_id.get(sac)
+                        if sac_info:
+                            conflicts.update(author_domains.intersection(sac_info['domains']))
+                            conflicts.update(author_relations.intersection(sac_info['emails']))
+                            conflicts.update(author_emails.intersection(sac_info['relations']))
+                            conflicts.update(author_emails.intersection(sac_info['emails']))
+                            conflicts.update(author_publications.intersection(sac_info['publications']))                            
 
                 if conflicts:
                     edges.append(Edge(
@@ -985,26 +1006,27 @@ class Matching(object):
                 assigned_users = []
                 for proposed_edge in proposed_edges:
                     assigned_user = proposed_edge['tail']
-                    # if self.is_area_chair and sac_assignment_edges:
-                    #     sac_assignments = sac_assignment_edges.get(assigned_user, [])
-                    #     for sac_assignment in sac_assignments:
-                    #         assigned_sac = sac_assignment['tail']
-                    #         sac_group_id = venue.get_committee_id(name=venue.senior_area_chairs_name, number=paper.number)
-                    #         client.post_group_edit(
-                    #             invitation = venue.get_meta_invitation_id(),
-                    #             readers = [venue.venue_id],
-                    #             writers = [venue.venue_id],
-                    #             signatures = [venue.venue_id],
-                    #             group = openreview.api.Group(
-                    #                 id = sac_group_id,
-                    #                 members = [assigned_sac]
-                    #             )
-                    #         )
+                    if self.is_area_chair and sac_assignment_edges:
+                        sac_assignments = sac_assignment_edges.get(assigned_user, [])
+                        for sac_assignment in sac_assignments:
+                            assigned_sac = sac_assignment['tail']
+                            sac_group_id = venue.get_senior_area_chairs_id(number=paper.number)
+                            client.post_group_edit(
+                                invitation = venue.get_meta_invitation_id(),
+                                readers = [venue.venue_id],
+                                writers = [venue.venue_id],
+                                signatures = [venue.venue_id],
+                                group = openreview.api.Group(
+                                    id = sac_group_id,
+                                    members = [assigned_sac]
+                                )
+                            )
                     assignment_edges.append(Edge(
                         invitation=assignment_invitation_id,
                         head=paper.id,
                         tail=assigned_user,
                         readers=proposed_edge['readers'],
+                        nonreaders=proposed_edge.get('nonreaders'),
                         writers=proposed_edge['writers'],
                         signatures=proposed_edge['signatures'],
                         weight=proposed_edge.get('weight')
@@ -1024,15 +1046,10 @@ class Matching(object):
 
         print('deploy_sac_assignments', assignment_title)
 
-        papers = venue.get_submissions()
-
         proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id),
             label=assignment_title, groupby='head', select=None)}
         assignment_edges = []
         assignment_invitation_id = venue.get_assignment_id(self.match_group.id, deployed=True)
-
-        if not papers:
-            raise openreview.OpenReviewException('No submissions to deploy SAC assignment')
 
         for head, sac_assignments in proposed_assignment_edges.items():
             for sac_assignment in sac_assignments:
@@ -1041,6 +1058,7 @@ class Matching(object):
                     head=head,
                     tail=sac_assignment['tail'],
                     readers=sac_assignment['readers'],
+                    nonreaders=sac_assignment.get('nonreaders'),
                     writers=sac_assignment['writers'],
                     signatures=sac_assignment['signatures'],
                     weight=sac_assignment.get('weight')
@@ -1064,4 +1082,4 @@ class Matching(object):
         #     hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
         #     self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=f'''Emergency_{self.venue.reviewers_name}''')
 
-        # self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id))
+        self.venue.expire_invitation(self.venue.get_assignment_id(self.match_group.id))

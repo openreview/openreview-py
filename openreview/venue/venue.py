@@ -407,12 +407,12 @@ class Venue(object):
                     }
 
                 note_readers = self.submission_stage.get_readers(self, submission.number)
-                note_writers = [venue_id,self.get_authors_id(submission.number)]
+                note_writers = [venue_id, self.get_authors_id(submission.number)]
                 note_signatures = [self.get_authors_id(submission.number)]
 
                 if submission.readers != note_readers:
                     return self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
-                        readers=[venue_id],
+                        readers=[venue_id, self.get_authors_id(submission.number)],
                         writers=[venue_id],
                         signatures=[venue_id],
                         note=openreview.api.Note(id=submission.id,
@@ -628,7 +628,7 @@ Total Errors: {len(errors)}
                 }
 
             self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
-                readers=[venue_id],
+                readers=[venue_id, self.get_authors_id(submission.number)],
                 writers=[venue_id],
                 signatures=[venue_id],
                 note=openreview.api.Note(id=submission.id,
