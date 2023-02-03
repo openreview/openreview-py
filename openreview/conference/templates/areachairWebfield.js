@@ -1595,3 +1595,22 @@ var registerEventHandlers = function() {
     return false;
   });
 };
+
+var postReviewerEmails = function(postData) {
+  postData.message = postData.message.replace(
+    '[[SUBMIT_REVIEW_LINK]]',
+    postData.forumUrl
+  );
+
+  return Webfield.post('/messages', _.pick(postData, ['groups', 'subject', 'message']))
+    .then(function(response) {
+      // Save the timestamp in the local storage
+      for (var i = 0; i < postData.groups.length; i++) {
+        var userId = postData.groups[i];
+        localStorage.setItem(postData.forumUrl + '|' + userId, Date.now());
+      }
+    });
+};
+
+main();  
+};
