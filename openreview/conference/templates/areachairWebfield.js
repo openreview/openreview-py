@@ -1612,5 +1612,4 @@ var postReviewerEmails = function(postData) {
     });
 };
 
-main();  
-};
+main();
