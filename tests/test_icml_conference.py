@@ -1340,27 +1340,27 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                 id = 'ICML.cc/2023/Conference/-/Submission',
                 reply_forum_views = [
                     {
-                        "id": "all",
-                        "label": "All"
+                        'id': 'all',
+                        'label': 'All'
                     },
                     {
-                        "id": "discussion",
-                        "label": "Discussion",
-                        "filter": "-invitation:ICML.cc/2023/Conference/Submission${note.number}/-/Chat",
-                        "nesting": 3,
-                        "sort": "date-desc",
-                        "layout": "default",
-                        "live": True
+                        'id': 'discussion',
+                        'label': 'Discussion',
+                        'filter': '-invitations:ICML.cc/2023/Conference/Submission${note.number}/-/Chat',
+                        'nesting': 3,
+                        'sort': 'date-desc',
+                        'layout': 'default',
+                        'live': True
                     },
                     {
-                        "id": "reviewers-chat",
-                        "label": "Reviewers Chat",
-                        "filter": "invitation:ICML.cc/2023/Conference/Submission${note.number}/-/Chat,ICML.cc/2023/Conference/Submission${note.number}/-/Official_Review",
-                        "nesting": 2,
-                        "sort": "date-asc",
-                        "layout": "chat",
-                        "live": True,
-                        "expandedInvitations": ["invitation:ICML.cc/2023/Conference/Submission${note.number}/-/Chat"]
+                        'id': 'reviewers-chat',
+                        'label': 'Reviewers Chat',
+                        'filter': 'invitations:ICML.cc/2023/Conference/Submission${note.number}/-/Chat,ICML.cc/2023/Conference/Submission${note.number}/-/Official_Review',
+                        'nesting': 2,
+                        'sort': 'date-asc',
+                        'layout': 'chat',
+                        'live': True,
+                        'expandedInvitations': ['ICML.cc/2023/Conference/Submission${note.number}/-/Chat']
                     }
                 ]
             )
@@ -1398,9 +1398,9 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                         'writers': ['ICML.cc/2023/Conference'],
                         'signatures': ['${3/signatures}'],
                         'forum': submission.id,
-                        "replyto": {
-                            "param": {
-                                "withForum": submission.id
+                        'replyto': {
+                            'param': {
+                                'withForum': submission.id
                             }
                         },
                         'content': {
