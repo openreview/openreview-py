@@ -55,7 +55,7 @@ def process(client, edge, invitation):
 
 
         # format the message defined above
-        subject=f'[{short_phrase}] Invitation {action_string} paper titled {submission.content["title"]["value"]}'
+        subject=f'[{short_phrase}] Invitation {action_string} paper titled "{submission.content["title"]["value"]}"'
         if email_template:
             message=email_template.format(
                 title=submission.content['title']['value'],
@@ -68,7 +68,9 @@ def process(client, edge, invitation):
             )
         else:
             message=f'''Hi {preferred_name},
-You were invited {action_string} the paper number: {submission.number}, title: {submission.content['title']['value']}.
+
+You were invited {action_string} the paper number: {submission.number}, title: "{submission.content['title']['value']}".
+
 Abstract: {submission.content['abstract']['value']}
 
 {invitation_links}

@@ -458,3 +458,57 @@ class GroupBuilder(object):
                             signatories=[venue_id, committee_invited_id],
                             members=[]
                             ))
+
+    def set_external_reviewer_recruitment_groups(self, name='External_Reviewers', create_paper_groups=False):
+
+        venue = self.venue
+        venue_id = self.venue_id
+
+        if name == venue.reviewers_name:
+            raise openreview.OpenReviewException(f'Can not use {name} as external reviewer name')
+
+        parent_group_id = venue.get_committee_id(name)
+        parent_group_invited_id = parent_group_id + '/Invited'
+
+        parent_group = tools.get_group(self.client, parent_group_id)
+        if not parent_group:
+            parent_group=self.post_group(Group(id=parent_group_id,
+                            readers=[venue_id, parent_group_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id, parent_group_id],
+                            members=[]
+                            ))
+
+        parent_group_invited = tools.get_group(self.client, parent_group_invited_id)
+        if not parent_group_invited:
+            parent_group_invited=self.post_group(Group(id=parent_group_invited_id,
+                            readers=[venue_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id, parent_group_invited_id],
+                            members=[]
+                            ))
+
+        # create submission paper groups
+        def create_paper_group(submission):
+            paper_group_id = venue.get_committee_id(name, submission.number)
+            self.post_group(Group(id=paper_group_id,
+                            readers=[venue_id, paper_group_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=[]
+                            ))
+
+            paper_invited_group_id = venue.get_committee_id(name + '/Invited', submission.number)
+            self.post_group(Group(id=paper_invited_group_id,
+                            readers=[venue_id, paper_invited_group_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=[]
+                            ))
+
+        if create_paper_groups:
+            tools.concurrent_requests(create_paper_group, venue.get_submissions(sort='number"asc'), desc='Creating paper groups')

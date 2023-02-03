@@ -2,7 +2,7 @@ def process(client, edge, invitation):
 
     reviewers_id = invitation.content['match_group']['value']
     assignment_invitation_id = invitation.content['assignment_invitation_id']['value']
-    assignment_label = invitation.content['assignment_label']['value']
+    assignment_label = invitation.content['assignment_label']['value'] if invitation.content['assignment_label']['value'] else None
     invite_label = invitation.content['invite_label']['value']
     print(edge.id)
 
