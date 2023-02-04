@@ -851,6 +851,15 @@ class MetaReviewStage(object):
 
         return '|'.join(committee)
 
+class MetaReviewRevisionStage(object):
+
+    def __init__(self, start_date = None, due_date = None, name = 'Meta_Review_Revision', additional_fields = {}, remove_fields = []):
+        self.start_date = start_date
+        self.due_date = due_date
+        self.name = name
+        self.additional_fields = additional_fields
+        self.remove_fields = remove_fields
+
 class DecisionStage(object):
 
     def __init__(self, options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False, additional_fields = {}, decisions_file=None):
