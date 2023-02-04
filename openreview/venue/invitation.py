@@ -1885,6 +1885,7 @@ class InvitationBuilder(object):
 
         current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
         process_file='process/simple_paper_recruitment_process.py' if proposed else 'process/paper_recruitment_process.py'
+        preprocess_file='process/paper_recruitment_pre_process.py'
         web = current_invitation.web if current_invitation else None
 
         edge_readers = []
@@ -1903,6 +1904,20 @@ class InvitationBuilder(object):
                 edge_readers.append(venue.get_area_chairs_id(number='{number}'))
                 edge_writers.append(venue.get_area_chairs_id(number='{number}'))
 
+        invitation_content = {
+            'committee_name': { 'value':  venue.get_committee_name(committee_id, pretty=True) },
+            'edge_readers': { 'value': edge_readers },
+            'edge_writers': { 'value': edge_writers },
+            'hash_seed': { 'value': hash_seed, 'readers': [ venue.venue_id ]},
+            'committee_id': { 'value': committee_id },
+            'committee_invited_id': { 'value': venue.get_committee_id(name=invited_committee_name + '/Invited')},
+            'invite_assignment_invitation_id': { 'value': venue.get_assignment_id(committee_id, invite=True)},
+            'assignment_invitation_id': { 'value': venue.get_assignment_id(committee_id) if assignment_title else venue.get_assignment_id(committee_id, deployed=True) },
+            'invited_label': { 'value': invited_label },
+            'accepted_label': { 'value': accepted_label },
+            'declined_label': { 'value': declined_label },
+        }
+
         content = default_content.paper_recruitment_v2.copy()
 
         paper_recruitment_invitation = Invitation(
@@ -1911,7 +1926,7 @@ class InvitationBuilder(object):
                 signatures = [venue.get_program_chairs_id()],
                 readers = ['everyone'],
                 writers = [venue.id],
-                # content = invitation_content,
+                content = invitation_content,
                 edit = {
                     'signatures': ['(anonymous)'],
                     'readers': [venue.id],
@@ -1923,7 +1938,7 @@ class InvitationBuilder(object):
                     }
                 },
                 process = process_file,
-                # preprocess = pre_process_content,
+                preprocess = preprocess_file,
                 web = web
             )
         self.save_invitation(paper_recruitment_invitation, replacement=True)
