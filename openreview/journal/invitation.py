@@ -1086,8 +1086,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            minReplies=1,
-            maxReplies=1,            
             type='Edge',
             edit={
                 'id': {
@@ -1311,8 +1309,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
             signatures=[venue_id], 
-            minReplies=1,
-            maxReplies=1,
             type='Edge',
             edit={
                 'id': {
@@ -2599,6 +2595,13 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'withInvitation': self.journal.get_author_submission_id() 
                         },
                     },
+                    'odate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },                    
                     'readers': self.journal.get_under_review_submission_readers('${2/number}'),
                     'content': {
                         'assigned_action_editor': {
@@ -2841,6 +2844,11 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'withInvitation': self.journal.get_under_review_id() 
                         }
                     },
+                    'pdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ]
+                        }
+                    },                    
                     'writers': [ venue_id ],
                     'content': {
                         '_bibtex': {

@@ -577,7 +577,7 @@ class Journal(object):
                     invitee_members.append(profile.id)
                 elif '@' in invitee:
                     profile = openreview.tools.get_profile(self.client, invitee)
-                    invitee_members.append(profile.id)
+                    invitee_members.append(profile.id if profile else invitee)
                 else:
                     invitee_members = invitee_members + self.client.get_group(invitee).members
 

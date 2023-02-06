@@ -1347,7 +1347,7 @@ class PaperMetaReviewInvitation(openreview.Invitation):
             writers = [conference.id],
             signatures = [conference.id],
             invitees = invitees + [conference.support_user],
-            noninvitees = [conference.get_authors_id(number = note.number), conference.id + '/Paper'+ str(note.number) + '/Secondary_Area_Chair'],
+            noninvitees = [conference.get_authors_id(number = note.number)] + ([conference.get_secondary_area_chairs_id(note.number)] if conference.use_secondary_area_chairs else []),
             reply = {
                 'forum': note.id,
                 'replyto': note.id,
