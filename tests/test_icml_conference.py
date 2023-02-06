@@ -160,12 +160,12 @@ class TestICMLConference():
                                     "tgz",
                                     "gz"
                                 ],
-                                "maxSize": 500,
+                                "maxSize": 100,
                                 "optional": True,
                                 "deletable": True
                             }
                         },
-                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 500MB.",
+                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
                         "order": 8
                     },
                     "financial_aid": {
@@ -222,12 +222,12 @@ class TestICMLConference():
                                     "tgz",
                                     "gz"
                                 ],
-                                "maxSize": 500,
+                                "maxSize": 100,
                                 "optional": True,
                                 "deletable": True
                             }
                         },
-                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 500MB.",
+                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
                         "order": 8
                     },
                     "financial_aid": {
@@ -282,12 +282,12 @@ class TestICMLConference():
                                     "tgz",
                                     "gz"
                                 ],
-                                "maxSize": 500,
+                                "maxSize": 100,
                                 "optional": True,
                                 "deletable": True
                             }
                         },
-                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 500MB.",
+                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
                         "order": 8
                     },
                     "financial_aid": {
@@ -685,12 +685,12 @@ reviewer6@gmail.com, Reviewer ICMLSix
                                     "tgz",
                                     "gz"
                                 ],
-                                "maxSize": 500,
+                                "maxSize": 100,
                                 "optional": True,
                                 "deletable": True
                             }
                         },
-                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 500MB.",
+                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
                         "order": 8
                     },
                     "financial_aid": {
@@ -943,7 +943,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
         assert openreview_client.get_edges_count(invitation='ICML.cc/2023/Conference/Reviewers/-/Conflict') == 0
 
-        affinity_scores =  openreview_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Affinity_Score')
+        affinity_scores =  openreview_client.get_grouped_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Affinity_Score', groupby='id')
         assert affinity_scores
         assert len(affinity_scores) == 100 * 5 ## submissions * reviewers
 
