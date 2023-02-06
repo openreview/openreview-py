@@ -191,7 +191,7 @@ The MELBA Editors-in-Chief
 
         journal.setup_ae_assignment(note)
 
-        conflicts = openreview_client.get_edges(invitation='MELBA/Action_Editors/-/Conflict')
+        conflicts = openreview_client.get_edges(invitation='MELBA/Action_Editors/-/Conflict', head=note_id_1)
         assert conflicts
         assert conflicts[0].label == 'mail.com'
 
