@@ -9,7 +9,7 @@ def process(client, edge, invitation):
     if edge.ddate is None and edge.label == invite_label:
 
         ## Get the submission
-        notes=client.get_notes(id=edge.head, details='original')
+        notes=client.get_notes(id=edge.head)
         if not notes:
             raise openreview.OpenReviewException(f'Note not found: {edge.head}')
         submission=notes[0]
@@ -58,8 +58,6 @@ def process(client, edge, invitation):
         print(f'Check conflicts for {user_profile.id}')
         ## - Check conflicts
         authorids = submission.content['authorids']['value']
-        if submission.details and submission.details.get('original'):
-            authorids = submission.details['original']['content']['authorids']['value']
         author_profiles = openreview.tools.get_profiles(client, authorids)
         conflicts=openreview.tools.get_conflicts(author_profiles, user_profile)
         if conflicts:

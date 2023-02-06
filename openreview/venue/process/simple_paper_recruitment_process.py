@@ -36,7 +36,7 @@ def process(client, edit, invitation):
         if profiles:
             user_profile=profiles[0]
 
-    submission = client.get_notes(note.content['submission_id']['value'], details='original')[0]
+    submission = client.get_notes(note.content['submission_id']['value'])[0]
     invitation_edges = client.get_edges(invitation=invite_assignment_invitation_id, head=submission.id, tail=user)
 
     if not invitation_edges:

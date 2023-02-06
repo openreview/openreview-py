@@ -37,7 +37,7 @@ def process(client, edit, invitation):
         if profiles:
             user_profile=profiles[0]
 
-    submission = client.get_notes(note.content['submission_id']['value'], details='original')[0]
+    submission = client.get_notes(note.content['submission_id']['value'])[0]
     invitation_edges = client.get_edges(invitation=invite_assignment_invitation_id, head=submission.id, tail=user)
 
     if not invitation_edges:
@@ -101,8 +101,6 @@ OpenReview Team'''
 
         ## - Check conflicts
         authorids = submission.content['authorids']['value']
-        if submission.details and submission.details.get('original'):
-            authorids = submission.details['original']['content']['authorids']['value']
         author_profiles = openreview.tools.get_profiles(client, authorids, with_publications=True)
         profiles=openreview.tools.get_profiles(client, [edge.tail], with_publications=True)
         conflicts=openreview.tools.get_conflicts(author_profiles, profiles[0])

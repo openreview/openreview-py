@@ -17,7 +17,7 @@ def process(client, edge, invitation):
     if edge.ddate is None and edge.label == invite_label:
 
         ## Get the submission
-        notes=client.get_notes(id=edge.head, details='original')
+        notes=client.get_notes(id=edge.head)
         if not notes:
             raise openreview.OpenReviewException(f'Note not found: {edge.head}')
         submission=notes[0]
