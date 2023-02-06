@@ -1,4 +1,5 @@
 import csv
+import datetime
 import os
 import openreview
 from openreview.api import Edge
@@ -1011,20 +1012,19 @@ class Matching(object):
             declined_label=declined_label,
             proposed=proposed
         )
-        # invitation = venue.group_builder.set_paper_recruitment_page(self.conference, invitation)
 
         #To-Do
         ## Only for reviewers, allow ACs and SACs to review the proposed assignments
         if self.match_group.id == venue.get_reviewers_id() and not proposed:
             venue.group_builder.set_external_reviewer_recruitment_groups(name=invited_committee_name, create_paper_groups=True if assignment_title else False)
-            # if assignment_title:
-            #     invitation=self.client.get_invitation(self.conference.get_paper_assignment_id(self.match_group.id))
-            #     invitation.duedate=tools.datetime_millis(due_date)
-            #     invitation.expdate=tools.datetime_millis(due_date + datetime.timedelta(minutes= 30)) if due_date else None
-            #     invitation=self.client.post_invitation(invitation)
+            if assignment_title:
+                invitation=self.client.get_invitation(venue.get_assignment_id(self.match_group.id))
+                invitation.duedate=tools.datetime_millis(due_date)
+                invitation.expdate=tools.datetime_millis(due_date + datetime.timedelta(minutes= 30)) if due_date else None
+                venue.invitation_builder.save_invitation(invitation, replacement=True)
             #     invitation = self.conference.webfield_builder.set_reviewer_proposed_assignment_page(self.conference, invitation, assignment_title, invite_assignment_invitation)
 
-        # return invite_assignment_invitation
+        return invite_assignment_invitation
 
     def deploy_assignments(self, assignment_title, overwrite):
 

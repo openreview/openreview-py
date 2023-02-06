@@ -1883,10 +1883,9 @@ class InvitationBuilder(object):
     def set_paper_recruitment_invitation(self, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title=None, due_date=None, invited_label='Invited', accepted_label='Accepted', declined_label='Declined', proposed=False):
         venue = self.venue
 
-        current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
         process_file='process/simple_paper_recruitment_process.py' if proposed else 'process/paper_recruitment_process.py'
-        preprocess_file='process/paper_recruitment_pre_process.py'
-        web = current_invitation.web if current_invitation else None
+        process_content = self.get_process_content(process_file)
+        preprocess_content = self.get_process_content('process/paper_recruitment_pre_process.py')
 
         edge_readers = []
         edge_writers = []
@@ -1910,15 +1909,21 @@ class InvitationBuilder(object):
             'edge_writers': { 'value': edge_writers },
             'hash_seed': { 'value': hash_seed, 'readers': [ venue.venue_id ]},
             'committee_id': { 'value': committee_id },
-            'committee_invited_id': { 'value': venue.get_committee_id(name=invited_committee_name + '/Invited')},
+            'committee_invited_id': { 'value': venue.get_committee_id(name=invited_committee_name + '/Invited') if invited_committee_name else ''},
             'invite_assignment_invitation_id': { 'value': venue.get_assignment_id(committee_id, invite=True)},
             'assignment_invitation_id': { 'value': venue.get_assignment_id(committee_id) if assignment_title else venue.get_assignment_id(committee_id, deployed=True) },
             'invited_label': { 'value': invited_label },
             'accepted_label': { 'value': accepted_label },
             'declined_label': { 'value': declined_label },
+            'assignment_title': { 'value': assignment_title if assignment_title else '' },
+            'external_committee_id': { 'value': venue.get_committee_id(name=invited_committee_name) if invited_committee_name else '' },
+            'external_paper_committee_id': {'value': venue.get_committee_id(name=invited_committee_name, number='{number}') if assignment_title else ''}
         }
 
         content = default_content.paper_recruitment_v2.copy()
+
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/paperRecruitResponseWebfield.js')) as webfield_reader:
+            webfield_content = webfield_reader.read()
 
         paper_recruitment_invitation = Invitation(
                 id = invitation_id,
@@ -1932,13 +1937,13 @@ class InvitationBuilder(object):
                     'readers': [venue.id],
                     'note' : {
                         'signatures':['${3/signatures}'],
-                        'readers': [venue.id, '${2/content/user}', '${2/content/inviter}'],
+                        'readers': [venue.id, '${2/content/user/value}', '${2/content/inviter/value}'],
                         'writers': [venue.id, '${3/signatures}'],
                         'content': content
                     }
                 },
-                process = process_file,
-                preprocess = preprocess_file,
-                web = web
+                process = process_content,
+                preprocess = preprocess_content,
+                web = webfield_content
             )
         self.save_invitation(paper_recruitment_invitation, replacement=True)

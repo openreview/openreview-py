@@ -1,10 +1,11 @@
-def process(client, note, invitation):
+def process(client, edit, invitation):
     from Crypto.Hash import HMAC, SHA256
     import urllib.parse
     from datetime import datetime
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     short_phrase = domain.content['subtitle']['value']
+    submission_name = domain.content['submission_name']['value']
     committee_name = invitation.content['committee_name']['value']
     edge_readers = invitation.content['edge_readers']['value']
     edge_writers = invitation.content['edge_writers']['value']
@@ -17,6 +18,8 @@ def process(client, note, invitation):
     declined_label = invitation.content['declined_label']['value']
     is_reviewer = committee_name == 'Reviewer'
     action_string = 'to review' if is_reviewer else 'to serve as area chair for'
+
+    note= edit.note
 
     user = urllib.parse.unquote(note.content['user']['value'])
     hashkey = HMAC.new(hash_seed.encode(), digestmod=SHA256).update(user.encode()).hexdigest()
@@ -76,9 +79,10 @@ def process(client, note, invitation):
                 invitation=assignment_invitation_id,
                 head=edge.head,
                 tail=edge.tail,
+                weigth = 1,
                 readers=[venue_id] + readers + [edge.tail],
                 nonreaders=[
-                    f'{venue_id}/Submission{submission.number}/Authors'
+                    f'{venue_id}/{submission_name}{submission.number}/Authors'
                 ],
                 writers=[venue_id] + writers,
                 signatures=[venue_id]
