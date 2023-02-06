@@ -56,7 +56,7 @@ class Conference(object):
         self.senior_area_chair_roles = ['Senior_Area_Chairs']
         self.area_chairs_name = 'Area_Chairs'
         self.senior_area_chairs_name = 'Senior_Area_Chairs'
-        self.secondary_area_chairs_name = 'Secondary_Area_Chair'
+        self.secondary_area_chairs_name = 'Secondary_Area_Chairs'
         self.ethics_chairs_name = 'Ethics_Chairs'
         self.ethics_reviewers_name = 'Ethics_Reviewers'
         self.program_chairs_name = 'Program_Chairs'
@@ -443,6 +443,10 @@ class Conference(object):
 
     def get_anon_area_chair_id(self, number=None, anon_id=None):
         single_area_chair_name=self.area_chairs_name[:-1] if self.area_chairs_name.endswith('s') else self.area_chairs_name
+        return f'{self.id}/Paper{number}/{single_area_chair_name}_{anon_id}'
+
+    def get_anon_secondary_area_chair_id(self, number=None, anon_id=None):
+        single_area_chair_name=self.secondary_area_chairs_name[:-1] if self.secondary_area_chairs_name.endswith('s') else self.secondary_area_chairs_name
         return f'{self.id}/Paper{number}/{single_area_chair_name}_{anon_id}'
 
     def get_reviewers_name(self, pretty=True):
@@ -1928,6 +1932,9 @@ class ConferenceBuilder(object):
 
     def has_ethics_reviewers(self, has_ethics_reviewers):
         self.conference.use_ethics_reviewers = has_ethics_reviewers
+
+    def has_secondary_area_chairs(self, has_secondary_area_chairs):
+        self.conference.has_secondary_area_chairs(has_secondary_area_chairs)
 
     def enable_reviewer_reassignment(self, enable):
         self.conference.enable_reviewer_reassignment = enable

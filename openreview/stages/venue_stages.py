@@ -746,6 +746,9 @@ class CommentStage(object):
         if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
             committee.append(conference.get_anon_area_chair_id(number=number, anon_id='.*'))
 
+        if conference.use_secondary_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
+            committee.append(conference.get_anon_secondary_area_chair_id(number=number, anon_id='.*'))
+
         if self.Readers.REVIEWERS_ASSIGNED in self.invitees or self.Readers.REVIEWERS_SUBMITTED in self.invitees:
             committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
 
