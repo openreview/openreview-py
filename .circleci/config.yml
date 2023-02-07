@@ -1,6 +1,15 @@
 version: 2.1
 orbs:
   codecov: codecov/codecov@1.0.5
+
+parameters:
+  openreview-api-v1-branch:
+    type: string
+    default: "master"
+  openreview-api-v2-branch:
+    type: string
+    default: "main"
+
 jobs:
   build:
     parallelism: 10
@@ -27,8 +36,10 @@ jobs:
             mongosh mongodb://localhost:27017 --eval "rs.initiate()"
       - run: pip install ~/openreview-py-repo
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api-v1.git ~/openreview
+      - run: cd ~/openreview && git checkout << pipeline.parameters.openreview-api-v1-branch >>
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api.git ~/openreview-v2
+      - run: cd ~/openreview-v2 && git checkout << pipeline.parameters.openreview-api-v2-branch >>
       - run: mkdir ~/openreview/logs
       - run: mkdir ~/openreview/files
       - run: mkdir ~/openreview/files/attachments

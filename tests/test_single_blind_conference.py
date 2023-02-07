@@ -782,6 +782,8 @@ url={https://openreview.net/forum?id='''
 }'''
 
         assert submissions[0].content['_bibtex'] == valid_bibtex
+        assert submissions[0].pdate
+        assert submissions[0].odate
 
     def test_enable_camera_ready_revisions(self, client, test_client, helpers):
 

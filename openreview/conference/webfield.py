@@ -44,7 +44,7 @@ class WebfieldBuilder(object):
 
     def set_landing_page(self, group, parentGroup, options = {}):
         ## Remove existing webfield to the UI renders the groups directory
-        if group.web:
+        if group.web and 'VENUE_LINKS' in group.web:
             group.web = None
             self.client.post_group(group)
 
