@@ -1015,7 +1015,7 @@ class InvitationBuilder(object):
                             'optional': True, 
                         }
                     },
-                    'date_processes': [{
+                    'dateprocesses': [{
                         'dates': ["#{4/cdate}"],
                         'script': self.cdate_invitation_process
                     }],
@@ -1048,7 +1048,7 @@ class InvitationBuilder(object):
                             }
                         },
                         'invitation': {
-                            'id': self.venue.get_invitation_id('${4/content/subvenueid/value}' + comment_stage.official_comment_name, '${2/content/noteNumber/value}'),
+                            'id': self.venue.get_invitation_id('${4/content/subvenueid/value}' + f"/{comment_stage.official_comment_name}", '${2/content/noteNumber/value}'),
                             'signatures': [ venue_id ],
                             'readers': ['everyone'],
                             'writers': [venue_id],
@@ -1134,6 +1134,20 @@ class InvitationBuilder(object):
                     'enum': comment_stage.get_readers(self.venue, '${7/content/noteNumber/value}')
                 }
             }
+
+        if sub_venue_id is not None and sub_venue_invitation is not None:
+            invitation=Invitation(id=official_comment_invitation_id,
+                    cdate=comment_cdate,
+                    expdate=comment_expdate,
+                    signatures=[venue_id]
+                )
+            content = {
+                'subvenueid': {
+                    'value': sub_venue_id
+                }
+            }
+            self.save_invitation(invitation, invitations=sub_venue_invitation.id, content=content)
+            return invitation
 
         invitation = Invitation(id=official_comment_invitation_id,
             invitees=[venue_id],

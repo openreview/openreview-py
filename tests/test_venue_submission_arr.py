@@ -359,10 +359,12 @@ class TestVenueSubmissionARR():
 
         #release papers to the public
         venue.submission_stage = SubmissionStage(double_blind=True, readers=[openreview.builder.SubmissionStage.Readers.EVERYONE])
-        venue.create_submission_stage()
-        venue.setup_post_submission_stage()
+        cycle = '2023_March'
 
-        submissions = venue.get_submissions()
+        venue.create_submission_stage(sub_venue_id=cycle)
+        venue.setup_post_submission_stage(sub_venue_id=cycle)
+
+        submissions = venue.get_submissions(submission_venue_id=venue.get_submission_venue_id(f'{cycle}/Submission'))
         assert submissions and len(submissions) == 2
         assert submissions[0].readers == ['everyone']
         assert submissions[1].readers == ['everyone']
@@ -375,9 +377,9 @@ class TestVenueSubmissionARR():
             check_mandatory_readers=True,
             readers=[openreview.CommentStage.Readers.REVIEWERS_ASSIGNED,openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.AUTHORS,openreview.CommentStage.Readers.EVERYONE],
             invitees=[openreview.CommentStage.Readers.REVIEWERS_ASSIGNED,openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.AUTHORS])
-        venue.create_comment_stage()
+        venue.create_comment_stage(sub_venue_id=cycle)
 
-        invitation = openreview_client.get_invitation(venue.id + '/Submission1/-/Public_Comment')
+        invitation = openreview_client.get_invitation(venue.id + '/Submission1/-/Public_Comment') ## TODO: Also make public comments?
         assert not invitation.expdate
         invitation = openreview_client.get_invitation(venue.id + '/Submission1/-/2023_March/Official_Comment')
         assert not invitation.expdate

@@ -397,7 +397,7 @@ class Venue(object):
     
     def setup_post_submission_stage(self, force=False, hide_fields=[], sub_venue_id=None):
         venue_id = self.venue_id
-        submissions = self.get_submissions(submission_venue_id=self.get_submission_venue_id(f"{sub_venue_id}/Submission")) if sub_venue_id else self.get_submissions()
+        submissions = self.get_submissions(submission_venue_id=self.get_submission_venue_id(f"{sub_venue_id}/Submission") if sub_venue_id else None)
         hide_author_fields = ['authors', 'authorids'] if self.submission_stage.double_blind else []
         final_hide_fields = hide_author_fields + hide_fields
         
@@ -447,11 +447,16 @@ class Venue(object):
     def create_bid_stages(self):
         self.invitation_builder.set_bid_invitations()
 
-    def create_comment_stage(self):
-        comment_invitation = self.invitation_builder.set_official_comment_invitation()
-        self.invitation_builder.create_paper_invitations(comment_invitation.id, self.get_submissions())
+    def create_comment_stage(self, sub_venue_id=None):
+        sub_venue_official_invitation = None
+        if sub_venue_id is not None:
+            sub_venue_official_invitation = self.invitation_builder.set_sub_venue_official_comment_invitation(sub_venue_id=sub_venue_id)
+    
+        comment_invitation = self.invitation_builder.set_official_comment_invitation(sub_venue_id=sub_venue_id, sub_venue_invitation=sub_venue_official_invitation)
+        self.invitation_builder.create_paper_invitations(comment_invitation.id, self.get_submissions(submission_venue_id=self.get_submission_venue_id(f"{sub_venue_id}/Submission") if sub_venue_id else None))
         if self.comment_stage.allow_public_comments:
-            public_notes = [note for note in self.get_submissions() if 'everyone' in note.readers]
+            print('CREATING PUBLIC COMMENTS')
+            public_notes = [note for note in self.get_submissions(submission_venue_id=self.get_submission_venue_id(f"{sub_venue_id}/Submission") if sub_venue_id else None) if 'everyone' in note.readers]
             comment_invitation = self.invitation_builder.set_public_comment_invitation()
             self.invitation_builder.create_paper_invitations(comment_invitation.id, public_notes)
 
