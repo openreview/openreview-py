@@ -354,3 +354,30 @@ class TestVenueSubmissionARR():
         messages = openreview_client.get_messages(to='editors@aclrollingreview.org', subject='[ARR]: Paper #2 restored by venue organizers')
         assert len(messages) == 2
         assert messages[1]['content']['text'] == f'The desk-rejected ARR paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
+
+    def test_comment_stage(self, venue, openreview_client, helpers):
+
+        #release papers to the public
+        venue.submission_stage = SubmissionStage(double_blind=True, readers=[openreview.builder.SubmissionStage.Readers.EVERYONE])
+        venue.create_submission_stage()
+        venue.setup_post_submission_stage()
+
+        submissions = venue.get_submissions()
+        assert submissions and len(submissions) == 2
+        assert submissions[0].readers == ['everyone']
+        assert submissions[1].readers == ['everyone']
+
+        now = datetime.datetime.utcnow()
+        venue.comment_stage = openreview.CommentStage(
+            allow_public_comments=True,
+            reader_selection=True,
+            email_pcs=True,
+            check_mandatory_readers=True,
+            readers=[openreview.CommentStage.Readers.REVIEWERS_ASSIGNED,openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.AUTHORS,openreview.CommentStage.Readers.EVERYONE],
+            invitees=[openreview.CommentStage.Readers.REVIEWERS_ASSIGNED,openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.AUTHORS])
+        venue.create_comment_stage()
+
+        invitation = openreview_client.get_invitation(venue.id + '/Submission1/-/Public_Comment')
+        assert not invitation.expdate
+        invitation = openreview_client.get_invitation(venue.id + '/Submission1/-/2023_March/Official_Comment')
+        assert not invitation.expdate
