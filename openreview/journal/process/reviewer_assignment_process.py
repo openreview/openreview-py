@@ -12,7 +12,7 @@ def process_update(client, edge, invitation, existing_edge):
     group = client.get_group(journal.get_reviewers_id(number=note.number))
     tail_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), tail=edge.tail)
     head_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), head=edge.head)
-    submission_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(number=note.number))
+    submission_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(number=note.number), head=note.id)
     responsiblity_invitation_edit = None
 
     ## Check task completion

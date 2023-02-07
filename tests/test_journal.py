@@ -2676,14 +2676,14 @@ note={Rejected}
         assert f"{venue_id}/Paper4/-/Authors_De-Anonymization" in [i.id for i in invitations]
 
         ## Check pending review edges
-        edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
-        assert len(edges) == 6
-        assert edges[0].weight == 0
-        assert edges[1].weight == 0
-        assert edges[2].weight == 0
-        assert edges[3].weight == 0
-        assert edges[4].weight == 0
-        assert edges[5].weight == 0
+        edges_count = joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews')
+        assert edges_count == 6
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Carlos_Mondragon1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='antony@irobot.com')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 0
 
     def test_eic_submission(self, journal, openreview_client, test_client, helpers):
 

@@ -234,8 +234,8 @@ class TestVenueSubmission():
         scores_invitation = openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Reviewers/-/Affinity_Score')
         assert scores_invitation
 
-        affinity_edges = openreview_client.get_edges(invitation='TestVenue.cc/Reviewers/-/Affinity_Score')
-        assert len(affinity_edges) == 6
+        affinity_edges = openreview_client.get_edges_count(invitation='TestVenue.cc/Reviewers/-/Affinity_Score')
+        assert affinity_edges == 6
 
         conflict_invitation = openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Reviewers/-/Conflict')
         assert conflict_invitation
