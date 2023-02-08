@@ -56,8 +56,6 @@ class Matching(object):
 
         assignment_or_proposed = edge_id.endswith('Assignment')
 
-        paper_num_signatures = '${{1/head}/number}'
-
         edge_invitees = [venue_id, venue.support_user]
         edge_readers = [venue_id]
         invitation_readers = [venue_id]
@@ -80,11 +78,11 @@ class Matching(object):
                 if venue.use_senior_area_chairs:
                     edge_invitees.append(venue.get_senior_area_chairs_id())
                     edge_writers.append(venue.get_senior_area_chairs_id(number=paper_number))
-                    edge_signatures.append(venue.get_senior_area_chairs_id(number=paper_num_signatures))
+                    edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
                 if venue.use_area_chairs:
                     edge_invitees.append(venue.get_area_chairs_id())
                     edge_writers.append(venue.get_area_chairs_id(number=paper_number))
-                    edge_signatures.append(venue.get_area_chairs_id(number=paper_num_signatures, anon=True))
+                    edge_signatures.append(venue.get_area_chairs_id(number='.*', anon=True))
 
                 edge_nonreaders = [venue.get_authors_id(number=paper_number)]
 
@@ -98,7 +96,7 @@ class Matching(object):
                 if self.venue.use_senior_area_chairs:
                     edge_invitees.append(venue.get_senior_area_chairs_id())
                     edge_writers.append(venue.get_senior_area_chairs_id(number=paper_number))
-                    edge_signatures.append(venue.get_senior_area_chairs_id(number=paper_num_signatures))
+                    edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
 
                 edge_nonreaders = [venue.get_authors_id(number=paper_number)]
 
