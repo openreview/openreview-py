@@ -1289,7 +1289,11 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         
         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2023/Conference/Area_Chairs", ac_client.token, wait_for_element='header')
         header = selenium.find_element_by_id('header')
-        assert 'Reviewer Assignment Browser:' in header.text     
+        assert 'Reviewer Assignment Browser:' in header.text
+
+        url = header.find_element_by_id('edge_browser_url')
+        assert url
+        assert url.get_attribute('href') == 'http://localhost:3030/edges/browse?start=ICML.cc/2023/Conference/Area_Chairs/-/Assignment,tail:ac1@icml.cc&traverse=ICML.cc/2023/Conference/Reviewers/-/Assignment&edit=ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment&browse=ICML.cc/2023/Conference/Reviewers/-/Affinity_Score;ICML.cc/2023/Conference/Reviewers/-/Bid;ICML.cc/2023/Conference/Reviewers/-/Custom_Max_Papers,head:ignore&hide=ICML.cc/2023/Conference/Reviewers/-/Conflict&maxColumns=2&version=2&referrer=[AC%20Console](/group?id=ICML.cc/2023/Conference/Area_Chairs)'  
     
     def test_review_stage(self, openreview_client, helpers):
 
