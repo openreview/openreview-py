@@ -162,6 +162,7 @@ class GroupBuilder(object):
             'reviewers_assignment_id': { 'value': self.venue.get_assignment_id(self.venue.get_reviewers_id(), deployed=True) },
             'reviewers_invite_assignment_id': { 'value': self.venue.get_assignment_id(self.venue.get_reviewers_id(), invite=True) },
             'reviewers_proposed_assignment_id': { 'value': self.venue.get_assignment_id(self.venue.get_reviewers_id()) },
+            'enable_reviewers_reassignment': { 'value': self.venue.enable_reviewers_reassignment },
             'reviewers_recruitment_id': { 'value': self.venue.get_recruitment_id(self.venue.get_reviewers_id()) },
             'authors_id': { 'value': self.venue.get_authors_id() },
             'authors_accepted_id': { 'value': f'{self.venue.get_authors_id()}/Accepted' },

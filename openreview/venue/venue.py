@@ -60,7 +60,8 @@ class Venue(object):
         self.recruitment = Recruitment(self)
         self.reviewer_identity_readers = []
         self.area_chair_identity_readers = []
-        self.senior_area_chair_identity_readers = []        
+        self.senior_area_chair_identity_readers = []
+        self.enable_reviewers_reassignment = False     
 
     def get_id(self):
         return self.venue_id

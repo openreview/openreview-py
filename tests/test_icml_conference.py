@@ -1208,7 +1208,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission100/Senior_Area_Chairs')
         assert ['~SAC_ICMLOne1'] == sac_group.members
 
-        venue.set_assignments(assignment_title='reviewer-matching', committee_id='ICML.cc/2023/Conference/Reviewers')
+        venue.set_assignments(assignment_title='reviewer-matching', committee_id='ICML.cc/2023/Conference/Reviewers', enable_reviewer_reassignment=True)
 
         reviewers_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Reviewers')
         assert len(reviewers_group.members) == 3
@@ -1222,6 +1222,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         assert '~Reviewer_ICMLTwo1' in reviewers_group.members    
         assert '~Reviewer_ICMLFive1' in reviewers_group.members 
 
+        assert pc_client_v2.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment')
 
         ## Change assigned SAC
         assignment_edge = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Senior_Area_Chairs/-/Assignment', head='~AC_ICMLTwo1', tail='~SAC_ICMLOne1')[0]
@@ -1269,6 +1270,27 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs')
         assert ['~SAC_ICMLTwo1'] == sac_group.members
 
+    def test_reviewer_reassingment(self, openreview_client, helpers, selenium, request_page):
+
+        pc_client = openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+        ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password='1234')
+
+        pc_client.post_group_edit(invitation='ICML.cc/2023/Conference/-/Edit',
+            readers = ['ICML.cc/2023/Conference'],
+            writers = ['ICML.cc/2023/Conference'],
+            signatures = ['ICML.cc/2023/Conference'],
+            group = openreview.api.Group(
+                id = 'ICML.cc/2023/Conference',
+                content = {
+                    'enable_reviewers_reassignment': { 'value': True }
+                }
+            )
+        )
+        
+        request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2023/Conference/Area_Chairs", ac_client.token, wait_for_element='header')
+        header = selenium.find_element_by_id('header')
+        assert 'Reviewer Assignment Browser:' in header.text     
+    
     def test_review_stage(self, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password='1234')

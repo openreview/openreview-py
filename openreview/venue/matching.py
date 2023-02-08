@@ -94,6 +94,7 @@ class Matching(object):
                 invitation_readers.append(venue.get_senior_area_chairs_id())
 
             if is_assignment_invitation:
+                invitation_readers.append(venue.get_area_chairs_id())
                 if self.venue.use_senior_area_chairs:
                     edge_invitees.append(venue.get_senior_area_chairs_id())
                     edge_writers.append(venue.get_senior_area_chairs_id(number=paper_number))
