@@ -416,7 +416,6 @@ class Venue(object):
 
                 note_odate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if (submission.odate is None and note_readers and 'everyone' in note_readers) else None
 
-                print(note_readers, note_writers, note_content)
                 if note_readers or note_writers or note_content or note_odate:
                     return self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
                         readers=[venue_id, self.get_authors_id(submission.number)],
