@@ -1505,7 +1505,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                 readers = ['everyone'],
                 writers = ['ICML.cc/2023/Conference'],
                 signatures = ['ICML.cc/2023/Conference'],
-                invitees = ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission1/Reviewers'],
+                invitees = ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission1/Area_Chairs', 'ICML.cc/2023/Conference/Submission1/Reviewers'],
                 edit = {
                     'readers': ['ICML.cc/2023/Conference', '${2/signatures}'],
                     'writers': ['ICML.cc/2023/Conference'],
@@ -1513,12 +1513,13 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                         'param': {
                             'enum': [
                                 'ICML.cc/2023/Conference/Program_Chairs',
-                                'ICML.cc/2023/Conference/Submission1/Reviewer_.*'
+                                'ICML.cc/2023/Conference/Submission1/Area_Chair_.*'
+                                'ICML.cc/2023/Conference/Submission1/Reviewer_.*',
                             ]
                         }
                     },
                     'note': {
-                        'readers': ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission1/Reviewers'],
+                        'readers': ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission1/Area_Chairs', 'ICML.cc/2023/Conference/Submission1/Reviewers'],
                         'writers': ['ICML.cc/2023/Conference'],
                         'signatures': ['${3/signatures}'],
                         'forum': submission.id,
