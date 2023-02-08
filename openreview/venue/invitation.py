@@ -103,24 +103,28 @@ class InvitationBuilder(object):
     def set_meta_invitation(self):
         venue_id=self.venue_id
 
-        invitation_start_process = self.get_process_content('process/invitation_start_process.py')
+        meta_invitation = openreview.tools.get_invitation(self.client, self.venue.get_meta_invitation_id())
+        
+        if meta_invitation is None:
+            
+            invitation_start_process = self.get_process_content('process/invitation_start_process.py')
 
-        self.client.post_invitation_edit(invitations=None,
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=['~Super_User1'],
-            invitation=Invitation(id=self.venue.get_meta_invitation_id(),
-                invitees=[venue_id],
+            self.client.post_invitation_edit(invitations=None,
                 readers=[venue_id],
+                writers=[venue_id],
                 signatures=['~Super_User1'],
-                content={
-                    'cdate_invitation_script': {
-                        'value': invitation_start_process
-                    }
-                },
-                edit=True
+                invitation=Invitation(id=self.venue.get_meta_invitation_id(),
+                    invitees=[venue_id],
+                    readers=[venue_id],
+                    signatures=['~Super_User1'],
+                    content={
+                        'cdate_invitation_script': {
+                            'value': invitation_start_process
+                        }
+                    },
+                    edit=True
+                )
             )
-        )
        
     def set_submission_invitation(self):
         venue_id = self.venue_id
@@ -570,7 +574,7 @@ class InvitationBuilder(object):
 
             invitation_readers = bid_stage.get_invitation_readers(venue)
             bid_readers = bid_stage.get_readers(venue)
-            bid_readers[-1] = bid_readers[-1].replace('{signatures}', '${2/signatures}')
+            bid_readers[-1] = bid_readers[-1].replace('{signatures}', '${2/tail}')
 
             head = {
                 'param': {
@@ -621,10 +625,10 @@ class InvitationBuilder(object):
                         }
                     },
                     'readers':  bid_readers,
-                    'writers': [ venue_id, '${2/signatures}' ],
+                    'writers': [ venue_id, '${2/tail}' ],
                     'signatures': {
                         'param': {
-                            'regex': '~.*' 
+                            'regex': f'~.*|{venue_id}' 
                         }
                     },
                     'head': head,
