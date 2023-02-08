@@ -131,7 +131,7 @@ var getRootGroups = function() {
     var anonGroups = _.filter(groups, filterAnonAreaChairGroups);
     var primaryAreaChairs = {};
     areaChairGroups.forEach(function(areaChairGroup) {
-      var num = getNumberfromGroup(areaChairGroup.id, 'Paper');
+      var num = parseInt(getNumberfromGroup(areaChairGroup.id, 'Paper'));
       // Filter out secondary area chairs
       if (!_.includes(secondaryAreaChairPaperNums, num)) {
         var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/Area_Chair_'); });
@@ -179,7 +179,7 @@ var getNumberfromGroup = function(groupId, name) {
   });
 
   if (paper) {
-    return parseInt(paper.replace(name, ''));
+    return paper.replace(name, '');
   } else {
     return null;
   }
@@ -187,7 +187,7 @@ var getNumberfromGroup = function(groupId, name) {
 
 var getPaperNumbersfromGroups = function(groups) {
   return _.uniq(_.map(groups, function(group) {
-    return getNumberfromGroup(group.id, 'Paper');
+    return parseInt(getNumberfromGroup(group.id, 'Paper'));
   }));
 };
 
