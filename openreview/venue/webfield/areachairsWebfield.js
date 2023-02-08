@@ -21,7 +21,7 @@ return {
       edgeBrowserDeployedUrl: `/edges/browse?start=${domain.content.area_chairs_assignment_id.value},tail:${user.id}&traverse=${domain.content.reviewers_assignment_id.value}&edit=${domain.content.reviewers_invite_assignment_id.value}&browse=${domain.content.reviewers_affinity_score_id.value};${reviewerGroup}/-/${domain.content.bid_name.value};${domain.content.reviewers_custom_max_papers_id.value},head:ignore&hide=${domain.content.reviewers_conflict_id.value}&maxColumns=2&referrer=[AC%20Console](/group?id=${areaChairsId})`,
     },
     submissionInvitationId: domain.content.submission_id.value,
-    seniorAreaChairsId: domain.content.senior_area_chairs_id.value,
+    seniorAreaChairsId: domain.content.senior_area_chairs_id?.value,
     areaChairName: domain.content.area_chairs_name.value,
     submissionName: domain.content.submission_name.value,
     officialReviewName: domain.content.review_name.value,
