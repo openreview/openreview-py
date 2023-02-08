@@ -1513,7 +1513,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                         'param': {
                             'enum': [
                                 'ICML.cc/2023/Conference/Program_Chairs',
-                                'ICML.cc/2023/Conference/Submission1/Area_Chair_.*'
+                                'ICML.cc/2023/Conference/Submission1/Area_Chair_.*',
                                 'ICML.cc/2023/Conference/Submission1/Reviewer_.*',
                             ]
                         }
