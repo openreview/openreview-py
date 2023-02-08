@@ -570,7 +570,7 @@ class InvitationBuilder(object):
 
             invitation_readers = bid_stage.get_invitation_readers(venue)
             bid_readers = bid_stage.get_readers(venue)
-            bid_readers[-1] = bid_readers[-1].replace('{signatures}', '${2/signatures}')
+            bid_readers[-1] = bid_readers[-1].replace('{signatures}', '${2/tail}')
 
             head = {
                 'param': {
@@ -621,10 +621,10 @@ class InvitationBuilder(object):
                         }
                     },
                     'readers':  bid_readers,
-                    'writers': [ venue_id, '${2/signatures}' ],
+                    'writers': [ venue_id, '${2/tail}' ],
                     'signatures': {
                         'param': {
-                            'regex': '~.*' 
+                            'regex': f'~.*|{venue_id}' 
                         }
                     },
                     'head': head,
