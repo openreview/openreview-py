@@ -379,7 +379,7 @@ class TestVenueSubmissionARR():
             invitees=[openreview.CommentStage.Readers.REVIEWERS_ASSIGNED,openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.AUTHORS])
         venue.create_comment_stage(sub_venue_id=cycle)
 
-        invitation = openreview_client.get_invitation(venue.id + '/Submission1/-/Public_Comment') ## TODO: Also make public comments?
+        invitation = openreview_client.get_invitation(venue.id + '/Submission1/-/2023_March/Public_Comment') ## TODO: Also make public comments?
         assert not invitation.expdate
         invitation = openreview_client.get_invitation(venue.id + '/Submission1/-/2023_March/Official_Comment')
         assert not invitation.expdate

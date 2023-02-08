@@ -455,9 +455,13 @@ class Venue(object):
         comment_invitation = self.invitation_builder.set_official_comment_invitation(sub_venue_id=sub_venue_id, sub_venue_invitation=sub_venue_official_invitation)
         self.invitation_builder.create_paper_invitations(comment_invitation.id, self.get_submissions(submission_venue_id=self.get_submission_venue_id(f"{sub_venue_id}/Submission") if sub_venue_id else None))
         if self.comment_stage.allow_public_comments:
-            print('CREATING PUBLIC COMMENTS')
             public_notes = [note for note in self.get_submissions(submission_venue_id=self.get_submission_venue_id(f"{sub_venue_id}/Submission") if sub_venue_id else None) if 'everyone' in note.readers]
-            comment_invitation = self.invitation_builder.set_public_comment_invitation()
+
+            sub_venue_public_invitation = None
+            if sub_venue_id is not None:
+                sub_venue_public_invitation = self.invitation_builder.set_sub_venue_public_comment_invitation(sub_venue_id=sub_venue_id)
+
+            comment_invitation = self.invitation_builder.set_public_comment_invitation(sub_venue_id=sub_venue_id, sub_venue_invitation=sub_venue_public_invitation)
             self.invitation_builder.create_paper_invitations(comment_invitation.id, public_notes)
 
     def create_decision_stage(self):
