@@ -2,7 +2,28 @@
 const reviewerAssignmentTitle = null
 const areaChairsId = domain.content.area_chairs_id.value
 const reviewerGroup = domain.content.reviewers_id.value
-// Add bid invitation if enabled
+const startParam = `${domain.content.area_chairs_assignment_id.value},tail:${user.id}`
+const traverseProposedParam = `${domain.content.reviewers_proposed_assignment_id.value},label:${reviewerAssignmentTitle}`
+const traverseParam = `${domain.content.reviewers_assignment_id.value}`
+const browseInvitations = []
+const browseProposedInvitations = [`${reviewerGroup}/-/Aggregate_Score,label:${reviewerAssignmentTitle}`]
+
+if (domain.content.reviewers_affinity_score_id?.value) {
+  browseInvitations.push(domain.content.reviewers_affinity_score_id.value)
+  browseProposedInvitations.push(domain.content.reviewers_affinity_score_id.value)
+}
+
+if (domain.content.bid_name?.value) {
+  browseInvitations.push(`${reviewerGroup}/-/${domain.content.bid_name.value}`)
+  browseProposedInvitations.push(`${reviewerGroup}/-/${domain.content.bid_name.value}`)
+}
+
+if (domain.content.reviewers_custom_max_papers_id?.value) {
+  browseInvitations.push(`${domain.content.reviewers_custom_max_papers_id.value},head:ignore`)
+  browseProposedInvitations.push(`${domain.content.reviewers_custom_max_papers_id.value},head:ignore`)
+}
+
+const otherParams = `&hide=${domain.content.reviewers_conflict_id.value}&maxColumns=2&version=2&referrer=[AC%20Console](/group?id=${areaChairsId})`
 
 return {
   component: 'AreaChairConsole',
@@ -17,8 +38,8 @@ return {
     reviewerAssignment: {
       showEdgeBrowserUrl: domain.content.enable_reviewers_reassignment?.value,
       proposedAssignmentTitle: '',
-      edgeBrowserProposedUrl: `/edges/browse?start=${domain.content.area_chairs_assignment_id.value},tail:${user.id}&traverse=${domain.content.reviewers_proposed_assignment_id.value},label:${reviewerAssignmentTitle}&edit=${domain.content.reviewers_proposed_assignment_id.value},label:${reviewerAssignmentTitle};${domain.content.reviewers_invite_assignment_id.value}&browse=${reviewerGroup}/-/Aggregate_Score,label:${reviewerAssignmentTitle};${domain.content.reviewers_affinity_score_id.value};${reviewerGroup}/-/${domain.content.bid_name.value};${domain.content.reviewers_custom_max_papers_id.value},head:ignore&hide=${domain.content.reviewers_conflict_id.value}&maxColumns=2&version=2&referrer=[AC%20Console](/group?id=${areaChairsId})`,
-      edgeBrowserDeployedUrl: `/edges/browse?start=${domain.content.area_chairs_assignment_id.value},tail:${user.id}&traverse=${domain.content.reviewers_assignment_id.value}&edit=${domain.content.reviewers_invite_assignment_id.value}&browse=${domain.content.reviewers_affinity_score_id.value};${reviewerGroup}/-/${domain.content.bid_name.value};${domain.content.reviewers_custom_max_papers_id.value},head:ignore&hide=${domain.content.reviewers_conflict_id.value}&maxColumns=2&version=2&referrer=[AC%20Console](/group?id=${areaChairsId})`,
+      edgeBrowserProposedUrl: `/edges/browse?start=${startParam}&traverse=${traverseProposedParam}&edit=${domain.content.reviewers_proposed_assignment_id.value},label:${reviewerAssignmentTitle};${domain.content.reviewers_invite_assignment_id.value}&browse=${browseProposedInvitations.join(';')}${otherParams}`,
+      edgeBrowserDeployedUrl: `/edges/browse?start=${startParam}&traverse=${traverseParam}&edit=${domain.content.reviewers_invite_assignment_id.value}&browse=${browseInvitations.join(';')}${otherParams}`,
     },
     submissionInvitationId: domain.content.submission_id.value,
     seniorAreaChairsId: domain.content.senior_area_chairs_id?.value,
