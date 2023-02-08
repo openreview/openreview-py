@@ -403,21 +403,27 @@ class Venue(object):
 
                 note_content = {}
                 for field in final_hide_fields:
-                    note_content[field] = {
-                        'readers': [venue_id, self.get_authors_id(submission.number)]
-                    }
+                    if 'readers' not in submission.content.get(field, {}):
+                        note_content[field] = {
+                            'readers': [venue_id, self.get_authors_id(submission.number)]
+                        }
 
-                note_readers = self.submission_stage.get_readers(self, submission.number)
-                note_writers = [venue_id, self.get_authors_id(submission.number)]
+                new_readers = self.submission_stage.get_readers(self, submission.number)
+                note_readers = new_readers if submission.readers != new_readers else None
+               
+                note_writers = [venue_id, self.get_authors_id(submission.number)] if submission.writers != [venue_id, self.get_authors_id(submission.number)] else None
                 note_signatures = [self.get_authors_id(submission.number)]
 
-                if submission.readers != note_readers:
+                note_odate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if (submission.odate is None and note_readers and 'everyone' in note_readers) else None
+
+                print(note_readers, note_writers, note_content)
+                if note_readers or note_writers or note_content or note_odate:
                     return self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
                         readers=[venue_id, self.get_authors_id(submission.number)],
                         writers=[venue_id],
                         signatures=[venue_id],
                         note=openreview.api.Note(id=submission.id,
-                                odate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if (submission.odate is None and 'everyone' in note_readers) else None,
+                                odate = note_odate,
                                 readers = note_readers,
                                 writers = note_writers,
                                 signatures = note_signatures,

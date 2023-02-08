@@ -103,24 +103,28 @@ class InvitationBuilder(object):
     def set_meta_invitation(self):
         venue_id=self.venue_id
 
-        invitation_start_process = self.get_process_content('process/invitation_start_process.py')
+        meta_invitation = openreview.tools.get_invitation(self.client, self.venue.get_meta_invitation_id())
+        
+        if meta_invitation is None:
+            
+            invitation_start_process = self.get_process_content('process/invitation_start_process.py')
 
-        self.client.post_invitation_edit(invitations=None,
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=['~Super_User1'],
-            invitation=Invitation(id=self.venue.get_meta_invitation_id(),
-                invitees=[venue_id],
+            self.client.post_invitation_edit(invitations=None,
                 readers=[venue_id],
+                writers=[venue_id],
                 signatures=['~Super_User1'],
-                content={
-                    'cdate_invitation_script': {
-                        'value': invitation_start_process
-                    }
-                },
-                edit=True
+                invitation=Invitation(id=self.venue.get_meta_invitation_id(),
+                    invitees=[venue_id],
+                    readers=[venue_id],
+                    signatures=['~Super_User1'],
+                    content={
+                        'cdate_invitation_script': {
+                            'value': invitation_start_process
+                        }
+                    },
+                    edit=True
+                )
             )
-        )
        
     def set_submission_invitation(self):
         venue_id = self.venue_id
