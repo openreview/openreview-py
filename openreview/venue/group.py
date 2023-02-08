@@ -159,6 +159,8 @@ class GroupBuilder(object):
             'reviewers_custom_max_papers_id': { 'value': self.venue.get_custom_max_papers_id(self.venue.get_reviewers_id()) },
             'reviewers_affinity_score_id': { 'value': self.venue.get_affinity_score_id(self.venue.get_reviewers_id()) },
             'reviewers_conflict_id': { 'value': self.venue.get_conflict_score_id(self.venue.get_reviewers_id()) },
+            'reviewers_assignment_id': { 'value': self.venue.get_assignment_id(self.venue.get_reviewers_id(), deployed=True) },
+            'reviewers_invite_assignment_id': { 'value': self.venue.get_assignment_id(self.venue.get_reviewers_id(), invite=True) },
             'reviewers_recruitment_id': { 'value': self.venue.get_recruitment_id(self.venue.get_reviewers_id()) },
             'authors_id': { 'value': self.venue.get_authors_id() },
             'authors_accepted_id': { 'value': f'{self.venue.get_authors_id()}/Accepted' },
@@ -177,6 +179,7 @@ class GroupBuilder(object):
 
         if self.venue.use_area_chairs:
             content['area_chairs_id'] = { 'value': self.venue.get_area_chairs_id() }
+            content['area_chairs_name'] = { 'value': self.venue.area_chairs_name }
             content['area_chairs_custom_max_papers_id'] = { 'value': self.venue.get_custom_max_papers_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_affinity_score_id'] = { 'value': self.venue.get_affinity_score_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_conflict_id'] = { 'value': self.venue.get_conflict_score_id(self.venue.get_area_chairs_id()) }
@@ -199,6 +202,7 @@ class GroupBuilder(object):
             content['review_email_pcs'] = { 'value': self.venue.review_stage.email_pcs }
 
         if self.venue.meta_review_stage:
+            content['meta_review_recommendation'] = { 'value': self.venue.meta_review_stage.recommendation_field_name }
             content['meta_review_name'] = { 'value': self.venue.meta_review_stage.name }
 
         if self.venue.decision_stage:
