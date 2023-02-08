@@ -885,6 +885,7 @@ class TestDoubleBlindConference():
         assert len(blind_submissions_3) == 3
         assert blind_submissions[0].id == blind_submissions_3[2].id
         assert blind_submissions_3[2].readers == ['everyone']
+        assert blind_submissions_3[2].odate
 
         assert client.get_group('AKBC.ws/2019/Conference/Paper1/Authors')
         assert client.get_group('AKBC.ws/2019/Conference/Paper2/Authors')
@@ -2034,6 +2035,8 @@ url={'''
         assert note.content['_bibtex'] == valid_bibtex
         assert 'venue' in note.content and not note.content['venue']
         assert 'venueid' in note.content and not note.content['venueid']
+        assert note.pdate is None
+        assert note.odate
 
     def test_release_accepted_notes_without_revealing_authors(self, client, request_page, selenium):
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
@@ -2090,6 +2093,8 @@ url={'''
         assert note.content['venueid'] == 'AKBC.ws/2019/Conference'
         assert note.content['authors'] == ['Anonymous']
         assert note.content['authorids'] == ['AKBC.ws/2019/Conference/Paper1/Authors']
+        assert note.pdate
+        assert note.odate
 
         accepted_authors = client.get_group('AKBC.ws/2019/Conference/Authors/Accepted')
         assert accepted_authors
@@ -2110,6 +2115,13 @@ url={'''
         builder.set_decision_stage(openreview.stages.DecisionStage(public=True))
         conference = builder.get_result()
         conference.create_decision_stage()
+
+        notes = conference.get_submissions(sort='tmdate')
+        assert notes
+        assert len(notes) == 1
+        note = notes[0]
+        original_pdate = note.pdate
+        orignal_odate = note.odate
 
         conference.post_decision_stage(reveal_authors_accepted=True, decision_heading_map={'Accept (Poster)': 'Accepted poster papers', 'Accept (Oral)': 'Accepted oral papers', 'Reject': 'Reject'})
 
@@ -2148,6 +2160,8 @@ url={'''
         assert note.content['_bibtex'] == valid_bibtex
         assert note.content['venue'] == 'AKBC 2019 Oral'
         assert note.content['venueid'] == 'AKBC.ws/2019/Conference'
+        assert note.pdate == original_pdate
+        assert note.odate == orignal_odate
 
         accepted_authors = client.get_group('AKBC.ws/2019/Conference/Authors/Accepted')
         assert accepted_authors
@@ -2248,6 +2262,7 @@ url={'''
         assert note.content['_bibtex'] == valid_bibtex
         assert note.content['venue'] == 'AKBC 2019 Oral'
         assert note.content['venueid'] == 'AKBC.ws/2019/Conference'
+        assert note.pdate
 
         accepted_authors = client.get_group('AKBC.ws/2019/Conference/Authors/Accepted')
         assert accepted_authors

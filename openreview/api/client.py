@@ -47,6 +47,7 @@ class OpenReviewClient(object):
         self.tags_url = self.baseurl + '/tags'
         self.edges_url = self.baseurl + '/edges'
         self.bulk_edges_url = self.baseurl + '/edges/bulk'
+        self.edges_count_url = self.baseurl + '/edges/count'
         self.profiles_url = self.baseurl + '/profiles'
         self.profiles_search_url = self.baseurl + '/profiles/search'
         self.profiles_merge_url = self.baseurl + '/profiles/merge'
@@ -1248,10 +1249,8 @@ class OpenReviewClient(object):
         params['head'] = head
         params['tail'] = tail
         params['label'] = label
-        params['limit'] = 1
-        params['offset'] = 0
 
-        response = self.session.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
+        response = self.session.get(self.edges_count_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()['count']
@@ -1315,7 +1314,7 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    def delete_edges(self, invitation, label=None, head=None, tail=None, wait_to_finish=False, soft_delete=False):
+    def delete_edges(self, invitation, id=None, label=None, head=None, tail=None, wait_to_finish=False, soft_delete=False):
         """
         Deletes edges by a combination of invitation id and one or more of the optional filters.
 
@@ -1340,7 +1339,9 @@ class OpenReviewClient(object):
             delete_query['head'] = head
         if tail:
             delete_query['tail'] = tail
-
+        if id: 
+            delete_query['id'] = id
+            
         delete_query['waitToFinish'] = wait_to_finish
         delete_query['softDelete'] = soft_delete
 
@@ -1986,6 +1987,7 @@ class Note(object):
         number=None,
         cdate=None,
         pdate=None,
+        odate=None,
         mdate=None,
         tcdate=None,
         tmdate=None,
@@ -2000,6 +2002,7 @@ class Note(object):
         self.number = number
         self.cdate = cdate
         self.pdate = pdate
+        self.odate = odate
         self.mdate = mdate
         self.tcdate = tcdate
         self.tmdate = tmdate
@@ -2047,6 +2050,8 @@ class Note(object):
             body['cdate'] = self.cdate
         if self.pdate:
             body['pdate'] = self.pdate
+        if self.odate:
+            body['odate'] = self.odate
         if self.mdate:
             body['mdate'] = self.mdate
         if self.ddate:
@@ -2077,6 +2082,8 @@ class Note(object):
         number = n.get('number'),
         cdate = n.get('cdate'),
         mdate = n.get('mdate'),
+        pdate = n.get('pdate'),
+        odate = n.get('odate'), 
         tcdate = n.get('tcdate'),
         tmdate =n.get('tmdate'),
         ddate=n.get('ddate'),

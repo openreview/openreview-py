@@ -61,6 +61,7 @@ class TestCVPRSConference():
                 'contact_email': 'pc@cvpr.cc',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
+                'secondary_area_chairs': 'Yes, our venue has Secondary Area Chairs',
                 'Venue Start Date': '2023/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
@@ -394,6 +395,30 @@ class TestCVPRSConference():
             weight = 0.94
         ))                        
 
+        client.post_edge(openreview.Edge(
+            invitation='thecvf.com/CVPR/2023/Conference/Area_Chairs/-/Assignment',
+            readers = [conference.id, f'thecvf.com/CVPR/2023/Conference/Paper{submissions[1].number}/Senior_Area_Chairs', '~AC_CVPRTwo1'],
+            writers = [conference.id, f'thecvf.com/CVPR/2023/Conference/Paper{submissions[1].number}/Senior_Area_Chairs'],
+            nonreaders = [f'thecvf.com/CVPR/2023/Conference/Paper{submissions[1].number}/Authors'],
+            signatures = [conference.id],
+            head = submissions[1].id,
+            tail = '~AC_CVPRTwo1',
+            label = 'ac-matching',
+            weight = 0.94
+        ))
+
+        client.post_edge(openreview.Edge(
+            invitation='thecvf.com/CVPR/2023/Conference/Area_Chairs/-/Assignment',
+            readers = [conference.id, f'thecvf.com/CVPR/2023/Conference/Paper{submissions[0].number}/Senior_Area_Chairs', '~AC_CVPRTwo1'],
+            writers = [conference.id, f'thecvf.com/CVPR/2023/Conference/Paper{submissions[0].number}/Senior_Area_Chairs'],
+            nonreaders = [f'thecvf.com/CVPR/2023/Conference/Paper{submissions[0].number}/Authors'],
+            signatures = [conference.id],
+            head = submissions[0].id,
+            tail = '~AC_CVPRTwo1',
+            label = 'ac-matching',
+            weight = 0.94
+        ))        
+
         ## Setup Reviewer matching
         with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
@@ -426,6 +451,147 @@ class TestCVPRSConference():
             total_recommendations = 3
         )      
 
+
+    def test_secondary_ac_assignment(self, conference, helpers, client):
+
+        ## Assign secondary ACs
+        client.post_group(openreview.Group(id='thecvf.com/CVPR/2023/Conference/Paper1/Secondary_Area_Chairs',
+            readers=['thecvf.com/CVPR/2023/Conference', 'thecvf.com/CVPR/2023/Conference/Paper1/Senior_Area_Chairs', 'thecvf.com/CVPR/2023/Conference/Paper1/Area_Chairs'],
+            nonreaders=['thecvf.com/CVPR/2023/Conference/Paper1/Authors'],
+            writers=['thecvf.com/CVPR/2023/Conference'],
+            signatures=['thecvf.com/CVPR/2023/Conference'],
+            signatories=['thecvf.com/CVPR/2023/Conference'],
+            anonids=True,
+            members=['~AC_CVPRTwo1']
+        ))
+        client.add_members_to_group('thecvf.com/CVPR/2023/Conference/Paper1/Area_Chairs', 'thecvf.com/CVPR/2023/Conference/Paper1/Secondary_Area_Chairs')
+
+        client.post_group(openreview.Group(id='thecvf.com/CVPR/2023/Conference/Paper2/Secondary_Area_Chairs',
+            readers=['thecvf.com/CVPR/2023/Conference', 'thecvf.com/CVPR/2023/Conference/Paper2/Senior_Area_Chairs', 'thecvf.com/CVPR/2023/Conference/Paper2/Area_Chairs'],
+            nonreaders=['thecvf.com/CVPR/2023/Conference/Paper2/Authors'],
+            writers=['thecvf.com/CVPR/2023/Conference'],
+            signatures=['thecvf.com/CVPR/2023/Conference'],
+            signatories=['thecvf.com/CVPR/2023/Conference'],
+            anonids=True,
+            members=['~AC_CVPRTwo1']
+        ))
+        client.add_members_to_group('thecvf.com/CVPR/2023/Conference/Paper2/Area_Chairs', 'thecvf.com/CVPR/2023/Conference/Paper2/Secondary_Area_Chairs')
+
+
+        client.post_group(openreview.Group(id='thecvf.com/CVPR/2023/Conference/Paper3/Secondary_Area_Chairs',
+            readers=['thecvf.com/CVPR/2023/Conference', 'thecvf.com/CVPR/2023/Conference/Paper3/Senior_Area_Chairs', 'thecvf.com/CVPR/2023/Conference/Paper3/Area_Chairs'],
+            nonreaders=['thecvf.com/CVPR/2023/Conference/Paper3/Authors'],
+            writers=['thecvf.com/CVPR/2023/Conference'],
+            signatures=['thecvf.com/CVPR/2023/Conference'],
+            signatories=['thecvf.com/CVPR/2023/Conference'],
+            anonids=True,
+            members=['~AC_CVPRTwo1']
+        ))
+        client.add_members_to_group('thecvf.com/CVPR/2023/Conference/Paper3/Area_Chairs', 'thecvf.com/CVPR/2023/Conference/Paper3/Secondary_Area_Chairs')
+
+
+        client.post_group(openreview.Group(id='thecvf.com/CVPR/2023/Conference/Paper4/Secondary_Area_Chairs',
+            readers=['thecvf.com/CVPR/2023/Conference', 'thecvf.com/CVPR/2023/Conference/Paper4/Senior_Area_Chairs', 'thecvf.com/CVPR/2023/Conference/Paper4/Area_Chairs'],
+            nonreaders=['thecvf.com/CVPR/2023/Conference/Paper4/Authors'],
+            writers=['thecvf.com/CVPR/2023/Conference'],
+            signatures=['thecvf.com/CVPR/2023/Conference'],
+            signatories=['thecvf.com/CVPR/2023/Conference'],
+            anonids=True,
+            members=['~AC_CVPROne1']
+        ))
+        client.add_members_to_group('thecvf.com/CVPR/2023/Conference/Paper4/Area_Chairs', 'thecvf.com/CVPR/2023/Conference/Paper4/Secondary_Area_Chairs')
+
+        client.post_group(openreview.Group(id='thecvf.com/CVPR/2023/Conference/Paper5/Secondary_Area_Chairs',
+            readers=['thecvf.com/CVPR/2023/Conference', 'thecvf.com/CVPR/2023/Conference/Paper5/Senior_Area_Chairs', 'thecvf.com/CVPR/2023/Conference/Paper5/Area_Chairs'],
+            nonreaders=['thecvf.com/CVPR/2023/Conference/Paper5/Authors'],
+            writers=['thecvf.com/CVPR/2023/Conference'],
+            signatures=['thecvf.com/CVPR/2023/Conference'],
+            signatories=['thecvf.com/CVPR/2023/Conference'],
+            anonids=True,
+            members=['~AC_CVPROne1']
+        ))        
+        client.add_members_to_group('thecvf.com/CVPR/2023/Conference/Paper5/Area_Chairs', 'thecvf.com/CVPR/2023/Conference/Paper5/Secondary_Area_Chairs')
+    
+        ## Set the meta review stage
+        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        pc_client.post_note(openreview.Note(
+            content= {
+                'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
+                'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'recommendation_options': 'Accept, Reject',
+                'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_meta_reviews_to_reviewers': 'Meta review should not be revealed to any reviewer',
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Meta_Review_Stage',
+            readers= ['thecvf.com/CVPR/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_CVPRChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue() 
+
+        ac1_client = openreview.Client(username='ac1@cvpr.cc', password='1234')       
+        ac2_client = openreview.Client(username='ac2@cvpr.cc', password='1234')
+
+        invitations = ac1_client.get_invitations(invitee=True, super='thecvf.com/CVPR/2023/Conference/-/Meta_Review')
+        assert len(invitations) == 3
+
+        invitations = ac2_client.get_invitations(invitee=True, super='thecvf.com/CVPR/2023/Conference/-/Meta_Review')
+        assert len(invitations) == 2         
+
+        ## Start official comment
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        end_date = now + datetime.timedelta(days=3)
+        pc_client.post_note(openreview.Note(
+            content= {
+                'commentary_start_date': start_date.strftime('%Y/%m/%d'),
+                'commentary_end_date': end_date.strftime('%Y/%m/%d'),
+                'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
+                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue',
+                'additional_readers': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Comment_Stage',
+            readers= ['thecvf.com/CVPR/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_CVPRChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
+
+        ## post a comment as a Secondary AC
+        submission = client.get_notes(invitation='thecvf.com/CVPR/2023/Conference/-/Blind_Submission', number=4)[0]   
+        anon_reviewers_group_id = ac1_client.get_groups(regex=f'thecvf.com/CVPR/2023/Conference/Paper4/Secondary_Area_Chair_', signatory='ac1@cvpr.cc')[0].id
+        ac1_client.post_note(
+            openreview.Note(
+                invitation = 'thecvf.com/CVPR/2023/Conference/Paper4/-/Official_Comment',
+                forum = submission.id,
+                replyto = submission.id,
+                readers = [
+                    'thecvf.com/CVPR/2023/Conference/Paper4/Reviewers',
+                    'thecvf.com/CVPR/2023/Conference/Paper4/Area_Chairs',
+                    'thecvf.com/CVPR/2023/Conference/Paper4/Senior_Area_Chairs',
+                    'thecvf.com/CVPR/2023/Conference/Program_Chairs'],
+                writers = [anon_reviewers_group_id],
+                signatures = [anon_reviewers_group_id],
+                content = {
+                    'title': 'Comment title',
+                    'comment': 'Paper is very good!'
+                }                
+            )
+        )
 
     def test_rebuttal_stage(self, conference, helpers, test_client, client):
 
