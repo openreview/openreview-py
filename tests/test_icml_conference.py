@@ -970,6 +970,40 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Bid')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Bid')
 
+        ## Hide the pdf and supplementary material 
+        pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                'hide_fields': ['financial_aid', 'pdf', 'supplementary_material']
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_ICMLChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()        
+
+        ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password='1234')
+        submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 101
+        assert ['ICML.cc/2023/Conference',
+        'ICML.cc/2023/Conference/Senior_Area_Chairs',
+        'ICML.cc/2023/Conference/Area_Chairs',
+        'ICML.cc/2023/Conference/Reviewers',
+        'ICML.cc/2023/Conference/Submission1/Authors'] == submissions[0].readers
+        assert ['ICML.cc/2023/Conference',
+        'ICML.cc/2023/Conference/Submission1/Authors'] == submissions[0].writers
+        assert ['ICML.cc/2023/Conference/Submission1/Authors'] == submissions[0].signatures
+        assert 'authorids' not in submissions[0].content
+        assert 'authors' not in submissions[0].content
+        assert 'financial_aid'not in submissions[0].content
+        assert 'pdf' not in submissions[0].content
+        assert 'supplementary_material' not in submissions[0].content
 
     def test_assignment(self, client, openreview_client, helpers):
 
