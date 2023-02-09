@@ -699,7 +699,7 @@ class TestMatching():
         assert 1 == len(ac1_s2_subject_scores)
         assert ac1_s2_subject_scores[0].weight ==  1
 
-    def test_set_assigments(self, conference, pc_client, test_client, helpers):
+    def test_set_assigments(self, conference, client, pc_client, test_client, helpers):
 
         conference.client = pc_client
 
@@ -843,6 +843,63 @@ class TestMatching():
 
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='r3@fb.com')
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='~Reviewer_MITOne1')
+
+        note = conference.get_submissions(sort='number:asc')[0]
+
+        note_assignment_edges = client.get_edges(
+            invitation=conference.get_reviewers_id() + '/-/Assignment',
+            head=note.forum)
+        assert note_assignment_edges and len(note_assignment_edges) == 2
+
+        assert client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=note.forum, tail='r3@fb.com')
+        assert client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=note.forum, tail='~Reviewer_MITOne1')
+
+        desk_reject_note = openreview.Note(
+            invitation=f'{conference.id}/Paper{note.number}/-/Desk_Reject',
+            forum=note.forum,
+            replyto=note.forum,
+            readers=[conference.id,
+                     conference.get_authors_id(note.number),
+                     conference.get_reviewers_id(note.number),
+                     conference.get_area_chairs_id(note.number),
+                     conference.get_program_chairs_id()],
+            writers=[conference.get_id(), conference.get_program_chairs_id()],
+            signatures=[conference.get_program_chairs_id()],
+            content={
+                'desk_reject_comments': 'PC has decided to reject this submission.',
+                'title': 'Submission Desk Rejected by Program Chairs'
+            }
+        )
+
+        desk_reject_note = pc_client.post_note(desk_reject_note)
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=desk_reject_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        note_assignment_edges = client.get_edges(
+            invitation=conference.get_reviewers_id() + '/-/Assignment',
+            head=desk_reject_note.forum)
+        assert not note_assignment_edges
+
+        #undo desk-reject
+        desk_reject_note = pc_client.get_note(desk_reject_note.id)
+        desk_reject_note.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        desk_reject_note = pc_client.post_note(desk_reject_note)
+
+        helpers.await_queue()
+
+        note = client.get_note(desk_reject_note.forum)
+
+        note_assignment_edges = client.get_edges(
+            invitation=conference.get_reviewers_id() + '/-/Assignment',
+            head=note.forum)
+        assert note_assignment_edges and len(note_assignment_edges) == 2
+
+        assert client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=note.forum, tail='r3@fb.com')
+        assert client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=note.forum, tail='~Reviewer_MITOne1')
 
     @pytest.mark.skip("proposed invitation is expired after first deploy")
     def test_redeploy_assigments(self, conference, client, pc_client, test_client, helpers):
