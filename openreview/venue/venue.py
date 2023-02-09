@@ -690,7 +690,7 @@ Total Errors: {len(errors)}
             alternate_matching_group = self.get_area_chairs_id()
         venue_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
 
-        return venue_matching.setup(compute_affinity_scores, self.venue.conflict_policy if compute_conflicts else False)
+        return venue_matching.setup(compute_affinity_scores, self.conflict_policy if compute_conflicts else False)
 
     def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
 
