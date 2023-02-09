@@ -16,9 +16,10 @@ def process(client, edit, invitation):
     invited_label = invitation.content['invited_label']['value']
     accepted_label = invitation.content['accepted_label']['value']
     declined_label = invitation.content['declined_label']['value']
-    assignment_title = invitation.content['assignment_title']['value'] if invitation.content['assignment_title']['value'] else None
+    assignment_title = invitation.content.get('assignment_title', {}).get('value')
     external_committee_id = invitation.content['external_committee_id']['value']
     external_paper_committee_id = invitation.content['external_paper_committee_id']['value']
+    conflict_policy = domain.content.get('conflict_policy', {}).get('value', 'default')
 
     note = edit.note
 
@@ -103,7 +104,7 @@ OpenReview Team'''
         authorids = submission.content['authorids']['value']
         author_profiles = openreview.tools.get_profiles(client, authorids, with_publications=True)
         profiles=openreview.tools.get_profiles(client, [edge.tail], with_publications=True)
-        conflicts=openreview.tools.get_conflicts(author_profiles, profiles[0])
+        conflicts=openreview.tools.get_conflicts(author_profiles, profiles[0], policy=conflict_policy)
         if conflicts:
             print('Conflicts detected', conflicts)
             edge.label='Conflict Detected'

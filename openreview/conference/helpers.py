@@ -20,7 +20,11 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')
         venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
         venue.senior_area_chair_identity_readers = get_identity_readers(note, 'senior_area_chair_identity')
-        venue.enable_reviewers_reassignment = domain_group.content.get('enable_reviewers_reassignment', {}).get('value', False) if domain_group else False
+        
+        if domain_group:
+            venue.enable_reviewers_reassignment = domain_group.content.get('enable_reviewers_reassignment', {}).get('value', False)
+            venue.reviewers_proposed_assignment_title = domain_group.content.get('reviewers_proposed_assignment_title', {}).get('value')
+            venue.conflict_policy = domain_group.content.get('conflict_policy', {}).get('value', 'default')
 
         venue.submission_stage = get_submission_stage(note)
         venue.review_stage = get_review_stage(note)

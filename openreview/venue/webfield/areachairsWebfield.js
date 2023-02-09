@@ -1,5 +1,5 @@
 // Webfield component
-const reviewerAssignmentTitle = null
+const reviewerAssignmentTitle = domain.content.reviewers_proposed_assignment_title?.value
 const areaChairsId = domain.content.area_chairs_id.value
 const reviewerGroup = domain.content.reviewers_id.value
 const startParam = `${domain.content.area_chairs_assignment_id.value},tail:${user.id}`
@@ -37,7 +37,7 @@ return {
     venueId: domain.id,
     reviewerAssignment: {
       showEdgeBrowserUrl: domain.content.enable_reviewers_reassignment?.value,
-      proposedAssignmentTitle: '',
+      proposedAssignmentTitle: reviewerAssignmentTitle,
       edgeBrowserProposedUrl: `/edges/browse?start=${startParam}&traverse=${traverseProposedParam}&edit=${domain.content.reviewers_proposed_assignment_id.value},label:${reviewerAssignmentTitle};${domain.content.reviewers_invite_assignment_id.value}&browse=${browseProposedInvitations.join(';')}${otherParams}`,
       edgeBrowserDeployedUrl: `/edges/browse?start=${startParam}&traverse=${traverseParam}&edit=${domain.content.reviewers_invite_assignment_id.value}&browse=${browseInvitations.join(';')}${otherParams}`,
     },

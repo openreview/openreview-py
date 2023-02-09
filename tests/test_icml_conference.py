@@ -1005,7 +1005,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         assert 'pdf' not in submissions[0].content
         assert 'supplementary_material' not in submissions[0].content
 
-    def test_assignment(self, client, openreview_client, helpers):
+    def test_assignment(self, client, openreview_client, helpers, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@icml.cc', password='1234')
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
@@ -1223,6 +1223,35 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission100/Senior_Area_Chairs')
         assert ['~SAC_ICMLOne1'] == sac_group.members
 
+        ### Reviewers reassignment of proposed assignments
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        venue.setup_assignment_recruitment(committee_id='ICML.cc/2023/Conference/Reviewers', assignment_title='reviewer-matching', hash_seed='1234', due_date=due_date)
+
+        pc_client_v2.post_group_edit(invitation='ICML.cc/2023/Conference/-/Edit',
+            readers = ['ICML.cc/2023/Conference'],
+            writers = ['ICML.cc/2023/Conference'],
+            signatures = ['ICML.cc/2023/Conference'],
+            group = openreview.api.Group(
+                id = 'ICML.cc/2023/Conference',
+                content = {
+                    'enable_reviewers_reassignment': { 'value': True },
+                    'reviewers_proposed_assignment_title': { 'value': 'reviewer-matching' },
+                    'conflict_policy': { 'value': 'neurips' }
+                }
+            )
+        )        
+
+        ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password='1234')
+        request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2023/Conference/Area_Chairs", ac_client.token, wait_for_element='header')
+        header = selenium.find_element_by_id('header')
+        assert 'Reviewer Assignment Browser:' in header.text
+
+        url = header.find_element_by_id('edge_browser_url')
+        assert url
+        assert url.get_attribute('href') == 'http://localhost:3030/edges/browse?start=ICML.cc/2023/Conference/Area_Chairs/-/Assignment,tail:ac1@icml.cc&traverse=ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment,label:reviewer-matching&edit=ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment,label:reviewer-matching;ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment&browse=ICML.cc/2023/Conference/Reviewers/-/Aggregate_Score,label:reviewer-matching;ICML.cc/2023/Conference/Reviewers/-/Affinity_Score;ICML.cc/2023/Conference/Reviewers/-/Bid;ICML.cc/2023/Conference/Reviewers/-/Custom_Max_Papers,head:ignore&hide=ICML.cc/2023/Conference/Reviewers/-/Conflict&maxColumns=2&version=2&referrer=[AC%20Console](/group?id=ICML.cc/2023/Conference/Area_Chairs)'
+
         venue.set_assignments(assignment_title='reviewer-matching', committee_id='ICML.cc/2023/Conference/Reviewers', enable_reviewer_reassignment=True)
 
         reviewers_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Reviewers')
@@ -1297,7 +1326,8 @@ To view your submission, click here: https://openreview.net/forum?id={submission
             group = openreview.api.Group(
                 id = 'ICML.cc/2023/Conference',
                 content = {
-                    'enable_reviewers_reassignment': { 'value': True }
+                    'enable_reviewers_reassignment': { 'value': True },
+                    'reviewers_proposed_assignment_title': { 'value': { 'delete': True } }
                 }
             )
         )

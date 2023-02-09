@@ -1,9 +1,11 @@
 def process(client, edge, invitation):
 
+    domain = client.get_group(edge.domain)
     reviewers_id = invitation.content['match_group']['value']
     assignment_invitation_id = invitation.content['assignment_invitation_id']['value']
-    assignment_label = invitation.content['assignment_label']['value'] if invitation.content['assignment_label']['value'] else None
+    assignment_label = invitation.content['assignment_label'].get('value')
     invite_label = invitation.content['invite_label']['value']
+    conflict_policy = domain.content.get('conflict_policy', {}).get('value', 'default')
     print(edge.id)
 
     if edge.ddate is None and edge.label == invite_label:
@@ -17,7 +19,7 @@ def process(client, edge, invitation):
         ## - Get profile
         user = edge.tail
         print(f'Get profile for {user}')
-        user_profile=openreview.tools.get_profiles(client, [user])[0]
+        user_profile=openreview.tools.get_profiles(client, [user], with_publications=True)[0]
 
         if user_profile:
             if user_profile.id != user:
@@ -58,8 +60,8 @@ def process(client, edge, invitation):
         print(f'Check conflicts for {user_profile.id}')
         ## - Check conflicts
         authorids = submission.content['authorids']['value']
-        author_profiles = openreview.tools.get_profiles(client, authorids)
-        conflicts=openreview.tools.get_conflicts(author_profiles, user_profile)
+        author_profiles = openreview.tools.get_profiles(client, authorids, with_publications=True)
+        conflicts=openreview.tools.get_conflicts(author_profiles, user_profile, policy=conflict_policy)
         if conflicts:
             print('Conflicts detected', conflicts)
             raise openreview.OpenReviewException(f'Conflict detected for {user_profile.get_preferred_name(pretty=True)}')

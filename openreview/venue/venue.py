@@ -61,7 +61,9 @@ class Venue(object):
         self.reviewer_identity_readers = []
         self.area_chair_identity_readers = []
         self.senior_area_chair_identity_readers = []
-        self.enable_reviewers_reassignment = False     
+        self.enable_reviewers_reassignment = False
+        self.reviewers_proposed_assignment_title = None
+        self.conflict_policy = 'default'
 
     def get_id(self):
         return self.venue_id
@@ -688,10 +690,16 @@ Total Errors: {len(errors)}
             alternate_matching_group = self.get_area_chairs_id()
         venue_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
 
-        return venue_matching.setup(compute_affinity_scores, compute_conflicts)
+        return venue_matching.setup(compute_affinity_scores, self.venue.conflict_policy if compute_conflicts else False)
 
     def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
 
         match_group = self.client.get_group(committee_id)
         conference_matching = matching.Matching(self, match_group)
         return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment)
+
+    def setup_assignment_recruitment(self, committee_id, hash_seed, due_date, assignment_title=None, invitation_labels={}, email_template=None):
+
+        match_group = self.client.get_group(committee_id)
+        conference_matching = matching.Matching(self, match_group)
+        return conference_matching.setup_invite_assignment(hash_seed, assignment_title, due_date, invitation_labels=invitation_labels, email_template=email_template)        
