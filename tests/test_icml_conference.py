@@ -1099,7 +1099,10 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     tail = r,
                     signatures = ['ICML.cc/2023/Conference/Program_Chairs'],
                     weight = 1,
-                    label = 'reviewer-matching'
+                    label = 'reviewer-matching',
+                    readers = ["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Area_Chairs", r],
+                    nonreaders = [f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Authors"],
+                    writers = ["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Area_Chairs"]
                 ))            
     
             openreview_client.post_edge(openreview.api.Edge(
@@ -1119,7 +1122,10 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     tail = r,
                     signatures = ['ICML.cc/2023/Conference/Program_Chairs'],
                     weight = 1,
-                    label = 'reviewer-matching'
+                    label = 'reviewer-matching',
+                    readers = ["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Area_Chairs", r],
+                    nonreaders = [f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Authors"],
+                    writers = ["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Area_Chairs"]
                 ))
     
             openreview_client.post_edge(openreview.api.Edge(
@@ -1139,7 +1145,10 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     tail = r,
                     signatures = ['ICML.cc/2023/Conference/Program_Chairs'],
                     weight = 1,
-                    label = 'reviewer-matching'
+                    label = 'reviewer-matching',
+                    readers = ["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Area_Chairs", r],
+                    nonreaders = [f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Authors"],
+                    writers = ["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Area_Chairs"]
                 ))
 
             openreview_client.post_edge(openreview.api.Edge(
@@ -1160,7 +1169,10 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     tail = r,
                     signatures = ['ICML.cc/2023/Conference/Program_Chairs'],
                     weight = 1,
-                    label = 'reviewer-matching'
+                    label = 'reviewer-matching',
+                    readers = ["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Area_Chairs", r],
+                    nonreaders = [f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Authors"],
+                    writers = ["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Area_Chairs"]
                 ))
     
             openreview_client.post_edge(openreview.api.Edge(
@@ -1180,7 +1192,10 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     tail = r,
                     signatures = ['ICML.cc/2023/Conference/Program_Chairs'],
                     weight = 1,
-                    label = 'reviewer-matching'
+                    label = 'reviewer-matching',
+                    readers = ["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Area_Chairs", r],
+                    nonreaders = [f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Authors"],
+                    writers = ["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Area_Chairs"]
                 ))            
     
             openreview_client.post_edge(openreview.api.Edge(
