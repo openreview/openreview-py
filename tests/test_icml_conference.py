@@ -1241,7 +1241,12 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     'conflict_policy': { 'value': 'neurips' }
                 }
             )
-        )        
+        )
+
+        ## increse quota for reviewer 4
+        quota_edge = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Custom_Max_Papers', tail='~Reviewer_ICMLFour1')[0]
+        quota_edge.weight = 15
+        pc_client_v2.post_edge(quota_edge)
 
         ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password='1234')
         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2023/Conference/Area_Chairs", ac_client.token, wait_for_element='header')
@@ -1251,6 +1256,78 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         url = header.find_element_by_id('edge_browser_url')
         assert url
         assert url.get_attribute('href') == 'http://localhost:3030/edges/browse?start=ICML.cc/2023/Conference/Area_Chairs/-/Assignment,tail:ac1@icml.cc&traverse=ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment,label:reviewer-matching&edit=ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment,label:reviewer-matching;ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment&browse=ICML.cc/2023/Conference/Reviewers/-/Aggregate_Score,label:reviewer-matching;ICML.cc/2023/Conference/Reviewers/-/Affinity_Score;ICML.cc/2023/Conference/Reviewers/-/Bid;ICML.cc/2023/Conference/Reviewers/-/Custom_Max_Papers,head:ignore&hide=ICML.cc/2023/Conference/Reviewers/-/Conflict&maxColumns=2&version=2&referrer=[AC%20Console](/group?id=ICML.cc/2023/Conference/Area_Chairs)'
+
+        anon_group_id = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLOne1')[0].id
+        
+        ## recruit external reviewer
+        with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for melisa@mail'):
+            ac_client.post_edge(
+                openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
+                    signatures=[anon_group_id],
+                    head=submissions[0].id,
+                    tail='melisa@mail.com',
+                    label='Invitation Sent',
+                    weight=1
+            ))
+
+        ac_client.post_edge(
+            openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
+                signatures=[anon_group_id],
+                head=submissions[0].id,
+                tail='melisa@icml.cc',
+                label='Invitation Sent',
+                weight=1
+        ))
+
+        helpers.await_queue(openreview_client)
+
+        assert client.get_groups('ICML.cc/2023/Conference/Reviewers/Submission1/External_Reviewers/Invited', member='melisa@icml.cc')
+        assert client.get_groups('ICML.cc/2023/Conference/Reviewers/External_Reviewers/Invited', member='melisa@icml.cc')
+
+        assert not client.get_groups('ICML.cc/2023/Conference/Reviewers/Submission1/External_Reviewers', member='melisa@icml.cc')
+        assert not client.get_groups('ICML.cc/2023/Conference/Reviewers/External_Reviewers', member='melisa@icml.cc')
+        assert not client.get_groups('ICML.cc/2023/Conference/Reviewers', member='melisa@icml.cc')
+
+        messages = client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] Invitation to review paper titled Paper title 1')
+        assert messages and len(messages) == 1
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+        helpers.await_queue(openreview_client)
+
+        ## Externel reviewer is set pending profile creation
+        invite_edges=pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Reviewer/-/Invite_Assignment', head=submissions[0].id, tail='melisa@icml.cc')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Pending Sign Up'
+
+        assignment_edges=pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submissions[0].id)
+        assert len(assignment_edges) == 3
+
+        messages = client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] Reviewer Invitation accepted for paper 5, assignment pending')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi melisa@icml.cc,
+Thank you for accepting the invitation to review the paper number: 5, title: Paper title 5.
+
+Please signup in OpenReview using the email address melisa@icml.cc and complete your profile.
+Confirmation of the assignment is pending until your profile is active and no conflicts of interest are detected.
+
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.
+
+OpenReview Team'''
+
+        messages = client.get_messages(to='ac1@icml.cc', subject='[ICML 2023] Reviewer melisa@icml.cc accepted to review paper 1, assignment pending')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi AC ICMLOne,
+The Reviewer melisa@icml.cc that you invited to review paper 1 has accepted the invitation.
+
+Confirmation of the assignment is pending until the invited reviewer creates a profile in OpenReview and no conflicts of interest are detected.
+
+OpenReview Team'''
+
+        ## External reviewer creates a profile and accepts the invitation again
+        external_reviewer=helpers.create_user('melisa@icml.cc', 'Melisa', 'ICML')
+
+        ## Run Job 
 
         venue.set_assignments(assignment_title='reviewer-matching', committee_id='ICML.cc/2023/Conference/Reviewers', enable_reviewer_reassignment=True)
 
