@@ -3346,7 +3346,6 @@ var buildReviewersCSV = function(){
       '"' + allExpertise + '"',	
       '"' + (institutionName || '') + '"',	
       institutionDomain,	
-      '"' + tracks + '"',	
       reviewerPapers.length,	
       reviewerReviews.length	
     ].join(',') + '\n');
