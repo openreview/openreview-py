@@ -15,34 +15,35 @@ class InvitationBuilder(object):
         self.venue_id = journal.venue_id
 
         day = 1000 * 60 * 60 * 24
-        seven_days = day * 7
+        week = day * 7
+        two_weeks = week * 2
         one_month = day * 30
 
         self.process_script = self.get_super_process_content('process_script')
         self.preprocess_script = self.get_super_process_content('preprocess_script')
 
         self.author_reminder_process = {
-            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days)],
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week)],
             'script': self.get_process_content('process/author_edge_reminder_process.py')
         }
 
         self.reviewer_reminder_process = {
-            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days)],
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week)],
             'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id())
         }
 
         self.reviewer_reminder_process_with_EIC = {
-            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week), "#{4/duedate} + " + str(two_weeks), "#{4/duedate} + " + str(one_month)],
             'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id())
         }
 
         self.ae_reminder_process = {
-            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week), "#{4/duedate} + " + str(one_month)],
             'script': self.get_super_dateprocess_content('ae_reminder_script', self.journal.get_meta_invitation_id())
         }
 
         self.ae_edge_reminder_process = {
-            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week), "#{4/duedate} + " + str(one_month)],
             'script': self.get_process_content('process/action_editor_edge_reminder_process.py')
         }
 
