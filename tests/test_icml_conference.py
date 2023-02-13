@@ -1281,14 +1281,14 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
         helpers.await_queue(openreview_client)
 
-        assert client.get_groups('ICML.cc/2023/Conference/Reviewers/Submission1/External_Reviewers/Invited', member='melisa@icml.cc')
-        assert client.get_groups('ICML.cc/2023/Conference/Reviewers/External_Reviewers/Invited', member='melisa@icml.cc')
+        assert openreview_client.get_groups('ICML.cc/2023/Conference/Submission1/External_Reviewers/Invited', member='melisa@icml.cc')
+        assert openreview_client.get_groups('ICML.cc/2023/Conference/External_Reviewers/Invited', member='melisa@icml.cc')
 
-        assert not client.get_groups('ICML.cc/2023/Conference/Reviewers/Submission1/External_Reviewers', member='melisa@icml.cc')
-        assert not client.get_groups('ICML.cc/2023/Conference/Reviewers/External_Reviewers', member='melisa@icml.cc')
-        assert not client.get_groups('ICML.cc/2023/Conference/Reviewers', member='melisa@icml.cc')
+        assert not openreview_client.get_groups('ICML.cc/2023/Conference/Submission1/External_Reviewers', member='melisa@icml.cc')
+        assert not openreview_client.get_groups('ICML.cc/2023/Conference/External_Reviewers', member='melisa@icml.cc')
+        assert not openreview_client.get_groups('ICML.cc/2023/Conference/Reviewers', member='melisa@icml.cc')
 
-        messages = client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] Invitation to review paper titled Paper title 1')
+        messages = client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] Invitation to review paper titled "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
@@ -1296,17 +1296,17 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         helpers.await_queue(openreview_client)
 
         ## Externel reviewer is set pending profile creation
-        invite_edges=pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Reviewer/-/Invite_Assignment', head=submissions[0].id, tail='melisa@icml.cc')
+        invite_edges=pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='melisa@icml.cc')
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Pending Sign Up'
 
         assignment_edges=pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submissions[0].id)
         assert len(assignment_edges) == 3
 
-        messages = client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] Reviewer Invitation accepted for paper 5, assignment pending')
+        messages = client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] Reviewer Invitation accepted for paper 1, assignment pending')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi melisa@icml.cc,
-Thank you for accepting the invitation to review the paper number: 5, title: Paper title 5.
+Thank you for accepting the invitation to review the paper number: 1, title: Paper title 1 Version 2.
 
 Please signup in OpenReview using the email address melisa@icml.cc and complete your profile.
 Confirmation of the assignment is pending until your profile is active and no conflicts of interest are detected.
@@ -1327,15 +1327,49 @@ OpenReview Team'''
         ## External reviewer creates a profile and accepts the invitation again
         external_reviewer=helpers.create_user('melisa@icml.cc', 'Melisa', 'ICML')
 
-        ## Run Job 
+        ## Run Job
+        openreview.venue.Venue.check_new_profiles(openreview_client) 
+
+        invite_edges=pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='melisa@icml.cc')
+        assert len(invite_edges) == 0
+
+        invite_edges=pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Melisa_ICML1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Accepted'
+
+        assignment_edges=pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submissions[0].id)
+        assert len(assignment_edges) == 4        
+
+        messages = client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] Reviewer Assignment confirmed for paper 1')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Melisa ICML,
+Thank you for accepting the invitation to review the paper number: 1, title: Paper title 1 Version 2.
+
+The ICML 2023 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
+
+If you would like to change your decision, please click the Decline link in the previous invitation email.
+
+OpenReview Team'''
+
+        messages = client.get_messages(to='ac1@icml.cc', subject='[ICML 2023] Reviewer Melisa ICML signed up and is assigned to paper 1')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi AC ICMLOne,
+The Reviewer Melisa ICML(melisa@icml.cc) that you invited to review paper 1 has accepted the invitation, signed up and is now assigned to the paper 1.
+
+OpenReview Team'''
+
+        assert openreview_client.get_groups('ICML.cc/2023/Conference/Submission1/External_Reviewers', member='melisa@icml.cc')
+        assert openreview_client.get_groups('ICML.cc/2023/Conference/External_Reviewers', member='melisa@icml.cc')
+        assert not openreview_client.get_groups('ICML.cc/2023/Conference/Reviewers', member='melisa@icml.cc')
 
         venue.set_assignments(assignment_title='reviewer-matching', committee_id='ICML.cc/2023/Conference/Reviewers', enable_reviewer_reassignment=True)
 
         reviewers_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Reviewers')
-        assert len(reviewers_group.members) == 3
+        assert len(reviewers_group.members) == 4
         assert '~Reviewer_ICMLOne1' in reviewers_group.members    
         assert '~Reviewer_ICMLTwo1' in reviewers_group.members    
         assert '~Reviewer_ICMLThree1' in reviewers_group.members    
+        assert '~Melisa_ICML1' in reviewers_group.members    
 
         reviewers_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission100/Reviewers')
         assert len(reviewers_group.members) == 3
