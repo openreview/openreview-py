@@ -1146,4 +1146,4 @@ class Matching(object):
             hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
             self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=f'''Emergency_{self.venue.reviewers_name}''')
 
-        self.venue.expire_invitation(self.venue.get_assignment_id(self.match_group.id))
+        self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id))
