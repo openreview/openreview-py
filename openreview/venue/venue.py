@@ -818,60 +818,61 @@ OpenReview Team'''
                 if invite_assignment_invitation_id:
                     
                     ## check if it is expired?
-                    invite_assignment_invitation = client.get_invitation(invite_assignment_invitation_id)
+                    invite_assignment_invitation = openreview.tools.get_invitation(client, invite_assignment_invitation_id)
 
-                    grouped_edges = client.get_grouped_edges(invitation=invite_assignment_invitation.id, label='Pending Sign Up', groupby='tail')
-                    print('Pending sign up edges found', len(grouped_edges))
+                    if invite_assignment_invitation:
+                        grouped_edges = client.get_grouped_edges(invitation=invite_assignment_invitation.id, label='Pending Sign Up', groupby='tail')
+                        print('Pending sign up edges found', len(grouped_edges))
 
-                    for grouped_edge in grouped_edges:
+                        for grouped_edge in grouped_edges:
 
-                        tail = grouped_edge['id']['tail']
-                        profiles=openreview.tools.get_profiles(client, [tail], with_publications=True)
+                            tail = grouped_edge['id']['tail']
+                            profiles=openreview.tools.get_profiles(client, [tail], with_publications=True)
 
-                        if profiles and profiles[0].active:
+                            if profiles and profiles[0].active:
 
-                            user_profile=profiles[0]
-                            print('Profile found for', tail, user_profile.id)
+                                user_profile=profiles[0]
+                                print('Profile found for', tail, user_profile.id)
 
-                            edges = grouped_edge['values']
+                                edges = grouped_edge['values']
 
-                            for edge in edges:
+                                for edge in edges:
 
-                                edge = openreview.api.Edge.from_json(edge)
-                                submission=client.get_note(id=edge.head)
+                                    edge = openreview.api.Edge.from_json(edge)
+                                    submission=client.get_note(id=edge.head)
 
-                                if submission.content['venueid']['value'] == venue_group.content.get('submission_venue_id', {}).get('value'):
+                                    if submission.content['venueid']['value'] == venue_group.content.get('submission_venue_id', {}).get('value'):
 
-                                    ## Check if there is already an accepted edge for that profile id
-                                    accepted_edges = client.get_edges(invitation=invite_assignment_invitation.id, label='Accepted', head=submission.id, tail=user_profile.id)
+                                        ## Check if there is already an accepted edge for that profile id
+                                        accepted_edges = client.get_edges(invitation=invite_assignment_invitation.id, label='Accepted', head=submission.id, tail=user_profile.id)
 
-                                    if not accepted_edges:
-                                        ## Check if the user was invited again with a profile id
-                                        invitation_edges = client.get_edges(invitation=invite_assignment_invitation.id, label='Invitation Sent', head=submission.id, tail=user_profile.id)
-                                        if invitation_edges:
-                                            print(f'User invited twice, remove double invitation edge {invitation_edge.id}')
-                                            invitation_edge = invitation_edges[0]
-                                            invitation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
-                                            client.post_edge(invitation_edge)
+                                        if not accepted_edges:
+                                            ## Check if the user was invited again with a profile id
+                                            invitation_edges = client.get_edges(invitation=invite_assignment_invitation.id, label='Invitation Sent', head=submission.id, tail=user_profile.id)
+                                            if invitation_edges:
+                                                print(f'User invited twice, remove double invitation edge {invitation_edge.id}')
+                                                invitation_edge = invitation_edges[0]
+                                                invitation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+                                                client.post_edge(invitation_edge)
 
-                                        ## Check conflicts
-                                        author_profiles = openreview.tools.get_profiles(client, submission.content['authorids']['value'], with_publications=True)
-                                        conflicts=openreview.tools.get_conflicts(author_profiles, user_profile, policy=venue_group.content.get('conflict_policy', {}).get('value'))
+                                            ## Check conflicts
+                                            author_profiles = openreview.tools.get_profiles(client, submission.content['authorids']['value'], with_publications=True)
+                                            conflicts=openreview.tools.get_conflicts(author_profiles, user_profile, policy=venue_group.content.get('conflict_policy', {}).get('value'))
 
-                                        if conflicts:
-                                            print(f'Conflicts detected for {edge.head} and {user_profile.id}', conflicts)
-                                            mark_as_conflict(venue_group, edge, submission, user_profile)
+                                            if conflicts:
+                                                print(f'Conflicts detected for {edge.head} and {user_profile.id}', conflicts)
+                                                mark_as_conflict(venue_group, edge, submission, user_profile)
+                                            else:
+                                                print(f'Mark accepted for {edge.head} and {user_profile.id}')
+                                                mark_as_accepted(venue_group, edge, submission, user_profile, invite_assignment_invitation)
+                                                                                                                                                            
                                         else:
-                                            print(f'Mark accepted for {edge.head} and {user_profile.id}')
-                                            mark_as_accepted(venue_group, edge, submission, user_profile, invite_assignment_invitation)
-                                                                                                                                                        
+                                            print("user already accepted with another invitation edge", submission.id, user_profile.id)                                
+
                                     else:
-                                        print("user already accepted with another invitation edge", submission.id, user_profile.id)                                
+                                        print(f'submission {submission.id} is not active: {submission.content["venueid"]["value"]}')
 
-                                else:
-                                    print(f'submission {submission.id} is not active: {submission.content["venueid"]["value"]}')
-
-                        else:
-                            print(f'no profile active for {edge.tail}')                                             
+                            else:
+                                print(f'no profile active for {edge.tail}')                                             
         
         return True
