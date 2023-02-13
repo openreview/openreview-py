@@ -3,7 +3,7 @@ def process(client, edge, invitation):
     domain = client.get_group(edge.domain)
     reviewers_id = invitation.content['match_group']['value']
     assignment_invitation_id = invitation.content['assignment_invitation_id']['value']
-    assignment_label = invitation.content['assignment_label'].get('value')
+    assignment_label = invitation.content.get('assignment_label', {}).get('value')
     invite_label = invitation.content['invite_label']['value']
     conflict_policy = domain.content.get('conflict_policy', {}).get('value', 'default')
     print(edge.id)

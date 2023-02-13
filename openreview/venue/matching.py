@@ -977,7 +977,7 @@ class Matching(object):
         invitation_content = {
             'match_group': { 'value':  self.match_group.id },
             'assignment_invitation_id': { 'value': venue.get_assignment_id(self.match_group.id) if assignment_title else venue.get_assignment_id(self.match_group.id, deployed=True)},
-            'assignment_label': { 'value': assignment_title if assignment_title else '' },
+            'assignment_label': { 'value': assignment_title } if assignment_title else { 'delete': True },
             'invite_label': { 'value': invite_label },
             'invited_label': { 'value': invited_label },
             'recruitment_invitation_id': { 'value': recruitment_invitation_id },

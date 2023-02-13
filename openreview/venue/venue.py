@@ -711,6 +711,8 @@ Total Errors: {len(errors)}
         def mark_as_conflict(venue_group, edge, submission, user_profile):
             edge.label='Conflict Detected'
             edge.tail=user_profile.id
+            edge.readers=None
+            edge.writers=None            
             client.post_edge(edge)
 
             ## Send email to reviewer
@@ -766,9 +768,11 @@ OpenReview Team'''
                     weight=1
                 ))
 
-                client.add_members_to_group(committee_invited_id.replace('/Invited', ''), edge.tail)
-                external_paper_committee_id=paper_reviewer_invited_id.replace('/Invited', '').replace('{number}', str(submission.number))
-                client.add_members_to_group(external_paper_committee_id, edge.tail)
+                if committee_invited_id:
+                    client.add_members_to_group(committee_invited_id.replace('/Invited', ''), edge.tail)
+                if paper_reviewer_invited_id:
+                    external_paper_committee_id=paper_reviewer_invited_id.replace('/Invited', '').replace('{number}', str(submission.number))
+                    client.add_members_to_group(external_paper_committee_id, edge.tail)
 
                 if assigment_label:
                     instructions=f'The {short_phrase} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.'

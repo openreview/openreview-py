@@ -1919,7 +1919,7 @@ class InvitationBuilder(object):
             'invited_label': { 'value': invited_label },
             'accepted_label': { 'value': accepted_label },
             'declined_label': { 'value': declined_label },
-            'assignment_title': { 'value': assignment_title if assignment_title else '' },
+            'assignment_title': { 'value': assignment_title } if assignment_title else { 'delete': True },
             'external_committee_id': { 'value': venue.get_committee_id(name=invited_committee_name) if invited_committee_name else '' },
             'external_paper_committee_id': {'value': venue.get_committee_id(name=invited_committee_name, number='{number}') if assignment_title else ''}
         }
