@@ -405,11 +405,16 @@ class Venue(object):
             if submission.content['venueid']['value'] == self.get_submission_venue_id():
 
                 note_content = {}
-                for field in final_hide_fields:
-                    if 'readers' not in submission.content.get(field, {}):
+                for field, value in submission.content.items():
+                    if field in final_hide_fields and 'readers' not in value:
                         note_content[field] = {
                             'readers': [venue_id, self.get_authors_id(submission.number)]
                         }
+                                           
+                    if field not in final_hide_fields and 'readers' in value:
+                        note_content[field] = {
+                            'readers': { 'delete': True }
+                        }                        
 
                 new_readers = self.submission_stage.get_readers(self, submission.number)
                 note_readers = new_readers if submission.readers != new_readers else None

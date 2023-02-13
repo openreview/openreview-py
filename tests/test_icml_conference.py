@@ -1657,6 +1657,41 @@ ICML 2023 Conference Program Chairs'''
         pc_client=openreview.Client(username='pc@icml.cc', password='1234')
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]        
 
+        ## Show the pdf and supplementary material to assigned reviewers
+        pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
+                'hide_fields': ['financial_aid']
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_ICMLChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
+
+        ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password='1234')
+        submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 60
+        assert ['ICML.cc/2023/Conference',
+        'ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs',
+        'ICML.cc/2023/Conference/Submission2/Area_Chairs',
+        'ICML.cc/2023/Conference/Submission2/Reviewers',
+        'ICML.cc/2023/Conference/Submission2/Authors'] == submissions[0].readers
+        assert ['ICML.cc/2023/Conference',
+        'ICML.cc/2023/Conference/Submission2/Authors'] == submissions[0].writers
+        assert ['ICML.cc/2023/Conference/Submission2/Authors'] == submissions[0].signatures
+        assert 'authorids' not in submissions[0].content
+        assert 'authors' not in submissions[0].content
+        assert 'financial_aid'not in submissions[0].content
+        assert 'pdf' in submissions[0].content
+        assert 'supplementary_material' in submissions[0].content
+
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
