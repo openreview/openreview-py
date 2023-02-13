@@ -1622,35 +1622,24 @@ class InvitationBuilder(object):
         is_area_chair = committee_id == venue.get_area_chairs_id()
         is_senior_area_chair = committee_id == venue.get_senior_area_chairs_id()
 
-        review_invitation_name = venue.review_stage.name if venue.review_stage else 'Official_Review'
-        anon_prefix = venue.get_reviewers_id('{number}', True)
         paper_group_id = venue.get_reviewers_id(number='{number}')
         group_name = venue.get_reviewers_name(pretty=True)
 
         if is_area_chair:
-            review_invitation_name = venue.meta_review_stage.name if venue.meta_review_stage else 'Meta_Review'
-            anon_prefix = venue.get_area_chairs_id('{number}', True)
             paper_group_id = venue.get_area_chairs_id(number='{number}')
             group_name = venue.get_area_chairs_name(pretty=True)
 
         if is_senior_area_chair:
             with open(os.path.join(os.path.dirname(__file__), 'process/sac_assignment_post_process.py')) as post:
                 post_content = post.read()
-                post_content = post_content.replace("VENUE_ID = ''", "VENUE_ID = '" + venue.id + "'")
-                post_content = post_content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + venue.get_senior_area_chairs_id(number='{number}') + "'")
-                post_content = post_content.replace("AC_ASSIGNMENT_INVITATION_ID = ''", "AC_ASSIGNMENT_INVITATION_ID = '" + venue.get_assignment_id(venue.get_area_chairs_id(), deployed=True) + "'")
                 invitation.process=post_content
                 invitation.signatures=[venue.get_program_chairs_id()] ## Program Chairs can see the reviews
                 return self.save_invitation(invitation)
 
         with open(os.path.join(os.path.dirname(__file__), 'process/assignment_pre_process.py')) as pre:
             pre_content = pre.read()
-            pre_content = pre_content.replace("REVIEW_INVITATION_ID = ''", "REVIEW_INVITATION_ID = '" + venue.get_invitation_id(review_invitation_name, '{number}') + "'")
-            pre_content = pre_content.replace("ANON_REVIEWER_PREFIX = ''", "ANON_REVIEWER_PREFIX = '" + anon_prefix + "'")
             with open(os.path.join(os.path.dirname(__file__), 'process/assignment_post_process.py')) as post:
                 post_content = post.read()
-                post_content = post_content.replace("VENUE_ID = ''", "VENUE_ID = '" + venue.id + "'")
-                post_content = post_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{venue.get_short_name()}"')
                 post_content = post_content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + paper_group_id + "'")
                 post_content = post_content.replace("GROUP_NAME = ''", "GROUP_NAME = '" + group_name + "'")
                 post_content = post_content.replace("GROUP_ID = ''", "GROUP_ID = '" + committee_id + "'")
