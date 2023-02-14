@@ -1946,7 +1946,7 @@ ICML 2023 Conference Program Chairs'''
             invitation='ICML.cc/2023/Conference/Submission1/-/Official_Review',
             signatures=[anon_group_id],
             note=openreview.api.Note(
-                id = review_edit['id'],
+                id = review_edit['note']['id'],
                 content={
                     'summary': { 'value': 'good paper version 2' },
                     'strengths_and_weaknesses': { 'value': '7: Good paper, accept'},
