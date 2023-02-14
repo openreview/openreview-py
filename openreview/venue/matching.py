@@ -1,10 +1,13 @@
 import csv
+import datetime
 import os
 import openreview
 from openreview.api import Edge
 from openreview.api import Invitation
 from tqdm import tqdm
 import time
+import random
+import string
 from .. import tools
 
 class Matching(object):
@@ -53,8 +56,6 @@ class Matching(object):
 
         assignment_or_proposed = edge_id.endswith('Assignment')
 
-        paper_num_signatures = '${{1/head}/number}'
-
         edge_invitees = [venue_id, venue.support_user]
         edge_readers = [venue_id]
         invitation_readers = [venue_id]
@@ -77,11 +78,11 @@ class Matching(object):
                 if venue.use_senior_area_chairs:
                     edge_invitees.append(venue.get_senior_area_chairs_id())
                     edge_writers.append(venue.get_senior_area_chairs_id(number=paper_number))
-                    edge_signatures.append(venue.get_senior_area_chairs_id(number=paper_num_signatures))
+                    edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
                 if venue.use_area_chairs:
                     edge_invitees.append(venue.get_area_chairs_id())
                     edge_writers.append(venue.get_area_chairs_id(number=paper_number))
-                    edge_signatures.append(venue.get_area_chairs_id(number=paper_num_signatures))
+                    edge_signatures.append(venue.get_area_chairs_id(number='.*', anon=True))
 
                 edge_nonreaders = [venue.get_authors_id(number=paper_number)]
 
@@ -91,10 +92,11 @@ class Matching(object):
                 invitation_readers.append(venue.get_senior_area_chairs_id())
 
             if is_assignment_invitation:
+                invitation_readers.append(venue.get_area_chairs_id())
                 if self.venue.use_senior_area_chairs:
                     edge_invitees.append(venue.get_senior_area_chairs_id())
                     edge_writers.append(venue.get_senior_area_chairs_id(number=paper_number))
-                    edge_signatures.append(venue.get_senior_area_chairs_id(number=paper_num_signatures))
+                    edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
 
                 edge_nonreaders = [venue.get_authors_id(number=paper_number)]
 
@@ -222,7 +224,7 @@ class Matching(object):
         if edge_label:
             invitation.edge['label'] = edge_label
 
-        invitation = self.venue.invitation_builder.save_invitation(invitation)
+        invitation = self.venue.invitation_builder.save_invitation(invitation, replacement=True)
         return invitation
 
     def _build_conflicts(self, submissions, user_profiles, get_profile_info):
@@ -961,6 +963,68 @@ class Matching(object):
         self._build_config_invitation(score_spec)
         return matching_status
 
+    def setup_invite_assignment(self, hash_seed, assignment_title=None, due_date=None, invitation_labels={}, invited_committee_name='External_Reviewers', email_template=None, proposed=False):
+        venue = self.venue
+
+        invite_label=invitation_labels.get('Invite', 'Invitation Sent')
+        invited_label=invitation_labels.get('Invited', 'Invitation Sent')
+        accepted_label=invitation_labels.get('Accepted', 'Accepted')
+        declined_label=invitation_labels.get('Declined', 'Declined')
+
+        recruitment_invitation_id=venue.get_invitation_id('Proposed_Assignment_Recruitment' if assignment_title else 'Assignment_Recruitment', prefix=self.match_group.id)
+        invitation=self._create_edge_invitation(venue.get_assignment_id(self.match_group.id, invite=True), any_tail=True, default_label=invite_label)
+
+        invitation_content = {
+            'match_group': { 'value':  self.match_group.id },
+            'assignment_invitation_id': { 'value': venue.get_assignment_id(self.match_group.id) if assignment_title else venue.get_assignment_id(self.match_group.id, deployed=True)},
+            'assignment_label': { 'value': assignment_title } if assignment_title else { 'delete': True },
+            'invite_label': { 'value': invite_label },
+            'invited_label': { 'value': invited_label },
+            'recruitment_invitation_id': { 'value': recruitment_invitation_id },
+            'committee_invited_id': { 'value': venue.get_committee_id(name=invited_committee_name + '/Invited') },
+            'paper_reviewer_invited_id': { 'value': venue.get_committee_id(name=invited_committee_name + '/Invited', number='{number}') if assignment_title else ''},
+            'hash_seed': { 'value': hash_seed, 'readers': [ venue.venue_id ]},
+            'email_template': { 'value': email_template if email_template else ''}
+        }
+
+        # set invite assignment invitation
+        pre_process_content = venue.invitation_builder.get_process_content('process/invite_assignment_pre_process.py')
+        post_process_content = venue.invitation_builder.get_process_content('process/invite_assignment_post_process.py')
+
+        invitation.preprocess = pre_process_content
+        invitation.process = post_process_content
+        invitation.content = invitation_content
+        invitation.minReplies = 1
+        invitation.maxReplies = 1
+        invitation.signatures = [venue.get_program_chairs_id()]
+        invite_assignment_invitation=venue.invitation_builder.save_invitation(invitation, replacement=True)
+
+        # set assignment recruitment invitation
+        invitation = venue.invitation_builder.set_paper_recruitment_invitation(recruitment_invitation_id,
+            self.match_group.id,
+            invited_committee_name,
+            hash_seed,
+            assignment_title,
+            due_date,
+            invited_label=invited_label,
+            accepted_label=accepted_label,
+            declined_label=declined_label,
+            proposed=proposed
+        )
+
+        #To-Do
+        ## Only for reviewers, allow ACs and SACs to review the proposed assignments
+        if self.match_group.id == venue.get_reviewers_id() and not proposed:
+            venue.group_builder.set_external_reviewer_recruitment_groups(name=invited_committee_name, create_paper_groups=True if assignment_title else False)
+            if assignment_title:
+                invitation=self.client.get_invitation(venue.get_assignment_id(self.match_group.id))
+                invitation.duedate=tools.datetime_millis(due_date)
+                invitation.expdate=tools.datetime_millis(due_date + datetime.timedelta(minutes= 30)) if due_date else None
+                venue.invitation_builder.save_invitation(invitation, replacement=True)
+            #     invitation = self.conference.webfield_builder.set_reviewer_proposed_assignment_page(self.conference, invitation, assignment_title, invite_assignment_invitation)
+
+        return invite_assignment_invitation
+
     def deploy_assignments(self, assignment_title, overwrite):
 
         venue = self.venue
@@ -1078,8 +1142,8 @@ class Matching(object):
         # ## Add sync process function
         self.venue.invitation_builder.set_assignment_invitation(self.match_group.id)
 
-        # if self.match_group.id == self.venue.get_reviewers_id() and enable_reviewer_reassignment:
-        #     hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
-        #     self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=f'''Emergency_{self.venue.reviewers_name}''')
+        if self.match_group.id == self.venue.get_reviewers_id() and enable_reviewer_reassignment:
+            hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
+            self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=f'''Emergency_{self.venue.reviewers_name}''')
 
-        self.venue.expire_invitation(self.venue.get_assignment_id(self.match_group.id))
+        self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id))

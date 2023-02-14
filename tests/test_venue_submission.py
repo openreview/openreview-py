@@ -243,8 +243,7 @@ class TestVenueSubmission():
         # #test posting proposed assignment edge
         proposed_assignment_edge = openreview_client.post_edge(Edge(
             invitation = venue.id + '/Reviewers/-/Proposed_Assignment',
-            # signatures = ['TestVenue.cc'],
-            signatures = ['TestVenue.cc/Submission1/Area_Chairs'],
+            signatures = ['TestVenue.cc'],
             head = submissions[0].id,
             tail = '~Reviewer_Venue_One1',
             readers = ['TestVenue.cc','TestVenue.cc/Submission1/Area_Chairs','~Reviewer_Venue_One1'],

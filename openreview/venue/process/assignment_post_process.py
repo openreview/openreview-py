@@ -1,12 +1,17 @@
 def process_update(client, edge, invitation, existing_edge):
 
-    VENUE_ID = ''
-    SHORT_PHRASE = ''
     GROUP_ID = ''
     GROUP_NAME = ''
     PAPER_GROUP_ID = ''
     SYNC_SAC_ID = ''
     SAC_ASSIGNMENT_INVITATION_ID = ''
+
+    domain = client.get_group(edge.domain)
+    venue_id = domain.id
+    short_phrase = domain.content['subtitle']['value']
+    program_chairs_id = domain.content['program_chairs_id']['value']
+    review_name = domain.content['review_name']['value']
+    reviewers_anon_name = domain.content['reviewers_anon_name']['value']    
 
     note=client.get_note(edge.head)
     group=client.get_group(PAPER_GROUP_ID.format(number=note.number))
@@ -18,10 +23,10 @@ def process_update(client, edge, invitation, existing_edge):
             print(f'Remove member from SAC group')
             group = client.get_group(SYNC_SAC_ID.format(number=note.number))
             client.post_group_edit(
-                invitation=f'{VENUE_ID}/-/Edit',
-                readers = [VENUE_ID],
-                writers = [VENUE_ID],
-                signatures = [VENUE_ID],
+                invitation=f'{venue_id}/-/Edit',
+                readers = [venue_id],
+                writers = [venue_id],
+                signatures = [venue_id],
                 group = openreview.api.Group(
                     id = group.id,
                     members = []
@@ -43,12 +48,12 @@ def process_update(client, edge, invitation, existing_edge):
 
         signature=f'{openreview.tools.pretty_id(edge.signatures[0])}({edge.tauthor})'
 
-        if VENUE_ID in edge.signatures or VENUE_ID + '/Program_Chairs' in edge.signatures:
-            signature=f'{openreview.tools.pretty_id(VENUE_ID + "/Program_Chairs")}'
+        if venue_id in edge.signatures or program_chairs_id in edge.signatures:
+            signature=f'{openreview.tools.pretty_id(program_chairs_id)}'
 
         recipients=[edge.tail]
-        subject=f'[{SHORT_PHRASE}] You have been assigned as a {GROUP_NAME} for paper number {note.number}'
-        message=f'''This is to inform you that you have been assigned as a {GROUP_NAME} for paper number {note.number} for {SHORT_PHRASE}.
+        subject=f'[{short_phrase}] You have been assigned as a {GROUP_NAME} for paper number {note.number}'
+        message=f'''This is to inform you that you have been assigned as a {GROUP_NAME} for paper number {note.number} for {short_phrase}.
 
 To review this new assignment, please login to OpenReview and go to https://openreview.net/forum?id={note.forum}.
 
