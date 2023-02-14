@@ -224,7 +224,7 @@ class Matching(object):
         if edge_label:
             invitation.edge['label'] = edge_label
 
-        invitation = self.venue.invitation_builder.save_invitation(invitation)
+        invitation = self.venue.invitation_builder.save_invitation(invitation, replacement=True)
         return invitation
 
     def _build_conflicts(self, submissions, user_profiles, get_profile_info):
