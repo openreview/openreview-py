@@ -1939,7 +1939,7 @@ ICML 2023 Conference Program Chairs'''
         messages = openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] Official Review posted to your assigned Paper number: 1, Paper title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
 
-        messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] You Official Review has been received on your assigned Paper number: 1, Paper title: "Paper title 1 Version 2"')
+        messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your Official Review has been received on your assigned Paper number: 1, Paper title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
 
         review_edit = reviewer_client.post_note_edit(
@@ -1968,7 +1968,7 @@ ICML 2023 Conference Program Chairs'''
         messages = openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] Official Review posted to your assigned Paper number: 1, Paper title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
 
-        messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] You Official Review has been received on your assigned Paper number: 1, Paper title: "Paper title 1 Version 2"')
+        messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your Official Review has been received on your assigned Paper number: 1, Paper title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 1        
 
 
