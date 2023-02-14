@@ -593,6 +593,70 @@ class TestCVPRSConference():
             )
         )
 
+        ## setup the metareview confirmation
+        start_date = datetime.datetime.utcnow() - datetime.timedelta(weeks = 1)
+        due_date = datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)
+
+        client.post_invitation(openreview.Invitation(id = 'thecvf.com/CVPR/2023/Conference/-/Meta_Review_Confirmation',
+            cdate = openreview.tools.datetime_millis(start_date),
+            duedate = openreview.tools.datetime_millis(due_date),
+            expdate = openreview.tools.datetime_millis(due_date + datetime.timedelta(minutes= 30)),
+            readers = ['everyone'],
+            writers = ['thecvf.com/CVPR/2023/Conference'],
+            signatures = ['thecvf.com/CVPR/2023/Conference'],
+            multiReply = False,
+            reply = {
+                'content': {
+                    "decision": {
+                    "description": "Please enter the decision for the paper (should match that of the primary AC).",
+                    "value-radio": [
+                        "Accept",
+                        "Reject"
+                    ],
+                    "required": True
+                    },
+                    "confirmation": {
+                    "description": "Please confirm that you approve the decision and the meta-review.",
+                    "value-radio": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": True
+                    }
+                }
+            }
+        ))
+
+        client.post_invitation(openreview.Invitation(id = 'thecvf.com/CVPR/2023/Conference/Paper4/-/Meta_Review_Confirmation',
+            super='thecvf.com/CVPR/2023/Conference/-/Meta_Review_Confirmation',
+            readers = ['thecvf.com/CVPR/2023/Conference', 'thecvf.com/CVPR/2023/Conference/Paper4/Secondary_Area_Chairs'],
+            invitees = ['thecvf.com/CVPR/2023/Conference/Paper4/Secondary_Area_Chairs'],
+            noninvitees = [],
+            writers = ['thecvf.com/CVPR/2023/Conference'],
+            signatures = ['thecvf.com/CVPR/2023/Conference'],
+            multiReply = False,
+            reply = {
+                'forum': submission.id,
+                'replyto': submission.id,
+                'readers': {
+                    'values': [
+                        'thecvf.com/CVPR/2023/Conference/Program_Chairs',
+                        'thecvf.com/CVPR/2023/Conference/Paper4/Senior_Area_Chairs',
+                        'thecvf.com/CVPR/2023/Conference/Paper4/Area_Chairs'
+                    ]
+                },
+                'writers': {
+                    'values-copied': [
+                        'thecvf.com/CVPR/2023/Conference/Program_Chairs',
+                        '{signatures}'
+                    ]
+                },
+                'signatures': {
+                    'values-regex': 'thecvf.com/CVPR/2023/Conference/Paper4/Secondary_Area_Chair_.*'
+                }
+            }
+        ))               
+
     def test_rebuttal_stage(self, conference, helpers, test_client, client):
 
         now = datetime.datetime.utcnow()
