@@ -815,7 +815,7 @@ OpenReview Team'''
 
             venue_group = client.get_group(venue_id)
             
-            if hasattr(venue_group, 'domain') and 'content' in venue_group:
+            if hasattr(venue_group, 'domain') and venue_group.content:
                 
                 print(f'Check active venue {venue_group.id}')
                 invite_assignment_invitation_id = venue_group.content.get('reviewers_invite_assignment_id', {}).get('value')
