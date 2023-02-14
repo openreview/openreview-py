@@ -1703,7 +1703,7 @@ ICML 2023 Conference Program Chairs'''
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
                 'remove_review_form_options': 'title,review',
-                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received',
+                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews',
                 'review_rating_field_name': 'rating',
                 'additional_review_form_options': {
                     "summary": {
@@ -1908,6 +1908,68 @@ ICML 2023 Conference Program Chairs'''
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission3/-/Official_Review')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Official_Review')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Official_Review')
+
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password='1234')
+
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLOne1')
+        anon_group_id = anon_groups[0].id
+
+        review_edit = reviewer_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission1/-/Official_Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'summary': { 'value': 'good paper' },
+                    'strengths_and_weaknesses': { 'value': '7: Good paper, accept'},
+                    'questions': { 'value': '7: Good paper, accept'},
+                    'limitations': { 'value': '7: Good paper, accept'},
+                    'ethics_flag': { 'value': 'No'},
+                    'soundness': { 'value': '3 good'},
+                    'presentation': { 'value': '3 good'},
+                    'contribution': { 'value': '3 good'},
+                    'rating': { 'value': '10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.'},
+                    'confidence': { 'value': '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.'},
+                    'code_of_conduct': { 'value': 'Yes'},
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        messages = openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] Official Review posted to your assigned Paper number: 1, Paper title: "Paper title 1 Version 2"')
+        assert messages and len(messages) == 1
+
+        messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] You Official Review has been received on your assigned Paper number: 1, Paper title: "Paper title 1 Version 2"')
+        assert messages and len(messages) == 1
+
+        review_edit = reviewer_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission1/-/Official_Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                id = review_edit['id'],
+                content={
+                    'summary': { 'value': 'good paper version 2' },
+                    'strengths_and_weaknesses': { 'value': '7: Good paper, accept'},
+                    'questions': { 'value': '7: Good paper, accept'},
+                    'limitations': { 'value': '7: Good paper, accept'},
+                    'ethics_flag': { 'value': 'No'},
+                    'soundness': { 'value': '3 good'},
+                    'presentation': { 'value': '3 good'},
+                    'contribution': { 'value': '3 good'},
+                    'rating': { 'value': '10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.'},
+                    'confidence': { 'value': '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.'},
+                    'code_of_conduct': { 'value': 'Yes'},
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        messages = openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] Official Review posted to your assigned Paper number: 1, Paper title: "Paper title 1 Version 2"')
+        assert messages and len(messages) == 1
+
+        messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] You Official Review has been received on your assigned Paper number: 1, Paper title: "Paper title 1 Version 2"')
+        assert messages and len(messages) == 1        
 
 
 
