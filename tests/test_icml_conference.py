@@ -2303,7 +2303,7 @@ ICML 2023 Conference Program Chairs'''
         messages = openreview_client.get_messages(to='ac2@icml.cc', subject=f'[ICML 2023] {pretty_signature} commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
 
-        messages = openreview_client.get_messages(to='sac2@icml.cc', subject=f'[ICML 2023] {pretty_signature} commented on a paper in your area. Paper Number: 1, Paper title: "Paper Title 1 Version 2"')
+        messages = openreview_client.get_messages(to='sac2@icml.cc', subject=f'[ICML 2023] {pretty_signature} commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
 
         messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your comment was received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
