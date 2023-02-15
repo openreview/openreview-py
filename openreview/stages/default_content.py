@@ -33,11 +33,12 @@ comment = {
 comment_v2 = {
     'title': {
         'order': 1,
-        'description': 'Brief summary of your comment.',
+        'description': '(Optional) Brief summary of your comment.',
         'value': {
             'param': {
                 'type': 'string',
-                'regex': '.{1,500}',
+                'maxLength': 500,
+                'optional': True
             }
         }
     },

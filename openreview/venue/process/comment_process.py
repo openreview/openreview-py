@@ -13,6 +13,10 @@ def process(client, edit, invitation):
     comment = client.get_note(edit.note.id)
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
 
+    ### TODO: Fix this, we should notify the use when the review is updated
+    if comment.tcdate != comment.tmdate:
+        return    
+
     ignore_groups = comment.nonreaders if comment.nonreaders else []
     ignore_groups.append(edit.tauthor)
 
@@ -25,8 +29,6 @@ def process(client, edit, invitation):
 Paper number: {submission.number}
 
 Paper title: {submission.content['title']['value']}
-
-Comment title: {comment.content['title']['value']}
 
 Comment: {comment.content['comment']['value']}
 
