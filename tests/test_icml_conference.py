@@ -2286,7 +2286,6 @@ ICML 2023 Conference Program Chairs'''
             invitation='ICML.cc/2023/Conference/Submission1/-/Official_Comment',
             signatures=[anon_group_id],
             note=openreview.api.Note(
-                id = comment_edit['note']['id'],
                 replyto = submissions[0].id,
                 readers = [
                     'ICML.cc/2023/Conference/Program_Chairs', 
@@ -2294,7 +2293,7 @@ ICML 2023 Conference Program Chairs'''
                     anon_group_id
                 ],
                 content={
-                    'comment': { 'value': 'I can not review this paper, EDITED' },
+                    'comment': { 'value': 'private message to SAC' },
                 }
             )
         )
