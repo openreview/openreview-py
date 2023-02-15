@@ -2250,7 +2250,6 @@ ICML 2023 Conference Program Chairs'''
 
         signature = anon_group_id.split('/')[-1]
         pretty_signature = openreview.tools.pretty_id(signature)
-        print('SUBJECT', f'[ICML 2023] {pretty_signature} commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
         messages = openreview_client.get_messages(to='ac2@icml.cc', subject=f'[ICML 2023] {pretty_signature} commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
 
@@ -2281,13 +2280,14 @@ ICML 2023 Conference Program Chairs'''
         assert messages and len(messages) == 1
 
         messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your comment was received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
-        assert messages and len(messages) == 1 
+        assert messages and len(messages) == 1
 
         comment_edit = reviewer_client.post_note_edit(
             invitation='ICML.cc/2023/Conference/Submission1/-/Official_Comment',
             signatures=[anon_group_id],
             note=openreview.api.Note(
                 id = comment_edit['note']['id'],
+                replyto = submissions[0].id,
                 readers = [
                     'ICML.cc/2023/Conference/Program_Chairs', 
                     'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
@@ -2301,10 +2301,10 @@ ICML 2023 Conference Program Chairs'''
 
         helpers.await_queue(openreview_client)
 
-        messages = openreview_client.get_messages(to='ac2@icml.cc', subject=f'[ICML 2023] {pretty_signature} commented on a paper in your area. Paper Number: 1, Paper title: "Paper title 1 Version 2"')
+        messages = openreview_client.get_messages(to='ac2@icml.cc', subject=f'[ICML 2023] {pretty_signature} commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
 
-        messages = openreview_client.get_messages(to='sac2@icml.cc', subject=f'[ICML 2023] {pretty_signature} commented on a paper in your area. Paper Number: 1, Paper title: "Paper title 1 Version 2"')
+        messages = openreview_client.get_messages(to='sac2@icml.cc', subject=f'[ICML 2023] {pretty_signature} commented on a paper in your area. Paper Number: 1, Paper title: "Paper Title 1 Version 2"')
         assert messages and len(messages) == 1
 
         messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your comment was received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
