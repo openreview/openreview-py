@@ -215,7 +215,7 @@ var loadData = function(paperNums) {
   var noteNumbers = _.uniq(_.concat(acPapers, secondaryAcPapers));
   var blindedNotesP;
   var allReviewersP;
-  var assignedSACP = $.Deferred().resolve();
+  var assignedSACsP = $.Deferred().resolve();
 
   if (noteNumbers.length) {
     var noteNumbersStr = noteNumbers.join(',');
@@ -261,11 +261,14 @@ var loadData = function(paperNums) {
   });
 
   if (SENIOR_AREA_CHAIRS_ID) {
-    assignedSACP = Webfield.get('/edges', { invitation: SENIOR_AREA_CHAIRS_ID + '/-/Assignment', head: user.profile.id })
+    assignedSACsP = Webfield.get('/edges', { invitation: SENIOR_AREA_CHAIRS_ID + '/-/Assignment', head: user.profile.id })
     .then(function(result) {
       if (result && result.edges.length) {
-        return result.edges[0].tail;
+        return result.edges.map(function (edge) {
+          return edge.tail;
+        });
       }
+      return []
     })
 
   }
@@ -280,7 +283,7 @@ var loadData = function(paperNums) {
     acPapers,
     secondaryAcPapers,
     secondaryAreaChairPrimaryACs,
-    assignedSACP
+    assignedSACsP
   );
 };
 
@@ -375,14 +378,14 @@ var getAllInvitations = function() {
   });
 };
 
-var formatData = function(blindedNotes, noteToReviewerIds, invitations, allReviewers, acRankingByPaper, reviewerRankingByPaper, acPapers, secondaryAcPapers, secondaryAreaChairPrimaryACs, assignedSAC) {
+var formatData = function(blindedNotes, noteToReviewerIds, invitations, allReviewers, acRankingByPaper, reviewerRankingByPaper, acPapers, secondaryAcPapers, secondaryAreaChairPrimaryACs, assignedSACs) {
 
   var uniqueIds = _.uniq(_.concat(_.reduce(noteToReviewerIds, function(result, idsObj, noteNum) {
     return result.concat(_.values(idsObj));
   }, []), allReviewers));
 
-  if (assignedSAC) {
-    uniqueIds.push(assignedSAC);
+  if (assignedSACs.length) {
+    uniqueIds.concat(assignedSACs);
   }
 
   return getUserProfiles(uniqueIds)
@@ -406,7 +409,9 @@ var formatData = function(blindedNotes, noteToReviewerIds, invitations, allRevie
       acPapers: acPapers,
       secondaryAcPapers: secondaryAcPapers,
       secondaryAreaChairPrimaryACs: secondaryAreaChairPrimaryACs,
-      sacProfile: assignedSAC && findProfile(profiles, assignedSAC)
+      sacProfiles: assignedSACs.length ? assignedSACs.map(function (assignedSAC) {
+        return findProfile(profiles, assignedSAC);
+      }) : []
     };
     return conferenceStatusData;
   });
@@ -1038,10 +1043,19 @@ var renderTasks = function(invitations) {
 }
 
 var renderTableAndTasks = function(fetchedData) {
-
-  if (fetchedData.sacProfile && fetchedData.sacProfile.id) {
+  var sacProfiles = fetchedData.sacProfiles.filter(function (profile) {
+    return profile.id;
+  })
+  if (sacProfiles.length>1) {
+    var sacProfileLinks = sacProfiles.map(function (profile) {
+      return '<a href="https://openreview.net/profile?id=' + profile.id + '" target="_blank">' + view.prettyId(profile.id) + ' </a> (' + profile.email + ')';
+    });
     $('#header .description').append(
-      '<p class="dark">Your assigned Senior Area Chair is <a href="https://openreview.net/profile?id=' + fetchedData.sacProfile.id + '" target="_blank">' + view.prettyId(fetchedData.sacProfile.id) + ' </a> (' + fetchedData.sacProfile.email + ').</p>'
+      '<p class="dark">Your assigned Senior Area Chair are '+ sacProfileLinks.join(' , ') +'.</p>'
+    );
+  } else if(sacProfiles.length){
+    $('#header .description').append(
+      '<p class="dark">Your assigned Senior Area Chair is <a href="https://openreview.net/profile?id=' + sacProfiles[0].id + '" target="_blank">' + view.prettyId(sacProfiles[0].id) + ' </a> (' + sacProfiles[0].email + ').</p>'
     );
   }
 
