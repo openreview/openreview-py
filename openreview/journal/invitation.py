@@ -15,34 +15,40 @@ class InvitationBuilder(object):
         self.venue_id = journal.venue_id
 
         day = 1000 * 60 * 60 * 24
-        seven_days = day * 7
+        week = day * 7
+        two_weeks = week * 2
         one_month = day * 30
 
         self.process_script = self.get_super_process_content('process_script')
         self.preprocess_script = self.get_super_process_content('preprocess_script')
 
         self.author_reminder_process = {
-            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days)],
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week)],
             'script': self.get_process_content('process/author_edge_reminder_process.py')
         }
 
         self.reviewer_reminder_process = {
-            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days)],
-            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id())
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week)],
+            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'one week' })
+        }
+
+        self.reviewer_ack_reminder_process = {
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(day * 4), "#{4/duedate} + " + str(week)],
+            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'four days', 2: 'one week' })
         }
 
         self.reviewer_reminder_process_with_EIC = {
-            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
-            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id())
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week), "#{4/duedate} + " + str(two_weeks), "#{4/duedate} + " + str(one_month)],
+            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'one week', 2: 'two weeks', 3: 'one month' })
         }
 
         self.ae_reminder_process = {
-            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week), "#{4/duedate} + " + str(one_month)],
             'script': self.get_super_dateprocess_content('ae_reminder_script', self.journal.get_meta_invitation_id())
         }
 
         self.ae_edge_reminder_process = {
-            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week), "#{4/duedate} + " + str(one_month)],
             'script': self.get_process_content('process/action_editor_edge_reminder_process.py')
         }
 
@@ -97,7 +103,7 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 '''
 
-    def get_super_dateprocess_content(self, field_name, invitation_id=None):
+    def get_super_dateprocess_content(self, field_name, invitation_id=None, days_late_map={}):
         meta_invitation = 'client.get_invitation("' + invitation_id + '")' if invitation_id else "client.get_invitation(invitation.invitations[0])"
 
         return '''def process(client, invitation):
@@ -106,7 +112,8 @@ class InvitationBuilder(object):
     funcs = {
         'openreview': openreview,
         'datetime': datetime,
-        'date_index': date_index
+        'date_index': date_index,
+        'days_late_map' : ''' + json.dumps(days_late_map) + '''
     }
     exec(script, funcs)
     funcs['process'](client, invitation)
@@ -641,7 +648,7 @@ If you have questions after reviewing the points below that are not answered on 
             'maxReplies': 1,
             'duedate': '${2/content/duedate/value}',
             'process': self.process_script,
-            'dateprocesses': [self.reviewer_reminder_process],
+            'dateprocesses': [self.reviewer_ack_reminder_process],
             'edit': {
                 'signatures': { 'param': { 'regex': self.journal.get_reviewers_id(number='${5/content/noteNumber/value}', anon=True) }},
                 'readers': [venue_id, '${2/signatures}'],
