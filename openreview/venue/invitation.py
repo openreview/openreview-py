@@ -317,6 +317,7 @@ class InvitationBuilder(object):
                         }
                     }
                 },
+                'replacement': True,
                 'invitation': {
                     'id': self.venue.get_invitation_id(review_stage.name, '${2/content/noteNumber/value}'),
                     'signatures': [ venue_id ],
@@ -422,6 +423,7 @@ class InvitationBuilder(object):
                         }
                     }
                 },
+                'replacement': True,
                 'invitation': {
                     'id': self.venue.get_invitation_id(meta_review_stage.name, '${2/content/noteNumber/value}'),
                     'signatures': [ venue_id ],
@@ -705,6 +707,7 @@ class InvitationBuilder(object):
                         }
                     }
                 },
+                'replacement': True,
                 'invitation': {
                     'id': self.venue.get_invitation_id(comment_stage.official_comment_name, '${2/content/noteNumber/value}'),
                     'signatures': [ venue_id ],
@@ -818,6 +821,7 @@ class InvitationBuilder(object):
                         }
                     }
                 },
+                'replacement': True,
                 'invitation': {
                     'id': self.venue.get_invitation_id(comment_stage.public_name, '${2/content/noteNumber/value}'),
                     'signatures': [ venue_id ],
@@ -929,6 +933,7 @@ class InvitationBuilder(object):
                         }
                     }
                 },
+                'replacement': True,
                 'invitation': {
                     'id': self.venue.get_invitation_id(decision_stage.name, '${2/content/noteNumber/value}'),
                     'signatures': [ venue_id ],
@@ -1021,6 +1026,7 @@ class InvitationBuilder(object):
                         }
                     }
                 },
+                'replacement': True,
                 'invitation': {
                     'id': self.venue.get_invitation_id(submission_stage.withdrawal_name, '${2/content/noteNumber/value}'),
                     'invitees': [venue_id, self.venue.get_authors_id(number='${3/content/noteNumber/value}')],
@@ -1202,6 +1208,7 @@ class InvitationBuilder(object):
                         }
                     }
                 },
+                'replacement': True,
                 'invitation': {
                     'id': self.venue.get_invitation_id(submission_stage.withdrawal_name + '_Reversion', '${{2/content/noteId/value}/number}'),
                     'invitees': [venue_id],
@@ -1304,6 +1311,7 @@ class InvitationBuilder(object):
                         }
                     }
                 },
+                'replacement': True,
                 'invitation': {
                     'id': self.venue.get_invitation_id(submission_stage.desk_rejection_name, '${2/content/noteNumber/value}'),
                     'invitees': [venue_id],
@@ -1459,6 +1467,7 @@ class InvitationBuilder(object):
                         }
                     }
                 },
+                'replacement': True,
                 'invitation': {
                     'id': self.venue.get_invitation_id(submission_stage.desk_rejection_name + '_Reversion', '${{2/content/noteId/value}/number}'),
                     'invitees': [venue_id],
@@ -1571,6 +1580,7 @@ class InvitationBuilder(object):
                         }
                     }
                 },
+                'replacement': True,
                 'invitation': {
                     'id': self.venue.get_invitation_id(revision_stage.name, '${2/content/noteNumber/value}'),
                     'signatures': [venue_id],

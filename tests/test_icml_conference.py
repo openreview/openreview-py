@@ -354,7 +354,7 @@ class TestICMLConference():
             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
             helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-        helpers.await_queue()
+        helpers.await_queue(openreview_client)
 
         messages = client.get_messages(subject='[ICML 2023] Senior Area Chair Invitation accepted')
         assert len(messages) == 2
@@ -1693,8 +1693,222 @@ ICML 2023 Conference Program Chairs'''
         assert 'supplementary_material' in submissions[0].content
 
         now = datetime.datetime.utcnow()
-        start_date = now - datetime.timedelta(days=2)
+        start_date = now + datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
+        review_stage_note = openreview.Note(
+            content={
+                'review_start_date': start_date.strftime('%Y/%m/%d'),
+                'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
+                'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                'remove_review_form_options': 'title,review',
+                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews',
+                'review_rating_field_name': 'rating',
+                'additional_review_form_options': {
+                    "summarry": {
+                        "order": 1,
+                        "description": "Briefly summarize the paper and its contributions. This is not the place to critique the paper; the authors should generally agree with a well-written summary.",
+                        "value": {
+                            "param": {
+                                "maxLength": 200000,
+                                "type": "string",
+                                "input": "textarea",
+                                "markdown": True
+                            }
+                        }
+                    },
+                    "strengths_and_weaknesses": {
+                        "order": 2,
+                        "description": "Please provide a thorough assessment of the strengths and weaknesses of the paper, touching on each of the following dimensions: originality, quality, clarity, and significance. We encourage people to be broad in their definitions of originality and significance. For example, originality may arise from creative combinations of existing ideas, application to a new domain, or removing restrictive assumptions from prior theoretical results. You can incorporate Markdown and Latex into your review. See https://openreview.net/faq.",
+                        "value": {
+                            "param": {
+                                "maxLength": 200000,
+                                "type": "string",
+                                "input": "textarea",
+                                "markdown": True
+                            }
+                        }                        
+                    },
+                    "questions": {
+                        "order": 3,
+                        "description": "Please list up and carefully describe any questions and suggestions for the authors. Think of the things where a response from the author can change your opinion, clarify a confusion or address a limitation. This can be very important for a productive rebuttal and discussion phase with the authors.",
+                        "value": {
+                            "param": {
+                                "maxLength": 200000,
+                                "type": "string",
+                                "input": "textarea",
+                                "markdown": True
+                            }
+                        }                        
+                    },
+                    "limitations": {
+                        "order": 4,
+                        "description": "Have the authors adequately addressed the limitations and potential negative societal impact of their work? If not, please include constructive suggestions for improvement. Authors should be rewarded rather than punished for being up front about the limitations of their work and any potential negative societal impact.",
+                        "value": {
+                            "param": {
+                                "maxLength": 200000,
+                                "type": "string",
+                                "input": "textarea",
+                                "markdown": True
+                            }
+                        }                        
+                    },
+                    "ethics_flag": {
+                        "order": 5,
+                        "description": "If there are ethical issues with this paper, please flag the paper for an ethics review. For guidance on when this is appropriate, please review the ethics guidelines (https://icml.cc/Conferences/2023/PublicationEthics).",
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "Yes",
+                                    "No"
+                                ],
+                                "input": "radio"
+                            }
+                        }
+                    },
+                    "ethics_review_area": {
+                        "order": 6,
+                        "description": "If you flagged this paper for ethics review, what area of expertise would it be most useful for the ethics reviewer to have? Please click all that apply.",
+                        "value": {
+                            "param": {
+                                "type": "string[]",
+                                "enum": [
+                                    "Discrimination / Bias / Fairness Concerns",
+                                    "Inadequate Data and Algorithm Evaluation",
+                                    "Inappropriate Potential Applications & Impact  (e.g., human rights concerns)",
+                                    "Privacy and Security (e.g., consent)",
+                                    "Legal Compliance (e.g., GDPR, copyright, terms of use)",
+                                    "Research Integrity Issues (e.g., plagiarism)",
+                                    "Responsible Research Practice (e.g., IRB, documentation, research ethics)",
+                                    "I don't know"
+                                ],
+                                "input": "checkbox",
+                                "optional": True,
+                            }
+                        }
+                    },
+                    "soundness": {
+                        "order": 7,
+                        "description": "Please assign the paper a numerical rating on the following scale to indicate the soundness of the technical claims, experimental and research methodology and on whether the central claims of the paper are adequately supported with evidence.",
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "4 excellent",
+                                    "3 good",
+                                    "2 fair",
+                                    "1 poor"
+                                ],
+                                "input": "radio"
+                            }
+                        }
+                    },
+                    "presentation": {
+                        "order": 8,
+                        "description": "Please assign the paper a numerical rating on the following scale to indicate the quality of the presentation. This should take into account the writing style and clarity, as well as contextualization relative to prior work.",
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "4 excellent",
+                                    "3 good",
+                                    "2 fair",
+                                    "1 poor"
+                                ],
+                                "input": "radio"
+                            }
+                        }
+                    },
+                    "contribution": {
+                        "order": 9,
+                        "description": "Please assign the paper a numerical rating on the following scale to indicate the quality of the overall contribution this paper makes to the research area being studied. Are the questions being asked important? Does the paper bring a significant originality of ideas and/or execution? Are the results valuable to share with the broader ICML community?",
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "4 excellent",
+                                    "3 good",
+                                    "2 fair",
+                                    "1 poor"
+                                ],
+                                "input": "radio"
+                            }
+                        }
+                    },                                                                                
+                    "rating": {
+                        "order": 10,
+                        "description": "Please provide an \"overall score\" for this submission.",
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.",
+                                    "9: Very Strong Accept: Technically flawless paper with groundbreaking impact on at least one area of AI/ML and excellent impact on multiple areas of AI/ML, with flawless evaluation, resources, and reproducibility, and no unaddressed ethical considerations.",
+                                    "8: Strong Accept: Technically strong paper, with novel ideas, excellent impact on at least one area, or high-to-excellent impact on multiple areas, with excellent evaluation, resources, and reproducibility, and no unaddressed ethical considerations.",
+                                    "7: Accept: Technically solid paper, with high impact on at least one sub-area, or moderate-to-high impact on more than one areas, with good-to-excellent evaluation, resources, reproducibility, and no unaddressed ethical considerations.",
+                                    "6: Weak Accept: Technically solid, moderate-to-high impact paper, with no major concerns with respect to evaluation, resources, reproducibility, ethical considerations.",
+                                    "5: Borderline accept: Technically solid paper where reasons to accept outweigh reasons to reject, e.g., limited evaluation. Please use sparingly.",
+                                    "4: Borderline reject: Technically solid paper where reasons to reject, e.g., limited evaluation, outweigh reasons to accept, e.g., good evaluation. Please use sparingly.",
+                                    "3: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations.",
+                                    "2: Strong Reject: For instance, a paper with major technical flaws, and/or poor evaluation, limited impact, poor reproducibility and mostly unaddressed ethical considerations.",
+                                    "1: Very Strong Reject: For instance, a paper with trivial results or unaddressed ethical considerations"
+                                ],
+                                "input": "radio"
+
+                            }
+                        }
+                    },
+                    "confidence": {
+                        "order": 11,
+                        "description": "Please provide a \"confidence score\" for your assessment of this submission to indicate how confident you are in your evaluation.",
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.",
+                                    "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work.",
+                                    "3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
+                                    "2: You are willing to defend your assessment, but it is quite likely that you did not understand the central parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
+                                    "1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked."
+                                ],
+                                "input": "radio"
+                            }
+                        }                        
+                    },
+                    "code_of_conduct": {
+                        "description": "While performing my duties as a reviewer (including writing reviews and participating in discussions), I have and will continue to abide by the ICML code of conduct (https://icml.cc/public/CodeOfConduct).",
+                        "order": 12,
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "enum": ["Yes"],
+                                "input": "checkbox"
+                            }
+                        }
+                    }
+                }
+            },
+            forum=request_form.forum,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Review_Stage',
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        )
+
+        review_stage_note=pc_client.post_note(review_stage_note)
+
+        helpers.await_queue()
+
+        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Official_Review')) == 100
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Review')
+        assert 'summarry' in invitation.edit['note']['content']
+        assert invitation.cdate > openreview.tools.datetime_millis(now)
+
+        start_date = now - datetime.timedelta(days=2)
         review_stage_note = openreview.Note(
             content={
                 'review_start_date': start_date.strftime('%Y/%m/%d'),
@@ -1903,11 +2117,11 @@ ICML 2023 Conference Program Chairs'''
 
         helpers.await_queue()
 
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Review')
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Official_Review')
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission3/-/Official_Review')
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Official_Review')
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Official_Review')
+        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Official_Review')) == 100
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Review')
+        assert 'summarry' not in invitation.edit['note']['content']
+        assert 'summary' in invitation.edit['note']['content']
+        assert invitation.cdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())    
 
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password='1234')
 
@@ -2007,6 +2221,93 @@ ICML 2023 Conference Program Chairs'''
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission3/-/Official_Comment')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Official_Comment')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Official_Comment')
+
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password='1234')
+
+        submissions = reviewer_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
+
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLOne1')
+        anon_group_id = anon_groups[0].id
+
+        comment_edit = reviewer_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission1/-/Official_Comment',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                replyto = submissions[0].id,
+                readers = [
+                    'ICML.cc/2023/Conference/Program_Chairs', 
+                    'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+                    'ICML.cc/2023/Conference/Submission1/Area_Chairs',
+                    anon_group_id
+                ],
+                content={
+                    'comment': { 'value': 'I can not review this paper' },
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        signature = anon_group_id.split('/')[-1]
+        pretty_signature = openreview.tools.pretty_id(signature)
+        messages = openreview_client.get_messages(to='ac2@icml.cc', subject=f'[ICML 2023] {pretty_signature} commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
+        assert messages and len(messages) == 1
+
+        messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your comment was received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
+        assert messages and len(messages) == 1        
+
+        comment_edit = reviewer_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission1/-/Official_Comment',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                id = comment_edit['note']['id'],
+                replyto = submissions[0].id,
+                readers = [
+                    'ICML.cc/2023/Conference/Program_Chairs', 
+                    'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+                    'ICML.cc/2023/Conference/Submission1/Area_Chairs',
+                    anon_group_id
+                ],
+                content={
+                    'comment': { 'value': 'I can not review this paper, EDITED' },
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        messages = openreview_client.get_messages(to='ac2@icml.cc', subject=f'[ICML 2023] {pretty_signature} commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
+        assert messages and len(messages) == 1
+
+        messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your comment was received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
+        assert messages and len(messages) == 1
+
+        comment_edit = reviewer_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission1/-/Official_Comment',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                replyto = submissions[0].id,
+                readers = [
+                    'ICML.cc/2023/Conference/Program_Chairs', 
+                    'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+                    anon_group_id
+                ],
+                content={
+                    'comment': { 'value': 'private message to SAC' },
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        messages = openreview_client.get_messages(to='ac2@icml.cc', subject=f'[ICML 2023] {pretty_signature} commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
+        assert messages and len(messages) == 1
+
+        messages = openreview_client.get_messages(to='sac2@icml.cc', subject=f'[ICML 2023] {pretty_signature} commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
+        assert messages and len(messages) == 1
+
+        messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your comment was received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
+        assert messages and len(messages) == 2 
 
 
     def test_meta_review_stage(self, openreview_client, helpers):
