@@ -1244,7 +1244,7 @@ The TMLR Editors-in-Chief
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Review',
-                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 30)) + 2000,
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 14)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
@@ -1252,10 +1252,47 @@ The TMLR Editors-in-Chief
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-0-2')
 
         messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
-        assert len(messages) == 5
+        assert len(messages) == 7
 
         messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
-        assert len(messages) == 8
+        assert len(messages) == 4
+        assert messages[-1]['content']['to'] == 'joelle@mailseven.com'
+        assert messages[-1]['content']['text'] == f'''Hi Joelle Pineau,
+
+Our records show that a reviewer on a paper you are the AE for is *two weeks* late on a reviewing task:
+
+Task: Review
+Reviewer: Antony Bal
+Submission: Paper title UPDATED
+Link: https://openreview.net/forum?id={note_id_1}
+
+Please follow up directly with the reviewer in question to ensure they complete their task ASAP.
+
+We thank you for your cooperation.
+
+The TMLR Editors-in-Chief
+'''        
+
+
+        ## Check review reminders
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Review',
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 30)) + 2000,
+                signatures=['TMLR/Editors_In_Chief']
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-0-3')
+
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 9
+
+        messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 10
 
         messages = journal.client.get_messages(to= 'raia@mail.com', subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
         assert len(messages) == 2
@@ -1273,9 +1310,9 @@ OpenReview Team
 '''
 
         messages = journal.client.get_messages(to= 'joelle@mailseven.com', subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
-        assert len(messages) == 4
+        assert len(messages) == 6
 
-        assert messages[2]['content']['text'] == f'''Hi Joelle Pineau,
+        assert messages[4]['content']['text'] == f'''Hi Joelle Pineau,
 
 Our records show that a reviewer on a paper you are the AE for is *one month* late on a reviewing task:
 
@@ -1307,8 +1344,8 @@ The TMLR Editors-in-Chief
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement-0-0')
 
         messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
-        assert len(messages) == 3
-        assert messages[2]['content']['text'] == f'''Hi Carlos Mondragon,
+        assert len(messages) == 5
+        assert messages[4]['content']['text'] == f'''Hi Carlos Mondragon,
 
 Our records show that you are late on the current reviewing task:
 

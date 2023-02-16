@@ -29,12 +29,17 @@ class InvitationBuilder(object):
 
         self.reviewer_reminder_process = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week)],
-            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id())
+            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'one week' })
+        }
+
+        self.reviewer_ack_reminder_process = {
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(day * 4), "#{4/duedate} + " + str(week)],
+            'script': self.get_super_dateprocess_content('reviewer_ack_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'four days', 2: 'one week' })
         }
 
         self.reviewer_reminder_process_with_EIC = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week), "#{4/duedate} + " + str(two_weeks), "#{4/duedate} + " + str(one_month)],
-            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id())
+            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'one week', 2: 'two weeks', 3: 'one month' })
         }
 
         self.ae_reminder_process = {
@@ -98,7 +103,7 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 '''
 
-    def get_super_dateprocess_content(self, field_name, invitation_id=None):
+    def get_super_dateprocess_content(self, field_name, invitation_id=None, days_late_map={}):
         meta_invitation = 'client.get_invitation("' + invitation_id + '")' if invitation_id else "client.get_invitation(invitation.invitations[0])"
 
         return '''def process(client, invitation):
@@ -107,7 +112,8 @@ class InvitationBuilder(object):
     funcs = {
         'openreview': openreview,
         'datetime': datetime,
-        'date_index': date_index
+        'date_index': date_index,
+        'days_late_map' : ''' + json.dumps(days_late_map) + '''
     }
     exec(script, funcs)
     funcs['process'](client, invitation)
