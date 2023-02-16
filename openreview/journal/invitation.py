@@ -34,7 +34,7 @@ class InvitationBuilder(object):
 
         self.reviewer_ack_reminder_process = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(day * 4), "#{4/duedate} + " + str(week)],
-            'script': self.get_super_dateprocess_content('reviewer_ack_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'four days', 2: 'one week' })
+            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'four days', 2: 'one week' })
         }
 
         self.reviewer_reminder_process_with_EIC = {
@@ -648,7 +648,7 @@ If you have questions after reviewing the points below that are not answered on 
             'maxReplies': 1,
             'duedate': '${2/content/duedate/value}',
             'process': self.process_script,
-            'dateprocesses': [self.reviewer_reminder_process],
+            'dateprocesses': [self.reviewer_ack_reminder_process],
             'edit': {
                 'signatures': { 'param': { 'regex': self.journal.get_reviewers_id(number='${5/content/noteNumber/value}', anon=True) }},
                 'readers': [venue_id, '${2/signatures}'],
