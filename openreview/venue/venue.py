@@ -60,7 +60,10 @@ class Venue(object):
         self.recruitment = Recruitment(self)
         self.reviewer_identity_readers = []
         self.area_chair_identity_readers = []
-        self.senior_area_chair_identity_readers = []        
+        self.senior_area_chair_identity_readers = []
+        self.enable_reviewers_reassignment = False
+        self.reviewers_proposed_assignment_title = None
+        self.conflict_policy = 'default'
 
     def get_id(self):
         return self.venue_id
@@ -402,11 +405,16 @@ class Venue(object):
             if submission.content['venueid']['value'] == self.get_submission_venue_id():
 
                 note_content = {}
-                for field in final_hide_fields:
-                    if 'readers' not in submission.content.get(field, {}):
+                for field, value in submission.content.items():
+                    if field in final_hide_fields and 'readers' not in value:
                         note_content[field] = {
                             'readers': [venue_id, self.get_authors_id(submission.number)]
                         }
+                                           
+                    if field not in final_hide_fields and 'readers' in value:
+                        note_content[field] = {
+                            'readers': { 'delete': True }
+                        }                        
 
                 new_readers = self.submission_stage.get_readers(self, submission.number)
                 note_readers = new_readers if submission.readers != new_readers else None
@@ -687,10 +695,189 @@ Total Errors: {len(errors)}
             alternate_matching_group = self.get_area_chairs_id()
         venue_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
 
-        return venue_matching.setup(compute_affinity_scores, compute_conflicts)
+        return venue_matching.setup(compute_affinity_scores, self.conflict_policy if compute_conflicts else False)
 
     def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
 
         match_group = self.client.get_group(committee_id)
         conference_matching = matching.Matching(self, match_group)
         return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment)
+
+    def setup_assignment_recruitment(self, committee_id, hash_seed, due_date, assignment_title=None, invitation_labels={}, email_template=None):
+
+        match_group = self.client.get_group(committee_id)
+        conference_matching = matching.Matching(self, match_group)
+        return conference_matching.setup_invite_assignment(hash_seed, assignment_title, due_date, invitation_labels=invitation_labels, email_template=email_template)
+
+
+    @classmethod
+    def check_new_profiles(Venue, client):
+
+        def mark_as_conflict(venue_group, edge, submission, user_profile):
+            edge.label='Conflict Detected'
+            edge.tail=user_profile.id
+            edge.readers=None
+            edge.writers=None            
+            client.post_edge(edge)
+
+            ## Send email to reviewer
+            subject=f"[{venue_group.content['subtitle']['value']}] Conflict detected for paper {submission.number}"
+            message =f'''Hi {{{{fullname}}}},
+You have accepted the invitation to review the paper number: {submission.number}, title: {submission.content['title']['value']}.
+
+A conflict was detected between you and the submission authors and the assignment can not be done.
+
+If you have any questions, please contact us as info@openreview.net.
+
+OpenReview Team'''
+            response = client.post_message(subject, [edge.tail], message)
+
+            ## Send email to inviter
+            subject=f"[{venue_group.content['subtitle']['value']}] Conflict detected between reviewer {user_profile.get_preferred_name(pretty=True)} and paper {submission.number}"
+            message =f'''Hi {{{{fullname}}}},
+A conflict was detected between {user_profile.get_preferred_name(pretty=True)}({user_profile.get_preferred_email()}) and the paper {submission.number} and the assignment can not be done.
+
+If you have any questions, please contact us as info@openreview.net.
+
+OpenReview Team'''
+
+            ## - Send email
+            response = client.post_message(subject, edge.signatures, message)            
+        
+        def mark_as_accepted(venue_group, edge, submission, user_profile, invite_assignment_invitation):
+
+            edge.label='Accepted'
+            edge.tail=user_profile.id
+            edge.readers=None
+            edge.writers=None
+            client.post_edge(edge)
+
+            short_phrase = venue_group.content['subtitle']['value']
+            assigment_label = invite_assignment_invitation.content.get('assignment_label', {}).get('value')
+            assignment_invitation_id = invite_assignment_invitation.content.get('assignment_invitation_id', {}).get('value')
+            committee_invited_id = invite_assignment_invitation.content.get('committee_invited_id', {}).get('value')
+            paper_reviewer_invited_id = invite_assignment_invitation.content.get('paper_reviewer_invited_id', {}).get('value')
+            reviewers_id = invite_assignment_invitation.content.get('match_group', {}).get('value')
+            reviewer_name = 'Reviewer' ## add this to the invitation?
+
+            assignment_edges = client.get_edges(invitation=assignment_invitation_id, head=submission.id, tail=edge.tail, label=assigment_label)
+
+            if not assignment_edges:
+                print('post assignment edge')
+                client.post_edge(openreview.api.Edge(
+                    invitation=assignment_invitation_id,
+                    head=edge.head,
+                    tail=edge.tail,
+                    label=assigment_label,
+                    signatures=[venue_group.id],
+                    weight=1
+                ))
+
+                if committee_invited_id:
+                    client.add_members_to_group(committee_invited_id.replace('/Invited', ''), edge.tail)
+                if paper_reviewer_invited_id:
+                    external_paper_committee_id=paper_reviewer_invited_id.replace('/Invited', '').replace('{number}', str(submission.number))
+                    client.add_members_to_group(external_paper_committee_id, edge.tail)
+
+                if assigment_label:
+                    instructions=f'The {short_phrase} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.'
+                else:
+                    instructions=f'Please go to the {short_phrase} Reviewers Console and check your pending tasks: https://openreview.net/group?id={reviewers_id}'
+
+                print('send confirmation email')
+                ## Send email to reviewer
+                subject=f'[{short_phrase}] {reviewer_name} Assignment confirmed for paper {submission.number}'
+                message =f'''Hi {{{{fullname}}}},
+Thank you for accepting the invitation to review the paper number: {submission.number}, title: {submission.content['title']['value']}.
+
+{instructions}
+
+If you would like to change your decision, please click the Decline link in the previous invitation email.
+
+OpenReview Team'''
+
+                ## - Send email
+                response = client.post_message(subject, [edge.tail], message)
+
+                ## Send email to inviter
+                subject=f'[{short_phrase}] {reviewer_name} {user_profile.get_preferred_name(pretty=True)} signed up and is assigned to paper {submission.number}'
+                message =f'''Hi {{{{fullname}}}},
+The {reviewer_name} {user_profile.get_preferred_name(pretty=True)}({user_profile.get_preferred_email()}) that you invited to review paper {submission.number} has accepted the invitation, signed up and is now assigned to the paper {submission.number}.
+
+OpenReview Team'''
+
+                ## - Send email
+                response = client.post_message(subject, edge.signatures, message)            
+        
+        active_venues = client.get_group('active_venues').members
+
+        for venue_id in active_venues:
+
+            venue_group = client.get_group(venue_id)
+            
+            if hasattr(venue_group, 'domain') and venue_group.content:
+                
+                print(f'Check active venue {venue_group.id}')
+                invite_assignment_invitation_id = venue_group.content.get('reviewers_invite_assignment_id', {}).get('value')
+
+                if invite_assignment_invitation_id:
+                    
+                    ## check if it is expired?
+                    invite_assignment_invitation = openreview.tools.get_invitation(client, invite_assignment_invitation_id)
+
+                    if invite_assignment_invitation:
+                        grouped_edges = client.get_grouped_edges(invitation=invite_assignment_invitation.id, label='Pending Sign Up', groupby='tail')
+                        print('Pending sign up edges found', len(grouped_edges))
+
+                        for grouped_edge in grouped_edges:
+
+                            tail = grouped_edge['id']['tail']
+                            profiles=openreview.tools.get_profiles(client, [tail], with_publications=True)
+
+                            if profiles and profiles[0].active:
+
+                                user_profile=profiles[0]
+                                print('Profile found for', tail, user_profile.id)
+
+                                edges = grouped_edge['values']
+
+                                for edge in edges:
+
+                                    edge = openreview.api.Edge.from_json(edge)
+                                    submission=client.get_note(id=edge.head)
+
+                                    if submission.content['venueid']['value'] == venue_group.content.get('submission_venue_id', {}).get('value'):
+
+                                        ## Check if there is already an accepted edge for that profile id
+                                        accepted_edges = client.get_edges(invitation=invite_assignment_invitation.id, label='Accepted', head=submission.id, tail=user_profile.id)
+
+                                        if not accepted_edges:
+                                            ## Check if the user was invited again with a profile id
+                                            invitation_edges = client.get_edges(invitation=invite_assignment_invitation.id, label='Invitation Sent', head=submission.id, tail=user_profile.id)
+                                            if invitation_edges:
+                                                print(f'User invited twice, remove double invitation edge {invitation_edge.id}')
+                                                invitation_edge = invitation_edges[0]
+                                                invitation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+                                                client.post_edge(invitation_edge)
+
+                                            ## Check conflicts
+                                            author_profiles = openreview.tools.get_profiles(client, submission.content['authorids']['value'], with_publications=True)
+                                            conflicts=openreview.tools.get_conflicts(author_profiles, user_profile, policy=venue_group.content.get('conflict_policy', {}).get('value'))
+
+                                            if conflicts:
+                                                print(f'Conflicts detected for {edge.head} and {user_profile.id}', conflicts)
+                                                mark_as_conflict(venue_group, edge, submission, user_profile)
+                                            else:
+                                                print(f'Mark accepted for {edge.head} and {user_profile.id}')
+                                                mark_as_accepted(venue_group, edge, submission, user_profile, invite_assignment_invitation)
+                                                                                                                                                            
+                                        else:
+                                            print("user already accepted with another invitation edge", submission.id, user_profile.id)                                
+
+                                    else:
+                                        print(f'submission {submission.id} is not active: {submission.content["venueid"]["value"]}')
+
+                            else:
+                                print(f'no profile active for {edge.tail}')                                             
+        
+        return True
