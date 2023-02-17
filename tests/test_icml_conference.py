@@ -1324,6 +1324,9 @@ Confirmation of the assignment is pending until the invited reviewer creates a p
 
 OpenReview Team'''
 
+        ## Run Job
+        openreview.venue.Venue.check_new_profiles(openreview_client) 
+
         ## External reviewer creates a profile and accepts the invitation again
         external_reviewer=helpers.create_user('melisa@icml.cc', 'Melisa', 'ICML')
 
