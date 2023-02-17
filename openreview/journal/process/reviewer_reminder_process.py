@@ -70,7 +70,7 @@ The {journal.short_name} Editors-in-Chief
         )
 
     ## send email to EICs
-    if date_index > 2:
+    if date_index > 2 or days_late == 'one month':
         profiles = openreview.tools.get_profiles(client, late_invitees)
         for profile in profiles:
             client.post_message(
