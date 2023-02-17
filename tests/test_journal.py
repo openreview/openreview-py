@@ -1851,6 +1851,8 @@ The TMLR Editors-in-Chief
         decision_note = joelle_client.get_note(decision_note['note']['id'])
         assert decision_note.readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors"]
 
+        submission = openreview_client.get_note(note_id_1)
+        assert 'TMLR/Decision_Pending' == submission.content['venueid']['value']
 
         ## Second decision note and get an error
         with pytest.raises(openreview.OpenReviewException, match=r'You have reached the maximum number \(1\) of replies for this Invitation'):
@@ -1933,14 +1935,14 @@ The TMLR Editors-in-Chief
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/-/Edit', 'TMLR/Paper1/-/Camera_Ready_Revision']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~Melissa_Bok1', '~SomeFirstName_User1']
         assert note.content['authors']['value'] == ['Melissa Bok', 'SomeFirstName User']
-        assert note.content['venue']['value'] == 'Under review for TMLR'
-        assert note.content['venueid']['value'] == 'TMLR/Under_Review'
+        assert note.content['venue']['value'] == 'Decision pending for TMLR'
+        assert note.content['venueid']['value'] == 'TMLR/Decision_Pending'
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
 
@@ -2045,7 +2047,7 @@ The TMLR Editors-in-Chief
         assert note.forum == note_id_1
         assert note.replyto is None
         assert note.pdate
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/-/Edit', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -2104,7 +2106,7 @@ note={Featured Certification, Reproducibility Certification}
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Edit']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/-/Edit', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -2184,7 +2186,7 @@ The TMLR Editors-in-Chief
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Edit', 'TMLR/-/Retracted']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/-/Edit', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Retracted']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -2677,7 +2679,7 @@ The TMLR Editors-in-Chief
         assert note
         assert note.forum == note_id_4
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Rejected']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Edit', 'TMLR/-/Rejected']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper4/Authors']
         assert note.signatures == ['TMLR/Paper4/Authors']
@@ -2709,7 +2711,7 @@ note={Rejected}
         assert note
         assert note.forum == note_id_4
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Rejected', 'TMLR/-/Authors_Release']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Edit', 'TMLR/-/Rejected', 'TMLR/-/Authors_Release']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper4/Authors']
         assert note.signatures == ['TMLR/Paper4/Authors']

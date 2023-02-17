@@ -38,6 +38,7 @@ class Journal(object):
         self.submission_group_name = 'Paper'
         self.submitted_venue_id = f'{venue_id}/Submitted'
         self.under_review_venue_id = f'{venue_id}/Under_Review'
+        self.decision_pending_venue_id = f'{venue_id}/Decision_Pending'
         self.rejected_venue_id = f'{venue_id}/Rejected'
         self.desk_rejected_venue_id = f'{venue_id}/Desk_Rejected'
         self.withdrawn_venue_id = f'{venue_id}/Withdrawn_Submission'
