@@ -28,13 +28,13 @@ class InvitationBuilder(object):
         }
 
         self.reviewer_reminder_process = {
-            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week)],
-            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'one week' })
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week),  "#{4/duedate} + " + str(one_month)],
+            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'one week', 3: 'one month' })
         }
 
         self.reviewer_ack_reminder_process = {
-            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(day * 4), "#{4/duedate} + " + str(week)],
-            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'four days', 2: 'one week' })
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(day * 5), "#{4/duedate} + " + str(day * 12)],
+            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'five days', 2: 'twelve days' })
         }
 
         self.reviewer_reminder_process_with_EIC = {

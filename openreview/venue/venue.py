@@ -878,6 +878,6 @@ OpenReview Team'''
                                         print(f'submission {submission.id} is not active: {submission.content["venueid"]["value"]}')
 
                             else:
-                                print(f'no profile active for {tail}')                                             
+                                print(f'no profile active for {edge.tail}')                                             
         
         return True
