@@ -642,9 +642,9 @@ class InvitationBuilder(object):
                     },
                     'label': {
                         'param': {
-                            'enum': bid_stage.get_bid_options()
-                        },
-                        'input': 'radio'
+                            'enum': bid_stage.get_bid_options(),
+                            'input': 'radio'
+                        }
                     }
                 }
             )
