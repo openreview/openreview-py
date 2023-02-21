@@ -185,6 +185,7 @@ class GroupBuilder(object):
         if self.venue.use_area_chairs:
             content['area_chairs_id'] = { 'value': self.venue.get_area_chairs_id() }
             content['area_chairs_name'] = { 'value': self.venue.area_chairs_name }
+            content['area_chairs_anom_name'] = { 'value': 'Area_Chair_' }
             content['area_chairs_custom_max_papers_id'] = { 'value': self.venue.get_custom_max_papers_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_affinity_score_id'] = { 'value': self.venue.get_affinity_score_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_conflict_id'] = { 'value': self.venue.get_conflict_score_id(self.venue.get_area_chairs_id()) }
