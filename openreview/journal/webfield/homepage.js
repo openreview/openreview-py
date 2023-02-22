@@ -13,6 +13,7 @@ var VENUE_ID = '';
 var SUBMISSION_ID = '';
 var SUBMITTED_ID = '';
 var UNDER_REVIEW_ID = '';
+var DECISION_PENDING_ID = '';
 var DESK_REJECTED_ID = '';
 var WITHDRAWN_ID = '';
 var REJECTED_ID = '';
@@ -92,7 +93,7 @@ function load() {
   });
 
   var underReviewNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
-    'content.venueid': UNDER_REVIEW_ID,
+    'content.venueid': [UNDER_REVIEW_ID, DECISION_PENDING_ID].join(','),
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true

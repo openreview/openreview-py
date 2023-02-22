@@ -125,6 +125,7 @@ var main = function() {
       'Under Review',
       'Under Discussion',
       'Under Decision',
+      'Decision Pending',
       'Camera Ready',
       'All Submissions',
       'Action Editor Status',
@@ -1203,7 +1204,7 @@ var renderData = function(venueStatusData) {
   renderTable('under-review', venueStatusData.underReviewStatusRows);
   renderTable('under-discussion', venueStatusData.underDiscussionStatusRows);
   renderTable('under-decision', venueStatusData.underDecisionStatusRows);
-  renderTable('decision', venueStatusData.decisionPendingStatusRows);
+  renderTable('decision-pending', venueStatusData.decisionPendingStatusRows);
   renderTable('camera-ready', venueStatusData.cameraReadyStatusRows);
   renderTable('all-submissions', venueStatusData.submissionStatusRows);
 
