@@ -348,6 +348,7 @@ def get_submission_stage(request_forum):
     if isinstance(submission_additional_options, str):
         submission_additional_options = json.loads(submission_additional_options.strip())
 
+    subject_areas = None
     if 'subject_areas' in submission_additional_options and 'value' in submission_additional_options['subject_areas']:
         subject_areas = submission_additional_options['subject_areas']['value'].get('param', {}).get('enum')
 
