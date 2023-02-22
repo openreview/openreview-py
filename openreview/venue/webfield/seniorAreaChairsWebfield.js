@@ -34,7 +34,7 @@ return {
     reviewerName: domain.content.reviewers_name.value,
     anonReviewerName: domain.content.reviewers_anon_name.value,
     areaChairName: domain.content.area_chairs_name.value,
-    anonAreaChairName: domain.content.area_chairs_anom_name.value,
+    anonAreaChairName: domain.content.area_chairs_anon_name.value,
     seniorAreaChairName: domain.content.senior_area_chairs_name.value,
     reviewRatingName: domain.content.review_rating?.value,
     reviewConfidenceName: domain.content.review_confidence?.value,
