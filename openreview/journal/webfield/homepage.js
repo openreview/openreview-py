@@ -46,6 +46,7 @@ function main() {
     tabs: [
       'Your Consoles',
       'Accepted Papers',
+      'Accepted Papers with Video',
       'Under Review Submissions',
       'All Submissions',
     ].concat(CERTIFICATIONS),
@@ -162,6 +163,10 @@ function renderContent(acceptedResponse, certificationsResponse, underReviewResp
 
   Webfield2.ui.renderSubmissionList('#accepted-papers', SUBMISSION_ID, acceptedResponse.notes, acceptedResponse.count,
   Object.assign({}, options, { query: { 'content.venueid': VENUE_ID }}));
+
+  var notesWithVideo = acceptedResponse.notes.filter(function(note) { return note.content['video']; })
+  Webfield2.ui.renderSubmissionList('#accepted-papers-with-video', SUBMISSION_ID, notesWithVideo, notesWithVideo.length,
+  Object.assign({}, options));
 
   Webfield2.ui.renderSubmissionList('#under-review-submissions', SUBMISSION_ID, underReviewResponse.notes, underReviewResponse.count,
   Object.assign({}, options, { query: {'content.venueid': UNDER_REVIEW_ID } } ));
