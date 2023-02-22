@@ -178,6 +178,30 @@ class TestICMLConference():
                                 "optional": True
                             }
                         }
+                    },
+                    "subject_areas": {
+                        "order": 19,
+                        "description": "Enter subject areas.",
+                        "value": {
+                            "param": {
+                                "type": "string[]",
+                                "enum": [
+                                    'Algorithms: Approximate Inference', 
+                                    'Algorithms: Belief Propagation', 
+                                    'Learning: Deep Learning', 
+                                    'Learning: General', 
+                                    'Learning: Nonparametric Bayes', 
+                                    'Methodology: Bayesian Methods', 
+                                    'Methodology: Calibration',  
+                                    'Principles: Causality', 
+                                    'Principles: Cognitive Models', 
+                                    'Representation: Constraints', 
+                                    'Representation: Dempster-Shafer', 
+                                    'Representation: Other'
+                                ],
+                                "input": "select"
+                            }
+                        }                        
                     }
                 }
             }
@@ -188,6 +212,7 @@ class TestICMLConference():
         assert submission_invitation
         assert 'supplementary_material' in submission_invitation.edit['note']['content']
         assert 'financial_aid' in submission_invitation.edit['note']['content']
+        assert 'subject_areas' in submission_invitation.edit['note']['content']
 
 
     def test_add_pcs(self, client, openreview_client, helpers):
@@ -300,7 +325,31 @@ class TestICMLConference():
                                 "optional": True
                             }
                         }
-                    }
+                    },
+                    "subject_areas": {
+                        "order": 19,
+                        "description": "Enter subject areas.",
+                        "value": {
+                            "param": {
+                                "type": "string[]",
+                                "enum": [
+                                    'Algorithms: Approximate Inference', 
+                                    'Algorithms: Belief Propagation', 
+                                    'Learning: Deep Learning', 
+                                    'Learning: General', 
+                                    'Learning: Nonparametric Bayes', 
+                                    'Methodology: Bayesian Methods', 
+                                    'Methodology: Calibration',  
+                                    'Principles: Causality', 
+                                    'Principles: Cognitive Models', 
+                                    'Representation: Constraints', 
+                                    'Representation: Dempster-Shafer', 
+                                    'Representation: Other'
+                                ],
+                                "input": "select"
+                            }
+                        }                        
+                    }                    
                 }
 
             },
@@ -566,6 +615,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
         domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu', 'deepmind.com', 'co.ux', 'apple.com', 'nvidia.com']
+        subject_areas = ['Algorithms: Approximate Inference', 'Algorithms: Belief Propagation', 'Learning: Deep Learning', 'Learning: General', 'Learning: Nonparametric Bayes', 'Methodology: Bayesian Methods', 'Methodology: Calibration', 'Principles: Causality', 'Principles: Cognitive Models', 'Representation: Constraints', 'Representation: Dempster-Shafer', 'Representation: Other']
         for i in range(1,102):
             note = openreview.api.Note(
                 content = {
@@ -576,7 +626,8 @@ reviewer6@gmail.com, Reviewer ICMLSix
                     'keywords': { 'value': ['machine learning', 'nlp'] },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
-                    'financial_aid': { 'value': 'Yes' }
+                    'financial_aid': { 'value': 'Yes' },
+                    'subject_areas': { 'value': [subject_areas[random.randint(0, 11)], subject_areas[random.randint(0, 11)]] }
                 }
             )
             if i == 1 or i == 101:
@@ -615,6 +666,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
                     'pdf': submission.content['pdf'],
                     'supplementary_material': submission.content['supplementary_material'],
                     'financial_aid': submission.content['financial_aid'],
+                    'subject_areas': submission.content['subject_areas'],
                 }
             ))
 
@@ -642,6 +694,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
                     'pdf': submission.content['pdf'],
                     'supplementary_material': submission.content['supplementary_material'],
                     'financial_aid': submission.content['financial_aid'],
+                    'subject_areas': submission.content['subject_areas'],
                 }
             ))
 
@@ -703,6 +756,30 @@ reviewer6@gmail.com, Reviewer ICMLSix
                                 "optional": True
                             }
                         }
+                    },
+                    "subject_areas": {
+                        "order": 19,
+                        "description": "Enter subject areas.",
+                        "value": {
+                            "param": {
+                                "type": "string[]",
+                                "enum": [
+                                    'Algorithms: Approximate Inference', 
+                                    'Algorithms: Belief Propagation', 
+                                    'Learning: Deep Learning', 
+                                    'Learning: General', 
+                                    'Learning: Nonparametric Bayes', 
+                                    'Methodology: Bayesian Methods', 
+                                    'Methodology: Calibration',  
+                                    'Principles: Causality', 
+                                    'Principles: Cognitive Models', 
+                                    'Representation: Constraints', 
+                                    'Representation: Dempster-Shafer', 
+                                    'Representation: Other'
+                                ],
+                                "input": "select"
+                            }
+                        }                        
                     }
                 }
 
@@ -834,7 +911,8 @@ reviewer6@gmail.com, Reviewer ICMLSix
                     'keywords': submission.content['keywords'],
                     'pdf': submission.content['pdf'],
                     'supplementary_material': { 'value': { 'delete': True } },
-                    'financial_aid': { 'value': submission.content['financial_aid']['value'] },                    
+                    'financial_aid': { 'value': submission.content['financial_aid']['value'] },
+                    'subject_areas': { 'value': submission.content['subject_areas']['value'] },                    
                 }
             ))
 

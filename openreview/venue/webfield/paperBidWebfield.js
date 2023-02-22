@@ -26,6 +26,7 @@ ${affinityScoreId ? '- Papers are sorted based on keyword similarity with the pa
     venueId: domain.id,
     submissionVenueId: domain.content.submission_venue_id.value,
     scoreIds: affinityScoreId ? [affinityScoreId] : [],
-    conflictInvitationId: domain.content[`${committeeName.toLowerCase()}_conflict_id`].value
+    conflictInvitationId: domain.content[`${committeeName.toLowerCase()}_conflict_id`].value,
+    subjectAreas: domain.content.subject_areas?.value
   }
 }
