@@ -215,7 +215,7 @@ var loadData = function(paperNums) {
   var noteNumbers = _.uniq(_.concat(acPapers, secondaryAcPapers));
   var blindedNotesP;
   var allReviewersP;
-  var assignedSACsP = $.Deferred().resolve();
+  var assignedSACsP = $.Deferred().resolve([]);
 
   if (noteNumbers.length) {
     var noteNumbersStr = noteNumbers.join(',');
