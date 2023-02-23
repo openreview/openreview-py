@@ -346,7 +346,7 @@ class WebfieldBuilder(object):
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(conference.get_homepage_options()) + ";")
             return self.__update_invitation(invitation, content)
 
-    def set_author_page(self, conference, group):
+    def set_author_page(self, conference, group, override=False):
 
         default_header = {
             'title': 'Author Console',
@@ -355,7 +355,7 @@ class WebfieldBuilder(object):
         }
 
         ## Set webfield component once
-        if group.web is None:
+        if group.web is None or override:
             header = self.__build_options(default_header, conference.get_authorpage_header())
 
             template_file = 'webfield/authorWebfield'
