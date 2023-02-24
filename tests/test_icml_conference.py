@@ -2191,30 +2191,6 @@ ICML 2023 Conference Program Chairs'''
         openreview_client.add_members_to_group(f'ICML.cc/2023/Conference/Submission1/Reviewers', '~Reviewer_ICMLTwo1')
         openreview_client.add_members_to_group(f'ICML.cc/2023/Conference/Submission1/Reviewers', '~Reviewer_ICMLThree1')
 
-        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password='1234')
-
-        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLOne1')
-        anon_group_id = anon_groups[0].id
-
-        reviewer_client.post_note_edit(
-            invitation='ICML.cc/2023/Conference/Submission1/-/Official_Review',
-            signatures=[anon_group_id],
-            note=openreview.api.Note(
-                content={
-                    'summary': { 'value': 'This was a very good paper version with some novel results.' },
-                    'strengths_and_weaknesses': { 'value': '7: Good paper, accept'},
-                    'questions': { 'value': '7: Good paper, accept'},
-                    'limitations': { 'value': '7: Good paper, accept'},
-                    'ethics_flag': { 'value': 'No'},
-                    'soundness': { 'value': '3 good'},
-                    'presentation': { 'value': '3 good'},
-                    'contribution': { 'value': '3 good'},
-                    'rating': { 'value': '10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.'},
-                    'confidence': { 'value': '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.'},
-                    'code_of_conduct': { 'value': 'Yes'},
-                }
-            )
-        )
 
     def test_comment_stage(self, openreview_client, helpers):
 
