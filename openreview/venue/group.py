@@ -162,6 +162,7 @@ class GroupBuilder(object):
             'reviewers_assignment_id': { 'value': self.venue.get_assignment_id(self.venue.get_reviewers_id(), deployed=True) },
             'reviewers_invite_assignment_id': { 'value': self.venue.get_assignment_id(self.venue.get_reviewers_id(), invite=True) },
             'reviewers_proposed_assignment_id': { 'value': self.venue.get_assignment_id(self.venue.get_reviewers_id()) },
+            'enable_reviewers_reassignment': { 'value': self.venue.enable_reviewers_reassignment },
             'reviewers_recruitment_id': { 'value': self.venue.get_recruitment_id(self.venue.get_reviewers_id()) },
             'authors_id': { 'value': self.venue.get_authors_id() },
             'authors_accepted_id': { 'value': f'{self.venue.get_authors_id()}/Accepted' },
@@ -175,12 +176,16 @@ class GroupBuilder(object):
             'desk_reject_expiration_id': { 'value': self.venue.get_invitation_id('Desk_Reject_Expiration') },
             'desk_rejection_reversion_id': { 'value': self.venue.get_invitation_id('Desk_Rejection_Reversion') },
             'desk_reject_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
-            'desk_rejection_name': { 'value': 'Desk_Rejection'}
+            'desk_rejection_name': { 'value': 'Desk_Rejection'},
+            'conflict_policy': { 'value': self.venue.conflict_policy }
         }
+        if self.venue.reviewers_proposed_assignment_title:
+            content['reviewers_proposed_assignment_title'] = { 'value': self.venue.reviewers_proposed_assignment_title }
 
         if self.venue.use_area_chairs:
             content['area_chairs_id'] = { 'value': self.venue.get_area_chairs_id() }
             content['area_chairs_name'] = { 'value': self.venue.area_chairs_name }
+            content['area_chairs_anon_name'] = { 'value': 'Area_Chair_' }
             content['area_chairs_custom_max_papers_id'] = { 'value': self.venue.get_custom_max_papers_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_affinity_score_id'] = { 'value': self.venue.get_affinity_score_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_conflict_id'] = { 'value': self.venue.get_conflict_score_id(self.venue.get_area_chairs_id()) }
@@ -464,3 +469,57 @@ class GroupBuilder(object):
                             signatories=[venue_id, committee_invited_id],
                             members=[]
                             ))
+
+    def set_external_reviewer_recruitment_groups(self, name='External_Reviewers', create_paper_groups=False):
+
+        venue = self.venue
+        venue_id = self.venue_id
+
+        if name == venue.reviewers_name:
+            raise openreview.OpenReviewException(f'Can not use {name} as external reviewer name')
+
+        parent_group_id = venue.get_committee_id(name)
+        parent_group_invited_id = parent_group_id + '/Invited'
+
+        parent_group = tools.get_group(self.client, parent_group_id)
+        if not parent_group:
+            parent_group=self.post_group(Group(id=parent_group_id,
+                            readers=[venue_id, parent_group_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id, parent_group_id],
+                            members=[]
+                            ))
+
+        parent_group_invited = tools.get_group(self.client, parent_group_invited_id)
+        if not parent_group_invited:
+            parent_group_invited=self.post_group(Group(id=parent_group_invited_id,
+                            readers=[venue_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id, parent_group_invited_id],
+                            members=[]
+                            ))
+
+        # create submission paper groups
+        def create_paper_group(submission):
+            paper_group_id = venue.get_committee_id(name, submission.number)
+            self.post_group(Group(id=paper_group_id,
+                            readers=[venue_id, paper_group_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=[]
+                            ))
+
+            paper_invited_group_id = venue.get_committee_id(name + '/Invited', submission.number)
+            self.post_group(Group(id=paper_invited_group_id,
+                            readers=[venue_id, paper_invited_group_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=[]
+                            ))
+
+        if create_paper_groups:
+            tools.concurrent_requests(create_paper_group, venue.get_submissions(sort='number"asc'), desc='Creating paper groups')

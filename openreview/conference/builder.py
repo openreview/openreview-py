@@ -96,10 +96,10 @@ class Conference(object):
         else:
             return self.client.add_members_to_group(group, members)
 
-    def __set_author_page(self):
+    def __set_author_page(self, override=False):
         authors_group = tools.get_group(self.client, self.get_authors_id())
         if authors_group:
-            return self.webfield_builder.set_author_page(self, authors_group)
+            return self.webfield_builder.set_author_page(self, authors_group, override)
 
     def __set_reviewer_page(self):
         reviewers_group = tools.get_group(self.client, self.get_reviewers_id())
@@ -643,7 +643,7 @@ class Conference(object):
 
     def set_authorpage_header(self, header):
         self.authorpage_header = header
-        return self.__set_author_page()
+        return self.__set_author_page(override=True)
 
     def get_authorpage_header(self):
         return self.authorpage_header

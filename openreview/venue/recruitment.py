@@ -55,6 +55,8 @@ class Recruitment(object):
         invitation_id = invitation.id
         hash_seed = invitation.content['hash_seed']['value']
 
+        invitees = [e.lower() if '@' in e else e for e in invitees if len(e) > 0]
+
         if remind:
             committee_invited_group = self.client.get_group(committee_invited_id)
             invited_committee = committee_invited_group.members
