@@ -593,6 +593,70 @@ class TestCVPRSConference():
             )
         )
 
+        ## setup the metareview confirmation
+        start_date = datetime.datetime.utcnow() - datetime.timedelta(weeks = 1)
+        due_date = datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)
+
+        client.post_invitation(openreview.Invitation(id = 'thecvf.com/CVPR/2023/Conference/-/Meta_Review_Confirmation',
+            cdate = openreview.tools.datetime_millis(start_date),
+            duedate = openreview.tools.datetime_millis(due_date),
+            expdate = openreview.tools.datetime_millis(due_date + datetime.timedelta(minutes= 30)),
+            readers = ['everyone'],
+            writers = ['thecvf.com/CVPR/2023/Conference'],
+            signatures = ['thecvf.com/CVPR/2023/Conference'],
+            multiReply = False,
+            reply = {
+                'content': {
+                    "decision": {
+                    "description": "Please enter the decision for the paper (should match that of the primary AC).",
+                    "value-radio": [
+                        "Accept",
+                        "Reject"
+                    ],
+                    "required": True
+                    },
+                    "confirmation": {
+                    "description": "Please confirm that you approve the decision and the meta-review.",
+                    "value-radio": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": True
+                    }
+                }
+            }
+        ))
+
+        client.post_invitation(openreview.Invitation(id = 'thecvf.com/CVPR/2023/Conference/Paper4/-/Meta_Review_Confirmation',
+            super='thecvf.com/CVPR/2023/Conference/-/Meta_Review_Confirmation',
+            readers = ['thecvf.com/CVPR/2023/Conference', 'thecvf.com/CVPR/2023/Conference/Paper4/Secondary_Area_Chairs'],
+            invitees = ['thecvf.com/CVPR/2023/Conference/Paper4/Secondary_Area_Chairs'],
+            noninvitees = [],
+            writers = ['thecvf.com/CVPR/2023/Conference'],
+            signatures = ['thecvf.com/CVPR/2023/Conference'],
+            multiReply = False,
+            reply = {
+                'forum': submission.id,
+                'replyto': submission.id,
+                'readers': {
+                    'values': [
+                        'thecvf.com/CVPR/2023/Conference/Program_Chairs',
+                        'thecvf.com/CVPR/2023/Conference/Paper4/Senior_Area_Chairs',
+                        'thecvf.com/CVPR/2023/Conference/Paper4/Area_Chairs'
+                    ]
+                },
+                'writers': {
+                    'values-copied': [
+                        'thecvf.com/CVPR/2023/Conference/Program_Chairs',
+                        '{signatures}'
+                    ]
+                },
+                'signatures': {
+                    'values-regex': 'thecvf.com/CVPR/2023/Conference/Paper4/Secondary_Area_Chair_.*'
+                }
+            }
+        ))               
+
     def test_rebuttal_stage(self, conference, helpers, test_client, client):
 
         now = datetime.datetime.utcnow()
@@ -668,3 +732,96 @@ class TestCVPRSConference():
             'thecvf.com/CVPR/2023/Conference/Paper5/Reviewers',
             'thecvf.com/CVPR/2023/Conference/Paper5/Authors'
         ]
+
+    def test_decision_stage(self, conference, helpers, client):
+
+        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        start_date = now        
+
+        request_form_note = pc_client.post_note(openreview.Note(
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Decision_Stage',
+            referent=request_form.id,
+            forum=request_form.id,
+            signatures=['~Program_CVPRChair1'],
+            readers=['thecvf.com/CVPR/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            writers=[],
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Reject',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                'notify_authors': 'No, I will send the emails to the authors',
+            }))
+
+        helpers.await_queue()
+
+        assert client.get_invitation('thecvf.com/CVPR/2023/Conference/Paper5/-/Decision')
+
+        submissions=conference.get_submissions(number=5)
+        assert len(submissions) == 1
+
+        rebuttal_note=pc_client.post_note(openreview.Note(
+            invitation='thecvf.com/CVPR/2023/Conference/Paper5/-/Decision',
+            forum=submissions[0].id,
+            replyto=submissions[0].id,
+            readers=[
+                'thecvf.com/CVPR/2023/Conference/Program_Chairs',
+                'thecvf.com/CVPR/2023/Conference/Paper5/Senior_Area_Chairs',
+                'thecvf.com/CVPR/2023/Conference/Paper5/Area_Chairs',
+                'thecvf.com/CVPR/2023/Conference/Paper5/Authors'
+            ],
+            writers=['thecvf.com/CVPR/2023/Conference/Program_Chairs'],
+            signatures=['thecvf.com/CVPR/2023/Conference/Program_Chairs'],
+            content={
+                'title': 'Paper Decision',
+                'decision': 'Accept'
+            }
+        ))
+
+        helpers.await_queue()
+
+
+    def test_camera_ready_stage(self, conference, helpers, client):
+
+        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        start_date = now        
+
+        ## Edit author console webfield to enable IEEE copyright
+        author_group = client.get_group('thecvf.com/CVPR/2023/Conference/Authors')
+        author_group.web = author_group.web.replace('showAuthorProfileStatus: true,', '''showAuthorProfileStatus: true,
+        showIEEECopyright: true,
+        IEEEPublicationTitle: "2023 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)",
+        IEEEArtSourceCode: 52729
+        ''')
+        client.post_group(author_group)
+
+        request_form_note = pc_client.post_note(openreview.Note(
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Submission_Revision_Stage',
+            referent=request_form.id,
+            forum=request_form.id,
+            signatures=['~Program_CVPRChair1'],
+            readers=['thecvf.com/CVPR/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            writers=[],
+            content={
+                'submission_revision_name': 'Camera_Ready_Revision',
+                'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
+                'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
+                'accepted_submissions_only': 'Enable revision for accepted submissions only',
+                'submission_author_edition': 'Allow addition and removal of authors'
+            }))
+
+        helpers.await_queue()
+
+        author_group = client.get_group('thecvf.com/CVPR/2023/Conference/Authors')
+        assert 'showIEEECopyright: true' in author_group.web              

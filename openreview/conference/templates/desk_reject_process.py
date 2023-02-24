@@ -44,6 +44,21 @@ def process_update(client, note, invitation, existing_note):
             forum_note.readers = SUBMISSION_READERS
             forum_note = client.post_note(forum_note)
 
+            #restore assignment edges
+            conference_roles = '|'.join(CONFERENCE_ROLES)
+            paper_groups = client.get_groups(regex=f'{CONFERENCE_ID}/Paper{forum_note.number}/({conference_roles})$')
+            members = []
+            for group in paper_groups:
+                members.extend(group.members)
+
+            for role in CONFERENCE_ROLES:
+                edges = client.get_edges(invitation=f'{CONFERENCE_ID}/{role}/-/Assignment', head=forum_note.id, trash=True)
+                for edge in edges:
+                    if edge.tail in members:
+                        print('Restoring edge:', edge.id)
+                        edge.ddate = None
+                        client.post_edge(edge)
+
             # Restore review, meta-review and decision invitations
             invitation_ids = ','.join([
                 f'{CONFERENCE_ID}/Paper{str(forum_note.number)}/-/Official_Review',
