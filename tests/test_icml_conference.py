@@ -893,7 +893,6 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                 'compute_conflicts': 'Yes',
                 'compute_affinity_scores': 'No',
                 'upload_affinity_scores': affinity_scores_url
-
             },
             forum=request_form.id,
             replyto=request_form.id,
@@ -2202,9 +2201,17 @@ ICML 2023 Conference Program Chairs'''
             signatures=[anon_group_id],
             note=openreview.api.Note(
                 content={
-                    'review': { 'value': 'good paper' },
-                    'review_rating': { 'value': '7: Good paper, accept'},
-                    'confidence': { 'value': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'}
+                    'summary': { 'value': 'This was a very good paper version with some novel results.' },
+                    'strengths_and_weaknesses': { 'value': '7: Good paper, accept'},
+                    'questions': { 'value': '7: Good paper, accept'},
+                    'limitations': { 'value': '7: Good paper, accept'},
+                    'ethics_flag': { 'value': 'No'},
+                    'soundness': { 'value': '3 good'},
+                    'presentation': { 'value': '3 good'},
+                    'contribution': { 'value': '3 good'},
+                    'rating': { 'value': '10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.'},
+                    'confidence': { 'value': '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.'},
+                    'code_of_conduct': { 'value': 'Yes'},
                 }
             )
         )
@@ -2225,7 +2232,6 @@ ICML 2023 Conference Program Chairs'''
                 'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
                 'additional_readers': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Assigned Submitted Reviewers'],
                 'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
-
             },
             forum=request_form.forum,
             invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment_Stage',
