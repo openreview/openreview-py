@@ -3944,7 +3944,7 @@ The TMLR Editors-in-Chief
         
         helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
         
-        notes = openreview_client.get_notes(invitation='TMLR/Paper12/-/Review_Approval', sort='tcdate:desc')
+        notes = openreview_client.get_notes(invitation='TMLR/Paper12/-/Review_Approval', signature='TMLR/Editors_In_Chief')
         edits = openreview_client.get_note_edits(notes[0].id)
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
 
