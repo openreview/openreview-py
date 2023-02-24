@@ -970,7 +970,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Bid')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Bid')
 
-        ## Hide the pdf and supplementary material 
+        ## Hide the pdf and supplementary material
         pc_client.post_note(openreview.Note(
             content= {
                 'force': 'Yes',
@@ -986,7 +986,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
             writers= [],
         ))
 
-        helpers.await_queue()        
+        helpers.await_queue()
 
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password='1234')
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
@@ -1099,18 +1099,12 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     tail = r,
                     signatures = ['ICML.cc/2023/Conference/Program_Chairs'],
                     weight = 1,
-<<<<<<< HEAD
-                    label = 'reviewer-matching'
-                ))
-
-=======
                     label = 'reviewer-matching',
                     readers = ["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Area_Chairs", r],
                     nonreaders = [f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Authors"],
                     writers = ["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Area_Chairs"]
-                ))            
-    
->>>>>>> master
+                ))
+
             openreview_client.post_edge(openreview.api.Edge(
                 invitation = 'ICML.cc/2023/Conference/Area_Chairs/-/Proposed_Assignment',
                 head = submissions[i].id,
@@ -1198,18 +1192,12 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     tail = r,
                     signatures = ['ICML.cc/2023/Conference/Program_Chairs'],
                     weight = 1,
-<<<<<<< HEAD
-                    label = 'reviewer-matching'
-                ))
-
-=======
                     label = 'reviewer-matching',
                     readers = ["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Area_Chairs", r],
                     nonreaders = [f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Authors"],
                     writers = ["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Area_Chairs"]
-                ))            
-    
->>>>>>> master
+                ))
+
             openreview_client.post_edge(openreview.api.Edge(
                 invitation = 'ICML.cc/2023/Conference/Area_Chairs/-/Proposed_Assignment',
                 head = submissions[i].id,
@@ -1270,7 +1258,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         assert url.get_attribute('href') == 'http://localhost:3030/edges/browse?start=ICML.cc/2023/Conference/Area_Chairs/-/Assignment,tail:ac1@icml.cc&traverse=ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment,label:reviewer-matching&edit=ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment,label:reviewer-matching;ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment&browse=ICML.cc/2023/Conference/Reviewers/-/Aggregate_Score,label:reviewer-matching;ICML.cc/2023/Conference/Reviewers/-/Affinity_Score;ICML.cc/2023/Conference/Reviewers/-/Bid;ICML.cc/2023/Conference/Reviewers/-/Custom_Max_Papers,head:ignore&hide=ICML.cc/2023/Conference/Reviewers/-/Conflict&maxColumns=2&version=2&referrer=[AC%20Console](/group?id=ICML.cc/2023/Conference/Area_Chairs)'
 
         anon_group_id = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLOne1')[0].id
-        
+
         ## recruit external reviewer
         with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for melisa@mail'):
             ac_client.post_edge(
@@ -1337,13 +1325,13 @@ Confirmation of the assignment is pending until the invited reviewer creates a p
 OpenReview Team'''
 
         ## Run Job
-        openreview.venue.Venue.check_new_profiles(openreview_client) 
+        openreview.venue.Venue.check_new_profiles(openreview_client)
 
         ## External reviewer creates a profile and accepts the invitation again
         external_reviewer=helpers.create_user('melisa@icml.cc', 'Melisa', 'ICML')
 
         ## Run Job
-        openreview.venue.Venue.check_new_profiles(openreview_client) 
+        openreview.venue.Venue.check_new_profiles(openreview_client)
 
         invite_edges=pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='melisa@icml.cc')
         assert len(invite_edges) == 0
@@ -1353,7 +1341,7 @@ OpenReview Team'''
         assert invite_edges[0].label == 'Accepted'
 
         assignment_edges=pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submissions[0].id)
-        assert len(assignment_edges) == 4        
+        assert len(assignment_edges) == 4
 
         messages = client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] Reviewer Assignment confirmed for paper 1')
         assert messages and len(messages) == 1
@@ -1380,18 +1368,11 @@ OpenReview Team'''
         venue.set_assignments(assignment_title='reviewer-matching', committee_id='ICML.cc/2023/Conference/Reviewers', enable_reviewer_reassignment=True)
 
         reviewers_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Reviewers')
-<<<<<<< HEAD
-        assert len(reviewers_group.members) == 3
+        assert len(reviewers_group.members) == 4
         assert '~Reviewer_ICMLOne1' in reviewers_group.members
         assert '~Reviewer_ICMLTwo1' in reviewers_group.members
         assert '~Reviewer_ICMLThree1' in reviewers_group.members
-=======
-        assert len(reviewers_group.members) == 4
-        assert '~Reviewer_ICMLOne1' in reviewers_group.members    
-        assert '~Reviewer_ICMLTwo1' in reviewers_group.members    
-        assert '~Reviewer_ICMLThree1' in reviewers_group.members    
-        assert '~Melisa_ICML1' in reviewers_group.members    
->>>>>>> master
+        assert '~Melisa_ICML1' in reviewers_group.members
 
         reviewers_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission100/Reviewers')
         assert len(reviewers_group.members) == 3
@@ -1464,19 +1445,19 @@ OpenReview Team'''
                 }
             )
         )
-        
+
         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2023/Conference/Area_Chairs", ac_client.token, wait_for_element='header')
         header = selenium.find_element_by_id('header')
         assert 'Reviewer Assignment Browser:' in header.text
 
         url = header.find_element_by_id('edge_browser_url')
         assert url
-        assert url.get_attribute('href') == 'http://localhost:3030/edges/browse?start=ICML.cc/2023/Conference/Area_Chairs/-/Assignment,tail:ac1@icml.cc&traverse=ICML.cc/2023/Conference/Reviewers/-/Assignment&edit=ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment&browse=ICML.cc/2023/Conference/Reviewers/-/Affinity_Score;ICML.cc/2023/Conference/Reviewers/-/Bid;ICML.cc/2023/Conference/Reviewers/-/Custom_Max_Papers,head:ignore&hide=ICML.cc/2023/Conference/Reviewers/-/Conflict&maxColumns=2&version=2&referrer=[AC%20Console](/group?id=ICML.cc/2023/Conference/Area_Chairs)'  
-    
- 
+        assert url.get_attribute('href') == 'http://localhost:3030/edges/browse?start=ICML.cc/2023/Conference/Area_Chairs/-/Assignment,tail:ac1@icml.cc&traverse=ICML.cc/2023/Conference/Reviewers/-/Assignment&edit=ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment&browse=ICML.cc/2023/Conference/Reviewers/-/Affinity_Score;ICML.cc/2023/Conference/Reviewers/-/Bid;ICML.cc/2023/Conference/Reviewers/-/Custom_Max_Papers,head:ignore&hide=ICML.cc/2023/Conference/Reviewers/-/Conflict&maxColumns=2&version=2&referrer=[AC%20Console](/group?id=ICML.cc/2023/Conference/Area_Chairs)'
+
+
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
         anon_group_id = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLOne1')[0].id
- 
+
         ac_client.post_edge(
             openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
                 signatures=[anon_group_id],
@@ -1533,7 +1514,7 @@ OpenReview Team'''
         external_reviewer=helpers.create_user('carlos@icml.cc', 'Carlos', 'ICML', institution='amazon.com')
 
         ## Run Job
-        openreview.venue.Venue.check_new_profiles(openreview_client) 
+        openreview.venue.Venue.check_new_profiles(openreview_client)
 
         invite_edges=pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='carlos@icml.cc')
         assert len(invite_edges) == 0
@@ -1543,7 +1524,7 @@ OpenReview Team'''
         assert invite_edges[0].label == 'Conflict Detected'
 
         assignment_edges=pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment', head=submissions[0].id)
-        assert len(assignment_edges) == 4        
+        assert len(assignment_edges) == 4
 
         messages = openreview_client.get_messages(to='carlos@icml.cc', subject='[ICML 2023] Conflict detected for paper 1')
         assert messages and len(messages) == 1
@@ -1597,7 +1578,7 @@ OpenReview Team'''
         assert invite_edges[0].label == 'Accepted'
 
         assignment_edges=pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment', head=submissions[0].id)
-        assert len(assignment_edges) == 5        
+        assert len(assignment_edges) == 5
 
         messages = openreview_client.get_messages(to='celeste@icml.cc', subject='[ICML 2023] Reviewer Assignment confirmed for paper 1')
         assert messages and len(messages) == 1
@@ -1636,10 +1617,10 @@ ICML 2023 Conference Program Chairs'''
 
         reviewers_group = pc_client.get_group('ICML.cc/2023/Conference/Submission1/Reviewers')
         assert len(reviewers_group.members) == 5
-        assert '~Reviewer_ICMLOne1' in reviewers_group.members    
-        assert '~Reviewer_ICMLTwo1' in reviewers_group.members    
-        assert '~Reviewer_ICMLThree1' in reviewers_group.members    
-        assert '~Melisa_ICML1' in reviewers_group.members                 
+        assert '~Reviewer_ICMLOne1' in reviewers_group.members
+        assert '~Reviewer_ICMLTwo1' in reviewers_group.members
+        assert '~Reviewer_ICMLThree1' in reviewers_group.members
+        assert '~Melisa_ICML1' in reviewers_group.members
         assert '~Celeste_ICML1' in reviewers_group.members
 
         ac_client.post_edge(
@@ -1666,12 +1647,12 @@ ICML 2023 Conference Program Chairs'''
 
         reviewers_group = pc_client.get_group('ICML.cc/2023/Conference/Submission1/Reviewers')
         assert len(reviewers_group.members) == 6
-        assert '~Reviewer_ICMLOne1' in reviewers_group.members    
-        assert '~Reviewer_ICMLTwo1' in reviewers_group.members    
-        assert '~Reviewer_ICMLThree1' in reviewers_group.members    
-        assert '~Melisa_ICML1' in reviewers_group.members                 
-        assert '~Celeste_ICML1' in reviewers_group.members        
-        assert '~Reviewer_ICMLFour1' in reviewers_group.members    
+        assert '~Reviewer_ICMLOne1' in reviewers_group.members
+        assert '~Reviewer_ICMLTwo1' in reviewers_group.members
+        assert '~Reviewer_ICMLThree1' in reviewers_group.members
+        assert '~Melisa_ICML1' in reviewers_group.members
+        assert '~Celeste_ICML1' in reviewers_group.members
+        assert '~Reviewer_ICMLFour1' in reviewers_group.members
 
 
     def test_review_stage(self, openreview_client, helpers):
@@ -1739,8 +1720,6 @@ ICML 2023 Conference Program Chairs'''
                                 "markdown": True
                             }
                         }
-<<<<<<< HEAD
-=======
                     },
                     "strengths_and_weaknesses": {
                         "order": 2,
@@ -1752,7 +1731,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "textarea",
                                 "markdown": True
                             }
-                        }                        
+                        }
                     },
                     "questions": {
                         "order": 3,
@@ -1764,7 +1743,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "textarea",
                                 "markdown": True
                             }
-                        }                        
+                        }
                     },
                     "limitations": {
                         "order": 4,
@@ -1776,7 +1755,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "textarea",
                                 "markdown": True
                             }
-                        }                        
+                        }
                     },
                     "ethics_flag": {
                         "order": 5,
@@ -1860,7 +1839,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "radio"
                             }
                         }
-                    },                                                                                
+                    },
                     "rating": {
                         "order": 10,
                         "description": "Please provide an \"overall score\" for this submission.",
@@ -1899,7 +1878,7 @@ ICML 2023 Conference Program Chairs'''
                                 ],
                                 "input": "radio"
                             }
-                        }                        
+                        }
                     },
                     "code_of_conduct": {
                         "description": "While performing my duties as a reviewer (including writing reviews and participating in discussions), I have and will continue to abide by the ICML code of conduct (https://icml.cc/public/CodeOfConduct).",
@@ -1911,7 +1890,6 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "checkbox"
                             }
                         }
->>>>>>> master
                     }
                 }
             },
@@ -1967,7 +1945,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "textarea",
                                 "markdown": True
                             }
-                        }                        
+                        }
                     },
                     "questions": {
                         "order": 3,
@@ -1979,7 +1957,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "textarea",
                                 "markdown": True
                             }
-                        }                        
+                        }
                     },
                     "limitations": {
                         "order": 4,
@@ -1991,7 +1969,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "textarea",
                                 "markdown": True
                             }
-                        }                        
+                        }
                     },
                     "ethics_flag": {
                         "order": 5,
@@ -2075,7 +2053,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "radio"
                             }
                         }
-                    },                                                                                
+                    },
                     "rating": {
                         "order": 10,
                         "description": "Please provide an \"overall score\" for this submission.",
@@ -2114,7 +2092,7 @@ ICML 2023 Conference Program Chairs'''
                                 ],
                                 "input": "radio"
                             }
-                        }                        
+                        }
                     },
                     "code_of_conduct": {
                         "description": "While performing my duties as a reviewer (including writing reviews and participating in discussions), I have and will continue to abide by the ICML code of conduct (https://icml.cc/public/CodeOfConduct).",
@@ -2146,7 +2124,7 @@ ICML 2023 Conference Program Chairs'''
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Review')
         assert 'summarry' not in invitation.edit['note']['content']
         assert 'summary' in invitation.edit['note']['content']
-        assert invitation.cdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())    
+        assert invitation.cdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password='1234')
 
@@ -2208,7 +2186,7 @@ ICML 2023 Conference Program Chairs'''
         assert messages and len(messages) == 1
 
         messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your official review has been received on your assigned Paper number: 1, Paper title: "Paper title 1 Version 2"')
-        assert messages and len(messages) == 1        
+        assert messages and len(messages) == 1
 
         openreview_client.add_members_to_group(f'ICML.cc/2023/Conference/Submission1/Reviewers', '~Reviewer_ICMLOne1')
         openreview_client.add_members_to_group(f'ICML.cc/2023/Conference/Submission1/Reviewers', '~Reviewer_ICMLTwo1')
@@ -2279,7 +2257,7 @@ ICML 2023 Conference Program Chairs'''
             note=openreview.api.Note(
                 replyto = submissions[0].id,
                 readers = [
-                    'ICML.cc/2023/Conference/Program_Chairs', 
+                    'ICML.cc/2023/Conference/Program_Chairs',
                     'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
                     'ICML.cc/2023/Conference/Submission1/Area_Chairs',
                     anon_group_id
@@ -2298,7 +2276,7 @@ ICML 2023 Conference Program Chairs'''
         assert messages and len(messages) == 1
 
         messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your comment was received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
-        assert messages and len(messages) == 1        
+        assert messages and len(messages) == 1
 
         comment_edit = reviewer_client.post_note_edit(
             invitation='ICML.cc/2023/Conference/Submission1/-/Official_Comment',
@@ -2307,7 +2285,7 @@ ICML 2023 Conference Program Chairs'''
                 id = comment_edit['note']['id'],
                 replyto = submissions[0].id,
                 readers = [
-                    'ICML.cc/2023/Conference/Program_Chairs', 
+                    'ICML.cc/2023/Conference/Program_Chairs',
                     'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
                     'ICML.cc/2023/Conference/Submission1/Area_Chairs',
                     anon_group_id
@@ -2332,7 +2310,7 @@ ICML 2023 Conference Program Chairs'''
             note=openreview.api.Note(
                 replyto = submissions[0].id,
                 readers = [
-                    'ICML.cc/2023/Conference/Program_Chairs', 
+                    'ICML.cc/2023/Conference/Program_Chairs',
                     'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
                     anon_group_id
                 ],
@@ -2351,7 +2329,7 @@ ICML 2023 Conference Program Chairs'''
         assert messages and len(messages) == 1
 
         messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your comment was received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
-        assert messages and len(messages) == 2 
+        assert messages and len(messages) == 2
 
 
     def test_meta_review_stage(self, openreview_client, helpers):
