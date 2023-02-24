@@ -733,6 +733,148 @@ class TestCVPRSConference():
             'thecvf.com/CVPR/2023/Conference/Paper5/Authors'
         ]
 
+    def test_metareview_revision_stage(self, conference, helpers, test_client, client):
+
+        now = datetime.datetime.utcnow()
+
+        conference.meta_review_stage = openreview.stages.MetaReviewStage(
+            due_date=now + datetime.timedelta(minutes = 40),
+            additional_fields={
+                "preliminary_recommendation": {
+                "order": 1,
+                "value-radio": [
+                    "Clear accept",
+                    "Needs discussion",
+                    "Clear reject"
+                ],
+                "required": True
+                },
+                "final_recommendation": {
+                "order": 2,
+                "value-radio": [
+                    "Accept and select as a higlight",
+                    "Accept",
+                    "Reject"
+                ],
+                "required": False
+                },
+                'metareview': {
+                    'order': 3,
+                    'value-regex': '[\\S\\s]{1,5000}',
+                    'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons. Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                    'required': True,
+                    'markdown': True
+                },
+                "award_candidate": {
+                    'description': '',
+                    "order": 4,
+                    "value-radio": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": True
+                }
+            },
+            remove_fields=['recommendation', 'confidence']
+        )
+
+        conference.create_meta_review_stage()
+
+        assert client.get_invitation('thecvf.com/CVPR/2023/Conference/Paper5/-/Meta_Review')
+
+        submissions=conference.get_submissions(number=1)
+        assert len(submissions) == 1
+
+        ac_client = openreview.Client(username='ac1@cvpr.cc', password='1234')
+        signatory_groups=client.get_groups(regex='thecvf.com/CVPR/2023/Conference/Paper1/Area_Chair_', signatory='ac1@cvpr.cc')
+        assert len(signatory_groups) == 1
+
+        metareview_note=ac_client.post_note(openreview.Note(
+            invitation='thecvf.com/CVPR/2023/Conference/Paper1/-/Meta_Review',
+            forum=submissions[0].id,
+            replyto=submissions[0].id,
+            readers=[
+                'thecvf.com/CVPR/2023/Conference/Program_Chairs',
+                'thecvf.com/CVPR/2023/Conference/Paper1/Senior_Area_Chairs',
+                'thecvf.com/CVPR/2023/Conference/Paper1/Area_Chairs'
+            ],
+            nonreaders=['thecvf.com/CVPR/2023/Conference/Paper1/Authors'],
+            writers=['thecvf.com/CVPR/2023/Conference/Program_Chairs', 'thecvf.com/CVPR/2023/Conference/Paper1/Area_Chairs'],
+            signatures=[signatory_groups[0].id],
+            content={
+                'preliminary_recommendation': 'Needs discussion',
+                'metareview': 'This is a metareview',
+                'award_candidate': 'No'
+            }
+        ))
+
+        helpers.await_queue()
+
+        now = datetime.datetime.utcnow()
+
+        conference.meta_review_revision_stage = openreview.stages.MetaReviewRevisionStage(
+            due_date=now + datetime.timedelta(minutes = 40),
+            additional_fields={
+                "final_recommendation": {
+                "order": 1,
+                "value-radio": [
+                    "Accept and select as a higlight",
+                    "Accept",
+                    "Reject"
+                ],
+                "required": False
+                },
+                'metareview': {
+                    'order': 2,
+                    'value-regex': '[\\S\\s]{1,5000}',
+                    'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons. Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                    'required': True,
+                    'markdown': True
+                },
+                "award_candidate": {
+                    'description': '',
+                    "order": 3,
+                    "value-radio": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": True
+                }
+            },
+            remove_fields=['recommendation', 'confidence']
+        )
+
+        conference.create_meta_review_revision_stage()
+
+        assert client.get_invitation('thecvf.com/CVPR/2023/Conference/-/Meta_Review_Revision')
+        invitations = client.get_invitations(super='thecvf.com/CVPR/2023/Conference/-/Meta_Review_Revision')
+        assert invitations and len(invitations) == 1
+
+        metareview_revision=ac_client.post_note(openreview.Note(
+            invitation=f'{signatory_groups[0].id}/-/Meta_Review_Revision',
+            forum=submissions[0].id,
+            referent=metareview_note.id,
+            readers=[
+                'thecvf.com/CVPR/2023/Conference/Program_Chairs',
+                'thecvf.com/CVPR/2023/Conference/Paper1/Senior_Area_Chairs',
+                'thecvf.com/CVPR/2023/Conference/Paper1/Area_Chairs'
+            ],
+            nonreaders=['thecvf.com/CVPR/2023/Conference/Paper1/Authors'],
+            writers=['thecvf.com/CVPR/2023/Conference/Program_Chairs', signatory_groups[0].id],
+            signatures=[signatory_groups[0].id],
+            content={
+                'final_recommendation': 'Accept',
+                'metareview': 'This is a metareview UPDATED',
+                'award_candidate': 'No'
+            }
+        ))
+
+        helpers.await_queue()
+        assert metareview_revision
+
+        references = client.get_references(referent=metareview_note.id)
+        assert references and len(references) == 2
+
     def test_decision_stage(self, conference, helpers, client):
 
         pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
@@ -787,7 +929,6 @@ class TestCVPRSConference():
 
         helpers.await_queue()
 
-
     def test_camera_ready_stage(self, conference, helpers, client):
 
         pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
@@ -824,4 +965,4 @@ class TestCVPRSConference():
         helpers.await_queue()
 
         author_group = client.get_group('thecvf.com/CVPR/2023/Conference/Authors')
-        assert 'showIEEECopyright: true' in author_group.web              
+        assert 'showIEEECopyright: true' in author_group.web
