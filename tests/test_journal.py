@@ -3880,3 +3880,101 @@ The TMLR Editors-in-Chief
         journal.invitation_builder.expire_paper_invitations(note)
         journal.invitation_builder.expire_reviewer_responsibility_invitations()
         journal.invitation_builder.expire_assignment_availability_invitations()
+
+    def test_decline_desk_rejection(self, journal, openreview_client, helpers):
+
+        venue_id = journal.venue_id
+        editor_in_chief_group_id = journal.get_editors_in_chief_id()
+        test_client = OpenReviewClient(username='test@mail.com', password='1234')
+        raia_client = OpenReviewClient(username='raia@mail.com', password='1234')
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password='1234')        
+
+        ## Post the submission 12
+        submission_note_12 = test_client.post_note_edit(invitation='TMLR/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title 12' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Bok']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Long submission (more than 12 pages of main content)'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_12['id'])
+        note_id_12=submission_note_12['note']['id']
+
+        # Assign Action Editor
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_12,
+            tail='~Joelle_Pineau1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        desk_reject_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper12/-/Review_Approval',
+                                    signatures=[f'{venue_id}/Paper12/Action_Editors'],
+                                    note=Note(content={
+                                        'under_review': { 'value': 'Desk Reject' },
+                                        'comment': { 'value': 'this paper is not ready' }
+                                    }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
+        
+        assert openreview_client.get_invitation(f"{venue_id}/Paper12/-/Desk_Rejection_Approval")
+        approval_note = raia_client.post_note_edit(invitation='TMLR/Paper12/-/Desk_Rejection_Approval',
+                            signatures=[f"{venue_id}/Editors_In_Chief"],
+                            note=Note(
+                                signatures=[f"{venue_id}/Editors_In_Chief"],
+                                forum=note_id_12,
+                                replyto=desk_reject_note['note']['id'],
+                                content= {
+                                    'approval': { 'value': 'I don\'t approve the AE\'s decision. Submission should be appropriate for review.' }
+                                 }
+                            ))
+        
+        helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
+        
+        notes = openreview_client.get_notes(invitation='TMLR/Paper12/-/Review_Approval', sort='tcdate:desc')
+        edits = openreview_client.get_note_edits(notes[0].id)
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+
+        note = joelle_client.get_note(note_id_12)
+        assert note
+        assert note.odate
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review']
+        assert note.readers == ['everyone']
+        assert note.writers == ['TMLR', 'TMLR/Paper12/Authors']
+        assert note.signatures == ['TMLR/Paper12/Authors']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
+        assert note.content['venue']['value'] == 'Under review for TMLR'
+        assert note.content['venueid']['value'] == 'TMLR/Under_Review'
+        assert note.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'
+        assert note.content['_bibtex']['value'] == '''@article{
+anonymous''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+title={Paper title 12},
+author={Anonymous},
+journal={Submitted to Transactions on Machine Learning Research},
+year={''' + str(datetime.datetime.today().year) + '''},
+url={https://openreview.net/forum?id=''' + note_id_12 + '''},
+note={Under review}
+}'''                                                                              
+
+        edits = openreview_client.get_note_edits(note.id, invitation='TMLR/-/Under_Review')
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+
+        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Perform reviewer assignments for TMLR submission Paper title 12')
+        assert len(messages) == 1
+
+        messages = journal.client.get_messages(to = 'melissa@maileight.com', subject = '[TMLR] Review Approval edited on submission Paper title 12')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'Hi Melissa Bok,\n\nA review approval has been edited on your submission.\n\nSubmission: Paper title 12\nUnder review: Appropriate for Review\nComment: \n\nTo view the review approval, click here: https://openreview.net/forum?id={note_id_12}&noteId={notes[0].id}\n\n'
