@@ -72,6 +72,7 @@ class Conference(object):
         self.submission_revision_stage = None
         self.comment_stage = CommentStage()
         self.meta_review_stage = MetaReviewStage()
+        self.meta_review_revision_stage = None
         self.decision_stage = DecisionStage()
         self.layout = 'tabs'
         self.venue_heading_map = {}
@@ -274,6 +275,15 @@ class Conference(object):
         notes = list(self.get_submissions())
         return self.invitation_builder.set_meta_review_invitation(self, notes)
 
+    def __create_meta_review_revision_stage(self):
+        submissions = self.get_submissions(details='directReplies')
+        metareviews = []
+        for submission in submissions:
+            for reply in submission.details['directReplies']:
+                if reply['invitation'] == self.get_invitation_id(self.meta_review_stage.name, submission.number):
+                    metareviews.append(openreview.Note.from_json(reply))
+        return self.invitation_builder.set_meta_review_revision_invitation(self, metareviews)
+
     def __create_decision_stage(self):
 
         notes = list(self.get_submissions())
@@ -372,6 +382,10 @@ class Conference(object):
     def create_meta_review_stage(self):
         if self.meta_review_stage:
             return self.__create_meta_review_stage()
+
+    def create_meta_review_revision_stage(self):
+        if self.meta_review_revision_stage:
+            return self.__create_meta_review_revision_stage()
 
     def create_comment_stage(self):
         if self.comment_stage:
