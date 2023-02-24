@@ -16,7 +16,7 @@ def process(client, edit, invitation):
     ## Update submission and set the decision submitted status
     client.post_note_edit(
         invitation = journal.get_meta_invitation_id(),
-        readers = [journal.venue_id, journal.get_action_editors_id(submission.number), journal.get_authors_id(submission.number)],
+        readers = [journal.venue_id, journal.get_action_editors_id(submission.number), journal.get_reviewers_id(submission.number), journal.get_authors_id(submission.number)],
         writers = [journal.venue_id],
         signatures = [journal.venue_id],
         note = openreview.api.Note(
