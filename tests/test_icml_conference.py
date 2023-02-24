@@ -2217,6 +2217,24 @@ ICML 2023 Conference Program Chairs'''
         messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your official review has been received on your assigned Paper number: 1, Paper title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 1        
 
+    def test_delete_assignents(self, openreview_client):
+
+        ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password='1234')
+
+        submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
+        assignment = ac_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment', head=submissions[0].id, tail='~Reviewer_ICMLOne1')[0]
+
+        anon_group_id = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLTwo1')[0].id
+        assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assignment.signatures = [anon_group_id]
+        
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not remove assignment, the user ~Reviewer_ICMLOne1 already posted a review.'):
+            ac_client.post_edge(assignment)
+
+        assignment = ac_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment', head=submissions[0].id, tail='~Celeste_ICML1')[0]
+        assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assignment.signatures = [anon_group_id]
+        ac_client.post_edge(assignment)
 
 
     def test_comment_stage(self, openreview_client, helpers):
