@@ -166,7 +166,7 @@ function renderContent(acceptedResponse, certificationsResponse, underReviewResp
 
   var notesWithVideo = acceptedResponse.notes.filter(function(note) { return note.content['video']; })
   Webfield2.ui.renderSubmissionList('#accepted-papers-with-video', SUBMISSION_ID, notesWithVideo, notesWithVideo.length,
-  Object.assign({}, options));
+  Object.assign({}, options, { localSearch: true }));
 
   Webfield2.ui.renderSubmissionList('#under-review-submissions', SUBMISSION_ID, underReviewResponse.notes, underReviewResponse.count,
   Object.assign({}, options, { query: {'content.venueid': UNDER_REVIEW_ID } } ));
