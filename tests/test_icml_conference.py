@@ -1428,7 +1428,7 @@ OpenReview Team'''
         sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs')
         assert ['~SAC_ICMLTwo1'] == sac_group.members
 
-    def test_reviewer_reassingment(self, openreview_client, helpers, selenium, request_page):
+    def test_reviewer_reassingment(self, client, openreview_client, helpers, selenium, request_page):
 
         pc_client = openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
         ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password='1234')
@@ -1652,8 +1652,37 @@ ICML 2023 Conference Program Chairs'''
         assert '~Reviewer_ICMLThree1' in reviewers_group.members    
         assert '~Melisa_ICML1' in reviewers_group.members                 
         assert '~Celeste_ICML1' in reviewers_group.members        
-        assert '~Reviewer_ICMLFour1' in reviewers_group.members    
+        assert '~Reviewer_ICMLFour1' in reviewers_group.members
 
+        helpers.create_user('rachel@icml.cc', 'Rachel', 'ICML')
+
+        ac_client.post_edge(
+            openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
+                signatures=[anon_group_id],
+                head=submissions[0].id,
+                tail='~Rachel_ICML1',
+                label='Invitation Sent',
+                weight=1
+        ))
+
+        helpers.await_queue(openreview_client)
+
+        messages = openreview_client.get_messages(to='rachel@icml.cc', subject='[ICML 2023] Invitation to review paper titled "Paper title 1 Version 2"')
+        assert messages and len(messages) == 1
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        
+        ## create another profile and merge
+        helpers.create_user('rachel_bis@icml.cc', 'Rachel', 'ICML')
+
+        client.rename_edges(new_id='~Rachel_ICML2', current_id='~Rachel_ICML1')
+        client.merge_profiles(profileTo='~Rachel_ICML2', profileFrom='~Rachel_ICML1')
+
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
+
+        helpers.await_queue(openreview_client)
+
+        messages = openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] Reviewer Invitation declined for paper 1')
+        assert len(messages) == 1
 
     def test_review_stage(self, openreview_client, helpers):
 
