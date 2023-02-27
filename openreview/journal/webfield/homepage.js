@@ -80,6 +80,17 @@ function load() {
     sort: 'tmdate:desc'
   });
 
+  var acceptedNotesWithVideoP = Webfield2.api.getAllSubmissions(SUBMISSION_ID, {
+    'content.venueid': VENUE_ID,
+    details: 'replyCount',
+    sort: 'tmdate:desc'
+  })
+  .then(function(submissions) {
+    return _.filter(submissions, function(submission) {
+      return submission.content['video'];
+    });
+  });  
+
   var certificationsP = $.when.apply($, CERTIFICATIONS.map(function(certification) {
     return Webfield2.api.getSubmissions(SUBMISSION_ID, {
       'content.venueid': VENUE_ID,
@@ -111,7 +122,7 @@ function load() {
     userGroupsP = Webfield2.getAll('/groups', { prefix: VENUE_ID + '/.*', member: user.id, web: true });
   }
 
-  return $.when(acceptedNotesP, certificationsP, underReviewNotesP, allNotesP, userGroupsP);
+  return $.when(acceptedNotesP, acceptedNotesWithVideoP, certificationsP, underReviewNotesP, allNotesP, userGroupsP);
 }
 
 function createConsoleLinks(allGroups) {
@@ -135,7 +146,7 @@ function createConsoleLinks(allGroups) {
 }
 
 // Render functions
-function renderContent(acceptedResponse, certificationsResponse, underReviewResponse, allResponse, userGroups) {
+function renderContent(acceptedResponse, acceptedNotesWithVideo, certificationsResponse, underReviewResponse, allResponse, userGroups) {
 
   // Your Consoles tab
   if (userGroups.length) {
@@ -164,8 +175,7 @@ function renderContent(acceptedResponse, certificationsResponse, underReviewResp
   Webfield2.ui.renderSubmissionList('#accepted-papers', SUBMISSION_ID, acceptedResponse.notes, acceptedResponse.count,
   Object.assign({}, options, { query: { 'content.venueid': VENUE_ID }}));
 
-  var notesWithVideo = acceptedResponse.notes.filter(function(note) { return note.content['video']; })
-  Webfield2.ui.renderSubmissionList('#accepted-papers-with-video', SUBMISSION_ID, notesWithVideo, notesWithVideo.length,
+  Webfield2.ui.renderSubmissionList('#accepted-papers-with-video', SUBMISSION_ID, acceptedNotesWithVideo, acceptedNotesWithVideo.length,
   Object.assign({}, options, { localSearch: true }));
 
   Webfield2.ui.renderSubmissionList('#under-review-submissions', SUBMISSION_ID, underReviewResponse.notes, underReviewResponse.count,
