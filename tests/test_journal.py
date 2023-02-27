@@ -3976,6 +3976,9 @@ note={Under review}
         messages = openreview_client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Perform reviewer assignments for TMLR submission Paper title 12')
         assert len(messages) == 1
 
+        messages = openreview_client.get_messages(subject='[TMLR] Review Approval edited on submission Paper title 12')
+        assert len(messages) == 3, messages
+        
         messages = openreview_client.get_messages(to = 'melissa@maileight.com', subject = '[TMLR] Review Approval edited on submission Paper title 12')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'Hi Melissa Bok,\n\nA review approval has been edited on your submission.\n\nSubmission: Paper title 12\nUnder review: Appropriate for Review\nComment: \n\nTo view the review approval, click here: https://openreview.net/forum?id={note_id_12}&noteId={notes[0].id}\n\n'
