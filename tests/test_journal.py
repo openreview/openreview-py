@@ -223,8 +223,8 @@ class TestJournal():
                 content={
                     'title': { 'value': 'Paper title' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Eight1']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Height']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Height1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     #'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
