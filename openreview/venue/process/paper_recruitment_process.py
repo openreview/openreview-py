@@ -41,12 +41,11 @@ def process(client, edit, invitation):
     submission = client.get_notes(note.content['submission_id']['value'])[0]
     invitation_edges = client.get_edges(invitation=invite_assignment_invitation_id, head=submission.id, tail=user)
 
-    if not invitation_edges:
-        ## Check edge with the profile id instead
-        if '@' in user and user_profile:
-            invitation_edges = client.get_edges(invitation=invite_assignment_invitation_id, head=submission.id, tail=user_profile.id)
-            if not invitation_edges:
-                raise openreview.OpenReviewException(f'user {user} not invited')
+    if not invitation_edges and user_profile:
+        invitation_edges = client.get_edges(invitation=invite_assignment_invitation_id, head=submission.id, tail=user_profile.id)
+
+        if not invitation_edges:
+            raise openreview.OpenReviewException(f'user {user} not invited')
 
     edge=invitation_edges[0]
 
