@@ -3946,7 +3946,8 @@ The TMLR Editors-in-Chief
         
         notes = openreview_client.get_notes(invitation='TMLR/Paper12/-/Review_Approval', signature='TMLR/Editors_In_Chief')
         edits = openreview_client.get_note_edits(notes[0].id)
-        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+        edit = [e for e in edits if 'TMLR/Paper12/-/Review_Approval' == e.invitation][0]
+        helpers.await_queue_edit(openreview_client, edit_id=edit.id)
 
         note = joelle_client.get_note(note_id_12)
         assert note
