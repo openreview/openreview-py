@@ -2091,7 +2091,7 @@ The TMLR Editors-in-Chief
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
-Eight''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+eight''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
 author={Melissa Eight and SomeFirstName User},
 journal={Transactions on Machine Learning Research},
@@ -2150,7 +2150,7 @@ note={Featured Certification, Reproducibility Certification}
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
-Eight''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+eight''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
 author={Melissa Eight and SomeFirstName User and Celeste Ana Martinez},
 journal={Transactions on Machine Learning Research},
@@ -2229,7 +2229,7 @@ The TMLR Editors-in-Chief
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
-Eight''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+eight''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
 author={Melissa Eight and SomeFirstName User and Celeste Ana Martinez},
 journal={Submitted to Transactions on Machine Learning Research},
