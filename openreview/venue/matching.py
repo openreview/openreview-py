@@ -994,6 +994,19 @@ class Matching(object):
         invitation.preprocess = pre_process_content
         invitation.process = post_process_content
         invitation.content = invitation_content
+        invitation.edit['label'] = {
+            'param': {
+                'enum': [
+                    invited_label,
+                    accepted_label,
+                    declined_label + '.*',
+                    'Pending Sign Up',
+                    'Conflict Detected'
+                ],
+                'optional': True,
+                'default': invited_label
+            }
+        }
         invitation.minReplies = 1
         invitation.maxReplies = 1
         invitation.signatures = [venue.get_program_chairs_id()]

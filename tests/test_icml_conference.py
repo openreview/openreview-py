@@ -1684,6 +1684,10 @@ ICML 2023 Conference Program Chairs'''
         messages = openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] Reviewer Invitation declined for paper 1')
         assert len(messages) == 1
 
+        invite_edges=openreview_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Rachel_ICML2')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Declined'
+
     def test_review_stage(self, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password='1234')
