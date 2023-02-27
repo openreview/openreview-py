@@ -16,7 +16,7 @@ def process_update(client, edge, invitation, existing_edge):
         if not reviews:
             return
 
-        groups=client.get_groups(regex=f'{paper_group_id}/{reviewers_anon_name}', signatory=edge.tail)
+        groups=client.get_groups(prefix=f'{paper_group_id}/{reviewers_anon_name}', signatory=edge.tail)
 
         if not groups:
             raise openreview.OpenReviewException(f'Can not remove assignment, signatory groups not found for {edge.tail}.')
