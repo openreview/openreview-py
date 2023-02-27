@@ -1260,12 +1260,12 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         anon_group_id = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLOne1')[0].id
         
         ## recruit external reviewer
-        with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for melisa@mail'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for danielle@mail'):
             ac_client.post_edge(
                 openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
                     signatures=[anon_group_id],
                     head=submissions[0].id,
-                    tail='melisa@mail.com',
+                    tail='danielle@mail.com',
                     label='Invitation Sent',
                     weight=1
             ))
