@@ -77,13 +77,13 @@ function load() {
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true,
-    sort: 'tmdate:desc'
+    sort: 'pdate:desc'
   });
 
   var acceptedNotesWithVideoP = Webfield2.api.getAllSubmissions(SUBMISSION_ID, {
     'content.venueid': VENUE_ID,
     details: 'replyCount',
-    sort: 'tmdate:desc'
+    sort: 'pdate:desc'
   })
   .then(function(submissions) {
     return _.filter(submissions, function(submission) {
@@ -98,7 +98,7 @@ function load() {
       pageSize: PAGE_SIZE,
       details: 'replyCount',
       includeCount: true,
-      sort: 'tmdate:desc'
+      sort: 'pdate:desc'
     });
   })).then(function() {
     return _.toArray(arguments);
