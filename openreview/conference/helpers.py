@@ -348,6 +348,10 @@ def get_submission_stage(request_forum):
     if isinstance(submission_additional_options, str):
         submission_additional_options = json.loads(submission_additional_options.strip())
 
+    subject_areas = None
+    if 'subject_areas' in submission_additional_options and 'value' in submission_additional_options['subject_areas']:
+        subject_areas = submission_additional_options['subject_areas']['value'].get('param', {}).get('enum')
+
     submission_remove_options = request_forum.content.get('remove_submission_options', [])
     submission_release=(request_forum.content.get('submissions_visibility', '') == 'Yes, submissions should be immediately revealed to the public.')
     create_groups=(not double_blind) and public and submission_release
@@ -365,6 +369,7 @@ def get_submission_stage(request_forum):
         second_due_date=submission_second_due_date,
         additional_fields=submission_additional_options,
         remove_fields=submission_remove_options,
+        subject_areas=subject_areas,
         create_groups=create_groups,
         author_names_revealed=author_names_revealed,
         papers_released=papers_released,
