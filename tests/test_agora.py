@@ -343,7 +343,7 @@ class TestAgora():
 
     def test_suggest_reviewer(self, client, helpers):
 
-        melisa_client = helpers.create_user(email = 'melisa@mail.com', first = 'Melissa', last = 'Agora')
+        melisa_client = helpers.create_user(email = 'melisa_agora@mail.com', first = 'Melissa', last = 'Agora')
 
         articles = melisa_client.get_notes(invitation='-Agora/COVID-19/-/Article')
         assert articles
@@ -371,7 +371,7 @@ class TestAgora():
         messages = client.get_messages(subject = '[Agora/COVID-19] Your suggestion has been posted on the article titled "Paper title"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
-        assert 'melisa@mail.com' in recipients
+        assert 'melisa_agora@mail.com' in recipients
 
         messages = client.get_messages(subject = '[Agora/COVID-19] A reviewer has been suggested on the article titled "Paper title"')
         assert len(messages) == 1

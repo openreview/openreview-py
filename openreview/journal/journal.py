@@ -38,6 +38,7 @@ class Journal(object):
         self.submission_group_name = 'Paper'
         self.submitted_venue_id = f'{venue_id}/Submitted'
         self.under_review_venue_id = f'{venue_id}/Under_Review'
+        self.decision_pending_venue_id = f'{venue_id}/Decision_Pending'
         self.rejected_venue_id = f'{venue_id}/Rejected'
         self.desk_rejected_venue_id = f'{venue_id}/Desk_Rejected'
         self.withdrawn_venue_id = f'{venue_id}/Withdrawn_Submission'
@@ -446,7 +447,7 @@ class Journal(object):
 
         first_word = re.sub('[^a-zA-Z]', '', note.content['title']['value'].split(' ')[0].lower())
         bibtex_title = u.unicode_to_latex(note.content['title']['value'])
-        year = datetime.datetime.fromtimestamp(note.cdate/1000).year
+        year = datetime.datetime.utcnow().year
 
         if new_venue_id == self.under_review_venue_id:
 
@@ -515,6 +516,7 @@ class Journal(object):
 
         if new_venue_id == self.accepted_venue_id:
 
+            year = datetime.datetime.fromtimestamp(note.pdate/1000).year if note.pdate else year
             first_author_last_name = 'anonymous'
             authors = 'Anonymous'
             if 'everyone' in self.get_release_authors_readers(note.number):

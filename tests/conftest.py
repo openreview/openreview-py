@@ -66,7 +66,6 @@ class Helpers:
 
     @staticmethod
     def await_queue_edit(super_client, edit_id=None, invitation=None):
-        print('await_queue_edit', edit_id)
         while True:
             process_logs = super_client.get_process_logs(id=edit_id, invitation=invitation)
             if process_logs:

@@ -68,6 +68,7 @@ var WITHDRAWN_STATUS = VENUE_ID + '/Withdrawn_Submission';
 var RETRACTED_STATUS = VENUE_ID + '/Retracted_Acceptance';
 var REJECTED_STATUS = VENUE_ID + '/Rejected';
 var DESK_REJECTED_STATUS = VENUE_ID + '/Desk_Rejected'
+var DECISION_PENDING_STATUS = VENUE_ID + '/Decision_Pending';
 
 var referrerUrl = encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')');
 var ae_url = '/edges/browse?traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
@@ -124,6 +125,7 @@ var main = function() {
       'Under Review',
       'Under Discussion',
       'Under Decision',
+      'Decision Pending',
       'Camera Ready',
       'All Submissions',
       'Action Editor Status',
@@ -766,8 +768,12 @@ var formatData = function(
     return row.submission.content.venueid === UNDER_REVIEW_STATUS
       && (row.actionEditorProgressData.ratingPending || row.actionEditorProgressData.decisionPending || row.actionEditorProgressData.decisionApprovalPending);
   });
+  var decisionPendingStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid === DECISION_PENDING_STATUS
+      && row.actionEditorProgressData.decisionApprovalPending;
+  });
   var cameraReadyStatusRows = paperStatusRows.filter(function(row) {
-    return row.submission.content.venueid === UNDER_REVIEW_STATUS
+    return row.submission.content.venueid === DECISION_PENDING_STATUS
       && row.actionEditorProgressData.cameraReadyPending;
   });
   var submissionStatusRows = paperStatusRows;
@@ -821,6 +827,7 @@ var formatData = function(
     underReviewStatusRows: underReviewStatusRows,
     underDiscussionStatusRows: underDiscussionStatusRows,
     underDecisionStatusRows: underDecisionStatusRows,
+    decisionPendingStatusRows: decisionPendingStatusRows,
     cameraReadyStatusRows: cameraReadyStatusRows,
     reviewerStatusRows: Object.values(reviewerStatusById),
     actionEditorStatusRows: Object.values(actionEditorStatusById),
@@ -1197,6 +1204,7 @@ var renderData = function(venueStatusData) {
   renderTable('under-review', venueStatusData.underReviewStatusRows);
   renderTable('under-discussion', venueStatusData.underDiscussionStatusRows);
   renderTable('under-decision', venueStatusData.underDecisionStatusRows);
+  renderTable('decision-pending', venueStatusData.decisionPendingStatusRows);
   renderTable('camera-ready', venueStatusData.cameraReadyStatusRows);
   renderTable('all-submissions', venueStatusData.submissionStatusRows);
 
