@@ -591,14 +591,14 @@ note: replies to this email will go to the AE, Graham Neubig.
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Under_Review', 'TACL/Paper1/-/Camera_Ready_Revision']
+        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Under_Review', 'TACL/-/Edit', 'TACL/Paper1/-/Camera_Ready_Revision']
         assert note.readers == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert note.writers == ['TACL', 'TACL/Paper1/Authors']
         assert note.signatures == ['TACL/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~Melisa_Andersen1', '~SomeFirstName_User1']
         assert note.content['authors']['value'] == ['Melisa Andersen', 'SomeFirstName User']
-        assert note.content['venue']['value'] == 'Under review for TACL'
-        assert note.content['venueid']['value'] == 'TACL/Under_Review'
+        assert note.content['venue']['value'] == 'Decision pending for TACL'
+        assert note.content['venueid']['value'] == 'TACL/Decision_Pending'
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
 
@@ -618,7 +618,7 @@ note: replies to this email will go to the AE, Graham Neubig.
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Under_Review', 'TACL/Paper1/-/Camera_Ready_Revision', 'TACL/-/Accepted']
+        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Under_Review', 'TACL/-/Edit', 'TACL/Paper1/-/Camera_Ready_Revision', 'TACL/-/Accepted']
         assert note.readers == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert note.writers == ['TACL']
         assert note.signatures == ['TACL/Paper1/Authors']
@@ -642,7 +642,7 @@ note={Featured Certification, Reproducibility Certification}
 }'''
 
         edits = openreview_client.get_note_edits(note.id)
-        assert len(edits) == 5
+        assert len(edits) == 6
         for edit in edits:
             assert edit.readers == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
 

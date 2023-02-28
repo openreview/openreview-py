@@ -2021,7 +2021,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'process': self.process_script,
             'dateprocesses': [self.ae_reminder_process],
             'edit': {
-                'signatures': { 'param': { 'regex': self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') }},
+                'signatures': { 'param': { 'regex': f"{editors_in_chief_id}|{self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')}" }},
                 'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                 'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                 'note': {
@@ -2148,8 +2148,11 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'enum': ['I approve the AE\'s decision.'],
-                                    'input': 'checkbox'
+                                    'enum': [
+                                        'I approve the AE\'s decision.', 
+                                        'I don\'t approve the AE\'s decision. Submission should be appropriate for review.'
+                                    ],
+                                    'input': 'radio'
                                 }
                             }
                         },
