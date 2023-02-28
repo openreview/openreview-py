@@ -94,7 +94,7 @@ class Helpers:
         ))
 
     @staticmethod
-    def respond_invitation(selenium, request_page, url, accept, quota=None):
+    def respond_invitation(selenium, request_page, url, accept, quota=None, comment=None):
 
         request_page(selenium, url, by=By.CLASS_NAME, wait_for_element='note_editor')
 
@@ -116,6 +116,13 @@ class Helpers:
             assert len(values) > 0
             values[0].click()
             time.sleep(1)
+            button = selenium.find_element_by_xpath('//button[text()="Submit"]')
+            button.click()
+        elif comment:
+            buttons[1].click()
+            time.sleep(1)
+            text_area = selenium.find_element_by_class_name("note_content_value")
+            text_area.send_keys("I am too busy.")
             button = selenium.find_element_by_xpath('//button[text()="Submit"]')
             button.click()
         elif accept:
