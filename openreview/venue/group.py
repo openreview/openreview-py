@@ -179,6 +179,10 @@ class GroupBuilder(object):
             'desk_rejection_name': { 'value': 'Desk_Rejection'},
             'conflict_policy': { 'value': self.venue.conflict_policy }
         }
+
+        if self.venue.submission_stage.subject_areas:
+            content['subject_areas'] = { 'value': self.venue.submission_stage.subject_areas }
+
         if self.venue.reviewers_proposed_assignment_title:
             content['reviewers_proposed_assignment_title'] = { 'value': self.venue.reviewers_proposed_assignment_title }
 
