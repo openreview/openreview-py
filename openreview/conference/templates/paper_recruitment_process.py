@@ -46,9 +46,6 @@ def process(client, note, invitation):
 
     edge=invitation_edges[0]
 
-    if edge.label not in [INVITED_LABEL, ACCEPTED_LABEL, DECLINED_LABEL, 'Pending Sign Up']:
-        raise openreview.OpenReviewException(f'user {user} can not reply to this invitation, invalid status {edge.label}')
-
     preferred_name=user_profile.get_preferred_name(pretty=True) if user_profile else edge.tail
     preferred_email=user_profile.get_preferred_email() if user_profile else edge.tail
 
