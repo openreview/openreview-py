@@ -63,19 +63,21 @@ class InvitationBuilder(object):
         if 'everyone' in invitation_readers and 'everyone' not in submission.readers:
             return
 
-        for note in notes:
-            if type(invitation_readers) is list and note.readers != invitation_readers:
-                self.client.post_note_edit(
-                    invitation = self.venue.get_meta_invitation_id(),
-                    readers = invitation_readers,
-                    writers = [self.venue_id],
-                    signatures = [self.venue_id],
-                    note = Note(
-                        id = note.id,
+        if type(invitation_readers) is list:
+            for note in notes:
+                final_invitation_readers = [note.signatures[0] if 'signatures' in r else r for r in invitation_readers]
+                if note.readers != final_invitation_readers:
+                    self.client.post_note_edit(
+                        invitation = self.venue.get_meta_invitation_id(),
                         readers = invitation_readers,
-                        nonreaders = invitation.edit['note'].get('nonreaders')
-                    )
-                )            
+                        writers = [self.venue_id],
+                        signatures = [self.venue_id],
+                        note = Note(
+                            id = note.id,
+                            readers = final_invitation_readers,
+                            nonreaders = invitation.edit['note'].get('nonreaders')
+                        )
+                    )            
 
     def create_paper_invitations(self, invitation_id, notes):
 
