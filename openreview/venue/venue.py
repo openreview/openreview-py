@@ -592,7 +592,7 @@ Total Errors: {len(errors)}
 
             api1_client.post_note(status_note)
 
-    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None):
+    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None, hide_fields=[]):
 
         venue_id = self.venue_id
         submissions = self.get_submissions(sort='number:asc', details='directReplies')
