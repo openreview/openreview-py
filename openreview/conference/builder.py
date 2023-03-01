@@ -1603,7 +1603,7 @@ Program Chairs
         for future in futures:
             result = future.result()
 
-    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None):
+    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None, hide_fields=[]):
         
         publication_date = openreview.tools.datetime_millis(datetime.datetime.utcnow())
         submissions = self.get_submissions(details='original,directReplies')
@@ -1614,7 +1614,7 @@ Program Chairs
         if submission_readers:
             self.submission_stage.readers = submission_readers
 
-        for submission in tqdm(submissions):
+        def update_note(submission):
             decisions = [reply for reply in submission.details['directReplies'] if self.get_invitation_id(self.decision_stage.name, submission.number) == reply['invitation']]
             decision_note = openreview.Note.from_json(decisions[0]) if decisions else None
             note_accepted = decision_note and 'Accept' in decision_note.content['decision']
@@ -1626,6 +1626,8 @@ Program Chairs
                 if not release_authors:
                     submission.content['authors'] = ['Anonymous']
                     submission.content['authorids'] = [self.get_authors_id(number=submission.number)]
+                for field in hide_fields:
+                    submission.content[field] = ''
 
                 bibtex = tools.generate_bibtex(
                         openreview.Note.from_json(submission.details['original']),
@@ -1669,6 +1671,8 @@ Program Chairs
                 pdate = publication_date if (note_accepted and submission.pdate is None) else submission.pdate,
                 odate = publication_date if ('everyone' in submission.readers and submission.odate is None) else submission.odate
             ))
+
+        tools.concurrent_requests(update_note, submissions)
 
         venue_heading_map = {}
         if decision_heading_map:

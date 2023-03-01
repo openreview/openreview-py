@@ -966,3 +966,52 @@ class TestCVPRSConference():
 
         author_group = client.get_group('thecvf.com/CVPR/2023/Conference/Authors')
         assert 'showIEEECopyright: true' in author_group.web
+
+    def test_post_decision_stage(self, conference, helpers, client):
+
+        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        invitation = client.get_invitation('openreview.net/Support/-/Request{}/Post_Decision_Stage'.format(request_form.number))
+        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        client.post_invitation(invitation)
+
+        request_form_note = pc_client.post_note(openreview.Note(
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Post_Decision_Stage',
+            referent=request_form.id,
+            forum=request_form.id,
+            signatures=['~Program_CVPRChair1'],
+            readers=['thecvf.com/CVPR/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            writers=[],
+            content= {
+                'reveal_authors': 'No, I don\'t want to reveal any author identities.',
+                'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
+                'send_decision_notifications': 'No, I will send the emails to the authors',
+                'home_page_tab_names': {
+                    'Accept': 'Accept',
+                    'Reject': 'Submitted'
+                }
+            }
+            ))
+
+        helpers.await_queue()
+
+        submissions=conference.get_submissions(number=5)
+        assert len(submissions) == 1
+        submission = submissions[0]
+
+        assert submission.content['keywords'] == ''
+        assert submission.content['venue'] == 'CVPR 2023'
+        assert submission.content['venueid'] == 'thecvf.com/CVPR/2023/Conference'
+        assert submission.pdate
+        assert not submission.odate
+
+        submissions=conference.get_submissions(number=4)
+        assert len(submissions) == 1
+        submission = submissions[0]
+
+        assert submission.content['keywords'] == ''
+        assert submission.content['venue'] == 'Submitted to CVPR 2023'
+        assert submission.content['venueid'] == 'thecvf.com/CVPR/2023/Conference'
+        assert not submission.pdate
+        assert not submission.odate
