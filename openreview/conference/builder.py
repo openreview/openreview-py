@@ -1603,7 +1603,7 @@ Program Chairs
         for future in futures:
             result = future.result()
 
-    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None, hide_fields=None):
+    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None, hide_fields=[]):
         
         publication_date = openreview.tools.datetime_millis(datetime.datetime.utcnow())
         submissions = self.get_submissions(details='original,directReplies')
