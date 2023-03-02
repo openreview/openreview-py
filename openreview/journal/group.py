@@ -62,6 +62,7 @@ class GroupBuilder(object):
             content = content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{self.journal.short_name}";')
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + self.journal.get_author_submission_id() + "';")
             content = content.replace("var EDITORS_IN_CHIEF_NAME = '';", "var EDITORS_IN_CHIEF_NAME = '" + self.journal.editors_in_chief_name + "';")
+            content = content.replace("var EDITORS_IN_CHIEF_EMAIL = '';", "var EDITORS_IN_CHIEF_EMAIL = '" + self.journal.get_editors_in_chief_email() + "';")
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + self.journal.reviewers_name + "';")
             content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + self.journal.action_editors_name + "';")
             if self.journal.request_form_id:
