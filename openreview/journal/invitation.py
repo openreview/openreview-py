@@ -868,18 +868,6 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             'description': 'Upload a PDF file that ends with .pdf.',
                             'order': 5,
                         },
-                        # 'submission_length': {
-                        #     'value': {
-                        #         'param': {
-                        #             'type': 'string',
-                        #             'enum': ['Regular submission (no more than 12 pages of main content)', 'Long submission (more than 12 pages of main content)'],
-                        #             'input': 'radio'
-
-                        #         }
-                        #     },
-                        #     'description': "Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
-                        #     'order': 6
-                        # },                        
                         "supplementary_material": {
                             'value': {
                                 'param': {
@@ -3825,18 +3813,6 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             'description': 'Upload a PDF file that ends with .pdf.',
                             'order': 5,
                         },
-                        'submission_length': {
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'enum': ['Regular submission (no more than 12 pages of main content)', 'Long submission (more than 12 pages of main content)'],
-                                    'input': 'radio'
-
-                                }
-                            },
-                            'description': "Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
-                            'order': 6
-                        },                        
                         "supplementary_material": {
                             'value': {
                                 'param': {
@@ -3903,6 +3879,21 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             },
             'process': self.process_script                    
         }
+
+        submission_length = self.journal.get_submission_length()
+        if submission_length:
+            invitation.edit['note']['content']['submission_length'] = {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': submission_length,
+                        'input': 'radio'
+
+                    }
+                },
+                'description': "Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
+                'order': 6                
+            }        
 
         self.save_super_invitation(self.journal.get_revision_id(), invitation_content, edit_content, invitation)
 
