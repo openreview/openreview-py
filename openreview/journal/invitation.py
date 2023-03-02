@@ -3882,7 +3882,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         submission_length = self.journal.get_submission_length()
         if submission_length:
-            invitation.edit['note']['content']['submission_length'] = {
+            invitation['edit']['note']['content']['submission_length'] = {
                 'value': {
                     'param': {
                         'type': 'string',
