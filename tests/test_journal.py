@@ -84,7 +84,19 @@ class TestJournal():
                                 'Reproducibility Certification',
                                 'Survey Certification'
                             ],
-                            'issn': '2835-8856'
+                            'submission_length': [
+                                'Regular submission (no more than 12 pages of main content)', 
+                                'Long submission (more than 12 pages of main content)'
+                            ],
+                            'issn': '2835-8856',
+                            'website_urls': {
+                                'editorial_board': 'https://jmlr.org/tmlr/editorial-board.html',
+                                'evaluation_criteria': 'https://jmlr.org/tmlr/editorial-policies.html#evaluation',
+                                'reviewer_guide': 'https://jmlr.org/tmlr/reviewer-guide.html',
+                                'editorial_policies': 'https://jmlr.org/tmlr/editorial-policies.html',
+                                'faq': 'https://jmlr.org/tmlr/contact.html'                     
+                            },
+                            'editors_email': 'tmlr-editors@jmlr.org'
                         }
                     }
                 }
@@ -268,12 +280,13 @@ The TMLR Editors-in-Chief
         assert note.content['venueid']['value'] == 'TMLR/Submitted'
 
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 9
+        assert len(invitations) == 10
         assert f"{venue_id}/-/Submission" not in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review_Approval" not in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Desk_Rejection"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Revision" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/-/Under_Review"  in [i.id for i in invitations]
         assert f"{venue_id}/-/Desk_Rejected" in [i.id for i in invitations]
         assert f"{venue_id}/-/Rejected" in [i.id for i in invitations]
@@ -469,6 +482,20 @@ The TMLR Editors-in-Chief
         assert invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
         assert openreview_client.get_invitation('TMLR/Paper1/-/Review_Approval')
 
+        ## Make a comment before approving the submission to be under review
+        comment_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Comment',
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            note=Note(
+                signatures=[f"{venue_id}/Paper1/Action_Editors"],
+                readers=['TMLR/Editors_In_Chief', 'TMLR/Paper1/Action_Editors'],
+                forum=note_id_1,
+                replyto=note_id_1,
+                content={
+                    'comment': { 'value': 'I\'m not sure if I should accept this paper to be under review' }
+                }
+            )
+        )
+        
         ## Accept the submission 1
         under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper1/-/Review_Approval',
                                     signatures=[f'{venue_id}/Paper1/Action_Editors'],
@@ -627,11 +654,13 @@ The TMLR Editors-in-Chief
 
         ## Check invitations as an author
         invitations = test_client.get_invitations(replyForum=note_id_2)
-        assert len(invitations) == 0
+        assert len(invitations) == 1
+        assert invitations[0].id == 'TMLR/Paper2/-/Official_Comment'
 
         ## Check invitations as an AE
         invitations = joelle_client.get_invitations(replyForum=note_id_2)
-        assert len(invitations) == 0
+        assert len(invitations) == 1
+        assert invitations[0].id == 'TMLR/Paper2/-/Official_Comment'
 
         ## Check assignment invitations
         with pytest.raises(openreview.OpenReviewException, match=r'Can not edit assignments for this submission'):
@@ -962,7 +991,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
         helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
 
         messages = journal.client.get_messages(subject = '[TMLR] Official Comment posted on submission Paper title UPDATED')
-        assert len(messages) == 4
+        assert len(messages) == 7
 
         ## Post an official comment from the reviewer
         comment_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Comment',
@@ -1015,8 +1044,8 @@ note: replies to this email will go to the AE, Joelle Pineau.
         helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
 
         messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] Official Comment posted on submission Paper title UPDATED')
-        assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Raia Hadsell,
+        assert len(messages) == 2
+        assert messages[-1]['content']['text'] == f'''Hi Raia Hadsell,
 
 An official comment has been posted on a submission for which you are serving as Editor-In-Chief.
 
@@ -1046,7 +1075,7 @@ To view the official comment, click here: https://openreview.net/forum?id={note_
         helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
 
         messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] Official Comment posted on submission Paper title UPDATED')
-        assert len(messages) == 1
+        assert len(messages) == 2
 
         # Post a public comment
         comment_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Public_Comment',
@@ -1507,11 +1536,12 @@ To view the acknowledgement, click here: https://openreview.net/forum?id={note_i
 
         ## All the comments should be public now
         comments = openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Official_Comment', sort= 'number:asc')
-        assert len(comments) == 4
-        assert comments[0].readers == ['everyone']
+        assert len(comments) == 5
+        assert comments[0].readers != ['everyone']
         assert comments[1].readers == ['everyone']
-        assert comments[2].readers != ['everyone']
+        assert comments[2].readers == ['everyone']
         assert comments[3].readers != ['everyone']
+        assert comments[4].readers != ['everyone']
 
         messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLR] Reviewer responses and discussion for your TMLR submission')
         assert len(messages) == 1
@@ -1862,6 +1892,18 @@ The TMLR Editors-in-Chief
             process_logs = openreview_client.get_process_logs(id = rating_note['id'])
             assert len(process_logs) == 1
             assert process_logs[0]['status'] == 'ok'
+
+        ## edit last rating
+        joelle_client.post_note_edit(invitation=rating_note['invitation'],
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            note=Note(
+                id = rating_note['note']['id'],
+                content={
+                    'rating': { 'value': 'Falls below expectations' }
+                }
+            )
+        )
+
 
         decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
             signatures=[f"{venue_id}/Paper1/Action_Editors"],

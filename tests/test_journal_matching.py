@@ -105,8 +105,7 @@ class TestJournalMatching():
                         'authorids': { 'value': ['~SomeFirstName_User1', '~Sigur_Ros1', '~John_Travolta1']},
                         'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                         'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                        'human_subjects_reporting': { 'value': 'Not applicable'},
-                        'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                        'human_subjects_reporting': { 'value': 'Not applicable'}
                     }
                 ))
 

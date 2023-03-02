@@ -354,6 +354,7 @@ class Journal(object):
         self.invitation_builder.set_note_revision_invitation(note)
         self.invitation_builder.set_note_withdrawal_invitation(note)
         self.invitation_builder.set_note_desk_rejection_invitation(note)
+        self.invitation_builder.set_note_comment_invitation(note, public=False) 
         self.setup_ae_assignment(note)
         self.invitation_builder.set_ae_recommendation_invitation(note, self.get_due_date(weeks = 1))
         self.setup_reviewer_assignment(note)
@@ -381,6 +382,15 @@ class Journal(object):
 
     def get_certifications(self):
         return self.settings.get('certifications', [])        
+
+    def get_submission_length(self):
+        return self.settings.get('submission_length', [])
+    
+    def get_website_url(self, key):
+        return self.settings.get('website_urls', {}).get(key, 'url not available')
+    
+    def get_editors_in_chief_email(self):
+        return self.settings.get('editors_email', self.contact_info)
 
     def should_show_conflict_details(self):
         return self.settings.get('show_conflict_details', False)
