@@ -353,11 +353,9 @@ class Venue(object):
             self.group_builder.create_senior_area_chairs_group()
 
         if self.use_ethics_reviewers:
-            print('A')
             self.group_builder.create_ethics_reviewers_group()
 
         if self.use_ethics_chairs:
-            print('B')
             self.group_builder.create_ethics_chairs_group()
 
     def recruit_reviewers(self,
