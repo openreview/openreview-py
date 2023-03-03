@@ -11,6 +11,7 @@ var VENUE_ID = '';
 var SHORT_PHRASE = '';
 var SUBMISSION_ID = '';
 var EDITORS_IN_CHIEF_NAME = '';
+var EDITORS_IN_CHIEF_EMAIL = '';
 var REVIEWERS_NAME = '';
 var ACTION_EDITOR_NAME = '';
 var JOURNAL_REQUEST_ID = '';
@@ -915,7 +916,7 @@ var renderTable = function(container, rows) {
       defaultBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n' +
         'Click on the link below to go to the submission page:\n\n{{forumUrl}}\n\n' +
         'Thank you,\n' + SHORT_PHRASE + ' Editor-in-Chief',
-      replyTo: 'tmlr-editors@jmlr.org',
+      replyTo: EDITORS_IN_CHIEF_EMAIL,
       menu: [{
         id: 'all-reviewers',
         name: 'All reviewers of selected papers',

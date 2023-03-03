@@ -91,8 +91,7 @@ class TestTACLJournal():
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'},
-                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'}
                 }
             ))
 
@@ -140,8 +139,7 @@ The TACL Editors-in-Chief
                     'supplementary_material': { 'value': '/attachment/' + 'z' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                     'human_subjects_reporting': { 'value': 'Not applicable'},
-                    'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' },
-                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                    'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' }
                 }
             ))
         helpers.await_queue_edit(openreview_client, edit_id=updated_submission_note_1['id'])
@@ -665,8 +663,7 @@ note={Featured Certification, Reproducibility Certification}
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'},
-                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'}
                 }
             ))
 
