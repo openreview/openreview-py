@@ -1239,10 +1239,12 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
+        exp_date = due_date - datetime.timedelta(days=1)
         review_stage_note = openreview.Note(
             content={
                 'review_start_date': start_date.strftime('%Y/%m/%d'),
                 'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'review_expiration_date': exp_date.strftime('%Y/%m/%d'),
                 'make_reviews_public': 'Yes, reviews should be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
@@ -1263,6 +1265,12 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             review_stage_note=test_client.post_note(review_stage_note)
 
         review_stage_note.content['make_reviews_public'] = 'No, reviews should NOT be revealed publicly when they are posted'
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Review expiration date should be after review deadline.'):
+            review_stage_note=test_client.post_note(review_stage_note)
+
+        exp_date = due_date + datetime.timedelta(days=1)
+        review_stage_note.content['review_expiration_date'] = exp_date.strftime('%Y/%m/%d')
         review_stage_note=test_client.post_note(review_stage_note)
 
         assert review_stage_note
@@ -1271,6 +1279,12 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         process_logs = client.get_process_logs(id = review_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
+
+        assert len(client.get_invitations(super='TEST.cc/2030/Conference/-/Official_Review')) == 2
+        invitation = client.get_invitation('TEST.cc/2030/Conference/Paper1/-/Official_Review')
+        # duedate + 1 day
+        exp_date = invitation.duedate + (24*60*60*1000)
+        assert invitation.expdate == exp_date
 
         client.add_members_to_group(f'{venue["venue_id"]}/Paper1/Reviewers', '~Venue_Reviewer2')
 

@@ -272,7 +272,9 @@ class InvitationBuilder(object):
         review_invitation_id = self.venue.get_invitation_id(review_stage.name)
         review_cdate = tools.datetime_millis(review_stage.start_date if review_stage.start_date else datetime.datetime.utcnow())
         review_duedate = tools.datetime_millis(review_stage.due_date) if review_stage.due_date else None
-        review_expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None
+        review_expdate = tools.datetime_millis(review_stage.exp_date) if review_stage.exp_date else None
+        if not review_expdate:
+            review_expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None
         content = default_content.review_v2.copy()
 
         for key in review_stage.additional_fields:
@@ -370,6 +372,7 @@ class InvitationBuilder(object):
 
         if review_duedate:
             invitation.edit['invitation']['duedate'] = review_duedate
+        if review_expdate:
             invitation.edit['invitation']['expdate'] = review_expdate
 
         self.save_invitation(invitation, replacement=True)
