@@ -360,6 +360,34 @@ class GroupBuilder(object):
                 senior_area_chairs_group.web = content
                 self.post_group(senior_area_chairs_group)
 
+    def create_ethics_reviewers_group(self):
+        venue_id = self.venue.id
+        ethics_reviewers_id = self.venue.get_ethics_reviewers_id()
+        ethics_reviewers_group = openreview.tools.get_group(self.client, ethics_reviewers_id)
+        if not ethics_reviewers_group:
+            ethics_reviewers_group = Group(id=ethics_reviewers_id,
+                            readers=[venue_id, ethics_reviewers_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=[]
+                        )
+            self.post_group(ethics_reviewers_group)
+                
+    def create_ethics_chairs_group(self):
+        venue_id = self.venue.id
+        ethics_chairs_id = self.venue.get_ethics_chairs_id()
+        ethics_chairs_group = openreview.tools.get_group(self.client, ethics_chairs_id)
+        if not ethics_chairs_group:
+            ethics_chairs_group = Group(id=ethics_chairs_id,
+                            readers=[venue_id, ethics_chairs_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=[]
+                        )                
+            self.post_group(ethics_chairs_group)
+
     def create_paper_committee_groups(self, submissions, overwrite=False):
 
         group_by_id = { g.id: g for g in self.client.get_all_groups(prefix=f'{self.venue.id}/{self.venue.submission_stage.name}.*') }

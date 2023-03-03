@@ -13,6 +13,8 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.request_form_id = request_form_id
         venue.use_area_chairs = note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs'
         venue.use_senior_area_chairs = note.content.get('senior_area_chairs') == 'Yes, our venue has Senior Area Chairs'
+        venue.use_ethics_chairs = note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers'
+        venue.use_ethics_reviewers = note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers'
         venue.short_name = note.content.get('Abbreviated Venue Name')
         venue.name = note.content.get('Official Venue Name')
         venue.website = note.content.get('Official Website URL')

@@ -97,6 +97,10 @@ class Venue(object):
             roles = self.reviewer_roles + [self.area_chairs_name]
         if self.use_senior_area_chairs:
             roles = roles + [self.senior_area_chairs_name]
+        if self.use_ethics_chairs:
+            roles = roles + [self.ethics_chairs_name]
+        if self.use_ethics_reviewers:
+            roles = roles + [self.ethics_reviewers_name]            
         return roles
 
     def get_meta_invitation_id(self):
@@ -346,7 +350,15 @@ class Venue(object):
             self.group_builder.create_area_chairs_group()
 
         if self.use_senior_area_chairs:
-            self.group_builder.create_senior_area_chairs_group()            
+            self.group_builder.create_senior_area_chairs_group()
+
+        if self.use_ethics_reviewers:
+            print('A')
+            self.group_builder.create_ethics_reviewers_group()
+
+        if self.use_ethics_chairs:
+            print('B')
+            self.group_builder.create_ethics_chairs_group()
 
     def recruit_reviewers(self,
         title,
