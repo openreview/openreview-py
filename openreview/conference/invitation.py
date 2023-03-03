@@ -908,11 +908,14 @@ class ReviewInvitation(openreview.Invitation):
             if review_stage.email_pcs:
                 file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
 
+            exp_date = tools.datetime_millis(review_stage.exp_date) if review_stage.exp_date else None
+            if not exp_date:
+                exp_date = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None
 
             super(ReviewInvitation, self).__init__(id = conference.get_invitation_id(review_stage.name),
                 cdate = tools.datetime_millis(review_stage.start_date),
                 duedate = tools.datetime_millis(review_stage.due_date),
-                expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None,
+                expdate = exp_date,
                 readers = ['everyone'],
                 writers = [conference.id],
                 signatures = [conference.id],

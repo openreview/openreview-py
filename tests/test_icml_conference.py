@@ -2021,12 +2021,18 @@ ICML 2023 Conference Program Chairs'''
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Review')
         assert 'summarry' in invitation.edit['note']['content']
         assert invitation.cdate > openreview.tools.datetime_millis(now)
+        # duedate + 30 min
+        exp_date = invitation.duedate + (30*60*1000)
+        assert invitation.expdate == exp_date
+
+        review_exp_date = due_date + datetime.timedelta(days=2)
 
         start_date = now - datetime.timedelta(days=2)
         review_stage_note = openreview.Note(
             content={
                 'review_start_date': start_date.strftime('%Y/%m/%d'),
                 'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'review_expiration_date': review_exp_date.strftime('%Y/%m/%d'),
                 'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Review should not be revealed to any reviewer, except to the author of the review',
@@ -2235,7 +2241,10 @@ ICML 2023 Conference Program Chairs'''
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Review')
         assert 'summarry' not in invitation.edit['note']['content']
         assert 'summary' in invitation.edit['note']['content']
-        assert invitation.cdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())    
+        assert invitation.cdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        # duedate + 2 days
+        exp_date = invitation.duedate + (2*24*60*60*1000)
+        assert invitation.expdate == exp_date
 
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password='1234')
 
