@@ -381,6 +381,7 @@ class ReviewStage(object):
     def __init__(self,
         start_date = None,
         due_date = None,
+        exp_date = None,
         name = None,
         allow_de_anonymization = False,
         public = False,
@@ -396,6 +397,7 @@ class ReviewStage(object):
 
         self.start_date = start_date
         self.due_date = due_date
+        self.exp_date = exp_date
         self.name = 'Official_Review'
         if name:
             self.name = name
