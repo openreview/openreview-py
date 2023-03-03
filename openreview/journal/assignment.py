@@ -275,16 +275,19 @@ class Assignment(object):
 
     def set_ae_assignments(self, assignment_title):
         journal = self.journal
-        proposed_assignments = self.client.get_all_edges(invitation=journal.get_ae_assignment_id(proposed=True), label=assignment_title)
+
+        proposed_assignments =  { g['id']['head']: [v['tail'] for v in g['values']] for g in self.client.get_grouped_edges(invitation=journal.get_ae_assignment_id(proposed=True),
+            label=assignment_title, groupby='head', select='tail')}        
         submission_by_id = { s.id: s for s in self.client.get_all_notes(invitation=journal.get_author_submission_id()) }
 
-        for assignment in tqdm(proposed_assignments):
-            submission = submission_by_id.get(assignment.head)
+        for head, tails in tqdm(proposed_assignments.items()):
+            submission = submission_by_id.get(head)
             if submission and submission.content['venueid']['value'] == journal.assigning_AE_venue_id:
-                self.client.post_edge(openreview.api.Edge(
-                    invitation = journal.get_ae_assignment_id(),
-                    head = assignment.head,
-                    tail = assignment.tail,
-                    weight = 1
-                ))                
+                for tail in tails:
+                    self.client.post_edge(openreview.api.Edge(
+                        invitation = journal.get_ae_assignment_id(),
+                        head = head,
+                        tail = tail,
+                        weight = 1
+                    ))                
 

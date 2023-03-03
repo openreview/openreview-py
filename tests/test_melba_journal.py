@@ -154,8 +154,7 @@ class TestJournal():
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Celeste_Martinez1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'},
-                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'}
                 }
             ))
 
@@ -191,7 +190,7 @@ The MELBA Editors-in-Chief
 
         journal.setup_ae_assignment(note)
 
-        conflicts = openreview_client.get_edges(invitation='MELBA/Action_Editors/-/Conflict')
+        conflicts = openreview_client.get_edges(invitation='MELBA/Action_Editors/-/Conflict', head=note_id_1)
         assert conflicts
         assert conflicts[0].label == 'mail.com'
 

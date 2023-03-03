@@ -18,7 +18,7 @@ class VenueStages():
 
     def setup_venue_revision(self):
 
-        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Paper Matching', 'reviewer_identity', 'area_chair_identity', 'senior_area_chair_identity', 'submissions_visibility', 'submission_readers', 'api_version']
+        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Paper Matching', 'reviewer_identity', 'area_chair_identity', 'senior_area_chair_identity', 'submissions_visibility', 'submission_readers', 'api_version', 'secondary_area_chairs']
         revision_content = {key: self.venue_request.request_content[key] for key in self.venue_request.request_content if key not in remove_fields}
         revision_content['Additional Submission Options'] = {
             'order': 18,
@@ -125,10 +125,16 @@ class VenueStages():
                 'order': 10
             },
             'review_deadline': {
-                'description': 'When does reviewing of submissions end? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'description': 'When does reviewing of submissions end? This is the official, soft deadline reviewers will see. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'required': True,
                 'order': 11
+            },
+            'review_expiration_date': {
+                'description': 'After this date, no more reviews can be submitted. This is the hard deadline reviewers will not be able to see. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59). Default is 30 minutes after the review deadline.',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'required': False,
+                'order': 12
             },
             'make_reviews_public': {
                 'description': "Should the reviews be made public immediately upon posting? Note that selecting 'Yes' will automatically release any posted reviews to the public if the submission is also public.",
@@ -907,6 +913,16 @@ class VenueRequest():
                 'required': False,
                 'order': 9
             },
+            'secondary_area_chairs': {
+                'description': 'Does your venue have Secondary Area Chairs?',
+                'value-radio': [
+                    'Yes, our venue has Secondary Area Chairs',
+                    'No, our venue does not have Secondary Area Chairs'
+                ],
+                'required': False,
+                'hidden': True,
+                'order': 9
+            },            
             'Submission Start Date': {
                 'description': 'When would you (ideally) like to have your OpenReview submission portal opened? Please specify the date and time in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59). (Skip this if only requesting paper matching service)',
                 'value-regex': '.*',

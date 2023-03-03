@@ -908,11 +908,14 @@ class ReviewInvitation(openreview.Invitation):
             if review_stage.email_pcs:
                 file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
 
+            exp_date = tools.datetime_millis(review_stage.exp_date) if review_stage.exp_date else None
+            if not exp_date:
+                exp_date = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None
 
             super(ReviewInvitation, self).__init__(id = conference.get_invitation_id(review_stage.name),
                 cdate = tools.datetime_millis(review_stage.start_date),
                 duedate = tools.datetime_millis(review_stage.due_date),
-                expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None,
+                expdate = exp_date,
                 readers = ['everyone'],
                 writers = [conference.id],
                 signatures = [conference.id],
@@ -1347,7 +1350,7 @@ class PaperMetaReviewInvitation(openreview.Invitation):
             writers = [conference.id],
             signatures = [conference.id],
             invitees = invitees + [conference.support_user],
-            noninvitees = [conference.get_authors_id(number = note.number), conference.id + '/Paper'+ str(note.number) + '/Secondary_Area_Chair'],
+            noninvitees = [conference.get_authors_id(number = note.number)] + ([conference.get_secondary_area_chairs_id(note.number)] if conference.use_secondary_area_chairs else []),
             reply = {
                 'forum': note.id,
                 'replyto': note.id,
@@ -1367,6 +1370,68 @@ class PaperMetaReviewInvitation(openreview.Invitation):
                     'description': 'How your identity will be displayed.'
                 }
             }
+        )
+
+class MetaReviewRevisionInvitation(openreview.Invitation):
+
+    def __init__(self, conference):
+
+        meta_review_revision_stage = conference.meta_review_revision_stage
+        content = default_content.meta_review.copy()
+
+        for key in meta_review_revision_stage.additional_fields:
+            content[key] = meta_review_revision_stage.additional_fields[key]
+
+        for field in meta_review_revision_stage.remove_fields:
+            if field in content:
+                del content[field]
+
+        super(MetaReviewRevisionInvitation, self).__init__(id = conference.get_invitation_id(meta_review_revision_stage.name),
+            cdate = tools.datetime_millis(meta_review_revision_stage.start_date),
+            duedate = tools.datetime_millis(meta_review_revision_stage.due_date),
+            expdate = tools.datetime_millis(meta_review_revision_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if meta_review_revision_stage.due_date else None,
+            readers = ['everyone'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            multiReply = False,
+            reply = {
+                'content': content
+            }
+        )
+
+class PaperMetaReviewRevisionInvitation(openreview.Invitation):
+
+    def __init__(self, conference, metareview):
+
+        meta_review_revision_stage = conference.meta_review_revision_stage
+
+        reply = {
+            'forum': metareview.forum,
+            'replyto': None,
+            'referent': metareview.id,
+            'readers': {
+                'description': 'Select all user groups that should be able to read this comment.',
+                'values': metareview.readers
+            },
+            'nonreaders': {
+                'values': metareview.nonreaders
+            },
+            'writers': {
+                'values-copied': [conference.get_program_chairs_id(), '{signatures}'],
+                'description': 'How your identity will be displayed.'
+            },
+            'signatures': {
+                'values-regex': '{}|{}'.format(metareview.signatures[0], conference.get_program_chairs_id()),
+                'description': 'How your identity will be displayed.'
+            }
+        }
+
+        super(PaperMetaReviewRevisionInvitation, self).__init__(id = metareview.signatures[0] + '/-/' + meta_review_revision_stage.name,
+            super = conference.get_invitation_id(meta_review_revision_stage.name),
+            writers = [conference.id],
+            signatures = [conference.id],
+            invitees = metareview.signatures + [conference.support_user],
+            reply = reply
         )
 
 class DecisionInvitation(openreview.Invitation):
@@ -1491,7 +1556,9 @@ class PaperGroupInvitation(openreview.Invitation):
             signatures = [conference.id],
             reply = {
                 'content': {
-                    'dummy': 'dummy'
+                    'dummy': {
+                        'value': 'dummy'
+                    }
                 }
             },
             process_string=file_content if with_process_function else None
@@ -1781,6 +1848,20 @@ class InvitationBuilder(object):
             return invitation
 
         return tools.concurrent_requests(post_invitation, notes, desc='set_meta_review_invitation')
+
+    def set_meta_review_revision_invitation(self, conference, metareviews):
+        invitations = []
+        self.client.post_invitation(MetaReviewRevisionInvitation(conference))
+        regex=conference.get_anon_area_chair_id(number='.*', anon_id='.*')
+
+        def set_meta_review_revision_invitation(note):
+            if re.search(regex, note.signatures[0]):
+                invitation = self.client.post_invitation(PaperMetaReviewRevisionInvitation(conference, note))
+                return invitation
+        
+        invitations = tools.concurrent_requests(set_meta_review_revision_invitation, metareviews, desc='set_meta_review_revision_invitation')
+
+        return invitations
 
     def set_decision_invitation(self, conference, notes):
         self.client.post_invitation(DecisionInvitation(conference))

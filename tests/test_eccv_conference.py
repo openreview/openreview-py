@@ -294,6 +294,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
         builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
         builder.has_area_chairs(True)
+        builder.set_submission_stage(double_blind = True)
         conference = builder.get_result()
         assert conference, 'conference is None'
         conference.set_program_chairs(['pc@eccv.org'])
@@ -1704,11 +1705,11 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         for i in range(1,3):
             secondary_group = client.post_group(openreview.Group(
-                id='{}/Paper{}/Secondary_Area_Chair'.format(conference.id, i),
+                id='{}/Paper{}/Secondary_Area_Chairs'.format(conference.id, i),
                 signatures=[],
-                signatories=['{}/Paper{}/Secondary_Area_Chair'.format(conference.id, i)],
-                readers=['{}/Paper{}/Secondary_Area_Chair'.format(conference.id, i)],
-                writers=['{}/Paper{}/Secondary_Area_Chair'.format(conference.id, i)],
+                signatories=['{}/Paper{}/Secondary_Area_Chairs'.format(conference.id, i)],
+                readers=['{}/Paper{}/Secondary_Area_Chairs'.format(conference.id, i)],
+                writers=['{}/Paper{}/Secondary_Area_Chairs'.format(conference.id, i)],
                 members=['~AreaChair_ECCV_Two1']))
             ac_group = client.get_group(conference.get_area_chairs_id(number=i))
             client.add_members_to_group(ac_group, secondary_group.id)

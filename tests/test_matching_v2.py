@@ -380,8 +380,8 @@ class TestMatching():
 
         revs_paper1 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[1].number))
         assert 2 == len(revs_paper1.members)
-        assert revs_paper1.members[0] == 'r2_venue@google.com'
-        assert revs_paper1.members[1] == 'r3_venue@fb.com'
+        assert 'r2_venue@google.com' in revs_paper1.members
+        assert 'r3_venue@fb.com' in revs_paper1.members
         assert pc_client.get_groups(prefix=venue.get_id()+'/Submission{x}/Program_Committee.*'.format(x=notes[1].number), member='r3_venue@fb.com')
         assert pc_client.get_groups(prefix=venue.get_id()+'/Submission{x}/Program_Committee.*'.format(x=notes[1].number), member='r2_venue@google.com')
 
@@ -403,6 +403,8 @@ class TestMatching():
     def test_redeploy_assigments(self, venue, openreview_client, pc_client, helpers):
 
         notes = venue.get_submissions(sort='number:asc')
+
+        venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
 
         #Reviewer assignments
         pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
@@ -463,6 +465,8 @@ class TestMatching():
         reviewer_group = openreview_client.get_group(venue.id + '/Program_Committee')
         openreview_client.add_members_to_group(reviewer_group, ['r2_venue@mit.edu'])
 
+        venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
+
         pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[0].number}/Senior_Program_Committee', '~Reviewer_Venue1'],
             nonreaders = [f'{venue.id}/Submission{notes[0].number}/Authors'],
@@ -499,17 +503,23 @@ class TestMatching():
         venue.set_assignments(assignment_title='rev-matching-emergency', committee_id=f'{venue.id}/Program_Committee')
 
         revs_paper0 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[0].number))
-        assert ['r3_venue@fb.com', '~Reviewer_Venue1', 'r2_venue@mit.edu'] == revs_paper0.members
+        assert len(revs_paper0.members) == 3
+        assert 'r3_venue@fb.com' in revs_paper0.members
+        assert '~Reviewer_Venue1' in revs_paper0.members
+        assert 'r2_venue@mit.edu' in revs_paper0.members
 
         revs_paper1 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[1].number))
-        assert ['~Reviewer_Venue1', 'r2_venue@google.com'] == revs_paper1.members
+        assert len(revs_paper1.members) == 2
+        assert '~Reviewer_Venue1' in revs_paper1.members
+        assert 'r2_venue@google.com' in revs_paper1.members
 
         revs_paper2 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[2].number))
         assert ['r2_venue@google.com'] == revs_paper2.members
 
-    #     pc_client.remove_members_from_group(f'{venue.id}/Submission3/AnonReviewer2', ['~Reviewer_Venue1'])
         pc_client.remove_members_from_group(f'{venue.id}/Submission1/Program_Committee', ['~Reviewer_Venue1'])
 
+        venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
+        
         pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[0].number}/Senior_Program_Committee', 'r2_venue@google.com'],
             nonreaders = [f'{venue.id}/Submission{notes[0].number}/Authors'],
@@ -524,13 +534,20 @@ class TestMatching():
         venue.set_assignments(assignment_title='rev-matching-emergency-2', committee_id=f'{venue.id}/Program_Committee')
 
         revs_paper0 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[0].number))
-        assert ['r3_venue@fb.com', 'r2_venue@mit.edu', 'r2_venue@google.com'] == revs_paper0.members
+        assert len(revs_paper0.members) == 3
+        assert 'r3_venue@fb.com' in revs_paper0.members
+        assert 'r2_venue@mit.edu' in revs_paper0.members
+        assert 'r2_venue@google.com' in revs_paper0.members
 
         revs_paper1 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[1].number))
-        assert ['~Reviewer_Venue1', 'r2_venue@google.com'] == revs_paper1.members
+        assert len(revs_paper1.members) == 2
+        assert '~Reviewer_Venue1' in revs_paper1.members
+        assert 'r2_venue@google.com' in revs_paper1.members
 
         revs_paper2 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[2].number))
         assert ['r2_venue@google.com'] == revs_paper2.members
+
+        venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
 
         pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[2].number}/Senior_Program_Committee', 'r2_venue@google.com'],
@@ -639,6 +656,8 @@ class TestMatching():
 
         notes = venue.get_submissions(sort='number:asc')
 
+        venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
+
         pc3_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[1].number}/Senior_Program_Committee', '~Reviewer_Venue1'],
             nonreaders = [f'{venue.id}/Submission{notes[1].number}/Authors'],
@@ -732,6 +751,8 @@ class TestMatching():
 
         assert pc_client.get_group(f'{venue.id}/Submission3/Senior_Program_Committee').members == ['ac2_venue@umass.edu']
 
+        venue.setup_committee_matching(committee_id=venue.get_area_chairs_id(), compute_conflicts=True)
+        
         pc_client.post_edge(Edge(invitation = f'{venue.id}/Senior_Program_Committee/-/Proposed_Assignment',
             readers = [venue.id, 'ac1_venue@cmu.edu'],
             nonreaders = [venue.get_authors_id(number=notes[1].number)],

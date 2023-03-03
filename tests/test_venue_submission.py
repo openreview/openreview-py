@@ -214,14 +214,36 @@ class TestVenueSubmission():
     
     def test_setup_matching(self, venue, openreview_client, helpers):
 
-        venue.setup_committee_matching(committee_id='TestVenue.cc/Reviewers', compute_conflicts=True)
-
         submissions = venue.get_submissions(sort='number:asc')
+
+        helpers.create_user('reviewer_venue_two@mail.com', 'Reviewer Venue', 'Two')
+        helpers.create_user('reviewer_venue_three@mail.com', 'Reviewer Venue', 'Three')
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/venue_affinity_scores.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in submissions:
+                writer.writerow([submission.id, '~Reviewer_Venue_One1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~Reviewer_Venue_Two1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~Reviewer_Venue_Three1', round(random.random(), 2)])
+
+        venue.setup_committee_matching(
+            committee_id='TestVenue.cc/Reviewers',
+            compute_affinity_scores=os.path.join(os.path.dirname(__file__), 'data/venue_affinity_scores.csv'),
+            compute_conflicts=True)
+
+        scores_invitation = openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Reviewers/-/Affinity_Score')
+        assert scores_invitation
+
+        affinity_edges = openreview_client.get_edges_count(invitation='TestVenue.cc/Reviewers/-/Affinity_Score')
+        assert affinity_edges == 6
+
+        conflict_invitation = openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Reviewers/-/Conflict')
+        assert conflict_invitation
+
         # #test posting proposed assignment edge
         proposed_assignment_edge = openreview_client.post_edge(Edge(
             invitation = venue.id + '/Reviewers/-/Proposed_Assignment',
-            # signatures = ['TestVenue.cc'],
-            signatures = ['TestVenue.cc/Submission1/Area_Chairs'],
+            signatures = ['TestVenue.cc'],
             head = submissions[0].id,
             tail = '~Reviewer_Venue_One1',
             readers = ['TestVenue.cc','TestVenue.cc/Submission1/Area_Chairs','~Reviewer_Venue_One1'],

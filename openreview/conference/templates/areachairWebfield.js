@@ -105,7 +105,7 @@ var main = function() {
 var getRootGroups = function() {
 
   var filterAreaChairGroups = function(group) {
-    return group.id.endsWith('Area_Chairs');
+    return group.id.endsWith('/Area_Chairs');
   }
 
   var filterAnonAreaChairGroups = function(group) {
@@ -122,15 +122,16 @@ var getRootGroups = function() {
   var allAreaChairGroupsP = Webfield.getAll('/groups', {
     member: user.id,
     regex: CONFERENCE_ID + '/Paper.*',
-    select: 'id'
+    select: 'id' + (SECONDARY_AREA_CHAIR_NAME ? ',members' : '')
   })
   .then(function(groups) {
     var secondaryAreaChairPaperNums = getPaperNumbersfromGroups(_.filter(groups, filterSecondaryAreaChairGroups));
     var areaChairPaperNums = [];
     var areaChairGroups = _.filter(groups, filterAreaChairGroups);
     var anonGroups = _.filter(groups, filterAnonAreaChairGroups);
+    var primaryAreaChairs = {};
     areaChairGroups.forEach(function(areaChairGroup) {
-      var num = getNumberfromGroup(areaChairGroup.id, 'Paper');
+      var num = parseInt(getNumberfromGroup(areaChairGroup.id, 'Paper'));
       // Filter out secondary area chairs
       if (!_.includes(secondaryAreaChairPaperNums, num)) {
         var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/Area_Chair_'); });
@@ -138,11 +139,14 @@ var getRootGroups = function() {
           anonids[num] = anonGroup.id;
           areaChairPaperNums.push(parseInt(num));
         }
+      } else {
+        primaryAreaChairs[num] = areaChairGroup.members.filter(function(m) { return m.startsWith('~'); });
       }
     });
     return {
       areaChairPaperNums: areaChairPaperNums,
-      secondaryAreaChairPaperNums: secondaryAreaChairPaperNums
+      secondaryAreaChairPaperNums: secondaryAreaChairPaperNums,
+      secondaryAreaChairPrimaryACs: primaryAreaChairs
     };
   });
 
@@ -207,10 +211,11 @@ var getInvitationRegex = function(name, numberStr) {
 var loadData = function(paperNums) {
   var acPapers = paperNums.areaChairPaperNums;
   var secondaryAcPapers = paperNums.secondaryAreaChairPaperNums;
+  var secondaryAreaChairPrimaryACs = paperNums.secondaryAreaChairPrimaryACs;
   var noteNumbers = _.uniq(_.concat(acPapers, secondaryAcPapers));
   var blindedNotesP;
   var allReviewersP;
-  var assignedSACP = $.Deferred().resolve();
+  var assignedSACsP = $.Deferred().resolve([]);
 
   if (noteNumbers.length) {
     var noteNumbersStr = noteNumbers.join(',');
@@ -256,11 +261,14 @@ var loadData = function(paperNums) {
   });
 
   if (SENIOR_AREA_CHAIRS_ID) {
-    assignedSACP = Webfield.get('/edges', { invitation: SENIOR_AREA_CHAIRS_ID + '/-/Assignment', head: user.profile.id })
+    assignedSACsP = Webfield.get('/edges', { invitation: SENIOR_AREA_CHAIRS_ID + '/-/Assignment', head: user.profile.id })
     .then(function(result) {
       if (result && result.edges.length) {
-        return result.edges[0].tail;
+        return result.edges.map(function (edge) {
+          return edge.tail;
+        });
       }
+      return []
     })
 
   }
@@ -274,7 +282,8 @@ var loadData = function(paperNums) {
     reviewerPaperRankingsP,
     acPapers,
     secondaryAcPapers,
-    assignedSACP
+    secondaryAreaChairPrimaryACs,
+    assignedSACsP
   );
 };
 
@@ -356,7 +365,7 @@ var getAllInvitations = function() {
   });
 
   var filterInvitee = function(inv) {
-    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AREA_CHAIR_NAME) !== -1; });
+    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AREA_CHAIR_NAME) !== -1 || (SECONDARY_AREA_CHAIR_NAME && invitee.indexOf(SECONDARY_AREA_CHAIR_NAME) !== -1); });
   };
 
   return $.when(
@@ -369,14 +378,14 @@ var getAllInvitations = function() {
   });
 };
 
-var formatData = function(blindedNotes, noteToReviewerIds, invitations, allReviewers, acRankingByPaper, reviewerRankingByPaper, acPapers, secondaryAcPapers, assignedSAC) {
+var formatData = function(blindedNotes, noteToReviewerIds, invitations, allReviewers, acRankingByPaper, reviewerRankingByPaper, acPapers, secondaryAcPapers, secondaryAreaChairPrimaryACs, assignedSACs) {
 
   var uniqueIds = _.uniq(_.concat(_.reduce(noteToReviewerIds, function(result, idsObj, noteNum) {
     return result.concat(_.values(idsObj));
   }, []), allReviewers));
 
-  if (assignedSAC) {
-    uniqueIds.push(assignedSAC);
+  if (assignedSACs.length) {
+    uniqueIds.concat(assignedSACs);
   }
 
   return getUserProfiles(uniqueIds)
@@ -399,7 +408,10 @@ var formatData = function(blindedNotes, noteToReviewerIds, invitations, allRevie
       reviewerRankingByPaper: reviewerRankingByPaper,
       acPapers: acPapers,
       secondaryAcPapers: secondaryAcPapers,
-      sacProfile: assignedSAC && findProfile(profiles, assignedSAC)
+      secondaryAreaChairPrimaryACs: secondaryAreaChairPrimaryACs,
+      sacProfiles: assignedSACs.length ? assignedSACs.map(function (assignedSAC) {
+        return findProfile(profiles, assignedSAC);
+      }) : []
     };
     return conferenceStatusData;
   });
@@ -504,7 +516,8 @@ var renderTable = function(rows, container, secondary_meta) {
 }
 
 var renderStatusTable = function(conferenceStatusData, container) {
-  var rows = _.map(conferenceStatusData.blindedNotes, function(note) {
+  var assignedNotes = _.filter(conferenceStatusData.blindedNotes, function(note) { return conferenceStatusData.acPapers.indexOf(note.number) > -1; });
+  var rows = _.map(assignedNotes, function(note) {
     var reviewersById = conferenceStatusData.noteToReviewerIds[note.number] || Object.create(null);
 
     var metaReview = _.find(note.details.directReplies, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
@@ -799,13 +812,14 @@ var renderStatusTable = function(conferenceStatusData, container) {
 };
 
 var renderSecondaryStatusTable = function(conferenceStatusData, container) {
-  var rows = _.map(conferenceStatusData.blindedNotes, function(note) {
+  var assignedNotes = _.filter(conferenceStatusData.blindedNotes, function(note) { return conferenceStatusData.secondaryAcPapers.indexOf(note.number) > -1; })
+  var rows = _.map(assignedNotes, function(note) {
     var revIds = conferenceStatusData.noteToReviewerIds[note.number] || Object.create(null);
     var metaReview = _.find(note.details.directReplies, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
     var noteCompletedReviews = getOfficialReviews((note.details.directReplies || []).filter(function(reply) { return reply.invitation === getInvitationId(OFFICIAL_REVIEW_NAME, note.number); }));
 
 
-    return buildTableRow(note, revIds, noteCompletedReviews, metaReview, undefined, conferenceStatusData.acRankingByPaper[note.forum], conferenceStatusData.reviewerRankingByPaper[note.forum] || {}, 'secondary');
+    return buildTableRow(note, revIds, noteCompletedReviews, metaReview, undefined, conferenceStatusData.acRankingByPaper[note.forum], conferenceStatusData.reviewerRankingByPaper[note.forum] || {}, 'secondary', conferenceStatusData.secondaryAreaChairPrimaryACs);
   });
 
   rows = Object.values(rows)
@@ -935,7 +949,7 @@ var renderTableRows = function(rows, container, secondary_meta) {
     },
     Handlebars.templates.noteSummary,
     Handlebars.templates.noteReviewers,
-    Handlebars.templates.noteMetaReviewStatus
+    secondary_meta ? Handlebars.templates.noteAreaChairs : Handlebars.templates.noteMetaReviewStatus
   ];
   var rowsHtml = rows.map(function(row) {
     return Object.values(row).map(function(cell, i) {
@@ -1029,10 +1043,19 @@ var renderTasks = function(invitations) {
 }
 
 var renderTableAndTasks = function(fetchedData) {
-
-  if (fetchedData.sacProfile && fetchedData.sacProfile.id) {
+  var sacProfiles = fetchedData.sacProfiles.filter(function (profile) {
+    return profile.id;
+  })
+  if (sacProfiles.length>1) {
+    var sacProfileLinks = sacProfiles.map(function (profile) {
+      return '<a href="https://openreview.net/profile?id=' + profile.id + '" target="_blank">' + view.prettyId(profile.id) + ' </a> (' + profile.email + ')';
+    });
     $('#header .description').append(
-      '<p class="dark">Your assigned Senior Area Chair is <a href="https://openreview.net/profile?id=' + fetchedData.sacProfile.id + '" target="_blank">' + view.prettyId(fetchedData.sacProfile.id) + ' </a> (' + fetchedData.sacProfile.email + ').</p>'
+      '<p class="dark">Your assigned Senior Area Chair are '+ sacProfileLinks.join(' , ') +'.</p>'
+    );
+  } else if(sacProfiles.length){
+    $('#header .description').append(
+      '<p class="dark">Your assigned Senior Area Chair is <a href="https://openreview.net/profile?id=' + sacProfiles[0].id + '" target="_blank">' + view.prettyId(sacProfiles[0].id) + ' </a> (' + sacProfiles[0].email + ').</p>'
     );
   }
 
@@ -1069,7 +1092,7 @@ var renderTableAndTasks = function(fetchedData) {
   Webfield.ui.done();
 }
 
-var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, metaReviewInvitation, acPaperRanking, reviewerPaperRanking, typeMetaReviewer) {
+var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, metaReviewInvitation, acPaperRanking, reviewerPaperRanking, typeMetaReviewer, secondaryAreaChairPrimaryACs) {
   var cellCheck = { selected: false, noteId: note.id };
   var referrerContainer = typeMetaReviewer === 'secondary' ? '#secondary-papers' : '#assigned-papers' ;
   var referrerUrl = encodeURIComponent('[Area Chair Console](/group?id=' + CONFERENCE_ID + '/' + AREA_CHAIR_NAME + referrerContainer + ')');
@@ -1188,6 +1211,15 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
   if (metaReviewInvitation) {
     cell3.invitationUrl = '/forum?' + $.param(invitationUrlParams);;
   }
+
+  if (typeMetaReviewer == 'secondary') {
+    cell3 = {
+      numMetaReview: metaReview ? 'One' : 'No',
+      areachair: { name: secondaryAreaChairPrimaryACs[note.number].map(function(m) { return view.prettyId(m);}) },
+      metaReview: metaReview,
+      referrer: referrerUrl
+    }    
+  }  
 
   return {
     cellCheck: cellCheck,

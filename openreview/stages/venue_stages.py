@@ -381,6 +381,7 @@ class ReviewStage(object):
     def __init__(self,
         start_date = None,
         due_date = None,
+        exp_date = None,
         name = None,
         allow_de_anonymization = False,
         public = False,
@@ -396,6 +397,7 @@ class ReviewStage(object):
 
         self.start_date = start_date
         self.due_date = due_date
+        self.exp_date = exp_date
         self.name = 'Official_Review'
         if name:
             self.name = name
@@ -746,6 +748,9 @@ class CommentStage(object):
         if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
             committee.append(conference.get_anon_area_chair_id(number=number, anon_id='.*'))
 
+        if conference.use_secondary_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
+            committee.append(conference.get_anon_secondary_area_chair_id(number=number, anon_id='.*'))
+
         if self.Readers.REVIEWERS_ASSIGNED in self.invitees or self.Readers.REVIEWERS_SUBMITTED in self.invitees:
             committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
 
@@ -800,6 +805,7 @@ class MetaReviewStage(object):
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.process = None
+        self.recommendation_field_name = 'recommendation',
 
     def _get_reviewer_readers(self, conference, number):
         if self.release_to_reviewers is MetaReviewStage.Readers.REVIEWERS:
@@ -850,6 +856,15 @@ class MetaReviewStage(object):
             committee.append(conference.get_anon_area_chair_id(number=number, anon_id='.*'))
 
         return '|'.join(committee)
+
+class MetaReviewRevisionStage(object):
+
+    def __init__(self, start_date = None, due_date = None, name = 'Meta_Review_Revision', additional_fields = {}, remove_fields = []):
+        self.start_date = start_date
+        self.due_date = due_date
+        self.name = name
+        self.additional_fields = additional_fields
+        self.remove_fields = remove_fields
 
 class DecisionStage(object):
 

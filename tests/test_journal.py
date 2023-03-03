@@ -57,7 +57,7 @@ class TestJournal():
         openreview_client.merge_profiles('~David_Belanger1', '~David_K_Belanger1')
 
         ## Authors
-        melisa_client = helpers.create_user('melissa@maileight.com', 'Melissa', 'Bok')
+        melisa_client = helpers.create_user('melissa@maileight.com', 'Melissa', 'Eight')
         celeste_client = helpers.create_user('celeste@mailnine.com', 'Celeste Ana', 'Martinez')
 
         #post journal request form
@@ -83,7 +83,20 @@ class TestJournal():
                                 'Featured Certification',
                                 'Reproducibility Certification',
                                 'Survey Certification'
-                            ]
+                            ],
+                            'submission_length': [
+                                'Regular submission (no more than 12 pages of main content)', 
+                                'Long submission (more than 12 pages of main content)'
+                            ],
+                            'issn': '2835-8856',
+                            'website_urls': {
+                                'editorial_board': 'https://jmlr.org/tmlr/editorial-board.html',
+                                'evaluation_criteria': 'https://jmlr.org/tmlr/editorial-policies.html#evaluation',
+                                'reviewer_guide': 'https://jmlr.org/tmlr/reviewer-guide.html',
+                                'editorial_policies': 'https://jmlr.org/tmlr/editorial-policies.html',
+                                'faq': 'https://jmlr.org/tmlr/contact.html'                     
+                            },
+                            'editors_email': 'tmlr-editors@jmlr.org'
                         }
                     }
                 }
@@ -222,8 +235,8 @@ class TestJournal():
                 content={
                     'title': { 'value': 'Paper title' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Bok']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Eight1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     #'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -252,7 +265,7 @@ The TMLR Editors-in-Chief
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper1/Authors")
         assert author_group
-        assert author_group.members == ['~SomeFirstName_User1', '~Melissa_Bok1']
+        assert author_group.members == ['~SomeFirstName_User1', '~Melissa_Eight1']
         assert openreview_client.get_group(f"{venue_id}/Paper1/Reviewers")
         assert openreview_client.get_group(f"{venue_id}/Paper1/Action_Editors")
 
@@ -262,17 +275,18 @@ The TMLR Editors-in-Chief
         assert note.readers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Eight1']
         assert note.content['venue']['value'] == 'Submitted to TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Submitted'
 
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 9
+        assert len(invitations) == 10
         assert f"{venue_id}/-/Submission" not in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review_Approval" not in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Desk_Rejection"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Revision" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/-/Under_Review"  in [i.id for i in invitations]
         assert f"{venue_id}/-/Desk_Rejected" in [i.id for i in invitations]
         assert f"{venue_id}/-/Rejected" in [i.id for i in invitations]
@@ -341,12 +355,12 @@ The TMLR Editors-in-Chief
         assert note.content['venueid']['value'] == 'TMLR/Submitted'
         assert note.content['supplementary_material']['value'] == '/attachment/zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz.zip'
         assert note.content['supplementary_material']['readers'] == ["TMLR", "TMLR/Paper1/Action_Editors", "TMLR/Paper1/Reviewers", "TMLR/Paper1/Authors"]
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Eight1']
         assert note.content['authorids']['readers'] == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper1/Authors")
         assert author_group
-        assert author_group.members == ['~SomeFirstName_User1', '~Melissa_Bok1']
+        assert author_group.members == ['~SomeFirstName_User1', '~Melissa_Eight1']
 
         ## Post the submission 2
         submission_note_2 = test_client.post_note_edit(invitation='TMLR/-/Submission',
@@ -468,6 +482,20 @@ The TMLR Editors-in-Chief
         assert invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
         assert openreview_client.get_invitation('TMLR/Paper1/-/Review_Approval')
 
+        ## Make a comment before approving the submission to be under review
+        comment_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Comment',
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            note=Note(
+                signatures=[f"{venue_id}/Paper1/Action_Editors"],
+                readers=['TMLR/Editors_In_Chief', 'TMLR/Paper1/Action_Editors'],
+                forum=note_id_1,
+                replyto=note_id_1,
+                content={
+                    'comment': { 'value': 'I\'m not sure if I should accept this paper to be under review' }
+                }
+            )
+        )
+        
         ## Accept the submission 1
         under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper1/-/Review_Approval',
                                     signatures=[f'{venue_id}/Paper1/Action_Editors'],
@@ -479,11 +507,12 @@ The TMLR Editors-in-Chief
 
         note = joelle_client.get_note(note_id_1)
         assert note
+        assert note.odate
         assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Eight1']
         assert note.content['venue']['value'] == 'Under review for TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Under_Review'
         assert note.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'
@@ -625,11 +654,13 @@ The TMLR Editors-in-Chief
 
         ## Check invitations as an author
         invitations = test_client.get_invitations(replyForum=note_id_2)
-        assert len(invitations) == 0
+        assert len(invitations) == 1
+        assert invitations[0].id == 'TMLR/Paper2/-/Official_Comment'
 
         ## Check invitations as an AE
         invitations = joelle_client.get_invitations(replyForum=note_id_2)
-        assert len(invitations) == 0
+        assert len(invitations) == 1
+        assert invitations[0].id == 'TMLR/Paper2/-/Official_Comment'
 
         ## Check assignment invitations
         with pytest.raises(openreview.OpenReviewException, match=r'Can not edit assignments for this submission'):
@@ -960,7 +991,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
         helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
 
         messages = journal.client.get_messages(subject = '[TMLR] Official Comment posted on submission Paper title UPDATED')
-        assert len(messages) == 4
+        assert len(messages) == 7
 
         ## Post an official comment from the reviewer
         comment_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Comment',
@@ -1013,8 +1044,8 @@ note: replies to this email will go to the AE, Joelle Pineau.
         helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
 
         messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] Official Comment posted on submission Paper title UPDATED')
-        assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Raia Hadsell,
+        assert len(messages) == 2
+        assert messages[-1]['content']['text'] == f'''Hi Raia Hadsell,
 
 An official comment has been posted on a submission for which you are serving as Editor-In-Chief.
 
@@ -1044,7 +1075,7 @@ To view the official comment, click here: https://openreview.net/forum?id={note_
         helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
 
         messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] Official Comment posted on submission Paper title UPDATED')
-        assert len(messages) == 1
+        assert len(messages) == 2
 
         # Post a public comment
         comment_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Public_Comment',
@@ -1242,7 +1273,7 @@ The TMLR Editors-in-Chief
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Review',
-                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 30)) + 2000,
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 14)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
@@ -1250,10 +1281,47 @@ The TMLR Editors-in-Chief
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-0-2')
 
         messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
-        assert len(messages) == 5
+        assert len(messages) == 7
 
         messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
-        assert len(messages) == 8
+        assert len(messages) == 4
+        assert messages[-1]['content']['to'] == 'joelle@mailseven.com'
+        assert messages[-1]['content']['text'] == f'''Hi Joelle Pineau,
+
+Our records show that a reviewer on a paper you are the AE for is *two weeks* late on a reviewing task:
+
+Task: Review
+Reviewer: Antony Bal
+Submission: Paper title UPDATED
+Link: https://openreview.net/forum?id={note_id_1}
+
+Please follow up directly with the reviewer in question to ensure they complete their task ASAP.
+
+We thank you for your cooperation.
+
+The TMLR Editors-in-Chief
+'''        
+
+
+        ## Check review reminders
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Review',
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 30)) + 2000,
+                signatures=['TMLR/Editors_In_Chief']
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-0-3')
+
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 9
+
+        messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 10
 
         messages = journal.client.get_messages(to= 'raia@mail.com', subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
         assert len(messages) == 2
@@ -1271,9 +1339,9 @@ OpenReview Team
 '''
 
         messages = journal.client.get_messages(to= 'joelle@mailseven.com', subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
-        assert len(messages) == 4
+        assert len(messages) == 6
 
-        assert messages[2]['content']['text'] == f'''Hi Joelle Pineau,
+        assert messages[4]['content']['text'] == f'''Hi Joelle Pineau,
 
 Our records show that a reviewer on a paper you are the AE for is *one month* late on a reviewing task:
 
@@ -1305,8 +1373,8 @@ The TMLR Editors-in-Chief
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement-0-0')
 
         messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
-        assert len(messages) == 3
-        assert messages[2]['content']['text'] == f'''Hi Carlos Mondragon,
+        assert len(messages) == 5
+        assert messages[4]['content']['text'] == f'''Hi Carlos Mondragon,
 
 Our records show that you are late on the current reviewing task:
 
@@ -1322,6 +1390,67 @@ We thank you for your cooperation.
 The TMLR Editors-in-Chief
 '''
 
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement',
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 5)) + 2000,
+                signatures=['TMLR/Editors_In_Chief']
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement-0-1')
+
+        messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 6
+        assert messages[5]['content']['text'] == f'''Hi Carlos Mondragon,
+
+Our records show that you are late on the current reviewing task:
+
+Task: Assignment Acknowledgement
+Submission: Paper title UPDATED
+Number of days late: five days
+Link: https://openreview.net/forum?id={note_id_1}
+
+Please follow the provided link and complete your task ASAP.
+
+We thank you for your cooperation.
+
+The TMLR Editors-in-Chief
+'''
+
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement',
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 12)) + 2000,
+                signatures=['TMLR/Editors_In_Chief']
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement-0-2')
+
+        messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 7
+        assert messages[6]['content']['text'] == f'''Hi Carlos Mondragon,
+
+Our records show that you are late on the current reviewing task:
+
+Task: Assignment Acknowledgement
+Submission: Paper title UPDATED
+Number of days late: twelve days
+Link: https://openreview.net/forum?id={note_id_1}
+
+Please follow the provided link and complete your task ASAP.
+
+We thank you for your cooperation.
+
+The TMLR Editors-in-Chief
+'''
 
         late_reviewers = journal.get_late_invitees('TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement')
         assert late_reviewers
@@ -1407,11 +1536,12 @@ To view the acknowledgement, click here: https://openreview.net/forum?id={note_i
 
         ## All the comments should be public now
         comments = openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Official_Comment', sort= 'number:asc')
-        assert len(comments) == 4
-        assert comments[0].readers == ['everyone']
+        assert len(comments) == 5
+        assert comments[0].readers != ['everyone']
         assert comments[1].readers == ['everyone']
-        assert comments[2].readers != ['everyone']
+        assert comments[2].readers == ['everyone']
         assert comments[3].readers != ['everyone']
+        assert comments[4].readers != ['everyone']
 
         messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLR] Reviewer responses and discussion for your TMLR submission')
         assert len(messages) == 1
@@ -1763,6 +1893,18 @@ The TMLR Editors-in-Chief
             assert len(process_logs) == 1
             assert process_logs[0]['status'] == 'ok'
 
+        ## edit last rating
+        joelle_client.post_note_edit(invitation=rating_note['invitation'],
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            note=Note(
+                id = rating_note['note']['id'],
+                content={
+                    'rating': { 'value': 'Falls below expectations' }
+                }
+            )
+        )
+
+
         decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
             signatures=[f"{venue_id}/Paper1/Action_Editors"],
             note=Note(
@@ -1781,6 +1923,8 @@ The TMLR Editors-in-Chief
         decision_note = joelle_client.get_note(decision_note['note']['id'])
         assert decision_note.readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors"]
 
+        submission = openreview_client.get_note(note_id_1)
+        assert 'TMLR/Decision_Pending' == submission.content['venueid']['value']
 
         ## Second decision note and get an error
         with pytest.raises(openreview.OpenReviewException, match=r'You have reached the maximum number \(1\) of replies for this Invitation'):
@@ -1845,8 +1989,8 @@ The TMLR Editors-in-Chief
             note=Note(
                 content={
                     'title': { 'value': 'Paper title VERSION 2' },
-                    'authors': { 'value': ['Melissa Bok', 'SomeFirstName User'] },
-                    'authorids': { 'value': ['~Melissa_Bok1', '~SomeFirstName_User1'] },
+                    'authors': { 'value': ['Melissa Eight', 'SomeFirstName User'] },
+                    'authorids': { 'value': ['~Melissa_Eight1', '~SomeFirstName_User1'] },
                     'abstract': { 'value': 'Paper abstract' },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -1863,14 +2007,14 @@ The TMLR Editors-in-Chief
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/-/Edit', 'TMLR/Paper1/-/Camera_Ready_Revision']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~Melissa_Bok1', '~SomeFirstName_User1']
-        assert note.content['authors']['value'] == ['Melissa Bok', 'SomeFirstName User']
-        assert note.content['venue']['value'] == 'Under review for TMLR'
-        assert note.content['venueid']['value'] == 'TMLR/Under_Review'
+        assert note.content['authorids']['value'] == ['~Melissa_Eight1', '~SomeFirstName_User1']
+        assert note.content['authors']['value'] == ['Melissa Eight', 'SomeFirstName User']
+        assert note.content['venue']['value'] == 'Decision pending for TMLR'
+        assert note.content['venueid']['value'] == 'TMLR/Decision_Pending'
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
 
@@ -1974,12 +2118,13 @@ The TMLR Editors-in-Chief
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted']
+        assert note.pdate
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/-/Edit', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~Melissa_Bok1', '~SomeFirstName_User1']
-        assert note.content['authors']['value'] == ['Melissa Bok', 'SomeFirstName User']
+        assert note.content['authorids']['value'] == ['~Melissa_Eight1', '~SomeFirstName_User1']
+        assert note.content['authors']['value'] == ['Melissa Eight', 'SomeFirstName User']
         # Check with cArlos
         assert note.content['authorids'].get('readers') == ['everyone']
         assert note.content['authors'].get('readers') == ['everyone']
@@ -1988,10 +2133,11 @@ The TMLR Editors-in-Chief
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
-bok''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+eight''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
-author={Melissa Bok and SomeFirstName User},
+author={Melissa Eight and SomeFirstName User},
 journal={Transactions on Machine Learning Research},
+issn={2835-8856},
 year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Featured Certification, Reproducibility Certification}
@@ -2014,8 +2160,8 @@ note={Featured Certification, Reproducibility Certification}
             note=Note(
                 content={
                     'title': { 'value': 'Paper title VERSION 2' },
-                    'authors': { 'value': ['Melissa Bok', 'SomeFirstName User', 'Celeste Ana Martinez'] },
-                    'authorids': { 'value': ['~Melissa_Bok1', '~SomeFirstName_User1', '~Celeste_Ana_Martinez1'] },
+                    'authors': { 'value': ['Melissa Eight', 'SomeFirstName User', 'Celeste Ana Martinez'] },
+                    'authorids': { 'value': ['~Melissa_Eight1', '~SomeFirstName_User1', '~Celeste_Ana_Martinez1'] },
                     'abstract': { 'value': 'Paper abstract' },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -2032,12 +2178,12 @@ note={Featured Certification, Reproducibility Certification}
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Edit']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/-/Edit', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~Melissa_Bok1', '~SomeFirstName_User1', '~Celeste_Ana_Martinez1']
-        assert note.content['authors']['value'] == ['Melissa Bok', 'SomeFirstName User', 'Celeste Ana Martinez']
+        assert note.content['authorids']['value'] == ['~Melissa_Eight1', '~SomeFirstName_User1', '~Celeste_Ana_Martinez1']
+        assert note.content['authors']['value'] == ['Melissa Eight', 'SomeFirstName User', 'Celeste Ana Martinez']
         # Check with cArlos
         assert note.content['authorids'].get('readers') == ['everyone']
         assert note.content['authors'].get('readers') == ['everyone']
@@ -2046,10 +2192,11 @@ note={Featured Certification, Reproducibility Certification}
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
-bok''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+eight''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
-author={Melissa Bok and SomeFirstName User and Celeste Ana Martinez},
+author={Melissa Eight and SomeFirstName User and Celeste Ana Martinez},
 journal={Transactions on Machine Learning Research},
+issn={2835-8856},
 year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Featured Certification, Reproducibility Certification}
@@ -2111,11 +2258,11 @@ The TMLR Editors-in-Chief
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Edit', 'TMLR/-/Retracted']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/-/Edit', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Retracted']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~Melissa_Bok1', '~SomeFirstName_User1', '~Celeste_Ana_Martinez1']
+        assert note.content['authorids']['value'] == ['~Melissa_Eight1', '~SomeFirstName_User1', '~Celeste_Ana_Martinez1']
         # Check with cArlos
         assert note.content['authorids'].get('readers') == ['everyone']
         assert note.content['authors'].get('readers') == ['everyone']
@@ -2124,9 +2271,9 @@ The TMLR Editors-in-Chief
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
-bok''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+eight''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
-author={Melissa Bok and SomeFirstName User and Celeste Ana Martinez},
+author={Melissa Eight and SomeFirstName User and Celeste Ana Martinez},
 journal={Submitted to Transactions on Machine Learning Research},
 year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
@@ -2163,8 +2310,8 @@ note={Retracted after acceptance}
                 content={
                     'title': { 'value': 'Paper title 4' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Bok']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Eight1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -2604,11 +2751,11 @@ The TMLR Editors-in-Chief
         assert note
         assert note.forum == note_id_4
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Rejected']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Edit', 'TMLR/-/Rejected']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper4/Authors']
         assert note.signatures == ['TMLR/Paper4/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Eight1']
         assert note.content['venue']['value'] == 'Rejected by TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Rejected'
         assert note.content['title']['value'] == 'Paper title 4'
@@ -2636,11 +2783,11 @@ note={Rejected}
         assert note
         assert note.forum == note_id_4
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Rejected', 'TMLR/-/Authors_Release']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Edit', 'TMLR/-/Rejected', 'TMLR/-/Authors_Release']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper4/Authors']
         assert note.signatures == ['TMLR/Paper4/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Eight1']
         assert note.content['authorids'].get('readers') == ['everyone']
         assert note.content['authors'].get('readers') == ['everyone']
         assert note.content['venue']['value'] == 'Rejected by TMLR'
@@ -2650,7 +2797,7 @@ note={Rejected}
         assert note.content['_bibtex']['value'] == '''@article{
 user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title 4},
-author={SomeFirstName User and Melissa Bok},
+author={SomeFirstName User and Melissa Eight},
 journal={Submitted to Transactions on Machine Learning Research},
 year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_4 + '''},
@@ -2671,14 +2818,14 @@ note={Rejected}
         assert f"{venue_id}/Paper4/-/Authors_De-Anonymization" in [i.id for i in invitations]
 
         ## Check pending review edges
-        edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
-        assert len(edges) == 6
-        assert edges[0].weight == 0
-        assert edges[1].weight == 0
-        assert edges[2].weight == 0
-        assert edges[3].weight == 0
-        assert edges[4].weight == 0
-        assert edges[5].weight == 0
+        edges_count = joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews')
+        assert edges_count == 6
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Carlos_Mondragon1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='antony@irobot.com')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 0
 
     def test_eic_submission(self, journal, openreview_client, test_client, helpers):
 
@@ -2705,8 +2852,8 @@ note={Rejected}
                 content={
                     'title': { 'value': 'Paper title 5' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Bok', 'Raia Hadsell']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1', '~Raia_Hadsell1']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight', 'Raia Hadsell']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Eight1', '~Raia_Hadsell1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -3003,8 +3150,8 @@ The TMLR Editors-in-Chief
                 content={
                     'title': { 'value': 'Paper title 6' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Bok']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Eight1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -3224,7 +3371,7 @@ The TMLR Editors-in-Chief
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper6/Authors']
         assert note.signatures == ['TMLR/Paper6/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Eight1']
         assert note.content['venue']['value'] == 'Withdrawn by Authors'
         assert note.content['venueid']['value'] == 'TMLR/Withdrawn_Submission'
 
@@ -3263,7 +3410,7 @@ The TMLR Editors-in-Chief
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper6/Authors']
         assert note.signatures == ['TMLR/Paper6/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Eight1']
         assert note.content['authorids'].get('readers') == ['everyone']
         assert note.content['authors'].get('readers') == ['everyone']
         assert note.content['venue']['value'] == 'Withdrawn by Authors'
@@ -3273,7 +3420,7 @@ The TMLR Editors-in-Chief
         assert note.content['_bibtex']['value'] == '''@article{
 user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title 6},
-author={SomeFirstName User and Melissa Bok},
+author={SomeFirstName User and Melissa Eight},
 journal={Submitted to Transactions on Machine Learning Research},
 year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_6 + '''},
@@ -3296,8 +3443,8 @@ note={Withdrawn}
                 content={
                     'title': { 'value': 'Paper title 7' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Bok']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Eight1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -3422,8 +3569,8 @@ The TMLR Editors-in-Chief
                 content={
                     'title': { 'value': 'Paper title 8' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Bok']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Eight1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -3569,8 +3716,8 @@ The TMLR Editors-in-Chief
                 content={
                     'title': { 'value': 'Paper title 9' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Bok']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Eight1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -3599,7 +3746,7 @@ The TMLR Editors-in-Chief
         assert note.readers == ['TMLR', 'TMLR/Paper9/Action_Editors', 'TMLR/Paper9/Authors']
         assert note.writers == ['TMLR', 'TMLR/Paper9/Action_Editors']
         assert note.signatures == ['TMLR/Paper9/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Eight1']
         assert note.content['venue']['value'] == 'Desk rejected by TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Desk_Rejected'
         assert note.content['title']['value'] == 'Paper title 9'
@@ -3640,8 +3787,8 @@ The TMLR Editors-in-Chief
                 content={
                     'title': { 'value': 'Paper title 4' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Bok']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Eight1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -3775,3 +3922,105 @@ The TMLR Editors-in-Chief
         journal.invitation_builder.expire_paper_invitations(note)
         journal.invitation_builder.expire_reviewer_responsibility_invitations()
         journal.invitation_builder.expire_assignment_availability_invitations()
+
+    def test_decline_desk_rejection(self, journal, openreview_client, helpers):
+
+        venue_id = journal.venue_id
+        editor_in_chief_group_id = journal.get_editors_in_chief_id()
+        test_client = OpenReviewClient(username='test@mail.com', password='1234')
+        raia_client = OpenReviewClient(username='raia@mail.com', password='1234')
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password='1234')        
+
+        ## Post the submission 12
+        submission_note_12 = test_client.post_note_edit(invitation='TMLR/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title 12' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Eight1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Long submission (more than 12 pages of main content)'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_12['id'])
+        note_id_12=submission_note_12['note']['id']
+
+        # Assign Action Editor
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_12,
+            tail='~Joelle_Pineau1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        desk_reject_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper12/-/Review_Approval',
+                                    signatures=[f'{venue_id}/Paper12/Action_Editors'],
+                                    note=Note(content={
+                                        'under_review': { 'value': 'Desk Reject' },
+                                        'comment': { 'value': 'this paper is not ready' }
+                                    }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
+        
+        assert openreview_client.get_invitation(f"{venue_id}/Paper12/-/Desk_Rejection_Approval")
+        approval_note = raia_client.post_note_edit(invitation='TMLR/Paper12/-/Desk_Rejection_Approval',
+                            signatures=[f"{venue_id}/Editors_In_Chief"],
+                            note=Note(
+                                signatures=[f"{venue_id}/Editors_In_Chief"],
+                                forum=note_id_12,
+                                replyto=desk_reject_note['note']['id'],
+                                content= {
+                                    'approval': { 'value': 'I don\'t approve the AE\'s decision. Submission should be appropriate for review.' }
+                                 }
+                            ))
+        
+        helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
+        
+        notes = openreview_client.get_notes(invitation='TMLR/Paper12/-/Review_Approval', signature='TMLR/Editors_In_Chief')
+        edits = openreview_client.get_note_edits(notes[0].id)
+        edit = [e for e in edits if 'TMLR/Paper12/-/Review_Approval' == e.invitation][0]
+        helpers.await_queue_edit(openreview_client, edit_id=edit.id)
+
+        note = joelle_client.get_note(note_id_12)
+        assert note
+        assert note.odate
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review']
+        assert note.readers == ['everyone']
+        assert note.writers == ['TMLR', 'TMLR/Paper12/Authors']
+        assert note.signatures == ['TMLR/Paper12/Authors']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Eight1']
+        assert note.content['venue']['value'] == 'Under review for TMLR'
+        assert note.content['venueid']['value'] == 'TMLR/Under_Review'
+        assert note.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'
+        assert note.content['_bibtex']['value'] == '''@article{
+anonymous''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+title={Paper title 12},
+author={Anonymous},
+journal={Submitted to Transactions on Machine Learning Research},
+year={''' + str(datetime.datetime.today().year) + '''},
+url={https://openreview.net/forum?id=''' + note_id_12 + '''},
+note={Under review}
+}'''                                                                              
+
+        edits = openreview_client.get_note_edits(note.id, invitation='TMLR/-/Under_Review')
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+
+        messages = openreview_client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Perform reviewer assignments for TMLR submission Paper title 12')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(subject='[TMLR] Review Approval edited on submission Paper title 12')
+        assert len(messages) == 3, messages
+        
+        messages = openreview_client.get_messages(to = 'melissa@maileight.com', subject = '[TMLR] Review Approval edited on submission Paper title 12')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'Hi Melissa Eight,\n\nA review approval has been edited on your submission.\n\nSubmission: Paper title 12\nUnder review: Appropriate for Review\nComment: \n\nTo view the review approval, click here: https://openreview.net/forum?id={note_id_12}&noteId={notes[0].id}\n\n'

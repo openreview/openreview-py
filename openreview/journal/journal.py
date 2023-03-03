@@ -38,6 +38,7 @@ class Journal(object):
         self.submission_group_name = 'Paper'
         self.submitted_venue_id = f'{venue_id}/Submitted'
         self.under_review_venue_id = f'{venue_id}/Under_Review'
+        self.decision_pending_venue_id = f'{venue_id}/Decision_Pending'
         self.rejected_venue_id = f'{venue_id}/Rejected'
         self.desk_rejected_venue_id = f'{venue_id}/Desk_Rejected'
         self.withdrawn_venue_id = f'{venue_id}/Withdrawn_Submission'
@@ -353,6 +354,7 @@ class Journal(object):
         self.invitation_builder.set_note_revision_invitation(note)
         self.invitation_builder.set_note_withdrawal_invitation(note)
         self.invitation_builder.set_note_desk_rejection_invitation(note)
+        self.invitation_builder.set_note_comment_invitation(note, public=False) 
         self.setup_ae_assignment(note)
         self.invitation_builder.set_ae_recommendation_invitation(note, self.get_due_date(weeks = 1))
         self.setup_reviewer_assignment(note)
@@ -372,11 +374,23 @@ class Journal(object):
     def is_submission_public(self):
         return self.settings.get('submission_public', True)
 
+    def get_issn(self):
+        return self.settings.get('issn', None)
+
     def are_authors_anonymous(self):
         return self.settings.get('author_anonymity', True)
 
     def get_certifications(self):
         return self.settings.get('certifications', [])        
+
+    def get_submission_length(self):
+        return self.settings.get('submission_length', [])
+    
+    def get_website_url(self, key):
+        return self.settings.get('website_urls', {}).get(key, 'url not available')
+    
+    def get_editors_in_chief_email(self):
+        return self.settings.get('editors_email', self.contact_info)
 
     def should_show_conflict_details(self):
         return self.settings.get('show_conflict_details', False)
@@ -443,7 +457,7 @@ class Journal(object):
 
         first_word = re.sub('[^a-zA-Z]', '', note.content['title']['value'].split(' ')[0].lower())
         bibtex_title = u.unicode_to_latex(note.content['title']['value'])
-        year = datetime.datetime.fromtimestamp(note.cdate/1000).year
+        year = datetime.datetime.utcnow().year
 
         if new_venue_id == self.under_review_venue_id:
 
@@ -512,6 +526,7 @@ class Journal(object):
 
         if new_venue_id == self.accepted_venue_id:
 
+            year = datetime.datetime.fromtimestamp(note.pdate/1000).year if note.pdate else year
             first_author_last_name = 'anonymous'
             authors = 'Anonymous'
             if 'everyone' in self.get_release_authors_readers(note.number):
@@ -519,12 +534,19 @@ class Journal(object):
                 first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
                 authors = ' and '.join(note.content['authors']['value'])
 
+            issn = self.get_issn()
+
             bibtex = [
                 '@article{',
                 utf8tolatex(first_author_last_name + str(year) + first_word + ','),
                 'title={' + bibtex_title + '},',
                 'author={' + utf8tolatex(authors) + '},',
                 'journal={' + self.full_name + '},',
+            ]
+            if issn:
+                bibtex.append('issn={' + issn + '},')
+            
+            bibtex = bibtex + [
                 'year={' + str(year) + '},',
                 'url={https://openreview.net/forum?id=' + note.forum + '},',
                 'note={' + ', '.join(certifications) + '}',
@@ -567,7 +589,7 @@ class Journal(object):
                     invitee_members.append(profile.id)
                 elif '@' in invitee:
                     profile = openreview.tools.get_profile(self.client, invitee)
-                    invitee_members.append(profile.id)
+                    invitee_members.append(profile.id if profile else invitee)
                 else:
                     invitee_members = invitee_members + self.client.get_group(invitee).members
 

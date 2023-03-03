@@ -2,12 +2,13 @@ import openreview
 import datetime
 import json
 
-def get_conference(client, request_form_id, support_user='OpenReview.net/Support'):
+def get_conference(client, request_form_id, support_user='OpenReview.net/Support', setup=True):
 
     note = client.get_note(request_form_id)
     if note.content.get('api_version') == '2':
         urls = openreview.tools.get_base_urls(client)
         openreview_client = openreview.api.OpenReviewClient(baseurl = urls[1], token=client.token)
+        domain_group = openreview.tools.get_group(openreview_client, note.content['venue_id'])
         venue = openreview.venue.Venue(openreview_client, note.content['venue_id'], support_user)
         venue.request_form_id = request_form_id
         venue.use_area_chairs = note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs'
@@ -19,6 +20,11 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')
         venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
         venue.senior_area_chair_identity_readers = get_identity_readers(note, 'senior_area_chair_identity')
+        
+        if domain_group:
+            venue.enable_reviewers_reassignment = domain_group.content.get('enable_reviewers_reassignment', {}).get('value', False)
+            venue.reviewers_proposed_assignment_title = domain_group.content.get('reviewers_proposed_assignment_title', {}).get('value')
+            venue.conflict_policy = domain_group.content.get('conflict_policy', {}).get('value', 'default')
 
         venue.submission_stage = get_submission_stage(note)
         venue.review_stage = get_review_stage(note)
@@ -34,8 +40,9 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         if 'OpenReview Affinity' in paper_matching_options:
             venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date, include_option=include_expertise_selection)
 
-        venue.setup(note.content.get('program_chair_emails'))
-        venue.create_submission_stage()
+        if setup:
+            venue.setup(note.content.get('program_chair_emails'))
+            venue.create_submission_stage()
         return venue
 
     builder = get_conference_builder(client, request_form_id, support_user)
@@ -134,6 +141,9 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     if note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers':
         builder.has_ethics_chairs(True)
         builder.has_ethics_reviewers(True)
+
+    if note.content.get('secondary_area_chairs') == 'Yes, our venue has Secondary Area Chairs':
+        builder.has_secondary_area_chairs(True)
 
     double_blind = (note.content.get('Author and Reviewer Anonymity', '') == 'Double-blind')
 
@@ -286,6 +296,7 @@ def get_submission_stage(request_forum):
 
     readers_map = {
         'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)': [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.REVIEWERS],
+        'All area chairs only': [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS],
         'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)': [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.REVIEWERS_ASSIGNED],
         'Program chairs and paper authors only': [],
         'Everyone (submissions are public)': [openreview.stages.SubmissionStage.Readers.EVERYONE],
@@ -337,6 +348,10 @@ def get_submission_stage(request_forum):
     if isinstance(submission_additional_options, str):
         submission_additional_options = json.loads(submission_additional_options.strip())
 
+    subject_areas = None
+    if 'subject_areas' in submission_additional_options and 'value' in submission_additional_options['subject_areas']:
+        subject_areas = submission_additional_options['subject_areas']['value'].get('param', {}).get('enum')
+
     submission_remove_options = request_forum.content.get('remove_submission_options', [])
     submission_release=(request_forum.content.get('submissions_visibility', '') == 'Yes, submissions should be immediately revealed to the public.')
     create_groups=(not double_blind) and public and submission_release
@@ -354,6 +369,7 @@ def get_submission_stage(request_forum):
         second_due_date=submission_second_due_date,
         additional_fields=submission_additional_options,
         remove_fields=submission_remove_options,
+        subject_areas=subject_areas,
         create_groups=create_groups,
         author_names_revealed=author_names_revealed,
         papers_released=papers_released,
@@ -408,6 +424,15 @@ def get_review_stage(request_forum):
     else:
         review_due_date = None
 
+    review_exp_date = request_forum.content.get('review_expiration_date', '').strip()
+    if review_exp_date:
+        try:
+            review_exp_date = datetime.datetime.strptime(review_exp_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            review_exp_date = datetime.datetime.strptime(review_exp_date, '%Y/%m/%d')
+    else:
+        review_exp_date = None
+
     review_form_additional_options = request_forum.content.get('additional_review_form_options', {})
 
     review_form_remove_options = request_forum.content.get('remove_review_form_options', '').replace(',', ' ').split()
@@ -429,6 +454,7 @@ def get_review_stage(request_forum):
     return openreview.stages.ReviewStage(
         start_date = review_start_date,
         due_date = review_due_date,
+        exp_date = review_exp_date,
         allow_de_anonymization = (request_forum.content.get('Author and Reviewer Anonymity', None) == 'No anonymity'),
         public = (request_forum.content.get('make_reviews_public', None) == 'Yes, reviews should be revealed publicly when they are posted'),
         release_to_authors = (request_forum.content.get('release_reviews_to_authors', '').startswith('Yes')),
