@@ -3,13 +3,17 @@ def process_update(client, edge, invitation, existing_edge):
     domain = client.get_group(edge.domain)
     venue_id = domain.id
     submission_name = domain.content['submission_name']['value']
-    review_name = domain.content['review_name']['value']
-    reviewers_anon_name = domain.content['reviewers_anon_name']['value']
+    is_reviewer = True
+    review_name = domain.content.get('review_name', {}).get('value') if is_reviewer else domain.content.get('meta_review_name', {}).get('value')
+    reviewers_anon_name = domain.content['reviewers_anon_name']['value'] if is_reviewer else domain.content['area_chairs_anon_name']['value']
     
     if edge.ddate:
         paper=client.get_note(edge.head)
 
         paper_group_id=f'{venue_id}/{submission_name}{paper.number}'
+
+        if not review_name:
+            return
 
         reviews=client.get_notes(invitation=f'{paper_group_id}/-/{review_name}')
 
