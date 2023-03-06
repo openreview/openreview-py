@@ -307,8 +307,11 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
+            cdate=review_cdate,
+            duedate=review_duedate,
+            expdate = review_expdate,            
             date_processes=[{ 
-                'dates': ["#{4/edit/invitation/cdate}"],
+                'dates': ["#{4/cdate}"],
                 'script': self.cdate_invitation_process              
             }, { 
                 'dates': ["#{4/mdate} + 10000"],
