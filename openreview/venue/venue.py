@@ -383,6 +383,7 @@ class Venue(object):
 
     def create_review_stage(self):
         self.invitation_builder.set_review_invitation()
+        
     def create_meta_review_stage(self):
         invitation = self.invitation_builder.set_meta_review_invitation()
         self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions())

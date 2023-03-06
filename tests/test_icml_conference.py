@@ -1327,9 +1327,6 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         quota_edge.weight = 15
         pc_client_v2.post_edge(quota_edge)
 
-        helpers.await_queue()        
-        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Review-1-0')
-
         ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password='1234')
         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2023/Conference/Area_Chairs", ac_client.token, wait_for_element='header')
         header = selenium.find_element_by_id('header')
@@ -2020,6 +2017,7 @@ ICML 2023 Conference Program Chairs'''
         review_stage_note=pc_client.post_note(review_stage_note)
 
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Review-1-0')        
 
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Official_Review')) == 100
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Review')
@@ -2240,6 +2238,7 @@ ICML 2023 Conference Program Chairs'''
         review_stage_note=pc_client.post_note(review_stage_note)
 
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Review-1-0', count=2)        
 
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Official_Review')) == 100
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Review')
@@ -2521,6 +2520,7 @@ ICML 2023 Conference Program Chairs'''
         review_stage_note=pc_client.post_note(review_stage_note)
 
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Review-1-0', count=3)
 
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
         
@@ -2888,6 +2888,7 @@ ICML 2023 Conference Program Chairs'''
         review_stage_note=pc_client.post_note(review_stage_note)
 
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Review-1-0', count=4)
 
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
         

@@ -18,19 +18,21 @@ def process(client, invitation):
         if 'everyone' in invitation_readers and 'everyone' not in submission.readers:
             return
 
-        for note in notes:
-            if type(invitation_readers) is list and note.readers != invitation_readers:
-                client.post_note_edit(
-                    invitation = meta_invitation_id,
-                    readers = invitation_readers,
-                    writers = [self.venue_id],
-                    signatures = [self.venue_id],
-                    note = openreview.api.Note(
-                        id = note.id,
+        if type(invitation_readers) is list:
+            for note in notes:
+                final_invitation_readers = [note.signatures[0] if 'signatures' in r else r for r in invitation_readers]
+                if note.readers != final_invitation_readers:
+                    client.post_note_edit(
+                        invitation = meta_invitation_id,
                         readers = invitation_readers,
-                        nonreaders = paper_invitation.edit['note'].get('nonreaders')
-                    )
-                )
+                        writers = [venue_id],
+                        signatures = [venue_id],
+                        note = openreview.api.Note(
+                            id = note.id,
+                            readers = final_invitation_readers,
+                            nonreaders = paper_invitation.edit['note'].get('nonreaders')
+                        )
+                    ) 
 
     def post_invitation(note):
         paper_invitation_edit = client.post_invitation_edit(invitations=invitation.id,
