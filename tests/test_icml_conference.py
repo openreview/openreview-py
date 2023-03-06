@@ -2577,6 +2577,7 @@ ICML 2023 Conference Program Chairs'''
         ))
 
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Comment-1-0', count=1)
 
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Comment')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Official_Comment')
@@ -2925,6 +2926,7 @@ ICML 2023 Conference Program Chairs'''
         ))
 
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Comment-1-0', count=2)
 
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password='1234')
 
@@ -2989,6 +2991,7 @@ ICML 2023 Conference Program Chairs'''
 
 
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Meta_Review-1-0', count=1)
 
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Meta_Review')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Meta_Review')
@@ -3041,6 +3044,7 @@ ICML 2023 Conference Program Chairs'''
         ))
         assert decision_stage_note
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Decision-1-0', count=1)
 
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Decision')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Decision')

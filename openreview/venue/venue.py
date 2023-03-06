@@ -386,7 +386,6 @@ class Venue(object):
         
     def create_meta_review_stage(self):
         invitation = self.invitation_builder.set_meta_review_invitation()
-        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions())
 
     def create_registration_stages(self):
         self.invitation_builder.set_registration_invitations()
@@ -456,15 +455,12 @@ class Venue(object):
 
     def create_comment_stage(self):
         comment_invitation = self.invitation_builder.set_official_comment_invitation()
-        self.invitation_builder.create_paper_invitations(comment_invitation.id, self.get_submissions())
         if self.comment_stage.allow_public_comments:
             public_notes = [note for note in self.get_submissions() if 'everyone' in note.readers]
             comment_invitation = self.invitation_builder.set_public_comment_invitation()
-            self.invitation_builder.create_paper_invitations(comment_invitation.id, public_notes)
 
     def create_decision_stage(self):
         invitation = self.invitation_builder.set_decision_invitation()
-        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions())
 
         decision_file = self.decision_stage.decisions_file
         if decision_file:

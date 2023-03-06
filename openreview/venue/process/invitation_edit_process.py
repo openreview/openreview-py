@@ -55,4 +55,4 @@ def process(client, invitation):
 
     notes = client.get_all_notes(content= { 'venueid': submission_venue_id }, sort='number:asc')        
     print(f'update child {len(notes)} invitations')
-    openreview.tools.concurrent_requests(post_invitation, notes, desc=f'review_invitation_process')     
+    openreview.tools.concurrent_requests(post_invitation, notes, desc=f'edit_invitation_process')     

@@ -16,21 +16,9 @@ class InvitationBuilder(object):
         self.client = venue.client
         self.venue = venue
         self.venue_id = venue.venue_id
-        self.cdate_invitation_process = '''def process(client, invitation):
+        self.invitation_edit_process = '''def process(client, invitation):
     meta_invitation = client.get_invitation("''' + self.venue.get_meta_invitation_id() + '''")
-    script = meta_invitation.content["cdate_invitation_script"]['value']
-    funcs = {
-        'openreview': openreview,
-        'datetime': datetime,
-        'date_index': date_index
-    }
-    exec(script, funcs)
-    funcs['process'](client, invitation)
-'''
-
-        self.tmdate_invitation_process = '''def process(client, invitation):
-    meta_invitation = client.get_invitation("''' + self.venue.get_meta_invitation_id() + '''")
-    script = meta_invitation.content["tmdate_invitation_script"]['value']
+    script = meta_invitation.content["invitation_edit_script"]['value']
     funcs = {
         'openreview': openreview,
         'datetime': datetime,
@@ -116,16 +104,10 @@ class InvitationBuilder(object):
 
     def set_meta_invitation(self):
         venue_id=self.venue_id
-
-        invitation_start_process = self.get_process_content('process/invitation_start_process.py')
-        invitation_tmdate_process = self.get_process_content('process/invitation_tmdate_process.py')
-
         meta_invitation = openreview.tools.get_invitation(self.client, self.venue.get_meta_invitation_id())
         
         if meta_invitation is None:
             
-            invitation_start_process = self.get_process_content('process/invitation_start_process.py')
-
             self.client.post_invitation_edit(invitations=None,
                 readers=[venue_id],
                 writers=[venue_id],
@@ -135,12 +117,9 @@ class InvitationBuilder(object):
                     readers=[venue_id],
                     signatures=['~Super_User1'],
                     content={
-                        'cdate_invitation_script': {
-                            'value': invitation_start_process
-                        },
-                        'tmdate_invitation_script': {
-                            'value': invitation_tmdate_process
-                        }                    
+                        'invitation_edit_script': {
+                            'value': self.get_process_content('process/invitation_edit_process.py')
+                        }
                     },
                     edit=True
                 )
@@ -281,8 +260,6 @@ class InvitationBuilder(object):
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=True)
     
-    
-    
     def set_review_invitation(self):
 
         venue_id = self.venue_id
@@ -312,10 +289,10 @@ class InvitationBuilder(object):
             expdate = review_expdate,            
             date_processes=[{ 
                 'dates': ["#{4/cdate}"],
-                'script': self.cdate_invitation_process              
+                'script': self.invitation_edit_process              
             }, { 
                 'dates': ["#{4/mdate} + 10000"],
-                'script': self.get_process_content('process/review_invitation_process.py')              
+                'script': self.invitation_edit_process             
             }],
             content={
                 'review_process_script': {
@@ -426,8 +403,11 @@ class InvitationBuilder(object):
             duedate=meta_review_duedate,
             expdate=meta_review_expdate,
             date_processes=[{ 
-                    'dates': ["#{4/cdate}"],
-                    'script': self.cdate_invitation_process                
+                'dates': ["#{4/cdate}"],
+                'script': self.invitation_edit_process              
+            }, { 
+                'dates': ["#{4/mdate} + 10000"],
+                'script': self.invitation_edit_process             
             }],
             edit={
                 'signatures': [venue_id],
@@ -702,9 +682,12 @@ class InvitationBuilder(object):
             signatures=[venue_id],
             cdate=comment_cdate,
             expdate=comment_expdate,
-            date_processes=[{
+            date_processes=[{ 
                 'dates': ["#{4/cdate}"],
-                'script': self.cdate_invitation_process
+                'script': self.invitation_edit_process              
+            }, { 
+                'dates': ["#{4/mdate} + 10000"],
+                'script': self.invitation_edit_process             
             }],
             content={
                 'comment_preprocess_script': {
@@ -819,9 +802,12 @@ class InvitationBuilder(object):
             signatures=[venue_id],
             cdate=comment_cdate,
             expdate=comment_expdate,
-            date_processes=[{
+            date_processes=[{ 
                 'dates': ["#{4/cdate}"],
-                'script': self.cdate_invitation_process
+                'script': self.invitation_edit_process              
+            }, { 
+                'dates': ["#{4/mdate} + 10000"],
+                'script': self.invitation_edit_process             
             }],
             content={
                 'comment_process_script': {
@@ -931,9 +917,12 @@ class InvitationBuilder(object):
             cdate=decision_cdate,
             duedate=decision_due_date,
             expdate=decision_expdate,
-            date_processes=[{
+            date_processes=[{ 
                 'dates': ["#{4/cdate}"],
-                'script': self.cdate_invitation_process
+                'script': self.invitation_edit_process              
+            }, { 
+                'dates': ["#{4/mdate} + 10000"],
+                'script': self.invitation_edit_process             
             }],
             content={
                 'decision_process_script': {
