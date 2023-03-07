@@ -286,21 +286,24 @@ If you would like to change your decision, please follow the link in the previou
         edges=sac_client.get_edges_count(invitation='NeurIPS.cc/2023/Conference/Senior_Area_Chairs/-/Affinity_Score', tail='~SeniorArea_GoogleChair1')
         assert edges == 3
 
-        # tasks_url = 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference/Senior_Area_Chairs#senior-areachair-tasks'
-        # request_page(selenium, tasks_url, sac_client.token, by=By.LINK_TEXT, wait_for_element='Senior Area Chair Bid')
+        tasks_url = 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference/Senior_Area_Chairs#senior-areachair-tasks'
+        request_page(selenium, tasks_url, sac_client.token, by=By.LINK_TEXT, wait_for_element='Senior Area Chair Bid')
 
-        # assert selenium.find_element_by_link_text('Senior Area Chair Bid')
+        task_panel = selenium.find_element(By.LINK_TEXT, "Senior Area Chair Tasks")
+        task_panel.click()
 
-        # bid_url = 'http://localhost:3030/invitation?id=NeurIPS.cc/2023/Conference/Senior_Area_Chairs/-/Bid'
-        # request_page(selenium, bid_url, sac_client.token, wait_for_element='notes')
+        assert selenium.find_element(By.LINK_TEXT, "Senior Area Chair Bid")
 
-        # notes = selenium.find_element_by_id('notes')
-        # assert notes
-        # assert len(notes.find_elements_by_class_name('note')) == 3
+        bid_url = 'http://localhost:3030/invitation?id=NeurIPS.cc/2023/Conference/Senior_Area_Chairs/-/Bid'
+        request_page(selenium, bid_url, sac_client.token, wait_for_element='notes')
 
-        # header = selenium.find_element_by_id('header')
-        # instruction = header.find_element_by_tag_name('li')
-        # assert 'Please indicate your level of interest in the list of Area Chairs below, on a scale from "Very Low" interest to "Very High" interest. Area Chairs were automatically pre-ranked using the expertise information in your profile.' == instruction.text
+        notes = selenium.find_element_by_id('all-area-chairs')
+        assert notes
+        assert len(notes.find_elements_by_class_name('bid-container')) == 3
+
+        header = selenium.find_element_by_id('header')
+        instruction = header.find_element_by_tag_name('li')
+        assert 'Please indicate your level of interest in the list of Area Chairs below, on a scale from "Very Low" interest to "Very High" interest. Area Chairs were automatically pre-ranked using the expertise information in your profile.' == instruction.text
 
         sac_client.post_edge(openreview.api.Edge(
             invitation='NeurIPS.cc/2023/Conference/Senior_Area_Chairs/-/Bid',
