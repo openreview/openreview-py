@@ -2419,7 +2419,7 @@ NeurIPS 2021 Conference Program Chairs'''
         submission=conference.get_submissions(number=5)[0]
         assignment_edge=client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment', head=submission.id, tail='~Reviewer_UMass1')[0]
         assignment_edge.ddate=openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        with pytest.raises(openreview.OpenReviewException, match=r'Can not remove assignment, the user ~Reviewer_UMass1 already posted a Official_Review.'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not remove assignment, the user ~Reviewer_UMass1 already posted a review.'):
             client.post_edge(assignment_edge)
 
 
