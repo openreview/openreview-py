@@ -3,9 +3,11 @@ def process_update(client, edge, invitation, existing_edge):
     domain = client.get_group(edge.domain)
     venue_id = domain.id
     submission_name = domain.content['submission_name']['value']
-    is_reviewer = True
-    review_name = domain.content.get('review_name', {}).get('value') if is_reviewer else domain.content.get('meta_review_name', {}).get('value')
-    reviewers_anon_name = domain.content['reviewers_anon_name']['value'] if is_reviewer else domain.content['area_chairs_anon_name']['value']
+
+    REVIEW_NAME_STRING = 'review_name'
+    REVIEWERS_ANON_NAME_STRING = 'reviewers_anon_name'
+    review_name = domain.content.get(REVIEW_NAME_STRING, {}).get('value')
+    reviewers_anon_name = domain.content[REVIEWERS_ANON_NAME_STRING]['value']
     
     if edge.ddate:
         paper=client.get_note(edge.head)
@@ -28,5 +30,5 @@ def process_update(client, edge, invitation, existing_edge):
 
         for review in reviews:
             if review.signatures[0] == groups[0].id:
-                raise openreview.OpenReviewException(f'Can not remove assignment, the user {edge.tail} already posted a review.')
+                raise openreview.OpenReviewException(f'Can not remove assignment, the user {edge.tail} already posted a {review_name}')
 
