@@ -10,8 +10,6 @@ def process_update(client, edge, invitation, existing_edge):
     venue_id = domain.id
     short_phrase = domain.content['subtitle']['value']
     program_chairs_id = domain.content['program_chairs_id']['value']
-    review_name = domain.content['review_name']['value']
-    reviewers_anon_name = domain.content['reviewers_anon_name']['value']    
 
     note=client.get_note(edge.head)
     group=client.get_group(PAPER_GROUP_ID.format(number=note.number))
