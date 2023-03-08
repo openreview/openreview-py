@@ -378,6 +378,110 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
+    def set_review_rebuttal_invitation(self):
+
+        venue_id = self.venue_id
+        review_rebuttal_stage = self.venue.review_rebuttal_stage
+        review_rebuttal_invitation_id = self.venue.get_invitation_id(review_rebuttal_stage.name)
+        review_rebuttal_cdate = tools.datetime_millis(review_rebuttal_stage.start_date if review_rebuttal_stage.start_date else datetime.datetime.utcnow())
+        review_rebuttal_duedate = tools.datetime_millis(review_rebuttal_stage.due_date) if review_rebuttal_stage.due_date else None
+        review_rebuttal_expdate = tools.datetime_millis(review_rebuttal_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_rebuttal_stage.due_date else None
+
+        content = default_content.rebuttal_v2.copy()
+
+        for key in review_rebuttal_stage.additional_fields:
+            content[key] = review_rebuttal_stage.additional_fields[key]
+
+        invitation = Invitation(id=review_rebuttal_invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            cdate=review_rebuttal_cdate,
+            duedate=review_rebuttal_duedate,
+            expdate=review_rebuttal_expdate,
+            date_processes=[{
+                    'dates': ["#{4/cdate}"],
+                    'script': self.cdate_invitation_process
+            }],
+            # content={
+            #     'review_rebuttal_process_script': {
+            #         'value': self.get_process_content('process/review_rebuttal_process.py')
+            #     }
+            # },
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'replacement': True,
+                'invitation': {
+                    'id': self.venue.get_rebuttal_invitation_id(review_rebuttal_stage.name, '${2/content/noteNumber/value}'), ##add review signatures once that is implemented
+                    'signatures': [venue_id],
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'invitees': [venue_id, self.venue.get_authors_id(number='${3/content/noteNumber/value}')],
+                    'maxReplies': 1,
+                    'cdate': review_rebuttal_cdate,
+#                     'process': '''def process(client, edit, invitation):
+#     meta_invitation = client.get_invitation(invitation.invitations[0])
+#     script = meta_invitation.content['review_rebuttal_process_script']['value']
+#     funcs = {}
+#     exec(script, funcs)
+#     funcs['process'](client, edit, invitation)
+# ''',
+                    'edit': {
+                        'signatures': { 'param': { 'regex': self.venue.get_authors_id(number='${5/content/noteNumber/value}') }},
+                        'readers': review_rebuttal_stage.get_invitation_readers(self.venue, '${4/content/noteNumber/value}'), #figure out readers for rebuttal per review
+                        'writers': [venue_id],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': self.venue.get_rebuttal_invitation_id(review_rebuttal_stage.name, '${6/content/noteNumber/value}'),
+                                    'optional': True
+                                }
+                            },
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': '${4/content/noteId/value}', #customize to allow reply to review
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            },
+                            'signatures': ['${3/signatures}'],
+                            'readers': review_rebuttal_stage.get_invitation_readers(self.venue, '${5/content/noteNumber/value}'), #figure out readers for rebuttal per review
+                            'writers': [venue_id, '${3/signatures}'],
+                            'content': content
+                        }
+                    }
+                }
+            }
+        )
+
+        if review_rebuttal_duedate:
+            invitation.edit['invitation']['duedate'] = review_rebuttal_duedate
+            invitation.edit['invitation']['expdate'] = review_rebuttal_expdate
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation
+
     def set_meta_review_invitation(self):
 
         venue_id = self.venue_id

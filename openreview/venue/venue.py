@@ -42,6 +42,7 @@ class Venue(object):
         self.expertise_selection_stage = None       
         self.submission_stage = None
         self.review_stage = None
+        self.review_rebuttal_stage = None
         self.ethics_review_stage = None
         self.bid_stages = []
         self.meta_review_stage = None
@@ -137,6 +138,13 @@ class Venue(object):
         if not committee_id:
             committee_id = self.get_reviewers_id()
         return self.get_invitation_id('Recommendation', prefix=committee_id)
+
+    def get_rebuttal_invitation_id(self, name, number, signature = None):
+        invitation_id = self.get_paper_group_prefix(number)
+        if signature:
+            invitation_id += f'/{signature}'
+        invitation_id += f'/-/{name}'
+        return invitation_id
 
     def get_paper_group_prefix(self, number=None):
         prefix = f'{self.venue_id}/{self.submission_stage.name}'
@@ -383,6 +391,10 @@ class Venue(object):
 
     def create_review_stage(self):
         invitation = self.invitation_builder.set_review_invitation()
+        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions())
+
+    def create_review_rebuttal_stage(self):
+        invitation = self.invitation_builder.set_review_rebuttal_invitation()
         self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions())
 
     def create_meta_review_stage(self):
