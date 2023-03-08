@@ -1,3 +1,4 @@
+import time
 import openreview
 import pytest
 import datetime
@@ -1373,7 +1374,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
         helpers.await_queue(openreview_client)
 
-        ## Externel reviewer is set pending profile creation
+        ## External reviewer is set pending profile creation
         invite_edges=pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='melisa@icml.cc')
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Pending Sign Up'
@@ -1509,7 +1510,7 @@ OpenReview Team'''
     def test_reviewer_reassingment(self, client, openreview_client, helpers, selenium, request_page):
 
         pc_client = openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
-        ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password='1234')
+        ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password='1234')
 
         pc_client.post_group_edit(invitation='ICML.cc/2023/Conference/-/Edit',
             readers = ['ICML.cc/2023/Conference'],
@@ -1530,11 +1531,11 @@ OpenReview Team'''
 
         url = header.find_element_by_id('edge_browser_url')
         assert url
-        assert url.get_attribute('href') == 'http://localhost:3030/edges/browse?start=ICML.cc/2023/Conference/Area_Chairs/-/Assignment,tail:ac1@icml.cc&traverse=ICML.cc/2023/Conference/Reviewers/-/Assignment&edit=ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment&browse=ICML.cc/2023/Conference/Reviewers/-/Affinity_Score;ICML.cc/2023/Conference/Reviewers/-/Bid;ICML.cc/2023/Conference/Reviewers/-/Custom_Max_Papers,head:ignore&hide=ICML.cc/2023/Conference/Reviewers/-/Conflict&maxColumns=2&version=2&referrer=[AC%20Console](/group?id=ICML.cc/2023/Conference/Area_Chairs)'  
+        assert url.get_attribute('href') == 'http://localhost:3030/edges/browse?start=ICML.cc/2023/Conference/Area_Chairs/-/Assignment,tail:ac2@icml.cc&traverse=ICML.cc/2023/Conference/Reviewers/-/Assignment&edit=ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment&browse=ICML.cc/2023/Conference/Reviewers/-/Affinity_Score;ICML.cc/2023/Conference/Reviewers/-/Bid;ICML.cc/2023/Conference/Reviewers/-/Custom_Max_Papers,head:ignore&hide=ICML.cc/2023/Conference/Reviewers/-/Conflict&maxColumns=2&version=2&referrer=[AC%20Console](/group?id=ICML.cc/2023/Conference/Area_Chairs)'
     
  
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
-        anon_group_id = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLOne1')[0].id
+        anon_group_id = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLTwo1')[0].id
  
         ac_client.post_edge(
             openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
@@ -1559,7 +1560,7 @@ OpenReview Team'''
 
         helpers.await_queue(openreview_client)
 
-        ## Externel reviewer is set pending profile creation
+        ## External reviewer is set pending profile creation
         invite_edges=pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='carlos@icml.cc')
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Pending Sign Up'
@@ -1579,9 +1580,9 @@ If you would like to change your decision, please follow the link in the previou
 
 OpenReview Team'''
 
-        messages = openreview_client.get_messages(to='ac1@icml.cc', subject='[ICML 2023] Reviewer carlos@icml.cc accepted to review paper 1, assignment pending')
+        messages = openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] Reviewer carlos@icml.cc accepted to review paper 1, assignment pending')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi AC ICMLOne,
+        assert messages[0]['content']['text'] == '''Hi AC ICMLTwo,
 The Reviewer carlos@icml.cc that you invited to review paper 1 has accepted the invitation.
 
 Confirmation of the assignment is pending until the invited reviewer creates a profile in OpenReview and no conflicts of interest are detected.
@@ -1615,9 +1616,9 @@ If you have any questions, please contact us as info@openreview.net.
 
 OpenReview Team'''
 
-        messages = openreview_client.get_messages(to='ac1@icml.cc', subject='[ICML 2023] Conflict detected between reviewer Carlos ICML and paper 1')
+        messages = openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] Conflict detected between reviewer Carlos ICML and paper 1')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi AC ICMLOne,
+        assert messages[0]['content']['text'] == '''Hi AC ICMLTwo,
 A conflict was detected between Carlos ICML(carlos@icml.cc) and the paper 1 and the assignment can not be done.
 
 If you have any questions, please contact us as info@openreview.net.
@@ -1669,9 +1670,9 @@ If you would like to change your decision, please click the Decline link in the 
 
 OpenReview Team'''
 
-        messages = openreview_client.get_messages(to='ac1@icml.cc', subject='[ICML 2023] Reviewer Celeste ICML signed up and is assigned to paper 1')
+        messages = openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] Reviewer Celeste ICML signed up and is assigned to paper 1')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi AC ICMLOne,
+        assert messages[0]['content']['text'] == '''Hi AC ICMLTwo,
 The Reviewer Celeste ICML(celeste@icml.cc) that you invited to review paper 1 has accepted the invitation, signed up and is now assigned to the paper 1.
 
 OpenReview Team'''
@@ -1700,6 +1701,9 @@ ICML 2023 Conference Program Chairs'''
         assert '~Reviewer_ICMLThree1' in reviewers_group.members    
         assert '~Melisa_ICML1' in reviewers_group.members                 
         assert '~Celeste_ICML1' in reviewers_group.members
+
+        ac_group = pc_client.get_group('ICML.cc/2023/Conference/Submission1/Area_Chairs')
+        assert len(ac_group.members) == 1
 
         ac_client.post_edge(
             openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
@@ -1765,6 +1769,33 @@ ICML 2023 Conference Program Chairs'''
         invite_edges=openreview_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Rachel_ICML2')
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Declined: I am too busy.'
+
+        helpers.create_user('ana@icml.cc', 'Ana', 'ICML')
+
+        ac_client.post_edge(
+            openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
+                signatures=[anon_group_id],
+                head=submissions[0].id,
+                tail='~Ana_ICML1',
+                label='Invitation Sent',
+                weight=1
+        ))
+
+        helpers.await_queue(openreview_client)
+
+        # delete invite assignment edge
+        invite_assignment = pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Ana_ICML1')[0]
+        invite_assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        pc_client.post_edge(invite_assignment)
+
+        messages = openreview_client.get_messages(to='ana@icml.cc', subject='[ICML 2023] Invitation to review paper titled "Paper title 1 Version 2"')
+        assert messages and len(messages) == 1
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+
+        #try to accept invitation that has been deleted
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        error_message = selenium.find_element_by_class_name('important_message')
+        assert 'Invitation no longer exists. No action is required from your end.' == error_message.text
 
     def test_review_stage(self, openreview_client, helpers):
 
