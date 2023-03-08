@@ -1704,6 +1704,7 @@ ICML 2023 Conference Program Chairs'''
 
         ac_group = pc_client.get_group('ICML.cc/2023/Conference/Submission1/Area_Chairs')
         assert len(ac_group.members) == 1
+        assert '~AC_ICMLTwo1' in ac_group.members
 
         ac_client.post_edge(
             openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
