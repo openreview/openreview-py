@@ -327,7 +327,9 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'invitees': [venue_id, self.venue.get_reviewers_id(number='${3/content/noteNumber/value}')],
                     'maxReplies': 1,
-                    'cdate': review_cdate,
+                    'cdate': '${{2/invitations}/cdate}',
+                    'duedate': '${{2/invitations}/duedate}',
+                    'expdate': '${{2/invitations}/expdate}',
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['review_process_script']['value']
@@ -367,11 +369,6 @@ class InvitationBuilder(object):
 
             }
         )
-
-        if review_duedate:
-            invitation.edit['invitation']['duedate'] = review_duedate
-        if review_expdate:
-            invitation.edit['invitation']['expdate'] = review_expdate
 
         self.save_invitation(invitation, replacement=True)
         return invitation
@@ -437,7 +434,9 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'invitees': [venue_id, self.venue.get_area_chairs_id(number='${3/content/noteNumber/value}')],
                     'maxReplies': 1,
-                    'cdate': meta_review_cdate,
+                    'cdate': '${{2/invitations}/cdate}',
+                    'duedate': '${{2/invitations}/duedate}',
+                    'expdate': '${{2/invitations}/expdate}',
                     'edit': {
                         'signatures': { 'param': { 'regex': meta_review_stage.get_signatures_regex(self.venue, '${5/content/noteNumber/value}') }},
                         'readers': meta_review_stage.get_readers(self.venue, '${4/content/noteNumber/value}'),
@@ -469,10 +468,6 @@ class InvitationBuilder(object):
                 }
             }
         )
-
-        if meta_review_duedate:
-            invitation.edit['invitation']['duedate'] = meta_review_duedate
-            invitation.edit['invitation']['expdate'] = meta_review_expdate
 
         self.save_invitation(invitation, replacement=True)
         return invitation
@@ -724,7 +719,8 @@ class InvitationBuilder(object):
                     'readers': ['everyone'],
                     'writers': [venue_id],
                     'invitees': invitees,
-                    'cdate': comment_cdate,
+                    'cdate': '${{2/invitations}/cdate}',
+                    'expdate': '${{2/invitations}/expdate}',
                     'preprocess': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['comment_preprocess_script']['value']
@@ -779,9 +775,6 @@ class InvitationBuilder(object):
 
             }
         )
-
-        if comment_expdate:
-            invitation.edit['invitation']['expdate'] = comment_expdate
 
         self.save_invitation(invitation, replacement=True)
         return invitation
@@ -842,7 +835,8 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'invitees': ['everyone'],
                     'noninvitees': self.venue.get_committee('${3/content/noteNumber/value}', with_authors = True),
-                    'cdate': comment_cdate,
+                    'cdate': '${{2/invitations}/cdate}',
+                    'expdate': '${{2/invitations}/expdate}',
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['comment_process_script']['value']
@@ -886,9 +880,6 @@ class InvitationBuilder(object):
 
             }
         )
-
-        if comment_expdate:
-            invitation.edit['invitation']['expdate'] = comment_expdate
 
         self.save_invitation(invitation, replacement=True)
         return invitation
@@ -958,7 +949,9 @@ class InvitationBuilder(object):
                     'invitees': [self.venue.get_program_chairs_id(), self.venue.support_user],
                     'maxReplies': 1,
                     'minReplies': 1,
-                    'cdate': decision_cdate,
+                    'cdate': '${{2/invitations}/cdate}',
+                    'duedate': '${{2/invitations}/duedate}',
+                    'expdate': '${{2/invitations}/expdate}',
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['decision_process_script']['value']
@@ -998,10 +991,6 @@ class InvitationBuilder(object):
 
             }
         )
-
-        if decision_due_date:
-            invitation.edit['invitation']['duedate'] = decision_due_date
-            invitation.edit['invitation']['expdate'] = decision_expdate
 
         self.save_invitation(invitation, replacement=True)
         return invitation

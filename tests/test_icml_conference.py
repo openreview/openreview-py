@@ -2528,6 +2528,26 @@ ICML 2023 Conference Program Chairs'''
         assert len(reviews) == 1
         assert anon_group_id in reviews[0].readers
 
+        ## Extend deadline using a meta invitation and propagate the change to all the children
+        new_due_date = openreview.tools.datetime_millis(now + datetime.timedelta(days=20))
+        new_exp_date = openreview.tools.datetime_millis(now + datetime.timedelta(days=25))
+        pc_client_v2.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            readers=['ICML.cc/2023/Conference'],
+            writers=['ICML.cc/2023/Conference'],
+            signatures=['ICML.cc/2023/Conference'],
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Official_Review',
+                duedate=new_due_date,
+                expdate=new_exp_date
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Review-1-0', count=4)
+        invitation = pc_client_v2.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Review')
+        assert invitation.duedate == new_due_date
+        assert invitation.expdate == new_exp_date
+
 
     def test_delete_assignents(self, openreview_client):
 
@@ -2889,7 +2909,7 @@ ICML 2023 Conference Program Chairs'''
         review_stage_note=pc_client.post_note(review_stage_note)
 
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Review-1-0', count=4)
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Review-1-0', count=5)
 
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
         
