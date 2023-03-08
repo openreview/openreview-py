@@ -9,6 +9,7 @@ def process(client, edit, invitation):
     committee_name = invitation.content['committee_id']['value'].split('/')[-1]
     submission_venue_id = domain.content['submission_venue_id']['value']
     check_decline = False
+    invite_assignment_invitation = domain.content['reviewers_invite_assignment_id']['value']
 
     note = edit.note
 
@@ -16,6 +17,15 @@ def process(client, edit, invitation):
     hashkey = HMAC.new(hash_seed.encode(), digestmod=SHA256).update(user.encode()).hexdigest()
 
     submission = client.get_notes(note.content['submission_id']['value'])[0]
+
+    invite_edges = client.get_edges(invitation=invite_assignment_invitation, head=submission.id, tail=user)
+    if not invite_edges:
+        profile = openreview.tools.get_profile(client, user)
+        if profile:
+            invite_edges = client.get_edges(invitation=invite_assignment_invitation, head=submission.id, tail=profile.id)
+        # if still no edges with profile.id, raise exception
+        if not invite_edges:
+            raise openreview.OpenReviewException('Invitation no longer exists. No action is required from your end.')
 
     if hashkey != note.content['key']['value']:
         raise openreview.OpenReviewException('Wrong key, please refer back to the recruitment email')
