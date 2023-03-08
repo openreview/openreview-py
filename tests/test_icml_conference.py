@@ -215,7 +215,6 @@ class TestICMLConference():
         assert 'financial_aid' in submission_invitation.edit['note']['content']
         assert 'subject_areas' in submission_invitation.edit['note']['content']
 
-
     def test_add_pcs(self, client, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password='1234')
@@ -1507,7 +1506,7 @@ OpenReview Team'''
         sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs')
         assert ['~SAC_ICMLTwo1'] == sac_group.members
 
-    def test_reviewer_reassingment(self, client, openreview_client, helpers, selenium, request_page):
+    def test_reviewer_reassignment(self, client, openreview_client, helpers, selenium, request_page):
 
         pc_client = openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
         ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password='1234')
@@ -1798,6 +1797,17 @@ ICML 2023 Conference Program Chairs'''
         error_message = selenium.find_element_by_class_name('important_message')
         assert 'Invitation no longer exists. No action is required from your end.' == error_message.text
 
+        #delete assignments before review stage and not get key error
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+
+        assignment = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment', head=submissions[10].id, tail='~Reviewer_ICMLThree1')[0]
+        assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        pc_client_v2.post_edge(assignment)
+
+        assignment = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Assignment', head=submissions[10].id, tail='~AC_ICMLOne1')[0]
+        assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        pc_client_v2.post_edge(assignment)
+
     def test_review_stage(self, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password='1234')
@@ -1823,7 +1833,7 @@ ICML 2023 Conference Program Chairs'''
 
         ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password='1234')
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
-        assert len(submissions) == 60
+        assert len(submissions) == 59
         assert ['ICML.cc/2023/Conference',
         'ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs',
         'ICML.cc/2023/Conference/Submission2/Area_Chairs',
@@ -2557,7 +2567,7 @@ ICML 2023 Conference Program Chairs'''
         assert anon_group_id in reviews[0].readers
 
 
-    def test_delete_assignents(self, openreview_client):
+    def test_delete_assignments(self, openreview_client):
 
         ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password='1234')
 
@@ -2568,7 +2578,7 @@ ICML 2023 Conference Program Chairs'''
         assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
         assignment.signatures = [anon_group_id]
         
-        with pytest.raises(openreview.OpenReviewException, match=r'Can not remove assignment, the user ~Reviewer_ICMLOne1 already posted a review.'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not remove assignment, the user ~Reviewer_ICMLOne1 already posted a Official_Review.'):
             ac_client.post_edge(assignment)
 
         assignment = ac_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment', head=submissions[0].id, tail='~Celeste_ICML1')[0]
@@ -2576,6 +2586,17 @@ ICML 2023 Conference Program Chairs'''
         assignment.signatures = [anon_group_id]
         ac_client.post_edge(assignment)
 
+        #delete AC assignment of paper with a review with no error
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+
+        assignment = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Assignment', head=submissions[0].id, tail='~AC_ICMLTwo1')[0]
+        assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        pc_client_v2.post_edge(assignment)
+
+        #re-add AC to paper 1
+        assignment = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Assignment', head=submissions[0].id, tail='~AC_ICMLTwo1', trash=True)[0]
+        assignment.ddate = None
+        pc_client_v2.post_edge(assignment)
 
     def test_comment_stage(self, openreview_client, helpers):
 
@@ -3023,6 +3044,33 @@ ICML 2023 Conference Program Chairs'''
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Meta_Review')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Meta_Review')
 
+        ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password='1234')
+        submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
+
+        anon_groups = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLTwo1')
+        anon_group_id = anon_groups[0].id
+
+        meta_review_edit = ac_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission1/-/Meta_Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'metareview': { 'value': 'This is a good paper' },
+                    'recommendation': { 'value': 'Accept'}
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        #try to delete AC assignment of paper with a submitted metareview
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+
+        assignment = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Assignment', head=submissions[0].id, tail='~AC_ICMLTwo1')[0]
+        assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not remove assignment, the user ~AC_ICMLTwo1 already posted a Meta_Review.'):
+            pc_client_v2.post_edge(assignment)
 
     def test_decision_stage(self, openreview_client, helpers):
 
