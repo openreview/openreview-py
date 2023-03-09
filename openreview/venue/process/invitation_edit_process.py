@@ -5,15 +5,47 @@ def process(client, invitation):
     submission_venue_id = domain.content['submission_venue_id']['value']
     rejected_venue_id = domain.content['rejected_venue_id']['value']
     meta_invitation_id = domain.content['meta_invitation_id']['value']
+    submission_name = domain.content['submission_name']['value']
+    decision_name = domain.content['decision_name']['value']
+    decision_field_name = domain.content['decision_field_name']['value']
 
-    ## If invitation is not active then
-    print('update invitation', invitation.edit['invitation']['edit']['note']['readers'])
+    def expire_existing_inviations():
 
+        new_expdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
+        def expire_invitation(child_invitation):
+            client.post_invitation_edit(
+                invitations=meta_invitation_id,
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitation=openreview.api.Invitation(
+                    id=child_invitation.id,
+                    expdate=new_expdate,
+                )
+            )
+
+        invitations = client.get_all_invitations(invitation=invitation.id)        
+        print(f'expiring {len(invitations)} child invitations')
+        openreview.tools.concurrent_requests(expire_invitation, invitations, desc=f'expire_invitations_process')            
+    
+    
     def get_submissions():
-        public_notes_only = invitation.content.get('public_notes_only', False) if invitation.content else False
-        submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc')
-        if not submissions:
-            submissions = client.get_all_notes(content={ 'venueid': ','.join([venue_id, rejected_venue_id]) }, sort='number:asc')
+        public_notes_only = invitation.content.get('public_notes_only', {}).get('value', False) if invitation.content else False
+        accepted_notes_only = invitation.content.get('accepted_notes_only', {}).get('value', False) if invitation.content else False
+
+        print('accepted_notes_only', accepted_notes_only)
+        if accepted_notes_only:
+            submissions = client.get_all_notes(content={ 'venueid': venue_id }, sort='number:asc')
+            if not submissions:
+                under_review_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='directReplies')
+                submissions = [s for s in under_review_submissions if len([r for r in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{decision_name}' in r['invitations'] and 'Accept' in r['content'][decision_field_name]['value']]) > 0]
+            expire_existing_inviations()
+        else:
+            submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc')
+            if not submissions:
+                submissions = client.get_all_notes(content={ 'venueid': ','.join([venue_id, rejected_venue_id]) }, sort='number:asc')
+
         if public_notes_only:
             submissions = [s for s in submissions if s.readers == ['everyone']]
         return submissions
@@ -21,7 +53,7 @@ def process(client, invitation):
     def update_note_readers(submission, paper_invitation):
         ## Update readers of current notes
         notes = client.get_notes(invitation=paper_invitation.id)
-        invitation_readers = paper_invitation.edit['note']['readers']
+        invitation_readers = paper_invitation.edit['note'].get('readers')
 
         ## if the invitation indicates readers is everyone but the submission is not, we ignore the update
         if 'everyone' in invitation_readers and 'everyone' not in submission.readers:
@@ -63,5 +95,5 @@ def process(client, invitation):
             update_note_readers(note, paper_invitation)
 
     notes = get_submissions()        
-    print(f'update child {len(notes)} invitations')
+    print(f'create or update {len(notes)} child invitations')
     openreview.tools.concurrent_requests(post_invitation, notes, desc=f'edit_invitation_process')     

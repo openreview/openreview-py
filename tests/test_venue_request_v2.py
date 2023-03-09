@@ -2086,9 +2086,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert revision_stage_note
 
         helpers.await_queue()
-        process_logs = client.get_process_logs(id=revision_stage_note.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Revision-1-0', count=1)
 
         # post revision for a submission
         updated_submission = author_client.post_note_edit(invitation='V2.cc/2030/Conference/Submission3/-/Revision',
@@ -2142,20 +2140,18 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert revision_stage_note
 
         helpers.await_queue()
-        process_logs = client.get_process_logs(id=revision_stage_note.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Revision-1-0', count=2)
 
         submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number:asc')
         assert submissions and len(submissions) == 3
 
-        revision_invitation = openreview_client.get_invitation(f'''V2.cc/2030/Conference/Submission1/-/Revision''')
+        revision_invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Revision')
         assert revision_invitation.expdate > round(time.time() * 1000)
 
-        revision_invitation = openreview_client.get_invitation(f'''V2.cc/2030/Conference/Submission2/-/Revision''')
+        revision_invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission2/-/Revision')
         assert revision_invitation.expdate < round(time.time() * 1000)
 
-        revision_invitation = openreview_client.get_invitation(f'''V2.cc/2030/Conference/Submission3/-/Revision''')
+        revision_invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission3/-/Revision')
         assert revision_invitation.expdate < round(time.time() * 1000)
 
     def test_post_decision_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
@@ -2316,9 +2312,7 @@ Best,
         assert revision_stage_note
 
         helpers.await_queue()
-        process_logs = client.get_process_logs(id=revision_stage_note.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Camera_Ready_Revision-1-0', count=1)
 
         revision_invitation = openreview_client.get_invitation(f'''V2.cc/2030/Conference/Submission1/-/Revision''')
         assert revision_invitation.expdate < round(time.time() * 1000)
@@ -2471,9 +2465,7 @@ Best,
         assert revision_stage_note
 
         helpers.await_queue()
-        process_logs = client.get_process_logs(id=revision_stage_note.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Supplementary_Material-1-0', count=1)
 
         submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number')
         assert submissions and len(submissions) == 3

@@ -887,7 +887,7 @@ class InvitationBuilder(object):
 
         if comment_expdate:
             invitation.edit['invitation']['expdate'] = '${{2/invitations}/expdate}'
-            
+
         self.save_invitation(invitation, replacement=True)
         return invitation
 
@@ -1563,13 +1563,21 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=revision_cdate,
+            duedate=revision_duedate,
+            expdate=revision_expdate,
             date_processes=[{ 
                 'dates': ["#{4/cdate}"],
-                'script': self.get_process_content('process/revision_start_process.py')
+                'script': self.invitation_edit_process              
+            }, { 
+                'dates': ["#{4/mdate} + 10000"],
+                'script': self.invitation_edit_process             
             }],
             content={
                 'revision_process_script': {
                     'value': self.get_process_content('process/submission_revision_process.py')
+                },
+                'accepted_notes_only': {
+                    'value': only_accepted
                 }
             },
             edit={
@@ -1599,7 +1607,9 @@ class InvitationBuilder(object):
                     'readers': ['everyone'],
                     'writers': [venue_id],
                     'invitees': [venue_id, self.venue.get_authors_id(number='${3/content/noteNumber/value}')],
-                    'cdate': revision_cdate,
+                    'cdate': '${{2/invitations}/cdate}',
+                    'duedate': '${{2/invitations}/duedate}',
+                    'expdate': '${{2/invitations}/expdate}',
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['revision_process_script']['value']
@@ -1628,10 +1638,6 @@ class InvitationBuilder(object):
                 }
             }
         )
-
-        if revision_duedate:
-            invitation.edit['invitation']['duedate'] = revision_duedate
-            invitation.edit['invitation']['expdate'] = revision_expdate
 
         self.save_invitation(invitation, replacement=True)
         return invitation
