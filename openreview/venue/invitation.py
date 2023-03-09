@@ -426,9 +426,21 @@ class InvitationBuilder(object):
 
         paper_invitation_id = self.venue.get_rebuttal_invitation_id(review_rebuttal_stage.name, '${2/content/noteNumber/value}')
         reply_to = '${4/content/noteId/value}'
-        if not review_rebuttal_stage.single_rebuttal:
+        if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals:
             paper_invitation_id = self.venue.get_rebuttal_invitation_id(review_rebuttal_stage.name, '${2/content/noteNumber/value}', '${2/content/noteSignatures/value}')
             reply_to = '${4/content/reviewId/value}'
+
+        if review_rebuttal_stage.unlimited_rebuttals:
+            reply_to = {
+                'param': {
+                    'withForum': '${6/content/noteId/value}'
+                }
+            }
+
+        invitation_content = {
+            'email_pcs': { 'value':  review_rebuttal_stage.email_pcs },
+            'review_rebuttal_process_script': { 'value': self.get_process_content('process/review_rebuttal_process.py') }
+        }
 
         invitation = Invitation(id=review_rebuttal_invitation_id,
             invitees=[venue_id],
@@ -441,12 +453,8 @@ class InvitationBuilder(object):
             date_processes=[{
                     'dates': ["#{4/cdate}"],
                     'script': self.cdate_invitation_process
-            }],
-            # content={
-            #     'review_rebuttal_process_script': {
-            #         'value': self.get_process_content('process/review_rebuttal_process.py')
-            #     }
-            # },
+            }] if review_rebuttal_stage.single_rebuttal or review_rebuttal_stage.unlimited_rebuttals else [],
+            content=invitation_content,
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -490,7 +498,6 @@ class InvitationBuilder(object):
                     'readers': ['everyone'],
                     'writers': [venue_id],
                     'invitees': [venue_id, self.venue.get_authors_id(number='${3/content/noteNumber/value}')],
-                    'maxReplies': 1,
                     'cdate': review_rebuttal_cdate,
 #                     'process': '''def process(client, edit, invitation):
 #     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -532,6 +539,9 @@ class InvitationBuilder(object):
         if review_rebuttal_duedate:
             invitation.edit['invitation']['duedate'] = review_rebuttal_duedate
             invitation.edit['invitation']['expdate'] = review_rebuttal_expdate
+
+        if not review_rebuttal_stage.unlimited_rebuttals:
+            invitation.edit['invitation']['maxReplies'] = 1
 
         self.save_invitation(invitation, replacement=True)
         return invitation
