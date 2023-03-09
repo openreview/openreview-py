@@ -6,8 +6,8 @@ def process(client, invitation):
     rejected_venue_id = domain.content['rejected_venue_id']['value']
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     submission_name = domain.content['submission_name']['value']
-    decision_name = domain.content['decision_name']['value']
-    decision_field_name = domain.content['decision_field_name']['value']
+    decision_name = domain.content.get('decision_name', {}).get('value')
+    decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'Decision')
 
     def expire_existing_inviations():
 
@@ -37,7 +37,7 @@ def process(client, invitation):
         print('accepted_notes_only', accepted_notes_only)
         if accepted_notes_only:
             submissions = client.get_all_notes(content={ 'venueid': venue_id }, sort='number:asc')
-            if not submissions:
+            if not submissions and decision_name:
                 under_review_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='directReplies')
                 submissions = [s for s in under_review_submissions if len([r for r in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{decision_name}' in r['invitations'] and 'Accept' in r['content'][decision_field_name]['value']]) > 0]
             expire_existing_inviations()
