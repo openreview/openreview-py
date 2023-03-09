@@ -686,19 +686,6 @@ Total Errors: {len(errors)}
 
         tools.concurrent_requests(send_notification, paper_notes)
 
-    # def create_submission_revision_stage(self):
-    #     invitation = tools.get_invitation(self.client, self.get_submission_id())
-    #     # if invitation:
-    #     #     notes = self.get_submissions(accepted=self.submission_revision_stage.only_accepted)
-    #     #     if self.submission_revision_stage.only_accepted:
-    #     #         all_notes = self.get_submissions()
-    #     #         accepted_note_ids = [note.id for note in notes]
-    #     #         non_accepted_notes = [note for note in all_notes if note.id not in accepted_note_ids]
-    #     #         expire_invitation_ids = [self.get_invitation_id(self.submission_revision_stage.name, note.number) for note in non_accepted_notes]
-    #     #         tools.concurrent_requests(self.invitation_builder.expire_invitation, expire_invitation_ids)
-    #     #     revision_invitation = self.invitation_builder.set_submission_revision_invitation(invitation.edit['note']['content'])
-    #     #     self.invitation_builder.create_paper_invitations(revision_invitation.id, notes)
-
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, alternate_matching_group=None):
         if committee_id is None:
             committee_id=self.get_reviewers_id()
