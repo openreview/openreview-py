@@ -2,6 +2,7 @@ import csv
 import datetime
 import json
 import os
+import time
 from openreview.api import Invitation
 from openreview.api import Note
 from openreview.stages import *
@@ -12,10 +13,12 @@ LONG_BUFFER_DAYS = 10
 
 class InvitationBuilder(object):
 
-    def __init__(self, venue):
+    def __init__(self, venue, update_wait_time=2000):
         self.client = venue.client
         self.venue = venue
         self.venue_id = venue.venue_id
+        self.update_wait_time = update_wait_time
+        self.update_date_string = "#{4/mdate} + " + str(self.update_wait_time)
         self.invitation_edit_process = '''def process(client, invitation):
     meta_invitation = client.get_invitation("''' + self.venue.get_meta_invitation_id() + '''")
     script = meta_invitation.content["invitation_edit_script"]['value']
@@ -36,7 +39,21 @@ class InvitationBuilder(object):
             replacement=replacement,
             invitation=invitation
         )
-        return self.client.get_invitation(invitation.id)
+        invitation = self.client.get_invitation(invitation.id)
+
+        if invitation.date_processes and len(invitation.date_processes) > 1 and [self.update_date_string] == invitation.date_processes[1]['dates']:
+            process_logs = self.client.get_process_logs(id=invitation.id + '-1-0', min_sdate = invitation.tmdate + self.update_wait_time - 1000)
+            count = 0
+            while len(process_logs) == 0 and count < 10:
+                time.sleep(5)
+                process_logs = self.client.get_process_logs(id=invitation.id + '-1-0', min_sdate = invitation.tmdate + self.update_wait_time - 1000)
+                count += 1
+
+            if len(process_logs) == 0 or process_logs[0]['status'] == 'error':
+                return openreview.OpenReviewException('Error saving invitation: ' + invitation.id)
+            
+        return invitation
+
 
     def expire_invitation(self, invitation_id):
         invitation = tools.get_invitation(self.client, id = invitation_id)
@@ -291,7 +308,7 @@ class InvitationBuilder(object):
                 'dates': ["#{4/cdate}"],
                 'script': self.invitation_edit_process              
             }, { 
-                'dates': ["#{4/mdate} + 10000"],
+                'dates': [self.update_date_string],
                 'script': self.invitation_edit_process             
             }],
             content={
@@ -403,7 +420,7 @@ class InvitationBuilder(object):
                 'dates': ["#{4/cdate}"],
                 'script': self.invitation_edit_process              
             }, { 
-                'dates': ["#{4/mdate} + 10000"],
+                'dates': [self.update_date_string],
                 'script': self.invitation_edit_process             
             }],
             edit={
@@ -681,7 +698,7 @@ class InvitationBuilder(object):
                 'dates': ["#{4/cdate}"],
                 'script': self.invitation_edit_process              
             }, { 
-                'dates': ["#{4/mdate} + 10000"],
+                'dates': [self.update_date_string],
                 'script': self.invitation_edit_process             
             }],
             content={
@@ -801,7 +818,7 @@ class InvitationBuilder(object):
                 'dates': ["#{4/cdate}"],
                 'script': self.invitation_edit_process              
             }, { 
-                'dates': ["#{4/mdate} + 10000"],
+                'dates': [self.update_date_string],
                 'script': self.invitation_edit_process             
             }],
             content={
@@ -919,7 +936,7 @@ class InvitationBuilder(object):
                 'dates': ["#{4/cdate}"],
                 'script': self.invitation_edit_process              
             }, { 
-                'dates': ["#{4/mdate} + 10000"],
+                'dates': [self.update_date_string],
                 'script': self.invitation_edit_process             
             }],
             content={
@@ -1569,7 +1586,7 @@ class InvitationBuilder(object):
                 'dates': ["#{4/cdate}"],
                 'script': self.invitation_edit_process              
             }, { 
-                'dates': ["#{4/mdate} + 10000"],
+                'dates': [self.update_date_string],
                 'script': self.invitation_edit_process             
             }],
             content={
