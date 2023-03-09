@@ -1180,6 +1180,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         review_stage_note=test_client.post_note(review_stage_note)
 
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Review-1-0')
 
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Reviewers', '~VenueThree_Reviewer1')
 
@@ -1276,6 +1277,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         ))
         assert review_stage_note
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Review-1-0', count=2)
 
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Official_Review')
         assert len(invitation.edit['note']['readers']) == 5
@@ -1364,6 +1366,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert meta_review_stage_note
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Meta_Review-1-0')
 
         process_logs = client.get_process_logs(id = meta_review_stage_note.id)
         assert len(process_logs) == 1
@@ -1456,6 +1459,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         ))
         assert meta_review_stage_note
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Meta_Review-1-0', count=2)
 
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Meta_Review')
         assert len(invitation.edit['note']['readers']) == 5
@@ -1502,10 +1506,12 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         ))
         assert comment_stage_note
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Comment-1-0', count=1)
 
-        process_logs = client.get_process_logs(id=comment_stage_note.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
+        official_comment_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission1/-/Official_Comment')
+        assert official_comment_invitation
+        official_comment_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission2/-/Official_Comment')
+        assert official_comment_invitation
 
         # Assert that official comment invitation is now available
         official_comment_invitation = openreview.tools.get_invitation(openreview_client, '{}/-/Official_Comment'.format(venue['venue_id']))
@@ -1596,6 +1602,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         ))
         assert decision_stage_note
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-1-0')
 
         process_logs = client.get_process_logs(id = decision_stage_note.id)
         assert len(process_logs) == 1
@@ -1710,6 +1717,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_stage_note
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-1-0', count=2)
 
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
@@ -1764,6 +1772,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_stage_note
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-1-0', count=3)
 
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
@@ -1818,6 +1827,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_stage_note
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-1-0', count=4)
 
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
@@ -1873,6 +1883,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_stage_note
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-1-0', count=5)
 
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
@@ -1927,6 +1938,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_stage_note
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-1-0', count=6)
 
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
@@ -1992,6 +2004,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_stage_note
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-1-0', count=7)
 
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
@@ -2265,13 +2278,13 @@ Best,
 
         # assert author identities of rejected paper are still hidden
         assert submissions[1].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
-        assert submissions[1].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected'
+        assert submissions[1].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected_Submission'
         assert submissions[1].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
         assert submissions[1].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
 
         # assert author identities of paper with no decision are still hidden
         assert submissions[2].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
-        assert submissions[2].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected'
+        assert submissions[2].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected_Submission'
         assert submissions[2].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
         assert submissions[2].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
 
@@ -2340,13 +2353,13 @@ Best,
 
         # assert author identities of rejected paper are still hidden
         assert submissions[1].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
-        assert submissions[1].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected'
+        assert submissions[1].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected_Submission'
         assert submissions[1].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
         assert submissions[1].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
 
         # assert author identities of paper with no decision are still hidden
         assert submissions[2].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
-        assert submissions[2].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected'
+        assert submissions[2].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected_Submission'
         assert submissions[2].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
         assert submissions[2].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
 
@@ -2396,6 +2409,9 @@ Best,
         ))
         assert comment_stage_note
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Comment-1-0', count=2)
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Public_Comment-1-0', count=1)
+
 
         process_logs = client.get_process_logs(id=comment_stage_note.id)
         assert len(process_logs) == 1

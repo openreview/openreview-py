@@ -720,7 +720,6 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'invitees': invitees,
                     'cdate': '${{2/invitations}/cdate}',
-                    'expdate': '${{2/invitations}/expdate}',
                     'preprocess': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['comment_preprocess_script']['value']
@@ -776,6 +775,9 @@ class InvitationBuilder(object):
             }
         )
 
+        if comment_expdate:
+            invitation.edit['invitation']['expdate'] = '${{2/invitations}/expdate}'
+
         self.save_invitation(invitation, replacement=True)
         return invitation
 
@@ -805,6 +807,9 @@ class InvitationBuilder(object):
             content={
                 'comment_process_script': {
                     'value': self.get_process_content('process/comment_process.py')
+                },
+                'public_notes_only': {
+                    'value': True
                 }
             },
             edit={
@@ -836,7 +841,6 @@ class InvitationBuilder(object):
                     'invitees': ['everyone'],
                     'noninvitees': self.venue.get_committee('${3/content/noteNumber/value}', with_authors = True),
                     'cdate': '${{2/invitations}/cdate}',
-                    'expdate': '${{2/invitations}/expdate}',
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['comment_process_script']['value']
@@ -881,6 +885,9 @@ class InvitationBuilder(object):
             }
         )
 
+        if comment_expdate:
+            invitation.edit['invitation']['expdate'] = '${{2/invitations}/expdate}'
+            
         self.save_invitation(invitation, replacement=True)
         return invitation
 

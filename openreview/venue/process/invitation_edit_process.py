@@ -3,12 +3,21 @@ def process(client, invitation):
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     submission_venue_id = domain.content['submission_venue_id']['value']
+    rejected_venue_id = domain.content['rejected_venue_id']['value']
     meta_invitation_id = domain.content['meta_invitation_id']['value']
 
     ## If invitation is not active then
     print('update invitation', invitation.edit['invitation']['edit']['note']['readers'])
 
-
+    def get_submissions():
+        public_notes_only = invitation.content.get('public_notes_only', False) if invitation.content else False
+        submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc')
+        if not submissions:
+            submissions = client.get_all_notes(content={ 'venueid': ','.join([venue_id, rejected_venue_id]) }, sort='number:asc')
+        if public_notes_only:
+            submissions = [s for s in submissions if s.readers == ['everyone']]
+        return submissions
+    
     def update_note_readers(submission, paper_invitation):
         ## Update readers of current notes
         notes = client.get_notes(invitation=paper_invitation.id)
@@ -53,6 +62,6 @@ def process(client, invitation):
         if 'readers' in paper_invitation.edit['note']:
             update_note_readers(note, paper_invitation)
 
-    notes = client.get_all_notes(content= { 'venueid': submission_venue_id }, sort='number:asc')        
+    notes = get_submissions()        
     print(f'update child {len(notes)} invitations')
     openreview.tools.concurrent_requests(post_invitation, notes, desc=f'edit_invitation_process')     
