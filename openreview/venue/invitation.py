@@ -499,13 +499,13 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'invitees': [venue_id, self.venue.get_authors_id(number='${3/content/noteNumber/value}')],
                     'cdate': review_rebuttal_cdate,
-#                     'process': '''def process(client, edit, invitation):
-#     meta_invitation = client.get_invitation(invitation.invitations[0])
-#     script = meta_invitation.content['review_rebuttal_process_script']['value']
-#     funcs = {}
-#     exec(script, funcs)
-#     funcs['process'](client, edit, invitation)
-# ''',
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['review_rebuttal_process_script']['value']
+    funcs = {}
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
                     'edit': {
                         'signatures': { 'param': { 'regex': self.venue.get_authors_id(number='${5/content/noteNumber/value}') }},
                         'readers': review_rebuttal_stage.get_invitation_readers(self.venue, '${4/content/noteNumber/value}'),
