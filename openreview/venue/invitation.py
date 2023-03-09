@@ -100,6 +100,40 @@ class InvitationBuilder(object):
             if 'readers' in paper_invitation.edit['note']:
                 self.update_note_readers(note, paper_invitation)
 
+        return tools.concurrent_requests(post_invitation, notes, desc=f'create_paper_invitations')
+
+    def create_rebuttal_paper_invitations(self, invitation_id, notes, single_rebuttal=False):
+
+        def post_invitation(note):
+            content = {
+                'noteId': {
+                    'value': note.forum
+                },
+                'noteNumber': {
+                    'value': note.number
+                }
+            }
+            if not single_rebuttal:
+                paper_number = note.signatures[0].split(self.venue.submission_stage.name)[-1].split('/')[0]
+                content['noteNumber']['value'] = int(paper_number)
+                content['noteSignatures'] = {
+                    'value': note.signatures[0]
+                }
+                content['reviewId'] = {
+                    'value': note.id
+                }
+
+            paper_invitation_edit = self.client.post_invitation_edit(invitations=invitation_id,
+                readers=[self.venue_id],
+                writers=[self.venue_id],
+                signatures=[self.venue_id],
+                content=content,
+                invitation=Invitation()
+            )
+            paper_invitation = self.client.get_invitation(paper_invitation_edit['invitation']['id'])
+            if 'readers' in paper_invitation.edit['note']:
+                self.update_note_readers(note, paper_invitation)
+
         return tools.concurrent_requests(post_invitation, notes, desc=f'create_paper_invitations')             
 
     def set_meta_invitation(self):
@@ -263,8 +297,6 @@ class InvitationBuilder(object):
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=True)
     
-    
-    
     def set_review_invitation(self):
 
         venue_id = self.venue_id
@@ -392,6 +424,12 @@ class InvitationBuilder(object):
         for key in review_rebuttal_stage.additional_fields:
             content[key] = review_rebuttal_stage.additional_fields[key]
 
+        paper_invitation_id = self.venue.get_rebuttal_invitation_id(review_rebuttal_stage.name, '${2/content/noteNumber/value}')
+        reply_to = '${4/content/noteId/value}'
+        if not review_rebuttal_stage.single_rebuttal:
+            paper_invitation_id = self.venue.get_rebuttal_invitation_id(review_rebuttal_stage.name, '${2/content/noteNumber/value}', '${2/content/noteSignatures/value}')
+            reply_to = '${4/content/reviewId/value}'
+
         invitation = Invitation(id=review_rebuttal_invitation_id,
             invitees=[venue_id],
             readers=[venue_id],
@@ -427,11 +465,27 @@ class InvitationBuilder(object):
                                 'regex': '.*', 'type': 'string'
                             }
                         }
-                    }
+                    },
+                    'noteSignatures': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string',
+                                'optional': True
+                            }
+                        }
+                    },
+                    'reviewId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string',
+                                'optional': True
+                            }
+                        }
+                    },
                 },
                 'replacement': True,
                 'invitation': {
-                    'id': self.venue.get_rebuttal_invitation_id(review_rebuttal_stage.name, '${2/content/noteNumber/value}'), ##add review signatures once that is implemented
+                    'id': paper_invitation_id,
                     'signatures': [venue_id],
                     'readers': ['everyone'],
                     'writers': [venue_id],
@@ -447,7 +501,7 @@ class InvitationBuilder(object):
 # ''',
                     'edit': {
                         'signatures': { 'param': { 'regex': self.venue.get_authors_id(number='${5/content/noteNumber/value}') }},
-                        'readers': review_rebuttal_stage.get_invitation_readers(self.venue, '${4/content/noteNumber/value}'), #figure out readers for rebuttal per review
+                        'readers': review_rebuttal_stage.get_invitation_readers(self.venue, '${4/content/noteNumber/value}'),
                         'writers': [venue_id],
                         'note': {
                             'id': {
@@ -457,7 +511,7 @@ class InvitationBuilder(object):
                                 }
                             },
                             'forum': '${4/content/noteId/value}',
-                            'replyto': '${4/content/noteId/value}', #customize to allow reply to review
+                            'replyto': reply_to,
                             'ddate': {
                                 'param': {
                                     'range': [ 0, 9999999999999 ],
@@ -466,7 +520,7 @@ class InvitationBuilder(object):
                                 }
                             },
                             'signatures': ['${3/signatures}'],
-                            'readers': review_rebuttal_stage.get_invitation_readers(self.venue, '${5/content/noteNumber/value}'), #figure out readers for rebuttal per review
+                            'readers': review_rebuttal_stage.get_invitation_readers(self.venue, '${5/content/noteNumber/value}'),
                             'writers': [venue_id, '${3/signatures}'],
                             'content': content
                         }

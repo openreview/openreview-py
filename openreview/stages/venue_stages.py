@@ -579,6 +579,7 @@ class ReviewRebuttalStage(object):
         AREA_CHAIRS_ASSIGNED = 4
         REVIEWERS = 5
         REVIEWERS_ASSIGNED = 6
+        REVIEWERS_SUBMITTED = 7
 
     def __init__(self, start_date = None, due_date = None, name = 'Rebuttal', email_pcs = False, additional_fields = {}, single_rebuttal = False, readers = []):
         self.start_date = start_date
@@ -613,6 +614,9 @@ class ReviewRebuttalStage(object):
 
         if self.Readers.REVIEWERS_ASSIGNED in self.readers:
             invitation_readers.append(conference.get_reviewers_id(number=number))
+
+        if self.Readers.REVIEWERS_SUBMITTED in self.readers:
+            invitation_readers.append(conference.get_reviewers_id(number=number) + '/Submitted')
 
         if conference.ethics_review_stage and number in conference.ethics_review_stage.submission_numbers:
             if conference.use_ethics_chairs:
