@@ -229,6 +229,9 @@ class GroupBuilder(object):
             content['comment_mandatory_readers'] = { 'value': self.venue.comment_stage.get_mandatory_readers(self.venue, '{number}') }
             content['comment_email_pcs'] = { 'value': self.venue.comment_stage.email_pcs }
 
+        if self.venue.review_rebuttal_stage:
+            content['rebuttal_email_pcs'] = { 'value': self.venue.review_rebuttal_stage.email_pcs}
+
         update_content = self.get_update_content(venue_group.content if venue_group.content else {}, content)
         if update_content:
             self.client.post_group_edit(
