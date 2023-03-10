@@ -36,6 +36,12 @@ def process(client, edit, invitation):
     if submission_venue_id not in submission.content['venueid']['value']:
         raise openreview.OpenReviewException('This submission is no longer under review. No action is required from your end.')
 
+    if note.content['response']['value'] == 'Yes':
+        if invite_edges[0].label == 'Accepted':
+            raise openreview.OpenReviewException('You have already accepted this invitation.')
+        if invite_edges[0].label == 'Pending Sign Up':
+            raise openreview.OpenReviewException('You have already accepted this invitation, but the assignment is pending until you create a profile and no conflict are detected.')
+
     if note.content['response']['value'] == 'No' and check_decline:
         groups = client.get_groups(prefix=venue_id, member=user)
         regex = venue_id + '/.*[0-9]/' + committee_name

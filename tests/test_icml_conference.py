@@ -1564,6 +1564,10 @@ OpenReview Team'''
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Pending Sign Up'
 
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        error_message = selenium.find_element_by_class_name('important_message')
+        assert 'You have already accepted this invitation, but the assignment is pending until you create a profile and no conflict are detected.' == error_message.text
+
         assignment_edges=pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment', head=submissions[0].id)
         assert len(assignment_edges) == 4
 
@@ -1692,6 +1696,10 @@ ICML 2023 Conference Program Chairs'''
 
         assert openreview_client.get_groups('ICML.cc/2023/Conference/Emergency_Reviewers', member='celeste@icml.cc')
         assert openreview_client.get_groups('ICML.cc/2023/Conference/Reviewers', member='celeste@icml.cc')
+
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        error_message = selenium.find_element_by_class_name('important_message')
+        assert 'You have already accepted this invitation.' == error_message.text
 
         reviewers_group = pc_client.get_group('ICML.cc/2023/Conference/Submission1/Reviewers')
         assert len(reviewers_group.members) == 5
