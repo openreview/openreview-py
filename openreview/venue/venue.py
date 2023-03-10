@@ -2,7 +2,6 @@ import csv
 import json
 from json import tool
 import datetime
-import time
 from io import StringIO
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
@@ -467,13 +466,6 @@ class Venue(object):
     def create_decision_stage(self):
         invitation = self.invitation_builder.set_decision_invitation()
 
-        invitations = self.client.get_invitations(invitation=invitation.id)
-        count = 0
-        while len(invitations) == 0 and count < 15:
-            invitations = self.client.get_invitations(invitation=invitation.id)
-            count += 1
-            time.sleep(1)
-
         decision_file = self.decision_stage.decisions_file
         if decision_file:
 
@@ -518,7 +510,6 @@ class Venue(object):
             print(f"Posting Decision {decision} for Paper {paper_number}")
             paper_note = paper_notes.get(paper_number, None)
             if not paper_note:
-                print(f"Paper {paper_number} not found. Please check the submitted paper numbers.")
                 raise openreview.OpenReviewException(
                     f"Paper {paper_number} not found. Please check the submitted paper numbers."
                 )
@@ -536,7 +527,6 @@ class Venue(object):
                 'comment': {'value': comment},
             }
             if paper_decision_note:
-                print('edit existing decision note')
                 self.client.post_note_edit(invitation = self.get_invitation_id(self.decision_stage.name, paper_number),
                     signatures = [self.get_program_chairs_id()],
                     note = Note(
@@ -545,7 +535,6 @@ class Venue(object):
                     )
                 )
             else:
-                print('create new decision note')
                 self.client.post_note_edit(invitation = self.get_invitation_id(self.decision_stage.name, paper_number),
                     signatures = [self.get_program_chairs_id()],
                     note = Note(
