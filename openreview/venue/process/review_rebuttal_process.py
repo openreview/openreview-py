@@ -5,12 +5,12 @@ def process(client, edit, invitation):
     short_name = domain.get_content_value('subtitle')
     submission_name = domain.get_content_value('submission_name')
     program_chairs_id = domain.get_content_value('program_chairs_id')
-    email_pcs = invitation.content['email_pcs']['value']
+    email_pcs = domain.get_content_value('rebuttal_email_pcs')
     
     submission = client.get_note(edit.note.forum)
     rebuttal = client.get_note(edit.note.id)
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
-    ignore_groups = edit.tauthor
+    ignore_groups = [edit.tauthor]
 
     action = 'posted' if rebuttal.tcdate == rebuttal.tmdate else 'updated'
     if rebuttal.ddate:
@@ -18,7 +18,7 @@ def process(client, edit, invitation):
 
     content = f'''To view the rebuttal, click here: https://openreview.net/forum?id={submission.forum}''' if action != 'deleted' else ''
 
-    author_message = f'''Your author rebuttal on your submission to {short_name} has been {action}.
+    author_message = f'''An author rebuttal has been {action} on your submission to {short_name}.
 
 Submission Number: {submission.number}
 
@@ -37,7 +37,7 @@ Title: {submission.content['title']['value']}
     client.post_message(
         recipients=submission.content['authorids']['value'],
         ignoreRecipients=ignore_groups,
-        subject=f'''[{short_name}] An author rebuttal was {action} on your submission. Submission Number: {submission.number}, Submission Title: "{submission.content['title']['value']}"''',
+        subject=f'''[{short_name}] An author rebuttal was {action} on Submission Number: {submission.number}, Submission Title: "{submission.content['title']['value']}"''',
         message=author_message
     )
 
