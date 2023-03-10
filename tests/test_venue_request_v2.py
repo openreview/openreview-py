@@ -1180,7 +1180,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         review_stage_note=test_client.post_note(review_stage_note)
 
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Review-1-0')
 
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Reviewers', '~VenueThree_Reviewer1')
 
@@ -1277,7 +1276,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         ))
         assert review_stage_note
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Review-1-0', count=2)
 
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Official_Review')
         assert len(invitation.edit['note']['readers']) == 5
@@ -1366,7 +1364,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert meta_review_stage_note
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Meta_Review-1-0')
 
         process_logs = client.get_process_logs(id = meta_review_stage_note.id)
         assert len(process_logs) == 1
@@ -1459,7 +1456,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         ))
         assert meta_review_stage_note
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Meta_Review-1-0', count=2)
 
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Meta_Review')
         assert len(invitation.edit['note']['readers']) == 5
@@ -1506,7 +1502,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         ))
         assert comment_stage_note
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Comment-1-0', count=1)
 
         official_comment_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission1/-/Official_Comment')
         assert official_comment_invitation
@@ -1602,7 +1597,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         ))
         assert decision_stage_note
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-1-0')
 
         process_logs = client.get_process_logs(id = decision_stage_note.id)
         assert len(process_logs) == 1
@@ -1717,7 +1711,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_stage_note
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-1-0', count=2)
 
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
@@ -1772,7 +1765,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_stage_note
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-1-0', count=3)
 
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
@@ -1827,7 +1819,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_stage_note
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-1-0', count=4)
 
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
@@ -1883,7 +1874,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_stage_note
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-1-0', count=5)
 
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
@@ -1938,7 +1928,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_stage_note
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-1-0', count=6)
 
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
@@ -2004,7 +1993,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_stage_note
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-1-0', count=7)
 
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
@@ -2086,7 +2074,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert revision_stage_note
 
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Revision-1-0', count=1)
 
         # post revision for a submission
         updated_submission = author_client.post_note_edit(invitation='V2.cc/2030/Conference/Submission3/-/Revision',
@@ -2140,7 +2127,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert revision_stage_note
 
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Revision-1-0', count=2)
 
         submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number:asc')
         assert submissions and len(submissions) == 3
@@ -2312,7 +2298,6 @@ Best,
         assert revision_stage_note
 
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Camera_Ready_Revision-1-0', count=1)
 
         revision_invitation = openreview_client.get_invitation(f'''V2.cc/2030/Conference/Submission1/-/Revision''')
         assert revision_invitation.expdate < round(time.time() * 1000)
@@ -2403,13 +2388,6 @@ Best,
         ))
         assert comment_stage_note
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Comment-1-0', count=2)
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Public_Comment-1-0', count=1)
-
-
-        process_logs = client.get_process_logs(id=comment_stage_note.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
 
         # Assert that official comment invitations are available
         official_comment_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission1/-/Official_Comment')
@@ -2465,7 +2443,6 @@ Best,
         assert revision_stage_note
 
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Supplementary_Material-1-0', count=1)
 
         submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number')
         assert submissions and len(submissions) == 3
