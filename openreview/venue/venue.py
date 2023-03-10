@@ -573,7 +573,6 @@ Total Errors: {len(errors)}
 {json.dumps({key: errors[key] for key in list(errors.keys())[:10]}, indent=2)}
 ```
 '''
-        print('error_status', error_status)
         if self.request_form_id:
             forum_note = api1_client.get_note(self.request_form_id)
             status_note = openreview.Note(
