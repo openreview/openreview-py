@@ -1631,6 +1631,10 @@ OpenReview Team'''
         assert not openreview_client.get_groups('ICML.cc/2023/Conference/Emergency_Reviewers', member='carlos@icml.cc')
         assert not openreview_client.get_groups('ICML.cc/2023/Conference/Reviewers', member='carlos@icml.cc')
 
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        error_message = selenium.find_element_by_class_name('important_message')
+        assert "You have already accepted this invitation, but a conflict was detected and the assignment cannot be made." == error_message.text
+
         ac_client.post_edge(
             openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
                 signatures=[anon_group_id],
@@ -1730,6 +1734,10 @@ ICML 2023 Conference Program Chairs'''
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
 
         helpers.await_queue(openreview_client)
+
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
+        error_message = selenium.find_element_by_class_name('important_message')
+        assert 'You have already declined this invitation.' == error_message.text
 
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 

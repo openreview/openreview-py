@@ -41,10 +41,15 @@ def process(client, edit, invitation):
             raise openreview.OpenReviewException('You have already accepted this invitation.')
         if invite_edges[0].label == 'Pending Sign Up':
             raise openreview.OpenReviewException('You have already accepted this invitation, but the assignment is pending until you create a profile and no conflict are detected.')
+        if invite_edges[0].label == 'Conflict Detected':
+            raise openreview.OpenReviewException('You have already accepted this invitation, but a conflict was detected and the assignment cannot be made.')
 
-    if note.content['response']['value'] == 'No' and check_decline:
-        groups = client.get_groups(prefix=venue_id, member=user)
-        regex = venue_id + '/.*[0-9]/' + committee_name
-        for group in groups:
-            if re.match(regex, group.id):
-                raise openreview.OpenReviewException('You have already been assigned to a paper. Please contact the paper area chair or program chairs to be unassigned.')
+    if note.content['response']['value'] == 'No':
+        if not note.content.get('comment') and 'Declined' in invite_edges[0].label:
+            raise openreview.OpenReviewException('You have already declined this invitation.')
+        if check_decline:
+            groups = client.get_groups(prefix=venue_id, member=user)
+            regex = venue_id + '/.*[0-9]/' + committee_name
+            for group in groups:
+                if re.match(regex, group.id):
+                    raise openreview.OpenReviewException('You have already been assigned to a paper. Please contact the paper area chair or program chairs to be unassigned.')
