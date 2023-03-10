@@ -38,6 +38,26 @@ class TestVenueSubmission():
             BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_area_chairs_id())
         ]        
         venue.review_stage = openreview.stages.ReviewStage(start_date=now + datetime.timedelta(minutes = 4), due_date=now + datetime.timedelta(minutes = 40))
+        venue.review_rebuttal_stage = openreview.ReviewRebuttalStage(
+            start_date=now + datetime.timedelta(minutes = 10),
+            due_date=now + datetime.timedelta(minutes = 35),
+            single_rebuttal = True,
+            readers = [openreview.stages.ReviewRebuttalStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.ReviewRebuttalStage.Readers.REVIEWERS_ASSIGNED],
+            additional_fields={
+                "pdf": {
+                    "value": {
+                    "param": {
+                        "type": "file",
+                        "extensions": [ "pdf" ],
+                        "maxSize": 50,
+                        "optional": True
+                    }
+                    },
+                    "description": "Upload a PDF file that ends with .pdf",
+                    "order": 9
+                }
+            }
+        )
         venue.meta_review_stage = openreview.stages.MetaReviewStage(start_date=now + datetime.timedelta(minutes = 10), due_date=now + datetime.timedelta(minutes = 40))
         venue.submission_revision_stage = openreview.SubmissionRevisionStage(
             name='Camera_Ready_Revision',
@@ -52,6 +72,7 @@ class TestVenueSubmission():
         venue.setup(program_chair_ids=['venue_pc@mail.com'])
         venue.create_submission_stage()
         venue.create_review_stage()
+        venue.create_review_rebuttal_stage()
         venue.create_meta_review_stage()
         venue.create_submission_revision_stage()
         assert openreview_client.get_group('TestVenue.cc')
@@ -279,6 +300,28 @@ class TestVenueSubmission():
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Official_Review')
         assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
+
+    def test_review_rebuttal_stage(self, venue, openreview_client, helpers):
+
+        assert openreview_client.get_invitation('TestVenue.cc/-/Rebuttal')
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation TestVenue.cc/Submission1/-/Rebuttal was not found'):
+            assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Rebuttal')
+
+        openreview_client.post_invitation_edit(
+            invitations='TestVenue.cc/-/Edit',
+            readers=['TestVenue.cc'],
+            writers=['TestVenue.cc'],
+            signatures=['TestVenue.cc'],
+            invitation=openreview.api.Invitation(id='TestVenue.cc/-/Rebuttal',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
+                signatures=['TestVenue.cc']
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Rebuttal-0-0')
+
+        assert openreview_client.get_invitation('TestVenue.cc/-/Rebuttal')
+        assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Rebuttal')
 
     def test_meta_review_stage(self, venue, openreview_client, helpers):
 

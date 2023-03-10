@@ -190,6 +190,36 @@ def process(client, note, invitation):
         elif invitation_type == 'Review_Stage':
             conference.create_review_stage()
 
+            if forum_note.content.get('api_version') == '2':
+
+                review_due_date = forum_note.content.get('review_deadline').strip()
+                cdate = datetime.datetime.utcnow()
+                if review_due_date:
+                    try:
+                        review_due_date = datetime.datetime.strptime(review_due_date, '%Y/%m/%d %H:%M')
+                    except ValueError:
+                        review_due_date = datetime.datetime.strptime(review_due_date, '%Y/%m/%d')
+                    cdate = openreview.tools.datetime_millis(review_due_date)
+
+                client.post_invitation(openreview.Invitation(
+                    id = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Rebuttal_Stage',
+                    super = SUPPORT_GROUP + '/-/Rebuttal_Stage',
+                    invitees = [conference.get_program_chairs_id(), SUPPORT_GROUP],
+                    cdate = cdate,
+                    reply = {
+                        'forum': forum_note.id,
+                        'referent': forum_note.id,
+                        'readers': {
+                            'description': 'The users who will be allowed to read the above content.',
+                            'values' : [conference.get_program_chairs_id(), SUPPORT_GROUP]
+                        }
+                    },
+                    signatures = ['~Super_User1']
+                ))
+
+        elif invitation_type == 'Rebuttal_Stage':
+            conference.create_review_rebuttal_stage()
+
         elif invitation_type == 'Ethics_Review_Stage':
             conference.create_ethics_review_stage()
 

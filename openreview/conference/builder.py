@@ -391,9 +391,9 @@ class Conference(object):
         if self.comment_stage:
             return self.__create_comment_stage()
 
-    def set_review_rebuttal_stage(self, stage):
-        self.review_rebuttal_stage = stage
-        return self.__create_review_rebuttal_stage()
+    def create_review_rebuttal_stage(self):
+        if self.review_rebuttal_stage:
+            return self.__create_review_rebuttal_stage()
 
     def create_review_revision_stage(self):
         if self.review_revision_stage:
@@ -2020,8 +2020,8 @@ class ConferenceBuilder(object):
     def set_review_stage(self, stage):
         self.conference.review_stage = stage
 
-    def set_review_rebuttal_stage(self, start_date = None, due_date = None, name = None,  email_pcs = False, additional_fields = {}):
-        self.review_rebuttal_stage = ReviewRebuttalStage(start_date, due_date, name, email_pcs, additional_fields)
+    def set_review_rebuttal_stage(self, stage):
+        self.conference.review_rebuttal_stage = stage
 
     def set_review_rating_stage(self, start_date = None, due_date = None,  name = None, additional_fields = {}, remove_fields = [], public = False, release_to_reviewers=ReviewRatingStage.Readers.NO_REVIEWERS):
         self.review_rating_stage = ReviewRatingStage(start_date, due_date, name, additional_fields, remove_fields, public, release_to_reviewers)
@@ -2123,8 +2123,5 @@ class ConferenceBuilder(object):
 
         for s in self.registration_stages:
             self.conference.set_registration_stage(s)
-
-        if self.review_rebuttal_stage:
-            self.conference.set_review_rebuttal_stage(self.review_rebuttal_stage)
 
         return self.conference
