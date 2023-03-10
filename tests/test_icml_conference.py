@@ -3021,6 +3021,17 @@ ICML 2023 Conference Program Chairs'''
 
         helpers.await_queue(openreview_client)
 
+        messages = openreview_client.get_messages(subject = '[ICML 2023] Your author rebuttal was posted on Submission Number: 1, Submission Title: "Paper title 1 Version 2"')
+        assert len(messages) == 1
+        assert 'test@mail.com' in messages[0]['content']['to']
+        messages = openreview_client.get_messages(subject = '[ICML 2023] An author rebuttal was posted on Submission Number: 1, Submission Title: "Paper title 1 Version 2"')
+        assert len(messages) == 4
+        recipients = [m['content']['to'] for m in messages]
+        assert 'peter@mail.com' in recipients
+        assert 'andrew@amazon.com' in recipients
+        assert 'sac1@gmail.com' in recipients
+        assert 'melisa@yahoo.com' in recipients
+
         rebuttal_edit = test_client.post_note_edit(
             invitation='ICML.cc/2023/Conference/Submission1/-/Rebuttal',
             signatures=['ICML.cc/2023/Conference/Submission1/Authors'],
