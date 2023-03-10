@@ -2,6 +2,7 @@ import csv
 import datetime
 import json
 import os
+import re
 from openreview.api import Invitation
 from openreview.api import Note
 from openreview.stages import *
@@ -114,14 +115,18 @@ class InvitationBuilder(object):
                 }
             }
             if not single_rebuttal and not unlimited_rebuttals:
-                paper_number = note.signatures[0].split(self.venue.submission_stage.name)[-1].split('/')[0]
-                content['noteNumber']['value'] = int(paper_number)
-                content['noteSignatures'] = {
-                    'value': note.signatures[0]
-                }
-                content['reviewId'] = {
-                    'value': note.id
-                }
+                regex=self.venue.get_reviewers_id(number='.*', anon=True)
+                if re.search(regex, note.signatures[0]):
+                    paper_number = note.signatures[0].split(self.venue.submission_stage.name)[-1].split('/')[0]
+                    content['noteNumber']['value'] = int(paper_number)
+                    content['noteSignatures'] = {
+                        'value': note.signatures[0]
+                    }
+                    content['reviewId'] = {
+                        'value': note.id
+                    }
+                else:
+                    return
 
             paper_invitation_edit = self.client.post_invitation_edit(invitations=invitation_id,
                 readers=[self.venue_id],
@@ -424,14 +429,16 @@ class InvitationBuilder(object):
         for key in review_rebuttal_stage.additional_fields:
             content[key] = review_rebuttal_stage.additional_fields[key]
 
-        paper_invitation_id = self.venue.get_rebuttal_invitation_id(review_rebuttal_stage.name, '${2/content/noteNumber/value}')
+        paper_invitation_id = self.venue.get_invitation_id(name=review_rebuttal_stage.name, number='${2/content/noteNumber/value}')
+        with_invitation = self.venue.get_invitation_id(name=review_rebuttal_stage.name, number='${6/content/noteNumber/value}')
         reply_to = '${4/content/noteId/value}'
         date_processes = [{
             'dates': ["#{4/cdate}"],
             'script': self.cdate_invitation_process
         }]
         if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals:
-            paper_invitation_id = self.venue.get_rebuttal_invitation_id(review_rebuttal_stage.name, '${2/content/noteNumber/value}', '${2/content/noteSignatures/value}')
+            paper_invitation_id = self.venue.get_invitation_id(name=review_rebuttal_stage.name, prefix='${2/content/noteSignatures/value}')
+            with_invitation = self.venue.get_invitation_id(name=review_rebuttal_stage.name, number='${6/content/noteSignatures/value}')
             reply_to = '${4/content/reviewId/value}'
             date_processes = []
 
@@ -498,6 +505,7 @@ class InvitationBuilder(object):
                     'signatures': [venue_id],
                     'readers': ['everyone'],
                     'writers': [venue_id],
+                    'minReplies': 1,
                     'invitees': [venue_id, self.venue.get_authors_id(number='${3/content/noteNumber/value}')],
                     'cdate': review_rebuttal_cdate,
                     'process': '''def process(client, edit, invitation):
@@ -514,7 +522,7 @@ class InvitationBuilder(object):
                         'note': {
                             'id': {
                                 'param': {
-                                    'withInvitation': self.venue.get_rebuttal_invitation_id(review_rebuttal_stage.name, '${6/content/noteNumber/value}'),
+                                    'withInvitation': with_invitation,
                                     'optional': True
                                 }
                             },

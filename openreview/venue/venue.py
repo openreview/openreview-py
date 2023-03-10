@@ -139,13 +139,6 @@ class Venue(object):
             committee_id = self.get_reviewers_id()
         return self.get_invitation_id('Recommendation', prefix=committee_id)
 
-    def get_rebuttal_invitation_id(self, name, number, signature = None):
-        invitation_id = self.get_paper_group_prefix(number)
-        if signature:
-            invitation_id = f'{signature}'
-        invitation_id += f'/-/{name}'
-        return invitation_id
-
     def get_paper_group_prefix(self, number=None):
         prefix = f'{self.venue_id}/{self.submission_stage.name}'
         if number:
