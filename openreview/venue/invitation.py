@@ -448,7 +448,7 @@ class InvitationBuilder(object):
         reply_to = '${4/content/noteId/value}'
         date_processes = [{
             'dates': ["#{4/cdate}"],
-            'script': self.cdate_invitation_process
+            'script': self.invitation_edit_process
         }]
         if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals:
             paper_invitation_id = self.venue.get_invitation_id(name=review_rebuttal_stage.name, prefix='${2/content/noteSignatures/value}')
