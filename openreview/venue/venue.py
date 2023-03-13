@@ -379,6 +379,7 @@ class Venue(object):
         self.invitation_builder.set_submission_invitation()
         self.invitation_builder.set_withdrawal_invitation()
         self.invitation_builder.set_desk_rejection_invitation()
+        self.invitation_builder.set_pc_submission_revision_invitation()
         if self.expertise_selection_stage:
             self.invitation_builder.set_expertise_selection_invitations()
 
@@ -448,14 +449,6 @@ class Venue(object):
                     return submission
         ## Release the submissions to specified readers if venueid is still submission
         openreview.tools.concurrent_requests(update_submission_readers, submissions, desc='update_submission_readers')
-
-        ## Open PC Revision
-        self.invitation_builder.set_pc_submission_revision_invitation()
-             
-        ## Create revision invitation if there is a second deadline?
-        ## Create withdraw and desk reject invitations
-        self.invitation_builder.create_paper_invitations(self.get_withdrawal_id(), submissions)
-        self.invitation_builder.create_paper_invitations(self.get_desk_rejection_id(), submissions)
 
         self.group_builder.add_to_active_venues()
 

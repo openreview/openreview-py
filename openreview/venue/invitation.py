@@ -270,6 +270,7 @@ class InvitationBuilder(object):
     def set_pc_submission_revision_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
+        cdate = tools.datetime_millis(submission_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN) if submission_stage.due_date else datetime.datetime.utcnow())        
 
         content = default_content.submission_v2.copy()
         
@@ -289,6 +290,7 @@ class InvitationBuilder(object):
             signatures = [venue_id],
             readers = ['everyone'],
             writers = [venue_id],
+            cdate = cdate,
             edit = {
                 'signatures': [self.venue.get_program_chairs_id()],
                 'readers': [self.venue.get_program_chairs_id(), self.venue.get_authors_id('${2/note/number}')],
@@ -1187,6 +1189,7 @@ class InvitationBuilder(object):
     def set_withdrawal_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
+        cdate = tools.datetime_millis(submission_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN) if submission_stage.due_date else datetime.datetime.utcnow())
         exp_date = tools.datetime_millis(self.venue.submission_stage.withdraw_submission_exp_date) if self.venue.submission_stage.withdraw_submission_exp_date else None
 
         invitation = Invitation(id=self.venue.get_invitation_id(submission_stage.withdrawal_name),
@@ -1194,7 +1197,10 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            expdate=exp_date,
+            date_processes=[{ 
+                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                'script': self.invitation_edit_process              
+            }],            
             content={
                 'process_script': {
                     'value': self.get_process_content('process/withdrawal_submission_process.py')
@@ -1228,6 +1234,7 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'signatures': [venue_id],
                     'maxReplies': 1,
+                    'cdate': cdate,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['process_script']['value']
@@ -1282,6 +1289,8 @@ class InvitationBuilder(object):
             }
         )            
 
+        if exp_date:
+            invitation.edit['invitation']['expdate'] = exp_date
 
         self.save_invitation(invitation, replacement=True)
 
@@ -1470,6 +1479,7 @@ class InvitationBuilder(object):
     def set_desk_rejection_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
+        cdate = tools.datetime_millis(submission_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN) if submission_stage.due_date else datetime.datetime.utcnow())
         exp_date = tools.datetime_millis(self.venue.submission_stage.due_date + datetime.timedelta(days = 90)) if self.venue.submission_stage.due_date else None
 
         content = default_content.desk_reject_v2.copy()
@@ -1479,7 +1489,10 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            expdate=exp_date,
+            date_processes=[{ 
+                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                'script': self.invitation_edit_process              
+            }],
             content={
                 'process_script': {
                     'value': self.get_process_content('process/desk_rejection_submission_process.py')
@@ -1513,6 +1526,7 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'signatures': [venue_id],
                     'maxReplies': 1,
+                    'cdate': cdate,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['process_script']['value']
@@ -1539,6 +1553,8 @@ class InvitationBuilder(object):
             }
         )
 
+        if exp_date:
+            invitation.edit['invitation']['expdate'] = exp_date
 
         self.save_invitation(invitation, replacement=True)
 

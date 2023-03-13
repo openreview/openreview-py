@@ -31,7 +31,14 @@ class TestVenueSubmission():
         venue.reviewer_identity_readers = [openreview.stages.IdentityReaders.PROGRAM_CHAIRS, openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED]
 
         now = datetime.datetime.utcnow()
-        venue.submission_stage = SubmissionStage(double_blind=True, readers=[SubmissionStage.Readers.EVERYONE], withdrawn_submission_public=True, withdrawn_submission_reveal_authors=True, desk_rejected_submission_public=True)
+        venue.submission_stage = SubmissionStage(
+            double_blind=True,
+            due_date=now + datetime.timedelta(minutes = 30),
+            readers=[SubmissionStage.Readers.EVERYONE], 
+            withdrawn_submission_public=True, 
+            withdrawn_submission_reveal_authors=True, 
+            desk_rejected_submission_public=True
+        )
 
         venue.bid_stages = [
             BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_reviewers_id()),
@@ -179,9 +186,11 @@ class TestVenueSubmission():
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id']) 
 
-    def test_post_submission_stage(self, venue, openreview_client):
+    def test_post_submission_stage(self, venue, openreview_client, helpers):
                 
         venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS, SubmissionStage.Readers.AREA_CHAIRS]
+        venue.submission_stage.due_date = datetime.datetime.utcnow() - datetime.timedelta(minutes = 30) + datetime.timedelta(seconds = 10)
+        venue.create_submission_stage()
         venue.setup_post_submission_stage()
         assert openreview_client.get_group('TestVenue.cc/Submission1/Authors')
         assert openreview_client.get_group('TestVenue.cc/Submission1/Reviewers')
@@ -196,8 +205,12 @@ class TestVenueSubmission():
         assert 'TestVenue.cc/Reviewers' in submission.readers
         assert 'TestVenue.cc/Area_Chairs' in submission.readers
 
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Withdrawal-0-0')
+        
         assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Withdrawal')
         assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Withdrawal')
+
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Desk_Rejection-0-0')
 
         assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Desk_Rejection')
         assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Desk_Rejection')
