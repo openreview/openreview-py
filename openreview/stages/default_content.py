@@ -719,3 +719,18 @@ decision_v2 = {
         }
     }
 }
+
+rebuttal_v2 = {
+    'rebuttal': {
+        'order': 1,
+        'description': 'Rebuttals can include Markdown formatting and LaTeX forumulas, for more information see https://openreview.net/faq , max length: 2500',
+        'value': {
+            'param': {
+                'type': 'string',
+                'maxLength': 2500,
+                'markdown': True,
+                'input': 'textarea'
+            }
+        }
+    }
+}

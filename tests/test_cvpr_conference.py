@@ -661,7 +661,7 @@ class TestCVPRSConference():
 
         now = datetime.datetime.utcnow()
 
-        conference.set_review_rebuttal_stage(openreview.ReviewRebuttalStage(
+        conference.review_rebuttal_stage = openreview.stages.ReviewRebuttalStage(
             due_date=now + datetime.timedelta(minutes = 40),
             single_rebuttal=True,
             additional_fields={
@@ -675,7 +675,8 @@ class TestCVPRSConference():
                     'required':True
                 }                
             }
-        ))
+        )
+        conference.create_review_rebuttal_stage()
 
         assert client.get_invitation('thecvf.com/CVPR/2023/Conference/Paper5/-/Rebuttal')
 
@@ -701,7 +702,7 @@ class TestCVPRSConference():
         helpers.await_queue()
 
         ## release the rebuttals
-        conference.set_review_rebuttal_stage(openreview.ReviewRebuttalStage(
+        conference.review_rebuttal_stage = openreview.stages.ReviewRebuttalStage(
             due_date=now + datetime.timedelta(minutes = 40),
             single_rebuttal=True,
             additional_fields={
@@ -720,7 +721,8 @@ class TestCVPRSConference():
                 openreview.conference.ReviewRebuttalStage.Readers.AREA_CHAIRS_ASSIGNED,
                 openreview.conference.ReviewRebuttalStage.Readers.REVIEWERS_ASSIGNED
             ]
-        ))
+        )
+        conference.create_review_rebuttal_stage()
 
         rebuttals = client.get_notes(invitation='thecvf.com/CVPR/2023/Conference/Paper5/-/Rebuttal')
         assert len(rebuttals) == 1
