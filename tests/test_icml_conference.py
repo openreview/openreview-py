@@ -403,7 +403,7 @@ class TestICMLConference():
             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
             helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Senior_Area_Chairs/-/Recruitment', count=2)
 
         messages = client.get_messages(subject='[ICML 2023] Senior Area Chair Invitation accepted')
         assert len(messages) == 2
@@ -447,7 +447,7 @@ class TestICMLConference():
             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
             helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Area_Chairs/-/Recruitment', count=2)
 
         messages = client.get_messages(subject='[ICML 2023] Area Chair Invitation accepted')
         assert len(messages) == 2
@@ -499,7 +499,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
             helpers.respond_invitation(selenium, request_page, invitation_url, accept=True, quota=3)
 
-        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Reviewers/-/Recruitment', count=6)
 
         messages = client.get_messages(subject='[ICML 2023] Reviewer Invitation accepted with reduced load')
         assert len(messages) == 6
@@ -512,7 +512,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
 
-        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Reviewers/-/Recruitment', count=7)
 
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers').members) == 5
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers/Invited').members) == 6
@@ -638,7 +638,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
                 signatures=['~SomeFirstName_User1'],
                 note=note)
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/-/Submission', count=101)
 
         submissions = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 101
@@ -670,7 +670,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
                 }
             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/-/Submission', count=102)
 
         authors_group = openreview_client.get_group(id='ICML.cc/2023/Conference/Authors')
 
@@ -698,7 +698,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
                 }
             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/-/Submission', count=103)
 
         authors_group = openreview_client.get_group(id='ICML.cc/2023/Conference/Authors')
 
@@ -798,6 +798,10 @@ reviewer6@gmail.com, Reviewer ICMLSix
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
         submission_invitation = pc_client_v2.get_invitation('ICML.cc/2023/Conference/-/Submission')
         assert submission_invitation.expdate < openreview.tools.datetime_millis(now)
+
+        assert len(pc_client_v2.get_all_invitations(invitation='ICML.cc/2023/Conference/-/Withdrawal')) == 101
+        assert len(pc_client_v2.get_all_invitations(invitation='ICML.cc/2023/Conference/-/Desk_Rejection')) == 101
+        assert pc_client_v2.get_invitation('ICML.cc/2023/Conference/-/PC_Revision')
 
         ## make submissions visible to ACs only
         pc_client.post_note(openreview.Note(
