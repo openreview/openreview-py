@@ -391,11 +391,7 @@ class Venue(object):
         return self.invitation_builder.set_review_invitation()
         
     def create_review_rebuttal_stage(self):
-        invitation = self.invitation_builder.set_review_rebuttal_invitation()
-        notes = self.get_submissions(details='directReplies')
-        if not self.review_rebuttal_stage.single_rebuttal and not self.review_rebuttal_stage.unlimited_rebuttals:
-            notes = [openreview.api.Note.from_json(reply) for note in notes for reply in note.details['directReplies'] if f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{self.review_stage.name}' in reply['invitations']]
-        self.invitation_builder.create_rebuttal_paper_invitations(invitation.id, notes, self.review_rebuttal_stage.single_rebuttal, self.review_rebuttal_stage.unlimited_rebuttals)
+        return self.invitation_builder.set_review_rebuttal_invitation()
 
     def create_meta_review_stage(self):
         return self.invitation_builder.set_meta_review_invitation()
