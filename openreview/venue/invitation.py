@@ -55,7 +55,6 @@ class InvitationBuilder(object):
             
         return invitation
 
-
     def expire_invitation(self, invitation_id):
         invitation = tools.get_invitation(self.client, id = invitation_id)
 
@@ -71,92 +70,6 @@ class InvitationBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
             process = f.read()
             return process
-
-    def update_note_readers(self, submission, invitation):
-        ## Update readers of current notes
-        notes = self.client.get_notes(invitation=invitation.id)
-        invitation_readers = invitation.edit['note']['readers']
-
-        ## if the invitation indicates readers is everyone but the submission is not, we ignore the update
-        if 'everyone' in invitation_readers and 'everyone' not in submission.readers:
-            return
-
-        if type(invitation_readers) is list:
-            for note in notes:
-                final_invitation_readers = [note.signatures[0] if 'signatures' in r else r for r in invitation_readers]
-                if note.readers != final_invitation_readers:
-                    self.client.post_note_edit(
-                        invitation = self.venue.get_meta_invitation_id(),
-                        readers = invitation_readers,
-                        writers = [self.venue_id],
-                        signatures = [self.venue_id],
-                        note = Note(
-                            id = note.id,
-                            readers = final_invitation_readers,
-                            nonreaders = invitation.edit['note'].get('nonreaders')
-                        )
-                    )            
-
-    def create_paper_invitations(self, invitation_id, notes):
-
-        def post_invitation(note):
-            paper_invitation_edit = self.client.post_invitation_edit(invitations=invitation_id,
-                readers=[self.venue_id],
-                writers=[self.venue_id],
-                signatures=[self.venue_id],
-                content={
-                    'noteId': {
-                        'value': note.id
-                    },
-                    'noteNumber': {
-                        'value': note.number
-                    }
-                },
-                invitation=Invitation()
-            )
-            paper_invitation = self.client.get_invitation(paper_invitation_edit['invitation']['id'])
-            if 'readers' in paper_invitation.edit['note']:
-                self.update_note_readers(note, paper_invitation)
-
-        return tools.concurrent_requests(post_invitation, notes, desc=f'create_paper_invitations')
-
-    def create_rebuttal_paper_invitations(self, invitation_id, notes, single_rebuttal=False, unlimited_rebuttals=False):
-
-        def post_invitation(note):
-            content = {
-                'noteId': {
-                    'value': note.forum
-                },
-                'noteNumber': {
-                    'value': note.number
-                }
-            }
-            if not single_rebuttal and not unlimited_rebuttals:
-                regex=self.venue.get_reviewers_id(number='.*', anon=True)
-                if re.search(regex, note.signatures[0]):
-                    paper_number = note.signatures[0].split(self.venue.submission_stage.name)[-1].split('/')[0]
-                    content['noteNumber']['value'] = int(paper_number)
-                    content['replytoSignatures'] = {
-                        'value': note.signatures[0]
-                    }
-                    content['replyto'] = {
-                        'value': note.id
-                    }
-                else:
-                    return
-
-            paper_invitation_edit = self.client.post_invitation_edit(invitations=invitation_id,
-                readers=[self.venue_id],
-                writers=[self.venue_id],
-                signatures=[self.venue_id],
-                content=content,
-                invitation=Invitation()
-            )
-            paper_invitation = self.client.get_invitation(paper_invitation_edit['invitation']['id'])
-            if 'readers' in paper_invitation.edit['note']:
-                self.update_note_readers(note, paper_invitation)
-
-        return tools.concurrent_requests(post_invitation, notes, desc=f'create_paper_invitations')             
 
     def set_meta_invitation(self):
         venue_id=self.venue_id
