@@ -1255,11 +1255,13 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         # Post a review stage note
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
-        due_date = now + datetime.timedelta(days=3)
+        due_date = now - datetime.timedelta(hours=1)
+        review_exp_date = now + datetime.timedelta(days=1)
         review_stage_note = test_client.post_note(openreview.Note(
             content={
-                'review_start_date': start_date.strftime('%Y/%m/%d'),
-                'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'review_start_date': start_date.strftime('%Y/%m/%d %H:%M'),
+                'review_deadline': due_date.strftime('%Y/%m/%d %H:%M'),
+                'review_expiration_date': review_exp_date.strftime('%Y/%m/%d'),
                 'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'Yes, reviews should be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers',
@@ -1290,6 +1292,56 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'V2.cc/2030/Conference/Submission1/Reviewers' in reviews[0].readers
         assert 'V2.cc/2030/Conference/Submission1/Authors' in reviews[0].readers
         assert len(reviews[0].nonreaders) == 0
+
+    def test_rebuttal_stage(self, client, test_client, venue, openreview_client, helpers):
+
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        rebuttal_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'rebuttal_start_date': start_date.strftime('%Y/%m/%d'),
+                'rebuttal_deadline': due_date.strftime('%Y/%m/%d'),
+                'number_of_rebuttals': 'One author rebuttal per posted review',
+                'rebuttal_readers': ['Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
+                'email_program_chairs_about_rebuttals': 'No, do not email program chairs about received rebuttals'
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Rebuttal_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert rebuttal_stage_note
+        helpers.await_queue()
+
+        reviews = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review')
+        assert len(reviews) == 1
+
+        assert openreview_client.get_invitation(f'{reviews[0].signatures[0]}/-/Rebuttal')
+
+        author_client = OpenReviewClient(username='venue_author_v2@mail.com', password='1234')
+
+        rebuttal_edit = author_client.post_note_edit(
+            invitation=f'{reviews[0].signatures[0]}/-/Rebuttal',
+            signatures=['V2.cc/2030/Conference/Submission1/Authors'],
+            note=openreview.api.Note(
+                content={
+                    'rebuttal': { 'value': 'This is a rebuttal.' }
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        messages = openreview_client.get_messages(subject = '[TestVenue@OR\'2030V2] Your author rebuttal was posted on Submission Number: 1, Submission Title: "test submission"')
+        assert len(messages) == 1
+        assert 'venue_author_v2@mail.com' in messages[0]['content']['to']
+        messages = openreview_client.get_messages(subject = '[TestVenue@OR\'2030V2] An author rebuttal was posted on Submission Number: 1, Submission Title: "test submission"')
+        assert len(messages) == 1
+        assert 'venue_reviewer_v2_@mail.com' in messages[0]['content']['to']       
 
     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 

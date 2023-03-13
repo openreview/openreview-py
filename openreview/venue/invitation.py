@@ -136,10 +136,10 @@ class InvitationBuilder(object):
                 if re.search(regex, note.signatures[0]):
                     paper_number = note.signatures[0].split(self.venue.submission_stage.name)[-1].split('/')[0]
                     content['noteNumber']['value'] = int(paper_number)
-                    content['noteSignatures'] = {
+                    content['replytoSignatures'] = {
                         'value': note.signatures[0]
                     }
-                    content['reviewId'] = {
+                    content['replyto'] = {
                         'value': note.id
                     }
                 else:
@@ -446,15 +446,11 @@ class InvitationBuilder(object):
         paper_invitation_id = self.venue.get_invitation_id(name=review_rebuttal_stage.name, number='${2/content/noteNumber/value}')
         with_invitation = self.venue.get_invitation_id(name=review_rebuttal_stage.name, number='${6/content/noteNumber/value}')
         reply_to = '${4/content/noteId/value}'
-        date_processes = [{
-            'dates': ["#{4/cdate}"],
-            'script': self.invitation_edit_process
-        }]
+
         if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals:
-            paper_invitation_id = self.venue.get_invitation_id(name=review_rebuttal_stage.name, prefix='${2/content/noteSignatures/value}')
-            with_invitation = self.venue.get_invitation_id(name=review_rebuttal_stage.name, number='${6/content/noteSignatures/value}')
-            reply_to = '${4/content/reviewId/value}'
-            date_processes = []
+            paper_invitation_id = self.venue.get_invitation_id(name=review_rebuttal_stage.name, prefix='${2/content/replytoSignatures/value}')
+            with_invitation = self.venue.get_invitation_id(name=review_rebuttal_stage.name, number='${6/content/replytoSignatures/value}')
+            reply_to = '${4/content/replyto/value}'
 
         if review_rebuttal_stage.unlimited_rebuttals:
             reply_to = {
@@ -471,10 +467,19 @@ class InvitationBuilder(object):
             cdate=review_rebuttal_cdate,
             duedate=review_rebuttal_duedate,
             expdate=review_rebuttal_expdate,
-            date_processes=date_processes,
+            date_processes=[{ 
+                'dates': ["#{4/cdate}"],
+                'script': self.invitation_edit_process              
+            }, { 
+                'dates': [self.update_date_string],
+                'script': self.invitation_edit_process             
+            }],
             content = {
                 'review_rebuttal_process_script': {
                     'value': self.get_process_content('process/review_rebuttal_process.py')
+                },
+                'review_notes_only': {
+                    'value': not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals
                 }
             },
             edit={
@@ -496,7 +501,7 @@ class InvitationBuilder(object):
                             }
                         }
                     },
-                    'noteSignatures': {
+                    'replytoSignatures': {
                         'value': {
                             'param': {
                                 'regex': '.*', 'type': 'string',
@@ -504,7 +509,7 @@ class InvitationBuilder(object):
                             }
                         }
                     },
-                    'reviewId': {
+                    'replyto': {
                         'value': {
                             'param': {
                                 'regex': '.*', 'type': 'string',
@@ -521,7 +526,9 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'minReplies': 1,
                     'invitees': [venue_id, self.venue.get_authors_id(number='${3/content/noteNumber/value}')],
-                    'cdate': review_rebuttal_cdate,
+                    'cdate': '${{2/invitations}/cdate}',
+                    'duedate': '${{2/invitations}/duedate}',
+                    'expdate': '${{2/invitations}/expdate}',
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['review_rebuttal_process_script']['value']
@@ -558,10 +565,6 @@ class InvitationBuilder(object):
                 }
             }
         )
-
-        if review_rebuttal_duedate:
-            invitation.edit['invitation']['duedate'] = review_rebuttal_duedate
-            invitation.edit['invitation']['expdate'] = review_rebuttal_expdate
 
         if not review_rebuttal_stage.unlimited_rebuttals:
             invitation.edit['invitation']['maxReplies'] = 1
