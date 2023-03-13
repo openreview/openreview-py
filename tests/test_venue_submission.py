@@ -371,8 +371,12 @@ class TestVenueSubmission():
             writers=['TestVenue.cc'],
             signatures=['TestVenue.cc'],
             invitation=openreview.api.Invitation(id='TestVenue.cc/-/Rebuttal',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
-                signatures=['TestVenue.cc']
+                signatures=['TestVenue.cc'],
+                edit = {
+                    'invitation': {
+                        'cdate': openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000
+                    }
+                }
             )
         )
 
@@ -393,8 +397,12 @@ class TestVenueSubmission():
             writers=['TestVenue.cc'],
             signatures=['TestVenue.cc'],
             invitation=openreview.api.Invitation(id='TestVenue.cc/-/Meta_Review',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
-                signatures=['TestVenue.cc']
+                signatures=['TestVenue.cc'],
+                edit = {
+                    'invitation': {
+                        'cdate': openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000
+                    }
+                }
             )
         )
 
@@ -606,8 +614,12 @@ class TestVenueSubmission():
             writers=['TestVenue.cc'],
             signatures=['TestVenue.cc'],
             invitation=openreview.api.Invitation(id='TestVenue.cc/-/Camera_Ready_Revision',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
-                signatures=['TestVenue.cc']
+                signatures=['TestVenue.cc'],
+                edit = {
+                    'invitation': {
+                        'cdate': openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000
+                    }
+                }
             )
         )
 
