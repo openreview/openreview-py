@@ -293,12 +293,16 @@ class TestVenueSubmission():
             signatures=['TestVenue.cc'],
             invitation=openreview.api.Invitation(id='TestVenue.cc/-/Official_Review',
                 signatures=['TestVenue.cc'],
-                cdate=new_cdate
+                edit = {
+                    'invitation': {
+                        'cdate': new_cdate
+                    }
+                }
             )
         )
 
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Official_Review-0-0')
-        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Official_Review-1-0', count=2)
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Official_Review-0-1', count=2)
 
         invitations = openreview_client.get_invitations(invitation='TestVenue.cc/-/Official_Review')
         assert len(invitations) == 2
@@ -349,7 +353,7 @@ class TestVenueSubmission():
             )
         )        
 
-        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Official_Review-1-0', count=4)
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Official_Review-0-1', count=4)
 
         invitation = openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
         assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/Submission1/Area_Chairs", "${3/signatures}", "TestVenue.cc/Submission1/Authors"]

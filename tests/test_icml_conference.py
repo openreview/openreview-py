@@ -2592,12 +2592,16 @@ ICML 2023 Conference Program Chairs'''
             signatures=['ICML.cc/2023/Conference'],
             invitation=openreview.api.Invitation(
                 id='ICML.cc/2023/Conference/-/Official_Review',
-                duedate=new_due_date,
-                expdate=new_exp_date
+                edit={
+                    'invitation': {
+                        'duedate': new_due_date,
+                        'expdate': new_exp_date            
+                    }
+                }
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Review-1-0', count=4)
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Review-0-1', count=4)
         invitation = pc_client_v2.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Review')
         assert invitation.duedate == new_due_date
         assert invitation.expdate == new_exp_date
