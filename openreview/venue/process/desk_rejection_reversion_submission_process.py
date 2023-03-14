@@ -7,6 +7,7 @@ def process(client, edit, invitation):
     desk_reject_expiration_id = domain.content['desk_reject_expiration_id']['value']
     desk_reject_committee = domain.content['desk_reject_committee']['value']
     submission_name = domain.content['submission_name']['value']
+    authors_name = domain.content['authors_name']['value']
 
     now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
     submission = client.get_note(edit.note.forum)
@@ -39,5 +40,5 @@ For more information, click here https://openreview.net/forum?id={submission.id}
 
     client.post_message(email_subject, formatted_committee, email_body)
 
-    print(f'Add {paper_group_id}/Authors to {venue_id}/Authors')
-    client.add_members_to_group(f'{venue_id}/Authors', f'{paper_group_id}/Authors')
+    print(f'Add {paper_group_id}/{authors_name} to {venue_id}/{authors_name}')
+    client.add_members_to_group(f'{venue_id}/{authors_name}', f'{paper_group_id}/{authors_name}')
