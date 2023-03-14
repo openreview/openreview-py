@@ -31,7 +31,14 @@ class TestVenueSubmission():
         venue.reviewer_identity_readers = [openreview.stages.IdentityReaders.PROGRAM_CHAIRS, openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED]
 
         now = datetime.datetime.utcnow()
-        venue.submission_stage = SubmissionStage(double_blind=True, readers=[SubmissionStage.Readers.EVERYONE], withdrawn_submission_public=True, withdrawn_submission_reveal_authors=True, desk_rejected_submission_public=True)
+        venue.submission_stage = SubmissionStage(
+            double_blind=True,
+            due_date=now + datetime.timedelta(minutes = 30),
+            readers=[SubmissionStage.Readers.EVERYONE], 
+            withdrawn_submission_public=True, 
+            withdrawn_submission_reveal_authors=True, 
+            desk_rejected_submission_public=True
+        )
 
         venue.bid_stages = [
             BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_reviewers_id()),
@@ -179,9 +186,11 @@ class TestVenueSubmission():
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id']) 
 
-    def test_post_submission_stage(self, venue, openreview_client):
+    def test_post_submission_stage(self, venue, openreview_client, helpers):
                 
         venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS, SubmissionStage.Readers.AREA_CHAIRS]
+        venue.submission_stage.due_date = datetime.datetime.utcnow() - datetime.timedelta(minutes = 30) + datetime.timedelta(seconds = 10)
+        venue.create_submission_stage()
         venue.setup_post_submission_stage()
         assert openreview_client.get_group('TestVenue.cc/Submission1/Authors')
         assert openreview_client.get_group('TestVenue.cc/Submission1/Reviewers')
@@ -196,8 +205,12 @@ class TestVenueSubmission():
         assert 'TestVenue.cc/Reviewers' in submission.readers
         assert 'TestVenue.cc/Area_Chairs' in submission.readers
 
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Withdrawal-0-0')
+        
         assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Withdrawal')
         assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Withdrawal')
+
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Desk_Rejection-0-0')
 
         assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Desk_Rejection')
         assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Desk_Rejection')
@@ -285,21 +298,79 @@ class TestVenueSubmission():
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation TestVenue.cc/Submission1/-/Official_Review was not found'):
             assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
 
+        new_cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000
         openreview_client.post_invitation_edit(
             invitations='TestVenue.cc/-/Edit',
             readers=['TestVenue.cc'],
             writers=['TestVenue.cc'],
             signatures=['TestVenue.cc'],
             invitation=openreview.api.Invitation(id='TestVenue.cc/-/Official_Review',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
-                signatures=['TestVenue.cc']
+                signatures=['TestVenue.cc'],
+                edit = {
+                    'invitation': {
+                        'cdate': new_cdate
+                    }
+                }
             )
         )
 
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Official_Review-0-0')
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Official_Review-0-1', count=2)
 
-        assert openreview_client.get_invitation('TestVenue.cc/-/Official_Review')
-        assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
+        invitations = openreview_client.get_invitations(invitation='TestVenue.cc/-/Official_Review')
+        assert len(invitations) == 2
+        #assert invitation.cdate == new_cdate
+        invitation = openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
+        assert invitation.cdate == new_cdate
+        assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/Submission1/Area_Chairs", "${3/signatures}"]
+
+        now = datetime.datetime.utcnow()
+        venue.review_stage = openreview.stages.ReviewStage(start_date=now + datetime.timedelta(minutes = 4), due_date=now + datetime.timedelta(minutes = 40), release_to_authors=True)
+        venue.create_review_stage()
+
+        invitation = openreview_client.get_invitation('TestVenue.cc/-/Official_Review')
+        assert invitation.edit['invitation']['edit']['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/Submission${5/content/noteNumber/value}/Area_Chairs", "${3/signatures}", "TestVenue.cc/Submission${5/content/noteNumber/value}/Authors"]
+
+        invitation = openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
+        assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/Submission1/Area_Chairs", "${3/signatures}", "TestVenue.cc/Submission1/Authors"]
+
+        ## If I change the super invitation, let's propagate the changes to the children
+        openreview_client.post_invitation_edit(
+            invitations='TestVenue.cc/-/Edit',
+            readers=['TestVenue.cc'],
+            writers=['TestVenue.cc'],
+            signatures=['TestVenue.cc'],
+            invitation=openreview.api.Invitation(id='TestVenue.cc/-/Official_Review',
+                signatures=['TestVenue.cc'],
+                edit={
+                    'invitation': {
+                        'edit': {
+                            'note': {
+                                'content': {
+                                    "private_comment_to_acs": {
+                                        "order": 11,
+                                        "description": "Leave a comment to the ACs.",
+                                        "value": {
+                                            "param": {
+                                                "type": "string",
+                                                "regex": ".{0,500}"
+                                            }
+                                        },
+                                        "readers": ['TestVenue.cc', "TestVenue.cc/Submission${4/number}/Area_Chairs"]
+                                    },
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )        
+
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Official_Review-0-1', count=4)
+
+        invitation = openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
+        assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/Submission1/Area_Chairs", "${3/signatures}", "TestVenue.cc/Submission1/Authors"]
+        assert 'private_comment_to_acs' in invitation.edit['note']['content']
 
     def test_review_rebuttal_stage(self, venue, openreview_client, helpers):
 
@@ -313,8 +384,12 @@ class TestVenueSubmission():
             writers=['TestVenue.cc'],
             signatures=['TestVenue.cc'],
             invitation=openreview.api.Invitation(id='TestVenue.cc/-/Rebuttal',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
-                signatures=['TestVenue.cc']
+                signatures=['TestVenue.cc'],
+                edit = {
+                    'invitation': {
+                        'cdate': openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000
+                    }
+                }
             )
         )
 
@@ -335,8 +410,12 @@ class TestVenueSubmission():
             writers=['TestVenue.cc'],
             signatures=['TestVenue.cc'],
             invitation=openreview.api.Invitation(id='TestVenue.cc/-/Meta_Review',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
-                signatures=['TestVenue.cc']
+                signatures=['TestVenue.cc'],
+                edit = {
+                    'invitation': {
+                        'cdate': openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000
+                    }
+                }
             )
         )
 
@@ -548,8 +627,12 @@ class TestVenueSubmission():
             writers=['TestVenue.cc'],
             signatures=['TestVenue.cc'],
             invitation=openreview.api.Invitation(id='TestVenue.cc/-/Camera_Ready_Revision',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
-                signatures=['TestVenue.cc']
+                signatures=['TestVenue.cc'],
+                edit = {
+                    'invitation': {
+                        'cdate': openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000
+                    }
+                }
             )
         )
 

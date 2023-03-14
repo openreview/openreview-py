@@ -320,7 +320,7 @@ class Venue(object):
             notes = self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.get_submission_venue_id()}'}, sort=sort, details=details)
             if len(notes) == 0:
                 notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort, details=details)
-                rejected = self.client.get_all_notes(content={ 'venueid': f'{self.venue_id}/Rejected'}, sort=sort, details=details)
+                rejected = self.client.get_all_notes(content={ 'venueid': self.get_rejected_submission_venue_id()}, sort=sort, details=details)
                 if rejected:
                     notes.extend(rejected)
             return notes
@@ -389,26 +389,26 @@ class Venue(object):
         self.invitation_builder.set_submission_invitation()
         self.invitation_builder.set_withdrawal_invitation()
         self.invitation_builder.set_desk_rejection_invitation()
+        self.invitation_builder.set_pc_submission_revision_invitation()
         if self.expertise_selection_stage:
             self.invitation_builder.set_expertise_selection_invitations()
 
-    def create_review_stage(self):
-        invitation = self.invitation_builder.set_review_invitation()
-        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions())
+    def create_submission_revision_stage(self):
+        invitation = tools.get_invitation(self.client, self.get_submission_id())
+        if invitation:
+            return self.invitation_builder.set_submission_revision_invitation(invitation.edit['note']['content'])
 
+    def create_review_stage(self):
+        return self.invitation_builder.set_review_invitation()
+        
     def create_review_rebuttal_stage(self):
-        invitation = self.invitation_builder.set_review_rebuttal_invitation()
-        notes = self.get_submissions(details='directReplies')
-        if not self.review_rebuttal_stage.single_rebuttal and not self.review_rebuttal_stage.unlimited_rebuttals:
-            notes = [openreview.api.Note.from_json(reply) for note in notes for reply in note.details['directReplies'] if f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{self.review_stage.name}' in reply['invitations']]
-        self.invitation_builder.create_rebuttal_paper_invitations(invitation.id, notes, self.review_rebuttal_stage.single_rebuttal, self.review_rebuttal_stage.unlimited_rebuttals)
+        return self.invitation_builder.set_review_rebuttal_invitation()
 
     def create_meta_review_stage(self):
-        invitation = self.invitation_builder.set_meta_review_invitation()
-        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions())
+        return self.invitation_builder.set_meta_review_invitation()
 
     def create_registration_stages(self):
-        self.invitation_builder.set_registration_invitations()
+        return self.invitation_builder.set_registration_invitations()
     
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
         venue_id = self.venue_id
@@ -460,30 +460,18 @@ class Venue(object):
         ## Release the submissions to specified readers if venueid is still submission
         openreview.tools.concurrent_requests(update_submission_readers, submissions, desc='update_submission_readers')
 
-        ## Open PC Revision
-        self.invitation_builder.set_pc_submission_revision_invitation()
-             
-        ## Create revision invitation if there is a second deadline?
-        ## Create withdraw and desk reject invitations
-        self.invitation_builder.create_paper_invitations(self.get_withdrawal_id(), submissions)
-        self.invitation_builder.create_paper_invitations(self.get_desk_rejection_id(), submissions)
-
         self.group_builder.add_to_active_venues()
 
     def create_bid_stages(self):
         self.invitation_builder.set_bid_invitations()
 
     def create_comment_stage(self):
-        comment_invitation = self.invitation_builder.set_official_comment_invitation()
-        self.invitation_builder.create_paper_invitations(comment_invitation.id, self.get_submissions())
+        self.invitation_builder.set_official_comment_invitation()
         if self.comment_stage.allow_public_comments:
-            public_notes = [note for note in self.get_submissions() if 'everyone' in note.readers]
-            comment_invitation = self.invitation_builder.set_public_comment_invitation()
-            self.invitation_builder.create_paper_invitations(comment_invitation.id, public_notes)
+            self.invitation_builder.set_public_comment_invitation()
 
     def create_decision_stage(self):
         invitation = self.invitation_builder.set_decision_invitation()
-        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions())
 
         decision_file = self.decision_stage.decisions_file
         if decision_file:
@@ -622,7 +610,7 @@ Total Errors: {len(errors)}
             if 'Accept' in decision:
                 return venue_id
             else:
-                return f'{venue_id}/Rejected'
+                return self.get_rejected_submission_venue_id()
 
         if submission_readers:
             self.submission_stage.readers = submission_readers
@@ -692,19 +680,6 @@ Total Errors: {len(errors)}
                 self.client.post_message(subject, recipients=note.content['authorids']['value'], message=final_message)
 
         tools.concurrent_requests(send_notification, paper_notes)
-
-    def create_submission_revision_stage(self):
-        invitation = tools.get_invitation(self.client, self.get_submission_id())
-        if invitation:
-            notes = self.get_submissions(accepted=self.submission_revision_stage.only_accepted)
-            if self.submission_revision_stage.only_accepted:
-                all_notes = self.get_submissions()
-                accepted_note_ids = [note.id for note in notes]
-                non_accepted_notes = [note for note in all_notes if note.id not in accepted_note_ids]
-                expire_invitation_ids = [self.get_invitation_id(self.submission_revision_stage.name, note.number) for note in non_accepted_notes]
-                tools.concurrent_requests(self.invitation_builder.expire_invitation, expire_invitation_ids)
-            revision_invitation = self.invitation_builder.set_submission_revision_invitation(invitation.edit['note']['content'])
-            self.invitation_builder.create_paper_invitations(revision_invitation.id, notes)
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, alternate_matching_group=None):
         if committee_id is None:

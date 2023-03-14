@@ -16,7 +16,7 @@ def process(client, edit, invitation):
     if rebuttal.ddate:
         action = 'deleted'
 
-    content = f'''To view the rebuttal, click here: https://openreview.net/forum?id={submission.forum}''' if action != 'deleted' else ''
+    content = f'''To view the rebuttal, click here: https://openreview.net/forum?id={submission.forum}&noteId={rebuttal.id}''' if action != 'deleted' else ''
 
     author_message = f'''An author rebuttal has been {action} on your submission to {short_name}.
 
