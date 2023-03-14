@@ -231,6 +231,88 @@ class VenueStages():
             }
         ))
 
+    def setup_rebuttal_stage(self):
+
+        rebuttal_stage_content = {
+            'rebuttal_start_date': {
+                'description': 'When does the rebuttal stage begin? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'order': 1
+            },
+            'rebuttal_deadline': {
+                'description': 'When does the rebuttal stage end? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'required': True,
+                'order': 2
+            },
+            'number_of_rebuttals': {
+                'description': "Select how many rebuttals the authors will be able to post.",
+                'value-radio': [
+                    'One author rebuttal per paper',
+                    'One author rebuttal per posted review',
+                    'Multiple author rebuttals per paper'
+                ],
+                'required': True,
+                'order': 3
+            },
+            'rebuttal_readers': {
+                'description': 'Select all participants that should be able to see the rebuttal when posted besides Program Chairs and paper authors, which are added by default',
+                'values-checkbox': [
+                    'Everyone',
+                    'All Senior Area Chairs',
+                    'Assigned Senior Area Chairs',
+                    'All Area Chairs',
+                    'Assigned Area Chairs',
+                    'All Reviewers',
+                    'Assigned Reviewers',
+                    'Assigned Reviewers who already submitted their review',
+                ],
+                'required': False,
+                'order': 4
+            },
+            'additional_rebuttal_form_options': {
+                'order': 5,
+                'value-dict': {},
+                'required': False,
+                'description': 'Configure additional options in the rebuttal form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
+            },
+            'email_program_chairs_about_rebuttals': {
+                'description': 'Should Program Chairs be emailed when each rebuttal is received? Default is "No, do not email program chairs about received rebuttals".',
+                'value-radio': [
+                    'Yes, email program chairs for each rebuttal received',
+                    'No, do not email program chairs about received rebuttals'],
+                'required': True,
+                'default': 'No, do not email program chairs about received rebuttals',
+                'order': 6
+            }
+        }
+
+        return self.venue_request.client.post_invitation(openreview.Invitation(
+            id='{}/-/Rebuttal_Stage'.format(self.venue_request.support_group.id),
+            readers=['everyone'],
+            writers=[self.venue_request.support_group.id],
+            signatures=[self.venue_request.super_user],
+            invitees=['everyone'],
+            multiReply=True,
+            process_string=self.file_content,
+            preprocess=self.pre_process_file_content,
+            reply={
+                'readers': {
+                    'values-copied': [
+                        self.venue_request.support_group.id,
+                        '{content["program_chair_emails"]}'
+                    ]
+                },
+                'writers': {
+                    'values':[],
+                },
+                'signatures': {
+                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                },
+                'content': rebuttal_stage_content
+            }
+        ))
+
     def setup_ethics_review_stage(self):
 
         ethics_review_stage_content = {
@@ -327,7 +409,6 @@ class VenueStages():
                 'content': ethics_review_stage_content
             }
         ))
-
 
     def setup_comment_stage(self):
 
@@ -841,6 +922,7 @@ class VenueRequest():
         self.venue_revision_invitation = venue_stages.setup_venue_revision()
         self.bid_stage_super_invitation = venue_stages.setup_bidding_stage()
         self.review_stage_super_invitation = venue_stages.setup_review_stage()
+        self.review_rebuttal_super_invitation = venue_stages.setup_rebuttal_stage()
         self.ethics_review_stage_super_invitation = venue_stages.setup_ethics_review_stage()
         self.comment_stage_super_invitation = venue_stages.setup_comment_stage()
         self.meta_review_stage_super_invitation = venue_stages.setup_meta_review_stage()

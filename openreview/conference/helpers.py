@@ -35,7 +35,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.comment_stage = get_comment_stage(note)
         venue.decision_stage = get_decision_stage(note)
         venue.submission_revision_stage = get_submission_revision_stage(note)
-
+        venue.review_rebuttal_stage = get_rebuttal_stage(note)
 
         paper_matching_options = note.content.get('Paper Matching', [])
         include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
@@ -263,6 +263,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     builder.set_area_chair_roles(note.content.get('area_chair_roles', ['Area_Chairs']))
     builder.set_senior_area_chair_roles(note.content.get('senior_area_chair_roles', ['Senior_Area_Chairs']))
     builder.set_review_stage(get_review_stage(note))
+    builder.set_review_rebuttal_stage(get_rebuttal_stage(note))
     builder.set_ethics_review_stage(get_ethics_review_stage(note))
     builder.set_bid_stages(get_bid_stages(note))
     builder.set_meta_review_stage(get_meta_review_stage(note))
@@ -466,6 +467,64 @@ def get_review_stage(request_forum):
         remove_fields = review_form_remove_options,
         rating_field_name=request_forum.content.get('review_rating_field_name', 'rating'),
         confidence_field_name=request_forum.content.get('review_confidence_field_name', 'confidence')
+    )
+
+def get_rebuttal_stage(request_forum):
+    rebuttal_start_date = request_forum.content.get('rebuttal_start_date', '').strip()
+    if rebuttal_start_date:
+        try:
+            rebuttal_start_date = datetime.datetime.strptime(rebuttal_start_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            rebuttal_start_date = datetime.datetime.strptime(rebuttal_start_date, '%Y/%m/%d')
+    else:
+        rebuttal_start_date = None
+
+    rebuttal_due_date = request_forum.content.get('rebuttal_deadline', '').strip()
+    if rebuttal_due_date:
+        try:
+            rebuttal_due_date = datetime.datetime.strptime(rebuttal_due_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            rebuttal_due_date = datetime.datetime.strptime(rebuttal_due_date, '%Y/%m/%d')
+    else:
+        rebuttal_due_date = None
+
+    rebuttal_form_additional_options = request_forum.content.get('additional_rebuttal_form_options', {})
+
+    single_rebuttal = 'One author rebuttal per paper' == request_forum.content.get('number_of_rebuttals')
+    unlimited_rebuttal = 'Multiple author rebuttals per paper' == request_forum.content.get('number_of_rebuttals')
+
+    rebuttal_readers = request_forum.content.get('rebuttal_readers', [])
+    readers = []
+    if 'All Senior Area Chairs' in rebuttal_readers:
+        readers.append(openreview.stages.ReviewRebuttalStage.Readers.SENIOR_AREA_CHAIRS)
+    if 'Assigned Senior Area Chairs' in rebuttal_readers:
+        readers.append(openreview.stages.ReviewRebuttalStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED)
+
+    if 'All Area Chairs' in rebuttal_readers:
+        readers.append(openreview.stages.ReviewRebuttalStage.Readers.AREA_CHAIRS)
+    if 'Assigned Area Chairs' in rebuttal_readers:
+        readers.append(openreview.stages.ReviewRebuttalStage.Readers.AREA_CHAIRS_ASSIGNED)
+
+    if 'All Reviewers' in rebuttal_readers:
+        readers.append(openreview.stages.ReviewRebuttalStage.Readers.REVIEWERS)
+    if 'Assigned Reviewers' in rebuttal_readers:
+        readers.append(openreview.stages.ReviewRebuttalStage.Readers.REVIEWERS_ASSIGNED)
+    if 'Assigned Reviewers who already submitted their review' in rebuttal_readers:
+        readers.append(openreview.stages.ReviewRebuttalStage.Readers.REVIEWERS_SUBMITTED)
+
+    if 'Everyone' in rebuttal_readers:
+        readers = [openreview.stages.CommentStage.Readers.EVERYONE]
+
+    email_pcs = 'Yes' in request_forum.content.get('email_program_chairs_about_rebuttals', '')
+
+    return openreview.stages.ReviewRebuttalStage(
+        start_date = rebuttal_start_date,
+        due_date = rebuttal_due_date,
+        email_pcs = email_pcs,
+        additional_fields = rebuttal_form_additional_options,
+        single_rebuttal = single_rebuttal,
+        unlimited_rebuttals = unlimited_rebuttal,
+        readers = readers
     )
 
 def get_ethics_review_stage(request_forum):
