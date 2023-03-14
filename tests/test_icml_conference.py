@@ -2481,9 +2481,22 @@ ICML 2023 Conference Program Chairs'''
                         }
                     },
                     'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': 'ICML.cc/2023/Conference/Submission1/-/Chat',
+                                'optional': True
+                            }
+                        },
                         'readers': ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission1/Area_Chairs', 'ICML.cc/2023/Conference/Submission1/Reviewers'],
                         'writers': ['ICML.cc/2023/Conference'],
                         'signatures': ['${3/signatures}'],
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
                         'forum': submission.id,
                         'replyto': {
                             'param': {
