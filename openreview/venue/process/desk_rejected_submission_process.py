@@ -48,3 +48,6 @@ For more information, click here https://openreview.net/forum?id={submission.id}
                 }
             }
         )
+
+    print(f'Remove {paper_group_id}/Authors from {venue_id}/Authors')
+    client.remove_members_from_group(f'{venue_id}/Authors', f'{paper_group_id}/Authors')
