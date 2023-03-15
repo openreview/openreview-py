@@ -476,7 +476,7 @@ If you would like to change your decision, please follow the link in the previou
         button = selenium.find_element_by_xpath('//button[text()="Submit"]')
         button.click()
         time.sleep(0.5)
-        helpers.await_queue(openreview_client)        
+        helpers.await_queue_edit(openreview_client, invitation='NeurIPS.cc/2023/Conference/Reviewers/-/Recruitment')        
 
         reviewers_group=openreview_client.get_group('NeurIPS.cc/2023/Conference/Reviewers')
         assert len(reviewers_group.members) == 1
@@ -636,9 +636,9 @@ If you would like to change your decision, please follow the link in the previou
         }
 
 
-    def test_submit_papers(self, test_client, client, helpers):
+    def test_submit_papers(self, test_client, client, helpers, openreview_client):
 
-        ## Need super user permission to add the venue to the active_venues group
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password='1234')
@@ -663,17 +663,50 @@ If you would like to change your decision, please follow the link in the previou
                 signatures=['~SomeFirstName_User1'],
                 note=note)            
 
+
+        ## finish submission deadline
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        first_date = now - datetime.timedelta(minutes=28)               
+
+        venue_revision_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Conference on Neural Information Processing Systems',
+                'Official Venue Name': 'Conference on Neural Information Processing Systems',
+                'Abbreviated Venue Name': 'NeurIPS 2023',
+                'Official Website URL': 'https://neurips.cc',
+                'program_chair_emails': ['pc@neurips.cc'],
+                'contact_email': 'pc@neurips.cc',
+                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
+                'Venue Start Date': '2023/12/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
+                'abstract_registration_deadline': first_date.strftime('%Y/%m/%d %H:%M'),
+                'Location': 'Virtual',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100'
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['{}/Program_Chairs'.format('NeurIPS.cc/2023/Conference'), 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
         
-        # conference.setup_first_deadline_stage(force=True)
+        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Post_Submission-0-0')
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Withdrawal-0-0')
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Desk_Rejection-0-0')
 
-        # blinded_notes = test_client.get_notes(invitation='NeurIPS.cc/2023/Conference/-/Blind_Submission', sort='tmdate')
-        # assert len(blinded_notes) == 5
+        notes = test_client.get_notes(invitation='NeurIPS.cc/2023/Conference/-/Submission', sort='number:desc')
+        assert len(notes) == 5
 
-        # assert blinded_notes[0].readers == ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Paper5/Authors']
+        assert notes[0].readers == ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Submission5/Authors']
 
-        # assert client.get_invitation('NeurIPS.cc/2023/Conference/Paper5/-/Withdraw')
-        # assert client.get_invitation('NeurIPS.cc/2023/Conference/Paper5/-/Desk_Reject')
-        # assert client.get_invitation('NeurIPS.cc/2023/Conference/Paper5/-/Revision')
+        assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Withdrawal')
+        assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Desk_Rejection')
+        assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Revision')
 
         # # expire the abstract submission deadline and update the submission deadline
         # pc_client = openreview.Client(username='pc@neurips.cc', password='1234')

@@ -11,7 +11,7 @@ def process(client, note, invitation):
     comment_readers = [forum_note.content.get('venue_id') + '/Program_Chairs', SUPPORT_GROUP]
 
     try:
-        conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP)
+        conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP, setup=True)
         short_name = conference.get_short_name()
         comment_readers = [conference.get_program_chairs_id(), SUPPORT_GROUP]
         if invitation_type in ['Bid_Stage', 'Review_Stage', 'Meta_Review_Stage', 'Decision_Stage', 'Submission_Revision_Stage', 'Comment_Stage']:

@@ -1,7 +1,7 @@
 def process(client, note, invitation):
     GROUP_PREFIX = ''
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
-    conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP)
+    conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP, setup=False)
     forum_note = client.get_note(note.forum)
 
     comment_readers = [conference.get_program_chairs_id(), SUPPORT_GROUP]

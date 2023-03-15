@@ -42,7 +42,7 @@ class InvitationBuilder(object):
         )
         invitation = self.client.get_invitation(invitation.id)
 
-        if invitation.date_processes and self.update_date_string == invitation.date_processes[0]['dates'][1]:
+        if invitation.date_processes and len(invitation.date_processes[0]['dates']) > 1 and self.update_date_string == invitation.date_processes[0]['dates'][1]:
             process_logs = self.client.get_process_logs(id=invitation.id + '-0-1', min_sdate = invitation.tmdate + self.update_wait_time - 1000)
             count = 0
             while len(process_logs) == 0 and count < 10:
@@ -143,7 +143,7 @@ class InvitationBuilder(object):
             writers = [venue_id],
             cdate=submission_cdate,
             duedate=tools.datetime_millis(submission_stage.due_date) if submission_stage.due_date else None,
-            expdate = tools.datetime_millis(submission_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if submission_stage.due_date else None,
+            expdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None,
             edit = {
                 'signatures': { 'param': { 'regex': f'~.*|{self.venue.get_program_chairs_id()}' } },
                 'readers': edit_readers,
@@ -180,10 +180,63 @@ class InvitationBuilder(object):
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=True)
 
+    
+    def set_post_submission_invitation(self):
+        venue_id = self.venue_id
+        submission_stage = self.venue.submission_stage
+        submission_name = submission_stage.name
+
+        submission_id = submission_stage.get_submission_id(self.venue)
+        post_submission_id = f'{venue_id}/-/Post_{submission_name}'
+        post_submission_cdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None
+
+        hidden_field_names = submission_stage.get_hidden_field_names()
+        note_content = { f: { 'readers': [venue_id, self.venue.get_authors_id('${{4/id}/number}')] } for f in hidden_field_names }
+
+        existing_invitation = openreview.tools.get_invitation(self.client, post_submission_id)        
+        if existing_invitation:
+            for field, value in existing_invitation.edit['note']['content'].items():
+                if field not in hidden_field_names and 'readers' in value:
+                    note_content[field] = {
+                        'readers': { 'param': { 'const': { 'delete': True } } }
+                    }
+
+        submission_invitation = Invitation(
+            id=post_submission_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = ['everyone'],
+            writers = [venue_id],
+            cdate=post_submission_cdate,
+            date_processes=[{ 
+                'dates': ["#{4/cdate}", self.update_date_string],
+                'script': self.get_process_content('process/post_submission_process.py')              
+            }],            
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id, self.venue.get_authors_id('${{2/note/id}/number}')],
+                'writers': [venue_id],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': submission_id,
+                            'optional': True
+                        }
+                    },
+                    'signatures': [ self.venue.get_authors_id('${{2/id}/number}') ],
+                    'readers': submission_stage.get_readers(self.venue, '${{2/id}/number}'),
+                    'writers': [venue_id, self.venue.get_authors_id('${{2/id}/number}')],
+                    'content': note_content
+                }
+            }
+        )
+
+        submission_invitation = self.save_invitation(submission_invitation, replacement=True)        
+        
     def set_pc_submission_revision_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
-        cdate = tools.datetime_millis(submission_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN) if submission_stage.due_date else datetime.datetime.utcnow())        
+        cdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None        
 
         content = default_content.submission_v2.copy()
         
@@ -1103,7 +1156,7 @@ class InvitationBuilder(object):
     def set_withdrawal_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
-        cdate = tools.datetime_millis(submission_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN) if submission_stage.due_date else datetime.datetime.utcnow())
+        cdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None
         exp_date = tools.datetime_millis(self.venue.submission_stage.withdraw_submission_exp_date) if self.venue.submission_stage.withdraw_submission_exp_date else None
 
         invitation = Invitation(id=self.venue.get_invitation_id(submission_stage.withdrawal_name),
@@ -1111,6 +1164,7 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
+            cdate=cdate,
             date_processes=[{ 
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process              
@@ -1393,7 +1447,7 @@ class InvitationBuilder(object):
     def set_desk_rejection_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
-        cdate = tools.datetime_millis(submission_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN) if submission_stage.due_date else datetime.datetime.utcnow())
+        cdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None
         exp_date = tools.datetime_millis(self.venue.submission_stage.due_date + datetime.timedelta(days = 90)) if self.venue.submission_stage.due_date else None
 
         content = default_content.desk_reject_v2.copy()
@@ -1403,6 +1457,7 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
+            cdate=cdate,
             date_processes=[{ 
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process              

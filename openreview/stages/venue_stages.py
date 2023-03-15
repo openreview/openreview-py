@@ -1,7 +1,9 @@
 import openreview
 import datetime
 from enum import Enum
-from . import default_content 
+from . import default_content
+
+SHORT_BUFFER_MIN = 30
 
 class IdentityReaders(Enum):
     PROGRAM_CHAIRS = 0
@@ -54,6 +56,7 @@ class SubmissionStage(object):
             double_blind=False,
             additional_fields={},
             remove_fields=[],
+            hide_fields=[],
             subject_areas=[],
             email_pcs=False,
             create_groups=False,
@@ -74,12 +77,14 @@ class SubmissionStage(object):
 
         self.start_date = start_date
         self.due_date = due_date
+        self.exp_date = (due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if due_date else None
         self.second_due_date = second_due_date
         self.name = name
         self.readers = readers
         self.double_blind = double_blind
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
+        self.hide_fields = hide_fields
         self.subject_areas = subject_areas
         self.email_pcs = email_pcs
         self.create_groups = create_groups
@@ -223,6 +228,9 @@ class SubmissionStage(object):
             content['pdf']['required'] = False
 
         return content
+    
+    def get_hidden_field_names(self):
+        return (['authors', 'authorids'] if self.double_blind else []) + self.hide_fields
 
     def is_under_submission(self):
         return self.due_date is None or datetime.datetime.utcnow() < self.due_date

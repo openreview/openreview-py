@@ -2,7 +2,7 @@ import openreview
 import datetime
 import json
 
-def get_conference(client, request_form_id, support_user='OpenReview.net/Support', setup=True):
+def get_conference(client, request_form_id, support_user='OpenReview.net/Support', setup=False):
 
     note = client.get_note(request_form_id)
     if note.content.get('api_version') == '2':
@@ -364,6 +364,7 @@ def get_submission_stage(request_forum):
 
     email_pcs = 'Yes' in request_forum.content.get('email_pcs_for_new_submissions', '')
     submission_email = request_forum.content.get('submission_email', None)
+    hide_fields = request_forum.content.get('hide_fields', [])
 
     return openreview.stages.SubmissionStage(name = name,
         double_blind=double_blind,
@@ -372,6 +373,7 @@ def get_submission_stage(request_forum):
         second_due_date=submission_second_due_date,
         additional_fields=submission_additional_options,
         remove_fields=submission_remove_options,
+        hide_fields=hide_fields,
         subject_areas=subject_areas,
         create_groups=create_groups,
         author_names_revealed=author_names_revealed,

@@ -389,9 +389,22 @@ class Venue(object):
         self.invitation_builder.set_submission_invitation()
         self.invitation_builder.set_withdrawal_invitation()
         self.invitation_builder.set_desk_rejection_invitation()
+        self.invitation_builder.set_post_submission_invitation()
         self.invitation_builder.set_pc_submission_revision_invitation()
         if self.expertise_selection_stage:
             self.invitation_builder.set_expertise_selection_invitations()
+
+        if self.submission_stage.second_due_date:
+            self.submission_revision_stage = openreview.stages.SubmissionRevisionStage(name='Revision',
+                start_date=self.submission_stage.exp_date,
+                due_date=self.submission_stage.second_due_date,
+                additional_fields=self.submission_stage.additional_fields,
+                remove_fields=self.submission_stage.remove_fields,
+                only_accepted=False,
+                multiReply=True,
+                allow_author_reorder=True
+            )
+            self.create_submission_revision_stage()                        
 
     def create_submission_revision_stage(self):
         invitation = tools.get_invitation(self.client, self.get_submission_id())
@@ -411,55 +424,13 @@ class Venue(object):
         return self.invitation_builder.set_registration_invitations()
     
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
-        venue_id = self.venue_id
+
         submissions = self.get_submissions()
-        hide_author_fields = ['authors', 'authorids'] if self.submission_stage.double_blind else []
-        final_hide_fields = hide_author_fields + hide_fields
         
         self.group_builder.create_paper_committee_groups(submissions)
+
+        self.invitation_builder.set_post_submission_invitation()
         
-        def update_submission_readers(submission):
-
-            if submission.content['venueid']['value'] == self.get_submission_venue_id():
-
-                note_content = {}
-                for field, value in submission.content.items():
-                    if field in final_hide_fields and 'readers' not in value:
-                        note_content[field] = {
-                            'readers': [venue_id, self.get_authors_id(submission.number)]
-                        }
-                                           
-                    if field not in final_hide_fields and 'readers' in value:
-                        note_content[field] = {
-                            'readers': { 'delete': True }
-                        }                        
-
-                new_readers = self.submission_stage.get_readers(self, submission.number)
-                note_readers = new_readers if submission.readers != new_readers else None
-               
-                note_writers = [venue_id, self.get_authors_id(submission.number)] if submission.writers != [venue_id, self.get_authors_id(submission.number)] else None
-                note_signatures = [self.get_authors_id(submission.number)]
-
-                note_odate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if (submission.odate is None and note_readers and 'everyone' in note_readers) else None
-
-                if note_readers or note_writers or note_content or note_odate:
-                    return self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
-                        readers=[venue_id, self.get_authors_id(submission.number)],
-                        writers=[venue_id],
-                        signatures=[venue_id],
-                        note=openreview.api.Note(id=submission.id,
-                                odate = note_odate,
-                                readers = note_readers,
-                                writers = note_writers,
-                                signatures = note_signatures,
-                                content = note_content 
-                            )
-                        )
-                else:
-                    return submission
-        ## Release the submissions to specified readers if venueid is still submission
-        openreview.tools.concurrent_requests(update_submission_readers, submissions, desc='update_submission_readers')
-
         self.group_builder.add_to_active_venues()
 
     def create_bid_stages(self):
