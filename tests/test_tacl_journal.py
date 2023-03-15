@@ -91,8 +91,7 @@ class TestTACLJournal():
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'},
-                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'}
                 }
             ))
 
@@ -140,8 +139,7 @@ The TACL Editors-in-Chief
                     'supplementary_material': { 'value': '/attachment/' + 'z' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                     'human_subjects_reporting': { 'value': 'Not applicable'},
-                    'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' },
-                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                    'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' }
                 }
             ))
         helpers.await_queue_edit(openreview_client, edit_id=updated_submission_note_1['id'])
@@ -591,14 +589,14 @@ note: replies to this email will go to the AE, Graham Neubig.
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Under_Review', 'TACL/Paper1/-/Camera_Ready_Revision']
+        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Under_Review', 'TACL/-/Edit', 'TACL/Paper1/-/Camera_Ready_Revision']
         assert note.readers == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert note.writers == ['TACL', 'TACL/Paper1/Authors']
         assert note.signatures == ['TACL/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~Melisa_Andersen1', '~SomeFirstName_User1']
         assert note.content['authors']['value'] == ['Melisa Andersen', 'SomeFirstName User']
-        assert note.content['venue']['value'] == 'Under review for TACL'
-        assert note.content['venueid']['value'] == 'TACL/Under_Review'
+        assert note.content['venue']['value'] == 'Decision pending for TACL'
+        assert note.content['venueid']['value'] == 'TACL/Decision_Pending'
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
 
@@ -618,7 +616,7 @@ note: replies to this email will go to the AE, Graham Neubig.
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Under_Review', 'TACL/Paper1/-/Camera_Ready_Revision', 'TACL/-/Accepted']
+        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Under_Review', 'TACL/-/Edit', 'TACL/Paper1/-/Camera_Ready_Revision', 'TACL/-/Accepted']
         assert note.readers == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert note.writers == ['TACL']
         assert note.signatures == ['TACL/Paper1/Authors']
@@ -642,7 +640,7 @@ note={Featured Certification, Reproducibility Certification}
 }'''
 
         edits = openreview_client.get_note_edits(note.id)
-        assert len(edits) == 5
+        assert len(edits) == 6
         for edit in edits:
             assert edit.readers == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
 
@@ -665,8 +663,7 @@ note={Featured Certification, Reproducibility Certification}
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'},
-                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'}
                 }
             ))
 

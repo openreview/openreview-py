@@ -81,7 +81,7 @@ class TestJournalMatching():
             signatures=['~Ana_Prada1'],
             head='CARP/Action_Editors',
             tail='~Ana_Prada1',
-            weight=3
+            weight=6
         ))
 
         ## Set unavailable
@@ -105,8 +105,7 @@ class TestJournalMatching():
                         'authorids': { 'value': ['~SomeFirstName_User1', '~Sigur_Ros1', '~John_Travolta1']},
                         'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                         'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                        'human_subjects_reporting': { 'value': 'Not applicable'},
-                        'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                        'human_subjects_reporting': { 'value': 'Not applicable'}
                     }
                 ))
 
@@ -214,7 +213,7 @@ class TestJournalMatching():
         assigning_submissions = openreview_client.get_notes(content={ 'venueid': 'CARP/Assigning_AE' })
         assert len(assigning_submissions) == 3
 
-        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Ana_Prada1')[0].weight == 3
+        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Ana_Prada1')[0].weight == 6
         assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Paul_McCartney1')[0].weight == 12
         assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~John_Lennon1')[0].weight == 12
         assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Janis_Joplin1')[0].weight == 12
@@ -293,7 +292,7 @@ class TestJournalMatching():
             weight=1
         ))
 
-        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Ana_Prada1')[0].weight == 2
+        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Ana_Prada1')[0].weight == 5
         assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Paul_McCartney1')[0].weight == 11
         assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~John_Lennon1')[0].weight == 11
         assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Janis_Joplin1')[0].weight == 12
@@ -309,7 +308,7 @@ class TestJournalMatching():
         assigning_submissions = openreview_client.get_notes(content={ 'venueid': 'CARP/Assigned_AE' })
         assert len(assigning_submissions) == 3               
 
-        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Ana_Prada1')[0].weight == 2
+        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Ana_Prada1')[0].weight == 5
         assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Paul_McCartney1')[0].weight == 11
         assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~John_Lennon1')[0].weight == 11
         assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Janis_Joplin1')[0].weight == 12

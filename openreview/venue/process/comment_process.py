@@ -13,6 +13,10 @@ def process(client, edit, invitation):
     comment = client.get_note(edit.note.id)
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
 
+    ### TODO: Fix this, we should notify the use when the review is updated
+    if comment.tcdate != comment.tmdate:
+        return    
+
     ignore_groups = comment.nonreaders if comment.nonreaders else []
     ignore_groups.append(edit.tauthor)
 
@@ -26,8 +30,6 @@ Paper number: {submission.number}
 
 Paper title: {submission.content['title']['value']}
 
-Comment title: {comment.content['title']['value']}
-
 Comment: {comment.content['comment']['value']}
 
 To view the comment, click here: https://openreview.net/forum?id={submission.id}&noteId={comment.id}'''
@@ -37,7 +39,7 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
         client.post_message(
             recipients=[program_chairs_id],
             ignoreRecipients = ignore_groups,
-            subject=f'''{short_name} {pretty_signature} commented on a paper. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            subject=f'''[{short_name}] {pretty_signature} commented on a paper. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''{pretty_signature} commented on a paper for which you are serving as Program Chair.{content}'''
         )
 
@@ -48,7 +50,7 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
         client.post_message(
             recipients=[paper_senior_area_chairs_id],
             ignoreRecipients = ignore_groups,
-            subject=f'''{short_name} {pretty_signature} commented on a paper in your area. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            subject=f'''[{short_name}] {pretty_signature} commented on a paper in your area. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''{pretty_signature} commented on a paper for which you are serving as Senior Area Chair.{content}'''
         )
 
@@ -58,7 +60,7 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
         client.post_message(
             recipients=[paper_area_chairs_id],
             ignoreRecipients=ignore_groups,
-            subject=f'''{short_name} {pretty_signature} commented on a paper in your area. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            subject=f'''[{short_name}] {pretty_signature} commented on a paper in your area. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''{pretty_signature} commented on a paper for which you are serving as Area Chair.{content}'''
         )
 
@@ -68,14 +70,14 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
         client.post_message(
             recipients=[paper_reviewers_id],
             ignoreRecipients=ignore_groups,
-            subject=f'''{short_name} {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            subject=f'''[{short_name}] {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''{pretty_signature} commented on a paper for which you are serving as Reviewer.{content}'''
         )
     elif paper_reviewers_submitted_id in comment.readers:
         client.post_message(
             recipients=[paper_reviewers_submitted_id],
             ignoreRecipients=ignore_groups,
-            subject=f'''{short_name} {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            subject=f'''[{short_name}] {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''{pretty_signature} commented on a paper for which you are serving as Reviewer.{content}'''
         )
     else:
@@ -84,14 +86,14 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
             client.post_message(
                 recipients=anon_reviewers,
                 ignoreRecipients=ignore_groups,
-                subject=f'''{short_name} {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+                subject=f'''[{short_name}] {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
                 message=f'''{pretty_signature} commented on a paper for which you are serving as Reviewer.{content}'''
             )
 
     #send email to author of comment
     client.post_message(
         recipients=[edit.tauthor],
-        subject=f'''{short_name} Your comment was received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+        subject=f'''[{short_name}] Your comment was received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
         message=f'''Your comment was received on a submission to {short_name}.{content}'''
     )
 
@@ -101,6 +103,6 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
         client.post_message(
             recipients=submission.content['authorids']['value'],
             ignoreRecipients=ignore_groups,
-            subject=f'''{short_name} {pretty_signature} commented on your submission. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            subject=f'''[{short_name}] {pretty_signature} commented on your submission. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''{pretty_signature} commented on your submission.{content}'''
         )

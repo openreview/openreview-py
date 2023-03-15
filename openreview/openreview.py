@@ -928,8 +928,19 @@ class Client(object):
         :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns Notes
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
         :type mintcdate: int, optional
-        :param details: TODO: What is a valid value for this field?
-        :type details: optional
+        :param details: Comma separated values of fields to add to details. Valid values are:
+            replyCount: Number of replies in a forum. Only available if the Note is a forum.
+            original: Include original Note if available.
+            revisions: Boolean indicating whether the Note has revisions.
+            writable: Boolean indicating whether the Note is writable by the user.
+            originalWritable: Boolean indicating whether the original Note is writable by the user.
+            tags: Tags of the Note.
+            invitation: Invitation of the Note.
+            originalInvitation: Invitation of the original Note.
+            directReplyCount: Number of direct replies to the Note.
+            directReplies: Direct replies to the Note.
+            replies: Replies to the Note. Only available if the Note is a forum.
+        :type details: str, optional
         :param sort: Sorts the output by field depending on the string passed. Possible values: number, cdate, ddate, tcdate, tmdate, replyCount (Invitation id needed in the invitation field).
         :type sort: str, optional
         :param select: Specific field of the group. Only this field would be returned for all the groups
@@ -1041,7 +1052,18 @@ class Client(object):
         :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns Notes
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
         :type mintcdate: int, optional
-        :param details: TODO: What is a valid value for this field?
+        :param details: Comma separated values of fields to add to details. Valid values are:
+            replyCount: Number of replies in a forum. Only available if the Note is a forum.
+            original: Include original Note if available.
+            revisions: Boolean indicating whether the Note has revisions.
+            writable: Boolean indicating whether the Note is writable by the user.
+            originalWritable: Boolean indicating whether the original Note is writable by the user.
+            tags: Tags of the Note.
+            invitation: Invitation of the Note.
+            originalInvitation: Invitation of the original Note.
+            directReplyCount: Number of direct replies to the Note.
+            directReplies: Direct replies to the Note.
+            replies: Replies to the Note. Only available if the Note is a forum.
         :type details: optional
         :param sort: Sorts the output by field depending on the string passed. Possible values: number, cdate, ddate, tcdate, tmdate, replyCount (Invitation id needed in the invitation field).
         :type sort: str, optional
@@ -2329,6 +2351,7 @@ class Note(object):
         number=None,
         cdate=None,
         pdate=None,
+        odate=None,
         mdate=None,
         tcdate=None,
         tmdate=None,
@@ -2345,6 +2368,7 @@ class Note(object):
         self.number = number
         self.cdate = cdate
         self.pdate = pdate
+        self.odate = odate
         self.mdate = mdate
         self.tcdate = tcdate
         self.tmdate = tmdate
@@ -2382,6 +2406,7 @@ class Note(object):
             'original': self.original,
             'cdate': self.cdate,
             'pdate': self.pdate,
+            'odate': self.odate,
             'mdate': self.mdate,
             'tcdate': self.tcdate,
             'tmdate': self.tmdate,
@@ -2415,6 +2440,8 @@ class Note(object):
         id = n.get('id'),
         original = n.get('original'),
         number = n.get('number'),
+        pdate = n.get('pdate'),
+        odate = n.get('odate'),
         cdate = n.get('cdate'),
         mdate = n.get('mdate'),
         tcdate = n.get('tcdate'),

@@ -339,9 +339,13 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
         submissions = conference.get_submissions(sort='number:desc')
         assert len(submissions) == 4
         assert submissions[0].readers == ['everyone']
+        assert submissions[0].odate
         assert submissions[1].readers == ['everyone']
+        assert submissions[1].odate
         assert submissions[2].readers == ['everyone']
+        assert submissions[2].odate
         assert submissions[3].readers == ['everyone']
+        assert submissions[3].odate
 
         ## Withdraw paper
         test_client.post_note(openreview.Note(invitation='eswc-conferences.org/ESWC/2021/Conference/Paper5/-/Withdraw',

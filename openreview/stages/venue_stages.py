@@ -381,6 +381,7 @@ class ReviewStage(object):
     def __init__(self,
         start_date = None,
         due_date = None,
+        exp_date = None,
         name = None,
         allow_de_anonymization = False,
         public = False,
@@ -396,6 +397,7 @@ class ReviewStage(object):
 
         self.start_date = start_date
         self.due_date = due_date
+        self.exp_date = exp_date
         self.name = 'Official_Review'
         if name:
             self.name = name
@@ -577,14 +579,16 @@ class ReviewRebuttalStage(object):
         AREA_CHAIRS_ASSIGNED = 4
         REVIEWERS = 5
         REVIEWERS_ASSIGNED = 6
+        REVIEWERS_SUBMITTED = 7
 
-    def __init__(self, start_date = None, due_date = None, name = 'Rebuttal', email_pcs = False, additional_fields = {}, single_rebuttal = False, readers = []):
+    def __init__(self, start_date = None, due_date = None, name = 'Rebuttal', email_pcs = False, additional_fields = {}, single_rebuttal = False, unlimited_rebuttals = False, readers = []):
         self.start_date = start_date
         self.due_date = due_date
         self.name = name
         self.email_pcs = email_pcs
         self.additional_fields = additional_fields
         self.single_rebuttal = single_rebuttal
+        self.unlimited_rebuttals = unlimited_rebuttals
         self.readers = readers
 
     def get_invitation_readers(self, conference, number):
@@ -611,6 +615,9 @@ class ReviewRebuttalStage(object):
 
         if self.Readers.REVIEWERS_ASSIGNED in self.readers:
             invitation_readers.append(conference.get_reviewers_id(number=number))
+
+        if self.Readers.REVIEWERS_SUBMITTED in self.readers:
+            invitation_readers.append(conference.get_reviewers_id(number=number) + '/Submitted')
 
         if conference.ethics_review_stage and number in conference.ethics_review_stage.submission_numbers:
             if conference.use_ethics_chairs:
@@ -746,6 +753,9 @@ class CommentStage(object):
         if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
             committee.append(conference.get_anon_area_chair_id(number=number, anon_id='.*'))
 
+        if conference.use_secondary_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
+            committee.append(conference.get_anon_secondary_area_chair_id(number=number, anon_id='.*'))
+
         if self.Readers.REVIEWERS_ASSIGNED in self.invitees or self.Readers.REVIEWERS_SUBMITTED in self.invitees:
             committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
 
@@ -800,6 +810,7 @@ class MetaReviewStage(object):
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.process = None
+        self.recommendation_field_name = 'recommendation',
 
     def _get_reviewer_readers(self, conference, number):
         if self.release_to_reviewers is MetaReviewStage.Readers.REVIEWERS:
@@ -850,6 +861,15 @@ class MetaReviewStage(object):
             committee.append(conference.get_anon_area_chair_id(number=number, anon_id='.*'))
 
         return '|'.join(committee)
+
+class MetaReviewRevisionStage(object):
+
+    def __init__(self, start_date = None, due_date = None, name = 'Meta_Review_Revision', additional_fields = {}, remove_fields = []):
+        self.start_date = start_date
+        self.due_date = due_date
+        self.name = name
+        self.additional_fields = additional_fields
+        self.remove_fields = remove_fields
 
 class DecisionStage(object):
 

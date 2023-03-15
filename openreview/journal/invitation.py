@@ -15,34 +15,40 @@ class InvitationBuilder(object):
         self.venue_id = journal.venue_id
 
         day = 1000 * 60 * 60 * 24
-        seven_days = day * 7
+        week = day * 7
+        two_weeks = week * 2
         one_month = day * 30
 
         self.process_script = self.get_super_process_content('process_script')
         self.preprocess_script = self.get_super_process_content('preprocess_script')
 
         self.author_reminder_process = {
-            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days)],
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week)],
             'script': self.get_process_content('process/author_edge_reminder_process.py')
         }
 
         self.reviewer_reminder_process = {
-            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days)],
-            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id())
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week),  "#{4/duedate} + " + str(one_month)],
+            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'one week', 3: 'one month' })
+        }
+
+        self.reviewer_ack_reminder_process = {
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(day * 5), "#{4/duedate} + " + str(day * 12)],
+            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'five days', 2: 'twelve days' })
         }
 
         self.reviewer_reminder_process_with_EIC = {
-            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
-            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id())
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week), "#{4/duedate} + " + str(two_weeks), "#{4/duedate} + " + str(one_month)],
+            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'one week', 2: 'two weeks', 3: 'one month' })
         }
 
         self.ae_reminder_process = {
-            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week), "#{4/duedate} + " + str(one_month)],
             'script': self.get_super_dateprocess_content('ae_reminder_script', self.journal.get_meta_invitation_id())
         }
 
         self.ae_edge_reminder_process = {
-            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week), "#{4/duedate} + " + str(one_month)],
             'script': self.get_process_content('process/action_editor_edge_reminder_process.py')
         }
 
@@ -97,7 +103,7 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 '''
 
-    def get_super_dateprocess_content(self, field_name, invitation_id=None):
+    def get_super_dateprocess_content(self, field_name, invitation_id=None, days_late_map={}):
         meta_invitation = 'client.get_invitation("' + invitation_id + '")' if invitation_id else "client.get_invitation(invitation.invitations[0])"
 
         return '''def process(client, invitation):
@@ -106,7 +112,8 @@ class InvitationBuilder(object):
     funcs = {
         'openreview': openreview,
         'datetime': datetime,
-        'date_index': date_index
+        'date_index': date_index,
+        'days_late_map' : ''' + json.dumps(days_late_map) + '''
     }
     exec(script, funcs)
     funcs['process'](client, invitation)
@@ -434,7 +441,8 @@ class InvitationBuilder(object):
                                 'param': {
                                     'type': "string",
                                     'maxLength': 50000,
-                                    'markdown': True
+                                    'markdown': True,
+                                    'input': 'textarea'
                                 }
                             }
                         }
@@ -452,13 +460,13 @@ class InvitationBuilder(object):
                     signatures = [editors_in_chief_id],
                     content = {
                         'title': { 'value': 'Acknowledgement of reviewer responsibility'},
-                        'description': { 'value': '''TMLR operates somewhat differently to other journals and conferences. Please read and acknowledge the following critical points before undertaking your first review. Note that the items below are stated very briefly; please see the full guidelines and instructions for reviewers on the journal website (links below).
+                        'description': { 'value': f'''{venue_id} operates somewhat differently to other journals and conferences. Please read and acknowledge the following critical points before undertaking your first review. Note that the items below are stated very briefly; please see the full guidelines and instructions for reviewers on the journal website (links below).
 
-- [Reviewer guidelines](https://jmlr.org/tmlr/reviewer-guide.html)
-- [Editorial policies](https://jmlr.org/tmlr/editorial-policies.html)
-- [FAQ](https://jmlr.org/tmlr/contact.html)
+- [Reviewer guidelines]({self.journal.get_website_url("reviewer_guide")})
+- [Editorial policies]({self.journal.get_website_url("editorial_policies")})
+- [FAQ]({self.journal.get_website_url("faq")})
 
-If you have questions after reviewing the points below that are not answered on the website, please contact the Editors-In-Chief: tmlr-editors@jmlr.org
+If you have questions after reviewing the points below that are not answered on the website, please contact the Editors-In-Chief: {self.journal.get_editors_in_chief_email()}
 '''}
                     }
                 )
@@ -526,7 +534,7 @@ If you have questions after reviewing the points below that are not answered on 
                                     'value': {
                                         'param': {
                                             'type': "string",
-                                            'enum': ['I understand that TMLR has a strict 6 week review process (for submissions of at most 12 pages of main content), and that I will need to submit an initial review (within 2 weeks), engage in discussion, and enter a recommendation within that period.'],
+                                            'enum': [f'I understand that {venue_id} has a strict 6 week review process (for submissions of at most 12 pages of main content), and that I will need to submit an initial review (within 2 weeks), engage in discussion, and enter a recommendation within that period.'],
                                             'input': 'checkbox'
                                         }
                                     }
@@ -537,7 +545,7 @@ If you have questions after reviewing the points below that are not answered on 
                                     'value': {
                                         'param': {
                                             'type': "string",
-                                            'enum': ['I understand that TMLR does not accept submissions which are expanded or modified versions of previously published papers.'],
+                                            'enum': [f'I understand that {venue_id} does not accept submissions which are expanded or modified versions of previously published papers.'],
                                             'input': 'checkbox'
                                         }
                                     }
@@ -547,14 +555,14 @@ If you have questions after reviewing the points below that are not answered on 
                                     'value': {
                                         'param': {
                                             'type': "string",
-                                            'enum': ['I understand that the acceptance criteria for TMLR is technical correctness and clarity of presentation rather than significance or impact.'],
+                                            'enum': [f'I understand that the acceptance criteria for {venue_id} is technical correctness and clarity of presentation rather than significance or impact.'],
                                             'input': 'checkbox'
                                         }
                                     }
                                 },
                                 'action_editor_visibility': {
                                     'order': 5,
-                                    'description': 'TMLR is double blind for reviewers and authors, but the Action Editor assigned to a submission is visible to both reviewers and authors.',
+                                    'description': f'{venue_id} is double blind for reviewers and authors, but the Action Editor assigned to a submission is visible to both reviewers and authors.',
                                     'value': {
                                         'param': {
                                             'type': "string",
@@ -641,7 +649,7 @@ If you have questions after reviewing the points below that are not answered on 
             'maxReplies': 1,
             'duedate': '${2/content/duedate/value}',
             'process': self.process_script,
-            'dateprocesses': [self.reviewer_reminder_process],
+            'dateprocesses': [self.reviewer_ack_reminder_process],
             'edit': {
                 'signatures': { 'param': { 'regex': self.journal.get_reviewers_id(number='${5/content/noteNumber/value}', anon=True) }},
                 'readers': [venue_id, '${2/signatures}'],
@@ -697,11 +705,11 @@ If you have questions after reviewing the points below that are not answered on 
                     signatures = [editors_in_chief_id],
                     content = {
                         'title': { 'value': 'Reviewer Report'},
-                        'description': { 'value': '''Use this report page to give feedback about a reviewer. 
+                        'description': { 'value': f'''Use this report page to give feedback about a reviewer. 
                         
 Tick one or more of the given reasons, and optionally add additional details in the comments.
 
-If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
+If you have questions please contact the Editors-In-Chief: {self.journal.get_editors_in_chief_id()}
 '''}
                     }
                 )
@@ -752,7 +760,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                         'Reviewer never responded to my messages to them',
                                         'Reviewer used inappropriate language, was aggressive, or showed significant bias.',
                                         'Reviewer plagiarized all or part of their review',
-                                        'Reviewer violated the TMLR Code of Conduct',                            
+                                        f'Reviewer violated the {venue_id} Code of Conduct',                            
                                         'Other'
                                     ],
                                     'input': 'checkbox'
@@ -860,18 +868,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'description': 'Upload a PDF file that ends with .pdf.',
                             'order': 5,
                         },
-                        'submission_length': {
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'enum': ['Regular submission (no more than 12 pages of main content)', 'Long submission (more than 12 pages of main content)'],
-                                    'input': 'radio'
-
-                                }
-                            },
-                            'description': "Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
-                            'order': 6
-                        },                        
                         "supplementary_material": {
                             'value': {
                                 'param': {
@@ -961,6 +957,21 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         if author_submission_readers:
             invitation.edit['note']['content']['authorids']['readers'] = author_submission_readers
             invitation.edit['note']['content']['authors']['readers'] = author_submission_readers
+
+        submission_length = self.journal.get_submission_length()
+        if submission_length:
+            invitation.edit['note']['content']['submission_length'] = {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': submission_length,
+                        'input': 'radio'
+
+                    }
+                },
+                'description': "Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
+                'order': 6                
+            }
 
         self.save_invitation(invitation)
 
@@ -1086,8 +1097,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            minReplies=1,
-            maxReplies=1,            
             type='Edge',
             edit={
                 'id': {
@@ -1311,8 +1320,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
             signatures=[venue_id], 
-            minReplies=1,
-            maxReplies=1,
             type='Edge',
             edit={
                 'id': {
@@ -1454,7 +1461,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 },
                 'weight': {
                     'param': {
-                        'enum': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                        'enum': [6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
                         'default': self.journal.ae_custom_max_papers
                     }
                 }
@@ -2018,7 +2025,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'process': self.process_script,
             'dateprocesses': [self.ae_reminder_process],
             'edit': {
-                'signatures': { 'param': { 'regex': self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') }},
+                'signatures': { 'param': { 'regex': f"{editors_in_chief_id}|{self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')}" }},
                 'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                 'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                 'note': {
@@ -2047,7 +2054,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         },
                         'comment': {
                             'order': 2,
-                            'description': 'Give an explanation for the desk reject decision. Be specific so that authors understand the decision, and explain why the submission does not meet TMLR\'s acceptance criteria if the rejection is based on the content rather than the format: https://jmlr.org/tmlr/reviewer-guide.html',
+                            'description': f'Give an explanation for the desk reject decision. Be specific so that authors understand the decision, and explain why the submission does not meet {venue_id}\'s acceptance criteria if the rejection is based on the content rather than the format: {self.journal.get_website_url("reviewer_guide")}',
                             'value': {
                                 'param': {
                                     'type': 'string',
@@ -2145,8 +2152,11 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'enum': ['I approve the AE\'s decision.'],
-                                    'input': 'checkbox'
+                                    'enum': [
+                                        'I approve the AE\'s decision.', 
+                                        'I don\'t approve the AE\'s decision. Submission should be appropriate for review.'
+                                    ],
+                                    'input': 'radio'
                                 }
                             }
                         },
@@ -2599,6 +2609,13 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'withInvitation': self.journal.get_author_submission_id() 
                         },
                     },
+                    'odate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },                    
                     'readers': self.journal.get_under_review_submission_readers('${2/number}'),
                     'content': {
                         'assigned_action_editor': {
@@ -2841,6 +2858,11 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'withInvitation': self.journal.get_under_review_id() 
                         }
                     },
+                    'pdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ]
+                        }
+                    },                    
                     'writers': [ venue_id ],
                     'content': {
                         '_bibtex': {
@@ -2998,12 +3020,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
 
         header = {
             'title': f'{self.journal.short_name} Action Editor Suggestion',
-            'instructions': '<p class="dark"><strong>Instructions:</strong></p>\
+            'instructions': f'<p class="dark"><strong>Instructions:</strong></p>\
                 <ul>\
                     <li>For your submission, please select at least 3 AEs to recommend.</li>\
                     <li>AEs who have conflicts with your submission are not shown.</li>\
                     <li>The list of AEs for a given paper can be sorted by affinity score. In addition, the search box can be used to search for a specific AE by name or institution.</li>\
-                    <li>See <a href="https://jmlr.org/tmlr/editorial-board.html" target="_blank" rel="nofollow">this page</a> for the list of Action Editors and their expertise.</li>\
+                    <li>See <a href="{self.journal.get_website_url("editorial_board")}" target="_blank" rel="nofollow">this page</a> for the list of Action Editors and their expertise.</li>\
                     <li>To get started click the button below.</li>\
                 </ul>\
                 <br>'
@@ -3222,7 +3244,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         },
                         'claims_and_evidence': {
                             'order': 5,
-                            'description': 'Are the claims made in the submission supported by accurate, convincing and clear evidence? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
+                            'description': f'Are the claims made in the submission supported by accurate, convincing and clear evidence? (see {self.journal.short_name}\'s evaluation criteria at {self.journal.get_website_url("evaluation_criteria")})',
                             'value': {
                                 'param': {
                                     'type': 'string',
@@ -3233,7 +3255,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         },
                         'audience': {
                             'order': 6,
-                            'description': f'Would at least some individuals in {self.journal.short_name}\'s audience be interested in knowing the findings of this paper? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
+                            'description': f'Would at least some individuals in {self.journal.short_name}\'s audience be interested in knowing the findings of this paper? (see {self.journal.short_name}\'s evaluation criteria at {self.journal.get_website_url("evaluation_criteria")})',
                             'value': {
                                 'param': {
                                     'type': 'string',
@@ -3397,7 +3419,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'content': {
                         'claims_and_evidence': {
                             'order': 1,
-                            'description': 'Are the claims made in the submission supported by accurate, convincing and clear evidence? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
+                            'description': f'Are the claims made in the submission supported by accurate, convincing and clear evidence? (see {self.journal.short_name}\'s evaluation criteria at {self.journal.get_website_url("evaluation_criteria")})',
                             'value': {
                                 'param': {
                                     'type': 'string',
@@ -3408,7 +3430,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         },
                         'audience': {
                             'order': 2,
-                            'description': f'Would at least some individuals in {self.journal.short_name}\'s audience be interested in knowing the findings of this paper? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
+                            'description': f'Would at least some individuals in {self.journal.short_name}\'s audience be interested in knowing the findings of this paper? (see {self.journal.short_name}\'s evaluation criteria at {self.journal.get_website_url("evaluation_criteria")})',
                             'value': {
                                 'param': {
                                     'type': 'string',
@@ -3435,7 +3457,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         },
                         'comment': {
                             'order': 5,
-                            'description': 'Briefly explain your recommendation, including justification for certification recommendation (if applicable). Refer to TMLR acceptance criteria here: https://jmlr.org/tmlr/reviewer-guide.html',
+                            'description': f'Briefly explain your recommendation, including justification for certification recommendation (if applicable). Refer to {self.journal.short_name} acceptance criteria here: {self.journal.get_website_url("reviewer_guide")}',
                             'value': {
                                 'param': {
                                     'type': 'string',
@@ -3454,7 +3476,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         if self.journal.get_certifications():
             invitation['edit']['note']['content']['certification_recommendations'] = {
                 'order': 4,
-                'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation. See certification details here: https://jmlr.org/tmlr/editorial-policies.html',
+                'description': f'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation. See certification details here: {self.journal.get_website_url("editorial_policies")}',
                 'value': {
                     'param': {
                         'type': 'string[]',
@@ -3791,18 +3813,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'description': 'Upload a PDF file that ends with .pdf.',
                             'order': 5,
                         },
-                        'submission_length': {
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'enum': ['Regular submission (no more than 12 pages of main content)', 'Long submission (more than 12 pages of main content)'],
-                                    'input': 'radio'
-
-                                }
-                            },
-                            'description': "Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
-                            'order': 6
-                        },                        
                         "supplementary_material": {
                             'value': {
                                 'param': {
@@ -3870,6 +3880,21 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'process': self.process_script                    
         }
 
+        submission_length = self.journal.get_submission_length()
+        if submission_length:
+            invitation['edit']['note']['content']['submission_length'] = {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': submission_length,
+                        'input': 'radio'
+
+                    }
+                },
+                'description': "Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
+                'order': 6                
+            }        
+
         self.save_super_invitation(self.journal.get_revision_id(), invitation_content, edit_content, invitation)
 
     def set_note_revision_invitation(self, note):
@@ -3904,6 +3929,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         for edit in self.client.get_note_edits(note.id, invitation=revision_invitation_id, sort='tmdate:asc'):
             edit.readers = self.journal.get_under_review_submission_readers(note.number)
             edit.note.mdate = None
+            edit.note.forum = None
             self.client.post_edit(edit)
 
         ## Change first edit readers
@@ -3982,7 +4008,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                 'param': {
                                     'type': 'string',
                                     'maxLength': 500,
-                                    'input': 'text'
+                                    'input': 'text',
+                                    'optional': True
                                 }
                             }
                         },
@@ -4061,7 +4088,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                 'param': {
                                     'type': 'string',
                                     'maxLength': 500,
-                                    'input': 'text'
+                                    'input': 'text',
+                                    'optional': True
                                 }
                             }
                         },
@@ -4118,7 +4146,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                 'param': {
                                     'type': 'string',
                                     'maxLength': 500,
-                                    'input': 'text'
+                                    'input': 'text',
+                                    'optional': True
                                 }
                             },
                             'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), '${5/signatures}']
@@ -4167,7 +4196,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         if self.journal.is_submission_public():
             self.save_super_invitation(self.journal.get_release_comment_id(), {}, edit_content, invitation)        
 
-    def set_note_comment_invitation(self, note):
+    def set_note_comment_invitation(self, note, public=True):
         
         self.client.post_invitation_edit(invitations=self.journal.get_official_comment_id(),
             content={ 
@@ -4179,7 +4208,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             signatures=[self.journal.venue_id]
         )        
 
-        if self.journal.is_submission_public():
+        if public and self.journal.is_submission_public():
             self.client.post_invitation_edit(invitations=self.journal.get_public_comment_id(),
                 content={ 
                     'noteId': { 'value': note.id }, 
@@ -4300,7 +4329,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'content': {
                         'claims_and_evidence': {
                             'order': 2,
-                            'description': 'Are the claims made in the submission supported by accurate, convincing and clear evidence? If not why? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
+                            'description': f'Are the claims made in the submission supported by accurate, convincing and clear evidence? If not why? (see {self.journal.short_name}\'s evaluation criteria at {self.journal.get_website_url("evaluation_criteria")})',
                             'value': {
                                 'param': {
                                     'type': 'string',
@@ -4312,7 +4341,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         },
                         'audience': {
                             'order': 3,
-                            'description': f'Would at least some individuals in {self.journal.short_name}\'s audience be interested in knowing the findings of this paper? If not, why? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
+                            'description': f'Would at least some individuals in {self.journal.short_name}\'s audience be interested in knowing the findings of this paper? If not, why? (see {self.journal.short_name}\'s evaluation criteria at {self.journal.get_website_url("evaluation_criteria")})',
                             'value': {
                                 'param': {
                                     'type': 'string',
@@ -4359,7 +4388,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         if self.journal.get_certifications():
             invitation['edit']['note']['content']['certifications'] = {
                 'order': 6,
-                'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE and will be reviewed by the Editors-in-Chief. See certification details here: https://jmlr.org/tmlr/editorial-policies.html',
+                'description': f'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE and will be reviewed by the Editors-in-Chief. See certification details here: {self.journal.get_website_url("editorial_policies")}.',
                 'value': {
                     'param': {
                         'type': 'string[]',
@@ -4606,6 +4635,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
                     'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                     'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': self.journal.get_review_rating_id(signature='${6/content/signature/value}'),
+                                'optional': True
+                            }
+                        },            
                         'forum': '${4/content/noteId/value}',
                         'replyto': '${4/content/replytoId/value}',
                         'signatures': [self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],

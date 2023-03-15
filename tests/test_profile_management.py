@@ -811,8 +811,7 @@ The OpenReview Team.
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Paul_Alternate_Last1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'},
-                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'}
                 }
             ))
 
@@ -828,8 +827,7 @@ The OpenReview Team.
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Paul_Alternate_Last1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'},
-                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'}
                 }
             ))
 
@@ -864,6 +862,7 @@ The OpenReview Team.
         acceptance_note = openreview_client.post_note_edit(invitation=journal.get_accepted_id(),
             signatures=['CABJ'],
             note=openreview.api.Note(id=submission.id,
+                pdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()),
                 content= {
                     '_bibtex': {
                         'value': journal.get_bibtex(submission, journal.accepted_venue_id, certifications=[])

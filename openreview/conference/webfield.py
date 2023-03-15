@@ -44,7 +44,7 @@ class WebfieldBuilder(object):
 
     def set_landing_page(self, group, parentGroup, options = {}):
         ## Remove existing webfield to the UI renders the groups directory
-        if group.web:
+        if group.web and 'VENUE_LINKS' in group.web:
             group.web = None
             self.client.post_group(group)
 
@@ -346,7 +346,7 @@ class WebfieldBuilder(object):
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(conference.get_homepage_options()) + ";")
             return self.__update_invitation(invitation, content)
 
-    def set_author_page(self, conference, group):
+    def set_author_page(self, conference, group, override=False):
 
         default_header = {
             'title': 'Author Console',
@@ -354,20 +354,22 @@ class WebfieldBuilder(object):
             'schedule': ''
         }
 
-        header = self.__build_options(default_header, conference.get_authorpage_header())
+        ## Set webfield component once
+        if group.web is None or override:
+            header = self.__build_options(default_header, conference.get_authorpage_header())
 
-        template_file = 'webfield/authorWebfield'
+            template_file = 'webfield/authorWebfield'
 
-        with open(os.path.join(os.path.dirname(__file__), f'templates/{template_file}.js')) as f:
-            content = f.read()
-            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
-            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
-            content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
-            content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
-            content = content.replace("var DECISION_NAME = '';", "var DECISION_NAME = '" + conference.decision_stage.name + "';")
-            content = content.replace("var AUTHOR_SUBMISSION_FIELD = '';", "var AUTHOR_SUBMISSION_FIELD = '" + ('content.authorids' if 'authorids' in conference.submission_stage.get_content() else 'signature') + "';")
-            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            return self.__update_group(group, content)
+            with open(os.path.join(os.path.dirname(__file__), f'templates/{template_file}.js')) as f:
+                content = f.read()
+                content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
+                content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
+                content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
+                content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
+                content = content.replace("var DECISION_NAME = '';", "var DECISION_NAME = '" + conference.decision_stage.name + "';")
+                content = content.replace("var AUTHOR_SUBMISSION_FIELD = '';", "var AUTHOR_SUBMISSION_FIELD = '" + ('content.authorids' if 'authorids' in conference.submission_stage.get_content() else 'signature') + "';")
+                content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+                return self.__update_group(group, content)
 
     def set_reviewer_page(self, conference, group):
 
