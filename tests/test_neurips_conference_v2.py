@@ -708,6 +708,32 @@ If you would like to change your decision, please follow the link in the previou
         assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Desk_Rejection')
         assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Revision')
 
+        withdraw_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission5/-/Withdrawal',
+            signatures=['NeurIPS.cc/2023/Conference/Submission5/Authors'],
+            note=openreview.api.Note(
+                content={
+                    'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='NeurIPS.cc/2023/Conference/-/Withdrawn_Submission')
+
+        note = test_client.get_note(withdraw_note['note']['forum'])
+        assert note
+        assert note.invitations == ['NeurIPS.cc/2023/Conference/-/Submission', 'NeurIPS.cc/2023/Conference/-/Post_Submission', 'NeurIPS.cc/2023/Conference/-/Withdrawn_Submission']
+        assert note.readers == ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Submission5/Authors']
+        assert note.writers == ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Submission5/Authors']
+        assert note.signatures == ['NeurIPS.cc/2023/Conference/Submission5/Authors']
+        assert note.content['venue']['value'] == 'NeurIPS 2023 Conference Withdrawn Submission'
+        assert note.content['venueid']['value'] == 'NeurIPS.cc/2023/Conference/Withdrawn_Submission'
+        assert 'readers' in note.content['authors']
+        assert 'readers' in note.content['authorids'] 
+
+        messages = client.get_messages(subject='[NeurIPS 2023]: Paper #5 withdrawn by paper authors')
+        assert len(messages) == 3
+
+
         # # expire the abstract submission deadline and update the submission deadline
         # pc_client = openreview.Client(username='pc@neurips.cc', password='1234')
         # request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]

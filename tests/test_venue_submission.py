@@ -189,9 +189,8 @@ class TestVenueSubmission():
     def test_post_submission_stage(self, venue, openreview_client, helpers):
                 
         venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS, SubmissionStage.Readers.AREA_CHAIRS]
-        venue.submission_stage.due_date = datetime.datetime.utcnow() - datetime.timedelta(minutes = 30) + datetime.timedelta(seconds = 10)
+        venue.submission_stage.exp_date = datetime.datetime.utcnow() + datetime.timedelta(seconds = 10)
         venue.create_submission_stage()
-        venue.setup_post_submission_stage()
         assert openreview_client.get_group('TestVenue.cc/Submission1/Authors')
         assert openreview_client.get_group('TestVenue.cc/Submission1/Reviewers')
         assert openreview_client.get_group('TestVenue.cc/Submission1/Area_Chairs')
