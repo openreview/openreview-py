@@ -699,7 +699,7 @@ If you would like to change your decision, please follow the link in the previou
         helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Withdrawal-0-0')
         helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Desk_Rejection-0-0')
 
-        notes = test_client.get_notes(invitation='NeurIPS.cc/2023/Conference/-/Submission', sort='number:desc')
+        notes = test_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Conference/Submission' }, sort='number:desc')
         assert len(notes) == 5
 
         assert notes[0].readers == ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Submission5/Authors']
@@ -708,6 +708,21 @@ If you would like to change your decision, please follow the link in the previou
         assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Desk_Rejection')
         assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Revision')
 
+        ## update submission
+        revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission4/-/Revision',
+            signatures=['NeurIPS.cc/2023/Conference/Submission4/Authors'],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': 'Paper title 4 Updated' },
+                    'abstract': { 'value': 'This is an abstract 4 updated' },
+                    'authorids': { 'value': ['test@mail.com', 'andrew@google.com', 'peter@mail.com' ] },
+                    'authors': { 'value': ['SomeFirstName User',  'Andrew Mc', 'Peter SomeLastName'] },
+                    'keywords': { 'value': ['machine learning', 'nlp'] },
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
+
+        ## withdraw submission
         withdraw_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission5/-/Withdrawal',
             signatures=['NeurIPS.cc/2023/Conference/Submission5/Authors'],
             note=openreview.api.Note(
@@ -733,236 +748,169 @@ If you would like to change your decision, please follow the link in the previou
         messages = client.get_messages(subject='[NeurIPS 2023]: Paper #5 withdrawn by paper authors')
         assert len(messages) == 3
 
+        due_date = now - datetime.timedelta(minutes=30)
 
-        # # expire the abstract submission deadline and update the submission deadline
-        # pc_client = openreview.Client(username='pc@neurips.cc', password='1234')
-        # request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        venue_revision_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Conference on Neural Information Processing Systems',
+                'Official Venue Name': 'Conference on Neural Information Processing Systems',
+                'Abbreviated Venue Name': 'NeurIPS 2023',
+                'Official Website URL': 'https://neurips.cc',
+                'program_chair_emails': ['pc@neurips.cc'],
+                'contact_email': 'pc@neurips.cc',
+                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
+                'Venue Start Date': '2023/12/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
+                'abstract_registration_deadline': first_date.strftime('%Y/%m/%d %H:%M'),
+                'Location': 'Virtual',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100'
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['{}/Program_Chairs'.format('NeurIPS.cc/2023/Conference'), 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
 
-        # now = datetime.datetime.utcnow()
-        # due_date = now + datetime.timedelta(days=4)
-        # first_date = now + datetime.timedelta(days=-1)
+        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Revision-0-1', count=3)
 
-        # venue_revision_note = pc_client.post_note(openreview.Note(
-        #     content={
-        #         'title': 'Conference on Neural Information Processing Systems',
-        #         'Official Venue Name': 'Conference on Neural Information Processing Systems',
-        #         'Abbreviated Venue Name': 'NeurIPS 2023',
-        #         'Official Website URL': 'https://neurips.cc',
-        #         'program_chair_emails': ['pc@neurips.cc'],
-        #         'contact_email': 'pc@neurips.cc',
-        #         'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
-        #         'Venue Start Date': '2023/12/01',
-        #         'Submission Deadline': due_date.strftime('%Y/%m/%d'),
-        #         'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
-        #         'Location': 'Virtual',
-        #         'How did you hear about us?': 'ML conferences',
-        #         'Expected Submissions': '100'
-        #     },
-        #     forum=request_form.forum,
-        #     invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
-        #     readers=['{}/Program_Chairs'.format('NeurIPS.cc/2023/Conference'), 'openreview.net/Support'],
-        #     referent=request_form.forum,
-        #     replyto=request_form.forum,
-        #     signatures=['~Program_NeurIPSChair1'],
-        #     writers=[]
-        # ))
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation NeurIPS.cc/2023/Conference/Submission5/-/Revision has expired'):
+            assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Revision')
 
-        # helpers.await_queue()
+        notes = test_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Conference/Submission' }, sort='number:desc')
+        assert len(notes) == 4
 
-        # revision_invitation = client.get_invitation(conference.get_invitation_id('Revision'))
-        # assert revision_invitation.duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))
+        reply_invitations = test_client.get_invitations(replyForum=notes[0].id)
+        assert len(reply_invitations) == 1
+        assert 'NeurIPS.cc/2023/Conference/Submission4/-/Withdrawal' == reply_invitations[0].id
 
-        # ## Add supplementary material
-        # submissions=conference.get_submissions(details='original')
-        # for submission in submissions:
-        #     id = conference.get_invitation_id('Supplementary_Material', submission.number)
-        #     invitation = openreview.Invitation(
-        #         id = id,
-        #         expdate = openreview.tools.datetime_millis(datetime.datetime(2023, 6, 2, 20, 0)),
-        #         readers = [conference.id, conference.get_authors_id(number=submission.number)],
-        #         writers = [conference.id],
-        #         signatures = [conference.id],
-        #         invitees = [conference.get_authors_id(number=submission.number)],
-        #         multiReply = False,
-        #         reply = {
-        #             'forum': submission.details['original']['id'],
-        #             'referent': submission.details['original']['id'],
-        #             'readers': {
-        #                 'values': [
-        #                     conference.id, conference.get_authors_id(number=submission.number)
-        #                 ]
-        #             },
-        #             'writers': {
-        #                 'values': [
-        #                     conference.id, conference.get_authors_id(number=submission.number)
-        #                 ]
-        #             },
-        #             'signatures': {
-        #                 'values-regex': '~.*'
-        #             },
-        #             'content': {
-        #                 'supplementary_material': {
-        #                     'order': 1,
-        #                     'required': True,
-        #                     'description': 'You can upload a single ZIP or a single PDF or a single MP4 file. Make sure that you do not use specialized codecs and the video runs on all computers. The maximum file size is 100MB.',
-        #                     'value-file': {
-        #                         'fileTypes': [
-        #                             'pdf',
-        #                             'zip',
-        #                             'mp4'
-        #                         ],
-        #                         'size': 100
-        #                     }
-        #                 }
-        #             }
-        #         }
-        #     )
-        #     client.post_invitation(invitation)
+        now = datetime.datetime.utcnow()
+        start_date = now
+        due_date = now + datetime.timedelta(days=3)
+        revision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'submission_revision_name': 'Supplementary_Material',
+                'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
+                'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
+                'accepted_submissions_only': 'Enable revision for all submissions',
+                'submission_author_edition': 'Allow addition and removal of authors',
+                'submission_revision_additional_options': {
+                    "supplementary_material": {
+                        "value": {
+                            "param": {
+                                "type": "file",
+                                "extensions": [
+                                    "zip",
+                                    "pdf",
+                                    "tgz",
+                                    "gz"
+                                ],
+                                "maxSize": 100,
+                                "deletable": True
+                            }
+                        },
+                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
+                        "order": 1
+                    },            
+                },
+                'submission_revision_remove_options': ['title', 'authors', 'authorids', 'TLDR', 'abstract', 'pdf', 'keywords']
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Submission_Revision_Stage'.format(request_form.number),
+            readers=['{}/Program_Chairs'.format('NeurIPS.cc/2023/Conference'), 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+        assert revision_stage_note
 
-        # assert client.get_invitation('NeurIPS.cc/2023/Conference/Paper5/-/Supplementary_Material')
+        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Supplementary_Material-0-1', count=1)
 
-        # ## Post a revision, add an author and check the permissions
-        # submissions=test_client.get_notes(invitation='NeurIPS.cc/2023/Conference/-/Submission', sort='number:desc')
-        # note = openreview.Note(referent=submissions[0].id,
-        #     forum = submissions[0].id,
-        #     invitation = 'NeurIPS.cc/2023/Conference/Paper5/-/Revision',
-        #     readers = ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Paper5/Authors'],
-        #     writers = [conference.id, 'NeurIPS.cc/2023/Conference/Paper5/Authors'],
-        #     signatures = ['NeurIPS.cc/2023/Conference/Paper5/Authors'],
-        #     content = {
-        #         'title': 'Paper title 5' ,
-        #         'abstract': 'This is an abstract 5 Rev',
-        #         'authorids': ['test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu'],
-        #         'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Another Andrew']
-        #     }
-        # )
-        # note = test_client.post_note(note)
+        assert len(test_client.get_invitations(invitation='NeurIPS.cc/2023/Conference/-/Supplementary_Material')) == 4
 
-        # updated_note=test_client.get_note(submissions[0].id)
-        # assert updated_note
-        # assert updated_note.readers == ['NeurIPS.cc/2023/Conference', 'test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu', '~SomeFirstName_User1']
-        # assert updated_note.writers == ['NeurIPS.cc/2023/Conference', 'test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu', '~SomeFirstName_User1']
-
-        # helpers.await_queue()
-
-        # author_group=test_client.get_group('NeurIPS.cc/2023/Conference/Paper5/Authors')
-        # assert author_group
-        # assert author_group.members == ['test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu']
-
-        # sac_client = openreview.Client(username='another_andrew@mit.edu', password='1234')
-        # sac_notes = sac_client.get_notes(invitation='NeurIPS.cc/2023/Conference/-/Submission')
-        # assert len(sac_notes) == 1
-        # assert sac_notes[0].id == note.forum
+        revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission4/-/Supplementary_Material',
+            signatures=['NeurIPS.cc/2023/Conference/Submission4/Authors'],
+            note=openreview.api.Note(
+                content={
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip' }
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
 
 
-#     def test_post_submission_stage(self, conference, helpers, test_client, client, request_page, selenium):
 
-#         #conference.setup_final_deadline_stage(force=True)
-#         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
-#         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+    def test_post_submission_stage(self, helpers, openreview_client, client, request_page, selenium):
 
-#         post_submission_note=pc_client.post_note(openreview.Note(
-#             content= {
-#                 'force': 'Yes',
-#                 'hide_fields': ['keywords'],
-#                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)'
-#             },
-#             forum= request_form.id,
-#             invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
-#             readers= ['NeurIPS.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
-#             referent= request_form.id,
-#             replyto= request_form.id,
-#             signatures= ['~Program_NeurIPSChair1'],
-#             writers= [],
-#         ))
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-#         helpers.await_queue()
+        post_submission_note=pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'hide_fields': ['keywords'],
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)'
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['NeurIPS.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_NeurIPSChair1'],
+            writers= [],
+        ))
 
-#         process_logs = client.get_process_logs(id=post_submission_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
+        helpers.await_queue()
 
-#         submissions = conference.get_submissions(sort='tmdate')
-#         assert len(submissions) == 5
+        notes = openreview_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Conference/Submission' }, sort='number:desc')
+        assert len(notes) == 4
 
-#         assert submissions[0].content['keywords'] == ''
+        assert 'readers' in notes[0].content['keywords']
 
-#         assert submissions[0].readers == ['NeurIPS.cc/2023/Conference',
-#             'NeurIPS.cc/2023/Conference/Senior_Area_Chairs',
-#             'NeurIPS.cc/2023/Conference/Area_Chairs',
-#             'NeurIPS.cc/2023/Conference/Reviewers',
-#             'NeurIPS.cc/2023/Conference/Paper5/Authors']
+        assert notes[0].readers == ['NeurIPS.cc/2023/Conference',
+            'NeurIPS.cc/2023/Conference/Senior_Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Reviewers',
+            'NeurIPS.cc/2023/Conference/Submission4/Authors']
 
-#         assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs').readers == ['NeurIPS.cc/2023/Conference',
-#             'NeurIPS.cc/2023/Conference/Program_Chairs',
-#             'NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs',
-#             'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs',
-#             'NeurIPS.cc/2023/Conference/Paper5/Reviewers']
-#         assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs').nonreaders == ['NeurIPS.cc/2023/Conference/Paper5/Authors']
+        # assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs').readers == ['NeurIPS.cc/2023/Conference',
+        #     'NeurIPS.cc/2023/Conference/Program_Chairs',
+        #     'NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs',
+        #     'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs',
+        #     'NeurIPS.cc/2023/Conference/Paper5/Reviewers']
+        # assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs').nonreaders == ['NeurIPS.cc/2023/Conference/Paper5/Authors']
 
-#         assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Area_Chairs').readers == ['NeurIPS.cc/2023/Conference',
-#             'NeurIPS.cc/2023/Conference/Program_Chairs',
-#             'NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs',
-#             'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs',
-#             'NeurIPS.cc/2023/Conference/Paper5/Reviewers']
+        # assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Area_Chairs').readers == ['NeurIPS.cc/2023/Conference',
+        #     'NeurIPS.cc/2023/Conference/Program_Chairs',
+        #     'NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs',
+        #     'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs',
+        #     'NeurIPS.cc/2023/Conference/Paper5/Reviewers']
 
-#         assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Area_Chairs').deanonymizers == ['NeurIPS.cc/2023/Conference',
-#             'NeurIPS.cc/2023/Conference/Program_Chairs',
-#             'NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs',
-#             'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs',
-#             'NeurIPS.cc/2023/Conference/Paper5/Reviewers']
+        # assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Area_Chairs').deanonymizers == ['NeurIPS.cc/2023/Conference',
+        #     'NeurIPS.cc/2023/Conference/Program_Chairs',
+        #     'NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs',
+        #     'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs',
+        #     'NeurIPS.cc/2023/Conference/Paper5/Reviewers']
 
-#         assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Area_Chairs').nonreaders == ['NeurIPS.cc/2023/Conference/Paper5/Authors']
+        # assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Area_Chairs').nonreaders == ['NeurIPS.cc/2023/Conference/Paper5/Authors']
 
-#         assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Reviewers').readers == ['NeurIPS.cc/2023/Conference',
-#             'NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs',
-#             'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs',
-#             'NeurIPS.cc/2023/Conference/Paper5/Reviewers']
+        # assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Reviewers').readers == ['NeurIPS.cc/2023/Conference',
+        #     'NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs',
+        #     'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs',
+        #     'NeurIPS.cc/2023/Conference/Paper5/Reviewers']
 
-#         assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Reviewers').deanonymizers == ['NeurIPS.cc/2023/Conference',
-#             'NeurIPS.cc/2023/Conference/Program_Chairs',
-#             'NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs',
-#             'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs',
-#             'NeurIPS.cc/2023/Conference/Paper5/Reviewers']
+        # assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Reviewers').deanonymizers == ['NeurIPS.cc/2023/Conference',
+        #     'NeurIPS.cc/2023/Conference/Program_Chairs',
+        #     'NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs',
+        #     'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs',
+        #     'NeurIPS.cc/2023/Conference/Paper5/Reviewers']
 
-#         assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Reviewers').nonreaders == ['NeurIPS.cc/2023/Conference/Paper5/Authors']
-
-#         ## Open Author paper ranking
-#         now = datetime.datetime.utcnow()
-#         conference.open_paper_ranking(committee_id=conference.get_authors_id(), due_date=now + datetime.timedelta(days=3))
-
-#         ## Manually set the webfield if the author ranking has to be enabled
-#         ## authors_url = 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference/Authors'
-#         ##request_page(selenium, authors_url, test_client.token, by=By.CLASS_NAME, wait_for_element='tag-widget')
-
-#         ##assert selenium.find_elements_by_class_name('tag-widget')
-
-#         client.post_invitation(openreview.Invitation(id=f'{conference.get_authors_id()}/-/Perceived_Likelihood',
-#             invitees=[conference.get_authors_id()],
-#             readers=[conference.get_authors_id()],
-#             signatures=[conference.id],
-#             writers=[conference.id],
-#             multiReply=False,
-#             reply={
-#                 'invitation': f'{conference.id}/-/Blind_Submission',
-#                 'readers': {
-#                     'values-copied': ['{signatures}']
-#                 },
-#                 'writers': {
-#                     'values-copied': ['{signatures}']
-#                 },
-#                 'signatures': {
-#                     'values-regex': '~.*'
-#                 },
-#                 'content': {
-#                     'percent_chance': {
-#                         'description': 'What is your best estimate of the percent chance that this submission will be accepted?  Please use a scale of 0 to 100, where 0 = “no chance” and 100 = “certain to be accepted',
-#                         'value-regex': '^(0|[1-9][0-9]?|100)$',
-#                         'required': True
-#                     }
-#                 }
-
-#             }))
+        # assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Reviewers').nonreaders == ['NeurIPS.cc/2023/Conference/Paper5/Authors']
 
 #     def test_update_withdraw_desk_reject_invitations(self, conference, client, helpers):
 #         pc_client = openreview.Client(username='pc@neurips.cc', password='1234')

@@ -406,10 +406,24 @@ class Venue(object):
             )
             self.create_submission_revision_stage()                        
 
+    def create_post_submission_stage(self):
+
+        submissions = self.get_submissions()
+        
+        self.group_builder.create_paper_committee_groups(submissions)
+
+        self.invitation_builder.set_post_submission_invitation()
+        
+        self.group_builder.add_to_active_venues()        
+    
     def create_submission_revision_stage(self):
+
+        print('create_submission_revision_stage!!!!', self.submission_revision_stage.name)
         invitation = tools.get_invitation(self.client, self.get_submission_id())
         if invitation:
             return self.invitation_builder.set_submission_revision_invitation(invitation.edit['note']['content'])
+        else:
+            print('invitation is expired!!!!')
 
     def create_review_stage(self):
         return self.invitation_builder.set_review_invitation()
@@ -424,14 +438,8 @@ class Venue(object):
         return self.invitation_builder.set_registration_invitations()
     
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
-
-        submissions = self.get_submissions()
-        
-        self.group_builder.create_paper_committee_groups(submissions)
-
-        self.invitation_builder.set_post_submission_invitation()
-        
-        self.group_builder.add_to_active_venues()
+        ## do nothing
+        return True
 
     def create_bid_stages(self):
         self.invitation_builder.set_bid_invitations()

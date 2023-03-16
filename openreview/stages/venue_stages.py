@@ -205,8 +205,12 @@ class SubmissionStage(object):
     def get_desk_rejected_submission_id(self, conference):
         return conference.get_invitation_id(f'Desk_Rejected_{self.name}')
 
-    def get_content(self):
-        content = default_content.submission.copy()
+    def get_content(self, api_version='1'):
+
+        if api_version == '1':
+            content = default_content.submission.copy()
+        elif api_version == '2':
+            content = default_content.submission_v2.copy()
 
         if self.subject_areas:
             content['subject_areas'] = {

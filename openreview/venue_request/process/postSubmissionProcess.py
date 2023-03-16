@@ -8,6 +8,10 @@ def process(client, note, invitation):
     import traceback
     try:
         conference.setup_post_submission_stage(force=note.content['force'] == 'Yes', hide_fields=note.content.get('hide_fields', []))
+
+        if isinstance(conference, openreview.venue.Venue):
+            conference.create_post_submission_stage()
+            
         print('Conference: ', conference.get_id())
     except Exception as e:
         error_status = f'''
