@@ -165,7 +165,7 @@ TJ22 Editors-in-Chief
 
         assert recruitment_status
         assert recruitment_status[0].content['title']['value'] == 'Recruitment Status'
-        assert 'Invited: 2 Reviewer(s).' in recruitment_status[0].content['comment']['value']
+        assert '**Invited**: 2 Reviewer(s).' in recruitment_status[0].content['comment']['value']
 
     def test_journal_action_editor_recruitment(self, openreview_client, selenium, request_page, helpers, journal, journal_number):
 
@@ -180,7 +180,7 @@ TJ22 Editors-in-Chief
         #add ae to action editors group
         openreview_client.add_members_to_group('TJ22/Action_Editors', 'already_actioneditor@mail.com')
 
-        ae_details = { 'value': '''ae_journal1@mail.com, First AE\nae_journal2@mail.com, Second AE\nae_journal3@mail.com, Third AE\nalready_actioneditor@mail.com, Action Editor\nnewactioneditor@mail.com;, New AE'''}
+        ae_details = { 'value': '''ae_journal1@mail.com, First AE\nae_journal2@mail.com, Second AE\nnewactioneditor@mail.com;, New AE\nae_journal3@mail.com, Third AE\nalready_actioneditor@mail.com, Action Editor'''}
         recruitment_note = test_client.post_note_edit(
             invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Action_Editor_Recruitment',
             signatures = ['~Support_Role1'],
@@ -218,9 +218,9 @@ TJ22 Editors-in-Chief
 
         assert recruitment_status
         assert recruitment_status[0].content['title']['value'] == 'Recruitment Status'
-        assert 'Invited: 2 Action Editor(s).' in recruitment_status[0].content['comment']['value']
-        assert 'No recruitment invitation was sent to the following users because they are already members of the Action Editor group:'
-        assert "'name': 'NotFoundError', 'message': 'Group Not Found: newactioneditor@mail.com;'"
+        assert '**Invited**: 2 Action Editor(s).' in recruitment_status[0].content['comment']['value']
+        assert 'No recruitment invitation was sent to the following users because they are already members of the Action Editor group:' in recruitment_status[0].content['comment']['value']
+        assert "'InvalidGroup': ['newactioneditor@mail.com;']" in recruitment_status[0].content['comment']['value']
 
     def test_journal_reviewer_recruitment_by_ae(self, openreview_client, selenium, request_page, helpers, journal, journal_number):
 
@@ -266,7 +266,7 @@ TJ22 Editors-in-Chief
 
         assert recruitment_status
         assert recruitment_status[0].content['title']['value'] == 'Recruitment Status'
-        assert 'Invited: 1 reviewer' in recruitment_status[0].content['comment']['value']
+        assert '**Invited**: 1 reviewer' in recruitment_status[0].content['comment']['value']
         assert recruitment_status[0].readers == ['openreview.net/Support', 'TJ22', '~First_AE1']
 
         # catch group not found error
@@ -294,8 +294,8 @@ TJ22 Editors-in-Chief
 
         assert recruitment_status
         assert recruitment_status[0].content['title']['value'] == 'Recruitment Status'
-        assert 'Invited: 0 reviewer' in recruitment_status[0].content['comment']['value']
-        assert "'name': 'NotFoundError', 'message': 'Group Not Found: new_reviewer@mail.com;'"
+        assert '**Invited**: 0 reviewer' in recruitment_status[0].content['comment']['value']
+        assert "'InvalidGroup': ['new_reviewer@mail.com;']" in recruitment_status[0].content['comment']['value']
         assert recruitment_status[0].readers == ['openreview.net/Support', 'TJ22', '~First_AE1']
 
         helpers.create_user('ae_journal2@mail.com', 'Second', 'AE')
@@ -333,7 +333,7 @@ TJ22 Editors-in-Chief
 
         assert recruitment_status
         assert recruitment_status[0].content['title']['value'] == 'Recruitment Status'
-        assert 'Invited: 1 reviewer' in recruitment_status[0].content['comment']['value']
+        assert '**Invited**: 1 reviewer' in recruitment_status[0].content['comment']['value']
         assert recruitment_status[0].readers == ['openreview.net/Support', 'TJ22', '~Second_AE1']
 
         #decline reviewer invitation
