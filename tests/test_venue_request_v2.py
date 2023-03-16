@@ -485,7 +485,7 @@ class TestVenueRequest():
         # assert reply_row
         # buttons = reply_row.find_elements_by_class_name('btn-xs')
         # assert [btn for btn in buttons if btn.text == 'Recruitment']
-        reviewer_details = '''reviewer_candidate1_v2@mail.com, Reviewer One\nReviewer_Candidate2_v2@mail.com, Reviewer Two'''
+        reviewer_details = '''reviewer_candidate1_v2@mail.com, Reviewer One\nreviewer_error@mail.com;, Reviewer Error\nReviewer_Candidate2_v2@mail.com, Reviewer Two'''
         recruitment_note = test_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
@@ -528,6 +528,8 @@ class TestVenueRequest():
                                                                                    venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
         assert '2 users' in last_comment.content['invited']
+        assert "InvalidGroup" in last_comment.content['error']
+        assert "reviewer_error@mail.com;" in last_comment.content['error']
 
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Recruitment Status' not in last_message['content']['text']
