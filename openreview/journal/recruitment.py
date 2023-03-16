@@ -48,15 +48,14 @@ class Recruitment(object):
                     recruitment_status['invited'].append(invitee)
                     assert self.client.get_groups(id=action_editors_invited_id, member=invitee)
                 except Exception as e:
-                    try:
+                    error_string = repr(e)
+                    if 'NotFoundError' in error_string:
+                        error_string = 'InvalidGroup'
+                    else:
                         self.client.remove_members_from_group(action_editors_invited_id, invitee)
-                    except Exception as e2:
-                        if repr(e2) not in recruitment_status['errors']:
-                            recruitment_status['errors'][repr(e2)] = []
-                        recruitment_status['errors'][repr(e2)].append(invitee)
-                    if repr(e) not in recruitment_status['errors']:
-                        recruitment_status['errors'][repr(e)] = []
-                    recruitment_status['errors'][repr(e)].append(invitee)
+                    if error_string not in recruitment_status['errors']:
+                        recruitment_status['errors'][error_string] = []
+                    recruitment_status['errors'][error_string].append(invitee)
 
         return recruitment_status
 
@@ -100,14 +99,13 @@ class Recruitment(object):
                         replyTo = replyTo)
                     recruitment_status['invited'].append(invitee)
                 except Exception as e:
-                    try:
+                    error_string = repr(e)
+                    if 'NotFoundError' in error_string:
+                        error_string = 'InvalidGroup'
+                    else:
                         self.client.remove_members_from_group(reviewers_invited_id, invitee)
-                    except Exception as e2:
-                        if repr(e2) not in recruitment_status['errors']:
-                            recruitment_status['errors'][repr(e2)] = []
-                        recruitment_status['errors'][repr(e2)].append(invitee)
-                    if repr(e) not in recruitment_status['errors']:
-                        recruitment_status['errors'][repr(e)] = []
-                    recruitment_status['errors'][repr(e)].append(invitee)
+                    if error_string not in recruitment_status['errors']:
+                        recruitment_status['errors'][error_string] = []
+                    recruitment_status['errors'][error_string].append(invitee)
 
         return recruitment_status
