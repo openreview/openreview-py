@@ -172,6 +172,7 @@ class GroupBuilder(object):
             'withdraw_reversion_id': { 'value': self.venue.get_invitation_id('Withdrawal_Reversion') },
             'withdraw_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
             'withdrawal_name': { 'value': 'Withdrawal'},
+            'withdrawal_email_pcs': { 'value': self.venue.submission_stage.email_pcs_on_withdraw },
             'desk_rejected_submission_id': { 'value': self.venue.get_desk_rejected_id() },
             'desk_reject_expiration_id': { 'value': self.venue.get_invitation_id('Desk_Reject_Expiration') },
             'desk_rejection_reversion_id': { 'value': self.venue.get_invitation_id('Desk_Rejection_Reversion') },
