@@ -189,7 +189,7 @@ TJ22 Editors-in-Chief
                     'title': { 'value': 'Recruitment' },
                     'invitee_details': ae_details,
                     'email_subject': { 'value': '[TJ22] Invitation to serve as {{role}} for TJ22' },
-                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of TJ22 to serve as action editor.\n\nACCEPT LINK:\n{{accept_url}}\n\nDECLINE LINK:\n{{decline_url}}\n\nCheers!'}
+                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of TJ22 to serve as {{role}}.\n\nACCEPT LINK:\n{{accept_url}}\n\nDECLINE LINK:\n{{decline_url}}\n\nCheers!'}
                 },
                 forum = journal.request_form_id,
                 replyto = journal.request_form_id,
@@ -207,11 +207,11 @@ TJ22 Editors-in-Chief
 
         messages = openreview_client.get_messages(to = 'ae_journal2@mail.com', subject = '[TJ22] Invitation to serve as Action Editor for TJ22')
         assert len(messages) == 1
-        assert messages[0]['content']['text'].startswith('Dear Second AE,\n\nYou have been nominated by the program chair committee of TJ22 to serve as action editor.')
+        assert messages[0]['content']['text'].startswith('Dear Second AE,\n\nYou have been nominated by the program chair committee of TJ22 to serve as Action Editor.')
 
         messages = openreview_client.get_messages(to = 'ae_journal3@mail.com', subject = '[TJ22] Invitation to serve as Action Editor for TJ22')
         assert len(messages) == 1
-        assert messages[0]['content']['text'].startswith('Dear Third AE,\n\nYou have been nominated by the program chair committee of TJ22 to serve as action editor.')
+        assert messages[0]['content']['text'].startswith('Dear Third AE,\n\nYou have been nominated by the program chair committee of TJ22 to serve as Action Editor.')
 
         inv = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment'
         recruitment_status = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'])
