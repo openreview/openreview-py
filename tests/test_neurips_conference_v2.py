@@ -450,6 +450,8 @@ If you would like to change your decision, please follow the link in the previou
         messages = notes.find_elements_by_tag_name("p")
         assert 'If you chose to decline the invitation because the paper load is too high, you can request to reduce your load. You can request a reduced reviewer load below:' == messages[0].text
 
+        helpers.await_queue_edit(openreview_client, invitation='NeurIPS.cc/2023/Conference/Reviewers/-/Recruitment', count=1) 
+        
         assert len(client.get_group('NeurIPS.cc/2023/Conference/Reviewers').members) == 0
 
         group = client.get_group('NeurIPS.cc/2023/Conference/Reviewers/Declined')
@@ -480,7 +482,7 @@ If you would like to change your decision, please follow the link in the previou
         button = selenium.find_element_by_xpath('//button[text()="Submit"]')
         button.click()
         time.sleep(0.5)
-        helpers.await_queue_edit(openreview_client, invitation='NeurIPS.cc/2023/Conference/Reviewers/-/Recruitment')        
+        helpers.await_queue_edit(openreview_client, invitation='NeurIPS.cc/2023/Conference/Reviewers/-/Recruitment', count=2)        
 
         reviewers_group=openreview_client.get_group('NeurIPS.cc/2023/Conference/Reviewers')
         assert len(reviewers_group.members) == 1

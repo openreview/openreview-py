@@ -930,8 +930,6 @@ class TestVenueRequest():
         assert 'If you have any questions, please contact the PCs at test@mail.com' in messages[0]['content']['text']
         assert 'If you are not an author of this submission and would like to be removed, please contact the author who added you at venue_author_v2_2@mail.com' not in messages[0]['content']['text']
 
-        conference.setup_post_submission_stage(force=True)
-
         submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='tmdate')
         assert submissions and len(submissions) == 2
 
@@ -1153,6 +1151,24 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
     def test_venue_review_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
+        # Close submission stage
+        test_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                'hide_fields': []
+            },
+            forum= venue['request_form_note'].forum,
+            invitation= f'openreview.net/Support/-/Request{venue["request_form_note"].number}/Post_Submission',
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent= venue['request_form_note'].forum,
+            replyto= venue['request_form_note'].forum,
+            signatures= ['~SomeFirstName_User1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()        
+        
         # Post a review stage note
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
@@ -2101,9 +2117,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         helpers.await_queue_edit(openreview_client, edit_id=submission['id'])
 
-        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        conference.setup_post_submission_stage(force=True)
-
         submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number:asc')
         assert submissions and len(submissions) == 3
 
@@ -2475,7 +2488,7 @@ Best,
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for all submissions',
                 'submission_author_edition': 'Allow addition and removal of authors',
-                'submission_revision_remove_options': ['title','authors', 'authorids','abstract','keywords', 'TL;DR'],
+                'submission_revision_remove_options': ['title','authors', 'authorids','abstract','keywords', 'TLDR'],
                 'submission_revision_additional_options': {
                     'supplementary_material': {
                         'description': 'Supplementary material (e.g. code or video). All supplementary material must be self-contained and zipped into a single file',
@@ -2511,7 +2524,7 @@ Best,
         revision_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission3/-/Supplementary_Material')
         assert revision_invitation
 
-        assert all(x not in revision_invitation.edit['note']['content'] for x in ['title','authors', 'authorids','abstract','keywords', 'TL;DR'])
+        assert all(x not in revision_invitation.edit['note']['content'] for x in ['title','authors', 'authorids','abstract','keywords', 'TLDR'])
         assert 'supplementary_material' in revision_invitation.edit['note']['content']
 
 #         #make sure homepage webfield was not overwritten after doing get_conference()

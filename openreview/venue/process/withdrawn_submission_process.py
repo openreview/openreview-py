@@ -9,13 +9,13 @@ def process(client, edit, invitation):
     submission_name = domain.content['submission_name']['value']
     authors_name = domain.content['authors_name']['value']
     reviewers_name = domain.content['reviewers_name']['value']
-    area_chairs_name = domain.content.get('area_chairs_name', {})['value']
-    senior_area_chairs_name = domain.content.get('senior_area_chairs_name', {})['value']
+    area_chairs_name = domain.content.get('area_chairs_name', {}).get('value')
+    senior_area_chairs_name = domain.content.get('senior_area_chairs_name', {}).get('value')
     reviewers_id = domain.content['reviewers_id']['value']
-    area_chairs_id = domain.content.get('area_chairs_id', {})['value']
-    senior_area_chairs_id = domain.content.get('senior_area_chairs_id', {})['value']
+    area_chairs_id = domain.content.get('area_chairs_id', {}).get('value')
+    senior_area_chairs_id = domain.content.get('senior_area_chairs_id', {}).get('value')
     program_chairs_id = domain.content['program_chairs_id']['value']
-    withdrawal_email_pcs = domain.content.get('withdrawal_email_pcs', {})['value']
+    withdrawal_email_pcs = domain.content.get('withdrawal_email_pcs', {}).get('value')
 
     submission = client.get_note(edit.note.id)
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'    

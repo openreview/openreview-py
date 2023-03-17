@@ -226,10 +226,12 @@ class InvitationBuilder(object):
                     'signatures': [ self.venue.get_authors_id('${{2/id}/number}') ],
                     'readers': submission_stage.get_readers(self.venue, '${{2/id}/number}'),
                     'writers': [venue_id, self.venue.get_authors_id('${{2/id}/number}')],
-                    'content': note_content
                 }
             }
         )
+
+        if note_content:
+            submission_invitation.edit['note']['content'] = note_content
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=True)        
         
@@ -1166,7 +1168,7 @@ class InvitationBuilder(object):
             signatures=[venue_id],
             cdate=cdate,
             date_processes=[{ 
-                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                'dates': [self.update_date_string],
                 'script': self.invitation_edit_process              
             }],            
             content={
@@ -1202,7 +1204,6 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'signatures': [venue_id],
                     'maxReplies': 1,
-                    'cdate': cdate,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['process_script']['value']
@@ -1256,6 +1257,13 @@ class InvitationBuilder(object):
 
             }
         )            
+
+        if cdate:
+            invitation.edit['invitation']['cdate'] = cdate
+            invitation.date_processes=[{ 
+                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                'script': self.invitation_edit_process              
+            }]            
 
         if exp_date:
             invitation.edit['invitation']['expdate'] = exp_date
@@ -1459,7 +1467,7 @@ class InvitationBuilder(object):
             signatures=[venue_id],
             cdate=cdate,
             date_processes=[{ 
-                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                'dates': [self.update_date_string],
                 'script': self.invitation_edit_process              
             }],
             content={
@@ -1495,7 +1503,6 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'signatures': [venue_id],
                     'maxReplies': 1,
-                    'cdate': cdate,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['process_script']['value']
@@ -1524,6 +1531,13 @@ class InvitationBuilder(object):
 
         if exp_date:
             invitation.edit['invitation']['expdate'] = exp_date
+
+        if cdate:
+            invitation.edit['invitation']['cdate'] = cdate
+            invitation.date_processes=[{ 
+                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                'script': self.invitation_edit_process              
+            }]
 
         self.save_invitation(invitation, replacement=True)
 

@@ -11,14 +11,13 @@ def process(client, note, invitation):
     comment_readers = [forum_note.content.get('venue_id') + '/Program_Chairs', SUPPORT_GROUP]
 
     try:
-        conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP, setup=False)
+        conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP, setup=True)
         short_name = conference.get_short_name()
         comment_readers = [conference.get_program_chairs_id(), SUPPORT_GROUP]
         if invitation_type in ['Bid_Stage', 'Review_Stage', 'Meta_Review_Stage', 'Decision_Stage', 'Submission_Revision_Stage', 'Comment_Stage']:
             conference.setup_post_submission_stage(hide_fields=forum_note.content.get('hide_fields', []))
 
         if invitation_type == 'Revision':
-            conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP, setup=True)
             submission_deadline = forum_note.content.get('Submission Deadline')
             if submission_deadline:
                 try:
