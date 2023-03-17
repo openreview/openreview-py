@@ -395,7 +395,7 @@ class Venue(object):
             self.invitation_builder.set_expertise_selection_invitations()
 
         if self.submission_stage.second_due_date:
-            self.submission_revision_stage = openreview.stages.SubmissionRevisionStage(name='Revision',
+            submission_revision_stage = openreview.stages.SubmissionRevisionStage(name='Revision',
                 start_date=self.submission_stage.exp_date,
                 due_date=self.submission_stage.second_due_date,
                 additional_fields=self.submission_stage.additional_fields,
@@ -404,7 +404,7 @@ class Venue(object):
                 multiReply=True,
                 allow_author_reorder=True
             )
-            self.create_submission_revision_stage()                        
+            self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)                        
 
     def create_post_submission_stage(self):
 
@@ -417,13 +417,7 @@ class Venue(object):
         self.group_builder.add_to_active_venues()        
     
     def create_submission_revision_stage(self):
-
-        print('create_submission_revision_stage!!!!', self.submission_revision_stage.name)
-        invitation = tools.get_invitation(self.client, self.get_submission_id())
-        if invitation:
-            return self.invitation_builder.set_submission_revision_invitation(invitation.edit['note']['content'])
-        else:
-            print('invitation is expired!!!!')
+        return self.invitation_builder.set_submission_revision_invitation()
 
     def create_review_stage(self):
         return self.invitation_builder.set_review_invitation()

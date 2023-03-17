@@ -209,27 +209,55 @@ class SubmissionStage(object):
 
         if api_version == '1':
             content = default_content.submission.copy()
+
+            if self.subject_areas:
+                content['subject_areas'] = {
+                    'order' : 5,
+                    'description' : "Select or type subject area",
+                    'values-dropdown': self.subject_areas,
+                    'required': True
+                }
+
+            for field in self.remove_fields:
+                del content[field]
+
+            for order, key in enumerate(self.additional_fields, start=10):
+                value = self.additional_fields[key]
+                value['order'] = order
+                content[key] = value
+
+            if self.second_due_date and 'pdf' in content:
+                content['pdf']['required'] = False
+
         elif api_version == '2':
             content = default_content.submission_v2.copy()
 
-        if self.subject_areas:
-            content['subject_areas'] = {
-                'order' : 5,
-                'description' : "Select or type subject area",
-                'values-dropdown': self.subject_areas,
-                'required': True
-            }
+            if self.subject_areas:
+                content['subject_areas'] = {
+                    'order' : 5,
+                    'description' : "Select or type subject area",
+                    'value': {
+                        'param': {
+                            'type': 'string[]',
+                            'enum': self.subject_areas,
+                            'input': 'select'                    
+                        }
+                    }
+                }
 
-        for field in self.remove_fields:
-            del content[field]
+            for field in self.remove_fields:
+                if field in content:
+                    del content[field]
+                else:
+                    print('Field {} not found in content: {}'.format(field, content))
 
-        for order, key in enumerate(self.additional_fields, start=10):
-            value = self.additional_fields[key]
-            value['order'] = order
-            content[key] = value
+            for order, key in enumerate(self.additional_fields, start=10):
+                value = self.additional_fields[key]
+                value['order'] = order
+                content[key] = value
 
-        if self.second_due_date and 'pdf' in content:
-            content['pdf']['required'] = False
+            if self.second_due_date and 'pdf' in content:
+                content['pdf']['value']['param']['optional'] = True
 
         return content
     

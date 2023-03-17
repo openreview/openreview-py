@@ -1682,20 +1682,18 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=True)
 
-    def set_submission_revision_invitation(self, submission_content):
+    def set_submission_revision_invitation(self, submission_revision_stage=None):
 
         venue_id = self.venue_id
-        revision_stage = self.venue.submission_revision_stage
+        revision_stage = submission_revision_stage if submission_revision_stage else self.venue.submission_revision_stage
+        print('revision_stage: {}'.format(revision_stage))
         revision_invitation_id = self.venue.get_invitation_id(revision_stage.name)
         revision_cdate = tools.datetime_millis(revision_stage.start_date if revision_stage.start_date else datetime.datetime.utcnow())
         revision_duedate = tools.datetime_millis(revision_stage.due_date) if revision_stage.due_date else None
         revision_expdate = tools.datetime_millis(revision_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if revision_stage.due_date else None
 
         only_accepted = revision_stage.only_accepted
-        content = submission_content.copy()
-
-        del content['venue']
-        del content['venueid']
+        content = self.venue.submission_stage.get_content(api_version='2').copy()
 
         for field in revision_stage.remove_fields:
             if field in content:

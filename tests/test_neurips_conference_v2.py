@@ -104,7 +104,7 @@ class TestNeurIPSConference():
 
         assert openreview_client.get_group('NeurIPS.cc/2023/Conference/Authors')
 
-    def test_recruit_senior_area_chairs(self, client, selenium, request_page, helpers):
+    def test_recruit_senior_area_chairs(self, client, openreview_client, selenium, request_page, helpers):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -150,6 +150,8 @@ class TestNeurIPSConference():
         print('invitation_url', invitation_url)
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
+        helpers.await_queue_edit(openreview_client, invitation='NeurIPS.cc/2023/Conference/Senior_Area_Chairs/-/Recruitment', count=1)
+
         messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2023] Senior Area Chair Invitation accepted')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Thank you for accepting the invitation to be a Senior Area Chair for NeurIPS 2023.
@@ -164,6 +166,8 @@ If you would like to change your decision, please follow the link in the previou
         assert messages[0]['content']['text'].startswith('Dear SAC Two,\n\nYou have been nominated by the program chair committee of NeurIPS 2023 to serve as Senior Area Chair.')
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+        helpers.await_queue_edit(openreview_client, invitation='NeurIPS.cc/2023/Conference/Senior_Area_Chairs/-/Recruitment', count=2)
 
         sac_group = client.get_group('NeurIPS.cc/2023/Conference/Senior_Area_Chairs')
         assert len(sac_group.members) == 2
