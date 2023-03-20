@@ -887,6 +887,7 @@ class DecisionStage(object):
         self.email_authors = email_authors
         self.additional_fields = additional_fields
         self.decisions_file = decisions_file
+        self.decision_field_name = 'decision'
 
     def get_readers(self, conference, number):
 

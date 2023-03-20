@@ -65,10 +65,10 @@ class Helpers:
         assert not super_client.get_process_logs(status='error')
 
     @staticmethod
-    def await_queue_edit(super_client, edit_id=None, invitation=None):
+    def await_queue_edit(super_client, edit_id=None, invitation=None, count=1):
         while True:
             process_logs = super_client.get_process_logs(id=edit_id, invitation=invitation)
-            if process_logs:
+            if len(process_logs) >= count:
                 break
 
             time.sleep(0.5)

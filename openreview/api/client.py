@@ -1609,7 +1609,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()['messages']
 
-    def get_process_logs(self, id = None, invitation = None, status = None):
+    def get_process_logs(self, id = None, invitation = None, status = None, min_sdate = None):
         """
         **Only for Super User**. Retrieves the logs of the process function executed by an Invitation
 
@@ -1622,7 +1622,7 @@ class OpenReviewClient(object):
         :rtype: dict
         """
 
-        response = self.session.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation, 'status': status }, headers = self.headers)
+        response = self.session.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation, 'status': status, 'minsdate': min_sdate }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()['logs']
 
