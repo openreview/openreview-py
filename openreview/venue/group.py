@@ -178,7 +178,8 @@ class GroupBuilder(object):
             'desk_rejection_reversion_id': { 'value': self.venue.get_invitation_id('Desk_Rejection_Reversion') },
             'desk_reject_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
             'desk_rejection_name': { 'value': 'Desk_Rejection'},
-            'conflict_policy': { 'value': self.venue.conflict_policy }
+            'conflict_policy': { 'value': self.venue.conflict_policy },
+            'decision_heading_map': { 'value': self.venue.decision_heading_map }
         }
 
         if self.venue.submission_stage.subject_areas:

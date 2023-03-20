@@ -48,6 +48,9 @@ def process(client, edit, invitation):
             }
         )
 
+    print(f'Remove {paper_group_id}/{authors_name} from {venue_id}/{authors_name}')
+    client.remove_members_from_group(f'{venue_id}/{authors_name}', f'{paper_group_id}/{authors_name}')
+
     recipients = [f'{paper_group_id}/{authors_name}']
 
     if reviewers_name and (f'{paper_group_id}/{reviewers_name}' in submission.readers or reviewers_id in submission.readers or 'everypone' in submission.readers):

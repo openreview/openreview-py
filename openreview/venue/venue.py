@@ -65,6 +65,7 @@ class Venue(object):
         self.enable_reviewers_reassignment = False
         self.reviewers_proposed_assignment_title = None
         self.conflict_policy = 'default'
+        self.decision_heading_map = {}
 
     def get_id(self):
         return self.venue_id

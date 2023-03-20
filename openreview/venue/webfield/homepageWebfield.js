@@ -4,6 +4,22 @@ const tabs = [{
   type: 'consoles'
 }]
 
+const decisionHeadingMap = domain.content.decision_heading_map?.value
+
+if (decisionHeadingMap) {
+  for (const [venue, tabName] of Object.entries(decisionHeadingMap)) {
+    tabs.push({
+      name:tabName,
+      query: {
+        'content.venue': venue
+      },
+      options: {
+        hideWhenEmpty: true
+      }
+    })
+  }
+}
+
 if (domain.content.public_submissions.value) {
   tabs.push({
     name: 'Active Submissions',

@@ -1225,7 +1225,10 @@ def recruit_reviewer(client, user, first,
 
     personalized_message.format()
 
-    client.add_members_to_group(reviewers_invited_id, [user])
+    try:
+        client.add_members_to_group(reviewers_invited_id, [user])
+    except openreview.OpenReviewException as e:
+        raise e
 
     # send the email through openreview
     response = client.post_message(recruit_message_subj, [user], personalized_message, parentGroup=reviewers_invited_id, replyTo=replyTo)

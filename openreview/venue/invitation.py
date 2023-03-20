@@ -1166,7 +1166,6 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            cdate=cdate,
             date_processes=[{ 
                 'dates': [self.update_date_string],
                 'script': self.invitation_edit_process              
@@ -1204,6 +1203,7 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'signatures': [venue_id],
                     'maxReplies': 1,
+                    'cdate': cdate,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['process_script']['value']
@@ -1503,6 +1503,7 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'signatures': [venue_id],
                     'maxReplies': 1,
+                    'cdate': cdate,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['process_script']['value']

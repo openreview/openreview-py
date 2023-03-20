@@ -119,8 +119,12 @@ class Recruitment(object):
                         verbose=False)
                     recruitment_status['invited'].append(email)
                 except Exception as e:
-                    self.client.remove_members_from_group(committee_invited_id, email)
-                    if repr(e) not in recruitment_status['errors']:
-                        recruitment_status['errors'][repr(e)] = []
-                    recruitment_status['errors'][repr(e)].append(email)
+                    error_string = repr(e)
+                    if 'NotFoundError' in error_string:
+                        error_string = 'InvalidGroup'
+                    else:
+                        self.client.remove_members_from_group(committee_invited_id, email)
+                    if error_string not in recruitment_status['errors']:
+                        recruitment_status['errors'][error_string] = []
+                    recruitment_status['errors'][error_string].append(email)
         return recruitment_status

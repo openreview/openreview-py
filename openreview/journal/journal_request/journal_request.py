@@ -254,6 +254,7 @@ class JournalRequest():
                                         'type': 'string',
                                         'maxLength': 200000,
                                         'input': 'textarea',
+                                        'markdown': True
                                     }
                                 }
                             }
