@@ -1151,6 +1151,38 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
     def test_venue_review_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now - datetime.timedelta(hours=1)
+
+        venue_revision_note = test_client.post_note(openreview.Note(
+            content={
+                'title': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Official Venue Name': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Abbreviated Venue Name': venue['request_form_note'].content['Abbreviated Venue Name'],
+                'Official Website URL': venue['request_form_note'].content['Official Website URL'],
+                'program_chair_emails': venue['request_form_note'].content['program_chair_emails'],
+                'Expected Submissions': '100',
+                'How did you hear about us?': 'ML conferences',
+                'Location': 'Virtual',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
+                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'contact_email': venue['request_form_note'].content['contact_email'],
+                'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
+                'submission_email': 'Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}} \n\nIf you have any questions, please contact the PCs at test@mail.com'
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert venue_revision_note
+
+        helpers.await_queue()        
+
         # Close submission stage
         test_client.post_note(openreview.Note(
             content= {
@@ -2099,7 +2131,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         helpers.create_user('venue_author3_v2@mail.com', 'VenueFour', 'Author')
         author_client = OpenReviewClient(username='venue_author3_v2@mail.com', password='1234')
 
-        submission = author_client.post_note_edit(
+        ## post the submission as super user becuase the submission invitation is already expired
+        submission = openreview_client.post_note_edit(
             invitation='V2.cc/2030/Conference/-/Submission',
             signatures= ['~VenueFour_Author1'],
             note=Note(

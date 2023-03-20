@@ -10,6 +10,14 @@ def process(client, invitation):
     decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'Decision')
     review_name = domain.content.get('review_name', {}).get('value')
 
+    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    cdate = invitation.edit['invitation']['cdate'] if 'cdate' in invitation.edit['invitation'] else invitation.cdate
+
+    if cdate > now:
+        ## invitation is in the future, do not process
+        print('invitation is not yet active', cdate)
+        return
+
     def expire_existing_inviations():
 
         new_expdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())

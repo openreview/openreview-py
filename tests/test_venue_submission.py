@@ -330,7 +330,7 @@ class TestVenueSubmission():
         assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/Submission1/Area_Chairs", "${3/signatures}"]
 
         now = datetime.datetime.utcnow()
-        venue.review_stage = openreview.stages.ReviewStage(start_date=now + datetime.timedelta(minutes = 4), due_date=now + datetime.timedelta(minutes = 40), release_to_authors=True)
+        venue.review_stage = openreview.stages.ReviewStage(start_date=now - datetime.timedelta(minutes = 4), due_date=now + datetime.timedelta(minutes = 40), release_to_authors=True)
         venue.create_review_stage()
 
         invitation = openreview_client.get_invitation('TestVenue.cc/-/Official_Review')
