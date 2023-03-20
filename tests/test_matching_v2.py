@@ -153,7 +153,7 @@ class TestMatching():
 
         helpers.await_queue_edit(openreview_client, edit_id=note_3['id'])
 
-        venue.setup_post_submission_stage()
+        venue.create_post_submission_stage()
         # Set up reviewer matching
         venue.setup_committee_matching(committee_id=venue.get_area_chairs_id())
         venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
