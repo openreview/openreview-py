@@ -2148,8 +2148,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         
         helpers.await_queue_edit(openreview_client, edit_id=submission['id'])
 
-        helpers.await_queue_edit(openreview_client, edit_id=submission['id'])
-
         submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number:asc')
         assert submissions and len(submissions) == 3
 
