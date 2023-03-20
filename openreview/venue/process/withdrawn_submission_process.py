@@ -8,6 +8,7 @@ def process(client, edit, invitation):
     withdraw_committee = domain.content['withdraw_committee']['value']
     withdrawal_name = domain.content['withdrawal_name']['value']
     submission_name = domain.content['submission_name']['value']
+    authors_name = domain.content['authors_name']['value']
 
     submission = client.get_note(edit.note.id)
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'    
@@ -48,3 +49,6 @@ For more information, click here https://openreview.net/forum?id={submission.id}
                 }
             }
         )
+
+    print(f'Remove {paper_group_id}/{authors_name} from {venue_id}/{authors_name}')
+    client.remove_members_from_group(f'{venue_id}/{authors_name}', f'{paper_group_id}/{authors_name}')

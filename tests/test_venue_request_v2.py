@@ -485,7 +485,7 @@ class TestVenueRequest():
         # assert reply_row
         # buttons = reply_row.find_elements_by_class_name('btn-xs')
         # assert [btn for btn in buttons if btn.text == 'Recruitment']
-        reviewer_details = '''reviewer_candidate1_v2@mail.com, Reviewer One\nReviewer_Candidate2_v2@mail.com, Reviewer Two'''
+        reviewer_details = '''reviewer_candidate1_v2@mail.com, Reviewer One\nreviewer_error@mail.com;, Reviewer Error\nReviewer_Candidate2_v2@mail.com, Reviewer Two'''
         recruitment_note = test_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
@@ -528,6 +528,8 @@ class TestVenueRequest():
                                                                                    venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
         assert '2 users' in last_comment.content['invited']
+        assert "InvalidGroup" in last_comment.content['error']
+        assert "reviewer_error@mail.com;" in last_comment.content['error']
 
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Recruitment Status' not in last_message['content']['text']
@@ -2244,7 +2246,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                 'home_page_tab_names': {
                     'Accept': 'Accept',
                     'Revision Needed': 'Revision Needed',
-                    'Reject': 'Reject'
+                    'Reject': 'Submitted'
                 },
                 'send_decision_notifications': 'Yes, send an email notification to the authors',
                 'accept_email_content': f'''Dear {{{{fullname}}}},
@@ -2330,6 +2332,16 @@ Best,
         last_message = client.get_messages(to='venue_author_v2@mail.com', subject='[TestVenue@OR\'2030V2] Decision notification for your submission 1: test submission')[0]
         assert "Dear VenueTwo Author,\n\nThank you for submitting your paper, test submission, to TestVenue@OR'2030V2." in last_message['content']['text']
         assert f"https://openreview.net/forum?id={submissions[0].id}" in last_message['content']['text']
+
+        request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token, wait_for_element='header')
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element(By.LINK_TEXT, "Your Consoles")
+        assert tabs.find_element(By.LINK_TEXT, "Accept")
+        assert tabs.find_element(By.LINK_TEXT, "Submitted")
+        assert tabs.find_element(By.LINK_TEXT, "Recent Activity")
 
         # Post another revision stage note
         now = datetime.datetime.utcnow()
