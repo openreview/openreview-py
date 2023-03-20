@@ -20,6 +20,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')
         venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
         venue.senior_area_chair_identity_readers = get_identity_readers(note, 'senior_area_chair_identity')
+        venue.decision_heading_map = get_decision_heading_map(venue.short_name, note)
         
         if domain_group:
             venue.enable_reviewers_reassignment = domain_group.content.get('enable_reviewers_reassignment', {}).get('value', False)
@@ -289,6 +290,14 @@ def get_identity_readers(request_forum, field_name):
     }
 
     return [readers_map[r] for r in request_forum.content.get(field_name, [])]
+
+def get_decision_heading_map(short_name, request_forum):
+    map = request_forum.content.get('home_page_tab_names', {})
+    decision_heading_map = {}
+    for decision, tabName in map.items():
+        decision_heading_map[openreview.tools.decision_to_venue(short_name, decision)] = tabName
+
+    return decision_heading_map
 
 def get_submission_stage(request_forum):
 
