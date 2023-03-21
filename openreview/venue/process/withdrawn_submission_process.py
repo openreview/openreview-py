@@ -56,7 +56,7 @@ def process(client, edit, invitation):
     if reviewers_name and (f'{paper_group_id}/{reviewers_name}' in submission.readers or reviewers_id in submission.readers or 'everyone' in submission.readers):
         recipients.append(f'{paper_group_id}/{reviewers_name}')
 
-    if area_chairs_name and (f'{paper_group_id}/{area_chairs_name}' in submission.readers or area_chairs_id in submission.readers or 'everypone' in submission.readers):
+    if area_chairs_name and (f'{paper_group_id}/{area_chairs_name}' in submission.readers or area_chairs_id in submission.readers or 'everyone' in submission.readers):
         recipients.append(f'{paper_group_id}/{area_chairs_name}')
 
     if senior_area_chairs_name and (f'{paper_group_id}/{senior_area_chairs_name}' in submission.readers or senior_area_chairs_id in submission.readers or 'everypone' in submission.readers):
