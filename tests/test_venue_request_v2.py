@@ -143,7 +143,7 @@ class TestVenueRequest():
         venue = VenueRequest(client, support_group_id, super_id)
 
         helpers.await_queue()
-        request_page(selenium, 'http://localhost:3030/group?id={}&mode=default'.format(support_group_id), client.token)
+        request_page(selenium, 'http://localhost:3030/group?id={}'.format(support_group_id), client.token)
 
         helpers.create_user('pc_venue_v2@mail.com', 'ProgramChair', 'User')
 
@@ -583,7 +583,7 @@ class TestVenueRequest():
         last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
         assert '0 users' in last_comment.content['invited']
         assert 'No recruitment invitation was sent to the users listed under \'Already Invited\' because they have already been invited.' in last_comment.content['comment']
-        
+
     def test_venue_recruitment_tilde_IDs(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Reviewer Recruitment
@@ -882,7 +882,7 @@ class TestVenueRequest():
                 }
             ))
 
-        helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id']) 
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
 
         messages = client.get_messages(subject="TestVenue@OR'2030V2 has received your submission titled test submission")
         assert messages and len(messages) == 1
@@ -911,7 +911,7 @@ class TestVenueRequest():
                     'keywords': {'value': ['aa'] }
                 }
         ))
-        
+
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id'])
 
         #check co-author email
@@ -2038,7 +2038,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                     'keywords': {'value': ['keyword1, keyword2'] }
                 }
         ))
-        
+
         helpers.await_queue_edit(openreview_client, edit_id=submission['id'])
 
         helpers.await_queue_edit(openreview_client, edit_id=submission['id'])
@@ -2205,7 +2205,7 @@ Best,
 ''',
                 'reject_email_content': f'''Dear {{{{fullname}}}},
 
-Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted. 
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted.
 You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,

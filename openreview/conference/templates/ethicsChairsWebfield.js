@@ -383,10 +383,10 @@ var displayOverview = function() {
   html += '<div class="row" style="margin-top: .5rem;">';
   html += '<div class="col-md-4 col-xs-6">'
   html += '<h4>Ethics Review Roles:</h4><ul style="padding-left: 15px">' +
-    '<li><a href="/group?id=' + ETHICS_CHAIRS_ID + '&mode=info">' + view.prettyId(ETHICS_CHAIRS_NAME) + '</a></li>';
-  html += '<li><a href="/group?id=' + ETHICS_REVIEWERS_ID + '&mode=info">' + view.prettyId(ETHICS_REVIEWERS_NAME) + '</a> (' +
-    '<a href="/group?id=' + ETHICS_REVIEWERS_ID + '/Invited&mode=info">Invited</a>, ' +
-    '<a href="/group?id=' + ETHICS_REVIEWERS_ID + '/Declined&mode=info">Declined</a>)</li></ul>';
+    '<li><a href="/group/info?id=' + ETHICS_CHAIRS_ID + '">' + view.prettyId(ETHICS_CHAIRS_NAME) + '</a></li>';
+  html += '<li><a href="/group/info?id=' + ETHICS_REVIEWERS_ID + '">' + view.prettyId(ETHICS_REVIEWERS_NAME) + '</a> (' +
+    '<a href="/group/info?id=' + ETHICS_REVIEWERS_ID + '/Invited">Invited</a>, ' +
+    '<a href="/group/info?id=' + ETHICS_REVIEWERS_ID + '/Declined">Declined</a>)</li></ul>';
   html += '</div>';
   html += '</div>';
 
@@ -604,7 +604,7 @@ var displayPaperStatusTable = function() {
       postRenderTable(data, newPageNum);
       return false;
     });
-  
+
 
   };
 
