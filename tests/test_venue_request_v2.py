@@ -932,8 +932,28 @@ class TestVenueRequest():
         assert 'If you have any questions, please contact the PCs at test@mail.com' in messages[0]['content']['text']
         assert 'If you are not an author of this submission and would like to be removed, please contact the author who added you at venue_author_v2_2@mail.com' not in messages[0]['content']['text']
 
+        helpers.create_user('venue_author3_v2@mail.com', 'VenueFour', 'Author')
+        author_client = OpenReviewClient(username='venue_author3_v2@mail.com', password='1234')
+
+        ## post the submission as super user becuase the submission invitation is already expired
+        submission = author_client.post_note_edit(
+            invitation='V2.cc/2030/Conference/-/Submission',
+            signatures= ['~VenueFour_Author1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'test submission 3' },
+                    'abstract': { 'value': 'test abstract 3' },
+                    'authors': { 'value': ['VenueFour Author']},
+                    'authorids': { 'value': ['~VenueFour_Author1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'keywords': {'value': ['keyword1, keyword2'] }
+                }
+        ))
+        
+        helpers.await_queue_edit(openreview_client, edit_id=submission['id'])
+
         submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='tmdate')
-        assert submissions and len(submissions) == 2
+        assert submissions and len(submissions) == 3
 
         reviewer_group = openreview_client.get_group('{}/Reviewers'.format(venue['venue_id']))
         openreview_client.remove_members_from_group(reviewer_group, '~VenueTwo_Reviewer1')
@@ -1068,7 +1088,7 @@ Affinity scores and/or conflicts could not be computed for the users listed unde
         scores_invitation = openreview_client.get_invitation(conference.get_invitation_id('Affinity_Score', prefix=reviewer_group.id))
         assert scores_invitation
         affinity_scores = openreview_client.get_edges_count(invitation=scores_invitation.id)
-        assert affinity_scores == 4
+        assert affinity_scores == 6
 
         ## Remove reviewer with no profile
         openreview_client.remove_members_from_group(reviewer_group, 'some_user@mail.com')
@@ -1101,7 +1121,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         scores_invitation = openreview_client.get_invitation(conference.get_invitation_id('Affinity_Score', prefix=reviewer_group.id))
         assert scores_invitation
         affinity_scores = openreview_client.get_edges_count(invitation=scores_invitation.id)
-        assert affinity_scores == 4
+        assert affinity_scores == 6
 
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Paper Matching Setup Status' not in last_message['content']['text']
@@ -1249,7 +1269,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'test submission' == note_div.find_element_by_link_text('test submission').text
 
         review_invitations = openreview_client.get_invitations(invitation='{}/-/Official_Review'.format(venue['venue_id']))
-        assert review_invitations and len(review_invitations) == 2
+        assert review_invitations and len(review_invitations) == 3
         assert 'title' not in review_invitations[0].edit['note']['content']
 
         reviewer_group = openreview_client.get_group('V2.cc/2030/Conference/Submission1/Reviewers')
@@ -1404,7 +1424,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         meta_reviewer_client = openreview.api.OpenReviewClient(username='venue_ac_v2@mail.com', password='1234')
 
         submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='tmdate')
-        assert submissions and len(submissions) == 2
+        print(len(submissions))
+        assert submissions and len(submissions) == 3
 
         # Assert that ACs do not see the Submit button for meta reviews at this point
         meta_reviewer_group = openreview_client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
@@ -1581,7 +1602,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
     def test_venue_comment_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
         submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='number:asc')
-        assert submissions and len(submissions) == 2
+        assert submissions and len(submissions) == 3
 
         # Assert that official comment invitation is not available already
         official_comment_invitation = openreview.tools.get_invitation(openreview_client, '{}/-/Official_Comment'.format(venue['venue_id']))
@@ -1655,7 +1676,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
     def test_venue_decision_stage(self, client, test_client, selenium, request_page, venue, helpers, openreview_client):
 
         submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='number:asc')
-        assert submissions and len(submissions) == 2
+        assert submissions and len(submissions) == 3
         submission = submissions[0]
 
         helpers.create_user('tom_venue@mail.com', 'ProgramChair', 'Venue')
@@ -1754,6 +1775,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             writer = csv.writer(file_handle)
             writer.writerow([submissions[0].number, 'Reject', 'Not Good', "Test"])
             writer.writerow([submissions[1].number, 'Accept', 'Good Good', "Test"])
+            writer.writerow([submissions[2].number, 'Accept', 'Good Good', "Test"])
 
         with open(os.path.join(os.path.dirname(__file__), 'data/decisions_less.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
@@ -1764,6 +1786,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             writer = csv.writer(file_handle)
             writer.writerow([submissions[0].number, 'Accept', 'Good Paper'])
             writer.writerow([submissions[1].number, 'Revision Needed', 'Not Good'])
+            writer.writerow([submissions[2].number, 'Reject', 'Good Good'])
 
         with open(os.path.join(os.path.dirname(__file__), 'data/decisions_wrong_paper.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
@@ -2046,7 +2069,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                                            forum=venue['request_form_note'].forum, sort='tmdate')[0]
 
         assert decision_status
-        assert decision_status.content['decision_posted'] == '2 Papers'
+        assert decision_status.content['decision_posted'] == '3 Papers'
 
         with open(os.path.join(os.path.dirname(__file__), 'data/decisions.csv')) as f:
             sub_decisions = list(csv.reader(f))
@@ -2124,32 +2147,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
     def test_venue_submission_revision_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
-        venue_id = venue['venue_id']
-
-        submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number:asc')
-        assert submissions and len(submissions) == 2
-        submission = submissions[0]
-
-        helpers.create_user('venue_author3_v2@mail.com', 'VenueFour', 'Author')
-        author_client = OpenReviewClient(username='venue_author3_v2@mail.com', password='1234')
-
-        ## post the submission as super user becuase the submission invitation is already expired
-        submission = openreview_client.post_note_edit(
-            invitation='V2.cc/2030/Conference/-/Submission',
-            signatures= ['~VenueFour_Author1'],
-            note=Note(
-                content={
-                    'title': { 'value': 'test submission 3' },
-                    'abstract': { 'value': 'test abstract 3' },
-                    'authors': { 'value': ['VenueFour Author']},
-                    'authorids': { 'value': ['~VenueFour_Author1']},
-                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'keywords': {'value': ['keyword1, keyword2'] }
-                }
-        ))
-        
-        helpers.await_queue_edit(openreview_client, edit_id=submission['id'])
-
         submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number:asc')
         assert submissions and len(submissions) == 3
 
@@ -2179,6 +2176,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         helpers.await_queue()
 
         # post revision for a submission
+        author_client = OpenReviewClient(username='venue_author3_v2@mail.com', password='1234')
         updated_submission = author_client.post_note_edit(invitation='V2.cc/2030/Conference/Submission3/-/Revision',
             signatures=['V2.cc/2030/Conference/Submission3/Authors'],
             note=Note(
