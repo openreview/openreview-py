@@ -96,7 +96,12 @@ class TestJournal():
                                 'editorial_policies': 'https://jmlr.org/tmlr/editorial-policies.html',
                                 'faq': 'https://jmlr.org/tmlr/contact.html'                     
                             },
-                            'editors_email': 'tmlr-editors@jmlr.org'
+                            'editors_email': 'tmlr-editors@jmlr.org',
+                            'ae_recommendation_period': 1,
+                            'review_period': 2,
+                            'discussion_period' : 2,
+                            'recommendation_period': 2,
+                            'decision_period': 2
                         }
                     }
                 }

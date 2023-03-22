@@ -300,13 +300,17 @@ class Journal(object):
             forum_note = self.client.get_note(self.request_form_id)
             return forum_note.invitations[0].split('/-/')[0]
 
+    def get_ae_recommendation_period_length(self):
+        return self.settings.get('ae_recommendation_period', 1)
+
     def get_review_period_length(self, note):
+        review_period = self.settings.get('review_period', 2)
         if 'submission_length' in note.content:
             if 'Regular submission' in note.content['submission_length']['value']:
-                return 2 ## weeks
+                return review_period ## weeks
             if 'Long submission' in note.content['submission_length']['value']:
-                return 4 ## weeks
-        return 2 ## weeks
+                return 2 * review_period ## weeks
+        return review_period ## weeks
 
     def is_active_submission(self, submission):
         venue_id = submission.content.get('venueid', {}).get('value')
@@ -356,7 +360,7 @@ class Journal(object):
         self.invitation_builder.set_note_desk_rejection_invitation(note)
         self.invitation_builder.set_note_comment_invitation(note, public=False) 
         self.setup_ae_assignment(note)
-        self.invitation_builder.set_ae_recommendation_invitation(note, self.get_due_date(weeks = 1))
+        self.invitation_builder.set_ae_recommendation_invitation(note, self.get_due_date(weeks = self.get_ae_recommendation_period_length()))
         self.setup_reviewer_assignment(note)
         print('Finished setup author submission data.')
         
