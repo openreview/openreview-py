@@ -2706,6 +2706,10 @@ ICML 2023 Conference Program Chairs'''
 
         venue.create_custom_stage()
 
+        submissions = venue.get_submissions(sort='number:asc', details='directReplies')
+        first_submission = submissions[0]
+        reviews = [reply for reply in first_submission.details['directReplies'] if f'ICML.cc/2023/Conference/Submission{first_submission.number}/-/Official_Review']
+
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password='1234')
         anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLOne1')
         anon_group_id = anon_groups[0].id
@@ -2714,6 +2718,8 @@ ICML 2023 Conference Program Chairs'''
         invitation = openreview_client.get_invitation(f'{anon_group_id}/-/Review_Rating')
         assert invitation.invitees == ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission1/Area_Chairs']
         assert 'review_quality' in invitation.edit['note']['content']
+        assert invitation.edit['note']['forum'] == submissions[0].id
+        assert invitation.edit['note']['replyto'] == reviews[0]['id']
         assert invitation.edit['note']['readers'] == [
             'ICML.cc/2023/Conference/Program_Chairs',
             'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
