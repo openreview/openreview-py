@@ -1764,13 +1764,23 @@ class InvitationBuilder(object):
 
         content = custom_stage.content
 
-        if custom_stage.reply == 'forum':
+        custom_stage_replyto = custom_stage.get_reply_to()
+        custom_stage_source = custom_stage.get_source_submissions()
+
+        if custom_stage_replyto == 'forum':
             paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, number='${2/content/noteNumber/value}')
             with_invitation = self.venue.get_invitation_id(name=custom_stage.name, number='${6/content/noteNumber/value}')
             reply_to = '${4/content/noteId/value}'
-            forum = '${4/content/noteId/value}'
+        else:
+            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix='${2/content/replytoSignatures/value}')
+            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, number='${6/content/replytoSignatures/value}')
+            reply_to = '${4/content/replyto/value}' 
 
-        invitation_content = custom_stage.get_source_submissions()
+        invitation_content = {
+            'source': { 'value': custom_stage_source },
+            'reply_to': { 'value': custom_stage_replyto }
+        }
+
         ## add custom template
         # invitation_content['custom_stage_process_script'] 
 
@@ -1779,9 +1789,6 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            cdate=custom_stage_cdate,
-            duedate=custom_stage_duedate,
-            expdate=custom_stage_expdate,
             date_processes=[{ 
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process              
@@ -1805,7 +1812,23 @@ class InvitationBuilder(object):
                                 'regex': '.*', 'type': 'string'
                             }
                         }
-                    }
+                    },
+                    'replytoSignatures': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string',
+                                'optional': True
+                            }
+                        }
+                    },
+                    'replyto': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string',
+                                'optional': True
+                            }
+                        }
+                    },
                 },
                 'replacement': True,
                 'invitation': {
@@ -1814,7 +1837,7 @@ class InvitationBuilder(object):
                     'readers': ['everyone'],
                     'writers': [venue_id],
                     'minReplies': 1,
-                    'invitees': self.custom_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}'),
+                    'invitees': custom_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}'),
                     'cdate': custom_stage_cdate,
 #                     'process': '''def process(client, edit, invitation):
 #     meta_invitation = client.get_invitation(invitation.invitations[0])
