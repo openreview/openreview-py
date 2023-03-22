@@ -2754,6 +2754,42 @@ ICML 2023 Conference Program Chairs'''
         ]
         assert notes[0].signatures == [ac_anon_group_id]
 
+        #hide review ratings from Senior Area Chairs
+        venue.custom_stage = openreview.stages.CustomStage(name='Review_Rating',
+            reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            due_date=due_date,
+            exp_date=due_date + datetime.timedelta(days=1),
+            invitees=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
+            readers=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
+            content={
+                'review_quality': {
+                    'order': 1,
+                    'description': 'How helpful is this review:',
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'input': 'radio',
+                            'enum': [
+                                'Poor - not very helpful',
+                                'Good',
+                                'Outstanding'
+                            ]
+                        }
+                    }
+                }
+            })
+
+        venue.create_custom_stage()
+
+        notes = pc_client_v2.get_notes(invitation=invitation.id)
+        assert len(notes) == 1
+        assert notes[0].readers == [
+            'ICML.cc/2023/Conference/Program_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Area_Chairs'
+        ]
+        assert notes[0].signatures == [ac_anon_group_id]
+
     def test_delete_assignments(self, openreview_client):
 
         ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password='1234')
