@@ -2720,6 +2720,34 @@ ICML 2023 Conference Program Chairs'''
             'ICML.cc/2023/Conference/Submission1/Area_Chairs'
         ]
 
+        ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password='1234')
+        invitation = ac_client.get_invitation(f'{anon_group_id}/-/Review_Rating')
+        ac_anon_groups = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLTwo1')
+        ac_anon_group_id = ac_anon_groups[0].id
+
+        rating_edit = ac_client.post_note_edit(
+            invitation=invitation.id,
+            signatures=[ac_anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'review_quality': { 'value': 'Poor - not very helpful' },
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+
+        notes = pc_client_v2.get_notes(invitation=invitation.id)
+        assert len(notes) == 1
+        assert notes[0].readers == [
+            'ICML.cc/2023/Conference/Program_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Area_Chairs'
+        ]
+        assert notes[0].signatures == [ac_anon_group_id]
+
     def test_delete_assignments(self, openreview_client):
 
         ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password='1234')
