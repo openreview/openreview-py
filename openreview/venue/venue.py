@@ -393,6 +393,10 @@ class Venue(object):
         self.invitation_builder.set_post_submission_invitation()
         self.invitation_builder.set_pc_submission_revision_invitation()
         self.invitation_builder.set_submission_reviewer_group_invitation()
+        if self.use_area_chairs:
+            self.invitation_builder.set_submission_area_chair_group_invitation()
+        if self.use_senior_area_chairs:
+            self.invitation_builder.set_submission_senior_area_chair_group_invitation()
         if self.expertise_selection_stage:
             self.invitation_builder.set_expertise_selection_invitations()
 
@@ -409,10 +413,6 @@ class Venue(object):
             self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)                        
 
     def create_post_submission_stage(self):
-
-        submissions = self.get_submissions()
-        
-        self.group_builder.create_paper_committee_groups(submissions)
 
         self.invitation_builder.set_post_submission_invitation()
         

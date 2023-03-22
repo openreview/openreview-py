@@ -65,7 +65,7 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
         )
 
     paper_reviewers_id = f'{paper_group_id}/{reviewers_name}'
-    paper_reviewers_submitted_id = f'{paper_group_id}/{reviewers_submitted_name}'
+    paper_reviewers_submitted_id = f'{paper_reviewers_id}/{reviewers_submitted_name}'
     if 'everyone' in comment.readers or paper_reviewers_id in comment.readers:
         client.post_message(
             recipients=[paper_reviewers_id],

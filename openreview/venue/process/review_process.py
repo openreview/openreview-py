@@ -66,7 +66,7 @@ Paper title: {submission.content['title']['value']}
         )
 
     paper_reviewers_id = f'{paper_group_id}/{reviewers_name}'
-    paper_reviewers_submitted_id = f'{paper_group_id}/{reviewers_submitted_name}'
+    paper_reviewers_submitted_id = f'{paper_reviewers_id}/{reviewers_submitted_name}'
     if 'everyone' in review.readers or paper_reviewers_id in review.readers:
         client.post_message(
             recipients=[paper_reviewers_id],
@@ -109,6 +109,29 @@ Paper title: {submission.content['title']['value']}
         )
 
     if paper_reviewers_submitted_id:
-        client.add_members_to_group(paper_reviewers_submitted_id, review.signatures[0])
+        meta_invitation_id = domain.content['meta_invitation_id']['value']
+        readers=[venue_id]
+        senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
+        paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'        
+        if senior_area_chairs_name:
+            readers.append(paper_senior_area_chairs_id)
+        if area_chairs_name:
+            readers.append(paper_area_chairs_id)
+        readers.append(paper_reviewers_submitted_id)
+        client.post_group_edit(
+            invitation=meta_invitation_id,
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            group=openreview.api.Group(id=paper_reviewers_submitted_id,
+                readers=readers,
+                writers=[venue_id],
+                signatures=[venue_id],
+                signatories=[venue_id],
+                members={
+                    'append': [review.signatures[0]]
+                }
+            )
+        )        
     
 

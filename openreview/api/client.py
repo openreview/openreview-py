@@ -1467,7 +1467,7 @@ class OpenReviewClient(object):
         def add_member(group, members):
             group = self.get_group(group) if type(group) in string_types else group
             if group.invitations:
-                self.post_group_edit(invitation = group.invitations[0], 
+                self.post_group_edit(invitation = f'{group.domain}/-/Edit', 
                     signatures = group.signatures, 
                     group = Group(
                         id = group.id, 
@@ -1507,7 +1507,7 @@ class OpenReviewClient(object):
         def remove_member(group, members):
             group = self.get_group(group) if type(group) in string_types else group
             if group.invitations:
-                self.post_group_edit(invitation = group.invitations[0], 
+                self.post_group_edit(invitation = f'{group.domain}/-/Edit', 
                     signatures = group.signatures, 
                     group = Group(
                         id = group.id, 

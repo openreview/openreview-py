@@ -366,7 +366,9 @@ class InvitationBuilder(object):
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['review_process_script']['value']
-    funcs = {}
+    funcs = {
+        'openreview': openreview
+    }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
 ''',
@@ -2200,16 +2202,15 @@ class InvitationBuilder(object):
                         }
                     }
                 },
-                'replacement': True,
                 'group': {
                     'id': self.venue.get_reviewers_id(number='${2/content/noteNumber/value}'),
                     'readers': self.venue.group_builder.get_reviewer_paper_group_readers('${3/content/noteNumber/value}'),
                     'nonreaders': [self.venue.get_authors_id('${3/content/noteNumber/value}')],
-                    #'deanonymizers': self.venue.group_builder.get_reviewer_identity_readers('${3/content/noteNumber/value}'),
+                    'deanonymizers': self.venue.group_builder.get_reviewer_identity_readers('${3/content/noteNumber/value}'),
                     'writers': self.venue.group_builder.get_reviewer_paper_group_writers('${3/content/noteNumber/value}'),
                     'signatures': [self.venue.id],
                     'signatories': [self.venue.id],
-                    #'anonids': True
+                    'anonids': True
                 }
 
             }
@@ -2217,3 +2218,109 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=True)
         return invitation
+    
+    def set_submission_area_chair_group_invitation(self):
+
+        venue_id = self.venue_id
+        invitation_id = self.venue.get_invitation_id(f'{self.venue.submission_stage.name}_Group', prefix=self.venue.get_area_chairs_id())
+        cdate=tools.datetime_millis(self.venue.submission_stage.second_due_date_exp_date if self.venue.submission_stage.second_due_date_exp_date else self.venue.submission_stage.exp_date)
+            
+
+        invitation = Invitation(id=invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            cdate=cdate,
+            date_processes=[{ 
+                'dates': ["#{4/cdate}", self.update_date_string],
+                'script': self.group_edit_process              
+            }],
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'group': {
+                    'id': self.venue.get_area_chairs_id(number='${2/content/noteNumber/value}'),
+                    'readers': self.venue.group_builder.get_area_chair_paper_group_readers('${3/content/noteNumber/value}'),
+                    'nonreaders': [self.venue.get_authors_id('${3/content/noteNumber/value}')],
+                    'deanonymizers': self.venue.group_builder.get_area_chair_identity_readers('${3/content/noteNumber/value}'),
+                    'writers': [self.venue.id],
+                    'signatures': [self.venue.id],
+                    'signatories': [self.venue.id],
+                    'anonids': True,
+                }
+
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation
+
+    def set_submission_senior_area_chair_group_invitation(self):
+
+        venue_id = self.venue_id
+        invitation_id = self.venue.get_invitation_id(f'{self.venue.submission_stage.name}_Group', prefix=self.venue.get_senior_area_chairs_id())
+        cdate=tools.datetime_millis(self.venue.submission_stage.second_due_date_exp_date if self.venue.submission_stage.second_due_date_exp_date else self.venue.submission_stage.exp_date)
+            
+
+        invitation = Invitation(id=invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            cdate=cdate,
+            date_processes=[{ 
+                'dates': ["#{4/cdate}", self.update_date_string],
+                'script': self.group_edit_process              
+            }],
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'group': {
+                    'id': self.venue.get_senior_area_chairs_id(number='${2/content/noteNumber/value}'),
+                    'readers': self.venue.group_builder.get_senior_area_chair_identity_readers('${3/content/noteNumber/value}'),
+                    'nonreaders': [self.venue.get_authors_id('${3/content/noteNumber/value}')],
+                    'writers': [self.venue.id],
+                    'signatures': [self.venue.id],
+                    'signatories': [self.venue.id, self.venue.get_senior_area_chairs_id(number='${3/content/noteNumber/value}')],
+                }
+
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation        
