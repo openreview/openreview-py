@@ -192,11 +192,11 @@ class TestVenueSubmission():
         venue.submission_stage.exp_date = datetime.datetime.utcnow() + datetime.timedelta(seconds = 10)
         venue.create_submission_stage()
 
-        # helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Post_Submission-0-0')
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Post_Submission-0-0')
 
-        # assert openreview_client.get_group('TestVenue.cc/Submission1/Authors')
-        # assert openreview_client.get_group('TestVenue.cc/Submission1/Reviewers')
-        # assert openreview_client.get_group('TestVenue.cc/Submission1/Area_Chairs')
+        assert openreview_client.get_group('TestVenue.cc/Submission1/Authors')
+        assert openreview_client.get_group('TestVenue.cc/Submission1/Reviewers')
+        assert openreview_client.get_group('TestVenue.cc/Submission1/Area_Chairs')
 
         submissions = venue.get_submissions(sort='number:asc')
         assert len(submissions) == 2

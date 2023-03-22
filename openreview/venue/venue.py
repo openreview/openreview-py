@@ -392,6 +392,7 @@ class Venue(object):
         self.invitation_builder.set_desk_rejection_invitation()
         self.invitation_builder.set_post_submission_invitation()
         self.invitation_builder.set_pc_submission_revision_invitation()
+        self.invitation_builder.set_submission_reviewer_group_invitation()
         if self.expertise_selection_stage:
             self.invitation_builder.set_expertise_selection_invitations()
 
@@ -435,6 +436,14 @@ class Venue(object):
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
         ## do nothing
         return True
+    
+    def create_withdraw_invitations(self):
+        ## deprecated
+        return self.invitation_builder.set_withdraw_invitation()
+    
+    def create_desk_reject_invitations(self):
+        ## deprecated
+        return self.invitation_builder.set_desk_rejection_invitation()
 
     def create_bid_stages(self):
         self.invitation_builder.set_bid_invitations()

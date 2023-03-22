@@ -79,6 +79,7 @@ class SubmissionStage(object):
         self.due_date = due_date
         self.exp_date = (due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if due_date else None
         self.second_due_date = second_due_date
+        self.second_due_date_exp_date = (second_due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if second_due_date else None
         self.name = name
         self.readers = readers
         self.double_blind = double_blind
