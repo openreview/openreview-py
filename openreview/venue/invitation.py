@@ -418,7 +418,7 @@ class InvitationBuilder(object):
 
         if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals:
             paper_invitation_id = self.venue.get_invitation_id(name=review_rebuttal_stage.name, prefix='${2/content/replytoSignatures/value}')
-            with_invitation = self.venue.get_invitation_id(name=review_rebuttal_stage.name, number='${6/content/replytoSignatures/value}')
+            with_invitation = self.venue.get_invitation_id(name=review_rebuttal_stage.name, prefix='${6/content/replytoSignatures/value}')
             reply_to = '${4/content/replyto/value}'
 
         if review_rebuttal_stage.unlimited_rebuttals:

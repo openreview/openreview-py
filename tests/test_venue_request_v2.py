@@ -1394,7 +1394,9 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         reviews = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review')
         assert len(reviews) == 1
 
-        assert openreview_client.get_invitation(f'{reviews[0].signatures[0]}/-/Rebuttal')
+        invitation = openreview_client.get_invitation(f'{reviews[0].signatures[0]}/-/Rebuttal')
+        assert invitation
+        assert invitation.edit['note']['id']['param']['withInvitation'] == invitation.id
 
         author_client = OpenReviewClient(username='venue_author_v2@mail.com', password='1234')
 

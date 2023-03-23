@@ -3082,12 +3082,13 @@ ICML 2023 Conference Program Chairs'''
         }
 
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password='1234')
+        review = reviews[0]
 
         rebuttal_edit = test_client.post_note_edit(
             invitation='ICML.cc/2023/Conference/Submission1/-/Rebuttal',
             signatures=['ICML.cc/2023/Conference/Submission1/Authors'],
             note=openreview.api.Note(
-                replyto = reviews[0].forum,
+                replyto = review.forum,
                 content={
                     'rebuttal': { 'value': 'This is a rebuttal.' }
                 }
@@ -3096,18 +3097,7 @@ ICML 2023 Conference Program Chairs'''
 
         helpers.await_queue(openreview_client)
 
-        messages = openreview_client.get_messages(subject = '[ICML 2023] Your author rebuttal was posted on Submission Number: 1, Submission Title: "Paper title 1 Version 2"')
-        assert len(messages) == 1
-        assert 'test@mail.com' in messages[0]['content']['to']
-        messages = openreview_client.get_messages(subject = '[ICML 2023] An author rebuttal was posted on Submission Number: 1, Submission Title: "Paper title 1 Version 2"')
-        assert len(messages) == 4
-        recipients = [m['content']['to'] for m in messages]
-        assert 'peter@mail.com' in recipients
-        assert 'andrew@amazon.com' in recipients
-        assert 'sac1@gmail.com' in recipients
-        assert 'melisa@yahoo.com' in recipients
-
-        rebuttal_edit = test_client.post_note_edit(
+        second_rebuttal_edit = test_client.post_note_edit(
             invitation='ICML.cc/2023/Conference/Submission1/-/Rebuttal',
             signatures=['ICML.cc/2023/Conference/Submission1/Authors'],
             note=openreview.api.Note(
@@ -3119,6 +3109,42 @@ ICML 2023 Conference Program Chairs'''
         )
 
         helpers.await_queue(openreview_client)
+
+        rebuttal_id = second_rebuttal_edit['note']['id']
+
+        messages = openreview_client.get_messages(subject = '[ICML 2023] Your author rebuttal was posted on Submission Number: 1, Submission Title: "Paper title 1 Version 2"')
+        assert len(messages) == 2
+        assert 'test@mail.com' in messages[0]['content']['to']
+        messages = openreview_client.get_messages(subject = '[ICML 2023] An author rebuttal was posted on Submission Number: 1, Submission Title: "Paper title 1 Version 2"')
+        assert len(messages) == 8
+        assert f'https://openreview.net/forum?id={review.forum}&noteId={rebuttal_id}' in messages[4]['content']['text']
+        recipients = [m['content']['to'] for m in messages]
+        assert 'peter@mail.com' in recipients
+        assert 'andrew@amazon.com' in recipients
+        assert 'sac1@gmail.com' in recipients
+        assert 'melisa@yahoo.com' in recipients
+
+        #update rebuttal
+        rebuttal_update = test_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission1/-/Rebuttal',
+            signatures=['ICML.cc/2023/Conference/Submission1/Authors'],
+            note=openreview.api.Note(
+                id = rebuttal_id,
+                replyto = reviews[0].id,
+                content={
+                    'rebuttal': { 'value': 'This is a rebuttal replying to a review UPDATED.' }
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        #check no new emails were sent
+        messages = openreview_client.get_messages(subject = '[ICML 2023] Your author rebuttal was posted on Submission Number: 1, Submission Title: "Paper title 1 Version 2"')
+        assert len(messages) == 2
+        assert 'test@mail.com' in messages[0]['content']['to']
+        messages = openreview_client.get_messages(subject = '[ICML 2023] An author rebuttal was posted on Submission Number: 1, Submission Title: "Paper title 1 Version 2"')
+        assert len(messages) == 8
 
         rebuttals = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Rebuttal')
         assert len(rebuttals) == 2

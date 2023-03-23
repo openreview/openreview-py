@@ -12,11 +12,12 @@ def process(client, edit, invitation):
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
     ignore_groups = [edit.tauthor]
 
-    action = 'posted' if rebuttal.tcdate == rebuttal.tmdate else 'updated'
-    if rebuttal.ddate:
-        action = 'deleted'
+    if rebuttal.tcdate != rebuttal.tmdate:
+        return   
 
-    content = f'''To view the rebuttal, click here: https://openreview.net/forum?id={submission.forum}&noteId={rebuttal.id}''' if action != 'deleted' else ''
+    action = 'posted'
+
+    content = f'''To view the rebuttal, click here: https://openreview.net/forum?id={submission.forum}&noteId={rebuttal.id}'''
 
     author_message = f'''An author rebuttal has been {action} on your submission to {short_name}.
 
