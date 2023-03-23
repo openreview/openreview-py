@@ -92,7 +92,11 @@ class TestVenueSubmission():
                     }
                     }
                 }
-            }
+            },
+            notify_readers=True,
+            email_pcs=True,
+            email_template='''The camera ready verification for submission number {submission_number} has been posted.
+Please follow this link: https://openreview.net/forum?id={submission_id}&noteId={note_id}'''
         )
 
         return venue
@@ -717,3 +721,29 @@ class TestVenueSubmission():
         assert invitation.edit['note']['forum'] == submissions[0].id
         assert invitation.edit['note']['replyto'] == submissions[0].id
         assert not openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Submission2/-/Camera_Ready_Verification')
+
+        pc_client = OpenReviewClient(username='venue_pc@mail.com', password='1234')
+
+        verification = pc_client.post_note_edit(invitation='TestVenue.cc/Submission1/-/Camera_Ready_Verification',
+            signatures=['TestVenue.cc/Program_Chairs'],
+            note=Note(
+                content={
+                    'verification': { 'value': 'I confirm that camera ready manuscript complies with the TV 22 stylefile and, if appropriate, includes the minor revisions that were requested.' },
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=verification['id'])
+
+        verification_note = openreview_client.get_notes(invitation='TestVenue.cc/Submission1/-/Camera_Ready_Verification')[0]
+
+        messages = openreview_client.get_messages(subject='[TV 22] A camera ready verification has been received on your Paper Number: 1, Paper Title: "Paper 1 Title UPDATED"')
+        assert len(messages) == 1
+        assert 'celeste@maileleven.com' in messages[0]['content']['to']
+        assert messages[0]['content']['text'] == f'''The camera ready verification for submission number {str(submissions[0].number)} has been posted.
+Please follow this link: https://openreview.net/forum?id={submissions[0].id}&noteId={verification_note.id}'''
+
+        messages = openreview_client.get_messages(subject='[TV 22] Your camera ready verification has been received on Paper Number: 1, Paper Title: "Paper 1 Title UPDATED"')
+        assert len(messages) == 1
+        assert 'venue_pc@mail.com' in messages[0]['content']['to']
+        assert messages[0]['content']['text'] == f'''The camera ready verification for submission number {str(submissions[0].number)} has been posted.
+Please follow this link: https://openreview.net/forum?id={submissions[0].id}&noteId={verification_note.id}'''

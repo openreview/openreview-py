@@ -15,7 +15,7 @@ def process(client, edit, invitation):
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
 
     if email_template:
-        email_template = email_template.replace('{submission_number}', submission.number)
+        email_template = email_template.replace('{submission_number}', str(submission.number))
         email_template = email_template.replace('{submission_id}', submission.id)
         email_template = email_template.replace('{note_id}', note.id)
 
