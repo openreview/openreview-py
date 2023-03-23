@@ -446,8 +446,8 @@ class Matching(object):
             score = str(max(round(float(row[2]), 4), 0))
             edges.append(Edge(
                     invitation=invitation_id,
-                    head=row[1],
-                    tail=row[0],
+                    head=row[0],
+                    tail=row[1],
                     weight=float(score),
                     readers=self._get_edge_readers(tail=row[1]),
                     writers=[self.venue.id],

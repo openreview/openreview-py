@@ -873,7 +873,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
 
         note = pc_openreview_client.get_note(desk_reject_note['note']['forum'])
         assert note
-        assert note.invitations == ['ICML.cc/2023/Conference/-/Submission', 'ICML.cc/2023/Conference/-/Edit', 'ICML.cc/2023/Conference/-/Desk_Rejected_Submission']
+        assert note.invitations == ['ICML.cc/2023/Conference/-/Submission', 'ICML.cc/2023/Conference/-/Post_Submission', 'ICML.cc/2023/Conference/-/Desk_Rejected_Submission']
 
         submissions = venue.get_submissions(sort='number:asc')
         assert len(submissions) == 100
@@ -1869,7 +1869,7 @@ ICML 2023 Conference Program Chairs'''
         assert 'supplementary_material' in submissions[0].content
 
         now = datetime.datetime.utcnow()
-        start_date = now + datetime.timedelta(days=2)
+        start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         review_stage_note = openreview.Note(
             content={
@@ -2082,14 +2082,13 @@ ICML 2023 Conference Program Chairs'''
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Official_Review')) == 100
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Review')
         assert 'summarry' in invitation.edit['note']['content']
-        assert invitation.cdate > openreview.tools.datetime_millis(now)
+        assert invitation.cdate < openreview.tools.datetime_millis(now)
         # duedate + 30 min
         exp_date = invitation.duedate + (30*60*1000)
         assert invitation.expdate == exp_date
 
         review_exp_date = due_date + datetime.timedelta(days=2)
 
-        start_date = now - datetime.timedelta(days=2)
         review_stage_note = openreview.Note(
             content={
                 'review_start_date': start_date.strftime('%Y/%m/%d'),

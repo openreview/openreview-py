@@ -11,8 +11,15 @@ from selenium.common.exceptions import UnexpectedAlertPresentException
 class Helpers:
     @staticmethod
     def create_user(email, first, last, alternates=[], institution=None):
+
+        super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password='1234')
+        profile = openreview.tools.get_profile(super_client, email)
+        if profile:
+            return Helpers.get_user(email)
+
         client = openreview.Client(baseurl = 'http://localhost:3000')
         assert client is not None, "Client is none"
+
         res = client.register_user(email = email, first = first, last = last, password = '1234')
         username = res.get('id')
         assert res, "Res i none"
