@@ -1773,16 +1773,17 @@ class InvitationBuilder(object):
             reply_to = '${4/content/noteId/value}'
         else:
             paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix='${2/content/replytoSignatures/value}')
-            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, number='${6/content/replytoSignatures/value}')
+            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix='${6/content/replytoSignatures/value}')
             reply_to = '${4/content/replyto/value}' 
 
         invitation_content = {
             'source': { 'value': custom_stage_source },
-            'reply_to': { 'value': custom_stage_replyto }
+            'reply_to': { 'value': custom_stage_replyto },
+            'email_pcs': { 'value': custom_stage.email_pcs },
+            'notify_readers': { 'value': custom_stage.notify_readers },
+            'email_template': { 'value': custom_stage.email_template if custom_stage.email_template else '' },
+            'custom_stage_process_script': { 'value': self.get_process_content('process/custom_stage_process.py')}
         }
-
-        ## add custom template
-        # invitation_content['custom_stage_process_script'] 
 
         invitation = Invitation(id=custom_stage_invitation_id,
             invitees=[venue_id],
@@ -1839,13 +1840,15 @@ class InvitationBuilder(object):
                     'minReplies': 1,
                     'invitees': custom_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}'),
                     'cdate': custom_stage_cdate,
-#                     'process': '''def process(client, edit, invitation):
-#     meta_invitation = client.get_invitation(invitation.invitations[0])
-#     script = meta_invitation.content['custom_stage_process_script']['value']
-#     funcs = {}
-#     exec(script, funcs)
-#     funcs['process'](client, edit, invitation)
-# ''',
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['custom_stage_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
                     'edit': {
                         'signatures': { 'param': { 'regex': custom_stage.get_signatures_regex(self.venue, '${5/content/noteNumber/value}') }},
                         'readers': custom_stage.get_readers(self.venue, '${4/content/noteNumber/value}'),

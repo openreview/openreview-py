@@ -2702,7 +2702,8 @@ ICML 2023 Conference Program Chairs'''
                         }
                     }
                 }
-            })
+            },
+            notify_readers=True)
 
         venue.create_custom_stage()
 
@@ -2789,6 +2790,13 @@ ICML 2023 Conference Program Chairs'''
             'ICML.cc/2023/Conference/Submission1/Area_Chairs'
         ]
         assert notes[0].signatures == [ac_anon_group_id]
+
+        messages = openreview_client.get_messages(to='sac2@icml.cc', subject='[ICML 2023] A review rating has been received on your assigned Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
+        assert len(messages) == 1
+        assert 'We have received a review rating on a submission to ICML 2023 for which you are serving as Senior Area Chair.' in messages[0]['content']['text']
+        messages = openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] Your review rating has been received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
+        assert len(messages) == 1
+        assert 'We have received your review rating on a submission to ICML 2023.' in messages[0]['content']['text']
 
     def test_delete_assignments(self, openreview_client):
 
