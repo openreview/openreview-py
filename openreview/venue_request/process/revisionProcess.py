@@ -11,7 +11,7 @@ def process(client, note, invitation):
     comment_readers = [forum_note.content.get('venue_id') + '/Program_Chairs', SUPPORT_GROUP]
 
     try:
-        conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP)
+        conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP, setup=True)
         short_name = conference.get_short_name()
         comment_readers = [conference.get_program_chairs_id(), SUPPORT_GROUP]
         if invitation_type in ['Bid_Stage', 'Review_Stage', 'Meta_Review_Stage', 'Decision_Stage', 'Submission_Revision_Stage', 'Comment_Stage']:
@@ -397,7 +397,7 @@ Best,
                 }
                 conference.send_decision_notifications(decision_options, email_messages)
 
-        submission_content = conference.submission_stage.get_content()
+        submission_content = conference.submission_stage.get_content(forum_note.content.get('api_version', '1'))
         submission_revision_invitation = client.get_invitation(SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Submission_Revision_Stage')
 
         remove_options = [key for key in submission_content]

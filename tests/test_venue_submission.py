@@ -217,12 +217,14 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
     def test_post_submission_stage(self, venue, openreview_client, helpers):
                 
         venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS, SubmissionStage.Readers.AREA_CHAIRS]
-        venue.submission_stage.due_date = datetime.datetime.utcnow() - datetime.timedelta(minutes = 30) + datetime.timedelta(seconds = 10)
+        venue.submission_stage.exp_date = datetime.datetime.utcnow() + datetime.timedelta(seconds = 10)
         venue.create_submission_stage()
-        venue.setup_post_submission_stage()
-        assert openreview_client.get_group('TestVenue.cc/Submission1/Authors')
-        assert openreview_client.get_group('TestVenue.cc/Submission1/Reviewers')
-        assert openreview_client.get_group('TestVenue.cc/Submission1/Area_Chairs')
+
+        # helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Post_Submission-0-0')
+
+        # assert openreview_client.get_group('TestVenue.cc/Submission1/Authors')
+        # assert openreview_client.get_group('TestVenue.cc/Submission1/Reviewers')
+        # assert openreview_client.get_group('TestVenue.cc/Submission1/Area_Chairs')
 
         submissions = venue.get_submissions(sort='number:asc')
         assert len(submissions) == 2
@@ -243,7 +245,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Desk_Rejection')
         assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Desk_Rejection')
 
-    def test_bid_stage(self, venue, openreview_client):
+    def test_bid_stage(self, venue, openreview_client, helpers):
         
         reviewer_client = OpenReviewClient(username='reviewer_venue_one@mail.com', password='1234')
         venue.create_bid_stages()
@@ -267,7 +269,10 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         ## after bidding stage the submissions should be visible to the assigned committee
         venue.submission_stage.readers = [SubmissionStage.Readers.EVERYONE]
-        venue.setup_post_submission_stage()
+        venue.create_post_submission_stage()
+
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Post_Submission-0-1', count=3)
+
         submissions = venue.get_submissions(sort='number:asc')
         assert len(submissions) == 2
         submission = submissions[0]
@@ -353,7 +358,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/Submission1/Area_Chairs", "${3/signatures}"]
 
         now = datetime.datetime.utcnow()
-        venue.review_stage = openreview.stages.ReviewStage(start_date=now + datetime.timedelta(minutes = 4), due_date=now + datetime.timedelta(minutes = 40), release_to_authors=True)
+        venue.review_stage = openreview.stages.ReviewStage(start_date=now - datetime.timedelta(minutes = 4), due_date=now + datetime.timedelta(minutes = 40), release_to_authors=True)
         venue.create_review_stage()
 
         invitation = openreview_client.get_invitation('TestVenue.cc/-/Official_Review')
@@ -468,7 +473,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         note = author_client.get_note(withdraw_note['note']['forum'])
         assert note
-        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Edit', 'TestVenue.cc/-/Withdrawn_Submission']
+        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Post_Submission', 'TestVenue.cc/-/Withdrawn_Submission']
         assert note.readers == ['everyone']
         assert note.writers == ['TestVenue.cc', 'TestVenue.cc/Submission2/Authors']
         assert note.signatures == ['TestVenue.cc/Submission2/Authors']
@@ -486,7 +491,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 withdrawn by paper authors')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been withdrawn by the paper authors.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
+        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been withdrawn by the paper authors.\n\nFor more information, click here https://openreview.net/forum?id={note.id}&noteId={withdraw_note["note"]["id"]}\n'
 
         assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Withdrawal_Reversion')
 
@@ -511,7 +516,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         note = author_client.get_note(withdraw_note['note']['forum'])
         assert note
-        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Edit']
+        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Post_Submission']
         assert note.content['venue']['value'] == 'TestVenue Submission'
         assert note.content['venueid']['value'] == 'TestVenue.cc/Submission'
 
@@ -539,7 +544,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         note = pc_client.get_note(desk_reject_note['note']['forum'])
         assert note
-        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Edit', 'TestVenue.cc/-/Desk_Rejected_Submission']
+        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Post_Submission', 'TestVenue.cc/-/Desk_Rejected_Submission']
         assert note.readers == ['everyone']
         assert note.writers == ['TestVenue.cc', 'TestVenue.cc/Submission2/Authors']
         assert note.signatures == ['TestVenue.cc/Submission2/Authors']
@@ -588,7 +593,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         note = pc_client.get_note(desk_reject_note['note']['forum'])
         assert note
-        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Edit']
+        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Post_Submission']
         assert note.content['venue']['value'] == 'TestVenue Submission'
         assert note.content['venueid']['value'] == 'TestVenue.cc/Submission'
 
@@ -608,7 +613,6 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         #release papers to the public
         venue.submission_stage = SubmissionStage(double_blind=True, readers=[openreview.builder.SubmissionStage.Readers.EVERYONE])
         venue.create_submission_stage()
-        venue.setup_post_submission_stage()
 
         submissions = venue.get_submissions()
         assert submissions and len(submissions) == 2

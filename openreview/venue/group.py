@@ -172,6 +172,7 @@ class GroupBuilder(object):
             'withdraw_reversion_id': { 'value': self.venue.get_invitation_id('Withdrawal_Reversion') },
             'withdraw_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
             'withdrawal_name': { 'value': 'Withdrawal'},
+            'withdrawal_email_pcs': { 'value': self.venue.submission_stage.email_pcs_on_withdraw },
             'desk_rejected_submission_id': { 'value': self.venue.get_desk_rejected_id() },
             'desk_reject_expiration_id': { 'value': self.venue.get_invitation_id('Desk_Reject_Expiration') },
             'desk_rejection_reversion_id': { 'value': self.venue.get_invitation_id('Desk_Rejection_Reversion') },
@@ -201,6 +202,7 @@ class GroupBuilder(object):
         if self.venue.use_senior_area_chairs:
             content['senior_area_chairs_id'] = { 'value': self.venue.get_senior_area_chairs_id() }
             content['senior_area_chairs_assignment_id'] = { 'value': self.venue.get_assignment_id(self.venue.get_senior_area_chairs_id(), deployed=True) }
+            content['senior_area_chairs_affinity_score_id'] = { 'value': self.venue.get_affinity_score_id(self.venue.get_senior_area_chairs_id()) }
             content['senior_area_chairs_name'] = { 'value': self.venue.senior_area_chairs_name }
 
         if self.venue.bid_stages:
@@ -364,6 +366,34 @@ class GroupBuilder(object):
                 content = f.read()
                 senior_area_chairs_group.web = content
                 self.post_group(senior_area_chairs_group)
+
+    def create_ethics_reviewers_group(self):
+        venue_id = self.venue.id
+        ethics_reviewers_id = self.venue.get_ethics_reviewers_id()
+        ethics_reviewers_group = openreview.tools.get_group(self.client, ethics_reviewers_id)
+        if not ethics_reviewers_group:
+            ethics_reviewers_group = Group(id=ethics_reviewers_id,
+                            readers=[venue_id, ethics_reviewers_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=[]
+                        )
+            self.post_group(ethics_reviewers_group)
+                
+    def create_ethics_chairs_group(self):
+        venue_id = self.venue.id
+        ethics_chairs_id = self.venue.get_ethics_chairs_id()
+        ethics_chairs_group = openreview.tools.get_group(self.client, ethics_chairs_id)
+        if not ethics_chairs_group:
+            ethics_chairs_group = Group(id=ethics_chairs_id,
+                            readers=[venue_id, ethics_chairs_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=[]
+                        )                
+            self.post_group(ethics_chairs_group)
 
     def create_paper_committee_groups(self, submissions, overwrite=False):
 

@@ -1,7 +1,9 @@
 import openreview
 import datetime
 from enum import Enum
-from . import default_content 
+from . import default_content
+
+SHORT_BUFFER_MIN = 30
 
 class IdentityReaders(Enum):
     PROGRAM_CHAIRS = 0
@@ -54,6 +56,7 @@ class SubmissionStage(object):
             double_blind=False,
             additional_fields={},
             remove_fields=[],
+            hide_fields=[],
             subject_areas=[],
             email_pcs=False,
             create_groups=False,
@@ -74,12 +77,14 @@ class SubmissionStage(object):
 
         self.start_date = start_date
         self.due_date = due_date
+        self.exp_date = (due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if due_date else None
         self.second_due_date = second_due_date
         self.name = name
         self.readers = readers
         self.double_blind = double_blind
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
+        self.hide_fields = hide_fields
         self.subject_areas = subject_areas
         self.email_pcs = email_pcs
         self.create_groups = create_groups
@@ -200,29 +205,64 @@ class SubmissionStage(object):
     def get_desk_rejected_submission_id(self, conference):
         return conference.get_invitation_id(f'Desk_Rejected_{self.name}')
 
-    def get_content(self):
-        content = default_content.submission.copy()
+    def get_content(self, api_version='1'):
 
-        if self.subject_areas:
-            content['subject_areas'] = {
-                'order' : 5,
-                'description' : "Select or type subject area",
-                'values-dropdown': self.subject_areas,
-                'required': True
-            }
+        if api_version == '1':
+            content = default_content.submission.copy()
 
-        for field in self.remove_fields:
-            del content[field]
+            if self.subject_areas:
+                content['subject_areas'] = {
+                    'order' : 5,
+                    'description' : "Select or type subject area",
+                    'values-dropdown': self.subject_areas,
+                    'required': True
+                }
 
-        for order, key in enumerate(self.additional_fields, start=10):
-            value = self.additional_fields[key]
-            value['order'] = order
-            content[key] = value
+            for field in self.remove_fields:
+                del content[field]
 
-        if self.second_due_date and 'pdf' in content:
-            content['pdf']['required'] = False
+            for order, key in enumerate(self.additional_fields, start=10):
+                value = self.additional_fields[key]
+                value['order'] = order
+                content[key] = value
+
+            if self.second_due_date and 'pdf' in content:
+                content['pdf']['required'] = False
+
+        elif api_version == '2':
+            content = default_content.submission_v2.copy()
+
+            if self.subject_areas:
+                content['subject_areas'] = {
+                    'order' : 5,
+                    'description' : "Select or type subject area",
+                    'value': {
+                        'param': {
+                            'type': 'string[]',
+                            'enum': self.subject_areas,
+                            'input': 'select'                    
+                        }
+                    }
+                }
+
+            for field in self.remove_fields:
+                if field in content:
+                    del content[field]
+                else:
+                    print('Field {} not found in content: {}'.format(field, content))
+
+            for order, key in enumerate(self.additional_fields, start=10):
+                value = self.additional_fields[key]
+                value['order'] = order
+                content[key] = value
+
+            if self.second_due_date and 'pdf' in content:
+                content['pdf']['value']['param']['optional'] = True
 
         return content
+    
+    def get_hidden_field_names(self):
+        return (['authors', 'authorids'] if self.double_blind else []) + self.hide_fields
 
     def is_under_submission(self):
         return self.due_date is None or datetime.datetime.utcnow() < self.due_date
