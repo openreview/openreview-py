@@ -2,20 +2,51 @@ def process(client, edit, invitation):
 
     domain = client.get_group(edit.domain)
     venue_id = domain.id
+    meta_invitation_id = domain.content['meta_invitation_id']['value']
     short_name = domain.get_content_value('subtitle')
     authors_name = domain.get_content_value('authors_name')
     submission_name = domain.get_content_value('submission_name')
     reviewers_name = domain.get_content_value('reviewers_name')
+    area_chairs_name = domain.get_content_value('area_chairs_name')
+    senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
     reviewers_submitted_name = domain.get_content_value('reviewers_submitted_name')
     review_name = domain.get_content_value('review_name')
 
     submission = client.get_note(edit.note.forum)
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
+    paper_reviewers_id = f'{paper_group_id}/{reviewers_name}'
+    paper_reviewers_submitted_id = f'{paper_reviewers_id}/{reviewers_submitted_name}'
+    paper_area_chairs_id = f'{paper_group_id}/{area_chairs_name}'
+    paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'        
+
     review = client.get_note(edit.note.id)
 
     ### TODO: Fix this, we should notify the use when the review is updated
     if review.tcdate != review.tmdate:
         return
+    
+    def create_group(group_id, members=[]):
+        readers=[venue_id]
+        if senior_area_chairs_name:
+            readers.append(paper_senior_area_chairs_id)
+        if area_chairs_name:
+            readers.append(paper_area_chairs_id)
+        readers.append(group_id)
+        client.post_group_edit(
+            invitation=meta_invitation_id,
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            group=openreview.api.Group(id=group_id,
+                readers=readers,
+                writers=[venue_id],
+                signatures=[venue_id],
+                signatories=[venue_id],
+                members={
+                    'append': members
+                }
+            )
+        )
 
     capital_review_name = review_name.replace('_', ' ')
     review_name = capital_review_name.lower()
@@ -48,8 +79,6 @@ Paper title: {submission.content['title']['value']}
 {content}
 ''')                  
 
-    area_chairs_name = domain.get_content_value('area_chairs_name')
-    paper_area_chairs_id = f'{paper_group_id}/{area_chairs_name}'
     if area_chairs_name and ('everyone' in review.readers or paper_area_chairs_id in review.readers):
         client.post_message(
             recipients=[paper_area_chairs_id],
@@ -65,8 +94,7 @@ Paper title: {submission.content['title']['value']}
 '''
         )
 
-    paper_reviewers_id = f'{paper_group_id}/{reviewers_name}'
-    paper_reviewers_submitted_id = f'{paper_reviewers_id}/{reviewers_submitted_name}'
+    create_group(paper_reviewers_submitted_id, [review.signatures[0]])
     if 'everyone' in review.readers or paper_reviewers_id in review.readers:
         client.post_message(
             recipients=[paper_reviewers_id],
@@ -106,32 +134,6 @@ Paper title: {submission.content['title']['value']}
 
 {content}
 '''
-        )
-
-    if paper_reviewers_submitted_id:
-        meta_invitation_id = domain.content['meta_invitation_id']['value']
-        readers=[venue_id]
-        senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
-        paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'        
-        if senior_area_chairs_name:
-            readers.append(paper_senior_area_chairs_id)
-        if area_chairs_name:
-            readers.append(paper_area_chairs_id)
-        readers.append(paper_reviewers_submitted_id)
-        client.post_group_edit(
-            invitation=meta_invitation_id,
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            group=openreview.api.Group(id=paper_reviewers_submitted_id,
-                readers=readers,
-                writers=[venue_id],
-                signatures=[venue_id],
-                signatories=[venue_id],
-                members={
-                    'append': [review.signatures[0]]
-                }
-            )
         )        
     
 
