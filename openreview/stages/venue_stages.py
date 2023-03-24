@@ -994,7 +994,7 @@ class CustomStage(object):
         REVIEWS = 1
         METAREVIEWS = 2
 
-    def __init__(self, name, reply_to, source, start_date=None, due_date=None, exp_date=None, invitees=[], readers=[], content={}, multi_reply = False, email_pcs = False, notify_readers=False, email_template=None):
+    def __init__(self, name, reply_to, source, start_date=None, due_date=None, exp_date=None, invitees=[], readers=[], content={}, multi_reply = False, email_pcs = False, email_sacs = False, notify_readers=False, email_template=None):
         self.name = name
         self.reply_to = reply_to
         self.source = source
@@ -1006,6 +1006,7 @@ class CustomStage(object):
         self.content = content
         self.multi_reply = multi_reply
         self.email_pcs = email_pcs
+        self.email_sacs = email_sacs
         self.notify_readers = notify_readers
         self.email_template = email_template
 

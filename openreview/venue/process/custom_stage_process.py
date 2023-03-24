@@ -7,6 +7,7 @@ def process(client, edit, invitation):
     invitation_name = invitation.id.split('/-/')[-1].replace('_', ' ').lower()
     meta_invitation = client.get_invitation(invitation.invitations[0])
     email_pcs = meta_invitation.content['email_pcs']['value']
+    email_sacs = meta_invitation.content['email_sacs']['value']
     notify_readers = meta_invitation.content['notify_readers']['value']
     email_template = meta_invitation.content['email_template']['value']
 
@@ -62,7 +63,8 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
     senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
     senior_area_chairs_id = domain.get_content_value('senior_area_chairs_id')
     paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'
-    if senior_area_chairs_name and ('everyone' in note.readers or senior_area_chairs_id in note.readers or paper_senior_area_chairs_id in note.readers):
+    send_SACS_emails = senior_area_chairs_name and email_sacs
+    if send_SACS_emails and ('everyone' in note.readers or senior_area_chairs_id in note.readers or paper_senior_area_chairs_id in note.readers):
         client.post_message(
             recipients=[paper_senior_area_chairs_id],
             ignoreRecipients = ignore_groups,

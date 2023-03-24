@@ -1847,6 +1847,7 @@ class InvitationBuilder(object):
             'source': { 'value': custom_stage_source },
             'reply_to': { 'value': custom_stage_replyto },
             'email_pcs': { 'value': custom_stage.email_pcs },
+            'email_sacs': { 'value': custom_stage.email_sacs },
             'notify_readers': { 'value': custom_stage.notify_readers },
             'email_template': { 'value': custom_stage.email_template if custom_stage.email_template else '' },
             'custom_stage_process_script': { 'value': self.get_process_content('process/custom_stage_process.py')}
