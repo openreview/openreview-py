@@ -1880,23 +1880,7 @@ class InvitationBuilder(object):
                                 'regex': '.*', 'type': 'string'
                             }
                         }
-                    },
-                    'replytoSignatures': {
-                        'value': {
-                            'param': {
-                                'regex': '.*', 'type': 'string',
-                                'optional': True
-                            }
-                        }
-                    },
-                    'replyto': {
-                        'value': {
-                            'param': {
-                                'regex': '.*', 'type': 'string',
-                                'optional': True
-                            }
-                        }
-                    },
+                    }
                 },
                 'replacement': True,
                 'invitation': {
@@ -1937,7 +1921,7 @@ class InvitationBuilder(object):
                                 }
                             },
                             'signatures': ['${3/signatures}'],
-                            'readers': custom_stage.get_readers(self.venue, '${5/content/noteNumber/value}'),
+                            'readers': ['${3/readers}'],
                             'writers': [venue_id, '${3/signatures}'],
                             'content': content
                         }
@@ -1945,6 +1929,24 @@ class InvitationBuilder(object):
                 }
             }
         )
+
+        if custom_stage_replyto != 'forum':
+            invitation.edit['content']['replytoSignatures'] = {
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'string',
+                        'optional': True
+                    }
+                }
+            }
+            invitation.edit['content']['replyto'] = {
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'string',
+                        'optional': True
+                    }
+                }
+            }
 
         if custom_stage_duedate:
             invitation.edit['invitation']['duedate'] = custom_stage_duedate
