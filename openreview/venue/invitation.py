@@ -435,7 +435,7 @@ class InvitationBuilder(object):
 
         if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals:
             paper_invitation_id = self.venue.get_invitation_id(name=review_rebuttal_stage.name, prefix='${2/content/replytoSignatures/value}')
-            with_invitation = self.venue.get_invitation_id(name=review_rebuttal_stage.name, number='${6/content/replytoSignatures/value}')
+            with_invitation = self.venue.get_invitation_id(name=review_rebuttal_stage.name, prefix='${6/content/replytoSignatures/value}')
             reply_to = '${4/content/replyto/value}'
 
         if review_rebuttal_stage.unlimited_rebuttals:
@@ -564,7 +564,9 @@ class InvitationBuilder(object):
         meta_review_invitation_id = self.venue.get_invitation_id(meta_review_stage.name)
         meta_review_cdate = tools.datetime_millis(meta_review_stage.start_date if meta_review_stage.start_date else datetime.datetime.utcnow())
         meta_review_duedate = tools.datetime_millis(meta_review_stage.due_date) if meta_review_stage.due_date else None
-        meta_review_expdate = tools.datetime_millis(meta_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if meta_review_stage.due_date else None
+        meta_review_expdate = tools.datetime_millis(meta_review_stage.exp_date) if meta_review_stage.exp_date else None
+        if not meta_review_expdate:
+            meta_review_expdate = tools.datetime_millis(meta_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if meta_review_stage.due_date else None
 
         content = default_content.meta_review_v2.copy()
 

@@ -840,10 +840,11 @@ class MetaReviewStage(object):
         REVIEWERS_SUBMITTED = 2
         NO_REVIEWERS = 3
 
-    def __init__(self, name='Meta_Review', start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = Readers.NO_REVIEWERS, additional_fields = {}, remove_fields=[], process = None):
+    def __init__(self, name='Meta_Review', start_date = None, due_date = None, exp_date = None, public = False, release_to_authors = False, release_to_reviewers = Readers.NO_REVIEWERS, additional_fields = {}, remove_fields=[], process = None):
 
         self.start_date = start_date
         self.due_date = due_date
+        self.exp_date = exp_date
         self.name = name
         self.public = public
         self.release_to_authors = release_to_authors

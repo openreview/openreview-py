@@ -602,6 +602,15 @@ def get_meta_review_stage(request_forum):
     else:
         meta_review_due_date = None
 
+    metareview_exp_date = request_forum.content.get('meta_review_expiration_date', '').strip()
+    if metareview_exp_date:
+        try:
+            metareview_exp_date = datetime.datetime.strptime(metareview_exp_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            metareview_exp_date = datetime.datetime.strptime(metareview_exp_date, '%Y/%m/%d')
+    else:
+        metareview_exp_date = None
+
     meta_review_form_additional_options = request_forum.content.get('additional_meta_review_form_options', {})
     options = request_forum.content.get('recommendation_options', '').strip()
     if options:
@@ -635,6 +644,7 @@ def get_meta_review_stage(request_forum):
     return openreview.stages.MetaReviewStage(
         start_date = meta_review_start_date,
         due_date = meta_review_due_date,
+        exp_date = metareview_exp_date,
         public = request_forum.content.get('make_meta_reviews_public', '').startswith('Yes'),
         release_to_authors = (request_forum.content.get('release_meta_reviews_to_authors', '').startswith('Yes')),
         release_to_reviewers = release_to_reviewers,
