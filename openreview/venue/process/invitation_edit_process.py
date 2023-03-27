@@ -111,8 +111,8 @@ def process(client, invitation):
             content['noteNumber'] = { 'value': int(paper_number) }
             content['replyto'] = { 'value': note.id }
             content['replytoSignatures'] ={ 'value': note.signatures[0] }
-        
-        
+
+
         paper_invitation_edit = client.post_invitation_edit(invitations=invitation.id,
             readers=[venue_id],
             writers=[venue_id],
@@ -124,6 +124,6 @@ def process(client, invitation):
         if 'readers' in paper_invitation.edit['note']:
             update_note_readers(note, paper_invitation)
 
-    notes = get_children_notes()        
+    notes = get_children_notes()
     print(f'create or update {len(notes)} child invitations')
-    openreview.tools.concurrent_requests(post_invitation, notes, desc=f'edit_invitation_process')     
+    openreview.tools.concurrent_requests(post_invitation, notes, desc=f'edit_invitation_process')

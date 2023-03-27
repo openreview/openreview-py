@@ -1836,18 +1836,25 @@ class InvitationBuilder(object):
         custom_stage_replyto = custom_stage.get_reply_to()
         custom_stage_source = custom_stage.get_source_submissions()
 
+        paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, number='${2/content/noteNumber/value}')
+        with_invitation = self.venue.get_invitation_id(name=custom_stage.name, number='${6/content/noteNumber/value}')
         if custom_stage_replyto == 'forum':
-            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, number='${2/content/noteNumber/value}')
-            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, number='${6/content/noteNumber/value}')
             reply_to = '${4/content/noteId/value}'
         else:
-            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix='${2/content/replytoSignatures/value}')
-            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix='${6/content/replytoSignatures/value}')
-            reply_to = '${4/content/replyto/value}' 
+            if custom_stage_replyto == 'reviews':
+                name = self.venue.review_stage.name
+            elif custom_stage_replyto == 'metareviews':
+                name = self.venue.meta_review_stage.name
+            withInvitation = 'ICML.cc/2023/Conference/Submission${6/content/noteNumber/value}/-/' + name
+            reply_to = {
+                'param': {
+                    'withInvitation': withInvitation
+                }
+            }
 
         invitation_content = {
             'source': { 'value': custom_stage_source },
-            'reply_to': { 'value': custom_stage_replyto },
+            'reply_to': { 'value': 'forum' },
             'email_pcs': { 'value': custom_stage.email_pcs },
             'email_sacs': { 'value': custom_stage.email_sacs },
             'notify_readers': { 'value': custom_stage.notify_readers },
@@ -1933,29 +1940,11 @@ class InvitationBuilder(object):
             }
         )
 
-        if custom_stage_replyto != 'forum':
-            invitation.edit['content']['replytoSignatures'] = {
-                'value': {
-                    'param': {
-                        'regex': '.*', 'type': 'string',
-                        'optional': True
-                    }
-                }
-            }
-            invitation.edit['content']['replyto'] = {
-                'value': {
-                    'param': {
-                        'regex': '.*', 'type': 'string',
-                        'optional': True
-                    }
-                }
-            }
-
         if custom_stage_duedate:
             invitation.edit['invitation']['duedate'] = custom_stage_duedate
         if custom_stage_expdate:
             invitation.edit['invitation']['expdate'] = custom_stage_expdate
-        if not custom_stage.multi_reply:
+        if not custom_stage.multi_reply and custom_stage_replyto == 'forum':
             invitation.edit['invitation']['maxReplies'] = 1
 
         self.save_invitation(invitation, replacement=True)
