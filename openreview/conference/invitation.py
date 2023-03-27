@@ -1315,10 +1315,14 @@ class MetaReviewInvitation(openreview.Invitation):
             if field in content:
                 del content[field]
 
+        exp_date = tools.datetime_millis(meta_review_stage.exp_date) if meta_review_stage.exp_date else None
+        if not exp_date:
+            exp_date = tools.datetime_millis(meta_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if meta_review_stage.due_date else None
+
         super(MetaReviewInvitation, self).__init__(id = conference.get_invitation_id(meta_review_stage.name),
             cdate = tools.datetime_millis(start_date),
             duedate = tools.datetime_millis(due_date),
-            expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes= SHORT_BUFFER_MIN)) if due_date else None,
+            expdate = exp_date,
             readers = ['everyone'],
             writers = [conference.id],
             signatures = [conference.id],
