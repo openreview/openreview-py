@@ -195,7 +195,6 @@ class InvitationBuilder(object):
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=True)
 
-    
     def set_post_submission_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
@@ -325,6 +324,7 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
+            cdate=review_cdate,
             date_processes=[{ 
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process              
@@ -450,6 +450,7 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
+            cdate=review_rebuttal_cdate,
             date_processes=[{ 
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process              
@@ -579,6 +580,7 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
+            cdate=meta_review_cdate,
             date_processes=[{ 
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process              
@@ -857,6 +859,7 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
+            cdate=comment_cdate,
             date_processes=[{ 
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process              
@@ -972,6 +975,7 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
+            cdate=comment_cdate,
             date_processes=[{ 
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process              
@@ -1084,6 +1088,7 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
+            cdate=decision_cdate,
             date_processes=[{ 
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process              
@@ -1183,6 +1188,7 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
+            cdate=cdate,
             date_processes=[{ 
                 'dates': [self.update_date_string],
                 'script': self.invitation_edit_process              
@@ -1757,6 +1763,7 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
+            cdate=revision_cdate,
             date_processes=[{ 
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process              
@@ -2170,7 +2177,6 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         invitation_id = self.venue.get_invitation_id(f'{self.venue.submission_stage.name}_Group', prefix=self.venue.get_reviewers_id())
         cdate=tools.datetime_millis(self.venue.submission_stage.second_due_date_exp_date if self.venue.submission_stage.second_due_date_exp_date else self.venue.submission_stage.exp_date)
-            
 
         invitation = Invitation(id=invitation_id,
             invitees=[venue_id],

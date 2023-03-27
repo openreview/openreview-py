@@ -219,6 +219,30 @@ class TestVenueSubmission():
         assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Desk_Rejection')
         assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Desk_Rejection')
 
+        ## post a submission after the deadline
+        pc_client = OpenReviewClient(username='venue_pc@mail.com', password='1234')
+        submission_note_3 = pc_client.post_note_edit(
+            invitation='TestVenue.cc/-/Submission',
+            signatures= ['~PC_Venue_One1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper 3 Title' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['Celeste MartinezEleven']},
+                    'authorids': { 'value': ['~Celeste_MartinezEleven1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'keywords': {'value': ['aa'] }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_3['id'])
+
+        assert openreview_client.get_group('TestVenue.cc/Submission3/Authors')
+        assert openreview_client.get_group('TestVenue.cc/Submission3/Reviewers')
+        assert openreview_client.get_group('TestVenue.cc/Submission3/Area_Chairs')
+        assert openreview_client.get_invitation('TestVenue.cc/Submission3/-/Withdrawal')
+        assert openreview_client.get_invitation('TestVenue.cc/Submission3/-/Desk_Rejection')
+
     def test_bid_stage(self, venue, openreview_client, helpers):
         
         reviewer_client = OpenReviewClient(username='reviewer_venue_one@mail.com', password='1234')
@@ -248,7 +272,7 @@ class TestVenueSubmission():
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Post_Submission-0-1', count=3)
 
         submissions = venue.get_submissions(sort='number:asc')
-        assert len(submissions) == 2
+        assert len(submissions) == 3
         submission = submissions[0]
         assert len(submission.readers) == 1
         assert 'everyone' in submission.readers
@@ -276,7 +300,7 @@ class TestVenueSubmission():
         assert scores_invitation
 
         affinity_edges = openreview_client.get_edges_count(invitation='TestVenue.cc/Reviewers/-/Affinity_Score')
-        assert affinity_edges == 6
+        assert affinity_edges == 9
 
         conflict_invitation = openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Reviewers/-/Conflict')
         assert conflict_invitation
@@ -325,7 +349,7 @@ class TestVenueSubmission():
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Official_Review-0-1', count=2)
 
         invitations = openreview_client.get_invitations(invitation='TestVenue.cc/-/Official_Review')
-        assert len(invitations) == 2
+        assert len(invitations) == 3
         #assert invitation.cdate == new_cdate
         invitation = openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
         assert invitation.cdate == new_cdate
@@ -589,9 +613,10 @@ class TestVenueSubmission():
         venue.create_submission_stage()
 
         submissions = venue.get_submissions()
-        assert submissions and len(submissions) == 2
+        assert submissions and len(submissions) == 3
         assert submissions[0].readers == ['everyone']
         assert submissions[1].readers == ['everyone']
+        assert submissions[2].readers == ['everyone']
 
         now = datetime.datetime.utcnow()
         venue.comment_stage = openreview.CommentStage(
@@ -611,7 +636,7 @@ class TestVenueSubmission():
     def test_decision_stage(self, venue, openreview_client, helpers):
 
         submissions = venue.get_submissions(sort='number:asc')
-        assert submissions and len(submissions) == 2
+        assert submissions and len(submissions) == 3
 
         with open(os.path.join(os.path.dirname(__file__), 'data/venue_decision.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)

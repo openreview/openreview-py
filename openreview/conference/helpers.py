@@ -45,7 +45,6 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
 
         if setup:
             venue.setup(note.content.get('program_chair_emails'))
-            venue.create_submission_stage()
         return venue
 
     builder = get_conference_builder(client, request_form_id, support_user)

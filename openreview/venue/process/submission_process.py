@@ -101,3 +101,71 @@ To view the submission, click here: https://openreview.net/forum?id={note.forum}
         client.add_members_to_group(authors_id, authors_group_id)
     if action == 'deleted':
         client.remove_members_from_group(authors_id, authors_group_id)
+
+    ### build all available invitations
+    venue_invitations = [i for i in client.get_all_invitations(prefix=venue_id + '/-/') if i.is_active()]
+    post_submission_id = f'{venue_id}/-/Post_{submission_name}'
+
+    for venue_invitation in venue_invitations:
+        print('processing invitation: ', venue_invitation.id)
+        if isinstance(venue_invitation.edit, dict) and 'invitation' in venue_invitation.edit:
+            accepted_only = venue_invitation.content.get('accepted_notes_only', {}).get('value', False) if venue_invitation.content else False
+            content_keys = venue_invitation.edit.get('content', {}).keys()
+            if not accepted_only and 'noteId' in content_keys and 'noteNumber' in content_keys and len(content_keys) == 2:
+                print('create invitation: ', venue_invitation.id)
+                client.post_invitation_edit(invitations=venue_invitation.id,
+                    content={
+                        'noteId': { 'value': note.id },
+                        'noteNumber': { 'value': note.number }
+                    },
+                    invitation=openreview.api.Invitation()
+                )
+
+        if post_submission_id == venue_invitation.id:
+            print('post note edit: ', venue_invitation.id)
+            client.post_note_edit(
+                invitation=venue_invitation.id,
+                note=openreview.api.Note(
+                    id=note.id
+                ),
+                signatures=[venue_id]
+            )            
+
+    ## Group invitations
+    group_invitation = client.get_invitation(f"{domain.content['reviewers_id']['value']}/-/{submission_name}_Group")
+    if group_invitation.is_active():
+        print('create invitation: ', group_invitation.id)
+        client.post_group_edit(
+            invitation=group_invitation.id,
+            content={
+                'noteId': { 'value': note.id },
+                'noteNumber': { 'value': note.number },
+            },
+            group=openreview.api.Group()
+        )
+
+    group_invitation = client.get_invitation(f"{domain.content.get('area_chairs_id', {}).get('value')}/-/{submission_name}_Group")
+    if group_invitation.is_active():
+        print('create invitation: ', group_invitation.id)
+        client.post_group_edit(
+            invitation=group_invitation.id,
+            content={
+                'noteId': { 'value': note.id },
+                'noteNumber': { 'value': note.number },
+            },
+            group=openreview.api.Group()
+        )
+
+    senior_area_chairs_id = domain.content.get('senior_area_chairs_id', {}).get('value')
+    if senior_area_chairs_id:
+        group_invitation = client.get_invitation(f"{senior_area_chairs_id}/-/{submission_name}_Group")
+        if group_invitation.is_active():
+            print('create invitation: ', group_invitation.id)
+            client.post_group_edit(
+                invitation=group_invitation.id,
+                content={
+                    'noteId': { 'value': note.id },
+                    'noteNumber': { 'value': note.number },
+                },
+                group=openreview.api.Group()
+            )        
