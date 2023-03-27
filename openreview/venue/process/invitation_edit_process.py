@@ -42,7 +42,7 @@ def process(client, invitation):
     
     def get_children_notes():
         source = invitation.content.get('source', {}).get('value', 'all_submissions') if invitation.content else False
-        reply_to = invitation.content.get('reply_to', {}).get('value', 'forum') if invitation.content else False
+        reply_to = invitation.content.get('reply_to', {}).get('value', 'submission') if invitation.content else False
 
         print('source', source)
         print('reply_to', reply_to)

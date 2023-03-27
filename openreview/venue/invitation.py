@@ -442,7 +442,7 @@ class InvitationBuilder(object):
                     'value': self.get_process_content('process/review_rebuttal_process.py')
                 },
                 'reply_to': {
-                    'value': 'reviews' if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals else 'forum'
+                    'value': 'reviews' if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals else 'submission'
                 }
             },
             edit={
@@ -1838,23 +1838,22 @@ class InvitationBuilder(object):
 
         paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, number='${2/content/noteNumber/value}')
         with_invitation = self.venue.get_invitation_id(name=custom_stage.name, number='${6/content/noteNumber/value}')
-        if custom_stage_replyto == 'forum':
+        if custom_stage_replyto == 'submission':
             reply_to = '${4/content/noteId/value}'
-        else:
-            if custom_stage_replyto == 'reviews':
-                name = self.venue.review_stage.name
-            elif custom_stage_replyto == 'metareviews':
-                name = self.venue.meta_review_stage.name
-            withInvitation = 'ICML.cc/2023/Conference/Submission${6/content/noteNumber/value}/-/' + name
+        elif custom_stage_replyto == 'forum':
             reply_to = {
                 'param': {
-                    'withInvitation': withInvitation
+                    'withForum': '${6/content/noteId/value}'
                 }
             }
+        else:
+            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix='${2/content/replytoSignatures/value}')
+            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix='${6/content/replytoSignatures/value}')
+            reply_to = '${4/content/replyto/value}'
 
         invitation_content = {
             'source': { 'value': custom_stage_source },
-            'reply_to': { 'value': 'forum' },
+            'reply_to': { 'value': custom_stage_replyto },
             'email_pcs': { 'value': custom_stage.email_pcs },
             'email_sacs': { 'value': custom_stage.email_sacs },
             'notify_readers': { 'value': custom_stage.notify_readers },
@@ -1940,11 +1939,29 @@ class InvitationBuilder(object):
             }
         )
 
+        if custom_stage_replyto in ['reviews', 'metareviews']:
+            invitation.edit['content']['replytoSignatures'] = {
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'string',
+                        'optional': True
+                    }
+                }
+            }
+            invitation.edit['content']['replyto'] = {
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'string',
+                        'optional': True
+                    }
+                }
+            }
+
         if custom_stage_duedate:
             invitation.edit['invitation']['duedate'] = custom_stage_duedate
         if custom_stage_expdate:
             invitation.edit['invitation']['expdate'] = custom_stage_expdate
-        if not custom_stage.multi_reply and custom_stage_replyto == 'forum':
+        if not custom_stage.multi_reply:
             invitation.edit['invitation']['maxReplies'] = 1
 
         self.save_invitation(invitation, replacement=True)

@@ -973,6 +973,10 @@ class RegistrationStage(object):
         self.remove_fields = remove_fields
 
 class CustomStage(object):
+    """
+    param reply_to: submission, reviews, metareviews, forum
+    type reply_to: string
+    """
 
     class Participants(Enum):
         EVERYONE = 0
@@ -991,9 +995,10 @@ class CustomStage(object):
         PUBLIC_SUBMISSIONS = 2
 
     class ReplyTo(Enum):
-        FORUM = 0
-        REVIEWS = 1
-        METAREVIEWS = 2
+        SUBMISSION = 0
+        FORUM = 1
+        REVIEWS = 2
+        METAREVIEWS = 3
 
     def __init__(self, name, reply_to, source, start_date=None, due_date=None, exp_date=None, invitees=[], readers=[], content={}, multi_reply = False, email_pcs = False, email_sacs = False, notify_readers=False, email_template=None):
         self.name = name
@@ -1084,7 +1089,9 @@ class CustomStage(object):
 
     def get_reply_to(self):
 
-        if self.reply_to == self.ReplyTo.FORUM:
+        if self.reply_to == self.ReplyTo.SUBMISSION:
+            reply_to = 'submission'
+        elif self.reply_to == self.ReplyTo.FORUM:
             reply_to = 'forum'
         elif self.reply_to == self.ReplyTo.REVIEWS:
             reply_to = 'reviews'
