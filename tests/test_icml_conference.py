@@ -3387,11 +3387,13 @@ ICML 2023 Conference Program Chairs'''
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
+        exp_date = due_date + datetime.timedelta(days=2)
         pc_client.post_note(openreview.Note(
             content={
                 'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
                 'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
                 'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'meta_review_expiration_date': exp_date.strftime('%Y/%m/%d'),
                 'recommendation_options': 'Accept, Reject',
                 'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
@@ -3421,6 +3423,11 @@ ICML 2023 Conference Program Chairs'''
 
 
         helpers.await_queue()
+
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Meta_Review')
+        # duedate + 2 days
+        exp_date = invitation.duedate + (2*24*60*60*1000)
+        assert invitation.expdate == exp_date
 
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Meta_Review')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Meta_Review')
