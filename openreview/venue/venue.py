@@ -163,7 +163,7 @@ class Venue(object):
         return invitation_id
 
     def get_committee(self, number = None, submitted_reviewers = False, with_authors = False):
-        committee = [self.id]
+        committee = []
 
         if with_authors:
             committee.append(self.get_authors_id(number))

@@ -1124,7 +1124,7 @@ class InvitationBuilder(object):
                     'signatures': [ venue_id ],
                     'readers': ['everyone'],
                     'writers': [venue_id],
-                    'invitees': [self.venue.get_program_chairs_id(), self.venue.support_user],
+                    'invitees': [venue_id, self.venue.support_user],
                     'maxReplies': 1,
                     'minReplies': 1,
                     'cdate': decision_cdate,

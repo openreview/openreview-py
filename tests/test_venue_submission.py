@@ -455,6 +455,33 @@ class TestVenueSubmission():
         assert openreview_client.get_invitation('TestVenue.cc/-/Meta_Review')
         assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Meta_Review')
 
+    def test_comment_stage(self, venue, openreview_client, helpers):
+
+        #release papers to the public
+        venue.submission_stage.readers = [SubmissionStage.Readers.EVERYONE]
+        venue.create_submission_stage()
+
+        submissions = venue.get_submissions()
+        assert submissions and len(submissions) == 3
+        assert submissions[0].readers == ['everyone']
+        assert submissions[1].readers == ['everyone']
+        assert submissions[2].readers == ['everyone']
+
+        now = datetime.datetime.utcnow()
+        venue.comment_stage = openreview.CommentStage(
+            allow_public_comments=True,
+            reader_selection=True,
+            email_pcs=True,
+            check_mandatory_readers=True,
+            readers=[openreview.CommentStage.Readers.REVIEWERS_ASSIGNED,openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.AUTHORS,openreview.CommentStage.Readers.EVERYONE],
+            invitees=[openreview.CommentStage.Readers.REVIEWERS_ASSIGNED,openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.AUTHORS])
+        venue.create_comment_stage()
+
+        invitation = openreview_client.get_invitation(venue.id + '/Submission1/-/Public_Comment')
+        assert not invitation.expdate
+        invitation = openreview_client.get_invitation(venue.id + '/Submission1/-/Official_Comment')
+        assert not invitation.expdate        
+
     def test_withdraw_submission(self, venue, openreview_client, helpers):
 
         author_client = OpenReviewClient(username='celeste@maileleven.com', password='1234')
@@ -486,6 +513,10 @@ class TestVenueSubmission():
         assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')
         assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Comment')
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())        
+        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Public_Comment')
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())        
 
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 withdrawn by paper authors')
         assert len(messages) == 1
@@ -511,6 +542,12 @@ class TestVenueSubmission():
 
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')
         assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
+        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Comment')
+        assert invitation.expdate is None       
+
+        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Public_Comment')
+        assert invitation.expdate is None 
 
         note = author_client.get_note(withdraw_note['note']['forum'])
         assert note
@@ -559,6 +596,10 @@ class TestVenueSubmission():
         assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')
         assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Comment')
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Public_Comment')
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 desk-rejected by program chairs')
         assert len(messages) == 1
@@ -589,6 +630,12 @@ class TestVenueSubmission():
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')
         assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
+        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Comment')
+        assert invitation.expdate is None 
+
+        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Public_Comment')
+        assert invitation.expdate is None 
+
         note = pc_client.get_note(desk_reject_note['note']['forum'])
         assert note
         assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Post_Submission']
@@ -605,33 +652,6 @@ class TestVenueSubmission():
 
         authors_group = openreview_client.get_group('TestVenue.cc/Authors')
         assert 'TestVenue.cc/Submission2/Authors' in authors_group.members
-
-    def test_comment_stage(self, venue, openreview_client, helpers):
-
-        #release papers to the public
-        venue.submission_stage = SubmissionStage(double_blind=True, readers=[openreview.builder.SubmissionStage.Readers.EVERYONE])
-        venue.create_submission_stage()
-
-        submissions = venue.get_submissions()
-        assert submissions and len(submissions) == 3
-        assert submissions[0].readers == ['everyone']
-        assert submissions[1].readers == ['everyone']
-        assert submissions[2].readers == ['everyone']
-
-        now = datetime.datetime.utcnow()
-        venue.comment_stage = openreview.CommentStage(
-            allow_public_comments=True,
-            reader_selection=True,
-            email_pcs=True,
-            check_mandatory_readers=True,
-            readers=[openreview.CommentStage.Readers.REVIEWERS_ASSIGNED,openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.AUTHORS,openreview.CommentStage.Readers.EVERYONE],
-            invitees=[openreview.CommentStage.Readers.REVIEWERS_ASSIGNED,openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.AUTHORS])
-        venue.create_comment_stage()
-
-        invitation = openreview_client.get_invitation(venue.id + '/Submission1/-/Public_Comment')
-        assert not invitation.expdate
-        invitation = openreview_client.get_invitation(venue.id + '/Submission1/-/Official_Comment')
-        assert not invitation.expdate
 
     def test_decision_stage(self, venue, openreview_client, helpers):
 

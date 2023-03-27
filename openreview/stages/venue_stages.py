@@ -806,7 +806,7 @@ class CommentStage(object):
         return '|'.join(committee)
 
     def get_invitees(self, conference, number):
-        invitees = [conference.get_program_chairs_id(), conference.support_user]
+        invitees = [conference.get_id(), conference.support_user]
 
         if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.invitees:
             invitees.append(conference.get_senior_area_chairs_id(number))
