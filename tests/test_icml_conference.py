@@ -3427,7 +3427,7 @@ ICML 2023 Conference Program Chairs'''
             'ICML.cc/2023/Conference/Submission1/Authors',
         ]
 
-    def test_meta_review_stage(self, openreview_client, helpers):
+    def test_meta_review_stage(self, client, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password='1234')
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -3510,6 +3510,56 @@ ICML 2023 Conference Program Chairs'''
 
         with pytest.raises(openreview.OpenReviewException, match=r'Can not remove assignment, the user ~AC_ICMLTwo1 already posted a Meta_Review.'):
             pc_client_v2.post_edge(assignment)
+
+    def test_meta_review_agreement(self, client, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        venue.custom_stage = openreview.stages.CustomStage(name='Meta_Review_Agreement',
+            reply_to=openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            due_date=due_date,
+            exp_date=due_date + datetime.timedelta(days=1),
+            invitees=[openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED],
+            readers=[openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED],
+            content={
+                'meta_review_agreement': {
+                    'order': 1,
+                    'description': "If you do not agree with the meta-reviewer’s recommendation, please reach out to the meta-reviewer directly, discuss this submission and arrive at a consensus. If the meta-reviewer and you cannot arrive at a consensus for this submission, please mark \"no\" and describe the disagreement.",
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'enum': [
+                            'yes',
+                            'no'
+                            ],
+                            'input': 'radio'
+                        }
+                    }
+                },
+                "explanation": {
+                    "order": 2,
+                    "description": "If you failed to arrive at consensus with the meta-reviewer, please describe your disagreement here for the program chairs.",
+                    "value": {
+                        "param": {
+                            "maxLength": 5000,
+                            "type": "string",
+                            "input": "textarea",
+                            "optional": True
+                        }
+                    }
+                }
+            },
+            notify_readers=False, 
+            email_sacs=False)
+
+        venue.create_custom_stage()
+
+        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review_Agreement')) == 1
 
     def test_decision_stage(self, openreview_client, helpers):
 
