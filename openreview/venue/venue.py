@@ -48,6 +48,7 @@ class Venue(object):
         self.meta_review_stage = None
         self.comment_stage = None
         self.decision_stage = None
+        self.custom_stage = None
         self.submission_revision_stage = None
         self.registration_stages = []
         self.use_area_chairs = False
@@ -465,6 +466,9 @@ class Venue(object):
                     decisions = file_handle.read()
 
             self.post_decisions(decisions, api1_client)
+
+    def create_custom_stage(self):
+        return self.invitation_builder.set_custom_stage_invitation()
 
     def post_decisions(self, decisions_file, api1_client):
 

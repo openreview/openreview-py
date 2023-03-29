@@ -971,3 +971,131 @@ class RegistrationStage(object):
         self.instructions = instructions
         self.title = title
         self.remove_fields = remove_fields
+
+class CustomStage(object):
+    """
+    param reply_to: submission, reviews, metareviews, forum
+    type reply_to: string
+    """
+
+    class Participants(Enum):
+        EVERYONE = 0
+        SENIOR_AREA_CHAIRS = 1
+        SENIOR_AREA_CHAIRS_ASSIGNED = 2
+        AREA_CHAIRS = 3
+        AREA_CHAIRS_ASSIGNED = 4
+        REVIEWERS = 5
+        REVIEWERS_ASSIGNED = 6
+        REVIEWERS_SUBMITTED = 7
+        AUTHORS = 8
+
+    class Source(Enum):
+        ALL_SUBMISSIONS = 0
+        ACCEPTED_SUBMISSIONS = 1
+        PUBLIC_SUBMISSIONS = 2
+
+    class ReplyTo(Enum):
+        FORUM = 0
+        WITHFORUM = 1
+        REVIEWS = 2
+        METAREVIEWS = 3
+
+    def __init__(self, name, reply_to, source, start_date=None, due_date=None, exp_date=None, invitees=[], readers=[], content={}, multi_reply = False, email_pcs = False, email_sacs = False, notify_readers=False, email_template=None):
+        self.name = name
+        self.reply_to = reply_to
+        self.source = source
+        self.start_date = start_date
+        self.due_date = due_date
+        self.exp_date = exp_date
+        self.invitees = invitees
+        self.readers = readers
+        self.content = content
+        self.multi_reply = multi_reply
+        self.email_pcs = email_pcs
+        self.email_sacs = email_sacs
+        self.notify_readers = notify_readers
+        self.email_template = email_template
+
+    def get_invitees(self, conference, number):
+        invitees = [conference.get_program_chairs_id()]
+
+        if conference.use_senior_area_chairs and self.Participants.SENIOR_AREA_CHAIRS_ASSIGNED in self.invitees:
+            invitees.append(conference.get_senior_area_chairs_id(number))
+
+        if conference.use_area_chairs and self.Participants.AREA_CHAIRS_ASSIGNED in self.invitees:
+            invitees.append(conference.get_area_chairs_id(number))
+
+        if self.Participants.REVIEWERS_ASSIGNED in self.invitees:
+            invitees.append(conference.get_reviewers_id(number))
+
+        if self.Participants.REVIEWERS_SUBMITTED in self.invitees:
+            invitees.append(conference.get_reviewers_id(number) + '/Submitted')
+
+        if self.Participants.AUTHORS in self.invitees:
+            invitees.append(conference.get_authors_id(number))
+
+        return invitees
+
+    def get_readers(self, conference, number):
+        readers = [conference.get_program_chairs_id()]
+
+        if self.Participants.EVERYONE in self.readers:
+            return ['everyone']
+
+        if conference.use_senior_area_chairs and self.Participants.SENIOR_AREA_CHAIRS_ASSIGNED in self.readers:
+            readers.append(conference.get_senior_area_chairs_id(number))
+
+        if conference.use_area_chairs and self.Participants.AREA_CHAIRS_ASSIGNED in self.readers:
+            readers.append(conference.get_area_chairs_id(number))
+
+        if self.Participants.REVIEWERS_ASSIGNED in self.readers:
+            readers.append(conference.get_reviewers_id(number))
+
+        if self.Participants.REVIEWERS_SUBMITTED in self.readers:
+            readers.append(conference.get_reviewers_id(number) + '/Submitted')
+
+        if self.Participants.AUTHORS in self.readers:
+            readers.append(conference.get_authors_id(number))
+
+        return readers
+
+    def get_signatures_regex(self, conference, number):
+        committee = [conference.get_program_chairs_id()]
+
+        if conference.use_senior_area_chairs and self.Participants.SENIOR_AREA_CHAIRS_ASSIGNED in self.invitees:
+                committee.append(conference.get_senior_area_chairs_id(number))
+
+        if conference.use_area_chairs and self.Participants.AREA_CHAIRS_ASSIGNED in self.invitees:
+                committee.append(conference.get_anon_area_chair_id(number=number, anon_id='.*'))
+
+        if self.Participants.REVIEWERS_ASSIGNED in self.invitees or self.Participants.REVIEWERS_SUBMITTED in self.invitees:
+            committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
+
+        if self.Participants.AUTHORS in self.invitees:
+            committee.append(conference.get_authors_id(number))
+
+        return '|'.join(committee)
+
+    def get_source_submissions(self):
+
+        if self.source == self.Source.ACCEPTED_SUBMISSIONS:
+            source = 'accepted_submissions'
+        elif self.source == self.Source.PUBLIC_SUBMISSIONS:
+            source = 'public_submissions'
+        elif self.source == self.Source.ALL_SUBMISSIONS:
+            source = 'all_submissions'
+        
+        return source
+
+    def get_reply_to(self):
+
+        if self.reply_to == self.ReplyTo.FORUM:
+            reply_to = 'forum'
+        elif self.reply_to == self.ReplyTo.WITHFORUM:
+            reply_to = 'withForum'
+        elif self.reply_to == self.ReplyTo.REVIEWS:
+            reply_to = 'reviews'
+        elif self.reply_to == self.ReplyTo.METAREVIEWS:
+            reply_to = 'metareviews'
+        
+        return reply_to
