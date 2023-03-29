@@ -2421,31 +2421,6 @@ ICML 2023 Conference Program Chairs'''
 
         helpers.await_queue(openreview_client)
 
-        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission3/Reviewer_', signatory='~Reviewer_ICMLOne1')
-        anon_group_id = anon_groups[0].id
-
-        review_edit = reviewer_client.post_note_edit(
-            invitation='ICML.cc/2023/Conference/Submission3/-/Official_Review',
-            signatures=[anon_group_id],
-            note=openreview.api.Note(
-                content={
-                    'summary': { 'value': 'good paper' },
-                    'strengths_and_weaknesses': { 'value': '7: Good paper, accept'},
-                    'questions': { 'value': '7: Good paper, accept'},
-                    'limitations': { 'value': '7: Good paper, accept'},
-                    'ethics_flag': { 'value': 'No'},
-                    'soundness': { 'value': '3 good'},
-                    'presentation': { 'value': '3 good'},
-                    'contribution': { 'value': '3 good'},
-                    'rating': { 'value': '10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.'},
-                    'confidence': { 'value': '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.'},
-                    'code_of_conduct': { 'value': 'Yes'},
-                }
-            )
-        )
-
-        helpers.await_queue(openreview_client)
-
         ## Extend deadline
         start_date = now - datetime.timedelta(days=20)
         review_stage_note = openreview.Note(
@@ -2742,7 +2717,7 @@ ICML 2023 Conference Program Chairs'''
         anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLOne1')
         anon_group_id = anon_groups[0].id
 
-        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Review_Rating')) == 4
+        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Review_Rating')) == 3
 
         invitation = openreview_client.get_invitation(f'{anon_group_id}/-/Review_Rating')
         assert invitation.invitees == ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission1/Area_Chairs']
@@ -2756,7 +2731,6 @@ ICML 2023 Conference Program Chairs'''
         ]
 
         ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password='1234')
-        # invitation = ac_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Review_Rating')
         ac_anon_groups = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLTwo1')
         ac_anon_group_id = ac_anon_groups[0].id
 
@@ -2844,6 +2818,45 @@ ICML 2023 Conference Program Chairs'''
         messages = openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] Your review rating has been received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
         assert len(messages) == 2
         assert 'We have received your review rating on a submission to ICML 2023.' in messages[0]['content']['text']
+
+        # post review and check review rating inv is created
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password='1234')
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission3/Reviewer_', signatory='~Reviewer_ICMLOne1')
+        anon_group_id = anon_groups[0].id
+
+        review_edit = reviewer_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission3/-/Official_Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'summary': { 'value': 'good paper' },
+                    'strengths_and_weaknesses': { 'value': '7: Good paper, accept'},
+                    'questions': { 'value': '7: Good paper, accept'},
+                    'limitations': { 'value': '7: Good paper, accept'},
+                    'ethics_flag': { 'value': 'No'},
+                    'soundness': { 'value': '3 good'},
+                    'presentation': { 'value': '3 good'},
+                    'contribution': { 'value': '3 good'},
+                    'rating': { 'value': '10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.'},
+                    'confidence': { 'value': '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.'},
+                    'code_of_conduct': { 'value': 'Yes'},
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Review_Rating')) == 4
+
+        invitation = openreview_client.get_invitation(f'{anon_group_id}/-/Review_Rating')
+        assert invitation.invitees == ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission3/Area_Chairs']
+        assert 'review_quality' in invitation.edit['note']['content']
+        assert invitation.edit['note']['forum'] == review_edit['note']['forum']
+        assert invitation.edit['note']['replyto'] == review_edit['note']['id']
+        assert invitation.edit['note']['readers'] == [
+            'ICML.cc/2023/Conference/Program_Chairs',
+            'ICML.cc/2023/Conference/Submission3/Area_Chairs'
+        ]
 
     def test_delete_assignments(self, openreview_client):
 

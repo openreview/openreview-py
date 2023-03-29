@@ -110,5 +110,24 @@ Paper title: {submission.content['title']['value']}
 
     if paper_reviewers_submitted_id:
         client.add_members_to_group(paper_reviewers_submitted_id, review.signatures[0])
-    
 
+    #create children invitation if applicable
+    venue_invitations = [i for i in client.get_all_invitations(prefix=venue_id + '/-/') if i.is_active()]
+
+    for invitation in venue_invitations:
+        print('processing invitation: ', invitation.id)
+        if isinstance(invitation.edit, dict) and 'invitation' in invitation.edit:
+            review_reply = invitation.content.get('reply_to', {}).get('value', False) if invitation.content else False
+            content_keys = invitation.edit.get('content', {}).keys()
+            if 'reviews' == review_reply and 'replytoSignatures' in content_keys and 'replyto' in content_keys and len(content_keys) == 4:
+                print('create invitation: ', invitation.id)
+                paper_number = review.signatures[0].split(submission_name)[-1].split('/')[0]
+                client.post_invitation_edit(invitations=invitation.id,
+                    content={
+                        'noteId': { 'value': review.forum },
+                        'noteNumber': { 'value': int(paper_number) },
+                        'replytoSignatures': { 'value': review.signatures[0] },
+                        'replyto': { 'value': review.id }
+                    },
+                    invitation=openreview.api.Invitation()
+                )
