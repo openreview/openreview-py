@@ -534,7 +534,7 @@ If you have questions after reviewing the points below that are not answered on 
                                     'value': {
                                         'param': {
                                             'type': "string",
-                                            'enum': [f'I understand that {venue_id} has a strict 6 week review process (for submissions of at most 12 pages of main content), and that I will need to submit an initial review (within 2 weeks), engage in discussion, and enter a recommendation within that period.'],
+                                            'enum': [f'I understand that {venue_id} has a strict {self.journal.get_review_period_length() + self.journal.get_discussion_period_length() + self.journal.get_recommendation_period_length()} week review process {"(for submissions of at most 12 pages of main content)" if self.journal.get_submission_length() else ""}, and that I will need to submit an initial review (within {self.journal.get_review_period_length()} weeks), engage in discussion, and enter a recommendation within that period.'],
                                             'input': 'checkbox'
                                         }
                                     }
@@ -1865,7 +1865,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'weight': {
                     'param': {
                         'enum': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-                        'default': 6
+                        'default': self.journal.get_reviewers_max_papers()
                     }
                 }
             }
@@ -3107,7 +3107,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'instructions': f'<p class="dark">Assign reviewers based on their affinity scores.</p>\
                 <p class="dark"><strong>Instructions:</strong></p>\
                 <ul>\
-                    <li>Assign 3 reviewers to the {self.journal.short_name} submissions you are in charged of.</li>\
+                    <li>Assign {self.journal.get_number_of_reviewers()} reviewers to the {self.journal.short_name} submissions you are in charged of.</li>\
                     <li>Please avoid giving an assignment to a reviewer that already has an uncompleted assignment.</li>\
                 </ul>\
                 <br>'

@@ -17,7 +17,7 @@ Thank you for submitting your review and engaging with the authors of {journal.s
 
 You may now submit your official recommendation for the submission. Before doing so, make sure you have sufficiently discussed with the authors (and possibly the other reviewers and AE) any concerns you may have about the submission.
 
-We ask that you submit your recommendation within 2 weeks ({duedate.strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={submission.id}&invitationId={invitation.id}
+We ask that you submit your recommendation within {journal.get_recommendation_period_length()} weeks ({duedate.strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={submission.id}&invitationId={invitation.id}
 
 For more details and guidelines on performing your review, visit {journal.website}.
 
@@ -36,7 +36,7 @@ note: replies to this email will go to the AE, {assigned_action_editor.get_prefe
         subject=f'''[{journal.short_name}] Reviewers must submit official recommendation for {journal.short_name} submission {submission.content['title']['value']}''',
         message=f'''Hi {{{{fullname}}}},
 
-This email is to let you know, as AE for {journal.short_name} submission "{submission.content['title']['value']}", that the reviewers for the submission must now submit their official recommendation for the submission, within the next 2 weeks ({duedate.strftime("%b %d")}). They have received a separate email from us, informing them of this task.
+This email is to let you know, as AE for {journal.short_name} submission "{submission.content['title']['value']}", that the reviewers for the submission must now submit their official recommendation for the submission, within the next {journal.get_recommendation_period_length()} weeks ({duedate.strftime("%b %d")}). They have received a separate email from us, informing them of this task.
 
 For more details and guidelines on performing your review, visit {journal.website}.
 

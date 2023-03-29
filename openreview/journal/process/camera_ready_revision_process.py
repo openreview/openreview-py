@@ -3,7 +3,7 @@ def process(client, edit, invitation):
     journal = openreview.journal.Journal()
     venue_id = journal.venue_id
 
-    duedate = journal.get_due_date(weeks = 1)
+    duedate = journal.get_due_date(weeks = journal.get_camera_ready_verification_period_length())
 
     submission = client.get_note(edit.note.id)
 

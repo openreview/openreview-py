@@ -97,11 +97,18 @@ class TestJournal():
                                 'faq': 'https://jmlr.org/tmlr/contact.html'                     
                             },
                             'editors_email': 'tmlr-editors@jmlr.org',
+                            'number_of_reviewers': 3,
+                            'reviewers_max_papers': 6,
                             'ae_recommendation_period': 1,
+                            'under_review_approval_period': 1,
+                            'reviewer_assignment_period': 1,
                             'review_period': 2,
                             'discussion_period' : 2,
                             'recommendation_period': 2,
-                            'decision_period': 2
+                            'decision_period': 1,
+                            'camera_ready_period': 4,
+                            'camera_ready_verification_period': 1,
+
                         }
                     }
                 }
@@ -1552,7 +1559,7 @@ To view the acknowledgement, click here: https://openreview.net/forum?id={note_i
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
 
-Now that 3 reviews have been submitted for your submission  Paper title UPDATED, all reviews have been made public. If you haven’t already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
+Now that 3 reviews have been submitted for your submission  Paper title UPDATED, all reviews have been made public. If you haven't already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
 
 You will have 2 weeks to respond to the reviewers. To maximise the period of interaction and discussion, please respond as soon as possible. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}), and no later than 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
 

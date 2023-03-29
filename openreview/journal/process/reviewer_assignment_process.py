@@ -14,9 +14,12 @@ def process_update(client, edge, invitation, existing_edge):
     head_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), head=edge.head)
     submission_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(number=note.number), head=note.id)
     responsiblity_invitation_edit = None
+    number_of_reviewers = journal.get_number_of_reviewers()
+    review_visibility = 'publicly visible' if journal.is_submission_public() else 'visible to all the reviewers'
+    submission_length = 'If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.' if journal.get_submission_length() else ''
 
     ## Check task completion
-    if len(head_assignment_edges) >= 3:
+    if len(head_assignment_edges) >= number_of_reviewers:
         if not submission_edges:
             print('Mark task a complete')
             client.post_edge(openreview.api.Edge(invitation=journal.get_reviewer_assignment_id(number=note.number),
@@ -114,15 +117,15 @@ note: replies to this email will go to the AE, {assigned_action_editor.get_prefe
         subject=f'''[{journal.short_name}] Assignment to review new {journal.short_name} submission {note.content['title']['value']}'''
         message=f'''Hi {{{{fullname}}}},
 
-With this email, we request that you submit, within {review_period_length} weeks ({duedate.strftime("%b %d")}) a review for your newly assigned {journal.short_name} submission "{note.content['title']['value']}". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
+With this email, we request that you submit, within {review_period_length} weeks ({duedate.strftime("%b %d")}) a review for your newly assigned {journal.short_name} submission "{note.content['title']['value']}". {submission_length}
 
 Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note.id}&invitationId={ack_invitation_edit['invitation']['id']}
 
-As a reminder, reviewers are **expected to accept all assignments** for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another {journal.short_name} submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).
+As a reminder, reviewers are **expected to accept all assignments** for submissions that fall within their expertise and annual quota ({journal.get_reviewers_max_papers()} papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another {journal.short_name} submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).
 
 To submit your review, please follow this link: https://openreview.net/forum?id={note.id}&invitationId={journal.get_review_id(number=note.number)} or check your tasks in the Reviewers Console: https://openreview.net/group?id={journal.venue_id}/Reviewers#reviewer-tasks
 
-Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit {journal.website}.
+Once submitted, your review will become privately visible to the authors and AE. Then, as soon as {number_of_reviewers} reviews have been submitted, all reviews will become {review_visibility}. For more details and guidelines on performing your review, visit {journal.website}.
 
 We thank you for your essential contribution to {journal.short_name}!
 
