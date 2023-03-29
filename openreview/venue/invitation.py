@@ -87,8 +87,7 @@ class InvitationBuilder(object):
         venue_id=self.venue_id
         meta_invitation = openreview.tools.get_invitation(self.client, self.venue.get_meta_invitation_id())
         
-        if meta_invitation is None:
-            
+        if meta_invitation is None or 'invitation_edit_script' not in meta_invitation.content or 'group_edit_script' not in meta_invitation.content:
             self.client.post_invitation_edit(invitations=None,
                 readers=[venue_id],
                 writers=[venue_id],
@@ -247,7 +246,7 @@ class InvitationBuilder(object):
         if note_content:
             submission_invitation.edit['note']['content'] = note_content
 
-        submission_invitation = self.save_invitation(submission_invitation, replacement=True)        
+        submission_invitation = self.save_invitation(submission_invitation, replacement=False)        
         
     def set_pc_submission_revision_invitation(self):
         venue_id = self.venue_id
@@ -412,7 +411,7 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['expdate'] = review_expdate
 
 
-        self.save_invitation(invitation, replacement=True)
+        self.save_invitation(invitation, replacement=False)
         return invitation
 
     def set_review_rebuttal_invitation(self):
@@ -554,7 +553,7 @@ class InvitationBuilder(object):
         if review_rebuttal_expdate:
             invitation.edit['invitation']['expdate'] = review_rebuttal_expdate            
 
-        self.save_invitation(invitation, replacement=True)
+        self.save_invitation(invitation, replacement=False)
         return invitation
 
     def set_meta_review_invitation(self):
@@ -654,7 +653,7 @@ class InvitationBuilder(object):
         if meta_review_expdate:
             invitation.edit['invitation']['expdate'] = meta_review_expdate         
 
-        self.save_invitation(invitation, replacement=True)
+        self.save_invitation(invitation, replacement=False)
         return invitation
 
     def set_recruitment_invitation(self, committee_name, options):
@@ -960,7 +959,7 @@ class InvitationBuilder(object):
         if comment_expdate:
             invitation.edit['invitation']['expdate'] = comment_expdate
 
-        self.save_invitation(invitation, replacement=True)
+        self.save_invitation(invitation, replacement=False)
         return invitation
 
     def set_public_comment_invitation(self):
@@ -1066,7 +1065,7 @@ class InvitationBuilder(object):
         if comment_expdate:
             invitation.edit['invitation']['expdate'] = comment_expdate
 
-        self.save_invitation(invitation, replacement=True)
+        self.save_invitation(invitation, replacement=False)
         return invitation
 
     def set_decision_invitation(self):
@@ -1292,7 +1291,7 @@ class InvitationBuilder(object):
         if exp_date:
             invitation.edit['invitation']['expdate'] = exp_date
 
-        self.save_invitation(invitation, replacement=True)
+        self.save_invitation(invitation, replacement=False)
 
         content = {
             'venue': {
@@ -1563,7 +1562,7 @@ class InvitationBuilder(object):
                 'script': self.invitation_edit_process              
             }]
 
-        self.save_invitation(invitation, replacement=True)
+        self.save_invitation(invitation, replacement=False)
 
         content = {
             'venue': {
@@ -2224,7 +2223,7 @@ class InvitationBuilder(object):
             }
         )
 
-        self.save_invitation(invitation, replacement=True)
+        self.save_invitation(invitation, replacement=False)
         return invitation
     
     def set_submission_area_chair_group_invitation(self):
@@ -2278,7 +2277,7 @@ class InvitationBuilder(object):
             }
         )
 
-        self.save_invitation(invitation, replacement=True)
+        self.save_invitation(invitation, replacement=False)
         return invitation
 
     def set_submission_senior_area_chair_group_invitation(self):
@@ -2330,5 +2329,5 @@ class InvitationBuilder(object):
             }
         )
 
-        self.save_invitation(invitation, replacement=True)
+        self.save_invitation(invitation, replacement=False)
         return invitation        
