@@ -107,7 +107,7 @@ To view the submission, click here: https://openreview.net/forum?id={note.forum}
 
     for venue_invitation in invitation_invitations:
         print('processing invitation: ', venue_invitation.id)
-        accepted_only = venue_invitation.content.get('accepted_notes_only', {}).get('value', False) if venue_invitation.content else False
+        accepted_only = ('accepted_submissions' == venue_invitation.content.get('source', {}).get('value', False)) if venue_invitation.content else False
         content_keys = venue_invitation.edit.get('content', {}).keys()
         if not accepted_only and 'noteId' in content_keys and 'noteNumber' in content_keys and len(content_keys) == 2:
             print('create invitation: ', venue_invitation.id)
