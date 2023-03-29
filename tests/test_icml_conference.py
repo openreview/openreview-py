@@ -3591,6 +3591,53 @@ ICML 2023 Conference Program Chairs'''
             'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs'
         ]
 
+        ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password='1234')
+        submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
+
+        anon_groups = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission2/Area_Chair_', signatory='~AC_ICMLOne1')
+        anon_group_id = anon_groups[0].id
+
+        # post another metareview and check agreement invitation is created
+        meta_review_edit = ac_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission2/-/Meta_Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'metareview': { 'value': 'This is a very bad paper' },
+                    'recommendation': { 'value': 'Reject'}
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review_Agreement')) == 2
+
+        invitation_id = f'{anon_group_id}/-/Meta_Review_Agreement'
+        sac_client = openreview.api.OpenReviewClient(username = 'sac1@gmail.com', password='1234')
+
+        agreement_edit = sac_client.post_note_edit(
+            invitation=invitation_id,
+            signatures=['ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs'],
+            note=openreview.api.Note(
+                content={
+                    'meta_review_agreement': { 'value': 'no' },
+                    'explanation': { 'value': 'I think the paper should be accepted.' }
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+        metareviews = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/Submission2/-/Meta_Review')
+        agreements = pc_client_v2.get_notes(invitation=invitation_id)
+        assert agreements[0].replyto == metareviews[0].id
+        assert agreements[0].readers == [
+            'ICML.cc/2023/Conference/Program_Chairs',
+            'ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs'
+        ]
+
     def test_decision_stage(self, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password='1234')

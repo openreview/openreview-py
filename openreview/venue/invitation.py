@@ -568,6 +568,11 @@ class InvitationBuilder(object):
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process              
             }],
+            content = {
+                'meta_review_process_script': {
+                    'value': self.get_process_content('process/metareview_process.py')
+                }
+            },
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -597,6 +602,15 @@ class InvitationBuilder(object):
                     'invitees': [venue_id, self.venue.get_area_chairs_id(number='${3/content/noteNumber/value}')],
                     'maxReplies': 1,
                     'cdate': meta_review_cdate,
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['meta_review_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
                     'edit': {
                         'signatures': { 'param': { 'regex': meta_review_stage.get_signatures_regex(self.venue, '${5/content/noteNumber/value}') }},
                         'readers': meta_review_stage.get_readers(self.venue, '${4/content/noteNumber/value}'),

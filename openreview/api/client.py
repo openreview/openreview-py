@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function, unicode_literals
-from datetime import date
+import datetime
 import sys
 if sys.version_info[0] < 3:
     string_types = [str, unicode]
@@ -2169,6 +2169,12 @@ class Invitation(object):
     def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
+
+    def is_active(self):
+        now = tools.datetime_millis(datetime.datetime.utcnow())
+        cdate = self.cdate if self.cdate else now
+        edate = self.expdate if self.expdate else now
+        return cdate <= now and now <= edate
 
     def pretty_id(self):
         tokens = self.id.split('/')[-2:]
