@@ -995,8 +995,8 @@ class CustomStage(object):
         PUBLIC_SUBMISSIONS = 2
 
     class ReplyTo(Enum):
-        SUBMISSION = 0
-        FORUM = 1
+        FORUM = 0
+        WITHFORUM = 1
         REVIEWS = 2
         METAREVIEWS = 3
 
@@ -1089,10 +1089,10 @@ class CustomStage(object):
 
     def get_reply_to(self):
 
-        if self.reply_to == self.ReplyTo.SUBMISSION:
-            reply_to = 'submission'
-        elif self.reply_to == self.ReplyTo.FORUM:
+        if self.reply_to == self.ReplyTo.FORUM:
             reply_to = 'forum'
+        elif self.reply_to == self.ReplyTo.WITHFORUM:
+            reply_to = 'withForum'
         elif self.reply_to == self.ReplyTo.REVIEWS:
             reply_to = 'reviews'
         elif self.reply_to == self.ReplyTo.METAREVIEWS:

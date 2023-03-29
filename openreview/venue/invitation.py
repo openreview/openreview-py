@@ -444,7 +444,7 @@ class InvitationBuilder(object):
                     'value': self.get_process_content('process/review_rebuttal_process.py')
                 },
                 'reply_to': {
-                    'value': 'reviews' if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals else 'submission'
+                    'value': 'reviews' if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals else 'forum'
                 }
             },
             edit={
@@ -1854,9 +1854,9 @@ class InvitationBuilder(object):
 
         paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, number='${2/content/noteNumber/value}')
         with_invitation = self.venue.get_invitation_id(name=custom_stage.name, number='${6/content/noteNumber/value}')
-        if custom_stage_replyto == 'submission':
+        if custom_stage_replyto == 'forum':
             reply_to = '${4/content/noteId/value}'
-        elif custom_stage_replyto == 'forum':
+        elif custom_stage_replyto == 'withForum':
             reply_to = {
                 'param': {
                     'withForum': '${6/content/noteId/value}'

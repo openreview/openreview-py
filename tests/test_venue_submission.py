@@ -75,7 +75,7 @@ class TestVenueSubmission():
         venue.custom_stage = openreview.stages.CustomStage(
             name='Camera_Ready_Verification',
             source=openreview.stages.CustomStage.Source.ACCEPTED_SUBMISSIONS,
-            reply_to=openreview.stages.CustomStage.ReplyTo.SUBMISSION,
+            reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
             start_date=now + datetime.timedelta(minutes = 10),
             due_date=now + datetime.timedelta(minutes = 40),
             readers=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED, openreview.stages.CustomStage.Participants.AUTHORS],
