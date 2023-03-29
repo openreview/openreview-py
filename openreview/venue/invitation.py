@@ -111,37 +111,8 @@ class InvitationBuilder(object):
     def set_submission_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
-        submission_name = submission_stage.name
 
-        content = default_content.submission_v2.copy()
-        
-        for field in submission_stage.remove_fields:
-            del content[field]
-
-        for order, key in enumerate(submission_stage.additional_fields, start=10):
-            value = submission_stage.additional_fields[key]
-            value['order'] = order
-            content[key] = value
-
-        if submission_stage.second_due_date and 'pdf' in content:
-            content['pdf']['value']['param']['optional'] = True
-
-        content['venue'] = {
-            'value': {
-                'param': {
-                    'const': tools.pretty_id(self.venue.get_submission_venue_id()),
-                    'hidden': True
-                }
-            }
-        }
-        content['venueid'] = {
-            'value': {
-                'param': {
-                    'const': self.venue.get_submission_venue_id(),
-                    'hidden': True
-                }
-            }
-        }
+        content = submission_stage.get_content(api_version='2', conference=self.venue)
 
         edit_readers = ['everyone'] if submission_stage.create_groups else [venue_id, '${2/note/content/authorids/value}']
         note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, '${2/content/authorids/value}']
@@ -253,17 +224,9 @@ class InvitationBuilder(object):
         submission_stage = self.venue.submission_stage
         cdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None        
 
-        content = default_content.submission_v2.copy()
-        
-        for field in submission_stage.remove_fields:
-            del content[field]
-
-        for order, key in enumerate(submission_stage.additional_fields, start=10):
-            value = submission_stage.additional_fields[key]
-            value['order'] = order
-            content[key] = value
-
         submission_id = submission_stage.get_submission_id(self.venue)
+
+        content = submission_stage.get_content(api_version='2', conference=self.venue)
 
         submission_invitation = Invitation(
             id=self.venue.get_pc_submission_revision_id(),
@@ -309,14 +272,8 @@ class InvitationBuilder(object):
         review_expdate = tools.datetime_millis(review_stage.exp_date) if review_stage.exp_date else None
         if not review_expdate:
             review_expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None
-        content = default_content.review_v2.copy()
-
-        for key in review_stage.additional_fields:
-            content[key] = review_stage.additional_fields[key]
-
-        for field in review_stage.remove_fields:
-            if field in content:
-                del content[field]
+        
+        content = review_stage.get_content(api_version='2', conference=self.venue)
 
         invitation = Invitation(id=review_invitation_id,
             invitees=[venue_id],
@@ -423,10 +380,7 @@ class InvitationBuilder(object):
         review_rebuttal_duedate = tools.datetime_millis(review_rebuttal_stage.due_date) if review_rebuttal_stage.due_date else None
         review_rebuttal_expdate = tools.datetime_millis(review_rebuttal_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_rebuttal_stage.due_date else None
 
-        content = default_content.rebuttal_v2.copy()
-
-        for key in review_rebuttal_stage.additional_fields:
-            content[key] = review_rebuttal_stage.additional_fields[key]
+        content = review_rebuttal_stage.get_content(api_version='2', conference=self.venue)
 
         paper_invitation_id = self.venue.get_invitation_id(name=review_rebuttal_stage.name, number='${2/content/noteNumber/value}')
         with_invitation = self.venue.get_invitation_id(name=review_rebuttal_stage.name, number='${6/content/noteNumber/value}')
@@ -567,14 +521,7 @@ class InvitationBuilder(object):
         if not meta_review_expdate:
             meta_review_expdate = tools.datetime_millis(meta_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if meta_review_stage.due_date else None
 
-        content = default_content.meta_review_v2.copy()
-
-        for key in meta_review_stage.additional_fields:
-            content[key] = meta_review_stage.additional_fields[key]
-
-        for field in meta_review_stage.remove_fields:
-            if field in content:
-                del content[field]
+        content = meta_review_stage.get_content(api_version='2', conference=self.venue)
 
         invitation = Invitation(id=meta_review_invitation_id,
             invitees=[venue_id],
@@ -1077,12 +1024,7 @@ class InvitationBuilder(object):
         decision_due_date = tools.datetime_millis(decision_stage.due_date) if decision_stage.due_date else None
         decision_expdate = tools.datetime_millis(decision_stage.due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if decision_stage.due_date else None
 
-        content = default_content.decision_v2.copy()
-
-        content['decision']['value']['param']['enum'] = decision_stage.options
-
-        for key in decision_stage.additional_fields:
-            content[key] = decision_stage.additional_fields[key]
+        content = decision_stage.get_content(api_version='2', conference=self.venue)
 
         invitation = Invitation(id=decision_invitation_id,
             invitees=[venue_id],
@@ -1730,34 +1672,7 @@ class InvitationBuilder(object):
         revision_expdate = tools.datetime_millis(revision_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if revision_stage.due_date else None
 
         only_accepted = revision_stage.only_accepted
-        content = self.venue.submission_stage.get_content(api_version='2').copy()
-
-        for field in revision_stage.remove_fields:
-            if field in content:
-                del content[field]
-            else:
-                print('Field {} not found in content: {}'.format(field, content))
-
-        for order, key in enumerate(revision_stage.additional_fields, start=10):
-            value = revision_stage.additional_fields[key]
-            value['order'] = order
-            content[key] = value
-
-        if revision_stage.allow_author_reorder:
-            content['authors'] = {
-                'value': {
-                    'param': {
-                        'type': 'string[]',
-                        'const': ['${{6/id}/content/authors/value}'],
-                        'hidden': True,
-                    }
-                },
-                'order': 3
-            }
-            content['authorids'] = {
-                'value': ['${{4/id}/content/authorids/value}'],
-                'order':4
-            }
+        content = revision_stage.get_content(api_version='2', conference=self.venue)
 
         invitation = Invitation(id=revision_invitation_id,
             invitees=[venue_id],
@@ -2034,37 +1949,7 @@ class InvitationBuilder(object):
             start_date = registration_stage.start_date
             due_date = registration_stage.due_date
 
-            registration_content = {
-                'profile_confirmed': {
-                    'description': 'In order to avoid conflicts of interest in reviewing, we ask that all reviewers take a moment to update their OpenReview profiles (link in instructions above) with their latest information regarding email addresses, work history and professional relationships. Please confirm that your OpenReview profile is up-to-date by selecting "Yes".\n\n',
-                    'value': {
-                        'param': {
-                            'type': 'string',
-                            'enum': ['Yes'],
-                            'input': 'checkbox'
-                        }
-                    },
-                    'order': 1
-                },
-                'expertise_confirmed': {
-                    'description': 'We will be using OpenReview\'s Expertise System as a factor in calculating paper-reviewer affinity scores. Please take a moment to ensure that your latest papers are visible at the Expertise Selection (link in instructions above). Please confirm finishing this step by selecting "Yes".\n\n',
-                    'value': {
-                        'param': {
-                            'type': 'string',
-                            'enum': ['Yes'],
-                            'input': 'checkbox'
-                        }
-                    },
-                    'order': 2
-                }
-            }
-
-            for content_key in registration_stage.additional_fields:
-                registration_content[content_key] = registration_stage.additional_fields[content_key]
-
-            for field in registration_stage.remove_fields:
-                if field in registration_content:
-                    del registration_content[field]        
+            registration_content = registration_stage.get_content(api_version='2', conference=self.venue)        
 
             registration_invitation_id = venue.get_invitation_id(name=f'{registration_stage.name}', prefix=committee_id)
             invitation=Invitation(id=registration_invitation_id,
