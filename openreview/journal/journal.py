@@ -381,7 +381,8 @@ class Journal(object):
         self.invitation_builder.set_note_desk_rejection_invitation(note)
         self.invitation_builder.set_note_comment_invitation(note, public=False) 
         self.setup_ae_assignment(note)
-        self.invitation_builder.set_ae_recommendation_invitation(note, self.get_due_date(weeks = self.get_ae_recommendation_period_length()))
+        if not self.should_skip_ac_recommendation():
+            self.invitation_builder.set_ae_recommendation_invitation(note, self.get_due_date(weeks = self.get_ae_recommendation_period_length()))
         self.setup_reviewer_assignment(note)
         print('Finished setup author submission data.')
         
@@ -404,6 +405,9 @@ class Journal(object):
 
     def are_authors_anonymous(self):
         return self.settings.get('author_anonymity', True)
+    
+    def should_skip_ac_recommendation(self):
+        return self.settings.get('skip_ac_recommendation', False)
 
     def get_certifications(self):
         return self.settings.get('certifications', [])        

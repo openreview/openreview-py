@@ -97,6 +97,7 @@ class TestJournal():
                                 'faq': 'https://jmlr.org/tmlr/contact.html'                     
                             },
                             'editors_email': 'tmlr-editors@jmlr.org',
+                            'skip_ac_recommendation': False,
                             'number_of_reviewers': 3,
                             'reviewers_max_papers': 6,
                             'ae_recommendation_period': 1,

@@ -46,6 +46,7 @@ class TestTACLJournal():
                     'settings': {
                         'value': {
                             'submission_public': False,
+                            'skip_ac_recommendation': True,
                             'assignment_delay': 0,
                             'certifications': [
                                 'Featured Certification',
@@ -99,19 +100,19 @@ class TestTACLJournal():
         note_id_1=submission_note_1['note']['id']
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TACL] Suggest candidate Action Editor for your new TACL submission')
-        assert len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi SomeFirstName User,
+        assert len(messages) == 0
+#         assert messages[0]['content']['text'] == '''Hi SomeFirstName User,
 
-Thank you for submitting your work titled "Paper title" to TACL.
+# Thank you for submitting your work titled "Paper title" to TACL.
 
-Before the review process starts, you need to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
+# Before the review process starts, you need to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
 
-To do so, please follow this link: https://openreview.net/invitation?id=TACL/Paper1/Action_Editors/-/Recommendation or check your tasks in the Author Console: https://openreview.net/group?id=TACL/Authors
+# To do so, please follow this link: https://openreview.net/invitation?id=TACL/Paper1/Action_Editors/-/Recommendation or check your tasks in the Author Console: https://openreview.net/group?id=TACL/Authors
 
-For more details and guidelines on the TACL review process, visit transacl.org.
+# For more details and guidelines on the TACL review process, visit transacl.org.
 
-The TACL Editors-in-Chief
-'''
+# The TACL Editors-in-Chief
+# '''
 
         author_group=openreview_client.get_group("TACL/Paper1/Authors")
         assert author_group

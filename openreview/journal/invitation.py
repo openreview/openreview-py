@@ -139,7 +139,10 @@ class InvitationBuilder(object):
         )
 
     def expire_invitation(self, invitation_id, expdate=None):
-        invitation = self.client.get_invitation(invitation_id)
+        invitation = openreview.tools.get_invitation(self.client, invitation_id)
+
+        if not invitation:
+            return
         
         if invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow()):
             return
