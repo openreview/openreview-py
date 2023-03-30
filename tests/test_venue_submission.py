@@ -23,6 +23,8 @@ class TestVenueSubmission():
         conference_id = 'TestVenue.cc'
 
         venue = Venue(openreview_client, conference_id, 'openreview.net/Support')
+        venue.invitation_builder.update_wait_time = 2000
+        venue.invitation_builder.update_date_string = "#{4/mdate} + 2000"
         venue.use_area_chairs = True
         venue.name = 'Test Venue V2'
         venue.short_name = 'TV 22'
