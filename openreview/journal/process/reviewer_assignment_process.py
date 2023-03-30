@@ -16,7 +16,7 @@ def process_update(client, edge, invitation, existing_edge):
     responsiblity_invitation_edit = None
     number_of_reviewers = journal.get_number_of_reviewers()
     review_visibility = 'publicly visible' if journal.is_submission_public() else 'visible to all the reviewers'
-    submission_length = 'If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.' if journal.get_submission_length() else ''
+    submission_length = ' If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.' if journal.get_submission_length() else ''
 
     ## Check task completion
     if len(head_assignment_edges) >= number_of_reviewers:
@@ -117,7 +117,7 @@ note: replies to this email will go to the AE, {assigned_action_editor.get_prefe
         subject=f'''[{journal.short_name}] Assignment to review new {journal.short_name} submission {note.content['title']['value']}'''
         message=f'''Hi {{{{fullname}}}},
 
-With this email, we request that you submit, within {review_period_length} weeks ({duedate.strftime("%b %d")}) a review for your newly assigned {journal.short_name} submission "{note.content['title']['value']}". {submission_length}
+With this email, we request that you submit, within {review_period_length} weeks ({duedate.strftime("%b %d")}) a review for your newly assigned {journal.short_name} submission "{note.content['title']['value']}".{submission_length}
 
 Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note.id}&invitationId={ack_invitation_edit['invitation']['id']}
 

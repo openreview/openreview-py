@@ -316,7 +316,7 @@ class Journal(object):
         return self.settings.get('camera_ready_verification_period', 1)
     
     def get_recommendation_period_length(self):
-        return self.settings.get('recommendation_period', 1)
+        return self.settings.get('recommendation_period', 2)
     
     def get_decision_period_length(self):
         return self.settings.get('decision_period', 1)
