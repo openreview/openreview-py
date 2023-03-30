@@ -27,6 +27,8 @@ class TestMatching():
         pc_client = helpers.create_user('pc1_venue@mail.com', 'PCFirstName', 'UAI')
         venue_id = 'VenueV2.cc'
         venue = Venue(openreview_client, venue_id, 'openreview.net/Support')
+        venue.invitation_builder.update_wait_time = 2000
+        venue.invitation_builder.update_date_string = "#{4/mdate} + 2000"        
         venue.short_name = 'VV2 2022'
         venue.website = 'www.venuev2.com'
         venue.contact = 'pc_venue@mail.com'
