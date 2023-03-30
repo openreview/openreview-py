@@ -14,7 +14,7 @@ LONG_BUFFER_DAYS = 10
 
 class InvitationBuilder(object):
 
-    def __init__(self, venue, update_wait_time=2000):
+    def __init__(self, venue, update_wait_time=5000):
         self.client = venue.client
         self.venue = venue
         self.venue_id = venue.venue_id
@@ -1768,7 +1768,7 @@ class InvitationBuilder(object):
         if revision_expdate:
             invitation.edit['invitation']['expdate'] = revision_expdate        
 
-        self.save_invitation(invitation, replacement=True)
+        self.save_invitation(invitation, replacement=False)
         return invitation
 
     def set_custom_stage_invitation(self):
