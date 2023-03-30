@@ -153,7 +153,10 @@ class TestMatching():
 
         helpers.await_queue_edit(openreview_client, edit_id=note_3['id'])
 
-        venue.setup_post_submission_stage()
+        venue.submission_stage.due_date = datetime.datetime.utcnow()
+        venue.submission_stage.exp_date = datetime.datetime.utcnow() + datetime.timedelta(seconds = 20)
+        venue.create_submission_stage()
+        helpers.await_queue_edit(openreview_client, f'{venue.id}/-/Post_Submission-0-0')
         # Set up reviewer matching
         venue.setup_committee_matching(committee_id=venue.get_area_chairs_id())
         venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
@@ -368,6 +371,8 @@ class TestMatching():
             label='rev-matching'
         )
         assert 6 == edges
+
+        venue.create_post_submission_stage()
 
         venue.set_assignments(assignment_title='rev-matching', committee_id=f'{venue.id}/Program_Committee', enable_reviewer_reassignment=True)
 

@@ -1367,11 +1367,13 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
-        meta_review_stage_note = test_client.post_note(openreview.Note(
+        exp_date = due_date - datetime.timedelta(days=1)
+        meta_review_stage_note = openreview.Note(
             content={
                 'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
                 'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
                 'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'meta_review_expiration_date': exp_date.strftime('%Y/%m/%d'),
                 'recommendation_options': 'Accept, Reject',
                 'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
@@ -1391,7 +1393,14 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             replyto=venue['request_form_note'].forum,
             signatures=['~SomeFirstName_User1'],
             writers=[]
-        ))
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Meta review expiration date should be after meta review deadline.'):
+            meta_review_stage_note=test_client.post_note(meta_review_stage_note)
+
+        exp_date = due_date + datetime.timedelta(days=1)
+        meta_review_stage_note.content['meta_review_expiration_date'] = exp_date.strftime('%Y/%m/%d')
+        meta_review_stage_note=test_client.post_note(meta_review_stage_note)
         assert meta_review_stage_note
         helpers.await_queue()
 
@@ -1421,6 +1430,10 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'suggestions' in meta_review_invitations[0].reply['content']
         assert 'Accept' in meta_review_invitations[0].reply['content']['recommendation']['value-dropdown']
         assert len(meta_review_invitations[0].reply['readers']['values']) == 4
+
+        # duedate + 1 day
+        exp_date = meta_review_invitations[0].duedate + (24*60*60*1000)
+        assert meta_review_invitations[0].expdate == exp_date
 
     def test_venue_comment_stage(self, client, test_client, selenium, request_page, helpers, venue):
 

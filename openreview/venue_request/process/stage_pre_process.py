@@ -29,3 +29,18 @@ def process(client, note, invitation):
 
         if review_exp_date < review_due_date:
             raise openreview.OpenReviewException('Review expiration date should be after review deadline.')
+
+    if 'meta_review_expiration_date' in note.content and 'meta_review_deadline' in note.content:
+        meta_review_due_date = note.content.get('meta_review_deadline', '').strip()
+        meta_review_exp_date = note.content.get('meta_review_expiration_date', '').strip()
+        try:
+            meta_review_exp_date = datetime.datetime.strptime(meta_review_exp_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            meta_review_exp_date = datetime.datetime.strptime(meta_review_exp_date, '%Y/%m/%d')
+        try:
+            meta_review_due_date = datetime.datetime.strptime(meta_review_due_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            meta_review_due_date = datetime.datetime.strptime(meta_review_due_date, '%Y/%m/%d')
+
+        if meta_review_exp_date < meta_review_due_date:
+            raise openreview.OpenReviewException('Meta review expiration date should be after meta review deadline.')

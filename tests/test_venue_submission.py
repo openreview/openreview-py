@@ -72,6 +72,33 @@ class TestVenueSubmission():
             only_accepted=True
         )
 
+        venue.custom_stage = openreview.stages.CustomStage(
+            name='Camera_Ready_Verification',
+            source=openreview.stages.CustomStage.Source.ACCEPTED_SUBMISSIONS,
+            reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
+            start_date=now + datetime.timedelta(minutes = 10),
+            due_date=now + datetime.timedelta(minutes = 40),
+            readers=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED, openreview.stages.CustomStage.Participants.AUTHORS],
+            content={
+                "verification": {
+                    "order": 1,
+                    "value": {
+                    "param": {
+                        "type": "string",
+                        "enum": [
+                        "I confirm that camera ready manuscript complies with the TV 22 stylefile and, if appropriate, includes the minor revisions that were requested."
+                        ],
+                        "input": "checkbox"
+                    }
+                    }
+                }
+            },
+            notify_readers=True,
+            email_pcs=True,
+            email_template='''The camera ready verification for submission number {submission_number} has been posted.
+Please follow this link: https://openreview.net/forum?id={submission_id}&noteId={note_id}'''
+        )
+
         return venue
 
     def test_setup(self, venue, openreview_client, helpers):
@@ -82,6 +109,7 @@ class TestVenueSubmission():
         venue.create_review_rebuttal_stage()
         venue.create_meta_review_stage()
         venue.create_submission_revision_stage()
+        venue.create_custom_stage()
         assert openreview_client.get_group('TestVenue.cc')
         assert openreview_client.get_group('TestVenue.cc/Authors')
 
@@ -189,12 +217,14 @@ class TestVenueSubmission():
     def test_post_submission_stage(self, venue, openreview_client, helpers):
                 
         venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS, SubmissionStage.Readers.AREA_CHAIRS]
-        venue.submission_stage.due_date = datetime.datetime.utcnow() - datetime.timedelta(minutes = 30) + datetime.timedelta(seconds = 10)
+        venue.submission_stage.exp_date = datetime.datetime.utcnow() + datetime.timedelta(seconds = 10)
         venue.create_submission_stage()
-        venue.setup_post_submission_stage()
-        assert openreview_client.get_group('TestVenue.cc/Submission1/Authors')
-        assert openreview_client.get_group('TestVenue.cc/Submission1/Reviewers')
-        assert openreview_client.get_group('TestVenue.cc/Submission1/Area_Chairs')
+
+        # helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Post_Submission-0-0')
+
+        # assert openreview_client.get_group('TestVenue.cc/Submission1/Authors')
+        # assert openreview_client.get_group('TestVenue.cc/Submission1/Reviewers')
+        # assert openreview_client.get_group('TestVenue.cc/Submission1/Area_Chairs')
 
         submissions = venue.get_submissions(sort='number:asc')
         assert len(submissions) == 2
@@ -215,7 +245,7 @@ class TestVenueSubmission():
         assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Desk_Rejection')
         assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Desk_Rejection')
 
-    def test_bid_stage(self, venue, openreview_client):
+    def test_bid_stage(self, venue, openreview_client, helpers):
         
         reviewer_client = OpenReviewClient(username='reviewer_venue_one@mail.com', password='1234')
         venue.create_bid_stages()
@@ -239,7 +269,10 @@ class TestVenueSubmission():
 
         ## after bidding stage the submissions should be visible to the assigned committee
         venue.submission_stage.readers = [SubmissionStage.Readers.EVERYONE]
-        venue.setup_post_submission_stage()
+        venue.create_post_submission_stage()
+
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Post_Submission-0-1', count=3)
+
         submissions = venue.get_submissions(sort='number:asc')
         assert len(submissions) == 2
         submission = submissions[0]
@@ -325,7 +358,7 @@ class TestVenueSubmission():
         assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/Submission1/Area_Chairs", "${3/signatures}"]
 
         now = datetime.datetime.utcnow()
-        venue.review_stage = openreview.stages.ReviewStage(start_date=now + datetime.timedelta(minutes = 4), due_date=now + datetime.timedelta(minutes = 40), release_to_authors=True)
+        venue.review_stage = openreview.stages.ReviewStage(start_date=now - datetime.timedelta(minutes = 4), due_date=now + datetime.timedelta(minutes = 40), release_to_authors=True)
         venue.create_review_stage()
 
         invitation = openreview_client.get_invitation('TestVenue.cc/-/Official_Review')
@@ -440,7 +473,7 @@ class TestVenueSubmission():
 
         note = author_client.get_note(withdraw_note['note']['forum'])
         assert note
-        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Edit', 'TestVenue.cc/-/Withdrawn_Submission']
+        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Post_Submission', 'TestVenue.cc/-/Withdrawn_Submission']
         assert note.readers == ['everyone']
         assert note.writers == ['TestVenue.cc', 'TestVenue.cc/Submission2/Authors']
         assert note.signatures == ['TestVenue.cc/Submission2/Authors']
@@ -458,7 +491,7 @@ class TestVenueSubmission():
 
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 withdrawn by paper authors')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been withdrawn by the paper authors.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
+        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been withdrawn by the paper authors.\n\nFor more information, click here https://openreview.net/forum?id={note.id}&noteId={withdraw_note["note"]["id"]}\n'
 
         assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Withdrawal_Reversion')
 
@@ -483,7 +516,7 @@ class TestVenueSubmission():
 
         note = author_client.get_note(withdraw_note['note']['forum'])
         assert note
-        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Edit']
+        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Post_Submission']
         assert note.content['venue']['value'] == 'TestVenue Submission'
         assert note.content['venueid']['value'] == 'TestVenue.cc/Submission'
 
@@ -511,7 +544,7 @@ class TestVenueSubmission():
 
         note = pc_client.get_note(desk_reject_note['note']['forum'])
         assert note
-        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Edit', 'TestVenue.cc/-/Desk_Rejected_Submission']
+        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Post_Submission', 'TestVenue.cc/-/Desk_Rejected_Submission']
         assert note.readers == ['everyone']
         assert note.writers == ['TestVenue.cc', 'TestVenue.cc/Submission2/Authors']
         assert note.signatures == ['TestVenue.cc/Submission2/Authors']
@@ -560,7 +593,7 @@ class TestVenueSubmission():
 
         note = pc_client.get_note(desk_reject_note['note']['forum'])
         assert note
-        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Edit']
+        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Post_Submission']
         assert note.content['venue']['value'] == 'TestVenue Submission'
         assert note.content['venueid']['value'] == 'TestVenue.cc/Submission'
 
@@ -580,7 +613,6 @@ class TestVenueSubmission():
         #release papers to the public
         venue.submission_stage = SubmissionStage(double_blind=True, readers=[openreview.builder.SubmissionStage.Readers.EVERYONE])
         venue.create_submission_stage()
-        venue.setup_post_submission_stage()
 
         submissions = venue.get_submissions()
         assert submissions and len(submissions) == 2
@@ -653,3 +685,69 @@ class TestVenueSubmission():
         assert openreview_client.get_invitation('TestVenue.cc/-/Camera_Ready_Revision')
         assert openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Submission1/-/Camera_Ready_Revision')
         assert not openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Submission2/-/Camera_Ready_Revision')
+
+    def test_custom_stage(self, venue, openreview_client, helpers):
+
+        submissions = venue.get_submissions(sort='number:asc')
+        assert submissions and len(submissions) == 2
+
+        assert openreview_client.get_invitation('TestVenue.cc/-/Camera_Ready_Verification')
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation TestVenue.cc/Submission1/-/Camera_Ready_Verification was not found'):
+            assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Camera_Ready_Verification')
+
+        openreview_client.post_invitation_edit(
+            invitations='TestVenue.cc/-/Edit',
+            readers=['TestVenue.cc'],
+            writers=['TestVenue.cc'],
+            signatures=['TestVenue.cc'],
+            invitation=openreview.api.Invitation(id='TestVenue.cc/-/Camera_Ready_Verification',
+                signatures=['TestVenue.cc'],
+                edit = {
+                    'invitation': {
+                        'cdate': openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Camera_Ready_Verification-0-0')
+
+        assert openreview_client.get_invitation('TestVenue.cc/-/Camera_Ready_Verification')
+        invitation = openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Submission1/-/Camera_Ready_Verification')
+        assert invitation
+        assert invitation.invitees == ['TestVenue.cc/Program_Chairs']
+        assert invitation.edit['note']['readers'] == [
+            'TestVenue.cc/Program_Chairs',
+            'TestVenue.cc/Submission1/Area_Chairs',
+            'TestVenue.cc/Submission1/Authors'
+        ]
+        assert 'verification' in invitation.edit['note']['content']
+        assert invitation.edit['note']['forum'] == submissions[0].id
+        assert invitation.edit['note']['replyto'] == submissions[0].id
+        assert not openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Submission2/-/Camera_Ready_Verification')
+
+        pc_client = OpenReviewClient(username='venue_pc@mail.com', password='1234')
+
+        verification = pc_client.post_note_edit(invitation='TestVenue.cc/Submission1/-/Camera_Ready_Verification',
+            signatures=['TestVenue.cc/Program_Chairs'],
+            note=Note(
+                content={
+                    'verification': { 'value': 'I confirm that camera ready manuscript complies with the TV 22 stylefile and, if appropriate, includes the minor revisions that were requested.' },
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=verification['id'])
+
+        verification_note = openreview_client.get_notes(invitation='TestVenue.cc/Submission1/-/Camera_Ready_Verification')[0]
+
+        messages = openreview_client.get_messages(subject='[TV 22] A camera ready verification has been received on your Paper Number: 1, Paper Title: "Paper 1 Title UPDATED"')
+        assert len(messages) == 1
+        assert 'celeste@maileleven.com' in messages[0]['content']['to']
+        assert messages[0]['content']['text'] == f'''The camera ready verification for submission number {str(submissions[0].number)} has been posted.
+Please follow this link: https://openreview.net/forum?id={submissions[0].id}&noteId={verification_note.id}'''
+
+        messages = openreview_client.get_messages(subject='[TV 22] Your camera ready verification has been received on Paper Number: 1, Paper Title: "Paper 1 Title UPDATED"')
+        assert len(messages) == 1
+        assert 'venue_pc@mail.com' in messages[0]['content']['to']
+        assert messages[0]['content']['text'] == f'''The camera ready verification for submission number {str(submissions[0].number)} has been posted.
+Please follow this link: https://openreview.net/forum?id={submissions[0].id}&noteId={verification_note.id}'''

@@ -94,7 +94,22 @@ class Recruitment(object):
             invited_group_ids=list(set(invited_roles) & set(memberships))
             member_group_ids=list(set(member_roles) & set(memberships))
 
-            if invited_group_ids:
+            profile_emails = []
+            profile = None
+            is_profile_id = email.startswith('~')
+            if is_profile_id:
+                profile = tools.get_profile(self.client, email)
+                profile_emails = profile.content['emails'] if profile else []
+
+            if profile and not profile_emails:
+                if 'profiles_without_email' not in recruitment_status['errors']:
+                    recruitment_status['errors']['profiles_without_email'] = []
+                recruitment_status['errors']['profiles_without_email'].append(email)
+            elif is_profile_id and not profile:
+                if 'invalid_profile_ids' not in recruitment_status['errors']:
+                    recruitment_status['errors']['invalid_profile_ids'] = []
+                recruitment_status['errors']['invalid_profile_ids'].append(email)
+            elif invited_group_ids:
                 invited_group_id=invited_group_ids[0]
                 if invited_group_id not in recruitment_status['already_invited']:
                     recruitment_status['already_invited'][invited_group_id] = [] 
@@ -106,7 +121,7 @@ class Recruitment(object):
                 recruitment_status['already_member'][member_group_id].append(email)
             else:
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
-                if not name and not email.startswith('~'):
+                if not name and not is_profile_id:
                     name = 'invitee'
                 try:
                     tools.recruit_reviewer(self.client, email, name,

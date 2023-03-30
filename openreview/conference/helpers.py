@@ -2,7 +2,7 @@ import openreview
 import datetime
 import json
 
-def get_conference(client, request_form_id, support_user='OpenReview.net/Support', setup=True):
+def get_conference(client, request_form_id, support_user='OpenReview.net/Support', setup=False):
 
     note = client.get_note(request_form_id)
     if note.content.get('api_version') == '2':
@@ -13,6 +13,8 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.request_form_id = request_form_id
         venue.use_area_chairs = note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs'
         venue.use_senior_area_chairs = note.content.get('senior_area_chairs') == 'Yes, our venue has Senior Area Chairs'
+        venue.use_ethics_chairs = note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers'
+        venue.use_ethics_reviewers = note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers'
         venue.short_name = note.content.get('Abbreviated Venue Name')
         venue.name = note.content.get('Official Venue Name')
         venue.website = note.content.get('Official Website URL')
@@ -371,6 +373,7 @@ def get_submission_stage(request_forum):
 
     email_pcs = 'Yes' in request_forum.content.get('email_pcs_for_new_submissions', '')
     submission_email = request_forum.content.get('submission_email', None)
+    hide_fields = request_forum.content.get('hide_fields', [])
 
     return openreview.stages.SubmissionStage(name = name,
         double_blind=double_blind,
@@ -379,6 +382,7 @@ def get_submission_stage(request_forum):
         second_due_date=submission_second_due_date,
         additional_fields=submission_additional_options,
         remove_fields=submission_remove_options,
+        hide_fields=hide_fields,
         subject_areas=subject_areas,
         create_groups=create_groups,
         author_names_revealed=author_names_revealed,
@@ -599,6 +603,15 @@ def get_meta_review_stage(request_forum):
     else:
         meta_review_due_date = None
 
+    metareview_exp_date = request_forum.content.get('meta_review_expiration_date', '').strip()
+    if metareview_exp_date:
+        try:
+            metareview_exp_date = datetime.datetime.strptime(metareview_exp_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            metareview_exp_date = datetime.datetime.strptime(metareview_exp_date, '%Y/%m/%d')
+    else:
+        metareview_exp_date = None
+
     meta_review_form_additional_options = request_forum.content.get('additional_meta_review_form_options', {})
     options = request_forum.content.get('recommendation_options', '').strip()
     if options:
@@ -632,6 +645,7 @@ def get_meta_review_stage(request_forum):
     return openreview.stages.MetaReviewStage(
         start_date = meta_review_start_date,
         due_date = meta_review_due_date,
+        exp_date = metareview_exp_date,
         public = request_forum.content.get('make_meta_reviews_public', '').startswith('Yes'),
         release_to_authors = (request_forum.content.get('release_meta_reviews_to_authors', '').startswith('Yes')),
         release_to_reviewers = release_to_reviewers,
