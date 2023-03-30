@@ -18,6 +18,7 @@ def process(client, note, invitation):
             conference.setup_post_submission_stage(hide_fields=forum_note.content.get('hide_fields', []))
 
         if invitation_type == 'Revision':
+            conference.create_submission_stage()
             submission_deadline = forum_note.content.get('Submission Deadline')
             if submission_deadline:
                 try:
