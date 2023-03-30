@@ -94,7 +94,17 @@ class Recruitment(object):
             invited_group_ids=list(set(invited_roles) & set(memberships))
             member_group_ids=list(set(member_roles) & set(memberships))
 
-            if invited_group_ids:
+            profile_emails = []
+            profile = None
+            if email.startswith('~'):
+                profile = tools.get_profile(self.client, email)
+                profile_emails = profile.content['emails'] if profile else []
+
+            if profile and not profile_emails:
+                if 'profiles_without_email' not in recruitment_status['errors']:
+                    recruitment_status['errors']['profiles_without_email'] = []
+                recruitment_status['errors']['profiles_without_email'].append(email)
+            elif invited_group_ids:
                 invited_group_id=invited_group_ids[0]
                 if invited_group_id not in recruitment_status['already_invited']:
                     recruitment_status['already_invited'][invited_group_id] = [] 
