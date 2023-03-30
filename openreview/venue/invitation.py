@@ -112,7 +112,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
 
-        content = submission_stage.get_content(api_version='2', conference=self.venue)
+        content = submission_stage.get_content(api_version='2', conference=self.venue, venue_id=self.venue.get_submission_venue_id())
 
         edit_readers = ['everyone'] if submission_stage.create_groups else [venue_id, '${2/note/content/authorids/value}']
         note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, '${2/content/authorids/value}']

@@ -206,7 +206,7 @@ class SubmissionStage(object):
     def get_desk_rejected_submission_id(self, conference):
         return conference.get_invitation_id(f'Desk_Rejected_{self.name}')
 
-    def get_content(self, api_version='1', conference=None):
+    def get_content(self, api_version='1', conference=None, venue_id=None):
 
         if api_version == '1':
             content = default_content.submission.copy()
@@ -268,22 +268,23 @@ class SubmissionStage(object):
                         if field not in content:
                             content[field] = { 'delete': True }
 
-                content['venue'] = {
-                    'value': {
-                        'param': {
-                            'const': openreview.tools.pretty_id(conference.get_submission_venue_id()),
-                            'hidden': True
+                if venue_id:
+                    content['venue'] = {
+                        'value': {
+                            'param': {
+                                'const': openreview.tools.pretty_id(venue_id),
+                                'hidden': True
+                            }
                         }
                     }
-                }
-                content['venueid'] = {
-                    'value': {
-                        'param': {
-                            'const': conference.get_submission_venue_id(),
-                            'hidden': True
+                    content['venueid'] = {
+                        'value': {
+                            'param': {
+                                'const': venue_id,
+                                'hidden': True
+                            }
                         }
-                    }
-                }                                            
+                    }                                            
 
         return content
     
@@ -438,7 +439,7 @@ class SubmissionRevisionStage():
 
     def get_content(self, api_version='2', conference=None):
         
-        content = default_content.submission_v2.copy()
+        content = conference.submission_stage.get_content(api_version, conference).copy()
 
         for field in self.remove_fields:
             if field in content:
