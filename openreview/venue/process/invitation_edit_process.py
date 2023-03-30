@@ -14,9 +14,9 @@ def process(client, invitation):
     now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
     cdate = invitation.edit['invitation']['cdate'] if 'cdate' in invitation.edit['invitation'] else invitation.cdate
 
-    if cdate > now:
+    if cdate > now and not client.get_invitations(invitation=invitation.id, limit=1):
         ## invitation is in the future, do not process
-        print('invitation is not yet active', cdate)
+        print('invitation is not yet active and no child invitations created', cdate)
         return
 
     def expire_existing_invitations():

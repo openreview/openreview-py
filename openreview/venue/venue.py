@@ -164,7 +164,7 @@ class Venue(object):
         return invitation_id
 
     def get_committee(self, number = None, submitted_reviewers = False, with_authors = False):
-        committee = [self.id]
+        committee = []
 
         if with_authors:
             committee.append(self.get_authors_id(number))
@@ -393,6 +393,11 @@ class Venue(object):
         self.invitation_builder.set_desk_rejection_invitation()
         self.invitation_builder.set_post_submission_invitation()
         self.invitation_builder.set_pc_submission_revision_invitation()
+        self.invitation_builder.set_submission_reviewer_group_invitation()
+        if self.use_area_chairs:
+            self.invitation_builder.set_submission_area_chair_group_invitation()
+        if self.use_senior_area_chairs:
+            self.invitation_builder.set_submission_senior_area_chair_group_invitation()
         if self.expertise_selection_stage:
             self.invitation_builder.set_expertise_selection_invitations()
 
@@ -409,10 +414,6 @@ class Venue(object):
             self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)                        
 
     def create_post_submission_stage(self):
-
-        submissions = self.get_submissions()
-        
-        self.group_builder.create_paper_committee_groups(submissions)
 
         self.invitation_builder.set_post_submission_invitation()
         
@@ -436,6 +437,14 @@ class Venue(object):
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
         ## do nothing
         return True
+    
+    def create_withdraw_invitations(self):
+        ## deprecated
+        return self.invitation_builder.set_withdraw_invitation()
+    
+    def create_desk_reject_invitations(self):
+        ## deprecated
+        return self.invitation_builder.set_desk_rejection_invitation()
 
     def create_bid_stages(self):
         self.invitation_builder.set_bid_invitations()
