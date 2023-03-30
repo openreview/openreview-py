@@ -358,6 +358,10 @@ class Conference(object):
     def set_submission_stage(self, stage):
         self.submission_stage = stage
         return self.__create_submission_stage()
+    
+    ## API2 only
+    def create_submission_stage(self):
+        return
 
     def set_expertise_selection_stage(self, stage):
         self.expertise_selection_stage = stage

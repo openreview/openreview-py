@@ -1467,7 +1467,7 @@ class OpenReviewClient(object):
         def add_member(group, members):
             group = self.get_group(group) if type(group) in string_types else group
             if group.invitations:
-                self.post_group_edit(invitation = group.invitations[0], 
+                self.post_group_edit(invitation = f'{group.domain}/-/Edit', 
                     signatures = group.signatures, 
                     group = Group(
                         id = group.id, 
@@ -1507,7 +1507,7 @@ class OpenReviewClient(object):
         def remove_member(group, members):
             group = self.get_group(group) if type(group) in string_types else group
             if group.invitations:
-                self.post_group_edit(invitation = group.invitations[0], 
+                self.post_group_edit(invitation = f'{group.domain}/-/Edit', 
                     signatures = group.signatures, 
                     group = Group(
                         id = group.id, 
@@ -1680,13 +1680,15 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    def post_group_edit(self, invitation, signatures, group=None, readers=None, writers=None):
+    def post_group_edit(self, invitation, signatures=None, group=None, readers=None, writers=None, content=None, replacement=None):
         """
         """
         edit_json = {
-            'invitation': invitation,
-            'group': group.to_json() if group else {}
+            'invitation': invitation
         }
+
+        if group is not None:
+            edit_json['group'] = group.to_json()
 
         if signatures is not None:
             edit_json['signatures'] = signatures
@@ -1696,6 +1698,12 @@ class OpenReviewClient(object):
 
         if writers is not None:
             edit_json['writers'] = writers
+
+        if content is not None:
+            edit_json['content'] = content
+
+        if replacement is not None:
+            edit_json['replacement'] = replacement            
 
         response = requests.post(self.group_edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
@@ -2169,6 +2177,12 @@ class Invitation(object):
     def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
+    
+    def is_active(self):
+        now = tools.datetime_millis(datetime.datetime.utcnow())
+        cdate = self.cdate if self.cdate else now
+        edate = self.expdate if self.expdate else now
+        return cdate <= now and now <= edate
 
     def is_active(self):
         now = tools.datetime_millis(datetime.datetime.utcnow())
@@ -2426,7 +2440,7 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, content=None, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, parent = None, details = None):
+    def __init__(self, id=None, content=None, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, parent = None, details = None):
         # post attributes
         self.id=id
         self.invitation=invitation

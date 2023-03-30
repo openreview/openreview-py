@@ -101,3 +101,46 @@ To view the submission, click here: https://openreview.net/forum?id={note.forum}
         client.add_members_to_group(authors_id, authors_group_id)
     if action == 'deleted':
         client.remove_members_from_group(authors_id, authors_group_id)
+
+    ### Invitation invitations
+    invitation_invitations = [i for i in client.get_all_invitations(prefix=venue_id + '/-/', type='invitation') if i.is_active()]
+
+    for venue_invitation in invitation_invitations:
+        print('processing invitation: ', venue_invitation.id)
+        accepted_only = ('accepted_submissions' == venue_invitation.content.get('source', {}).get('value', False)) if venue_invitation.content else False
+        content_keys = venue_invitation.edit.get('content', {}).keys()
+        if not accepted_only and 'noteId' in content_keys and 'noteNumber' in content_keys and len(content_keys) == 2:
+            print('create invitation: ', venue_invitation.id)
+            client.post_invitation_edit(invitations=venue_invitation.id,
+                content={
+                    'noteId': { 'value': note.id },
+                    'noteNumber': { 'value': note.number }
+                },
+                invitation=openreview.api.Invitation()
+            )
+
+    ### Post Submission invitation
+    post_submission_invitation = client.get_invitation(f'{venue_id}/-/Post_{submission_name}')
+    if post_submission_invitation.is_active():
+        print('post note edit: ', post_submission_invitation.id)
+        client.post_note_edit(
+            invitation=post_submission_invitation.id,
+            note=openreview.api.Note(
+                id=note.id
+            ),
+            signatures=[venue_id]
+        )            
+
+    ### Group invitations
+    group_invitations = [i for i in client.get_all_invitations(prefix=venue_id, type='group') if i.is_active()]
+
+    for group_invitation in group_invitations:
+        print('create invitation: ', group_invitation.id)
+        client.post_group_edit(
+            invitation=group_invitation.id,
+            content={
+                'noteId': { 'value': note.id },
+                'noteNumber': { 'value': note.number },
+            },
+            group=openreview.api.Group()
+        )       

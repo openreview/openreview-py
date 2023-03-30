@@ -79,6 +79,7 @@ class SubmissionStage(object):
         self.due_date = due_date
         self.exp_date = (due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if due_date else None
         self.second_due_date = second_due_date
+        self.second_due_date_exp_date = (second_due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if second_due_date else None
         self.name = name
         self.readers = readers
         self.double_blind = double_blind
@@ -205,7 +206,7 @@ class SubmissionStage(object):
     def get_desk_rejected_submission_id(self, conference):
         return conference.get_invitation_id(f'Desk_Rejected_{self.name}')
 
-    def get_content(self, api_version='1'):
+    def get_content(self, api_version='1', conference=None, venue_id=None):
 
         if api_version == '1':
             content = default_content.submission.copy()
@@ -258,6 +259,32 @@ class SubmissionStage(object):
 
             if self.second_due_date and 'pdf' in content:
                 content['pdf']['value']['param']['optional'] = True
+
+            if conference:
+                submission_id = self.get_submission_id(conference)
+                submission_invitation = openreview.tools.get_invitation(conference.client, submission_id)
+                if submission_invitation:
+                    for field, value in submission_invitation.edit['note']['content'].items():
+                        if field not in content:
+                            content[field] = { 'delete': True }
+
+                if venue_id:
+                    content['venue'] = {
+                        'value': {
+                            'param': {
+                                'const': openreview.tools.pretty_id(venue_id),
+                                'hidden': True
+                            }
+                        }
+                    }
+                    content['venueid'] = {
+                        'value': {
+                            'param': {
+                                'const': venue_id,
+                                'hidden': True
+                            }
+                        }
+                    }                                            
 
         return content
     
@@ -410,6 +437,48 @@ class SubmissionRevisionStage():
         self.multiReply=multiReply
         self.allow_author_reorder=allow_author_reorder
 
+    def get_content(self, api_version='2', conference=None):
+        
+        content = conference.submission_stage.get_content(api_version, conference).copy()
+
+        for field in self.remove_fields:
+            if field in content:
+                del content[field]
+            else:
+                print('Field {} not found in content: {}'.format(field, content))
+
+        for order, key in enumerate(self.additional_fields, start=10):
+            value = self.additional_fields[key]
+            value['order'] = order
+            content[key] = value
+
+        if self.allow_author_reorder:
+            content['authors'] = {
+                'value': {
+                    'param': {
+                        'type': 'string[]',
+                        'const': ['${{6/id}/content/authors/value}'],
+                        'hidden': True,
+                    }
+                },
+                'order': 3
+            }
+            content['authorids'] = {
+                'value': ['${{4/id}/content/authorids/value}'],
+                'order':4
+            }            
+
+        if conference:
+            invitation_id = conference.get_invitation_id(self.name)
+            invitation = openreview.tools.get_invitation(conference.client, invitation_id)
+            if invitation:
+                for field, value in invitation.edit['invitation']['edit']['note']['content'].items():
+                    if field not in content:
+                        content[field] = { 'delete': True }
+
+        
+        return content        
+
 class ReviewStage(object):
 
     class Readers(Enum):
@@ -510,7 +579,31 @@ class ReviewStage(object):
             return '~.*|' + conference.get_program_chairs_id()
 
         return conference.get_anon_reviewer_id(number=number, anon_id='.*') + '|' +  conference.get_program_chairs_id()
+    
+    def get_content(self, api_version='2', conference=None):
 
+        content = default_content.review_v2.copy()
+
+        for field in self.remove_fields:
+            if field in content:
+                del content[field]
+            else:
+                print('Field {} not found in content: {}'.format(field, content))
+
+        for order, key in enumerate(self.additional_fields, start=10):
+            value = self.additional_fields[key]
+            value['order'] = order
+            content[key] = value
+
+        if conference:
+            invitation_id = conference.get_invitation_id(self.name)
+            invitation = openreview.tools.get_invitation(conference.client, invitation_id)
+            if invitation:
+                for field, value in invitation.edit['invitation']['edit']['note']['content'].items():
+                    if field not in content:
+                        content[field] = { 'delete': True }
+
+        return content
 class EthicsReviewStage(object):
 
     class Readers(Enum):
@@ -627,6 +720,7 @@ class ReviewRebuttalStage(object):
         self.name = name
         self.email_pcs = email_pcs
         self.additional_fields = additional_fields
+        self.remove_fields = []
         self.single_rebuttal = single_rebuttal
         self.unlimited_rebuttals = unlimited_rebuttals
         self.readers = readers
@@ -667,6 +761,31 @@ class ReviewRebuttalStage(object):
 
         invitation_readers.append(conference.get_authors_id(number=number))
         return invitation_readers        
+
+    def get_content(self, api_version='2', conference=None):
+        
+        content = default_content.rebuttal_v2.copy()
+
+        for field in self.remove_fields:
+            if field in content:
+                del content[field]
+            else:
+                print('Field {} not found in content: {}'.format(field, content))
+
+        for order, key in enumerate(self.additional_fields, start=10):
+            value = self.additional_fields[key]
+            value['order'] = order
+            content[key] = value
+
+        if conference:
+            invitation_id = conference.get_invitation_id(self.name)
+            invitation = openreview.tools.get_invitation(conference.client, invitation_id)
+            if invitation:
+                for field, value in invitation.edit['invitation']['edit']['note']['content'].items():
+                    if field not in content:
+                        content[field] = { 'delete': True }
+
+        return content
 
 class ReviewRevisionStage(object):
 
@@ -805,7 +924,7 @@ class CommentStage(object):
         return '|'.join(committee)
 
     def get_invitees(self, conference, number):
-        invitees = [conference.get_program_chairs_id(), conference.support_user]
+        invitees = [conference.get_id(), conference.support_user]
 
         if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.invitees:
             invitees.append(conference.get_senior_area_chairs_id(number))
@@ -903,6 +1022,31 @@ class MetaReviewStage(object):
 
         return '|'.join(committee)
 
+    def get_content(self, api_version='2', conference=None):
+        
+        content = default_content.meta_review_v2.copy()
+
+        for field in self.remove_fields:
+            if field in content:
+                del content[field]
+            else:
+                print('Field {} not found in content: {}'.format(field, content))
+
+        for order, key in enumerate(self.additional_fields, start=10):
+            value = self.additional_fields[key]
+            value['order'] = order
+            content[key] = value
+
+        if conference:
+            invitation_id = conference.get_invitation_id(self.name)
+            invitation = openreview.tools.get_invitation(conference.client, invitation_id)
+            if invitation:
+                for field, value in invitation.edit['invitation']['edit']['note']['content'].items():
+                    if field not in content:
+                        content[field] = { 'delete': True }
+
+        return content
+
 class MetaReviewRevisionStage(object):
 
     def __init__(self, start_date = None, due_date = None, name = 'Meta_Review_Revision', additional_fields = {}, remove_fields = []):
@@ -929,6 +1073,7 @@ class DecisionStage(object):
         self.additional_fields = additional_fields
         self.decisions_file = decisions_file
         self.decision_field_name = 'decision'
+        self.remove_fields = []
 
     def get_readers(self, conference, number):
 
@@ -959,6 +1104,34 @@ class DecisionStage(object):
             return []
 
         return [conference.get_authors_id(number = number)]
+    
+    def get_content(self, api_version='2', conference=None):
+        
+        content = default_content.decision_v2.copy()
+
+        for field in self.remove_fields:
+            if field in content:
+                del content[field]
+            else:
+                print('Field {} not found in content: {}'.format(field, content))
+
+        for order, key in enumerate(self.additional_fields, start=10):
+            value = self.additional_fields[key]
+            value['order'] = order
+            content[key] = value
+
+        if conference:
+            invitation_id = conference.get_invitation_id(self.name)
+            invitation = openreview.tools.get_invitation(conference.client, invitation_id)
+            if invitation:
+                for field, value in invitation.edit['invitation']['edit']['note']['content'].items():
+                    if field not in content:
+                        content[field] = { 'delete': True }
+
+        
+        if 'decision' in content:
+            content['decision']['value']['param']['enum'] = self.options
+        return content    
 
 class RegistrationStage(object):
 
@@ -972,6 +1145,53 @@ class RegistrationStage(object):
         self.title = title
         self.remove_fields = remove_fields
 
+    def get_content(self, api_version='2', conference=None):
+        
+        content = {
+            'profile_confirmed': {
+                'description': 'In order to avoid conflicts of interest in reviewing, we ask that all reviewers take a moment to update their OpenReview profiles (link in instructions above) with their latest information regarding email addresses, work history and professional relationships. Please confirm that your OpenReview profile is up-to-date by selecting "Yes".\n\n',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': ['Yes'],
+                        'input': 'checkbox'
+                    }
+                },
+                'order': 1
+            },
+            'expertise_confirmed': {
+                'description': 'We will be using OpenReview\'s Expertise System as a factor in calculating paper-reviewer affinity scores. Please take a moment to ensure that your latest papers are visible at the Expertise Selection (link in instructions above). Please confirm finishing this step by selecting "Yes".\n\n',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': ['Yes'],
+                        'input': 'checkbox'
+                    }
+                },
+                'order': 2
+            }
+        }
+
+        for field in self.remove_fields:
+            if field in content:
+                del content[field]
+            else:
+                print('Field {} not found in content: {}'.format(field, content))
+
+        for order, key in enumerate(self.additional_fields, start=10):
+            value = self.additional_fields[key]
+            value['order'] = order
+            content[key] = value
+
+        if conference:
+            invitation_id = conference.get_invitation_id(self.name)
+            invitation = openreview.tools.get_invitation(conference.client, invitation_id)
+            if invitation:
+                for field, value in invitation.edit['invitation']['edit']['note']['content'].items():
+                    if field not in content:
+                        content[field] = { 'delete': True }
+
+        return content
 class CustomStage(object):
     """
     param reply_to: submission, reviews, metareviews, forum
@@ -1099,3 +1319,18 @@ class CustomStage(object):
             reply_to = 'metareviews'
         
         return reply_to
+
+    def get_content(self, api_version='2', conference=None):
+        
+        content = self.content.copy()
+
+        if conference:
+            invitation_id = conference.get_invitation_id(self.name)
+            invitation = openreview.tools.get_invitation(conference.client, invitation_id)
+            if invitation:
+                for field, value in invitation.edit['invitation']['edit']['note']['content'].items():
+                    if field not in content:
+                        content[field] = { 'delete': True }
+
+        
+        return content

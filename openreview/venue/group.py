@@ -155,7 +155,7 @@ class GroupBuilder(object):
             'reviewers_id': { 'value': self.venue.get_reviewers_id() },
             'reviewers_name': { 'value': self.venue.reviewers_name },
             'reviewers_anon_name': { 'value': 'Reviewer_' },
-            'reviewers_submitted_name': { 'value': f'{self.venue.reviewers_name}/Submitted' },
+            'reviewers_submitted_name': { 'value': 'Submitted' },
             'reviewers_custom_max_papers_id': { 'value': self.venue.get_custom_max_papers_id(self.venue.get_reviewers_id()) },
             'reviewers_affinity_score_id': { 'value': self.venue.get_affinity_score_id(self.venue.get_reviewers_id()) },
             'reviewers_conflict_id': { 'value': self.venue.get_conflict_score_id(self.venue.get_reviewers_id()) },
@@ -394,76 +394,6 @@ class GroupBuilder(object):
                             members=[]
                         )                
             self.post_group(ethics_chairs_group)
-
-    def create_paper_committee_groups(self, submissions, overwrite=False):
-
-        group_by_id = { g.id: g for g in self.client.get_all_groups(prefix=f'{self.venue.id}/{self.venue.submission_stage.name}.*') }
-
-        def create_paper_commmitee_group(note):
-            # Reviewers Paper group
-            reviewers_id=self.venue.get_reviewers_id(number=note.number)
-            group = group_by_id.get(reviewers_id)
-            if not group or overwrite:
-                self.post_group(openreview.api.Group(id=reviewers_id,
-                    readers=self.get_reviewer_paper_group_readers(note.number),
-                    nonreaders=[self.venue.get_authors_id(note.number)],
-                    deanonymizers=self.get_reviewer_identity_readers(note.number),
-                    writers=self.get_reviewer_paper_group_writers(note.number),
-                    signatures=[self.venue.id],
-                    signatories=[self.venue.id],
-                    anonids=True,
-                    members=group.members if group else []
-                ))
-
-            # Reviewers Submitted Paper group
-            reviewers_submitted_id = self.venue.get_reviewers_id(number=note.number) + '/Submitted'
-            group = group_by_id.get(reviewers_submitted_id)
-            if not group or overwrite:
-                readers=[self.venue.id]
-                if self.venue.use_senior_area_chairs:
-                    readers.append(self.venue.get_senior_area_chairs_id(note.number))
-                if self.venue.use_area_chairs:
-                    readers.append(self.venue.get_area_chairs_id(note.number))
-                readers.append(reviewers_submitted_id)
-                self.post_group(openreview.api.Group(id=reviewers_submitted_id,
-                    readers=readers,
-                    writers=[self.venue.id],
-                    signatures=[self.venue.id],
-                    signatories=[self.venue.id],
-                    members=group.members if group else []
-                ))
-
-            # Area Chairs Paper group
-            if self.venue.use_area_chairs:
-                area_chairs_id=self.venue.get_area_chairs_id(number=note.number)
-                group = group_by_id.get(area_chairs_id)
-                if not group or overwrite:
-                    self.post_group(openreview.api.Group(id=area_chairs_id,
-                        readers=self.get_area_chair_paper_group_readers(note.number),
-                        nonreaders=[self.venue.get_authors_id(note.number)],
-                        deanonymizers=self.get_area_chair_identity_readers(note.number),
-                        writers=[self.venue.id],
-                        signatures=[self.venue.id],
-                        signatories=[self.venue.id],
-                        anonids=True,
-                        members=group.members if group else []
-                    ))
-
-            # Senior Area Chairs Paper group
-            if self.venue.use_senior_area_chairs:
-                senior_area_chairs_id=self.venue.get_senior_area_chairs_id(number=note.number)
-                group = group_by_id.get(senior_area_chairs_id)
-                if not group or overwrite:
-                    self.post_group(openreview.api.Group(id=senior_area_chairs_id,
-                        readers=self.get_senior_area_chair_identity_readers(note.number),
-                        nonreaders=[self.venue.get_authors_id(note.number)],
-                        writers=[self.venue.id],
-                        signatures=[self.venue.id],
-                        signatories=[self.venue.id, senior_area_chairs_id],
-                        members=group.members if group else []
-                    ))
-
-        openreview.tools.concurrent_requests(create_paper_commmitee_group, submissions, desc='create_paper_committee_groups')
 
     def add_to_active_venues(self):
         active_venues = self.client_v1.get_group('active_venues')

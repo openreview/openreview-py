@@ -86,7 +86,7 @@ Title: {submission.content['title']['value']}
     reviewers_name = domain.get_content_value('reviewers_name')
     paper_reviewers_id = f'{paper_group_id}/{reviewers_name}'
     reviewers_submitted_name = domain.get_content_value('reviewers_submitted_name')
-    paper_reviewers_submitted_id = f'{paper_group_id}/{reviewers_submitted_name}'
+    paper_reviewers_submitted_id = f'{paper_reviewers_id}/{reviewers_submitted_name}'
     if 'everyone' in rebuttal.readers or paper_reviewers_id in rebuttal.readers:
         client.post_message(
             recipients=[paper_reviewers_id],
