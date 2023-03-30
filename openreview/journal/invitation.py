@@ -1465,7 +1465,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'weight': {
                     'param': {
                         'enum': [6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-                        'default': self.journal.ae_custom_max_papers
+                        'default': self.journal.get_ae_max_papers()
                     }
                 }
             }

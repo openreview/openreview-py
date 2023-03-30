@@ -239,7 +239,7 @@ class Assignment(object):
                         no_decision_count += 1
                 if no_decision_count <= 1:
                     # they have sufficient total quota of assignment
-                    quota = max(quota, quota_edges.get(action_editor, journal.ae_custom_max_papers) - len(assignments))
+                    quota = max(quota, quota_edges.get(action_editor, journal.get_ae_max_papers()) - len(assignments))
 
             custom_load_edges.append(openreview.api.Edge(
                 signatures=[journal.venue_id],

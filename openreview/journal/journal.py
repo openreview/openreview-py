@@ -62,7 +62,6 @@ class Journal(object):
         self.assignment = Assignment(self)
         self.recruitment = Recruitment(self)
         self.unavailable_reminder_period = 4 # weeks
-        self.ae_custom_max_papers = 12
 
     def __get_group_id(self, name, number=None):
         if number:
@@ -431,7 +430,10 @@ class Journal(object):
         return self.settings.get('number_of_reviewers', 3)
 
     def get_reviewers_max_papers(self):
-        return self.settings.get('reviewers_max_papers', 6)   
+        return self.settings.get('reviewers_max_papers', 6)
+
+    def get_ae_max_papers(self):
+        return self.settings.get('action_editors_max_papers', 12)       
 
     def should_release_authors(self):
         return self.is_submission_public() and self.are_authors_anonymous()
