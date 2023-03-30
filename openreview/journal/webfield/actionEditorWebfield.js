@@ -50,7 +50,9 @@ var reviewersUrl = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',tai
     REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
     REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' +
     REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
-  '&maxColumns=2&version=2&referrer=' + referrerUrl;
+  '&maxColumns=2&version=2' +
+  '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available' +
+  '&referrer=' + referrerUrl;
 
 
 var HEADER = {
@@ -378,7 +380,8 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
             url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=' + REVIEWERS_ASSIGNMENT_ID +
             '&edit=' + REVIEWERS_ASSIGNMENT_ID +
             '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
-            '&maxColumns=2&version=2'
+            '&maxColumns=2&version=2' +
+            '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available'
           }
         ] : [],
         duedate: reviewInvitation && reviewInvitation.duedate || 0
