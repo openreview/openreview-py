@@ -219,7 +219,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
     def test_post_submission_stage(self, venue, openreview_client, helpers):
                 
         venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS, SubmissionStage.Readers.AREA_CHAIRS]
-        venue.submission_stage.exp_date = datetime.datetime.utcnow() + datetime.timedelta(seconds = 25)
+        venue.submission_stage.exp_date = datetime.datetime.utcnow() + datetime.timedelta(seconds = 60)
         venue.create_submission_stage()
 
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Post_Submission-0-0')
