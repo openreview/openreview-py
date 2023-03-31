@@ -9,6 +9,7 @@ def process(client, edit, invitation):
     ## Make the retraction public
     print('Make retraction public')
     invitation = journal.invitation_builder.set_note_retraction_release_invitation(submission)
+    author_readers = submission.content['authors'].get('readers', [])
 
     if edit.note.content['approval']['value'] == 'Yes':
         client.post_note_edit(invitation= journal.get_retracted_id(),
@@ -16,7 +17,7 @@ def process(client, edit, invitation):
                                 note=openreview.api.Note(id=submission.id,
                                 content= {
                                     '_bibtex': {
-                                        'value': journal.get_bibtex(submission, journal.retracted_venue_id, anonymous=submission.content['authors'].get('readers', []) != ['everyone'])
+                                        'value': journal.get_bibtex(submission, journal.retracted_venue_id, anonymous=(author_readers and author_readers != ['everyone']))
                                     }
                                 }
         ))

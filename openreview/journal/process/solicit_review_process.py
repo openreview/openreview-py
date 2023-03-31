@@ -5,6 +5,10 @@ def process(client, edit, invitation):
     solicit_note = edit.note
     submission = client.get_note(edit.note.forum)
 
+    if solicit_note.ddate:
+        journal.invitation_builder.expire_invitation(journal.get_solicit_review_approval_id(number=submission.number, signature=solicit_note.signatures[0]))
+        return
+
     ## Notify readers
     duedate = journal.get_due_date(weeks = 1)
     journal.invitation_builder.set_note_solicit_review_approval_invitation(submission, solicit_note, duedate)

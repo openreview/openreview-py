@@ -2139,8 +2139,9 @@ The TMLR Editors-in-Chief
         assert note.content['authorids']['value'] == ['~Melissa_Eight1', '~SomeFirstName_User1']
         assert note.content['authors']['value'] == ['Melissa Eight', 'SomeFirstName User']
         # Check with cArlos
-        assert note.content['authorids'].get('readers') == ['everyone']
-        assert note.content['authors'].get('readers') == ['everyone']
+        assert note.content['authorids'].get('readers') is None
+        assert note.content['authors'].get('readers') is None
+        assert note.content['supplementary_material'].get('readers') is None
         assert note.content['venue']['value'] == 'Accepted by TMLR'
         assert note.content['venueid']['value'] == 'TMLR'
         assert note.content['title']['value'] == 'Paper title VERSION 2'
@@ -2198,8 +2199,9 @@ note={Featured Certification, Reproducibility Certification}
         assert note.content['authorids']['value'] == ['~Melissa_Eight1', '~SomeFirstName_User1', '~Celeste_Ana_Martinez1']
         assert note.content['authors']['value'] == ['Melissa Eight', 'SomeFirstName User', 'Celeste Ana Martinez']
         # Check with cArlos
-        assert note.content['authorids'].get('readers') == ['everyone']
-        assert note.content['authors'].get('readers') == ['everyone']
+        assert note.content['authorids'].get('readers') is None
+        assert note.content['authors'].get('readers') is None
+        assert note.content['supplementary_material'].get('readers') is None
         assert note.content['venue']['value'] == 'Accepted by TMLR'
         assert note.content['venueid']['value'] == 'TMLR'
         assert note.content['title']['value'] == 'Paper title VERSION 2'
@@ -2277,8 +2279,9 @@ The TMLR Editors-in-Chief
         assert note.signatures == ['TMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~Melissa_Eight1', '~SomeFirstName_User1', '~Celeste_Ana_Martinez1']
         # Check with cArlos
-        assert note.content['authorids'].get('readers') == ['everyone']
-        assert note.content['authors'].get('readers') == ['everyone']
+        assert note.content['authorids'].get('readers') is None
+        assert note.content['authors'].get('readers') is None
+        assert note.content['supplementary_material'].get('readers') is None
         assert note.content['venue']['value'] == 'Retracted by Authors'
         assert note.content['venueid']['value'] == 'TMLR/Retracted_Acceptance'
         assert note.content['title']['value'] == 'Paper title VERSION 2'
@@ -2444,8 +2447,43 @@ note: replies to this email will go to the AE, Joelle Pineau.
             assert edges[1]['id']['weight'] == 0
             assert len(edges[1]['values']) == 2
 
+        ## Ask solicit review and then delete it
+        celeste_client = OpenReviewClient(username='celeste@mailnine.com', password='1234')
+
+        volunteer_to_review_note = celeste_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Volunteer_to_Review',
+            signatures=['~Celeste_Ana_Martinez1'],
+            note=Note(
+                content={
+                    'solicit': { 'value': 'I solicit to review this paper.' },
+                    'comment': { 'value': 'I can review this paper.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=volunteer_to_review_note['id'])
+
+        assert openreview_client.get_invitation(f'{venue_id}/Paper4/-/~Celeste_Ana_Martinez1_Volunteer_to_Review_Approval')
+
+        volunteer_to_review_note = celeste_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Volunteer_to_Review',
+            signatures=['~Celeste_Ana_Martinez1'],
+            note=Note(
+                id=volunteer_to_review_note['note']['id'],
+                ddate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                content={
+                    'solicit': { 'value': 'I solicit to review this paper.' },
+                    'comment': { 'value': 'I can review this paper.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=volunteer_to_review_note['id'])
+
+        ## approval must be expired
+        invitation = openreview_client.get_invitation(f'{venue_id}/Paper4/-/~Celeste_Ana_Martinez1_Volunteer_to_Review_Approval') 
+        assert invitation.is_active() == False
+
         ## Ask solicit review with a conflict
-        Volunteer_to_Review_note = tom_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Volunteer_to_Review',
+        volunteer_to_review_note = tom_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Volunteer_to_Review',
             signatures=['~Tom_Rain1'],
             note=Note(
                 content={
@@ -2455,17 +2493,17 @@ note: replies to this email will go to the AE, Joelle Pineau.
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=Volunteer_to_Review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=volunteer_to_review_note['id'])
 
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Request to review TMLR submission "4: Paper title 4" has been submitted')
-        assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
+        assert len(messages) == 2
+        assert messages[-1]['content']['text'] == f'''Hi Joelle Pineau,
 
 This is to inform you that an OpenReview user has requested to review TMLR submission 4: Paper title 4, which you are the AE for.
 
 Please consult the request and either accept or reject it, by visiting this link:
 
-https://openreview.net/forum?id={note_id_4}&noteId={Volunteer_to_Review_note['note']['id']}
+https://openreview.net/forum?id={note_id_4}&noteId={volunteer_to_review_note['note']['id']}
 
 We ask that you provide a response within 1 week, by {(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}. Note that it is your responsibility to ensure that this submission is assigned to qualified reviewers and is evaluated fairly. Therefore, make sure to overview the user’s profile (https://openreview.net/profile?id=~Tom_Rain1) before making a decision.
 

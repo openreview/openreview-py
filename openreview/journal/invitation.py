@@ -2897,11 +2897,14 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.should_release_authors():
             invitation.edit['note']['content']['authors'] = {
-                'readers': ['everyone']
+                'readers': { 'param': { 'const': { 'delete': True } } }
             }
             invitation.edit['note']['content']['authorids'] = {
-                'readers': ['everyone']
+                'readers': { 'param': { 'const': { 'delete': True } } }
             }
+            invitation.edit['note']['content']['supplementary_material'] = {
+                'readers': { 'param': { 'const': { 'delete': True } } }
+            }            
 
         if self.journal.get_certifications():
             invitation.edit['note']['content']['certifications'] = {
@@ -5089,8 +5092,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                 }
                             },
                             "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                            "order": 6,
-                            'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${7/content/noteNumber/value}'), self.journal.get_authors_id(number='${7/content/noteNumber/value}')]
+                            "order": 6
                         },
                         f'previous_{short_name}_submission_url': {
                             'value': {
