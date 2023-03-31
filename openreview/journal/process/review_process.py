@@ -59,7 +59,7 @@ def process(client, edit, invitation):
             subject=f'''[{journal.short_name}] Reviewer responses and discussion for your {journal.short_name} submission''',
             message=f'''Hi {{{{fullname}}}},
 
-Now that {number_of_reviewers} reviews have been submitted for your submission  {submission.content['title']['value']}, all reviews have been made {review_visibility}. If you haven't already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
+Now that {number_of_reviewers} reviews have been submitted for your submission  {submission.number}: {submission.content['title']['value']}, all reviews have been made {review_visibility}. If you haven't already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
 
 You will have {journal.get_discussion_period_length()} weeks to respond to the reviewers. To maximise the period of interaction and discussion, please respond as soon as possible. The reviewers will be using this time period to hear from you and gather all the information they need. In about {journal.get_discussion_period_length()} weeks ({cdate.strftime("%b %d")}), and no later than {journal.get_discussion_period_length() + journal.get_recommendation_period_length()} weeks ({duedate.strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
 
@@ -77,10 +77,10 @@ note: replies to this email will go to the AE, {assigned_action_editor.get_prefe
         print('Send emails to reviewers')
         client.post_message(
             recipients=[journal.get_reviewers_id(number=submission.number)],
-            subject=f'''[{journal.short_name}] Start of author discussion for {journal.short_name} submission {submission.content['title']['value']}''',
+            subject=f'''[{journal.short_name}] Start of author discussion for {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
             message=f'''Hi {{{{fullname}}}},
 
-There are now {number_of_reviewers} reviews that have been submitted for your assigned submission "{submission.content['title']['value']}" and all reviews have been made {review_visibility}. Please read the other reviews and start engaging with the authors (and possibly the other reviewers and AE) in order to address any concern you may have about the submission. Your goal should be to gather all the information you need **within the next {journal.get_discussion_period_length()} weeks** to be comfortable submitting a decision recommendation for this paper. You will receive an upcoming notification on how to enter your recommendation in OpenReview.
+There are now {number_of_reviewers} reviews that have been submitted for your assigned submission "{submission.number}: {submission.content['title']['value']}" and all reviews have been made {review_visibility}. Please read the other reviews and start engaging with the authors (and possibly the other reviewers and AE) in order to address any concern you may have about the submission. Your goal should be to gather all the information you need **within the next {journal.get_discussion_period_length()} weeks** to be comfortable submitting a decision recommendation for this paper. You will receive an upcoming notification on how to enter your recommendation in OpenReview.
 
 You will find the OpenReview page for this submission at this link: https://openreview.net/forum?id={submission.id}
 
@@ -98,10 +98,10 @@ note: replies to this email will go to the AE, {assigned_action_editor.get_prefe
         print('Send emails to action editor')
         client.post_message(
             recipients=[journal.get_action_editors_id(number=submission.number)],
-            subject=f'''[{journal.short_name}] Start of author discussion for {journal.short_name} submission {submission.content['title']['value']}''',
+            subject=f'''[{journal.short_name}] Start of author discussion for {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
             message=f'''Hi {{{{fullname}}}},
 
-Now that {number_of_reviewers} reviews have been submitted for submission {submission.content['title']['value']}, all reviews have been made {review_visibility} and authors and reviewers have been notified that the discussion phase has begun. Please read the reviews and oversee the discussion between the reviewers and the authors. The goal of the reviewers should be to gather all the information they need to be comfortable submitting a decision recommendation to you for this submission. Reviewers will be able to submit their formal decision recommendation starting in **{journal.get_discussion_period_length()} weeks**.
+Now that {number_of_reviewers} reviews have been submitted for submission {submission.number}: {submission.content['title']['value']}, all reviews have been made {review_visibility} and authors and reviewers have been notified that the discussion phase has begun. Please read the reviews and oversee the discussion between the reviewers and the authors. The goal of the reviewers should be to gather all the information they need to be comfortable submitting a decision recommendation to you for this submission. Reviewers will be able to submit their formal decision recommendation starting in **{journal.get_discussion_period_length()} weeks**.
 
 You will find the OpenReview page for this submission at this link: https://openreview.net/forum?id={submission.id}
 

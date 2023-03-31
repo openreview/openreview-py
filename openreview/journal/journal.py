@@ -670,7 +670,7 @@ class Journal(object):
         before_invitation = 'An' if lower_formatted_invitation[0] in vowels else 'A'
         is_public = 'everyone' in readers
 
-        subject = f'''[{self.short_name}] {formatted_invitation} {action} on submission {forum.content['title']['value']}'''
+        subject = f'''[{self.short_name}] {formatted_invitation} {action} on submission {forum.number}: {forum.content['title']['value']}'''
 
         formatted_content = f'''
 Submission: {forum.content['title']['value']}

@@ -30,10 +30,10 @@ def process(client, edit, invitation):
     print('Send email to AE')
     client.post_message(
         recipients=[journal.get_action_editors_id(number=submission.number)],
-        subject=f'''[{journal.short_name}] Review camera ready version for {journal.short_name} paper {submission.content['title']['value']}''',
+        subject=f'''[{journal.short_name}] Review camera ready version for {journal.short_name} paper {submission.number}: {submission.content['title']['value']}''',
         message=f'''Hi {{{{fullname}}}},
 
-The authors of {journal.short_name} paper {submission.content['title']['value']} have now submitted the deanonymized camera ready version of their work.
+The authors of {journal.short_name} paper {submission.number}: {submission.content['title']['value']} have now submitted the deanonymized camera ready version of their work.
 
 As your final task for this submission, please verify that the camera ready manuscript complies with the {journal.short_name} stylefile, with all author information inserted in the manuscript as well as the link to the OpenReview page for the submission.
 

@@ -168,11 +168,11 @@ class TestTACLJournal():
         ae_group = brian_client.get_group('TACL/Paper1/Action_Editors')
         assert ae_group.members == ['~Graham_Neubig1']
 
-        messages = journal.client.get_messages(to = 'graham@mailseven.com', subject = '[TACL] Assignment to new TACL submission Paper title UPDATED')
+        messages = journal.client.get_messages(to = 'graham@mailseven.com', subject = '[TACL] Assignment to new TACL submission 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Graham Neubig,
 
-With this email, we request that you manage the review process for a new TACL submission titled "Paper title UPDATED".
+With this email, we request that you manage the review process for a new TACL submission "1: Paper title UPDATED".
 
 As a reminder, TACL Action Editors (AEs) are **expected to accept all AE requests** to manage submissions that fall within your expertise and quota. Reasonable exceptions are 1) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of fully performing your AE duties or 2) you have a conflict of interest with one of the authors. If any such exception applies to you, contact us at tacl@venue.org.
 
@@ -256,11 +256,11 @@ note={Under review}
 
          # wait for process function delay (5 seconds) and check email has been sent
         time.sleep(6)
-        messages = journal.client.get_messages(to = 'david@taclone.com', subject = '[TACL] Assignment to review new TACL submission Paper title UPDATED')
+        messages = journal.client.get_messages(to = 'david@taclone.com', subject = '[TACL] Assignment to review new TACL submission 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi David Bensusan,
 
-With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TACL submission "Paper title UPDATED".
+With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TACL submission "1: Paper title UPDATED".
 
 Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_1}&invitationId=TACL/Paper1/Reviewers/-/~David_Bensusan1/Assignment/Acknowledgement
 
@@ -414,12 +414,12 @@ note: replies to this email will go to the AE, Graham Neubig.
         time.sleep(5) ## wait until the process function runs
 
         ## Check emails being sent to Reviewers and AE
-        messages = journal.client.get_messages(subject = '[TACL] Submit official recommendation for TACL submission Paper title UPDATED')
+        messages = journal.client.get_messages(subject = '[TACL] Submit official recommendation for TACL submission 1: Paper title UPDATED')
         assert len(messages) == 3
-        messages = journal.client.get_messages(to= 'david@taclone.com', subject = '[TACL] Submit official recommendation for TACL submission Paper title UPDATED')
+        messages = journal.client.get_messages(to= 'david@taclone.com', subject = '[TACL] Submit official recommendation for TACL submission 1: Paper title UPDATED')
         assert messages[0]['content']['text'] == f'''Hi David Bensusan,
 
-Thank you for submitting your review and engaging with the authors of TACL submission "Paper title UPDATED".
+Thank you for submitting your review and engaging with the authors of TACL submission "1: Paper title UPDATED".
 
 You may now submit your official recommendation for the submission. Before doing so, make sure you have sufficiently discussed with the authors (and possibly the other reviewers and AE) any concerns you may have about the submission.
 
@@ -432,7 +432,7 @@ We thank you for your essential contribution to TACL!
 The TACL Editors-in-Chief
 note: replies to this email will go to the AE, Graham Neubig.
 '''
-        messages = journal.client.get_messages(subject = '[TACL] Reviewers must submit official recommendation for TACL submission Paper title UPDATED')
+        messages = journal.client.get_messages(subject = '[TACL] Reviewers must submit official recommendation for TACL submission 1: Paper title UPDATED')
         assert len(messages) == 1
 
         david_anon_groups=david_client.get_groups(prefix='TACL/Paper1/Reviewer_.*', signatory='~David_Bensusan1')

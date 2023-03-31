@@ -12,11 +12,11 @@ def process_update(client, edge, invitation, existing_edge):
         print(f'Remove member {edge.tail} from {group.id}')
 
         recipients=[edge.tail]
-        subject=f'[{journal.short_name}] You have been unassigned from {journal.short_name} submission {note.content["title"]["value"]}'
+        subject=f'[{journal.short_name}] You have been unassigned from {journal.short_name} submission {note.number}: {note.content["title"]["value"]}'
 
         message=f'''Hi {{{{fullname}}}},
 
-We recently informed you that your help was requested to manage the review process for a new {journal.short_name} submission titled "{note.content['title']['value']}".
+We recently informed you that your help was requested to manage the review process for a new {journal.short_name} submission "{note.number}: {note.content['title']['value']}".
 
 However, we've just determined that your help was no longer needed for this submission and have unassigned you as the AE for it.
 
@@ -37,11 +37,11 @@ The {journal.short_name} Editors-in-Chief
         journal.invitation_builder.set_note_review_approval_invitation(note, journal.get_due_date(weeks=journal.get_under_review_approval_period_length()))
 
         recipients=[edge.tail]
-        subject=f'[{journal.short_name}] Assignment to new {journal.short_name} submission {note.content["title"]["value"]}'
+        subject=f'[{journal.short_name}] Assignment to new {journal.short_name} submission {note.number}: {note.content["title"]["value"]}'
 
         message=f'''Hi {{{{fullname}}}},
 
-With this email, we request that you manage the review process for a new {journal.short_name} submission titled "{note.content['title']['value']}".
+With this email, we request that you manage the review process for a new {journal.short_name} submission "{note.number}: {note.content['title']['value']}".
 
 As a reminder, {journal.short_name} Action Editors (AEs) are **expected to accept all AE requests** to manage submissions that fall within your expertise and quota. Reasonable exceptions are 1) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of fully performing your AE duties or 2) you have a conflict of interest with one of the authors. If any such exception applies to you, contact us at {journal.contact_info}.
 

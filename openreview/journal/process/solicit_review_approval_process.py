@@ -25,10 +25,10 @@ def process(client, edit, invitation):
 
         client.post_message(
             recipients=solicit_request.signatures,
-            subject=f'''[{journal.short_name}] Request to review {journal.short_name} submission "{submission.content['title']['value']}" has been accepted''',
+            subject=f'''[{journal.short_name}] Request to review {journal.short_name} submission "{submission.number}: {submission.content['title']['value']}" has been accepted''',
             message=f'''Hi {{{{fullname}}}},
 
-This is to inform you that your request to act as a reviewer for {journal.short_name} submission {submission.content['title']['value']} has been accepted by the Action Editor (AE).
+This is to inform you that your request to act as a reviewer for {journal.short_name} submission {submission.number}: {submission.content['title']['value']} has been accepted by the Action Editor (AE).
 
 You are required to submit your review within {review_period_length} weeks ({duedate.strftime("%b %d")}). {submission_length}
 
@@ -52,10 +52,10 @@ note: replies to this email will go to the AE, {assigned_action_editor.get_prefe
         client.add_members_to_group(journal.get_solicit_reviewers_id(number=submission.number, declined=True), solicit_request.signatures)
         client.post_message(
             recipients=solicit_request.signatures,
-            subject=f'''[{journal.short_name}] Request to review {journal.short_name} submission "{submission.content['title']['value']}" was not accepted''',
+            subject=f'''[{journal.short_name}] Request to review {journal.short_name} submission "{submission.number}: {submission.content['title']['value']}" was not accepted''',
             message=f'''Hi {{{{fullname}}}},
 
-This is to inform you that your request to act as a reviewer for {journal.short_name} submission {submission.content['title']['value']} was not accepted by the Action Editor (AE). If you would like to know more about the reason behind this decision, you can click here: https://openreview.net/forum?id={submission.id}&noteId={note.id}.
+This is to inform you that your request to act as a reviewer for {journal.short_name} submission {submission.number}: {submission.content['title']['value']} was not accepted by the Action Editor (AE). If you would like to know more about the reason behind this decision, you can click here: https://openreview.net/forum?id={submission.id}&noteId={note.id}.
 
 Respectfully,
 

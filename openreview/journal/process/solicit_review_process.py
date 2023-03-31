@@ -11,10 +11,10 @@ def process(client, edit, invitation):
 
     client.post_message(
         recipients=[journal.get_action_editors_id(number=submission.number)],
-        subject=f'''[{journal.short_name}] Request to review {journal.short_name} submission "{submission.content['title']['value']}" has been submitted''',
+        subject=f'''[{journal.short_name}] Request to review {journal.short_name} submission "{submission.number}: {submission.content['title']['value']}" has been submitted''',
         message=f'''Hi {{{{fullname}}}},
 
-This is to inform you that an OpenReview user has requested to review {journal.short_name} submission {submission.content['title']['value']}, which you are the AE for.
+This is to inform you that an OpenReview user has requested to review {journal.short_name} submission {submission.number}: {submission.content['title']['value']}, which you are the AE for.
 
 Please consult the request and either accept or reject it, by visiting this link:
 

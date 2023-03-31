@@ -322,9 +322,9 @@ The TMLR Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/Action_Editors/-/Recommendation-0-0')
 
-        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for your paper Paper title')
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for your paper 1: Paper title')
         assert len(messages) == 2
-        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] You are late in performing a task for your paper Paper title')
+        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] You are late in performing a task for your paper 1: Paper title')
         assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
 
 Our records show that you are late on the current task:
@@ -441,7 +441,7 @@ The TMLR Editors-in-Chief
         paper_assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
         paper_assignment_edge = raia_client.post_edge(paper_assignment_edge)
 
-        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Assignment to new TMLR submission Paper title UPDATED')
+        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Assignment to new TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 0
 
         # Assign Action Editor
@@ -459,11 +459,11 @@ The TMLR Editors-in-Chief
         ae_group = raia_client.get_group(f'{venue_id}/Paper1/Action_Editors')
         assert ae_group.members == ['~Joelle_Pineau1']
 
-        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Assignment to new TMLR submission Paper title UPDATED')
+        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Assignment to new TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
 
-With this email, we request that you manage the review process for a new TMLR submission titled "Paper title UPDATED".
+With this email, we request that you manage the review process for a new TMLR submission "1: Paper title UPDATED".
 
 As a reminder, TMLR Action Editors (AEs) are **expected to accept all AE requests** to manage submissions that fall within your expertise and quota. Reasonable exceptions are 1) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of fully performing your AE duties or 2) you have a conflict of interest with one of the authors. If any such exception applies to you, contact us at tmlr@jmlr.org.
 
@@ -564,11 +564,11 @@ note={Under review}
 
         helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Under_Review')
 
-        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Perform reviewer assignments for TMLR submission Paper title UPDATED')
+        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Perform reviewer assignments for TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
 
-With this email, we request that you assign 3 reviewers to your assigned TMLR submission "Paper title UPDATED". The assignments must be completed **within 1 week** ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: https://openreview.net/group?id=TMLR/Action_Editors and click on "Edit Assignment" for that paper in your "Assigned Papers" console.
+With this email, we request that you assign 3 reviewers to your assigned TMLR submission "1: Paper title UPDATED". The assignments must be completed **within 1 week** ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: https://openreview.net/group?id=TMLR/Action_Editors and click on "Edit Assignment" for that paper in your "Assigned Papers" console.
 
 As a reminder, up to their annual quota of six reviews per year, reviewers are expected to review all assigned submissions that fall within their expertise. Acceptable exceptions are 1) if they have an unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render them incapable of fully performing their reviewing duties.
 
@@ -640,11 +640,11 @@ The TMLR Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
 
-        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title 2')
+        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission 2: Paper title 2')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
 
-We are sorry to inform you that, after consideration by the assigned Action Editor, your TMLR submission titled "Paper title 2" has been rejected without further review.
+We are sorry to inform you that, after consideration by the assigned Action Editor, your TMLR submission "2: Paper title 2" has been rejected without further review.
 
 Cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified TMLR stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication).
 
@@ -771,11 +771,11 @@ note={Withdrawn}
 
          # wait for process function delay (5 seconds) and check email has been sent
         time.sleep(6)
-        messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title UPDATED')
+        messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Assignment to review new TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi David Belanger,
 
-With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission "Paper title UPDATED". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
+With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission "1: Paper title UPDATED". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
 
 Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement
 
@@ -841,11 +841,11 @@ The TMLR Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
-        messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title UPDATED')
+        messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] Assignment to review new TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Carlos Mondragon,
 
-With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission "Paper title UPDATED". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
+With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission "1: Paper title UPDATED". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
 
 Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement
 
@@ -875,7 +875,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
 
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/Reviewers/-/Assignment-0-0')
 
-        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'joelle@mailseven.com'
         assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
@@ -908,11 +908,11 @@ The TMLR Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
-        messages = journal.client.get_messages(to = 'javier@mailtwo.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title UPDATED')
+        messages = journal.client.get_messages(to = 'javier@mailtwo.com', subject = '[TMLR] Assignment to review new TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Javier Burroni,
 
-With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission "Paper title UPDATED". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
+With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission "1: Paper title UPDATED". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
 
 Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/Reviewers/-/~Javier_Burroni1/Assignment/Acknowledgement
 
@@ -1003,7 +1003,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
 
         helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
 
-        messages = journal.client.get_messages(subject = '[TMLR] Official Comment posted on submission Paper title UPDATED')
+        messages = journal.client.get_messages(subject = '[TMLR] Official Comment posted on submission 1: Paper title UPDATED')
         assert len(messages) == 7
 
         ## Post an official comment from the reviewer
@@ -1056,7 +1056,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
 
         helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
 
-        messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] Official Comment posted on submission Paper title UPDATED')
+        messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] Official Comment posted on submission 1: Paper title UPDATED')
         assert len(messages) == 2
         assert messages[-1]['content']['text'] == f'''Hi Raia Hadsell,
 
@@ -1087,7 +1087,7 @@ To view the official comment, click here: https://openreview.net/forum?id={note_
 
         helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
 
-        messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] Official Comment posted on submission Paper title UPDATED')
+        messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] Official Comment posted on submission 1: Paper title UPDATED')
         assert len(messages) == 2
 
         # Post a public comment
@@ -1115,9 +1115,9 @@ To view the official comment, click here: https://openreview.net/forum?id={note_
 
         helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
 
-        messages = journal.client.get_messages(subject = '[TMLR] Public Comment posted on submission Paper title UPDATED')
+        messages = journal.client.get_messages(subject = '[TMLR] Public Comment posted on submission 1: Paper title UPDATED')
         assert len(messages) == 8
-        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Public Comment posted on submission Paper title UPDATED')
+        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Public Comment posted on submission 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'joelle@mailseven.com'
         assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
@@ -1219,9 +1219,9 @@ To view the public comment, click here: https://openreview.net/forum?id={note_id
 
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-0-0')
 
-        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 3
-        messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] You are late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'carlos@mailthree.com'
         assert messages[0]['content']['text'] == f'''Hi Carlos Mondragon,
@@ -1240,7 +1240,7 @@ We thank you for your cooperation.
 The TMLR Editors-in-Chief
 '''
 
-        messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
+        messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 0
 
         ## Check review reminders
@@ -1257,10 +1257,10 @@ The TMLR Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-0-1')
 
-        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 5
 
-        messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
+        messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 2
         assert messages[0]['content']['to'] == 'joelle@mailseven.com'
         assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
@@ -1293,10 +1293,10 @@ The TMLR Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-0-2')
 
-        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 7
 
-        messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
+        messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 4
         assert messages[-1]['content']['to'] == 'joelle@mailseven.com'
         assert messages[-1]['content']['text'] == f'''Hi Joelle Pineau,
@@ -1330,13 +1330,13 @@ The TMLR Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-0-3')
 
-        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 9
 
-        messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
+        messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 10
 
-        messages = journal.client.get_messages(to= 'raia@mail.com', subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
+        messages = journal.client.get_messages(to= 'raia@mail.com', subject = '[TMLR] Reviewer is late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 2
 
         assert messages[0]['content']['text'] == f'''Hi Raia Hadsell,
@@ -1351,7 +1351,7 @@ Link: https://openreview.net/forum?id={note_id_1}
 OpenReview Team
 '''
 
-        messages = journal.client.get_messages(to= 'joelle@mailseven.com', subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
+        messages = journal.client.get_messages(to= 'joelle@mailseven.com', subject = '[TMLR] Reviewer is late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 6
 
         assert messages[4]['content']['text'] == f'''Hi Joelle Pineau,
@@ -1385,7 +1385,7 @@ The TMLR Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement-0-0')
 
-        messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] You are late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 5
         assert messages[4]['content']['text'] == f'''Hi Carlos Mondragon,
 
@@ -1416,7 +1416,7 @@ The TMLR Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement-0-1')
 
-        messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] You are late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 6
         assert messages[5]['content']['text'] == f'''Hi Carlos Mondragon,
 
@@ -1447,7 +1447,7 @@ The TMLR Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement-0-2')
 
-        messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] You are late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 7
         assert messages[6]['content']['text'] == f'''Hi Carlos Mondragon,
 
@@ -1488,7 +1488,7 @@ The TMLR Editors-in-Chief
         late_reviewers = journal.get_late_invitees('TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement')
         assert not late_reviewers
 
-        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Assignment Acknowledgement posted on submission Paper title UPDATED')
+        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Assignment Acknowledgement posted on submission 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
 
@@ -1560,7 +1560,7 @@ To view the acknowledgement, click here: https://openreview.net/forum?id={note_i
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
 
-Now that 3 reviews have been submitted for your submission  Paper title UPDATED, all reviews have been made public. If you haven't already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
+Now that 3 reviews have been submitted for your submission  1: Paper title UPDATED, all reviews have been made public. If you haven't already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
 
 You will have 2 weeks to respond to the reviewers. To maximise the period of interaction and discussion, please respond as soon as possible. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}), and no later than 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
 
@@ -1573,11 +1573,11 @@ note: replies to this email will go to the AE, Joelle Pineau.
 '''
         assert messages[0]['content']['replyTo'] == 'joelle@mailseven.com'
 
-        messages = openreview_client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] Start of author discussion for TMLR submission Paper title UPDATED')
+        messages = openreview_client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] Start of author discussion for TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Carlos Mondragon,
 
-There are now 3 reviews that have been submitted for your assigned submission "Paper title UPDATED" and all reviews have been made public. Please read the other reviews and start engaging with the authors (and possibly the other reviewers and AE) in order to address any concern you may have about the submission. Your goal should be to gather all the information you need **within the next 2 weeks** to be comfortable submitting a decision recommendation for this paper. You will receive an upcoming notification on how to enter your recommendation in OpenReview.
+There are now 3 reviews that have been submitted for your assigned submission "1: Paper title UPDATED" and all reviews have been made public. Please read the other reviews and start engaging with the authors (and possibly the other reviewers and AE) in order to address any concern you may have about the submission. Your goal should be to gather all the information you need **within the next 2 weeks** to be comfortable submitting a decision recommendation for this paper. You will receive an upcoming notification on how to enter your recommendation in OpenReview.
 
 You will find the OpenReview page for this submission at this link: https://openreview.net/forum?id={note_id_1}
 
@@ -1589,11 +1589,11 @@ The TMLR Editors-in-Chief
 note: replies to this email will go to the AE, Joelle Pineau.
 '''
 
-        messages = openreview_client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Start of author discussion for TMLR submission Paper title UPDATED')
+        messages = openreview_client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Start of author discussion for TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
 
-Now that 3 reviews have been submitted for submission Paper title UPDATED, all reviews have been made public and authors and reviewers have been notified that the discussion phase has begun. Please read the reviews and oversee the discussion between the reviewers and the authors. The goal of the reviewers should be to gather all the information they need to be comfortable submitting a decision recommendation to you for this submission. Reviewers will be able to submit their formal decision recommendation starting in **2 weeks**.
+Now that 3 reviews have been submitted for submission 1: Paper title UPDATED, all reviews have been made public and authors and reviewers have been notified that the discussion phase has begun. Please read the reviews and oversee the discussion between the reviewers and the authors. The goal of the reviewers should be to gather all the information they need to be comfortable submitting a decision recommendation to you for this submission. Reviewers will be able to submit their formal decision recommendation starting in **2 weeks**.
 
 You will find the OpenReview page for this submission at this link: https://openreview.net/forum?id={note_id_1}
 
@@ -1706,12 +1706,12 @@ The TMLR Editors-in-Chief
         time.sleep(5) ## wait until the process function runs
 
         ## Check emails being sent to Reviewers and AE
-        messages = journal.client.get_messages(subject = '[TMLR] Submit official recommendation for TMLR submission Paper title UPDATED')
+        messages = journal.client.get_messages(subject = '[TMLR] Submit official recommendation for TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 5
-        messages = journal.client.get_messages(to= 'hugo@mailsix.com', subject = '[TMLR] Submit official recommendation for TMLR submission Paper title UPDATED')
+        messages = journal.client.get_messages(to= 'hugo@mailsix.com', subject = '[TMLR] Submit official recommendation for TMLR submission 1: Paper title UPDATED')
         assert messages[0]['content']['text'] == f'''Hi Hugo Larochelle,
 
-Thank you for submitting your review and engaging with the authors of TMLR submission "Paper title UPDATED".
+Thank you for submitting your review and engaging with the authors of TMLR submission "1: Paper title UPDATED".
 
 You may now submit your official recommendation for the submission. Before doing so, make sure you have sufficiently discussed with the authors (and possibly the other reviewers and AE) any concerns you may have about the submission.
 
@@ -1724,7 +1724,7 @@ We thank you for your essential contribution to TMLR!
 The TMLR Editors-in-Chief
 note: replies to this email will go to the AE, Joelle Pineau.
 '''
-        messages = journal.client.get_messages(subject = '[TMLR] Reviewers must submit official recommendation for TMLR submission Paper title UPDATED')
+        messages = journal.client.get_messages(subject = '[TMLR] Reviewers must submit official recommendation for TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
 
         ## Post a review recommendation
@@ -1821,11 +1821,11 @@ note: replies to this email will go to the AE, Joelle Pineau.
         assert f"{carlos_anon_groups[0].id}/-/Rating" in [i.id for i in invitations]
         assert f"{hugo_anon_groups[0].id}/-/Rating" in [i.id for i in invitations]
 
-        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Evaluate reviewers and submit decision for TMLR submission Paper title UPDATED')
+        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Evaluate reviewers and submit decision for TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
 
-Thank you for overseeing the review process for TMLR submission "Paper title UPDATED".
+Thank you for overseeing the review process for TMLR submission "1: Paper title UPDATED".
 
 All reviewers have submitted their official recommendation of a decision for the submission. Therefore it is now time for you to determine a decision for the submission. Before doing so:
 
@@ -1864,7 +1864,7 @@ The TMLR Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
 
-        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Evaluate reviewers and submit decision for TMLR submission Paper title UPDATED')
+        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Evaluate reviewers and submit decision for TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
 
         ## Check permissions of the review revisions
@@ -1976,11 +1976,11 @@ The TMLR Editors-in-Chief
         assert decision_note.nonreaders == []
 
 
-        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title UPDATED')
+        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
 
-We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission title "Paper title UPDATED" is accepted as is.
+We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission "1: Paper title UPDATED" is accepted as is.
 
 To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={note_id_1}
 
@@ -2031,11 +2031,11 @@ The TMLR Editors-in-Chief
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
 
-        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Review camera ready version for TMLR paper Paper title VERSION 2')
+        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Review camera ready version for TMLR paper 1: Paper title VERSION 2')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
 
-The authors of TMLR paper Paper title VERSION 2 have now submitted the deanonymized camera ready version of their work.
+The authors of TMLR paper 1: Paper title VERSION 2 have now submitted the deanonymized camera ready version of their work.
 
 As your final task for this submission, please verify that the camera ready manuscript complies with the TMLR stylefile, with all author information inserted in the manuscript as well as the link to the OpenReview page for the submission.
 
@@ -2062,17 +2062,17 @@ The TMLR Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Camera_Ready_Verification-0-1')
 
-        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title VERSION 2')
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper 1: Paper title VERSION 2')
         assert len(messages) == 1
 
-        messages = journal.client.get_messages(subject = '[TMLR] AE is late in performing a task for assigned paper Paper title VERSION 2')
+        messages = journal.client.get_messages(subject = '[TMLR] AE is late in performing a task for assigned paper 1: Paper title VERSION 2')
         assert len(messages) == 2
 
-        messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] AE is late in performing a task for assigned paper Paper title VERSION 2')
+        messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] AE is late in performing a task for assigned paper 1: Paper title VERSION 2')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Raia Hadsell,
 
-Our records show that the AE for submission Paper title VERSION 2 is *one week* late on an AE task:
+Our records show that the AE for submission 1: Paper title VERSION 2 is *one week* late on an AE task:
 
 Task: Camera Ready Verification
 AE: Joelle Pineau
@@ -2094,13 +2094,13 @@ OpenReview Team
 
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Camera_Ready_Verification-0-2')
 
-        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title VERSION 2')
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper 1: Paper title VERSION 2')
         assert len(messages) == 1
 
-        messages = journal.client.get_messages(subject = '[TMLR] AE is late in performing a task for assigned paper Paper title VERSION 2')
+        messages = journal.client.get_messages(subject = '[TMLR] AE is late in performing a task for assigned paper 1: Paper title VERSION 2')
         assert len(messages) == 4
 
-        messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] AE is late in performing a task for assigned paper Paper title VERSION 2')
+        messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] AE is late in performing a task for assigned paper 1: Paper title VERSION 2')
         assert len(messages) == 2
 
         ## AE verifies the camera ready revision
@@ -2115,11 +2115,11 @@ OpenReview Team
 
         helpers.await_queue_edit(openreview_client, edit_id=verification_note['id'])
 
-        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Camera ready version accepted for your TMLR submission Paper title VERSION 2')
+        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Camera ready version accepted for your TMLR submission 1: Paper title VERSION 2')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
 
-This is to inform you that your submitted camera ready version of your paper Paper title VERSION 2 has been verified and confirmed by the Action Editor.
+This is to inform you that your submitted camera ready version of your paper 1: Paper title VERSION 2 has been verified and confirmed by the Action Editor.
 
 We thank you again for your contribution to TMLR and congratulate you for your successful submission!
 
@@ -2228,12 +2228,12 @@ note={Featured Certification, Reproducibility Certification}
 
         helpers.await_queue_edit(openreview_client, edit_id=retraction_note['id'])
 
-        messages = journal.client.get_messages(subject = '[TMLR] Authors request to retract TMLR submission Paper title VERSION 2')
+        messages = journal.client.get_messages(subject = '[TMLR] Authors request to retract TMLR submission 1: Paper title VERSION 2')
         assert len(messages) == 2
-        messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] Authors request to retract TMLR submission Paper title VERSION 2')
+        messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] Authors request to retract TMLR submission 1: Paper title VERSION 2')
         assert messages[0]['content']['text'] == f'''Hi Raia Hadsell,
 
-The authors of paper Paper title VERSION 2 are requesting to retract the paper. An EIC must confirm and accept the retraction: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/-/Retraction_Approval
+The authors of paper 1: Paper title VERSION 2 are requesting to retract the paper. An EIC must confirm and accept the retraction: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/-/Retraction_Approval
 
 OpenReview Team
 '''
@@ -2250,12 +2250,12 @@ OpenReview Team
 
         helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
 
-        messages = journal.client.get_messages(subject = '[TMLR] Decision available for retraction request of TMLR submission Paper title VERSION 2')
+        messages = journal.client.get_messages(subject = '[TMLR] Decision available for retraction request of TMLR submission 1: Paper title VERSION 2')
         assert len(messages) == 3
-        messages = journal.client.get_messages(to='test@mail.com', subject = '[TMLR] Decision available for retraction request of TMLR submission Paper title VERSION 2')
+        messages = journal.client.get_messages(to='test@mail.com', subject = '[TMLR] Decision available for retraction request of TMLR submission 1: Paper title VERSION 2')
         assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
 
-As TMLR Editors-in-Chief, we have submitted our decision on your request to retract your accepted paper at TMLR titled "Paper title VERSION 2".
+As TMLR Editors-in-Chief, we have submitted our decision on your request to retract your accepted paper at TMLR "1: Paper title VERSION 2".
 
 To view our decision, follow this link: https://openreview.net/forum?id={note_id_1}&noteId={approval_note['note']['id']}
 
@@ -2374,11 +2374,11 @@ note={Retracted after acceptance}
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
-        messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title 4')
+        messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Assignment to review new TMLR submission 4: Paper title 4')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi David Belanger,
 
-With this email, we request that you submit, within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}) a review for your newly assigned TMLR submission "Paper title 4". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
+With this email, we request that you submit, within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}) a review for your newly assigned TMLR submission "4: Paper title 4". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
 
 Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_4}&invitationId=TMLR/Paper4/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement
 
@@ -2457,11 +2457,11 @@ note: replies to this email will go to the AE, Joelle Pineau.
 
         helpers.await_queue_edit(openreview_client, edit_id=Volunteer_to_Review_note['id'])
 
-        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Request to review TMLR submission "Paper title 4" has been submitted')
+        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Request to review TMLR submission "4: Paper title 4" has been submitted')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
 
-This is to inform you that an OpenReview user has requested to review TMLR submission Paper title 4, which you are the AE for.
+This is to inform you that an OpenReview user has requested to review TMLR submission 4: Paper title 4, which you are the AE for.
 
 Please consult the request and either accept or reject it, by visiting this link:
 
@@ -2525,11 +2525,11 @@ The TMLR Editors-in-Chief
 
         assert '~Peter_Snow1' in joelle_client.get_group(f'{venue_id}/Paper4/Reviewers').members
 
-        messages = journal.client.get_messages(to = 'petersnow@yahoo.com', subject = '[TMLR] Request to review TMLR submission "Paper title 4" has been accepted')
+        messages = journal.client.get_messages(to = 'petersnow@yahoo.com', subject = '[TMLR] Request to review TMLR submission "4: Paper title 4" has been accepted')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Peter Snow,
 
-This is to inform you that your request to act as a reviewer for TMLR submission Paper title 4 has been accepted by the Action Editor (AE).
+This is to inform you that your request to act as a reviewer for TMLR submission 4: Paper title 4 has been accepted by the Action Editor (AE).
 
 You are required to submit your review within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}). If the submission is longer than 12 pages (excluding any appendix), you may request more time from the AE.
 
@@ -2543,7 +2543,7 @@ The TMLR Editors-in-Chief
 note: replies to this email will go to the AE, Joelle Pineau.
 '''
 
-        messages = journal.client.get_messages(to = 'petersnow@yahoo.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title 4')
+        messages = journal.client.get_messages(to = 'petersnow@yahoo.com', subject = '[TMLR] Assignment to review new TMLR submission 4: Paper title 4')
         assert len(messages) == 0
 
         ## Post a review edit
@@ -2566,7 +2566,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
 
         helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
-        messages = journal.client.get_messages(subject = '[TMLR] Review posted on TMLR submission Paper title 4')
+        messages = journal.client.get_messages(subject = '[TMLR] Review posted on TMLR submission 4: Paper title 4')
 
         ## Post a review edit
         javier_anon_groups=javier_client.get_groups(prefix=f'{venue_id}/Paper4/Reviewer_.*', signatory='~Javier_Burroni1')
@@ -2743,11 +2743,11 @@ note: replies to this email will go to the AE, Joelle Pineau.
 
         helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Rejected')
 
-        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title 4')
+        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission 4: Paper title 4')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
 
-We are sorry to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission title "Paper title 4" is rejected.
+We are sorry to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission "4: Paper title 4" is rejected.
 
 To know more about the decision, please follow this link: https://openreview.net/forum?id={note_id_4}
 
@@ -3109,11 +3109,11 @@ note={Rejected}
         decision_note = raia_client.get_note(decision_note.id)
         assert decision_note.readers == ['everyone']
 
-        messages = journal.client.get_messages(to = 'raia@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title 5')
+        messages = journal.client.get_messages(to = 'raia@mail.com', subject = '[TMLR] Decision for your TMLR submission 5: Paper title 5')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Raia Hadsell,
 
-We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission title "Paper title 5" is accepted with minor revision.
+We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission "5: Paper title 5" is accepted with minor revision.
 
 To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={note_id_5}
 
@@ -3403,7 +3403,7 @@ The TMLR Editors-in-Chief
         assert f"{venue_id}/Paper6/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper6/-/Moderation" in [i.id for i in invitations]
 
-        messages = journal.client.get_messages(subject = '[TMLR] Authors have withdrawn TMLR submission Paper title 6')
+        messages = journal.client.get_messages(subject = '[TMLR] Authors have withdrawn TMLR submission 6: Paper title 6')
         assert len(messages) == 4
 
         deanonymize_authors_note = test_client.post_note_edit(invitation='TMLR/Paper6/-/Authors_De-Anonymization',
@@ -3534,11 +3534,11 @@ note={Withdrawn}
 
         helpers.await_queue_edit(openreview_client, edit_id=Volunteer_to_Review_approval_note['id'])
 
-        messages = journal.client.get_messages(to = 'tom@mail.com', subject = '[TMLR] Request to review TMLR submission "Paper title 7" was not accepted')
+        messages = journal.client.get_messages(to = 'tom@mail.com', subject = '[TMLR] Request to review TMLR submission "7: Paper title 7" was not accepted')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Tom Rain,
 
-This is to inform you that your request to act as a reviewer for TMLR submission Paper title 7 was not accepted by the Action Editor (AE). If you would like to know more about the reason behind this decision, you can click here: https://openreview.net/forum?id={note_id_7}&noteId={Volunteer_to_Review_approval_note['note']['id']}.
+This is to inform you that your request to act as a reviewer for TMLR submission 7: Paper title 7 was not accepted by the Action Editor (AE). If you would like to know more about the reason behind this decision, you can click here: https://openreview.net/forum?id={note_id_7}&noteId={Volunteer_to_Review_approval_note['note']['id']}.
 
 Respectfully,
 
@@ -3765,11 +3765,11 @@ The TMLR Editors-in-Chief
         assert note.content['title']['value'] == 'Paper title 9'
         assert note.content['abstract']['value'] == 'Paper abstract'
 
-        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title 9')
+        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission 9: Paper title 9')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
 
-We are sorry to inform you that, after consideration by the Editors-in-Chief, your TMLR submission title "Paper title 9" has been rejected without further review.
+We are sorry to inform you that, after consideration by the Editors-in-Chief, your TMLR submission "9: Paper title 9" has been rejected without further review.
 
 Cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified TMLR stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication).
 
@@ -4028,12 +4028,12 @@ note={Under review}
         edits = openreview_client.get_note_edits(note.id, invitation='TMLR/-/Under_Review')
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
 
-        messages = openreview_client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Perform reviewer assignments for TMLR submission Paper title 12')
+        messages = openreview_client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Perform reviewer assignments for TMLR submission 12: Paper title 12')
         assert len(messages) == 1
 
-        messages = openreview_client.get_messages(subject='[TMLR] Review Approval edited on submission Paper title 12')
+        messages = openreview_client.get_messages(subject='[TMLR] Review Approval edited on submission 12: Paper title 12')
         assert len(messages) == 3, messages
         
-        messages = openreview_client.get_messages(to = 'melissa@maileight.com', subject = '[TMLR] Review Approval edited on submission Paper title 12')
+        messages = openreview_client.get_messages(to = 'melissa@maileight.com', subject = '[TMLR] Review Approval edited on submission 12: Paper title 12')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'Hi Melissa Eight,\n\nA review approval has been edited on your submission.\n\nSubmission: Paper title 12\nUnder review: Appropriate for Review\nComment: \n\nTo view the review approval, click here: https://openreview.net/forum?id={note_id_12}&noteId={notes[0].id}\n\n'

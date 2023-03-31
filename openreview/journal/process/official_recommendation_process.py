@@ -26,10 +26,10 @@ def process(client, edit, invitation):
         print('Send email to AEs')
         client.post_message(
             recipients=[journal.get_action_editors_id(number=submission.number)],
-            subject=f'''[{journal.short_name}] Evaluate reviewers and submit decision for {journal.short_name} submission {submission.content['title']['value']}''',
+            subject=f'''[{journal.short_name}] Evaluate reviewers and submit decision for {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
             message=f'''Hi {{{{fullname}}}},
 
-Thank you for overseeing the review process for {journal.short_name} submission "{submission.content['title']['value']}".
+Thank you for overseeing the review process for {journal.short_name} submission "{submission.number}: {submission.content['title']['value']}".
 
 All reviewers have submitted their official recommendation of a decision for the submission. Therefore it is now time for you to determine a decision for the submission. Before doing so:
 

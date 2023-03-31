@@ -25,10 +25,10 @@ def process(client, edit, invitation):
     print('Send email to authors')
     client.post_message(
         recipients=[journal.get_authors_id(number=submission.number)],
-        subject=f'''[{journal.short_name}] Decision available for retraction request of {journal.short_name} submission {submission.content['title']['value']}''',
+        subject=f'''[{journal.short_name}] Decision available for retraction request of {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
         message=f'''Hi {{{{fullname}}}},
 
-As {journal.short_name} Editors-in-Chief, we have submitted our decision on your request to retract your accepted paper at {journal.short_name} titled "{submission.content['title']['value']}".
+As {journal.short_name} Editors-in-Chief, we have submitted our decision on your request to retract your accepted paper at {journal.short_name} "{submission.number}: {submission.content['title']['value']}".
 
 To view our decision, follow this link: https://openreview.net/forum?id={edit.note.forum}&noteId={edit.note.id}
 
