@@ -57,13 +57,16 @@ class InvitationBuilder(object):
         if invitation.date_processes and len(invitation.date_processes[0]['dates']) > 1 and self.update_date_string == invitation.date_processes[0]['dates'][1]:
             process_logs = self.client.get_process_logs(id=invitation.id + '-0-1', min_sdate = invitation.tmdate + self.update_wait_time - 1000)
             count = 0
-            while len(process_logs) == 0 and count < 10:
-                time.sleep(5)
+            while len(process_logs) == 0 and count < 180: ## wait up to 30 minutes
+                time.sleep(10)
                 process_logs = self.client.get_process_logs(id=invitation.id + '-0-1', min_sdate = invitation.tmdate + self.update_wait_time - 1000)
                 count += 1
 
-            if len(process_logs) == 0 or process_logs[0]['status'] == 'error':
-                return openreview.OpenReviewException('Error saving invitation: ' + invitation.id)
+            if len(process_logs) == 0:
+                raise openreview.OpenReviewException('Time out waiting for invitation to complete: ' + invitation.id)
+                
+            if process_logs[0]['status'] == 'error':
+                raise openreview.OpenReviewException('Error saving invitation: ' + invitation.id)
             
         return invitation
 
