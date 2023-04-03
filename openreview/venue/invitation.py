@@ -1981,7 +1981,7 @@ class InvitationBuilder(object):
                 signatures = [venue_id],
                 readers = [venue_id, committee_id],
                 writers = [venue_id],
-                maxReplies=1,
+                minReplies=1,
                 web = webfield_content,
                 edge = {
                     'id': {
