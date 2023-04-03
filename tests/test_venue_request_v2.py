@@ -643,6 +643,36 @@ class TestVenueRequest():
         assert '2 users' in last_comment.content['invited']
         assert '"invalid_profile_ids\": [\n    \"~Celeste_Martinez1\"\n  ]\n}' in last_comment.content['error']
 
+        recruitment_note = test_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'Reviewers',
+                'invitee_reduced_load': ['2', '4', '6'],
+                'invitee_details': '''~Celeste_Martinez''',
+                'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert recruitment_note
+
+        helpers.await_queue()
+        process_logs = client.get_process_logs(id=recruitment_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[0]['invitation'] == '{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
+
+        recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
+                                                                                   venue['request_form_note'].number)
+        last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
+        assert '0 users' in last_comment.content['invited']
+        assert '"invalid_profile_ids\": [\n    \"~Celeste_Martinez\"\n  ]\n}' in last_comment.content['error']
+
     def test_venue_AC_recruitment_(self, client, test_client, openreview_client, selenium, request_page, venue, helpers):
 
         # Test AC Recruitment
