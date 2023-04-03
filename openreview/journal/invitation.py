@@ -3113,7 +3113,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'instructions': f'<p class="dark">Assign reviewers based on their affinity scores.</p>\
                 <p class="dark"><strong>Instructions:</strong></p>\
                 <ul>\
-                    <li>Assign {self.journal.get_number_of_reviewers()} reviewers to the {self.journal.short_name} submissions you are in charged of.</li>\
+                    <li>Assign {self.journal.get_number_of_reviewers()} reviewers to the {self.journal.short_name} submissions you are in charge of.</li>\
                     <li>Please avoid giving an assignment to a reviewer that already has an uncompleted assignment.</li>\
                 </ul>\
                 <br>'
