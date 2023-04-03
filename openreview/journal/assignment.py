@@ -131,24 +131,6 @@ class Assignment(object):
         self.post_submission_edges(conflict_edges)
         print('Finished setup Reviewer assignment.')
 
-
-    def assign_reviewer(self, note, reviewer, solicit=False):
-
-        profile = self.client.get_profile(reviewer)
-        ## Check conflicts again?
-        self.client.post_edge(Edge(invitation=self.journal.get_reviewer_assignment_id(),
-            readers=[self.journal.venue_id, self.journal.get_action_editors_id(number=note.number), profile.id],
-            nonreaders=[self.journal.get_authors_id(number=note.number)],
-            writers=[self.journal.venue_id, self.journal.get_action_editors_id(number=note.number)],
-            signatures=[self.journal.venue_id],
-            head=note.id,
-            tail=profile.id,
-            weight=1
-        ))
-
-        if solicit:
-            self.client.add_members_to_group(self.journal.get_solicit_reviewers_id(number=note.number), profile.id)
-
     def compute_conflicts(self, note, reviewer):
 
         reviewer_profiles = tools.get_profiles(self.client, [reviewer], with_publications=True)

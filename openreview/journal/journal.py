@@ -393,9 +393,6 @@ class Journal(object):
         self.invitation_builder.release_submission_history(note)
         self.invitation_builder.expire_invitation(self.get_review_approval_id(note.number))
 
-    def assign_reviewer(self, note, reviewer, solicit):
-        self.assignment.assign_reviewer(note, reviewer, solicit)
-
     def is_submission_public(self):
         return self.settings.get('submission_public', True)
 

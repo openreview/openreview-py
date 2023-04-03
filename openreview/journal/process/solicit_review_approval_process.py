@@ -16,7 +16,15 @@ def process(client, edit, invitation):
     if note.content['decision']['value'] == 'Yes, I approve the solicit review.':
         print('Assign reviewer from solicit review')
         solicit_request = client.get_note(note.replyto)
-        journal.assign_reviewer(submission, solicit_request.signatures[0], solicit=True)
+        profile = client.get_profile(solicit_request.signatures[0])
+        
+        client.add_members_to_group(journal.get_solicit_reviewers_id(number=submission.number), profile.id)
+        client.post_edge(openreview.api.Edge(invitation=journal.get_reviewer_assignment_id(),
+            signatures=[journal.venue_id],
+            head=submission.id,
+            tail=profile.id,
+            weight=1
+        ))
 
         print('Send email to solicit reviewer')
         review_period_length = journal.get_review_period_length(submission)
