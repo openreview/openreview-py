@@ -41,7 +41,7 @@ return {
     officialReviewName: domain.content.review_name?.value,
     officialMetaReviewName: domain.content.meta_review_name?.value,
     decisionName: domain.content.decision_name?.value,
-    recommendationName: domain.content.recommendation_id?.value || 'Recommendation',
+    recommendationName: domain.content.meta_review_recommendation?.value || 'recommendation',
     shortPhrase: domain.content.subtitle.value,
     enableQuerySearch: true,
     edgeBrowserDeployedUrl: `/edges/browse?start=${startParam}&traverse=${traverseParam}&edit=${domain.content.reviewers_invite_assignment_id.value}&browse=${browseInvitations.join(';')}${otherParams}`
