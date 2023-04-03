@@ -91,6 +91,7 @@ class Recruitment(object):
             profile = None
             is_profile_id = email.startswith('~')
             invalid_profile_id = False
+            no_profile_found = False
             if is_profile_id:
                 try:
                     profile = tools.get_profile(self.client, email)
@@ -104,7 +105,7 @@ class Recruitment(object):
                         recruitment_status['errors'][error_string].append(email)
                         continue
                 if not profile:
-                    invalid_profile_id = True
+                    no_profile_found = True
                 profile_emails = profile.content['emails'] if profile else []
 
             memberships = [g.id for g in self.client.get_groups(member=email, prefix=venue_id)] if tools.get_group(self.client, email) else []
@@ -122,6 +123,10 @@ class Recruitment(object):
                 if 'invalid_profile_ids' not in recruitment_status['errors']:
                     recruitment_status['errors']['invalid_profile_ids'] = []
                 recruitment_status['errors']['invalid_profile_ids'].append(email)
+            elif no_profile_found:
+                if 'profile_not_found' not in recruitment_status['errors']:
+                    recruitment_status['errors']['profile_not_found'] = []
+                recruitment_status['errors']['profile_not_found'].append(email)
             elif invited_group_ids:
                 invited_group_id=invited_group_ids[0]
                 if invited_group_id not in recruitment_status['already_invited']:
