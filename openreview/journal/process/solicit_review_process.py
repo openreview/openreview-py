@@ -5,16 +5,20 @@ def process(client, edit, invitation):
     solicit_note = edit.note
     submission = client.get_note(edit.note.forum)
 
+    if solicit_note.ddate:
+        journal.invitation_builder.expire_invitation(journal.get_solicit_review_approval_id(number=submission.number, signature=solicit_note.signatures[0]))
+        return
+
     ## Notify readers
     duedate = journal.get_due_date(weeks = 1)
     journal.invitation_builder.set_note_solicit_review_approval_invitation(submission, solicit_note, duedate)
 
     client.post_message(
         recipients=[journal.get_action_editors_id(number=submission.number)],
-        subject=f'''[{journal.short_name}] Request to review {journal.short_name} submission "{submission.content['title']['value']}" has been submitted''',
+        subject=f'''[{journal.short_name}] Request to review {journal.short_name} submission "{submission.number}: {submission.content['title']['value']}" has been submitted''',
         message=f'''Hi {{{{fullname}}}},
 
-This is to inform you that an OpenReview user has requested to review {journal.short_name} submission {submission.content['title']['value']}, which you are the AE for.
+This is to inform you that an OpenReview user has requested to review {journal.short_name} submission {submission.number}: {submission.content['title']['value']}, which you are the AE for.
 
 Please consult the request and either accept or reject it, by visiting this link:
 

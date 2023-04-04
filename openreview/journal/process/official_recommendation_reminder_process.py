@@ -15,7 +15,7 @@ def process(client, invitation):
     client.post_message(
         recipients=[journal.get_reviewers_id(number=submission.number)],
         ignoreRecipients=signatures,
-        subject=f'''[{journal.short_name}] You are late in performing a task for assigned paper {submission.content['title']['value']}''',
+        subject=f'''[{journal.short_name}] You are late in performing a task for assigned paper {submission.number}: {submission.content['title']['value']}''',
         message=f'''Hi {{{{fullname}}}},
 
 Our records show that you are late on the current reviewing task:

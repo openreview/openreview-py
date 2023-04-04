@@ -8,7 +8,7 @@ def process(client, edit, invitation):
 
     recipients = [journal.get_action_editors_id(number=submission.number)]
     ignoreRecipients = []
-    subject=f'''[{journal.short_name}] Assignment Acknowledgement posted on submission {submission.content['title']['value']}'''
+    subject=f'''[{journal.short_name}] Assignment Acknowledgement posted on submission {submission.number}: {submission.content['title']['value']}'''
     message=f'''Hi {{{{fullname}}}},
 
 {profile.get_preferred_name(pretty=True)} posted an assignment acknowledgement on a submission for which you are an Action Editor.

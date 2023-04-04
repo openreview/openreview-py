@@ -2184,12 +2184,6 @@ class Invitation(object):
         edate = self.expdate if self.expdate else now
         return cdate <= now and now <= edate
 
-    def is_active(self):
-        now = tools.datetime_millis(datetime.datetime.utcnow())
-        cdate = self.cdate if self.cdate else now
-        edate = self.expdate if self.expdate else now
-        return cdate <= now and now <= edate
-
     def pretty_id(self):
         tokens = self.id.split('/')[-2:]
         filtered_tokens = []

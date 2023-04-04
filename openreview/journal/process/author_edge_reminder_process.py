@@ -17,7 +17,7 @@ def process(client, invitation):
     print('send email to authors')
     client.post_message(
         recipients=[journal.get_authors_id(submission.number)],
-        subject=f'''[{journal.short_name}] You are late in performing a task for your paper {submission.content['title']['value']}''',
+        subject=f'''[{journal.short_name}] You are late in performing a task for your paper {submission.number}: {submission.content['title']['value']}''',
         message=f'''Hi {{{{fullname}}}},
 
 Our records show that you are late on the current task:

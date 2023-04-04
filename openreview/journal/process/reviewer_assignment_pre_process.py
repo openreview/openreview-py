@@ -35,15 +35,19 @@ def process(client, edge, invitation):
         if invitation is None:
            raise openreview.OpenReviewException(f'Can not add assignment, invitation is not active yet.')
 
-        ## Check availability
-        edges = client.get_edges(invitation=journal.get_reviewer_availability_id(), tail=edge.tail)
-        if edges and edges[0].label == 'Unavailable':
-           raise openreview.OpenReviewException(f'Reviewer {edge.tail} is currently unavailable.')           
-
         ## Check conflicts
         conflicts = journal.assignment.compute_conflicts(submission, edge.tail)
         if conflicts:
            raise openreview.OpenReviewException(f'Can not add assignment, conflict detected for {edge.tail}.')
+
+        ## Check if it is a volunteer and skip the avaliability check and pedning reviews check
+        if client.get_groups(member=edge.tail, id=journal.get_solicit_reviewers_id(number=submission.number)):
+            return
+        
+        ## Check availability
+        edges = client.get_edges(invitation=journal.get_reviewer_availability_id(), tail=edge.tail)
+        if edges and edges[0].label == 'Unavailable':
+           raise openreview.OpenReviewException(f'Reviewer {edge.tail} is currently unavailable.')           
 
         ## Check resubmission assignments
         if f'previous_{journal.short_name}_submission_url' in submission.content:
