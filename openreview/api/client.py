@@ -65,7 +65,6 @@ class OpenReviewClient(object):
         self.group_edits_url = self.baseurl + '/groups/edits'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
-        self.limit = 1000
         self.token = token.replace('Bearer ', '') if token else None
         self.profile = None
         self.headers = {
