@@ -1269,6 +1269,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         helpers.await_queue()
 
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Reviewers', '~VenueThree_Reviewer1')
+        openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission2/Reviewers', '~VenueTwo_Reviewer1')
 
         reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2_@mail.com', password='1234')
         reviewer_group = openreview_client.get_group('V2.cc/2030/Conference/Reviewers')
@@ -1431,7 +1432,32 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'venue_author_v2@mail.com' in messages[0]['content']['to']
         messages = openreview_client.get_messages(subject = '[TestVenue@OR\'2030V2] An author rebuttal was posted on Submission Number: 1, Submission Title: "test submission"')
         assert len(messages) == 1
-        assert 'venue_reviewer_v2_@mail.com' in messages[0]['content']['to']       
+        assert 'venue_reviewer_v2_@mail.com' in messages[0]['content']['to']
+
+        reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2@mail.com', password='1234')
+        ## Post a review
+        reviewer_anon_groups=reviewer_client.get_groups(prefix=f'V2.cc/2030/Conference/Submission2/Reviewer_.*', signatory='~VenueTwo_Reviewer1')
+        assert len(reviewer_anon_groups) == 1
+
+        ## Post a review edit
+        review_note = reviewer_client.post_note_edit(invitation=f'V2.cc/2030/Conference/Submission2/-/Official_Review',
+            signatures=[reviewer_anon_groups[0].id],
+            note=Note(
+                content={
+                    'review': { 'value': 'very good paper' },
+                    'rating': { 'value': '7: Good paper, accept' },
+                    'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+
+        invitation = openreview_client.get_invitation(f'{reviewer_anon_groups[0].id}/-/Rebuttal')
+        assert invitation
+        assert invitation.edit['note']['id']['param']['withInvitation'] == invitation.id
+        assert invitation.edit['note']['forum'] == review_note['note']['forum']
+        assert invitation.edit['note']['replyto'] == review_note['note']['id']
 
     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
