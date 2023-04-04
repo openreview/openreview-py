@@ -297,7 +297,18 @@ class TestVenueRequest():
             client.post_note(venue_revision_note)
 
         venue_revision_note.content['desk_rejected_submissions_author_anonymity'] = 'Yes, author identities of desk rejected submissions should be revealed.'
+        venue_revision_note.content['Submission Deadline'] = request_form_note.content['Submission Deadline'] + ' '
         venue_revision_note=client.post_note(venue_revision_note)
+
+        helpers.await_queue()
+        process_logs = client.get_process_logs(id=venue_revision_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[0]['invitation'] == f'{support_group_id}/-/Request{request_form_note.number}/Revision'
+
+        comment_invitation = f'{support_group_id}/-/Request{request_form_note.number}/Stage_Error_Status'
+        error_comments = client.get_notes(invitation=comment_invitation, sort='tmdate')
+        assert not error_comments
 
         assert openreview_client.get_invitation('V2.cc/2022/Conference/-/Submission_Test')
 
