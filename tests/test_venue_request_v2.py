@@ -600,7 +600,7 @@ class TestVenueRequest():
         # assert [btn for btn in buttons if btn.text == 'Recruitment']
         helpers.create_user('reviewer_one_tilde_v2@mail.com', 'Reviewer', 'OneTildeV')
         helpers.create_user('reviewer_two_tilde_v2@mail.com', 'Reviewer', 'TwoTildeV')
-        reviewer_details = '''~Reviewer_OneTildeV1\n~Reviewer_TwoTildeV1\n~Celeste_Martinez1'''
+        reviewer_details = '''~Reviewer_OneTildeV1\n~Reviewer_TwoTildeV1\n~Celeste_Martinez1\n~Melisa_Bok'''
 
         recruitment_note = test_client.post_note(openreview.Note(
             content={
@@ -641,7 +641,8 @@ class TestVenueRequest():
                                                                                    venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
         assert '2 users' in last_comment.content['invited']
-        assert '"invalid_profile_ids\": [\n    \"~Celeste_Martinez1\"\n  ]\n}' in last_comment.content['error']
+        assert '"profile_not_found\": [\n    \"~Celeste_Martinez1\"\n  ]' in last_comment.content['error']
+        assert '"invalid_profile_ids\": [\n    \"~Melisa_Bok\"\n  ]' in last_comment.content['error']
 
     def test_venue_AC_recruitment_(self, client, test_client, openreview_client, selenium, request_page, venue, helpers):
 
