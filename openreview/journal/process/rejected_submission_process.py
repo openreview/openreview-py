@@ -9,10 +9,10 @@ def process(client, edit, invitation):
     print('Send email to authors')
     client.post_message(
         recipients=[journal.get_authors_id(number=submission.number)],
-        subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.content['title']['value']}''',
+        subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
         message=f'''Hi {{{{fullname}}}},
 
-We are sorry to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your {journal.short_name} submission title "{submission.content['title']['value']}" is rejected.
+We are sorry to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your {journal.short_name} submission "{submission.number}: {submission.content['title']['value']}" is rejected.
 
 To know more about the decision, please follow this link: https://openreview.net/forum?id={submission.id}
 

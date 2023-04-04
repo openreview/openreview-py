@@ -9,12 +9,22 @@ def process(client, edit, invitation):
         return
 
     submission = client.get_note(note.forum)
+    review_visibility = 'publicly visible' if journal.is_submission_public() else 'visible to all the reviewers'
+    submission_length = 'If the submission is longer than 12 pages (excluding any appendix), you may request more time from the AE.' if journal.get_submission_length() else ''
 
     ## If yes then assign the reviewer to the papers
     if note.content['decision']['value'] == 'Yes, I approve the solicit review.':
         print('Assign reviewer from solicit review')
         solicit_request = client.get_note(note.replyto)
-        journal.assign_reviewer(submission, solicit_request.signatures[0], solicit=True)
+        profile = client.get_profile(solicit_request.signatures[0])
+        
+        client.add_members_to_group(journal.get_solicit_reviewers_id(number=submission.number), profile.id)
+        client.post_edge(openreview.api.Edge(invitation=journal.get_reviewer_assignment_id(),
+            signatures=[journal.venue_id],
+            head=submission.id,
+            tail=profile.id,
+            weight=1
+        ))
 
         print('Send email to solicit reviewer')
         review_period_length = journal.get_review_period_length(submission)
@@ -23,16 +33,16 @@ def process(client, edit, invitation):
 
         client.post_message(
             recipients=solicit_request.signatures,
-            subject=f'''[{journal.short_name}] Request to review {journal.short_name} submission "{submission.content['title']['value']}" has been accepted''',
+            subject=f'''[{journal.short_name}] Request to review {journal.short_name} submission "{submission.number}: {submission.content['title']['value']}" has been accepted''',
             message=f'''Hi {{{{fullname}}}},
 
-This is to inform you that your request to act as a reviewer for {journal.short_name} submission {submission.content['title']['value']} has been accepted by the Action Editor (AE).
+This is to inform you that your request to act as a reviewer for {journal.short_name} submission {submission.number}: {submission.content['title']['value']} has been accepted by the Action Editor (AE).
 
-You are required to submit your review within {review_period_length} weeks ({duedate.strftime("%b %d")}). If the submission is longer than 12 pages (excluding any appendix), you may request more time from the AE.
+You are required to submit your review within {review_period_length} weeks ({duedate.strftime("%b %d")}). {submission_length}
 
 To submit your review, please follow this link: https://openreview.net/forum?id={submission.id}&invitationId={journal.get_review_id(number=submission.number)} or check your tasks in the Reviewers Console: https://openreview.net/group?id={journal.venue_id}/Reviewers
 
-Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit {journal.website}.
+Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become {review_visibility}. For more details and guidelines on performing your review, visit {journal.website}.
 
 We thank you for your contribution to {journal.short_name}!
 
@@ -50,10 +60,10 @@ note: replies to this email will go to the AE, {assigned_action_editor.get_prefe
         client.add_members_to_group(journal.get_solicit_reviewers_id(number=submission.number, declined=True), solicit_request.signatures)
         client.post_message(
             recipients=solicit_request.signatures,
-            subject=f'''[{journal.short_name}] Request to review {journal.short_name} submission "{submission.content['title']['value']}" was not accepted''',
+            subject=f'''[{journal.short_name}] Request to review {journal.short_name} submission "{submission.number}: {submission.content['title']['value']}" was not accepted''',
             message=f'''Hi {{{{fullname}}}},
 
-This is to inform you that your request to act as a reviewer for {journal.short_name} submission {submission.content['title']['value']} was not accepted by the Action Editor (AE). If you would like to know more about the reason behind this decision, you can click here: https://openreview.net/forum?id={submission.id}&noteId={note.id}.
+This is to inform you that your request to act as a reviewer for {journal.short_name} submission {submission.number}: {submission.content['title']['value']} was not accepted by the Action Editor (AE). If you would like to know more about the reason behind this decision, you can click here: https://openreview.net/forum?id={submission.id}&noteId={note.id}.
 
 Respectfully,
 

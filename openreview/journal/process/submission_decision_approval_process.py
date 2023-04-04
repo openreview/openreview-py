@@ -36,17 +36,17 @@ def process(client, edit, invitation):
 
     ## Enable Camera Ready Revision
     print('Enable Camera Ready Revision')
-    journal.invitation_builder.set_note_camera_ready_revision_invitation(submission, journal.get_due_date(weeks = 4))
+    journal.invitation_builder.set_note_camera_ready_revision_invitation(submission, journal.get_due_date(weeks = journal.get_camera_ready_period_length()))
 
     ## Send email to authors
     print('Send email to authors')
     if decision.content['recommendation']['value'] == 'Accept as is':
         client.post_message(
             recipients=[journal.get_authors_id(number=submission.number)],
-            subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.content['title']['value']}''',
+            subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
             message=f'''Hi {{{{fullname}}}},
 
-We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your {journal.short_name} submission title "{submission.content['title']['value']}" is accepted as is.
+We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your {journal.short_name} submission "{submission.number}: {submission.content['title']['value']}" is accepted as is.
 
 To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={submission.id}
 
@@ -65,10 +65,10 @@ The {journal.short_name} Editors-in-Chief
     if decision.content['recommendation']['value'] == 'Accept with minor revision':
         client.post_message(
             recipients=[journal.get_authors_id(number=submission.number)],
-            subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.content['title']['value']}''',
+            subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
             message=f'''Hi {{{{fullname}}}},
 
-We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your {journal.short_name} submission title "{submission.content['title']['value']}" is accepted with minor revision.
+We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your {journal.short_name} submission "{submission.number}: {submission.content['title']['value']}" is accepted with minor revision.
 
 To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={submission.id}
 

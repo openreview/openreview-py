@@ -19,7 +19,7 @@ def process(client, invitation):
         print('send email to action editors', late_invitees)
         client.post_message(
             recipients=late_invitees,
-            subject=f'''[{journal.short_name}] You are late in performing a task for assigned paper {submission.content['title']['value']}''',
+            subject=f'''[{journal.short_name}] You are late in performing a task for assigned paper {submission.number}: {submission.content['title']['value']}''',
             message=f'''Hi {{{{fullname}}}},
 
 Our records show that you are late on the current action editor task:
@@ -45,10 +45,10 @@ The {journal.short_name} Editors-in-Chief
       for profile in profiles:
         client.post_message(
             recipients=[journal.get_editors_in_chief_id()],
-            subject=f'''[{journal.short_name}] AE is late in performing a task for assigned paper {submission.content['title']['value']}''',
+            subject=f'''[{journal.short_name}] AE is late in performing a task for assigned paper {submission.number}: {submission.content['title']['value']}''',
             message=f'''Hi {{{{fullname}}}},
 
-Our records show that the AE for submission {submission.content['title']['value']} is *{days_late}* late on an AE task:
+Our records show that the AE for submission {submission.number}: {submission.content['title']['value']} is *{days_late}* late on an AE task:
 
 Task: {task}
 AE: {profile.get_preferred_name(pretty=True)}
