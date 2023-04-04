@@ -87,6 +87,27 @@ class Recruitment(object):
 
         print('sending recruitment invitations')
         for index, email in enumerate(tqdm(invitees, desc='send_invitations')):
+            profile_emails = []
+            profile = None
+            is_profile_id = email.startswith('~')
+            invalid_profile_id = False
+            no_profile_found = False
+            if is_profile_id:
+                try:
+                    profile = tools.get_profile(self.client, email)
+                except openreview.OpenReviewException as e:
+                    error_string = repr(e)
+                    if 'ValidationError' in error_string:
+                        invalid_profile_id = True
+                    else:
+                        if error_string not in recruitment_status['errors']:
+                            recruitment_status['errors'][error_string] = []
+                        recruitment_status['errors'][error_string].append(email)
+                        continue
+                if not profile:
+                    no_profile_found = True
+                profile_emails = profile.content['emails'] if profile else []
+
             memberships = [g.id for g in self.client.get_groups(member=email, prefix=venue_id)] if tools.get_group(self.client, email) else []
             invited_roles = [f'{venue_id}/{role}/Invited' for role in committee_roles]
             member_roles = [f'{venue_id}/{role}' for role in committee_roles]
@@ -94,21 +115,18 @@ class Recruitment(object):
             invited_group_ids=list(set(invited_roles) & set(memberships))
             member_group_ids=list(set(member_roles) & set(memberships))
 
-            profile_emails = []
-            profile = None
-            is_profile_id = email.startswith('~')
-            if is_profile_id:
-                profile = tools.get_profile(self.client, email)
-                profile_emails = profile.content['emails'] if profile else []
-
             if profile and not profile_emails:
                 if 'profiles_without_email' not in recruitment_status['errors']:
                     recruitment_status['errors']['profiles_without_email'] = []
                 recruitment_status['errors']['profiles_without_email'].append(email)
-            elif is_profile_id and not profile:
+            elif invalid_profile_id:
                 if 'invalid_profile_ids' not in recruitment_status['errors']:
                     recruitment_status['errors']['invalid_profile_ids'] = []
                 recruitment_status['errors']['invalid_profile_ids'].append(email)
+            elif no_profile_found:
+                if 'profile_not_found' not in recruitment_status['errors']:
+                    recruitment_status['errors']['profile_not_found'] = []
+                recruitment_status['errors']['profile_not_found'].append(email)
             elif invited_group_ids:
                 invited_group_id=invited_group_ids[0]
                 if invited_group_id not in recruitment_status['already_invited']:
