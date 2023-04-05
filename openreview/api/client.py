@@ -881,6 +881,7 @@ class OpenReviewClient(object):
             replyto = None,
             tauthor = None,
             signature = None,
+            transitive_members = None,
             signatures = None,
             writer = None,
             trash = None,
@@ -914,6 +915,8 @@ class OpenReviewClient(object):
         :type tauthor: str, optional
         :param signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
         :type signature: str, optional
+        :param transitive_members: If true, returns Notes whose tauthor field is a transitive member of the Group represented by the given Group ID.
+        :type transitive_members: bool, optional
         :param signatures: Group IDs. If provided, returns Notes whose signatures field contains the given Group IDs.
         :type signatures: list[str], optional
         :param writer: A Group ID. If provided, returns Notes whose writers field contains the given Group ID.
@@ -955,6 +958,8 @@ class OpenReviewClient(object):
             params['tauthor'] = tauthor
         if signature is not None:
             params['signature'] = signature
+        if transitive_members is not None:
+            params['transitiveMembers'] = transitive_members
         if signatures is not None:
             params['signatures'] = signatures
         if writer is not None:
@@ -995,6 +1000,7 @@ class OpenReviewClient(object):
             replyto = None,
             tauthor = None,
             signature = None,
+            transitive_members = None,
             signatures = None,
             writer = None,
             trash = None,
@@ -1028,6 +1034,8 @@ class OpenReviewClient(object):
         :type tauthor: str, optional
         :param signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
         :type signature: str, optional
+        :param transitive_members: If true, returns Notes whose tauthor field is a transitive member of the Group represented by the given Group ID.
+        :type transitive_members: bool, optional
         :param signatures: Group IDs. If provided, returns Notes whose signatures field contains the given Group IDs.
         :type signatures: list[str], optional
         :param writer: A Group ID. If provided, returns Notes whose writers field contains the given Group ID.
@@ -1064,6 +1072,7 @@ class OpenReviewClient(object):
             'replyto': replyto,
             'tauthor': tauthor,
             'signature': signature,
+            'transitive_members': transitive_members,
             'signatures': signatures,
             'writer': writer,
             'trash': trash,
