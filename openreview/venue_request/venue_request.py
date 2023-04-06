@@ -18,7 +18,7 @@ class VenueStages():
 
     def setup_venue_revision(self):
 
-        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Paper Matching', 'reviewer_identity', 'area_chair_identity', 'senior_area_chair_identity', 'submissions_visibility', 'submission_readers', 'api_version', 'secondary_area_chairs']
+        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Paper Matching', 'reviewer_identity', 'area_chair_identity', 'senior_area_chair_identity', 'submissions_visibility', 'submission_readers', 'api_version', 'secondary_area_chairs', 'force_profiles_only']
         revision_content = {key: self.venue_request.request_content[key] for key in self.venue_request.request_content if key not in remove_fields}
         revision_content['Additional Submission Options'] = {
             'order': 18,
@@ -1112,6 +1112,15 @@ class VenueRequest():
                 'order': 20,
                 'required': False,
                 'hidden': True
+            },
+            'force_profiles_only': {
+                'description': 'Should all authors of papers have OpenReview profiles before submitting a paper?',
+                'value-radio': [
+                    'Yes, require all authors to have an OpenReview profile',
+                    'No, allow submissions with email addresses'
+                ],
+                'order': 20,
+                'default': ['No, allow submissions with email addresses']
             },
             'submission_readers': {
                 'description': 'Please select who should have access to the submissions after the abstract deadline (if your venue had one) or the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
