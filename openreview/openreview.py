@@ -879,6 +879,7 @@ class Client(object):
             replyto = None,
             tauthor = None,
             signature = None,
+            signatures = None,
             writer = None,
             trash = None,
             number = None,
@@ -912,6 +913,8 @@ class Client(object):
         :type tauthor: bool, optional
         :param signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
         :type signature: str, optional
+        :param signatures: Group IDs. If provided, returns Notes whose signatures field contains the given Group IDs.
+        :type signatures: list[str], optional
         :param writer: A Group ID. If provided, returns Notes whose writers field contains the given Group ID.
         :type writer: str, optional
         :param trash: If True, includes Notes that have been deleted (i.e. the ddate field is less than the
@@ -964,6 +967,8 @@ class Client(object):
             params['tauthor'] = tauthor
         if signature is not None:
             params['signature'] = signature
+        if signatures is not None:
+            params['signatures'] = signatures
         if writer is not None:
             params['writer'] = writer
         if trash == True:
@@ -1005,6 +1010,7 @@ class Client(object):
             replyto = None,
             tauthor = None,
             signature = None,
+            signatures = None,
             writer = None,
             trash = None,
             number = None,
@@ -1036,6 +1042,8 @@ class Client(object):
         :type tauthor: bool, optional
         :param signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
         :type signature: str, optional
+        :param signatures: Group IDs. If provided, returns Notes whose signatures field contains the given Group IDs.
+        :type signatures: list[str], optional
         :param writer: A Group ID. If provided, returns Notes whose writers field contains the given Group ID.
         :type writer: str, optional
         :param trash: If True, includes Notes that have been deleted (i.e. the ddate field is less than the
@@ -1081,6 +1089,7 @@ class Client(object):
             'replyto': replyto,
             'tauthor': tauthor,
             'signature': signature,
+            'signatures': signatures,
             'writer': writer,
             'trash': trash,
             'number': number,
