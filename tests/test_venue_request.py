@@ -185,6 +185,7 @@ class TestVenueRequest():
                     'Reviewer Recommendation Scores'],
                 'Author and Reviewer Anonymity': 'Single-blind (Reviewers are anonymous)',
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
+                'force_profiles_only': 'Yes, require all authors to have an OpenReview profile',
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
                 'withdrawn_submissions_visibility': 'No, withdrawn submissions should not be made public.',
@@ -270,8 +271,10 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Deploy'.format(support_group_id, request_form_note.number)
 
-        assert openreview.tools.get_invitation(pc_client, 'TEST.cc/2021/Conference/-/Submission_Test')
+        submission_inv = openreview.tools.get_invitation(pc_client, 'TEST.cc/2021/Conference/-/Submission_Test')
+        assert submission_inv
         assert not openreview.tools.get_invitation(pc_client, 'TEST.cc/2021/Conference/-/Submission')
+        assert '~.*' == submission_inv.reply['content']['authorids']['values-regex'] 
 
         assert pc_client.get_notes(invitation='openreview.net/Support/-/Request{number}/Comment'.format(number=request_form_note.number))
         
