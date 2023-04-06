@@ -39,7 +39,8 @@ class TestVenueSubmission():
             readers=[SubmissionStage.Readers.EVERYONE], 
             withdrawn_submission_public=True, 
             withdrawn_submission_reveal_authors=True, 
-            desk_rejected_submission_public=True
+            desk_rejected_submission_public=True,
+            force_profiles=True
         )
 
         venue.bid_stages = [
@@ -200,19 +201,36 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         #TODO: check author console
 
+        with pytest.raises(openreview.OpenReviewException, match=r'authorids value/1 must match pattern "~.*"'):
+            submission_note_2 = author_client.post_note_edit(
+                invitation='TestVenue.cc/-/Submission',
+                signatures= ['~Celeste_MartinezEleven1'],
+                note=Note(
+                    content={
+                        'title': { 'value': 'Paper 2 Title' },
+                        'abstract': { 'value': 'Paper abstract' },
+                        'authors': { 'value': ['Celeste MartinezEleven', 'Melisa BokEleven']},
+                        'authorids': { 'value': ['~Celeste_MartinezEleven1', 'melisa@maileleven.com']},
+                        'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                        'keywords': {'value': ['aa'] }
+                    }
+                ))
+            
+        helpers.create_user('melisa@maileleven.com', 'Melisa', 'BokEleven')
+
         submission_note_2 = author_client.post_note_edit(
-            invitation='TestVenue.cc/-/Submission',
-            signatures= ['~Celeste_MartinezEleven1'],
-            note=Note(
-                content={
-                    'title': { 'value': 'Paper 2 Title' },
-                    'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['Celeste MartinezEleven']},
-                    'authorids': { 'value': ['~Celeste_MartinezEleven1']},
-                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'keywords': {'value': ['aa'] }
-                }
-            ))
+                invitation='TestVenue.cc/-/Submission',
+                signatures= ['~Celeste_MartinezEleven1'],
+                note=Note(
+                    content={
+                        'title': { 'value': 'Paper 2 Title' },
+                        'abstract': { 'value': 'Paper abstract' },
+                        'authors': { 'value': ['Celeste MartinezEleven', 'Melisa BokEleven']},
+                        'authorids': { 'value': ['~Celeste_MartinezEleven1', '~Melisa_BokEleven1']},
+                        'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                        'keywords': {'value': ['aa'] }
+                    }
+                ))
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id']) 
 

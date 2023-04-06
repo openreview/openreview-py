@@ -72,7 +72,8 @@ class SubmissionStage(object):
             author_names_revealed=False,
             papers_released=False,
             author_reorder_after_first_deadline=False,
-            submission_email=None
+            submission_email=None,
+            force_profiles=False
         ):
 
         self.start_date = start_date
@@ -104,6 +105,7 @@ class SubmissionStage(object):
         self.submission_email = submission_email
         self.withdrawal_name = 'Withdrawal'
         self.desk_rejection_name = 'Desk_Rejection'
+        self.force_profiles = force_profiles
 
     def get_readers(self, conference, number, decision=None):
 
@@ -230,6 +232,10 @@ class SubmissionStage(object):
             if self.second_due_date and 'pdf' in content:
                 content['pdf']['required'] = False
 
+            if self.force_profiles:
+                content['authorids']['description'] = 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.'
+                content['authorids']['values-regex'] = '~.*'
+
         elif api_version == '2':
             content = default_content.submission_v2.copy()
 
@@ -259,6 +265,10 @@ class SubmissionStage(object):
 
             if self.second_due_date and 'pdf' in content:
                 content['pdf']['value']['param']['optional'] = True
+
+            if self.force_profiles:
+                content['authorids']['description'] = 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.'
+                content['authorids']['value']['param']['regex'] = '~.*'
 
             if conference:
                 submission_id = self.get_submission_id(conference)

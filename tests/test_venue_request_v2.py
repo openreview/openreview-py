@@ -63,6 +63,7 @@ class TestVenueRequest():
                     'Reviewer Recommendation Scores'],
                 'Author and Reviewer Anonymity': 'Double-blind',
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
+                'force_profiles_only': 'Yes, require all authors to have an OpenReview profile',
                 'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
@@ -104,6 +105,7 @@ class TestVenueRequest():
         submission_inv = openreview_client.get_invitation('V2.cc/2030/Conference/-/Submission')
         assert submission_inv.duedate == openreview.tools.datetime_millis(due_date)
         assert submission_inv.expdate == openreview.tools.datetime_millis(due_date + datetime.timedelta(minutes = 30))
+        assert '~.*' == submission_inv.edit['note']['content']['authorids']['value']['param']['regex']
 
         # Return venue details as a dict
         venue_details = {
@@ -875,6 +877,21 @@ class TestVenueRequest():
         matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum, sort='tmdate')[0]
         assert matching_status
         assert 'Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button.' in matching_status.content['error']
+
+        with pytest.raises(openreview.OpenReviewException, match=r'authorids value/0 must match pattern "~.*"'):
+            submission_note_1 = author_client.post_note_edit(
+                invitation=f'{venue_id}/-/Submission',
+                signatures= ['~VenueTwo_Author1'],
+                note=Note(
+                    content={
+                        'title': { 'value': 'test submission' },
+                        'abstract': { 'value': 'test abstract' },
+                        'authors': { 'value': ['VenueTwo Author']},
+                        'authorids': { 'value': ['venue_author_v2@mail.com']},
+                        'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                        'keywords': {'value': ['aa'] }
+                    }
+                ))
 
         submission_note_1 = author_client.post_note_edit(
             invitation=f'{venue_id}/-/Submission',

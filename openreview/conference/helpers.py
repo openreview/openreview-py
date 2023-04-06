@@ -208,6 +208,8 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
 
     submission_email = note.content.get('submission_email', None)
 
+    force_profiles = 'Yes' in note.content.get('force_profiles_only', '')
+
     builder.set_submission_stage(
         name=name,
         double_blind=double_blind,
@@ -231,7 +233,8 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         papers_released=papers_released,
         readers=readers,
         author_reorder_after_first_deadline=author_reorder_after_first_deadline,
-        submission_email=submission_email)
+        submission_email=submission_email,
+        force_profiles=force_profiles)
 
     paper_matching_options = note.content.get('Paper Matching', [])
     include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
@@ -373,6 +376,7 @@ def get_submission_stage(request_forum):
     email_pcs = 'Yes' in request_forum.content.get('email_pcs_for_new_submissions', '')
     submission_email = request_forum.content.get('submission_email', None)
     hide_fields = request_forum.content.get('hide_fields', [])
+    force_profiles = 'Yes' in request_forum.content.get('force_profiles_only', '')
 
     return openreview.stages.SubmissionStage(name = name,
         double_blind=double_blind,
@@ -388,7 +392,8 @@ def get_submission_stage(request_forum):
         papers_released=papers_released,
         readers=readers,
         email_pcs=email_pcs,
-        submission_email=submission_email)
+        submission_email=submission_email,
+        force_profiles=force_profiles)
 
 def get_bid_stages(request_forum):
     bid_start_date = request_forum.content.get('bid_start_date', '').strip()
