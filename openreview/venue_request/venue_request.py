@@ -1138,7 +1138,7 @@ class VenueRequest():
             'hide_fields': {
                 'values-regex': '.*',
                 'required': False,
-                'description': 'Comma separated values of submission fields to be hidden, author names are already hidden.',
+                'description': 'Comma separated values of submission fields to be hidden, author names are already hidden. These fields will be hidden from all readers of the submissions, except for program chairs and paper authors.',
                 'order': 22
             },
             'submissions_visibility': {
@@ -1428,7 +1428,7 @@ class VenueRequest():
             'hide_fields': {
                 'values-regex': '.*',
                 'required': False,
-                'description': 'Comma separated values of submission fields to be hidden, author names are already hidden.'
+                'description': 'Comma separated values of submission fields to be hidden, author names are already hidden. These fields will be hidden from all readers of the submissions, except for program chairs and paper authors.'
             }
         }
 
