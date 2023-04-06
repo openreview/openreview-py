@@ -831,7 +831,7 @@ class InvitationBuilder(object):
             }],
             content={
                 'comment_preprocess_script': {
-                    'value': self.get_process_content('process/comment_pre_process.py')
+                    'value': self.get_process_content('process/comment_pre_process.js')
                 },
                 'comment_process_script': {
                     'value': self.get_process_content('process/comment_process.py')
@@ -865,15 +865,14 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'invitees': invitees,
                     'cdate': comment_cdate,
-                    'preprocess': '''def process(client, edit, invitation):
-    meta_invitation = client.get_invitation(invitation.invitations[0])
-    script = meta_invitation.content['comment_preprocess_script']['value']
-    funcs = {
-        'openreview': openreview
-    }
-    exec(script, funcs)
-    funcs['process'](client, edit, invitation)
-''' if comment_stage.check_mandatory_readers and comment_stage.reader_selection else None,
+                    'preprocess': '''async function process(client, edit, invitation) {
+  client.throwErrors = true;
+  const { invitations } = await client.getInvitations({ id: invitation.invitations[0] })
+  const metaInvitation = invitations[0];
+  const script = metaInvitation.content.comment_preprocess_script.value;
+  eval(`var process = ${script}`);
+  await process(client, edit, invitation);
+}''' if comment_stage.check_mandatory_readers and comment_stage.reader_selection else None,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['comment_process_script']['value']
