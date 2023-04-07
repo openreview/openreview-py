@@ -154,7 +154,7 @@ class GroupBuilder(object):
             'program_chairs_id': { 'value': self.venue.get_program_chairs_id() },
             'reviewers_id': { 'value': self.venue.get_reviewers_id() },
             'reviewers_name': { 'value': self.venue.reviewers_name },
-            'reviewers_anon_name': { 'value': 'Reviewer_' },
+            'reviewers_anon_name': { 'value': self.venue.get_anon_reviewers_name() },
             'reviewers_submitted_name': { 'value': 'Submitted' },
             'reviewers_custom_max_papers_id': { 'value': self.venue.get_custom_max_papers_id(self.venue.get_reviewers_id()) },
             'reviewers_affinity_score_id': { 'value': self.venue.get_affinity_score_id(self.venue.get_reviewers_id()) },
@@ -191,7 +191,7 @@ class GroupBuilder(object):
         if self.venue.use_area_chairs:
             content['area_chairs_id'] = { 'value': self.venue.get_area_chairs_id() }
             content['area_chairs_name'] = { 'value': self.venue.area_chairs_name }
-            content['area_chairs_anon_name'] = { 'value': 'Area_Chair_' }
+            content['area_chairs_anon_name'] = { 'value': self.venue.get_anon_area_chairs_name() }
             content['area_chairs_custom_max_papers_id'] = { 'value': self.venue.get_custom_max_papers_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_affinity_score_id'] = { 'value': self.venue.get_affinity_score_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_conflict_id'] = { 'value': self.venue.get_conflict_score_id(self.venue.get_area_chairs_id()) }

@@ -1924,6 +1924,14 @@ class InvitationBuilder(object):
     def set_assignment_invitation(self, committee_id):
         client = self.client
         venue = self.venue
+        content = {
+            'review_name': {
+                'value': venue.review_stage.name
+            },
+            'reviewers_anon_name': {
+                'value': venue.get_anon_reviewers_name()
+            }
+        }
         
         invitation = client.get_invitation(venue.get_assignment_id(committee_id, deployed=True))
         is_area_chair = committee_id == venue.get_area_chairs_id()
@@ -1935,6 +1943,14 @@ class InvitationBuilder(object):
         if is_area_chair:
             paper_group_id = venue.get_area_chairs_id(number='{number}')
             group_name = venue.get_area_chairs_name(pretty=True)
+            content = {
+                'review_name': {
+                    'value': venue.meta_review_stage.name
+                },
+                'reviewers_anon_name': {
+                    'value': venue.get_anon_area_chairs_name()
+                }
+            }            
 
         if is_senior_area_chair:
             with open(os.path.join(os.path.dirname(__file__), 'process/sac_assignment_post_process.py')) as post:
@@ -1943,11 +1959,8 @@ class InvitationBuilder(object):
                 invitation.signatures=[venue.get_program_chairs_id()] ## Program Chairs can see the reviews
                 return self.save_invitation(invitation)
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/assignment_pre_process.py')) as pre:
+        with open(os.path.join(os.path.dirname(__file__), 'process/assignment_pre_process.js')) as pre:
             pre_content = pre.read()
-            if is_area_chair:
-                pre_content = pre_content.replace("REVIEW_NAME_STRING = 'review_name'", "REVIEW_NAME_STRING = 'meta_review_name'")
-                pre_content = pre_content.replace("REVIEWERS_ANON_NAME_STRING = 'reviewers_anon_name'", "REVIEWERS_ANON_NAME_STRING = 'area_chairs_anon_name'")
             with open(os.path.join(os.path.dirname(__file__), 'process/assignment_post_process.py')) as post:
                 post_content = post.read()
                 post_content = post_content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + paper_group_id + "'")
@@ -1959,6 +1972,7 @@ class InvitationBuilder(object):
                 invitation.process=post_content
                 invitation.preprocess=pre_content
                 invitation.signatures=[venue.get_program_chairs_id()] ## Program Chairs can see the reviews
+                invitation.content = content
                 return self.save_invitation(invitation)
 
     def set_expertise_selection_invitations(self):
