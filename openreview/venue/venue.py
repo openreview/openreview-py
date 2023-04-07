@@ -438,7 +438,7 @@ class Venue(object):
         ## do nothing
         return True
     
-    def create_withdraw_invitations(self):
+    def create_withdraw_invitations(self, reveal_authors=None, reveal_submission=None, email_pcs=None, hide_fields=[]):
         ## deprecated
         return self.invitation_builder.set_withdraw_invitation()
     
