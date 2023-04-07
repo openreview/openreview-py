@@ -181,7 +181,7 @@ class InvitationBuilder(object):
         note_content = { f: { 'readers': [venue_id, self.venue.get_authors_id('${{4/id}/number}')] } for f in hidden_field_names }
 
         existing_invitation = openreview.tools.get_invitation(self.client, post_submission_id)        
-        if existing_invitation:
+        if existing_invitation and 'content' in existing_invitation.edit['note']:
             for field, value in existing_invitation.edit['note']['content'].items():
                 if field not in hidden_field_names and 'readers' in value:
                     note_content[field] = {

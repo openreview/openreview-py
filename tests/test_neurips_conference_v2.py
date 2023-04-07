@@ -71,6 +71,7 @@ class TestNeurIPSConference():
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'submission_readers': 'Program chairs and paper authors only',
+                'hide_fields': ['keywords'],
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'api_version': '2'
@@ -103,6 +104,11 @@ class TestNeurIPSConference():
         assert 'NeurIPS.cc/2023/Conference/Area_Chairs' in reviewers.readers
 
         assert openreview_client.get_group('NeurIPS.cc/2023/Conference/Authors')
+
+        post_submission =  openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Post_Submission')
+        assert 'authors' in post_submission.edit['note']['content']
+        assert 'authorids' in post_submission.edit['note']['content']
+        assert 'keywords' in post_submission.edit['note']['content']
 
     def test_recruit_senior_area_chairs(self, client, openreview_client, selenium, request_page, helpers):
 
