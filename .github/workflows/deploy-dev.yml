@@ -21,12 +21,15 @@ jobs:
       TAG: ${{ github.event.inputs.tag }}
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v0
+      - name: Authenticate with Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v1
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
+          workload_identity_provider: projects/997553930042/locations/global/workloadIdentityPools/github-identity-pool/providers/github-identity-provider
+          service_account: github-actions@sunlit-realm-131518.iam.gserviceaccount.com
+          create_credentials_file: true
+          cleanup_credentials: true
+          export_environment_variables: true
       - name: Run deploy script
         run: |
           instance_prefix='dev-instance'
