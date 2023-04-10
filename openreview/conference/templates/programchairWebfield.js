@@ -565,11 +565,11 @@ var getBidCounts = function(bidInvitationGroup) {
     invitation: bidInvitationGroup + '/-/' + BID_NAME,
     groupBy: 'tail',
     select: 'count'
-  }, 'groupedEdges').then(function(results) {
-    if (!results || !results.length) {
+  }).then(function(results) {
+    if (!results.groupedEdges || !results.groupedEdges.length) {
       return {};
     }
-    return results.reduce(function(profileMap, groupedEdge) {
+    return results.groupedEdges.reduce(function(profileMap, groupedEdge) {
       profileMap[groupedEdge.id.tail] = groupedEdge.count;
       return profileMap;
     }, {});
@@ -3346,7 +3346,6 @@ var buildReviewersCSV = function(){
       '"' + allExpertise + '"',	
       '"' + (institutionName || '') + '"',	
       institutionDomain,	
-      '"' + tracks + '"',	
       reviewerPapers.length,	
       reviewerReviews.length	
     ].join(',') + '\n');

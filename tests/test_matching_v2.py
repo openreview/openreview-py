@@ -27,6 +27,8 @@ class TestMatching():
         pc_client = helpers.create_user('pc1_venue@mail.com', 'PCFirstName', 'UAI')
         venue_id = 'VenueV2.cc'
         venue = Venue(openreview_client, venue_id, 'openreview.net/Support')
+        venue.invitation_builder.update_wait_time = 2000
+        venue.invitation_builder.update_date_string = "#{4/mdate} + 2000"        
         venue.short_name = 'VV2 2022'
         venue.website = 'www.venuev2.com'
         venue.contact = 'pc_venue@mail.com'
@@ -153,7 +155,10 @@ class TestMatching():
 
         helpers.await_queue_edit(openreview_client, edit_id=note_3['id'])
 
-        venue.setup_post_submission_stage()
+        venue.submission_stage.due_date = datetime.datetime.utcnow()
+        venue.submission_stage.exp_date = datetime.datetime.utcnow() + datetime.timedelta(seconds = 60)
+        venue.create_submission_stage()
+        helpers.await_queue_edit(openreview_client, f'{venue.id}/-/Post_Submission-0-0')
         # Set up reviewer matching
         venue.setup_committee_matching(committee_id=venue.get_area_chairs_id())
         venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
@@ -369,6 +374,8 @@ class TestMatching():
         )
         assert 6 == edges
 
+        venue.create_post_submission_stage()
+
         venue.set_assignments(assignment_title='rev-matching', committee_id=f'{venue.id}/Program_Committee', enable_reviewer_reassignment=True)
 
         revs_paper0 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[0].number))
@@ -403,6 +410,8 @@ class TestMatching():
     def test_redeploy_assigments(self, venue, openreview_client, pc_client, helpers):
 
         notes = venue.get_submissions(sort='number:asc')
+
+        venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
 
         #Reviewer assignments
         pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
@@ -463,6 +472,8 @@ class TestMatching():
         reviewer_group = openreview_client.get_group(venue.id + '/Program_Committee')
         openreview_client.add_members_to_group(reviewer_group, ['r2_venue@mit.edu'])
 
+        venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
+
         pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[0].number}/Senior_Program_Committee', '~Reviewer_Venue1'],
             nonreaders = [f'{venue.id}/Submission{notes[0].number}/Authors'],
@@ -514,6 +525,8 @@ class TestMatching():
 
         pc_client.remove_members_from_group(f'{venue.id}/Submission1/Program_Committee', ['~Reviewer_Venue1'])
 
+        venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
+        
         pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[0].number}/Senior_Program_Committee', 'r2_venue@google.com'],
             nonreaders = [f'{venue.id}/Submission{notes[0].number}/Authors'],
@@ -540,6 +553,8 @@ class TestMatching():
 
         revs_paper2 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[2].number))
         assert ['r2_venue@google.com'] == revs_paper2.members
+
+        venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
 
         pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[2].number}/Senior_Program_Committee', 'r2_venue@google.com'],
@@ -648,6 +663,8 @@ class TestMatching():
 
         notes = venue.get_submissions(sort='number:asc')
 
+        venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
+
         pc3_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
             readers = [venue.id, f'{venue.id}/Submission{notes[1].number}/Senior_Program_Committee', '~Reviewer_Venue1'],
             nonreaders = [f'{venue.id}/Submission{notes[1].number}/Authors'],
@@ -741,6 +758,8 @@ class TestMatching():
 
         assert pc_client.get_group(f'{venue.id}/Submission3/Senior_Program_Committee').members == ['ac2_venue@umass.edu']
 
+        venue.setup_committee_matching(committee_id=venue.get_area_chairs_id(), compute_conflicts=True)
+        
         pc_client.post_edge(Edge(invitation = f'{venue.id}/Senior_Program_Committee/-/Proposed_Assignment',
             readers = [venue.id, 'ac1_venue@cmu.edu'],
             nonreaders = [venue.get_authors_id(number=notes[1].number)],

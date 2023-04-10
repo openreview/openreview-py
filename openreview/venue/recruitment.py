@@ -55,6 +55,8 @@ class Recruitment(object):
         invitation_id = invitation.id
         hash_seed = invitation.content['hash_seed']['value']
 
+        invitees = [e.lower() if '@' in e else e for e in invitees if len(e) > 0]
+
         if remind:
             committee_invited_group = self.client.get_group(committee_invited_id)
             invited_committee = committee_invited_group.members
@@ -85,6 +87,27 @@ class Recruitment(object):
 
         print('sending recruitment invitations')
         for index, email in enumerate(tqdm(invitees, desc='send_invitations')):
+            profile_emails = []
+            profile = None
+            is_profile_id = email.startswith('~')
+            invalid_profile_id = False
+            no_profile_found = False
+            if is_profile_id:
+                try:
+                    profile = tools.get_profile(self.client, email)
+                except openreview.OpenReviewException as e:
+                    error_string = repr(e)
+                    if 'ValidationError' in error_string:
+                        invalid_profile_id = True
+                    else:
+                        if error_string not in recruitment_status['errors']:
+                            recruitment_status['errors'][error_string] = []
+                        recruitment_status['errors'][error_string].append(email)
+                        continue
+                if not profile:
+                    no_profile_found = True
+                profile_emails = profile.content['emails'] if profile else []
+
             memberships = [g.id for g in self.client.get_groups(member=email, prefix=venue_id)] if tools.get_group(self.client, email) else []
             invited_roles = [f'{venue_id}/{role}/Invited' for role in committee_roles]
             member_roles = [f'{venue_id}/{role}' for role in committee_roles]
@@ -92,7 +115,19 @@ class Recruitment(object):
             invited_group_ids=list(set(invited_roles) & set(memberships))
             member_group_ids=list(set(member_roles) & set(memberships))
 
-            if invited_group_ids:
+            if profile and not profile_emails:
+                if 'profiles_without_email' not in recruitment_status['errors']:
+                    recruitment_status['errors']['profiles_without_email'] = []
+                recruitment_status['errors']['profiles_without_email'].append(email)
+            elif invalid_profile_id:
+                if 'invalid_profile_ids' not in recruitment_status['errors']:
+                    recruitment_status['errors']['invalid_profile_ids'] = []
+                recruitment_status['errors']['invalid_profile_ids'].append(email)
+            elif no_profile_found:
+                if 'profile_not_found' not in recruitment_status['errors']:
+                    recruitment_status['errors']['profile_not_found'] = []
+                recruitment_status['errors']['profile_not_found'].append(email)
+            elif invited_group_ids:
                 invited_group_id=invited_group_ids[0]
                 if invited_group_id not in recruitment_status['already_invited']:
                     recruitment_status['already_invited'][invited_group_id] = [] 
@@ -104,7 +139,7 @@ class Recruitment(object):
                 recruitment_status['already_member'][member_group_id].append(email)
             else:
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
-                if not name and not email.startswith('~'):
+                if not name and not is_profile_id:
                     name = 'invitee'
                 try:
                     tools.recruit_reviewer(self.client, email, name,
@@ -117,8 +152,12 @@ class Recruitment(object):
                         verbose=False)
                     recruitment_status['invited'].append(email)
                 except Exception as e:
-                    self.client.remove_members_from_group(committee_invited_id, email)
-                    if repr(e) not in recruitment_status['errors']:
-                        recruitment_status['errors'][repr(e)] = []
-                    recruitment_status['errors'][repr(e)].append(email)
+                    error_string = repr(e)
+                    if 'NotFoundError' in error_string:
+                        error_string = 'InvalidGroup'
+                    else:
+                        self.client.remove_members_from_group(committee_invited_id, email)
+                    if error_string not in recruitment_status['errors']:
+                        recruitment_status['errors'][error_string] = []
+                    recruitment_status['errors'][error_string].append(email)
         return recruitment_status

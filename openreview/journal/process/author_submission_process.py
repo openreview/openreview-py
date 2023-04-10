@@ -7,6 +7,9 @@ def process(client, edit, invitation):
     ## setup author submission invitations
     journal.setup_author_submission(note)
 
+    if journal.should_skip_ac_recommendation():
+        return
+    
     ## send email to authors
     client.post_message(
         recipients=note.signatures,

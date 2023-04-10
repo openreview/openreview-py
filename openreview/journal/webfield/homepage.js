@@ -13,6 +13,7 @@ var VENUE_ID = '';
 var SUBMISSION_ID = '';
 var SUBMITTED_ID = '';
 var UNDER_REVIEW_ID = '';
+var DECISION_PENDING_ID = '';
 var DESK_REJECTED_ID = '';
 var WITHDRAWN_ID = '';
 var REJECTED_ID = '';
@@ -45,6 +46,7 @@ function main() {
     tabs: [
       'Your Consoles',
       'Accepted Papers',
+      'Accepted Papers with Video',
       'Under Review Submissions',
       'All Submissions',
     ].concat(CERTIFICATIONS),
@@ -75,8 +77,19 @@ function load() {
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true,
-    sort: 'tmdate:desc'
+    sort: 'pdate:desc'
   });
+
+  var acceptedNotesWithVideoP = Webfield2.api.getAllSubmissions(SUBMISSION_ID, {
+    'content.venueid': VENUE_ID,
+    details: 'replyCount',
+    sort: 'pdate:desc'
+  })
+  .then(function(submissions) {
+    return _.filter(submissions, function(submission) {
+      return submission.content['video'];
+    });
+  });  
 
   var certificationsP = $.when.apply($, CERTIFICATIONS.map(function(certification) {
     return Webfield2.api.getSubmissions(SUBMISSION_ID, {
@@ -85,23 +98,25 @@ function load() {
       pageSize: PAGE_SIZE,
       details: 'replyCount',
       includeCount: true,
-      sort: 'tmdate:desc'
+      sort: 'pdate:desc'
     });
   })).then(function() {
     return _.toArray(arguments);
   });
 
   var underReviewNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
-    'content.venueid': UNDER_REVIEW_ID,
+    'content.venueid': [UNDER_REVIEW_ID, DECISION_PENDING_ID].join(','),
     pageSize: PAGE_SIZE,
     details: 'replyCount',
-    includeCount: true
+    includeCount: true,
+    sort: 'mdate:desc'
   });
 
   var allNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
     pageSize: PAGE_SIZE,
     details: 'replyCount',
-    includeCount: true
+    includeCount: true,
+    sort: 'mdate:desc'
   });
 
   var userGroupsP = $.Deferred().resolve([]);
@@ -109,7 +124,7 @@ function load() {
     userGroupsP = Webfield2.getAll('/groups', { prefix: VENUE_ID + '/.*', member: user.id, web: true });
   }
 
-  return $.when(acceptedNotesP, certificationsP, underReviewNotesP, allNotesP, userGroupsP);
+  return $.when(acceptedNotesP, acceptedNotesWithVideoP, certificationsP, underReviewNotesP, allNotesP, userGroupsP);
 }
 
 function createConsoleLinks(allGroups) {
@@ -133,7 +148,7 @@ function createConsoleLinks(allGroups) {
 }
 
 // Render functions
-function renderContent(acceptedResponse, certificationsResponse, underReviewResponse, allResponse, userGroups) {
+function renderContent(acceptedResponse, acceptedNotesWithVideo, certificationsResponse, underReviewResponse, allResponse, userGroups) {
 
   // Your Consoles tab
   if (userGroups.length) {
@@ -160,18 +175,22 @@ function renderContent(acceptedResponse, certificationsResponse, underReviewResp
   }
 
   Webfield2.ui.renderSubmissionList('#accepted-papers', SUBMISSION_ID, acceptedResponse.notes, acceptedResponse.count,
-  Object.assign({}, options, { query: { 'content.venueid': VENUE_ID }}));
+  Object.assign({}, options, { query: { 'content.venueid': VENUE_ID, sort: 'pdate:desc' }}));
+
+  Webfield2.ui.renderSubmissionList('#accepted-papers-with-video', SUBMISSION_ID, acceptedNotesWithVideo, acceptedNotesWithVideo.length,
+  Object.assign({}, options, { localSearch: true }));
 
   Webfield2.ui.renderSubmissionList('#under-review-submissions', SUBMISSION_ID, underReviewResponse.notes, underReviewResponse.count,
-  Object.assign({}, options, { query: {'content.venueid': UNDER_REVIEW_ID } } ));
+  Object.assign({}, options, { query: {'content.venueid': UNDER_REVIEW_ID, sort: 'mdate:desc' } } ));
 
-  Webfield2.ui.renderSubmissionList('#all-submissions', SUBMISSION_ID, allResponse.notes, allResponse.count, options);
+  Webfield2.ui.renderSubmissionList('#all-submissions', SUBMISSION_ID, allResponse.notes, allResponse.count, 
+  Object.assign({}, options, { sort: 'mdate:desc' }));
 
   CERTIFICATIONS.forEach(function(certification, index) {
     var response = certificationsResponse[index];
     var key = certification.toLowerCase().replace(' ', '-');
     Webfield2.ui.renderSubmissionList('#' + key, SUBMISSION_ID, response.notes, response.count,
-    Object.assign({}, options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': certification }}));
+    Object.assign({}, options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': certification, sort: 'pdate:desc' }}));
   })
 
   $('#notes .spinner-container').remove();

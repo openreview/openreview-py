@@ -17,7 +17,7 @@ return {
     decisionName: domain.content.decision_name.value,
     reviewRatingName: domain.content.review_rating.value,
     reviewConfidenceName: domain.content.review_confidence.value,
-    authorName: 'Authors',
+    authorName: domain.content.authors_name.value,
     submissionName: domain.content.submission_name.value,
     wildcardInvitation: domain.id + '.*'
   }

@@ -63,6 +63,7 @@ class TestVenueRequest():
                     'Reviewer Recommendation Scores'],
                 'Author and Reviewer Anonymity': 'Double-blind',
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
+                'force_profiles_only': 'Yes, require all authors to have an OpenReview profile',
                 'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
@@ -104,6 +105,7 @@ class TestVenueRequest():
         submission_inv = openreview_client.get_invitation('V2.cc/2030/Conference/-/Submission')
         assert submission_inv.duedate == openreview.tools.datetime_millis(due_date)
         assert submission_inv.expdate == openreview.tools.datetime_millis(due_date + datetime.timedelta(minutes = 30))
+        assert '~.*' == submission_inv.edit['note']['content']['authorids']['value']['param']['regex']
 
         # Return venue details as a dict
         venue_details = {
@@ -297,7 +299,18 @@ class TestVenueRequest():
             client.post_note(venue_revision_note)
 
         venue_revision_note.content['desk_rejected_submissions_author_anonymity'] = 'Yes, author identities of desk rejected submissions should be revealed.'
+        venue_revision_note.content['Submission Deadline'] = request_form_note.content['Submission Deadline'] + ' '
         venue_revision_note=client.post_note(venue_revision_note)
+
+        helpers.await_queue()
+        process_logs = client.get_process_logs(id=venue_revision_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[0]['invitation'] == f'{support_group_id}/-/Request{request_form_note.number}/Revision'
+
+        comment_invitation = f'{support_group_id}/-/Request{request_form_note.number}/Stage_Error_Status'
+        error_comments = client.get_notes(invitation=comment_invitation, sort='tmdate')
+        assert not error_comments
 
         assert openreview_client.get_invitation('V2.cc/2022/Conference/-/Submission_Test')
 
@@ -485,7 +498,7 @@ class TestVenueRequest():
         # assert reply_row
         # buttons = reply_row.find_elements_by_class_name('btn-xs')
         # assert [btn for btn in buttons if btn.text == 'Recruitment']
-        reviewer_details = '''reviewer_candidate1_v2@mail.com, Reviewer One\nreviewer_candidate2_v2@mail.com, Reviewer Two'''
+        reviewer_details = '''reviewer_candidate1_v2@mail.com, Reviewer One\nreviewer_error@mail.com;, Reviewer Error\nReviewer_Candidate2_v2@mail.com, Reviewer Two'''
         recruitment_note = test_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
@@ -528,6 +541,8 @@ class TestVenueRequest():
                                                                                    venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
         assert '2 users' in last_comment.content['invited']
+        assert "InvalidGroup" in last_comment.content['error']
+        assert "reviewer_error@mail.com;" in last_comment.content['error']
 
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Recruitment Status' not in last_message['content']['text']
@@ -550,6 +565,8 @@ class TestVenueRequest():
         print('invitation_url', invitation_url)
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
+        helpers.await_queue_edit(openreview_client, invitation='V2.cc/2030/Conference/Reviewers/-/Recruitment')
+        
         messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="[TestVenue@OR'2030V2] Reviewer Invitation accepted")
         assert messages and len(messages) == 1
 
@@ -596,7 +613,7 @@ class TestVenueRequest():
         # assert [btn for btn in buttons if btn.text == 'Recruitment']
         helpers.create_user('reviewer_one_tilde_v2@mail.com', 'Reviewer', 'OneTildeV')
         helpers.create_user('reviewer_two_tilde_v2@mail.com', 'Reviewer', 'TwoTildeV')
-        reviewer_details = '''~Reviewer_OneTildeV1\n~Reviewer_TwoTildeV1'''
+        reviewer_details = '''~Reviewer_OneTildeV1\n~Reviewer_TwoTildeV1\n~Celeste_Martinez1\n~Melisa_Bok'''
 
         recruitment_note = test_client.post_note(openreview.Note(
             content={
@@ -637,8 +654,10 @@ class TestVenueRequest():
                                                                                    venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
         assert '2 users' in last_comment.content['invited']
+        assert '"profile_not_found\": [\n    \"~Celeste_Martinez1\"\n  ]' in last_comment.content['error']
+        assert '"invalid_profile_ids\": [\n    \"~Melisa_Bok\"\n  ]' in last_comment.content['error']
 
-    def test_venue_AC_recruitment_(self, client, test_client, selenium, request_page, venue, helpers):
+    def test_venue_AC_recruitment_(self, client, test_client, openreview_client, selenium, request_page, venue, helpers):
 
         # Test AC Recruitment
 
@@ -689,6 +708,8 @@ class TestVenueRequest():
         invitation_url = re.search('https://.*\n', messages[2]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
         print('invitation_url', invitation_url)
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+        helpers.await_queue_edit(openreview_client, invitation='V2.cc/2030/Conference/Area_Chairs/-/Recruitment')
 
         messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="[TestVenue@OR'2030V2] Area Chair Invitation accepted")
         assert messages and len(messages) == 1
@@ -868,6 +889,21 @@ class TestVenueRequest():
         assert matching_status
         assert 'Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button.' in matching_status.content['error']
 
+        with pytest.raises(openreview.OpenReviewException, match=r'authorids value/0 must match pattern "~.*"'):
+            submission_note_1 = author_client.post_note_edit(
+                invitation=f'{venue_id}/-/Submission',
+                signatures= ['~VenueTwo_Author1'],
+                note=Note(
+                    content={
+                        'title': { 'value': 'test submission' },
+                        'abstract': { 'value': 'test abstract' },
+                        'authors': { 'value': ['VenueTwo Author']},
+                        'authorids': { 'value': ['venue_author_v2@mail.com']},
+                        'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                        'keywords': {'value': ['aa'] }
+                    }
+                ))
+
         submission_note_1 = author_client.post_note_edit(
             invitation=f'{venue_id}/-/Submission',
             signatures= ['~VenueTwo_Author1'],
@@ -926,10 +962,28 @@ class TestVenueRequest():
         assert 'If you have any questions, please contact the PCs at test@mail.com' in messages[0]['content']['text']
         assert 'If you are not an author of this submission and would like to be removed, please contact the author who added you at venue_author_v2_2@mail.com' not in messages[0]['content']['text']
 
-        conference.setup_post_submission_stage(force=True)
+        helpers.create_user('venue_author3_v2@mail.com', 'VenueFour', 'Author')
+        author_client = OpenReviewClient(username='venue_author3_v2@mail.com', password='1234')
+
+        ## post the submission as super user becuase the submission invitation is already expired
+        submission = author_client.post_note_edit(
+            invitation='V2.cc/2030/Conference/-/Submission',
+            signatures= ['~VenueFour_Author1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'test submission 3' },
+                    'abstract': { 'value': 'test abstract 3' },
+                    'authors': { 'value': ['VenueFour Author']},
+                    'authorids': { 'value': ['~VenueFour_Author1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'keywords': {'value': ['keyword1, keyword2'] }
+                }
+        ))
+        
+        helpers.await_queue_edit(openreview_client, edit_id=submission['id'])
 
         submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='tmdate')
-        assert submissions and len(submissions) == 2
+        assert submissions and len(submissions) == 3
 
         reviewer_group = openreview_client.get_group('{}/Reviewers'.format(venue['venue_id']))
         openreview_client.remove_members_from_group(reviewer_group, '~VenueTwo_Reviewer1')
@@ -1064,7 +1118,7 @@ Affinity scores and/or conflicts could not be computed for the users listed unde
         scores_invitation = openreview_client.get_invitation(conference.get_invitation_id('Affinity_Score', prefix=reviewer_group.id))
         assert scores_invitation
         affinity_scores = openreview_client.get_edges_count(invitation=scores_invitation.id)
-        assert affinity_scores == 4
+        assert affinity_scores == 6
 
         ## Remove reviewer with no profile
         openreview_client.remove_members_from_group(reviewer_group, 'some_user@mail.com')
@@ -1097,7 +1151,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         scores_invitation = openreview_client.get_invitation(conference.get_invitation_id('Affinity_Score', prefix=reviewer_group.id))
         assert scores_invitation
         affinity_scores = openreview_client.get_edges_count(invitation=scores_invitation.id)
-        assert affinity_scores == 4
+        assert affinity_scores == 6
 
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Paper Matching Setup Status' not in last_message['content']['text']
@@ -1149,6 +1203,56 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
     def test_venue_review_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now - datetime.timedelta(hours=1)
+
+        venue_revision_note = test_client.post_note(openreview.Note(
+            content={
+                'title': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Official Venue Name': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Abbreviated Venue Name': venue['request_form_note'].content['Abbreviated Venue Name'],
+                'Official Website URL': venue['request_form_note'].content['Official Website URL'],
+                'program_chair_emails': venue['request_form_note'].content['program_chair_emails'],
+                'Expected Submissions': '100',
+                'How did you hear about us?': 'ML conferences',
+                'Location': 'Virtual',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
+                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'contact_email': venue['request_form_note'].content['contact_email'],
+                'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
+                'submission_email': 'Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}} \n\nIf you have any questions, please contact the PCs at test@mail.com'
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert venue_revision_note
+
+        helpers.await_queue()        
+
+        # Close submission stage
+        test_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                'hide_fields': []
+            },
+            forum= venue['request_form_note'].forum,
+            invitation= f'openreview.net/Support/-/Request{venue["request_form_note"].number}/Post_Submission',
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent= venue['request_form_note'].forum,
+            replyto= venue['request_form_note'].forum,
+            signatures= ['~SomeFirstName_User1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()        
+        
         # Post a review stage note
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
@@ -1182,6 +1286,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         helpers.await_queue()
 
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Reviewers', '~VenueThree_Reviewer1')
+        openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission2/Reviewers', '~VenueTwo_Reviewer1')
 
         reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2_@mail.com', password='1234')
         reviewer_group = openreview_client.get_group('V2.cc/2030/Conference/Reviewers')
@@ -1195,7 +1300,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'test submission' == note_div.find_element_by_link_text('test submission').text
 
         review_invitations = openreview_client.get_invitations(invitation='{}/-/Official_Review'.format(venue['venue_id']))
-        assert review_invitations and len(review_invitations) == 2
+        assert review_invitations and len(review_invitations) == 3
         assert 'title' not in review_invitations[0].edit['note']['content']
 
         reviewer_group = openreview_client.get_group('V2.cc/2030/Conference/Submission1/Reviewers')
@@ -1255,11 +1360,13 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         # Post a review stage note
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
-        due_date = now + datetime.timedelta(days=3)
+        due_date = now - datetime.timedelta(hours=1)
+        review_exp_date = now + datetime.timedelta(days=1)
         review_stage_note = test_client.post_note(openreview.Note(
             content={
-                'review_start_date': start_date.strftime('%Y/%m/%d'),
-                'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'review_start_date': start_date.strftime('%Y/%m/%d %H:%M'),
+                'review_deadline': due_date.strftime('%Y/%m/%d %H:%M'),
+                'review_expiration_date': review_exp_date.strftime('%Y/%m/%d'),
                 'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'Yes, reviews should be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers',
@@ -1291,13 +1398,92 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'V2.cc/2030/Conference/Submission1/Authors' in reviews[0].readers
         assert len(reviews[0].nonreaders) == 0
 
+    def test_rebuttal_stage(self, client, test_client, venue, openreview_client, helpers):
+
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        rebuttal_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'rebuttal_start_date': start_date.strftime('%Y/%m/%d'),
+                'rebuttal_deadline': due_date.strftime('%Y/%m/%d'),
+                'number_of_rebuttals': 'One author rebuttal per posted review',
+                'rebuttal_readers': ['Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
+                'email_program_chairs_about_rebuttals': 'No, do not email program chairs about received rebuttals'
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Rebuttal_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert rebuttal_stage_note
+        helpers.await_queue()
+
+        reviews = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review')
+        assert len(reviews) == 1
+
+        invitation = openreview_client.get_invitation(f'{reviews[0].signatures[0]}/-/Rebuttal')
+        assert invitation
+        assert invitation.edit['note']['id']['param']['withInvitation'] == invitation.id
+
+        author_client = OpenReviewClient(username='venue_author_v2@mail.com', password='1234')
+
+        rebuttal_edit = author_client.post_note_edit(
+            invitation=f'{reviews[0].signatures[0]}/-/Rebuttal',
+            signatures=['V2.cc/2030/Conference/Submission1/Authors'],
+            note=openreview.api.Note(
+                content={
+                    'rebuttal': { 'value': 'This is a rebuttal.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Rebuttal-0-1')
+        helpers.await_queue_edit(openreview_client, rebuttal_edit['id'])
+
+        messages = openreview_client.get_messages(subject = '[TestVenue@OR\'2030V2] Your author rebuttal was posted on Submission Number: 1, Submission Title: "test submission"')
+        assert len(messages) == 1
+        assert 'venue_author_v2@mail.com' in messages[0]['content']['to']
+        messages = openreview_client.get_messages(subject = '[TestVenue@OR\'2030V2] An author rebuttal was posted on Submission Number: 1, Submission Title: "test submission"')
+        assert len(messages) == 1
+        assert 'venue_reviewer_v2_@mail.com' in messages[0]['content']['to']
+
+        reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2@mail.com', password='1234')
+        ## Post a review
+        reviewer_anon_groups=reviewer_client.get_groups(prefix=f'V2.cc/2030/Conference/Submission2/Reviewer_.*', signatory='~VenueTwo_Reviewer1')
+        assert len(reviewer_anon_groups) == 1
+
+        ## Post a review edit
+        review_note = reviewer_client.post_note_edit(invitation=f'V2.cc/2030/Conference/Submission2/-/Official_Review',
+            signatures=[reviewer_anon_groups[0].id],
+            note=Note(
+                content={
+                    'review': { 'value': 'very good paper' },
+                    'rating': { 'value': '7: Good paper, accept' },
+                    'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+
+        invitation = openreview_client.get_invitation(f'{reviewer_anon_groups[0].id}/-/Rebuttal')
+        assert invitation
+        assert invitation.edit['note']['id']['param']['withInvitation'] == invitation.id
+        assert invitation.edit['note']['forum'] == review_note['note']['forum']
+        assert invitation.edit['note']['replyto'] == review_note['note']['id']
+
     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
         helpers.create_user('venue_ac_v2@mail.com', 'VenueTwo', 'Ac')
         meta_reviewer_client = openreview.api.OpenReviewClient(username='venue_ac_v2@mail.com', password='1234')
 
         submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='tmdate')
-        assert submissions and len(submissions) == 2
+        print(len(submissions))
+        assert submissions and len(submissions) == 3
 
         # Assert that ACs do not see the Submit button for meta reviews at this point
         meta_reviewer_group = openreview_client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
@@ -1474,7 +1660,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
     def test_venue_comment_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
         submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='number:asc')
-        assert submissions and len(submissions) == 2
+        assert submissions and len(submissions) == 3
 
         # Assert that official comment invitation is not available already
         official_comment_invitation = openreview.tools.get_invitation(openreview_client, '{}/-/Official_Comment'.format(venue['venue_id']))
@@ -1503,9 +1689,10 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert comment_stage_note
         helpers.await_queue()
 
-        process_logs = client.get_process_logs(id=comment_stage_note.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
+        official_comment_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission1/-/Official_Comment')
+        assert official_comment_invitation
+        official_comment_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission2/-/Official_Comment')
+        assert official_comment_invitation
 
         # Assert that official comment invitation is now available
         official_comment_invitation = openreview.tools.get_invitation(openreview_client, '{}/-/Official_Comment'.format(venue['venue_id']))
@@ -1547,7 +1734,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
     def test_venue_decision_stage(self, client, test_client, selenium, request_page, venue, helpers, openreview_client):
 
         submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='number:asc')
-        assert submissions and len(submissions) == 2
+        assert submissions and len(submissions) == 3
         submission = submissions[0]
 
         helpers.create_user('tom_venue@mail.com', 'ProgramChair', 'Venue')
@@ -1646,6 +1833,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             writer = csv.writer(file_handle)
             writer.writerow([submissions[0].number, 'Reject', 'Not Good', "Test"])
             writer.writerow([submissions[1].number, 'Accept', 'Good Good', "Test"])
+            writer.writerow([submissions[2].number, 'Accept', 'Good Good', "Test"])
 
         with open(os.path.join(os.path.dirname(__file__), 'data/decisions_less.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
@@ -1656,6 +1844,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             writer = csv.writer(file_handle)
             writer.writerow([submissions[0].number, 'Accept', 'Good Paper'])
             writer.writerow([submissions[1].number, 'Revision Needed', 'Not Good'])
+            writer.writerow([submissions[2].number, 'Reject', 'Good Good'])
 
         with open(os.path.join(os.path.dirname(__file__), 'data/decisions_wrong_paper.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
@@ -1938,7 +2127,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                                            forum=venue['request_form_note'].forum, sort='tmdate')[0]
 
         assert decision_status
-        assert decision_status.content['decision_posted'] == '2 Papers'
+        assert decision_status.content['decision_posted'] == '3 Papers'
 
         with open(os.path.join(os.path.dirname(__file__), 'data/decisions.csv')) as f:
             sub_decisions = list(csv.reader(f))
@@ -2016,36 +2205,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
     def test_venue_submission_revision_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
-        venue_id = venue['venue_id']
-
-        submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number:asc')
-        assert submissions and len(submissions) == 2
-        submission = submissions[0]
-
-        helpers.create_user('venue_author3_v2@mail.com', 'VenueFour', 'Author')
-        author_client = OpenReviewClient(username='venue_author3_v2@mail.com', password='1234')
-
-        submission = author_client.post_note_edit(
-            invitation='V2.cc/2030/Conference/-/Submission',
-            signatures= ['~VenueFour_Author1'],
-            note=Note(
-                content={
-                    'title': { 'value': 'test submission 3' },
-                    'abstract': { 'value': 'test abstract 3' },
-                    'authors': { 'value': ['VenueFour Author']},
-                    'authorids': { 'value': ['~VenueFour_Author1']},
-                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'keywords': {'value': ['keyword1, keyword2'] }
-                }
-        ))
-        
-        helpers.await_queue_edit(openreview_client, edit_id=submission['id'])
-
-        helpers.await_queue_edit(openreview_client, edit_id=submission['id'])
-
-        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        conference.setup_post_submission_stage(force=True)
-
         submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number:asc')
         assert submissions and len(submissions) == 3
 
@@ -2073,11 +2232,9 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert revision_stage_note
 
         helpers.await_queue()
-        process_logs = client.get_process_logs(id=revision_stage_note.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
 
         # post revision for a submission
+        author_client = OpenReviewClient(username='venue_author3_v2@mail.com', password='1234')
         updated_submission = author_client.post_note_edit(invitation='V2.cc/2030/Conference/Submission3/-/Revision',
             signatures=['V2.cc/2030/Conference/Submission3/Authors'],
             note=Note(
@@ -2129,20 +2286,17 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert revision_stage_note
 
         helpers.await_queue()
-        process_logs = client.get_process_logs(id=revision_stage_note.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
 
         submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number:asc')
         assert submissions and len(submissions) == 3
 
-        revision_invitation = openreview_client.get_invitation(f'''V2.cc/2030/Conference/Submission1/-/Revision''')
+        revision_invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Revision')
         assert revision_invitation.expdate > round(time.time() * 1000)
 
-        revision_invitation = openreview_client.get_invitation(f'''V2.cc/2030/Conference/Submission2/-/Revision''')
+        revision_invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission2/-/Revision')
         assert revision_invitation.expdate < round(time.time() * 1000)
 
-        revision_invitation = openreview_client.get_invitation(f'''V2.cc/2030/Conference/Submission3/-/Revision''')
+        revision_invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission3/-/Revision')
         assert revision_invitation.expdate < round(time.time() * 1000)
 
     def test_post_decision_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
@@ -2192,7 +2346,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                 'home_page_tab_names': {
                     'Accept': 'Accept',
                     'Revision Needed': 'Revision Needed',
-                    'Reject': 'Reject'
+                    'Reject': 'Submitted'
                 },
                 'send_decision_notifications': 'Yes, send an email notification to the authors',
                 'accept_email_content': f'''Dear {{{{fullname}}}},
@@ -2265,19 +2419,29 @@ Best,
 
         # assert author identities of rejected paper are still hidden
         assert submissions[1].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
-        assert submissions[1].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected'
+        assert submissions[1].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected_Submission'
         assert submissions[1].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
         assert submissions[1].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
 
         # assert author identities of paper with no decision are still hidden
         assert submissions[2].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
-        assert submissions[2].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected'
+        assert submissions[2].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected_Submission'
         assert submissions[2].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
         assert submissions[2].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
 
         last_message = client.get_messages(to='venue_author_v2@mail.com', subject='[TestVenue@OR\'2030V2] Decision notification for your submission 1: test submission')[0]
         assert "Dear VenueTwo Author,\n\nThank you for submitting your paper, test submission, to TestVenue@OR'2030V2." in last_message['content']['text']
         assert f"https://openreview.net/forum?id={submissions[0].id}" in last_message['content']['text']
+
+        request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token, wait_for_element='header')
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element(By.LINK_TEXT, "Your Consoles")
+        assert tabs.find_element(By.LINK_TEXT, "Accept")
+        assert tabs.find_element(By.LINK_TEXT, "Submitted")
+        assert tabs.find_element(By.LINK_TEXT, "Recent Activity")
 
         # Post another revision stage note
         now = datetime.datetime.utcnow()
@@ -2303,9 +2467,6 @@ Best,
         assert revision_stage_note
 
         helpers.await_queue()
-        process_logs = client.get_process_logs(id=revision_stage_note.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
 
         revision_invitation = openreview_client.get_invitation(f'''V2.cc/2030/Conference/Submission1/-/Revision''')
         assert revision_invitation.expdate < round(time.time() * 1000)
@@ -2340,13 +2501,13 @@ Best,
 
         # assert author identities of rejected paper are still hidden
         assert submissions[1].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
-        assert submissions[1].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected'
+        assert submissions[1].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected_Submission'
         assert submissions[1].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
         assert submissions[1].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
 
         # assert author identities of paper with no decision are still hidden
         assert submissions[2].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
-        assert submissions[2].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected'
+        assert submissions[2].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected_Submission'
         assert submissions[2].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
         assert submissions[2].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
 
@@ -2397,10 +2558,6 @@ Best,
         assert comment_stage_note
         helpers.await_queue()
 
-        process_logs = client.get_process_logs(id=comment_stage_note.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
-
         # Assert that official comment invitations are available
         official_comment_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission1/-/Official_Comment')
         assert official_comment_invitation
@@ -2430,7 +2587,7 @@ Best,
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for all submissions',
                 'submission_author_edition': 'Allow addition and removal of authors',
-                'submission_revision_remove_options': ['title','authors', 'authorids','abstract','keywords', 'TL;DR'],
+                'submission_revision_remove_options': ['title','authors', 'authorids','abstract','keywords', 'TLDR'],
                 'submission_revision_additional_options': {
                     'supplementary_material': {
                         'description': 'Supplementary material (e.g. code or video). All supplementary material must be self-contained and zipped into a single file',
@@ -2455,9 +2612,6 @@ Best,
         assert revision_stage_note
 
         helpers.await_queue()
-        process_logs = client.get_process_logs(id=revision_stage_note.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
 
         submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number')
         assert submissions and len(submissions) == 3
@@ -2469,7 +2623,7 @@ Best,
         revision_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission3/-/Supplementary_Material')
         assert revision_invitation
 
-        assert all(x not in revision_invitation.edit['note']['content'] for x in ['title','authors', 'authorids','abstract','keywords', 'TL;DR'])
+        assert all(x not in revision_invitation.edit['note']['content'] for x in ['title','authors', 'authorids','abstract','keywords', 'TLDR'])
         assert 'supplementary_material' in revision_invitation.edit['note']['content']
 
 #         #make sure homepage webfield was not overwritten after doing get_conference()

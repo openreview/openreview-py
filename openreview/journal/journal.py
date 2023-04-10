@@ -38,6 +38,7 @@ class Journal(object):
         self.submission_group_name = 'Paper'
         self.submitted_venue_id = f'{venue_id}/Submitted'
         self.under_review_venue_id = f'{venue_id}/Under_Review'
+        self.decision_pending_venue_id = f'{venue_id}/Decision_Pending'
         self.rejected_venue_id = f'{venue_id}/Rejected'
         self.desk_rejected_venue_id = f'{venue_id}/Desk_Rejected'
         self.withdrawn_venue_id = f'{venue_id}/Withdrawn_Submission'
@@ -61,7 +62,6 @@ class Journal(object):
         self.assignment = Assignment(self)
         self.recruitment = Recruitment(self)
         self.unavailable_reminder_period = 4 # weeks
-        self.ae_custom_max_papers = 12
 
     def __get_group_id(self, name, number=None):
         if number:
@@ -299,13 +299,38 @@ class Journal(object):
             forum_note = self.client.get_note(self.request_form_id)
             return forum_note.invitations[0].split('/-/')[0]
 
-    def get_review_period_length(self, note):
-        if 'submission_length' in note.content:
+    def get_ae_recommendation_period_length(self):
+        return self.settings.get('ae_recommendation_period', 1)
+    
+    def get_under_review_approval_period_length(self):
+        return self.settings.get('under_review_approval_period', 1)
+    
+    def get_reviewer_assignment_period_length(self):
+        return self.settings.get('reviewer_assignment_period', 1)
+    
+    def get_camera_ready_period_length(self):
+        return self.settings.get('camera_ready_period', 4)
+    
+    def get_camera_ready_verification_period_length(self):
+        return self.settings.get('camera_ready_verification_period', 1)
+    
+    def get_recommendation_period_length(self):
+        return self.settings.get('recommendation_period', 2)
+    
+    def get_decision_period_length(self):
+        return self.settings.get('decision_period', 1)
+    
+    def get_discussion_period_length(self):
+        return self.settings.get('discussion_period', 2)
+
+    def get_review_period_length(self, note=None):
+        review_period = self.settings.get('review_period', 2)
+        if note and 'submission_length' in note.content:
             if 'Regular submission' in note.content['submission_length']['value']:
-                return 2 ## weeks
+                return review_period ## weeks
             if 'Long submission' in note.content['submission_length']['value']:
-                return 4 ## weeks
-        return 2 ## weeks
+                return 2 * review_period ## weeks
+        return review_period ## weeks
 
     def is_active_submission(self, submission):
         venue_id = submission.content.get('venueid', {}).get('value')
@@ -353,8 +378,10 @@ class Journal(object):
         self.invitation_builder.set_note_revision_invitation(note)
         self.invitation_builder.set_note_withdrawal_invitation(note)
         self.invitation_builder.set_note_desk_rejection_invitation(note)
+        self.invitation_builder.set_note_comment_invitation(note, public=False) 
         self.setup_ae_assignment(note)
-        self.invitation_builder.set_ae_recommendation_invitation(note, self.get_due_date(weeks = 1))
+        if not self.should_skip_ac_recommendation():
+            self.invitation_builder.set_ae_recommendation_invitation(note, self.get_due_date(weeks = self.get_ae_recommendation_period_length()))
         self.setup_reviewer_assignment(note)
         print('Finished setup author submission data.')
         
@@ -366,9 +393,6 @@ class Journal(object):
         self.invitation_builder.release_submission_history(note)
         self.invitation_builder.expire_invitation(self.get_review_approval_id(note.number))
 
-    def assign_reviewer(self, note, reviewer, solicit):
-        self.assignment.assign_reviewer(note, reviewer, solicit)
-
     def is_submission_public(self):
         return self.settings.get('submission_public', True)
 
@@ -377,15 +401,36 @@ class Journal(object):
 
     def are_authors_anonymous(self):
         return self.settings.get('author_anonymity', True)
+    
+    def should_skip_ac_recommendation(self):
+        return self.settings.get('skip_ac_recommendation', False)
 
     def get_certifications(self):
         return self.settings.get('certifications', [])        
+
+    def get_submission_length(self):
+        return self.settings.get('submission_length', [])
+    
+    def get_website_url(self, key):
+        return self.settings.get('website_urls', {}).get(key, 'url not available')
+    
+    def get_editors_in_chief_email(self):
+        return self.settings.get('editors_email', self.contact_info)
 
     def should_show_conflict_details(self):
         return self.settings.get('show_conflict_details', False)
 
     def has_publication_chairs(self):
-        return self.settings.get('has_publication_chairs', False)     
+        return self.settings.get('has_publication_chairs', False)
+
+    def get_number_of_reviewers(self):
+        return self.settings.get('number_of_reviewers', 3)
+
+    def get_reviewers_max_papers(self):
+        return self.settings.get('reviewers_max_papers', 6)
+
+    def get_ae_max_papers(self):
+        return self.settings.get('action_editors_max_papers', 12)       
 
     def should_release_authors(self):
         return self.is_submission_public() and self.are_authors_anonymous()
@@ -446,7 +491,7 @@ class Journal(object):
 
         first_word = re.sub('[^a-zA-Z]', '', note.content['title']['value'].split(' ')[0].lower())
         bibtex_title = u.unicode_to_latex(note.content['title']['value'])
-        year = datetime.datetime.fromtimestamp(note.cdate/1000).year
+        year = datetime.datetime.utcnow().year
 
         if new_venue_id == self.under_review_venue_id:
 
@@ -515,6 +560,7 @@ class Journal(object):
 
         if new_venue_id == self.accepted_venue_id:
 
+            year = datetime.datetime.fromtimestamp(note.pdate/1000).year if note.pdate else year
             first_author_last_name = 'anonymous'
             authors = 'Anonymous'
             if 'everyone' in self.get_release_authors_readers(note.number):
@@ -621,7 +667,7 @@ class Journal(object):
         before_invitation = 'An' if lower_formatted_invitation[0] in vowels else 'A'
         is_public = 'everyone' in readers
 
-        subject = f'''[{self.short_name}] {formatted_invitation} {action} on submission {forum.content['title']['value']}'''
+        subject = f'''[{self.short_name}] {formatted_invitation} {action} on submission {forum.number}: {forum.content['title']['value']}'''
 
         formatted_content = f'''
 Submission: {forum.content['title']['value']}

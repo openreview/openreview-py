@@ -1225,7 +1225,10 @@ def recruit_reviewer(client, user, first,
 
     personalized_message.format()
 
-    client.add_members_to_group(reviewers_invited_id, [user])
+    try:
+        client.add_members_to_group(reviewers_invited_id, [user])
+    except openreview.OpenReviewException as e:
+        raise e
 
     # send the email through openreview
     response = client.post_message(recruit_message_subj, [user], personalized_message, parentGroup=reviewers_invited_id, replyTo=replyTo)
@@ -1473,6 +1476,87 @@ def export_committee(client, committee_id, file_name):
         csvwriter = csv.writer(outfile, delimiter=',')
         for profile in tqdm(profiles):
             s = csvwriter.writerow([profile.get_preferred_email(), profile.get_preferred_name(pretty=True)])
+
+def get_own_reviews(client):
+    baseurl_v1, baseurl_v2 = get_base_urls(client)
+    client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
+    client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
+
+    # Get all the reviews from v1
+    notes_v1 = client_v1.get_all_notes(tauthor=True)
+
+    submissions_and_official_reviews = []
+
+    # Filter Official Reviews
+    for note in notes_v1:
+        # Make sure that the Official Review is public
+        if 'Official_Review' not in note.invitation or 'everyone' not in note.readers:
+            continue
+        submission_id = note.forum
+        # Make sure that the submission is public
+        submission = client_v1.get_note(submission_id)
+        if 'everyone' not in submission.readers:
+            continue
+        # Add both submission and note
+        submissions_and_official_reviews.append((submission, note, 1))
+
+    # Get all the reviews from v2
+    profile_id = 'Guest' if not getattr(client, 'profile') else getattr(getattr(client, 'profile'), 'id')
+    if profile_id == 'Guest':
+        notes_v2 = []
+    else:
+        notes_v2 = client_v2.get_all_notes(signature=profile_id, transitive_members=True)
+
+    # TMLR was created before the invitation names were added to the
+    # group content, so we need to hardcode it
+    domain_to_reviewer_invitation_suffix = {
+        'TMLR': '/-/Review'
+    }
+
+    # Filter Official Reviews
+    for note in notes_v2:
+        # Get review invitation name from domain group content
+        if domain_to_reviewer_invitation_suffix.get(note.domain) is None:
+            domain = note.domain
+            group = client_v2.get_group(domain)
+            reviewer_invitation_suffix = getattr(group, 'content', {}).get('review_name', {}).get('value', None)
+            if reviewer_invitation_suffix is None:
+                continue
+            domain_to_reviewer_invitation_suffix[domain] = '/-/' + reviewer_invitation_suffix
+        
+        reviewer_invitation_suffix = domain_to_reviewer_invitation_suffix[note.domain]
+
+        # Make sure that the Official Review is public
+        official_review = None
+        for invitation in note.invitations:
+            if reviewer_invitation_suffix in invitation:
+                official_review = note
+        if official_review is None or 'everyone' not in note.readers:
+            continue
+        submission_id = official_review.forum
+        # Make sure that the submission is public
+        submission = client_v2.get_note(submission_id)
+        if 'everyone' not in submission.readers:
+            continue
+        # Add both submission and note
+        submissions_and_official_reviews.append((submission, official_review, 2))
+
+    links = []
+    for submission, official_review, version in submissions_and_official_reviews:
+        submission_link = f'https://openreview.net/forum?id={submission.id}'
+        review_link = f'https://openreview.net/forum?id={submission.id}&noteId={official_review.id}'
+        submission_title = ''
+        if version == 1:
+            submission_title = submission.content.get('title', '')
+        else:
+            submission_title = submission.content.get('title', {}).get('value', '')
+        links.append({
+            'submission_title': submission_title,
+            'submission_link': submission_link,
+            'review_link': review_link
+        })
+    
+    return links
 
 def get_base_urls(client):
 

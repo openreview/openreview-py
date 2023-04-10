@@ -879,6 +879,7 @@ class Client(object):
             replyto = None,
             tauthor = None,
             signature = None,
+            signatures = None,
             writer = None,
             trash = None,
             number = None,
@@ -912,6 +913,8 @@ class Client(object):
         :type tauthor: bool, optional
         :param signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
         :type signature: str, optional
+        :param signatures: Group IDs. If provided, returns Notes whose signatures field contains the given Group IDs.
+        :type signatures: list[str], optional
         :param writer: A Group ID. If provided, returns Notes whose writers field contains the given Group ID.
         :type writer: str, optional
         :param trash: If True, includes Notes that have been deleted (i.e. the ddate field is less than the
@@ -928,8 +931,19 @@ class Client(object):
         :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns Notes
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
         :type mintcdate: int, optional
-        :param details: TODO: What is a valid value for this field?
-        :type details: optional
+        :param details: Comma separated values of fields to add to details. Valid values are:
+            replyCount: Number of replies in a forum. Only available if the Note is a forum.
+            original: Include original Note if available.
+            revisions: Boolean indicating whether the Note has revisions.
+            writable: Boolean indicating whether the Note is writable by the user.
+            originalWritable: Boolean indicating whether the original Note is writable by the user.
+            tags: Tags of the Note.
+            invitation: Invitation of the Note.
+            originalInvitation: Invitation of the original Note.
+            directReplyCount: Number of direct replies to the Note.
+            directReplies: Direct replies to the Note.
+            replies: Replies to the Note. Only available if the Note is a forum.
+        :type details: str, optional
         :param sort: Sorts the output by field depending on the string passed. Possible values: number, cdate, ddate, tcdate, tmdate, replyCount (Invitation id needed in the invitation field).
         :type sort: str, optional
         :param select: Specific field of the group. Only this field would be returned for all the groups
@@ -953,6 +967,8 @@ class Client(object):
             params['tauthor'] = tauthor
         if signature is not None:
             params['signature'] = signature
+        if signatures is not None:
+            params['signatures'] = signatures
         if writer is not None:
             params['writer'] = writer
         if trash == True:
@@ -994,6 +1010,7 @@ class Client(object):
             replyto = None,
             tauthor = None,
             signature = None,
+            signatures = None,
             writer = None,
             trash = None,
             number = None,
@@ -1025,6 +1042,8 @@ class Client(object):
         :type tauthor: bool, optional
         :param signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
         :type signature: str, optional
+        :param signatures: Group IDs. If provided, returns Notes whose signatures field contains the given Group IDs.
+        :type signatures: list[str], optional
         :param writer: A Group ID. If provided, returns Notes whose writers field contains the given Group ID.
         :type writer: str, optional
         :param trash: If True, includes Notes that have been deleted (i.e. the ddate field is less than the
@@ -1041,7 +1060,18 @@ class Client(object):
         :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns Notes
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
         :type mintcdate: int, optional
-        :param details: TODO: What is a valid value for this field?
+        :param details: Comma separated values of fields to add to details. Valid values are:
+            replyCount: Number of replies in a forum. Only available if the Note is a forum.
+            original: Include original Note if available.
+            revisions: Boolean indicating whether the Note has revisions.
+            writable: Boolean indicating whether the Note is writable by the user.
+            originalWritable: Boolean indicating whether the original Note is writable by the user.
+            tags: Tags of the Note.
+            invitation: Invitation of the Note.
+            originalInvitation: Invitation of the original Note.
+            directReplyCount: Number of direct replies to the Note.
+            directReplies: Direct replies to the Note.
+            replies: Replies to the Note. Only available if the Note is a forum.
         :type details: optional
         :param sort: Sorts the output by field depending on the string passed. Possible values: number, cdate, ddate, tcdate, tmdate, replyCount (Invitation id needed in the invitation field).
         :type sort: str, optional
@@ -1059,6 +1089,7 @@ class Client(object):
             'replyto': replyto,
             'tauthor': tauthor,
             'signature': signature,
+            'signatures': signatures,
             'writer': writer,
             'trash': trash,
             'number': number,

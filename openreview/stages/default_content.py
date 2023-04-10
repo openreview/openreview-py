@@ -33,11 +33,12 @@ comment = {
 comment_v2 = {
     'title': {
         'order': 1,
-        'description': 'Brief summary of your comment.',
+        'description': '(Optional) Brief summary of your comment.',
         'value': {
             'param': {
                 'type': 'string',
-                'regex': '.{1,500}',
+                'maxLength': 500,
+                'optional': True
             }
         }
     },
@@ -610,6 +611,82 @@ paper_recruitment = {
     }
 }
 
+paper_recruitment_v2 = {
+    'title': {
+        'order': 1,
+        'description': 'Title',
+        'value': {
+            'param': {
+                'type': 'string',
+                'const': 'Recruit response'
+            }
+        }
+    },
+    'user': {
+        'order': 2,
+        'description': 'email address',
+        'value': {
+            'param': {
+                'type': 'string',
+                'regex': '.*'
+            }
+        }
+    },
+    'key': {
+        'order': 3,
+        'description': 'Email key hash',
+        'value': {
+            'param': {
+                'type': 'string',
+                'regex': '.{0,100}'
+            }
+        }
+    },
+    "response": {
+        'order': 4,
+        'description': 'Invitation response',
+        'value': {
+            'param': {
+                'type': 'string',
+                'enum': ['Yes', 'No'],
+                'input': 'radio'
+            }
+        }
+    },
+    'comment': {
+        'order': 5,
+        'description': '(Optionally) Leave a comment to the organizers of the venue.',
+        'value': {
+            'param': {
+                'type': 'string',
+                'maxLength': 5000,
+                'optional': True,
+                'input': 'textarea'
+            }
+        }
+    },
+    'submission_id': {
+        'order': 6,
+        'description': 'submission id',
+        'value': {
+            'param': {
+                'type': 'string',
+                'regex': '.*'
+            }
+        }
+    },
+    'inviter': {
+        'order': 7,
+        'description': 'inviter id',
+        'value': {
+            'param': {
+                'type': 'string',
+                'regex': '.*'
+            }
+        }
+    }
+}
+
 decision_v2 = {
     'title': {
         'order': 1,
@@ -638,6 +715,21 @@ decision_v2 = {
                 'markdown': True,
                 'input': 'textarea',
                 'optional': True
+            }
+        }
+    }
+}
+
+rebuttal_v2 = {
+    'rebuttal': {
+        'order': 1,
+        'description': 'Rebuttals can include Markdown formatting and LaTeX forumulas, for more information see https://openreview.net/faq , max length: 2500',
+        'value': {
+            'param': {
+                'type': 'string',
+                'maxLength': 2500,
+                'markdown': True,
+                'input': 'textarea'
             }
         }
     }

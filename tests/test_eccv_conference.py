@@ -294,6 +294,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
         builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
         builder.has_area_chairs(True)
+        builder.set_submission_stage(double_blind = True)
         conference = builder.get_result()
         assert conference, 'conference is None'
         conference.set_program_chairs(['pc@eccv.org'])
@@ -1491,7 +1492,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         now = datetime.datetime.utcnow()
 
-        conference.set_review_rebuttal_stage(openreview.ReviewRebuttalStage(due_date=now + datetime.timedelta(minutes = 40)))
+        conference.review_rebuttal_stage = openreview.stages.ReviewRebuttalStage(due_date=now + datetime.timedelta(minutes = 40))
+        conference.create_review_rebuttal_stage()
         request_page(selenium, 'http://localhost:3030/forum?id=' + blinded_notes[2].id , test_client.token, by=By.CLASS_NAME, wait_for_element='note_with_children')
         notes = selenium.find_elements_by_class_name('note_with_children')
         assert len(notes) == 2

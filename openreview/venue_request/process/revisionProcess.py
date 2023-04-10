@@ -11,14 +11,15 @@ def process(client, note, invitation):
     comment_readers = [forum_note.content.get('venue_id') + '/Program_Chairs', SUPPORT_GROUP]
 
     try:
-        conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP)
+        conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP, setup=True)
         short_name = conference.get_short_name()
         comment_readers = [conference.get_program_chairs_id(), SUPPORT_GROUP]
         if invitation_type in ['Bid_Stage', 'Review_Stage', 'Meta_Review_Stage', 'Decision_Stage', 'Submission_Revision_Stage', 'Comment_Stage']:
             conference.setup_post_submission_stage(hide_fields=forum_note.content.get('hide_fields', []))
 
         if invitation_type == 'Revision':
-            submission_deadline = forum_note.content.get('Submission Deadline')
+            conference.create_submission_stage()
+            submission_deadline = forum_note.content.get('Submission Deadline', '').strip()
             if submission_deadline:
                 try:
                     submission_deadline = datetime.datetime.strptime(submission_deadline, '%Y/%m/%d %H:%M')
@@ -33,7 +34,7 @@ def process(client, note, invitation):
                     revision_invitation.duedate = openreview.tools.datetime_millis(submission_deadline)
                     revision_invitation.expdate = openreview.tools.datetime_millis(submission_deadline + datetime.timedelta(minutes=openreview.conference.invitation.SHORT_BUFFER_MIN))
                     client.post_invitation(revision_invitation)
-            withdraw_submission_expiration = forum_note.content.get('withdraw_submission_expiration')
+            withdraw_submission_expiration = forum_note.content.get('withdraw_submission_expiration', '').strip()
             if withdraw_submission_expiration:
                 try:
                     withdraw_submission_expiration = datetime.datetime.strptime(withdraw_submission_expiration, '%Y/%m/%d %H:%M')
@@ -189,6 +190,36 @@ def process(client, note, invitation):
 
         elif invitation_type == 'Review_Stage':
             conference.create_review_stage()
+
+            if forum_note.content.get('api_version') == '2':
+
+                review_due_date = forum_note.content.get('review_deadline').strip()
+                cdate = datetime.datetime.utcnow()
+                if review_due_date:
+                    try:
+                        review_due_date = datetime.datetime.strptime(review_due_date, '%Y/%m/%d %H:%M')
+                    except ValueError:
+                        review_due_date = datetime.datetime.strptime(review_due_date, '%Y/%m/%d')
+                    cdate = openreview.tools.datetime_millis(review_due_date)
+
+                client.post_invitation(openreview.Invitation(
+                    id = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Rebuttal_Stage',
+                    super = SUPPORT_GROUP + '/-/Rebuttal_Stage',
+                    invitees = [conference.get_program_chairs_id(), SUPPORT_GROUP],
+                    cdate = cdate,
+                    reply = {
+                        'forum': forum_note.id,
+                        'referent': forum_note.id,
+                        'readers': {
+                            'description': 'The users who will be allowed to read the above content.',
+                            'values' : [conference.get_program_chairs_id(), SUPPORT_GROUP]
+                        }
+                    },
+                    signatures = ['~Super_User1']
+                ))
+
+        elif invitation_type == 'Rebuttal_Stage':
+            conference.create_review_rebuttal_stage()
 
         elif invitation_type == 'Ethics_Review_Stage':
             conference.create_ethics_review_stage()
@@ -354,7 +385,7 @@ Best,
                 elif 'No, I don\'t want to release any submissions' in forum_note.content['release_submissions']:
                     submission_readers=[openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.REVIEWERS_ASSIGNED]
 
-            conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,decision_heading_map=forum_note.content.get('home_page_tab_names'), submission_readers=submission_readers)
+            conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,decision_heading_map=forum_note.content.get('home_page_tab_names'), submission_readers=submission_readers, hide_fields=forum_note.content.get('hide_fields', []))
             if note.content.get('send_decision_notifications') == 'Yes, send an email notification to the authors':
                 decision_options = forum_note.content.get(
                     'decision_options',
@@ -367,7 +398,7 @@ Best,
                 }
                 conference.send_decision_notifications(decision_options, email_messages)
 
-        submission_content = conference.submission_stage.get_content()
+        submission_content = conference.submission_stage.get_content(forum_note.content.get('api_version', '1'))
         submission_revision_invitation = client.get_invitation(SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Submission_Revision_Stage')
 
         remove_options = [key for key in submission_content]
