@@ -663,7 +663,7 @@ class InvitationBuilder(object):
             content['reduced_load'] = reduced_load_dict
         
         process_content = self.get_process_content('process/recruitment_process.py')
-        pre_process_content = self.get_process_content('process/recruitment_pre_process.py')
+        pre_process_content = self.get_process_content('process/recruitment_pre_process.js')
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
             webfield_content = webfield_reader.read()
