@@ -2172,7 +2172,7 @@ class InvitationBuilder(object):
 
         process_file='process/simple_paper_recruitment_process.py' if proposed else 'process/paper_recruitment_process.py'
         process_content = self.get_process_content(process_file)
-        preprocess_content = self.get_process_content('process/paper_recruitment_pre_process.py')
+        preprocess_content = self.get_process_content('process/paper_recruitment_pre_process.js')
 
         edge_readers = []
         edge_writers = []
