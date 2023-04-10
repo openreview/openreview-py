@@ -26,7 +26,7 @@ async function process(client, edit, invitation) {
   const { count: edgeCount, edges } = await client.getEdges({ invitation: inviteAssignmentInvitation, head: submission.id, tail: note.content.user.value })
   let inviteEdges = edges
 
-  if (edgeCount == 0) {
+  if (edgeCount === 0) {
     const { profiles} = await client.getProfiles(user.startsWith('~') ? { id: user } : { email: user })
     if (profiles.length > 0) {
       const { count: edgeCount, edges } = await client.getEdges({ invitation: inviteAssignmentInvitation, head: submission.id, tail: profiles[0].id })
