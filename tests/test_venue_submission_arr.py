@@ -48,6 +48,27 @@ class TestVenueSubmissionARR():
     
         venue.review_stage = openreview.stages.ReviewStage(start_date=now + datetime.timedelta(minutes = 4), due_date=now + datetime.timedelta(minutes = 40))
         venue.meta_review_stage = openreview.stages.MetaReviewStage(start_date=now + datetime.timedelta(minutes = 10), due_date=now + datetime.timedelta(minutes = 40))
+
+        venue.review_rebuttal_stage = openreview.ReviewRebuttalStage(
+            start_date=now + datetime.timedelta(minutes = 10),
+            due_date=now + datetime.timedelta(minutes = 35),
+            single_rebuttal = True,
+            readers = [openreview.stages.ReviewRebuttalStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.ReviewRebuttalStage.Readers.REVIEWERS_ASSIGNED],
+            additional_fields={
+                "pdf": {
+                    "value": {
+                    "param": {
+                        "type": "file",
+                        "extensions": [ "pdf" ],
+                        "maxSize": 50,
+                        "optional": True
+                    }
+                    },
+                    "description": "Upload a PDF file that ends with .pdf",
+                    "order": 9
+                }
+            }
+        )
         return venue
 
     def test_setup(self, venue, openreview_client, helpers):
@@ -58,6 +79,7 @@ class TestVenueSubmissionARR():
         venue.create_submission_stage(sub_venue_id=cycle)
         venue.create_review_stage(sub_venue_id=cycle)
         venue.create_meta_review_stage(sub_venue_id=cycle)
+        venue.create_review_rebuttal_stage(sub_venue_id=cycle)
         assert openreview_client.get_group('ARR')
         assert openreview_client.get_group('ARR/Authors')
 
@@ -225,6 +247,34 @@ class TestVenueSubmissionARR():
         
         assert openreview_client.get_invitation(f'ARR/-/{cycle}/Meta_Review')
         assert openreview_client.get_invitation(f'ARR/Submission1/-/{cycle}/Meta_Review')
+
+    def test_review_rebuttal_stage(self, venue, openreview_client, helpers):
+        cycle = '2023_March'
+
+        assert openreview_client.get_invitation(f'ARR/-/{cycle}/Rebuttal')
+        with pytest.raises(openreview.OpenReviewException, match=rf'The Invitation ARR/Submission1/-/{cycle}/Rebuttal was not found'):
+            assert openreview_client.get_invitation(f'ARR/Submission1/-/{cycle}/Rebuttal')
+
+        openreview_client.post_invitation_edit(
+            invitations='ARR/-/Rebuttal',
+            readers=['ARR'],
+            writers=['ARR'],
+            signatures=['ARR'],
+            content={
+                'subvenueid': {
+                    'value': cycle
+                }
+            },
+            invitation=openreview.api.Invitation(id=f'ARR/-/{cycle}/Rebuttal',
+                signatures=['ARR'],
+                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, f'ARR/-/{cycle}/Rebuttal-0-0')
+
+        assert openreview_client.get_invitation(f'ARR/-/{cycle}/Rebuttal')
+        assert openreview_client.get_invitation(f'ARR/Submission1/-/{cycle}/Rebuttal')
 
     def test_withdraw_submission(self, venue, openreview_client, helpers):
         cycle = '2023_March'

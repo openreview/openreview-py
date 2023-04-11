@@ -545,7 +545,7 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_review_rebuttal_invitation(self):
+    def set_sub_venue_review_rebuttal_invitation(self, sub_venue_id=None):
 
         venue_id = self.venue_id
         review_rebuttal_stage = self.venue.review_rebuttal_stage
@@ -553,6 +553,198 @@ class InvitationBuilder(object):
         review_rebuttal_cdate = tools.datetime_millis(review_rebuttal_stage.start_date if review_rebuttal_stage.start_date else datetime.datetime.utcnow())
         review_rebuttal_duedate = tools.datetime_millis(review_rebuttal_stage.due_date) if review_rebuttal_stage.due_date else None
         review_rebuttal_expdate = tools.datetime_millis(review_rebuttal_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_rebuttal_stage.due_date else None
+
+        content = review_rebuttal_stage.get_content(api_version='2', conference=self.venue)
+
+        paper_invitation_id = self.venue.get_invitation_id(name='${4/content/subvenueid/value}' + f"/{review_rebuttal_stage.name}", number='${2/content/noteNumber/value}')
+        with_invitation = self.venue.get_invitation_id(name='${4/content/subvenueid/value}' + f"/{review_rebuttal_stage.name}", number='${6/content/noteNumber/value}')
+        reply_to = '${4/content/noteId/value}'
+
+        if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals:
+            paper_invitation_id = self.venue.get_invitation_id(name='${4/content/subvenueid/value}' + f"/{review_rebuttal_stage.name}", prefix='${2/content/replytoSignatures/value}')
+            with_invitation = self.venue.get_invitation_id(name='${4/content/subvenueid/value}' + f"/{review_rebuttal_stage.name}", prefix='${6/content/replytoSignatures/value}')
+            reply_to = '${4/content/replyto/value}'
+
+        if review_rebuttal_stage.unlimited_rebuttals:
+            reply_to = {
+                'param': {
+                    'withForum': '${6/content/noteId/value}'
+                }
+            }
+
+        invitation = Invitation(id=review_rebuttal_invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'subvenueid': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string' 
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': self.venue.get_invitation_id(name='${2/content/subvenueid/value}' + f"/{review_rebuttal_stage.name}"),
+                    'invitees': [venue_id],
+                    'readers': [venue_id],
+                    'writers': [venue_id],
+                    'signatures': [venue_id],
+                    'cdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                        }
+                    },
+                    'duedate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True, 
+                        }
+                    },
+                    'expdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True, 
+                        }
+                    },
+                    'dateprocesses': [{ 
+                        'dates': ["#{4/cdate}", self.update_date_string],
+                        'script': self.invitation_edit_process              
+                    }],
+                    'content': {
+                        'review_rebuttal_process_script': {
+                            'value': self.get_process_content('process/review_rebuttal_process.py')
+                        },
+                        'reply_to': {
+                            'value': 'reviews' if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals else 'forum'
+                        }
+                    },
+                    'edit': {
+                        'signatures': [venue_id],
+                        'readers': [venue_id],
+                        'writers': [venue_id],
+                        'content': {
+                            'noteNumber': {
+                                'value': {
+                                    'param': {
+                                        'regex': '.*', 'type': 'integer'
+                                    }
+                                }
+                            },
+                            'noteId': {
+                                'value': {
+                                    'param': {
+                                        'regex': '.*', 'type': 'string'
+                                    }
+                                }
+                            },
+                            'replytoSignatures': {
+                                'value': {
+                                    'param': {
+                                        'regex': '.*', 'type': 'string',
+                                        'optional': True
+                                    }
+                                }
+                            },
+                            'replyto': {
+                                'value': {
+                                    'param': {
+                                        'regex': '.*', 'type': 'string',
+                                        'optional': True
+                                    }
+                                }
+                            },
+                        },
+                        'replacement': True,
+                        'invitation': {
+                            'id': paper_invitation_id,
+                            'signatures': [venue_id],
+                            'readers': ['everyone'],
+                            'writers': [venue_id],
+                            'minReplies': 1,
+                            'invitees': [venue_id, self.venue.get_authors_id(number='${3/content/noteNumber/value}')],
+                            'process': '''def process(client, edit, invitation):
+            meta_invitation = client.get_invitation(invitation.invitations[0])
+            script = meta_invitation.content['review_rebuttal_process_script']['value']
+            funcs = {}
+            exec(script, funcs)
+            funcs['process'](client, edit, invitation)
+        ''',
+                            'edit': {
+                                'signatures': { 'param': { 'regex': self.venue.get_authors_id(number='${5/content/noteNumber/value}') }},
+                                'readers': review_rebuttal_stage.get_invitation_readers(self.venue, '${4/content/noteNumber/value}'),
+                                'writers': [venue_id],
+                                'note': {
+                                    'id': {
+                                        'param': {
+                                            'withInvitation': with_invitation,
+                                            'optional': True
+                                        }
+                                    },
+                                    'forum': '${4/content/noteId/value}',
+                                    'replyto': reply_to,
+                                    'ddate': {
+                                        'param': {
+                                            'range': [ 0, 9999999999999 ],
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    },
+                                    'signatures': ['${3/signatures}'],
+                                    'readers': review_rebuttal_stage.get_invitation_readers(self.venue, '${5/content/noteNumber/value}'),
+                                    'writers': [venue_id, '${3/signatures}'],
+                                    'content': content
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        if not review_rebuttal_stage.unlimited_rebuttals:
+            invitation.edit['invitation']['edit']['invitation']['maxReplies'] = 1
+
+        if review_rebuttal_duedate:
+            invitation.edit['invitation']['edit']['invitation']['duedate'] = review_rebuttal_duedate
+
+        if review_rebuttal_expdate:
+            invitation.edit['invitation']['edit']['invitation']['expdate'] = review_rebuttal_expdate            
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
+
+    def set_review_rebuttal_invitation(self, sub_venue_id=None, sub_venue_invitation=None):
+
+        venue_id = self.venue_id
+        review_rebuttal_stage = self.venue.review_rebuttal_stage
+        review_rebuttal_stage_name = review_rebuttal_stage if sub_venue_id is None else f"{sub_venue_id}/{review_rebuttal_stage.name}"
+        review_rebuttal_invitation_id = self.venue.get_invitation_id(review_rebuttal_stage_name)
+        review_rebuttal_cdate = tools.datetime_millis(review_rebuttal_stage.start_date if review_rebuttal_stage.start_date else datetime.datetime.utcnow())
+        review_rebuttal_duedate = tools.datetime_millis(review_rebuttal_stage.due_date) if review_rebuttal_stage.due_date else None
+        review_rebuttal_expdate = tools.datetime_millis(review_rebuttal_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_rebuttal_stage.due_date else None
+
+        if sub_venue_id is not None and sub_venue_invitation is not None:
+            invitation=Invitation(id=review_rebuttal_invitation_id,
+                    cdate=review_rebuttal_cdate,
+                    duedate=review_rebuttal_duedate,
+                    expdate=review_rebuttal_expdate,
+                    signatures=[venue_id]
+                )
+            content = {
+                'subvenueid': {
+                    'value': sub_venue_id
+                }
+            }
+            self.save_invitation(invitation, invitations=sub_venue_invitation.id, content=content)
+            return invitation
 
         content = review_rebuttal_stage.get_content(api_version='2', conference=self.venue)
 
