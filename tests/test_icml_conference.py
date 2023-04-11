@@ -3653,6 +3653,20 @@ ICML 2023 Conference Program Chairs'''
             'ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs'
         ]
 
+        ## SAC can edit the meta review
+        meta_review_edit = sac_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission2/-/Meta_Review_SAC_Revision',
+            signatures=['ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs'],
+            note=openreview.api.Note(
+                id=metareviews[0].id,
+                content={
+                    'metareview': { 'value': 'I reverted the AC decision' },
+                    'recommendation': { 'value': 'Accept'}
+                }
+            )
+        )
+
+
     def test_decision_stage(self, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password='1234')
