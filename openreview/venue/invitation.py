@@ -2099,16 +2099,29 @@ class InvitationBuilder(object):
             )
             self.save_invitation(invitation, replacement=True)
 
-            forum_edit = self.client.post_note_edit(invitation=invitation.id,
-                signatures=[venue_id],
-                note = Note(
-                    signatures = [venue_id],
-                    content = {
-                        'instructions': { 'value': registration_stage.instructions },
-                        'title': { 'value': registration_stage.title}
-                    }
+            registration_notes = self.client.get_notes(invitation=registration_parent_invitation_id)
+            if registration_notes:
+                print('Updating existing registration note')
+                forum_edit = self.client.post_note_edit(invitation = self.venue.get_meta_invitation_id(),
+                    signatures=[venue_id],
+                    note = Note(
+                        id = registration_notes[0].id,
+                        content = {
+                            'instructions': { 'value': registration_stage.instructions },
+                            'title': { 'value': registration_stage.title}
+                        }
+                    ))
+            else:
+                forum_edit = self.client.post_note_edit(invitation=invitation.id,
+                    signatures=[venue_id],
+                    note = Note(
+                        signatures = [venue_id],
+                        content = {
+                            'instructions': { 'value': registration_stage.instructions },
+                            'title': { 'value': registration_stage.title}
+                        }
+                    )
                 )
-            )
             forum_note_id = forum_edit['note']['id']
             start_date = registration_stage.start_date
             due_date = registration_stage.due_date
@@ -2152,7 +2165,7 @@ class InvitationBuilder(object):
                     }
                 }        
             )
-            self.save_invitation(invitation)                           
+            self.save_invitation(invitation, replacement=True)
 
     def set_paper_recruitment_invitation(self, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title=None, due_date=None, invited_label='Invited', accepted_label='Accepted', declined_label='Declined', proposed=False):
         venue = self.venue

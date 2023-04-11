@@ -37,6 +37,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.decision_stage = get_decision_stage(note)
         venue.submission_revision_stage = get_submission_revision_stage(note)
         venue.review_rebuttal_stage = get_rebuttal_stage(note)
+        venue.registration_stages = get_registration_stages(note, venue)
 
         paper_matching_options = note.content.get('Paper Matching', [])
         include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
@@ -815,3 +816,98 @@ def get_comment_stage(request_forum):
         readers=readers,
         invitees=invitees
     )
+
+def get_registration_stages(request_forum, venue):
+
+    def get_reviewer_registration_stage(request_forum, venue):
+        start_date = request_forum.content.get('reviewer_registration_start_date', '').strip()
+        if start_date:
+            try:
+                start_date = datetime.datetime.strptime(start_date, '%Y/%m/%d %H:%M')
+            except ValueError:
+                start_date = datetime.datetime.strptime(start_date, '%Y/%m/%d')
+        else:
+            start_date = None
+
+        end_date = request_forum.content.get('reviewer_registration_deadline', '').strip()
+        if end_date:
+            try:
+                end_date = datetime.datetime.strptime(end_date, '%Y/%m/%d %H:%M')
+            except ValueError:
+                end_date = datetime.datetime.strptime(end_date, '%Y/%m/%d')
+        else:
+            end_date = None
+
+        exp_date = request_forum.content.get('reviewer_registration_expiration_date', '').strip()
+        if exp_date:
+            try:
+                exp_date = datetime.datetime.strptime(exp_date, '%Y/%m/%d %H:%M')
+            except ValueError:
+                exp_date = datetime.datetime.strptime(exp_date, '%Y/%m/%d')
+        else:
+            exp_date = None
+
+        title = request_forum.content.get('reviewer_form_title')
+        instructions = request_forum.content.get('reviewer_form_instructions')
+        additional_options = request_forum.content.get('additional_reviewer_form_options', {})
+        remove_fields = request_forum.content.get('remove_reviewer_form_options', [])
+
+        return openreview.stages.RegistrationStage(
+            committee_id=venue.get_reviewers_id(),
+            start_date=start_date,
+            due_date=end_date,
+            title=title,
+            instructions=instructions,
+            additional_fields=additional_options,
+            remove_fields=remove_fields
+        )
+
+    def get_ac_registration_stage(request_forum, venue):
+    
+        start_date = request_forum.content.get('ac_registration_start_date', '').strip()
+        if start_date:
+            try:
+                start_date = datetime.datetime.strptime(start_date, '%Y/%m/%d %H:%M')
+            except ValueError:
+                start_date = datetime.datetime.strptime(start_date, '%Y/%m/%d')
+        else:
+            start_date = None
+
+        end_date = request_forum.content.get('ac_registration_deadline', '').strip()
+        if end_date:
+            try:
+                end_date = datetime.datetime.strptime(end_date, '%Y/%m/%d %H:%M')
+            except ValueError:
+                end_date = datetime.datetime.strptime(end_date, '%Y/%m/%d')
+        else:
+            end_date = None
+
+        exp_date = request_forum.content.get('ac_registration_expiration_date', '').strip()
+        if exp_date:
+            try:
+                exp_date = datetime.datetime.strptime(exp_date, '%Y/%m/%d %H:%M')
+            except ValueError:
+                exp_date = datetime.datetime.strptime(exp_date, '%Y/%m/%d')
+        else:
+            exp_date = None
+
+        title = request_forum.content.get('ac_form_title')
+        instructions = request_forum.content.get('ac_form_instructions')
+        additional_options = request_forum.content.get('additional_ac_form_options', {})
+        remove_fields = request_forum.content.get('remove_ac_form_options', [])
+
+        return openreview.stages.RegistrationStage(
+            committee_id=venue.get_area_chairs_id(),
+            start_date=start_date,
+            due_date=end_date,
+            title=title,
+            instructions=instructions,
+            additional_fields=additional_options,
+            remove_fields=remove_fields
+        )
+    stages = []
+    if 'reviewer_form_title' in request_forum.content:
+        stages.append(get_reviewer_registration_stage(request_forum, venue))
+    if 'Yes' in request_forum.content.get('Area Chairs (Metareviewers)') and 'ac_form_title' in request_forum.content:
+        stages.append(get_ac_registration_stage(request_forum, venue))
+    return stages

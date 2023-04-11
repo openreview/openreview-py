@@ -884,6 +884,134 @@ class VenueStages():
             }
         ))
 
+    def setup_registration_stages(self):
+        registration_content = {
+            'reviewer_registration_start_date': {
+                'description': 'Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$'
+            },
+            'reviewer_registration_deadline': {
+                'description': 'This is the official, soft deadline reviewers will see. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'required': True
+            },
+            'reviewer_registration_expiration_date': {
+                'description': 'AThis is the hard deadline reviewers will not be able to see. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59). Default is 30 minutes after the review deadline.',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'required': False,
+            },
+            'reviewer_form_title': {
+                'description': 'What should be the title of the registration form. Default name: Reviewer Registration',
+                'value-regex': '.*',
+                'default':'Reviewer Registration'
+            },
+            'reviewer_form_instructions': {
+                'description': 'These will be the instructions reviewers will see when completing the registration task. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                'value-regex': '[\\S\\s]{1,5000}',
+                'markdown': True,
+                'required': True
+            },
+            'additional_reviewer_form_options': {
+                'value-dict': {},
+                'required': False,
+                'description': 'Configure additional options in the review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
+            },
+            'remove_reviewer_form_options': {
+                'values-dropdown': ['profile_confirmed', 'expertise_confirmed'],
+                'required': False,
+                'description': 'Select which fields you want removed from the default registration form.'
+            }
+        }
+
+        self.venue_request.client.post_invitation(openreview.Invitation(
+            id='{}/-/Reviewer_Registration'.format(self.venue_request.support_group.id),
+            readers=['everyone'],
+            writers=[],
+            signatures=[self.venue_request.super_user],
+            invitees=['everyone'],
+            multiReply=True,
+            process_string=self.file_content,
+            reply={
+                'readers': {
+                    'values-copied': [
+                        self.venue_request.support_group.id,
+                        '{content["program_chair_emails"]}'
+                    ]
+                },
+                'writers': {
+                    'values':[],
+                },
+                'signatures': {
+                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                },
+                'content': registration_content
+            }
+        ))
+
+        registration_content = {
+            'ac_registration_start_date': {
+                'description': 'Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$'
+            },
+            'ac_registration_deadline': {
+                'description': 'This is the official, soft deadline area chairs will see. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'required': True
+            },
+            'ac_registration_expiration_date': {
+                'description': 'This is the hard deadline area chairs will not be able to see. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59). Default is 30 minutes after the review deadline.',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'required': False,
+                'order': 12
+            },
+            'ac_form_title': {
+                'description': 'What should be the title of the registration form. Default name: Area Chair Registration',
+                'value-regex': '.*',
+                'default':'Reviewer Registration'
+            },
+            'ac_form_instructions': {
+                'description': 'These will be the instructions area chairs will see when completing the registration task. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                'value-regex': '[\\S\\s]{1,5000}',
+                'markdown': True,
+                'required': True
+            },
+            'additional_ac_form_options': {
+                'value-dict': {},
+                'required': False,
+                'description': 'Configure additional options in the area chair registration form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
+            },
+            'remove_ac_form_options': {
+                'values-dropdown': ['profile_confirmed', 'expertise_confirmed'],
+                'required': False,
+                'description': 'Select which fields you want removed from the default registration form.'
+            }
+        }
+
+        self.venue_request.client.post_invitation(openreview.Invitation(
+            id='{}/-/Area_Chair_Registration'.format(self.venue_request.support_group.id),
+            readers=['everyone'],
+            writers=[],
+            signatures=[self.venue_request.super_user],
+            invitees=['everyone'],
+            multiReply=True,
+            process_string=self.file_content,
+            reply={
+                'readers': {
+                    'values-copied': [
+                        self.venue_request.support_group.id,
+                        '{content["program_chair_emails"]}'
+                    ]
+                },
+                'writers': {
+                    'values':[],
+                },
+                'signatures': {
+                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                },
+                'content': registration_content
+            }
+        ))
+
 class VenueRequest():
 
     def __init__(self, client, support_group_id, super_user):
@@ -935,6 +1063,7 @@ class VenueRequest():
         self.submission_revision_stage_super_invitation = venue_stages.setup_submission_revision_stage()
         self.decision_stage_super_invitation = venue_stages.setup_decision_stage()
         self.post_decision_stage_invitation = venue_stages.setup_post_decision_stage()
+        venue_stages.setup_registration_stages()
 
     def setup_request_form(self):
 
