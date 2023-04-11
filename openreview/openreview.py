@@ -1853,7 +1853,7 @@ class Client(object):
             'type': 'Group',
             'memberOf': group_id
         }
-        if exclusion_inv:
+        if exclusion_inv and tools.get_invitation(self, exclusion_inv):
             expertise = { 'invitation': exclusion_inv }
             entityA['expertise'] = expertise
         

@@ -1762,7 +1762,7 @@ class OpenReviewClient(object):
             'type': 'Group',
             'memberOf': group_id
         }
-        if expertise_selection_id:
+        if expertise_selection_id and tools.get_invitation(self, expertise_selection_id):
             expertise = { 'invitation': expertise_selection_id }
             entityA['expertise'] = expertise
 
