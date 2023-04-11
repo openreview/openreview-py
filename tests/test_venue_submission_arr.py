@@ -39,7 +39,12 @@ class TestVenueSubmissionARR():
         venue.reviewer_identity_readers = [openreview.stages.IdentityReaders.PROGRAM_CHAIRS, openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED]
 
         now = datetime.datetime.utcnow()
-        venue.submission_stage = SubmissionStage(double_blind=True, readers=[SubmissionStage.Readers.EVERYONE], withdrawn_submission_public=True, withdrawn_submission_reveal_authors=True, desk_rejected_submission_public=True)
+        venue.submission_stage = SubmissionStage(
+            double_blind=True,
+            due_date=now + datetime.timedelta(minutes = 30),
+            withdrawn_submission_reveal_authors=True,
+            force_profiles=True
+        )
     
         venue.review_stage = openreview.stages.ReviewStage(start_date=now + datetime.timedelta(minutes = 4), due_date=now + datetime.timedelta(minutes = 40))
         venue.meta_review_stage = openreview.stages.MetaReviewStage(start_date=now + datetime.timedelta(minutes = 10), due_date=now + datetime.timedelta(minutes = 40))
@@ -133,11 +138,16 @@ class TestVenueSubmissionARR():
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id']) 
 
-    def test_post_submission_stage(self, venue, openreview_client):
+    def test_post_submission_stage(self, venue, openreview_client, helpers):
         cycle = '2023_March'
     
         venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS, SubmissionStage.Readers.AREA_CHAIRS]
-        venue.setup_post_submission_stage(sub_venue_id=cycle)
+        venue.submission_stage.exp_date = datetime.datetime.utcnow() + datetime.timedelta(seconds = 60)
+        venue.create_submission_stage(sub_venue_id=cycle)
+
+        helpers.await_queue_edit(openreview_client, 'ARR/-/Post_Submission-0-0')
+        helpers.await_queue_edit(openreview_client, 'ARR/Reviewers/-/Submission_Group-0-0')
+        helpers.await_queue_edit(openreview_client, 'ARR/Action_Editors/-/Submission_Group-0-0')
 
         #print(openreview_client.get_all_groups(prefix='ARR/Submission1/.*'))
         assert openreview_client.get_group('ARR/Submission1/Authors')
@@ -183,6 +193,7 @@ class TestVenueSubmissionARR():
         )
 
         helpers.await_queue_edit(openreview_client, f'ARR/-/{cycle}/Official_Review-0-0')
+        helpers.await_queue_edit(openreview_client, f'ARR/-/{cycle}/Official_Review-0-1', count=2)
 
         assert openreview_client.get_invitation(f'ARR/-/{cycle}/Official_Review')
         assert openreview_client.get_invitation(f'ARR/Submission1/-/{cycle}/Official_Review')
@@ -232,7 +243,7 @@ class TestVenueSubmissionARR():
 
         note = author_client.get_note(withdraw_note['note']['forum'])
         assert note
-        assert note.invitations == ['ARR/-/Submission', 'ARR/-/Edit', 'ARR/-/Withdrawn_Submission']
+        assert note.invitations == ['ARR/-/Submission', 'ARR/-/Post_Submission', 'ARR/-/Withdrawn_Submission']
         assert note.readers == ['ARR', 'ARR/Action_Editors', 'ARR/Reviewers', 'ARR/Submission2/Authors']
         assert note.writers == ['ARR', 'ARR/Submission2/Authors']
         assert note.signatures == ['ARR/Submission2/Authors']
@@ -250,7 +261,7 @@ class TestVenueSubmissionARR():
 
         messages = openreview_client.get_messages(to='harold@maileleven.com', subject='[ARR]: Paper #2 withdrawn by paper authors')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'The ARR paper \"Paper 2 Title\" has been withdrawn by the paper authors.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
+        assert messages[0]['content']['text'] == f'The ARR paper \"Paper 2 Title\" has been withdrawn by the paper authors.\n\nFor more information, click here https://openreview.net/forum?id={note.id}&noteId={withdraw_note["note"]["id"]}\n'
 
         assert openreview_client.get_invitation('ARR/Submission2/-/Withdrawal_Reversion')
 
@@ -272,8 +283,8 @@ class TestVenueSubmissionARR():
 
         note = author_client.get_note(withdraw_note['note']['forum'])
         assert note
-        assert note.invitations == ['ARR/-/Submission', 'ARR/-/Edit']
-        assert note.content['venue']['value'] == 'ARR Submission'
+        assert note.invitations == ['ARR/-/Submission', 'ARR/-/Post_Submission']
+        assert note.content['venue']['value'] == 'ARR 2023 March Submission'
         assert note.content['venueid']['value'] == 'ARR/2023_March/Submission'
 
 
@@ -297,7 +308,7 @@ class TestVenueSubmissionARR():
 
         note = pc_client.get_note(desk_reject_note['note']['forum'])
         assert note
-        assert note.invitations == ['ARR/-/Submission', 'ARR/-/Edit', 'ARR/-/Desk_Rejected_Submission']
+        assert note.invitations == ['ARR/-/Submission', 'ARR/-/Post_Submission', 'ARR/-/Desk_Rejected_Submission']
         assert note.readers == ['ARR', 'ARR/Action_Editors', 'ARR/Reviewers', 'ARR/Submission2/Authors']
         assert note.writers == ['ARR', 'ARR/Submission2/Authors']
         assert note.signatures == ['ARR/Submission2/Authors']
@@ -343,8 +354,8 @@ class TestVenueSubmissionARR():
 
         note = pc_client.get_note(desk_reject_note['note']['forum'])
         assert note
-        assert note.invitations == ['ARR/-/Submission', 'ARR/-/Edit']
-        assert note.content['venue']['value'] == 'ARR Submission'
+        assert note.invitations == ['ARR/-/Submission', 'ARR/-/Post_Submission']
+        assert note.content['venue']['value'] == 'ARR 2023 March Submission'
         assert note.content['venueid']['value'] == 'ARR/2023_March/Submission'
 
         messages = openreview_client.get_messages(to='harold@maileleven.com', subject='[ARR]: Paper #2 restored by venue organizers')
@@ -362,7 +373,6 @@ class TestVenueSubmissionARR():
         cycle = '2023_March'
 
         venue.create_submission_stage(sub_venue_id=cycle)
-        venue.setup_post_submission_stage(sub_venue_id=cycle)
 
         submissions = venue.get_submissions(submission_venue_id=venue.get_submission_venue_id(f'{cycle}/Submission'))
         assert submissions and len(submissions) == 2

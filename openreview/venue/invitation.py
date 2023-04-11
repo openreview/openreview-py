@@ -309,7 +309,7 @@ class InvitationBuilder(object):
                     'cdate': {
                         'param': {
                             'range': [ 0, 9999999999999 ],
-                            'optional': True, 
+                            'optional': True,
                         }
                     },
                     'duedate': {
@@ -330,8 +330,8 @@ class InvitationBuilder(object):
                         }
                     },
                     'dateprocesses': [{ 
-                        'dates': ["#{4/cdate}"],
-                        'script': self.cdate_invitation_process              
+                        'dates': ["#{4/cdate}", self.update_date_string],
+                        'script': self.invitation_edit_process              
                     }],
                     'edit': {
                         'signatures': [venue_id],
@@ -353,6 +353,7 @@ class InvitationBuilder(object):
                                 }
                             }
                         },
+                        'replacement': True,
                         'invitation': {
                             'id': self.venue.get_invitation_id('${4/content/subvenueid/value}' + f"/{review_stage.name}", '${2/content/noteNumber/value}'),
                             'signatures': [ venue_id ],
@@ -360,11 +361,13 @@ class InvitationBuilder(object):
                             'writers': [venue_id],
                             'invitees': [venue_id, self.venue.get_reviewers_id(number='${3/content/noteNumber/value}')],
                             'maxReplies': 1,
-                            'cdate': review_cdate,
+                            #'cdate': review_cdate,#'#{3/cdate}',
                             'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['review_process_script']['value']
-    funcs = {}
+    funcs = {
+        'openreview': openreview
+    }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
 ''',
@@ -738,8 +741,8 @@ class InvitationBuilder(object):
                         }
                     },
                     'dateprocesses': [{ 
-                        'dates': ["#{4/cdate}"],
-                        'script': self.cdate_invitation_process              
+                        'dates': ["#{4/cdate}", self.update_date_string],
+                        'script': self.invitation_edit_process              
                     }],
                     'edit': {
                         'signatures': [venue_id],
@@ -761,6 +764,7 @@ class InvitationBuilder(object):
                                 }
                             }
                         },
+                        'replacement': True,
                         'invitation': {
                             'id': self.venue.get_invitation_id('${4/content/subvenueid/value}' + f"/{meta_review_stage.name}", '${2/content/noteNumber/value}'),
                             'signatures': [ venue_id ],
@@ -768,7 +772,15 @@ class InvitationBuilder(object):
                             'writers': [venue_id],
                             'invitees': [venue_id, self.venue.get_area_chairs_id(number='${3/content/noteNumber/value}')],
                             'maxReplies': 1,
-                            'cdate': meta_review_cdate,
+                            'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['meta_review_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
                             'edit': {
                                 'signatures': { 'param': { 'regex': meta_review_stage.get_signatures_regex(self.venue, '${5/content/noteNumber/value}') }},
                                 'readers': meta_review_stage.get_readers(self.venue, '${4/content/noteNumber/value}'),
@@ -829,7 +841,7 @@ class InvitationBuilder(object):
             if field in content:
                 del content[field]
 
-        if sub_venue_id is not None and sub_venue_id is not None:
+        if sub_venue_id is not None and sub_venue_invitation is not None:
             invitation=Invitation(id=meta_review_invitation_id,
                     cdate=meta_review_cdate,
                     duedate=meta_review_duedate,
@@ -1174,9 +1186,9 @@ class InvitationBuilder(object):
                             'optional': True, 
                         }
                     },
-                    'dateprocesses': [{
-                        'dates': ["#{4/cdate}"],
-                        'script': self.cdate_invitation_process
+                    'dateprocesses': [{ 
+                        'dates': ["#{4/cdate}", self.update_date_string],
+                        'script': self.invitation_edit_process              
                     }],
                     'content': {
                         'comment_preprocess_script': {
@@ -1460,9 +1472,9 @@ class InvitationBuilder(object):
                             'optional': True, 
                         }
                     },
-                    'dateprocesses': [{
-                        'dates': ["#{4/cdate}"],
-                        'script': self.cdate_invitation_process
+                    'dateprocesses': [{ 
+                        'dates': ["#{4/cdate}", self.update_date_string],
+                        'script': self.invitation_edit_process              
                     }],
                     'content': {
                         'comment_process_script': {
