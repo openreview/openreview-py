@@ -19,7 +19,7 @@ def process(client, note, invitation):
 
         if invitation_type == 'Revision':
             conference.create_submission_stage()
-            submission_deadline = forum_note.content.get('Submission Deadline')
+            submission_deadline = forum_note.content.get('Submission Deadline', '').strip()
             if submission_deadline:
                 try:
                     submission_deadline = datetime.datetime.strptime(submission_deadline, '%Y/%m/%d %H:%M')
@@ -34,7 +34,7 @@ def process(client, note, invitation):
                     revision_invitation.duedate = openreview.tools.datetime_millis(submission_deadline)
                     revision_invitation.expdate = openreview.tools.datetime_millis(submission_deadline + datetime.timedelta(minutes=openreview.conference.invitation.SHORT_BUFFER_MIN))
                     client.post_invitation(revision_invitation)
-            withdraw_submission_expiration = forum_note.content.get('withdraw_submission_expiration')
+            withdraw_submission_expiration = forum_note.content.get('withdraw_submission_expiration', '').strip()
             if withdraw_submission_expiration:
                 try:
                     withdraw_submission_expiration = datetime.datetime.strptime(withdraw_submission_expiration, '%Y/%m/%d %H:%M')
