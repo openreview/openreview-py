@@ -71,9 +71,7 @@ class TestNeurIPSConference():
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
-                'Paper Matching': [
-                    'Reviewer Bid Scores',
-                    'OpenReview Affinity'],
+                'submission_reviewer_assignment': 'Automatic',
                 'Author and Reviewer Anonymity': 'Double-blind',
                 'reviewer_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
@@ -618,6 +616,7 @@ If you would like to change your decision, please follow the link in the previou
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
             },
@@ -753,6 +752,7 @@ If you would like to change your decision, please follow the link in the previou
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
             },
@@ -984,6 +984,7 @@ If you would like to change your decision, please follow the link in the previou
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'withdrawn_submissions_author_anonymity': 'Yes, author identities of withdrawn submissions should be revealed.',
@@ -1024,6 +1025,7 @@ If you would like to change your decision, please follow the link in the previou
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'withdrawn_submissions_author_anonymity': 'No, author identities of withdrawn submissions should not be revealed.',
@@ -2899,6 +2901,7 @@ NeurIPS 2021 Conference Program Chairs'''
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
             },

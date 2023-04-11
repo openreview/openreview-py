@@ -64,6 +64,7 @@ class Venue(object):
         self.area_chair_identity_readers = []
         self.senior_area_chair_identity_readers = []
         self.enable_reviewers_reassignment = False
+        self.automatic_reviewer_assignment = False
         self.reviewers_proposed_assignment_title = None
         self.conflict_policy = 'default'
         self.decision_heading_map = {}

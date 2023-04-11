@@ -18,7 +18,7 @@ class VenueStages():
 
     def setup_venue_revision(self):
 
-        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Paper Matching', 'reviewer_identity', 'area_chair_identity', 'senior_area_chair_identity', 'submissions_visibility', 'submission_readers', 'api_version', 'secondary_area_chairs', 'force_profiles_only']
+        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'reviewer_identity', 'area_chair_identity', 'senior_area_chair_identity', 'submissions_visibility', 'submission_readers', 'api_version', 'secondary_area_chairs', 'force_profiles_only']
         revision_content = {key: self.venue_request.request_content[key] for key in self.venue_request.request_content if key not in remove_fields}
         revision_content['Additional Submission Options'] = {
             'order': 18,
@@ -1037,15 +1037,14 @@ class VenueRequest():
                 'value-regex': '.*',
                 'order': 14
             },
-            'Paper Matching': {
-                'description': 'Choose options for assigning papers to reviewers (and ACs, if present). If using the OpenReview Paper Matching System, see the top of the page for a description of each feature type. If you want to make manual assignments, do not select any options.',
-                'values-checkbox': [
-                    'Reviewer Bid Scores',
-                    'Reviewer Recommendation Scores',
-                    'OpenReview Affinity'
+            'submission_reviewer_assignment': {
+                'description': 'How do you want to assign reviewers to submissions?. Automatic assignment will assign reviewers to submissions based on their expertise and/or bids. Manual assignment will allow you to assign reviewers to submissions manually.',
+                'value-radio': [
+                    'Automatic',
+                    'Manual'
                 ],
                 'order': 15,
-                'required': False
+                'required': True
             },
             'Author and Reviewer Anonymity': {
                 'description': 'What policy best describes your anonymity policy? (If none of the options apply then please describe your request below)',

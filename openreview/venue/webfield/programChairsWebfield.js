@@ -1,4 +1,14 @@
 // Webfield component
+const manualReviewerAssignmentUrl = `/edges/browse?traverse=${domain.content.reviewers_assignment_id.value}&edit=${domain.content.reviewers_assignment_id.value};${domain.content.reviewers_custom_max_papers_id.value},tail:ignore&browse=${domain.content.reviewers_affinity_score_id.value};${domain.content.reviewers_conflict_id.value}&version=2`
+const manualAreaChairAssignmentUrl = domain.content.area_chairs_id?.value && `/edges/browse?traverse=${domain.content.area_chairs_assignment_id.value}&edit=${domain.content.area_chairs_assignment_id.value};${domain.content.area_chairs_custom_max_papers_id.value},tail:ignore&browse=${domain.content.area_chairs_affinity_score_id.value};${domain.content.area_chairs_conflict_id.value}&version=2`
+
+let instructions = ''
+if (!domain.content.automatic_reviewer_assignment.value) {
+  instructions = `- [Manual reviewer assigments](${manualReviewerAssignmentUrl})`
+  if (manualAreaChairAssignmentUrl) {
+    instructions += `- [Manual area chair assigments](${manualAreaChairAssignmentUrl})`
+  }
+}
 return {
   component: 'ProgramChairConsole',
   version: 1,
@@ -7,8 +17,7 @@ return {
       title: 'Program Chairs Console',
       instructions: `This page provides information and status updates for the ${domain.content.subtitle.value}. It will be regularly updated as the conference progresses, so please check back frequently.
       
-Manual assignments: 
-- [Reviewers edge browser](/edges/browse?traverse=${domain.content.reviewers_assignment_id.value}&edit=${domain.content.reviewers_assignment_id.value}&browse=${domain.content.reviewers_affinity_score_id.value};${domain.content.reviewers_conflict_id.value}&version=2)
+${instructions}
       `
     },
     apiVersion: 2,

@@ -972,7 +972,7 @@ var displayStatsAndConfiguration = function(conferenceStats) {
     var description = [
       'Author And Reviewer Anonymity: ' + note.content['Author and Reviewer Anonymity'],
       note.content['Open Reviewing Policy'],
-      'Paper matching uses ' + note.content['Paper Matching'].join(', ')
+      'Paper matching uses ' + (note.content['Paper Matching'].join(', ') || note.content['submission_reviewer_assignment'])
     ];
     if (note.content['Other Important Information']) {
       description.push(note.content['Other Important Information']);

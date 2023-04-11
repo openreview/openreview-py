@@ -25,6 +25,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.name = note.content.get('Official Venue Name')
         venue.website = note.content.get('Official Website URL')
         venue.contact = note.content.get('contact_email')
+        venue.automatic_reviewer_assignment = note.content.get('submission_reviewer_assignment', '') == 'Automatic'
         venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')
         venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
         venue.senior_area_chair_identity_readers = get_identity_readers(note, 'senior_area_chair_identity')
@@ -44,10 +45,8 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.submission_revision_stage = get_submission_revision_stage(note)
         venue.review_rebuttal_stage = get_rebuttal_stage(note)
 
-        paper_matching_options = note.content.get('Paper Matching', [])
         include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
-        if 'OpenReview Affinity' in paper_matching_options:
-            venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date, include_option=include_expertise_selection)
+        venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date, include_option=include_expertise_selection)
 
         if setup:
             venue.setup(note.content.get('program_chair_emails'))
@@ -242,12 +241,12 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         submission_email=submission_email,
         force_profiles=force_profiles)
 
-    paper_matching_options = note.content.get('Paper Matching', [])
     include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
-    if 'OpenReview Affinity' in paper_matching_options:
-        builder.set_expertise_selection_stage(due_date=submission_due_date, include_option=include_expertise_selection)
+    builder.set_expertise_selection_stage(due_date=submission_due_date, include_option=include_expertise_selection)
 
-    if not paper_matching_options or 'Organizers will assign papers manually' in paper_matching_options:
+    paper_matching_options = note.content.get('Paper Matching', [])
+    
+    if not paper_matching_options or 'Organizers will assign papers manually' in paper_matching_options or 'Manual' in note.content.get('submission_reviewer_assignment', ''):
         builder.enable_reviewer_reassignment(enable=True)
 
     ## Contact Emails is deprecated
@@ -324,18 +323,8 @@ def get_submission_stage(request_forum):
     }
 
     # Prioritize submission_readers over Open Reviewing Policy (because PCs can keep changing this)
-    if 'submission_readers' in request_forum.content:
-        readers = readers_map[request_forum.content.get('submission_readers')]
-        public = 'Everyone (submissions are public)' in readers
-    else:
-        public = (request_forum.content.get('Open Reviewing Policy', '') in ['Submissions and reviews should both be public.', 'Submissions should be public, but reviews should be private.'])
-        bidding_enabled = 'Reviewer Bid Scores' in request_forum.content.get('Paper Matching', '') or 'Reviewer Recommendation Scores' in request_forum.content.get('Paper Matching', '')
-        if bidding_enabled and not public:
-            readers = [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.REVIEWERS]
-        elif public:
-            readers = [openreview.stages.SubmissionStage.Readers.EVERYONE]
-        else:
-            readers = [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.REVIEWERS_ASSIGNED]
+    readers = readers_map[request_forum.content.get('submission_readers', [])]
+    public = 'Everyone (submissions are public)' in readers
 
     submission_start_date = request_forum.content.get('Submission Start Date', '').strip()
     if submission_start_date:

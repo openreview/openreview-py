@@ -66,9 +66,7 @@ class TestCVPRSConference():
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
-                'Paper Matching': [
-                    'Reviewer Bid Scores',
-                    'OpenReview Affinity'],
+                'submission_reviewer_assignment': 'Automatic',
                 'Author and Reviewer Anonymity': 'Double-blind',
                 'reviewer_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
@@ -264,6 +262,7 @@ class TestCVPRSConference():
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',

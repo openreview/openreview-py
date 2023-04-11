@@ -849,36 +849,10 @@ class Matching(object):
         venue = self.venue
         client = self.client
 
-        score_spec = {}
         matching_status = {
             'no_profiles': [],
             'no_publications': []
         }
-
-        try:
-            invitation = client.get_invitation(venue.get_bid_id(self.match_group.id))
-            score_spec[invitation.id] = {
-                'weight': 1,
-                'default': 0,
-                'translate_map' : {
-                    'Very High': 1.0,
-                    'High': 0.5,
-                    'Neutral': 0.0,
-                    'Low': -0.5,
-                    'Very Low': -1.0
-                }
-            }
-        except:
-            print('Bid invitation not found')
-
-        try:
-            invitation = self.client.get_invitation(venue.get_recommendation_id())
-            score_spec[invitation.id] = {
-                'weight': 1,
-                'default': 0
-            }
-        except:
-            print('Recommendation invitation not found')
 
         # The reviewers are all emails so convert to tilde ids
         self.match_group = openreview.tools.replace_members_with_ids(client, self.match_group)
@@ -889,22 +863,6 @@ class Matching(object):
                 'Members without profiles will not have metadata created.')
 
         user_profiles = openreview.tools.get_profiles(client, self.match_group.members, with_publications=compute_conflicts)
-
-        invitation = self._create_edge_invitation(venue.get_assignment_id(self.match_group.id))
-        
-        if not self.is_senior_area_chair:
-            with open(os.path.join(os.path.dirname(__file__), 'process/proposed_assignment_pre_process.py')) as f:
-                content = f.read()
-                invitation.content = { 'committee_name': { 'value': self.get_committee_name() }}
-                invitation.preprocess = content
-                venue.invitation_builder.save_invitation(invitation)
-
-        self._create_edge_invitation(venue.get_assignment_id(self.match_group.id, deployed=True))
-        venue.invitation_builder.set_assignment_invitation(self.match_group.id)
-
-        self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
-        self._build_custom_max_papers(user_profiles)
-        self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))
 
         submissions = venue.get_submissions(sort='number:asc')
 
@@ -920,47 +878,76 @@ class Matching(object):
         type_affinity_scores = type(compute_affinity_scores)
 
         if type_affinity_scores == str:
-            invitation = self._build_scores_from_file(
+            self._build_scores_from_file(
                 venue.get_affinity_score_id(self.match_group.id),
                 compute_affinity_scores,
                 submissions
             )
-            if invitation:
-                invitation_id = invitation.id
-                score_spec[invitation_id] = {
-                    'weight': 1,
-                    'default': 0
-                }
 
         if type_affinity_scores == bytes:
-            invitation = self._build_scores_from_stream(
+            self._build_scores_from_stream(
                 venue.get_affinity_score_id(self.match_group.id),
                 compute_affinity_scores,
                 submissions
             )
-            if invitation:
-                invitation_id = invitation.id
-                score_spec[invitation_id] = {
-                    'weight': 1,
-                    'default': 0
-                }
 
         if compute_affinity_scores == True:
             invitation, matching_status = self._compute_scores(
                 venue.get_affinity_score_id(self.match_group.id),
                 submissions
             )
-            if invitation:
-                invitation_id = invitation.id
-                score_spec[invitation_id] = {
-                    'weight': 1,
-                    'default': 0
-                }
 
         if compute_conflicts:
             self._build_conflicts(submissions, user_profiles, openreview.tools.get_neurips_profile_info if compute_conflicts == 'neurips' else openreview.tools.get_profile_info)
 
-        self._build_config_invitation(score_spec)
+
+        if venue.automatic_reviewer_assignment:
+            invitation = self._create_edge_invitation(venue.get_assignment_id(self.match_group.id))
+            
+            if not self.is_senior_area_chair:
+                with open(os.path.join(os.path.dirname(__file__), 'process/proposed_assignment_pre_process.py')) as f:
+                    content = f.read()
+                    invitation.content = { 'committee_name': { 'value': self.get_committee_name() }}
+                    invitation.preprocess = content
+                    venue.invitation_builder.save_invitation(invitation)
+
+            self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
+            score_spec = {}
+            
+            invitation = openreview.tools.get_invitation(self.client, venue.get_affinity_score_id(self.match_group.id))
+            score_spec[invitation.id] = {
+                'weight': 1,
+                'default': 0
+            }
+
+            invitation = openreview.tools.get_invitation(self.client, venue.get_bid_id(self.match_group.id))
+            score_spec[invitation.id] = {
+                'weight': 1,
+                'default': 0,
+                'translate_map' : {
+                    'Very High': 1.0,
+                    'High': 0.5,
+                    'Neutral': 0.0,
+                    'Low': -0.5,
+                    'Very Low': -1.0
+                }
+            }
+
+            invitation = openreview.tools.get_invitation(self.client, venue.get_recommendation_id(self.match_group.id))
+            score_spec[invitation.id] = {
+                'weight': 1,
+                'default': 0
+            }
+
+            self._build_config_invitation(score_spec)            
+
+        ## TODO: merge this in a single function so there is only one edit
+        self._create_edge_invitation(venue.get_assignment_id(self.match_group.id, deployed=True))
+        venue.invitation_builder.set_assignment_invitation(self.match_group.id)
+
+        self._build_custom_max_papers(user_profiles)
+        self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))
+
         return matching_status
 
     def setup_invite_assignment(self, hash_seed, assignment_title=None, due_date=None, invitation_labels={}, invited_committee_name='External_Reviewers', email_template=None, proposed=False):

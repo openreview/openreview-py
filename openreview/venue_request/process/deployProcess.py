@@ -254,21 +254,20 @@ If you would like to change your decision, please follow the link in the previou
     client.post_invitation(recruitment_invitation)
     client.post_invitation(remind_recruitment_invitation)
 
-    if 'Reviewer Bid Scores' in forum.content.get('Paper Matching', []):
-        client.post_invitation(openreview.Invitation(
-            id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Bid_Stage',
-            super = SUPPORT_GROUP + '/-/Bid_Stage',
-            invitees = readers,
-            reply = {
-                'forum': forum.id,
-                'referent': forum.id,
-                'readers' : {
-                    'description': 'The users who will be allowed to read the above content.',
-                    'values' : readers
-                }
-            },
-            signatures = ['~Super_User1']
-        ))
+    client.post_invitation(openreview.Invitation(
+        id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Bid_Stage',
+        super = SUPPORT_GROUP + '/-/Bid_Stage',
+        invitees = readers,
+        reply = {
+            'forum': forum.id,
+            'referent': forum.id,
+            'readers' : {
+                'description': 'The users who will be allowed to read the above content.',
+                'values' : readers
+            }
+        },
+        signatures = ['~Super_User1']
+    ))
 
     client.post_invitation(openreview.Invitation(
         id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Review_Stage',

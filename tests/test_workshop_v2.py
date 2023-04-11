@@ -54,6 +54,7 @@ class TestWorkshopV2():
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Manual',
                 'Author and Reviewer Anonymity': 'Double-blind',
                 'reviewer_identity': ['Program Chairs'],
                 'area_chair_identity': ['Program Chairs'],
@@ -145,6 +146,8 @@ class TestWorkshopV2():
         submissions = pc_client_v2.get_notes(invitation='PRL/2023/ICAPS/-/Submission', sort='number:asc')
         pc_client_v2.add_members_to_group('PRL/2023/ICAPS/Reviewers', ['reviewer1@icaps.cc', 'reviewer2@icaps.cc', 'reviewer3@icaps.cc', 'reviewer4@icaps.cc', 'reviewer5@icaps.cc', 'reviewer6@icaps.cc'])
 
+        openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group('PRL/2023/ICAPS/Reviewers'))
+        
         with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
             for submission in submissions:
@@ -173,5 +176,15 @@ class TestWorkshopV2():
         helpers.await_queue()
 
         assert pc_client_v2.get_edges_count(invitation='PRL/2023/ICAPS/Reviewers/-/Affinity_Score') == 66
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation PRL/2023/ICAPS/Reviewers/-/Proposed_Assignment was not found'):
+            assert openreview_client.get_invitation('PRL/2023/ICAPS/Reviewers/-/Proposed_Assignment')
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation PRL/2023/ICAPS/Reviewers/-/Aggregate_Score was not found'):
+            assert openreview_client.get_invitation('PRL/2023/ICAPS/Reviewers/-/Aggregate_Score')
+
+        assert openreview_client.get_invitation('PRL/2023/ICAPS/Reviewers/-/Assignment')                    
+        assert openreview_client.get_invitation('PRL/2023/ICAPS/Reviewers/-/Custom_Max_Papers')                    
+        assert openreview_client.get_invitation('PRL/2023/ICAPS/Reviewers/-/Custom_User_Demands')                    
 
         

@@ -179,6 +179,7 @@ class GroupBuilder(object):
             'desk_reject_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
             'desk_rejection_name': { 'value': 'Desk_Rejection'},
             'conflict_policy': { 'value': self.venue.conflict_policy },
+            'automatic_reviewer_assignment': { 'value': self.venue.automatic_reviewer_assignment },
             'decision_heading_map': { 'value': self.venue.decision_heading_map }
         }
 

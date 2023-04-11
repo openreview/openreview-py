@@ -59,9 +59,7 @@ class TestMultipleRoles():
                 'Venue Start Date': '2021/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
-                'Paper Matching': [
-                    'Reviewer Bid Scores',
-                    'OpenReview Affinity'],
+                'submission_reviewer_assignment': 'Automatic',
                 'Author and Reviewer Anonymity': 'Double-blind',
                 'reviewer_identity': ['Program Chairs', 'Assigned Reviewers', 'Assigned Area Chair'],
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
