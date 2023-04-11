@@ -127,8 +127,14 @@ class TestProfileManagement():
             writers=['ICLRR.cc'],
             signatures=['~Super_User1'],
             signatories=[],
-            members=['~John_Alternate_Last1']
-        ))        
+            members=['~John_Alternate_Last1'],
+            anonids=True
+        ))
+
+        anon_groups = client.get_groups(regex='ICLRR.cc/Reviewer_')
+        assert len(anon_groups) == 1
+        assert '~John_Alternate_Last1' in anon_groups[0].members
+        first_anon_group_id = anon_groups[0].id                
 
         publications = client.get_notes(content={ 'authorids': '~John_Last1'})
         assert len(publications) == 2
@@ -190,6 +196,12 @@ The OpenReview Team.
         group = client.get_group('ICLRR.cc/Reviewers')
         assert '~John_Alternate_Last1' not in group.members
         assert '~John_Last1' in group.members
+
+        anon_groups = client.get_groups(regex='ICLRR.cc/Reviewer_')
+        assert len(anon_groups) == 1
+        assert '~John_Alternate_Last1' not in anon_groups[0].members
+        assert '~John_Last1' in anon_groups[0].members
+        assert anon_groups[0].id == first_anon_group_id
 
         profile = john_client.get_profile(email_or_id='~John_Last1')
         assert len(profile.content['names']) == 1
