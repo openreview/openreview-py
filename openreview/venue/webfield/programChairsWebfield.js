@@ -5,7 +5,11 @@ return {
   properties: {
     header: {
       title: 'Program Chairs Console',
-      instructions: `<p class="dark">This page provides information and status updates for the ${domain.content.subtitle.value}. It will be regularly updated as the conference progresses, so please check back frequently.</p>`
+      instructions: `This page provides information and status updates for the ${domain.content.subtitle.value}. It will be regularly updated as the conference progresses, so please check back frequently.
+      
+Manual assignments: 
+- [Reviewers edge browser](/edges/browse?traverse=${domain.content.reviewers_assignment_id.value}&edit=${domain.content.reviewers_assignment_id.value}&browse=${domain.content.reviewers_affinity_score_id.value};${domain.content.reviewers_conflict_id.value}&version=2)
+      `
     },
     apiVersion: 2,
     venueId: domain.id,
@@ -28,7 +32,7 @@ return {
     areaChairName: domain.content.area_chairs_name?.value,
     reviewerName: domain.content.reviewers_name.value,
     anonReviewerName: domain.content.reviewers_anon_name.value,
-    anonAreaChairName: domain.content.area_chairs_anon_name.value,
+    anonAreaChairName: domain.content.area_chairs_anon_name?.value,
     scoresName: 'Affinity_Score',
     shortPhrase: domain.content.subtitle.value,
     enableQuerySearch: true,
