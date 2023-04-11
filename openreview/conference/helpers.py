@@ -10,6 +10,12 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         openreview_client = openreview.api.OpenReviewClient(baseurl = urls[1], token=client.token)
         domain_group = openreview.tools.get_group(openreview_client, note.content['venue_id'])
         venue = openreview.venue.Venue(openreview_client, note.content['venue_id'], support_user)
+        
+        ## Run test faster
+        if 'openreview.net' in support_user:
+            venue.invitation_builder.update_wait_time = 2000
+            venue.invitation_builder.update_date_string = "#{4/mdate} + 2000"
+
         venue.request_form_id = request_form_id
         venue.use_area_chairs = note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs'
         venue.use_senior_area_chairs = note.content.get('senior_area_chairs') == 'Yes, our venue has Senior Area Chairs'
