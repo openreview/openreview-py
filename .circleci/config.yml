@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  codecov: codecov/codecov@3.2.4
+  codecov: codecov/codecov@1.0.5
 
 parameters:
   openreview-api-v1-branch:
@@ -34,7 +34,6 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y mongodb-org=5.0.13 mongodb-org-database=5.0.13 mongodb-org-server=5.0.13 mongodb-org-shell=5.0.13 mongodb-org-mongos=5.0.13 mongodb-org-tools=5.0.13
             mongosh mongodb://localhost:27017 --eval "rs.initiate()"
-      - run: pip install --upgrade pip
       - run: pip install ~/openreview-py-repo
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api-v1.git ~/openreview
       - run: cd ~/openreview && git checkout << pipeline.parameters.openreview-api-v1-branch >>
@@ -118,14 +117,10 @@ jobs:
             cd ~/openreview-py-repo
             pip install -U pytest
             pip install selenium==4.2.0
-            pip install pytest-selenium
-            pip install pytest-cov
             pip install -e .
             TEST_FILES=$(circleci tests glob "tests/test_*.py" | circleci tests split --split-by=timings)
             mkdir test-reports
-            pytest --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver --cov-report xml:~/openreview-py-repo/coverage/cov.xml --cov=./ $TEST_FILES
-      - codecov/upload:
-          file: "~/openreview-py-repo/coverage/cov.xml"
+            pytest --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver $TEST_FILES
       - store_test_results:
           path: test-reports
       - store_artifacts:
