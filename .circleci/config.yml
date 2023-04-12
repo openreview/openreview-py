@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  codecov: codecov/codecov@4
+  codecov: codecov/codecov@3.2.4
 
 parameters:
   openreview-api-v1-branch:
