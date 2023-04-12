@@ -1287,7 +1287,7 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=5):
 
     return list(conflicts)
 
-def get_profile_info(profile, n_years=3):
+def get_profile_info(profile, n_years=None):
     """
     Gets all the domains, emails, relations associated with a Profile
 
@@ -1303,6 +1303,12 @@ def get_profile_info(profile, n_years=3):
     publications = set()
     common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
                       'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
+    if n_years:
+        cut_off_date = datetime.datetime.now()
+        cut_off_date = cut_off_date.replace(year=cut_off_date.year - n_years)
+        cut_off_year = cut_off_date.year
+    else:
+        cut_off_year = -1
 
     ## Emails section
     for email in profile.content['emails']:
@@ -1312,23 +1318,24 @@ def get_profile_info(profile, n_years=3):
         emails.add(email)
 
     ## Institution section
-    for h in profile.content.get('history', []):
-        domain = h.get('institution', {}).get('domain', '')
-        domains.update(openreview.tools.subdomains(domain))
+    for history in profile.content.get('history', []):
+        try:
+            end = int(history.get('end', 0) or 0)
+        except:
+            end = 0
+        if not end or (int(end) > cut_off_year):
+            domain = history.get('institution', {}).get('domain', '')
+            domains.update(openreview.tools.subdomains(domain))
 
     ## Relations section
-    relations.update([r['email'] for r in profile.content.get('relations', [])])
+    for relation in profile.content.get('relations', []):
+        if relation.get('end') is None or int(relation.get('end')) > cut_off_year:
+            relations.add(relation['email'])
 
     ## Publications section: get publications within last n years, default is all publications from previous years
-    if n_years:
-        cut_off_date = datetime.datetime.now()
-        cut_off_date = cut_off_date.replace(year=cut_off_date.year - n_years)
-        for publication in profile.get('content', {}).get('publications', []):
-            publication_date = publication.get('pdate') or publication.get('cdate') or publication.get('tcdate') or 0
-            if datetime.datetime.fromtimestamp(publication_date/1000).year > cut_off_date.year:
-                publications.add(publication.get('id'))
-    else:
-        for publication in profile.get('content', {}).get('publications', []):
+    for publication in profile.get('content', {}).get('publications', []):
+        publication_date = publication.get('pdate') or publication.get('cdate') or publication.get('tcdate') or 0
+        if datetime.datetime.fromtimestamp(publication_date/1000).year > cut_off_year:
             publications.add(publication.get('id'))
 
     ## Filter common domains
