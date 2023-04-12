@@ -954,43 +954,42 @@ class VenueStages():
         ))
 
         registration_content = {
-            'ac_registration_start_date': {
+            'AC_registration_start_date': {
                 'description': 'Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$'
             },
-            'ac_registration_deadline': {
+            'AC_registration_deadline': {
                 'description': 'This is the official, soft deadline area chairs will see. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'required': True
             },
-            'ac_registration_expiration_date': {
+            'AC_registration_expiration_date': {
                 'description': 'This is the hard deadline area chairs will not be able to see. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59). Default is 30 minutes after the review deadline.',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
-                'required': False,
-                'order': 12
+                'required': False
             },
-            'ac_registration_name': {
+            'AC_registration_name': {
                 'description': 'What should be the name of the registration button. Use underscores to represent spaces. Default name: Registration',
                 'value-regex': '.*',
                 'default':'Registration'
             },
-            'ac_form_title': {
+            'AC_form_title': {
                 'description': 'What should be the title of the registration form. Default name: Area Chair Registration',
                 'value-regex': '.*',
                 'default':'Reviewer Registration'
             },
-            'ac_form_instructions': {
+            'AC_form_instructions': {
                 'description': 'These will be the instructions area chairs will see when completing the registration task. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                 'value-regex': '[\\S\\s]{1,5000}',
                 'markdown': True,
                 'required': True
             },
-            'additional_ac_form_options': {
+            'additional_AC_form_options': {
                 'value-dict': {},
                 'required': False,
                 'description': 'Configure additional options in the area chair registration form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
             },
-            'remove_ac_form_options': {
+            'remove_AC_form_options': {
                 'values-dropdown': ['profile_confirmed', 'expertise_confirmed'],
                 'required': False,
                 'description': 'Select which fields you want removed from the default registration form.'

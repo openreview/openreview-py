@@ -867,7 +867,7 @@ def get_registration_stages(request_forum, venue):
 
     def get_ac_registration_stage(request_forum, venue):
     
-        start_date = request_forum.content.get('ac_registration_start_date', '').strip()
+        start_date = request_forum.content.get('AC_registration_start_date', '').strip()
         if start_date:
             try:
                 start_date = datetime.datetime.strptime(start_date, '%Y/%m/%d %H:%M')
@@ -876,7 +876,7 @@ def get_registration_stages(request_forum, venue):
         else:
             start_date = None
 
-        end_date = request_forum.content.get('ac_registration_deadline', '').strip()
+        end_date = request_forum.content.get('AC_registration_deadline', '').strip()
         if end_date:
             try:
                 end_date = datetime.datetime.strptime(end_date, '%Y/%m/%d %H:%M')
@@ -885,7 +885,7 @@ def get_registration_stages(request_forum, venue):
         else:
             end_date = None
 
-        exp_date = request_forum.content.get('ac_registration_expiration_date', '').strip()
+        exp_date = request_forum.content.get('AC_registration_expiration_date', '').strip()
         if exp_date:
             try:
                 exp_date = datetime.datetime.strptime(exp_date, '%Y/%m/%d %H:%M')
@@ -894,11 +894,11 @@ def get_registration_stages(request_forum, venue):
         else:
             exp_date = None
 
-        name = request_forum.content.get('ac_registration_name')
-        title = request_forum.content.get('ac_form_title')
-        instructions = request_forum.content.get('ac_form_instructions')
-        additional_options = request_forum.content.get('additional_ac_form_options', {})
-        remove_fields = request_forum.content.get('remove_ac_form_options', [])
+        name = request_forum.content.get('AC_registration_name')
+        title = request_forum.content.get('AC_form_title')
+        instructions = request_forum.content.get('AC_form_instructions')
+        additional_options = request_forum.content.get('additional_AC_form_options', {})
+        remove_fields = request_forum.content.get('remove_AC_form_options', [])
 
         return openreview.stages.RegistrationStage(
             committee_id=venue.get_area_chairs_id(),
@@ -914,6 +914,6 @@ def get_registration_stages(request_forum, venue):
     stages = []
     if 'reviewer_form_title' in request_forum.content:
         stages.append(get_reviewer_registration_stage(request_forum, venue))
-    if 'Yes' in request_forum.content.get('Area Chairs (Metareviewers)') and 'ac_form_title' in request_forum.content:
+    if 'Yes' in request_forum.content.get('Area Chairs (Metareviewers)') and 'AC_form_title' in request_forum.content:
         stages.append(get_ac_registration_stage(request_forum, venue))
     return stages

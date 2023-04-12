@@ -654,7 +654,7 @@ class TestVenueRequest():
                                                                                    venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
         assert '2 users' in last_comment.content['invited']
-        assert '"profile_not_found\": [\n    \"~Celeste_Martinez1\"\n  ]' in last_comment.content['error']
+        assert '"profile_not_found\": [\n    \"~Celeste_Martinez2\"\n  ]' in last_comment.content['error']
         assert '"invalid_profile_ids\": [\n    \"~Melisa_Bok\"\n  ]' in last_comment.content['error']
 
     def test_venue_AC_recruitment_(self, client, test_client, openreview_client, selenium, request_page, venue, helpers):

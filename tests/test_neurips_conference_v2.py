@@ -254,11 +254,11 @@ If you would like to change your decision, please follow the link in the previou
 
         registration_stage_note = pc_client.post_note(openreview.Note(
             content={
-                'ac_registration_deadline': due_date.strftime('%Y/%m/%d'),
-                'ac_registration_expiration_date': expdate.strftime('%Y/%m/%d'),
-                'ac_registration_name': 'Registration',
-                'ac_form_title': 'NeurIPS 2023 - Area Chair Registration',
-                'ac_form_instructions': "NeurIPS 2023 employs [OpenReview](https://openreview.net/) as our paper submission and peer review system. To match papers to reviewers (including conflict handling and computation of affinity scores), OpenReview requires carefully populated and up-to-date OpenReview profiles. To this end, we require every reviewer to **create (if nonexistent) and update their OpenReview profile** (Section A) and to complete the **Expertise Selection** (Section B) and **Reviewer Registration** (Section C) tasks."
+                'AC_registration_deadline': due_date.strftime('%Y/%m/%d'),
+                'AC_registration_expiration_date': expdate.strftime('%Y/%m/%d'),
+                'AC_registration_name': 'Registration',
+                'AC_form_title': 'NeurIPS 2023 - Area Chair Registration',
+                'AC_form_instructions': "NeurIPS 2023 employs [OpenReview](https://openreview.net/) as our paper submission and peer review system. To match papers to reviewers (including conflict handling and computation of affinity scores), OpenReview requires carefully populated and up-to-date OpenReview profiles. To this end, we require every reviewer to **create (if nonexistent) and update their OpenReview profile** (Section A) and to complete the **Expertise Selection** (Section B) and **Reviewer Registration** (Section C) tasks."
             },
             forum=request_form.forum,
             replyto=request_form.forum,
