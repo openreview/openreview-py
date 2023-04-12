@@ -188,6 +188,9 @@ def process(client, note, invitation):
         elif invitation_type == 'Bid_Stage':
             conference.create_bid_stages()
 
+        elif invitation_type.endswith('_Registration'):
+            conference.create_registration_stages()
+
         elif invitation_type == 'Review_Stage':
             conference.create_review_stage()
 
