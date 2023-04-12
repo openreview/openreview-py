@@ -847,6 +847,7 @@ def get_registration_stages(request_forum, venue):
         else:
             exp_date = None
 
+        name = request_forum.content.get('reviewer_registration_name')
         title = request_forum.content.get('reviewer_form_title')
         instructions = request_forum.content.get('reviewer_form_instructions')
         additional_options = request_forum.content.get('additional_reviewer_form_options', {})
@@ -854,6 +855,7 @@ def get_registration_stages(request_forum, venue):
 
         return openreview.stages.RegistrationStage(
             committee_id=venue.get_reviewers_id(),
+            name=name,
             start_date=start_date,
             due_date=end_date,
             expdate=exp_date,
@@ -892,6 +894,7 @@ def get_registration_stages(request_forum, venue):
         else:
             exp_date = None
 
+        name = request_forum.content.get('ac_registration_name')
         title = request_forum.content.get('ac_form_title')
         instructions = request_forum.content.get('ac_form_instructions')
         additional_options = request_forum.content.get('additional_ac_form_options', {})
@@ -899,6 +902,7 @@ def get_registration_stages(request_forum, venue):
 
         return openreview.stages.RegistrationStage(
             committee_id=venue.get_area_chairs_id(),
+            name=name,
             start_date=start_date,
             due_date=end_date,
             expdate=exp_date,

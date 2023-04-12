@@ -775,6 +775,7 @@ class TestVenueRequest():
         registration_stage_note = test_client.post_note(openreview.Note(
             content={
                 'reviewer_registration_deadline': due_date.strftime('%Y/%m/%d'),
+                'reviewer_registration_name': 'Registration',
                 'reviewer_form_title': 'Test 2030 Venue V2 - Reviewer Registration',
                 'reviewer_form_instructions': "TestVenue@OR'2030V2 employs [OpenReview](https://openreview.net/) as our paper submission and peer review system. To match papers to reviewers (including conflict handling and computation of affinity scores), OpenReview requires carefully populated and up-to-date OpenReview profiles. To this end, we require every reviewer to **create (if nonexistent) and update their OpenReview profile** (Section A) and to complete the **Expertise Selection** (Section B) and **Reviewer Registration** (Section C) tasks.\n\n### **A) OpenReview Profile Update**  \n(If you are an author of a submission, you should have already completed Steps 1-4.)",
                 'additional_reviewer_form_options' : {

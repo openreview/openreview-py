@@ -900,6 +900,11 @@ class VenueStages():
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'required': False,
             },
+            'reviewer_registration_name': {
+                'description': 'What should be the name of the registration button. Use underscores to represent spaces. Default name: Registration',
+                'value-regex': '.*',
+                'default':'Registration'
+            },
             'reviewer_form_title': {
                 'description': 'What should be the title of the registration form. Default name: Reviewer Registration',
                 'value-regex': '.*',
@@ -963,6 +968,11 @@ class VenueStages():
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'required': False,
                 'order': 12
+            },
+            'ac_registration_name': {
+                'description': 'What should be the name of the registration button. Use underscores to represent spaces. Default name: Registration',
+                'value-regex': '.*',
+                'default':'Registration'
             },
             'ac_form_title': {
                 'description': 'What should be the title of the registration form. Default name: Area Chair Registration',
