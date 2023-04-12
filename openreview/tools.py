@@ -1408,6 +1408,7 @@ def get_neurips_profile_info(profile, n_years=None):
             domains.update(openreview.tools.subdomains(email))
 
     ## Publications section: get publications within last n years
+    curr_year = datetime.datetime.now().year
     for pub in profile.content.get('publications', []):
         year = None
         if 'year' in pub.content and isinstance(pub.content['year'], str):
