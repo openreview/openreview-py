@@ -613,7 +613,7 @@ class TestVenueRequest():
         # assert [btn for btn in buttons if btn.text == 'Recruitment']
         helpers.create_user('reviewer_one_tilde_v2@mail.com', 'Reviewer', 'OneTildeV')
         helpers.create_user('reviewer_two_tilde_v2@mail.com', 'Reviewer', 'TwoTildeV')
-        reviewer_details = '''~Reviewer_OneTildeV1\n~Reviewer_TwoTildeV1\n~Celeste_Martinez1\n~Melisa_Bok'''
+        reviewer_details = '''~Reviewer_OneTildeV1\n~Reviewer_TwoTildeV1\n~Celeste_Martinez2\n~Melisa_Bok'''
 
         recruitment_note = test_client.post_note(openreview.Note(
             content={
@@ -654,7 +654,7 @@ class TestVenueRequest():
                                                                                    venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
         assert '2 users' in last_comment.content['invited']
-        assert '"profile_not_found\": [\n    \"~Celeste_Martinez1\"\n  ]' in last_comment.content['error']
+        assert '"profile_not_found\": [\n    \"~Celeste_Martinez2\"\n  ]' in last_comment.content['error']
         assert '"invalid_profile_ids\": [\n    \"~Melisa_Bok\"\n  ]' in last_comment.content['error']
 
     def test_venue_AC_recruitment_(self, client, test_client, openreview_client, selenium, request_page, venue, helpers):
@@ -768,6 +768,94 @@ class TestVenueRequest():
 
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Remind Recruitment Status' not in last_message['content']['text']
+
+    def test_reviewer_registration_stage(self, client, test_client, selenium, request_page, venue, helpers, openreview_client):
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=2)
+        registration_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'reviewer_registration_deadline': due_date.strftime('%Y/%m/%d'),
+                'reviewer_registration_name': 'Registration',
+                'reviewer_form_title': 'Test 2030 Venue V2 - Reviewer Registration',
+                'reviewer_form_instructions': "TestVenue@OR'2030V2 employs [OpenReview](https://openreview.net/) as our paper submission and peer review system. To match papers to reviewers (including conflict handling and computation of affinity scores), OpenReview requires carefully populated and up-to-date OpenReview profiles. To this end, we require every reviewer to **create (if nonexistent) and update their OpenReview profile** (Section A) and to complete the **Expertise Selection** (Section B) and **Reviewer Registration** (Section C) tasks.\n\n### **A) OpenReview Profile Update**  \n(If you are an author of a submission, you should have already completed Steps 1-4.)",
+                'additional_reviewer_form_options' : {
+                    "emergency_reviews": {
+                        "description": "Would you be willing to act as emergency reviewer?",
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "Yes",
+                                    "No"
+                                ],
+                                "input": "radio"
+                            }
+                        }
+                    }
+                }
+            },
+            forum=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            referent=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Reviewer_Registration'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert registration_stage_note
+        helpers.await_queue()
+
+        registration_notes = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Reviewers/-/Registration_Form')
+        assert registration_notes and len(registration_notes) == 1
+        assert registration_notes[0].content['title']['value'] == 'Test 2030 Venue V2 - Reviewer Registration'
+        invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Reviewers/-/Registration')
+        assert invitation
+        assert 'profile_confirmed' in invitation.edit['note']['content']
+        assert 'expertise_confirmed' in invitation.edit['note']['content']
+        assert 'emergency_reviews' in invitation.edit['note']['content']
+
+        #update registration note
+        registration_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'reviewer_registration_deadline': due_date.strftime('%Y/%m/%d'),
+                'reviewer_form_title': 'Test 2030 Venue V2 - Reviewer Registration UPDATED',
+                'reviewer_form_instructions': "TestVenue@OR'2030V2 employs [OpenReview](https://openreview.net/) as our paper submission and peer review system. To match papers to reviewers (including conflict handling and computation of affinity scores), OpenReview requires carefully populated and up-to-date OpenReview profiles. To this end, we require every reviewer to **create (if nonexistent) and update their OpenReview profile** (Section A) and to complete the **Expertise Selection** (Section B) and **Reviewer Registration** (Section C) tasks.\n\n### **A) OpenReview Profile Update**  \n(If you are an author of a submission, you should have already completed Steps 1-4.)",
+                'additional_reviewer_form_options' : {
+                    "emergency_reviews": {
+                        "description": "Would you be willing to act as emergency reviewer?",
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "Yes",
+                                    "No"
+                                ],
+                                "input": "radio"
+                            }
+                        }
+                    }
+                },
+                'remove_reviewer_form_options': ['expertise_confirmed']
+            },
+            forum=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            referent=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Reviewer_Registration'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert registration_stage_note
+        helpers.await_queue()
+
+        registration_notes = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Reviewers/-/Registration_Form')
+        assert registration_notes and len(registration_notes) == 1
+        assert registration_notes[0].content['title']['value'] == 'Test 2030 Venue V2 - Reviewer Registration UPDATED'
+        invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Reviewers/-/Registration')
+        assert invitation
+        assert 'profile_confirmed' in invitation.edit['note']['content']
+        assert 'expertise_confirmed' not in invitation.edit['note']['content']
+        assert 'emergency_reviews' in invitation.edit['note']['content']
 
     def test_venue_bid_stage_error(self, client, test_client, selenium, request_page, helpers, venue):
         now = datetime.datetime.utcnow()
