@@ -2125,6 +2125,7 @@ class InvitationBuilder(object):
             forum_note_id = forum_edit['note']['id']
             start_date = registration_stage.start_date
             due_date = registration_stage.due_date
+            expdate = registration_stage.expdate if registration_stage.expdate else due_date
 
             registration_content = registration_stage.get_content(api_version='2', conference=self.venue)        
 
@@ -2136,7 +2137,7 @@ class InvitationBuilder(object):
                 signatures=[venue_id],
                 cdate = tools.datetime_millis(start_date) if start_date else None,
                 duedate = tools.datetime_millis(due_date) if due_date else None,
-                expdate = tools.datetime_millis(due_date),
+                expdate = tools.datetime_millis(expdate) if expdate else None,
                 maxReplies = 1,
                 minReplies = 1,       
                 edit={

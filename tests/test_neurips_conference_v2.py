@@ -249,11 +249,13 @@ If you would like to change your decision, please follow the link in the previou
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         now = datetime.datetime.utcnow()
-        due_date = now + datetime.timedelta(days=2)
+        due_date  = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=2)
+        expdate = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=5)
 
         registration_stage_note = pc_client.post_note(openreview.Note(
             content={
                 'ac_registration_deadline': due_date.strftime('%Y/%m/%d'),
+                'ac_registration_expiration_date': expdate.strftime('%Y/%m/%d'),
                 'ac_form_title': 'NeurIPS 2023 - Area Chair Registration',
                 'ac_form_instructions': "NeurIPS 2023 employs [OpenReview](https://openreview.net/) as our paper submission and peer review system. To match papers to reviewers (including conflict handling and computation of affinity scores), OpenReview requires carefully populated and up-to-date OpenReview profiles. To this end, we require every reviewer to **create (if nonexistent) and update their OpenReview profile** (Section A) and to complete the **Expertise Selection** (Section B) and **Reviewer Registration** (Section C) tasks."
             },
@@ -280,6 +282,8 @@ If you would like to change your decision, please follow the link in the previou
         assert 'profile_confirmed' in invitation.edit['note']['content']
         assert 'expertise_confirmed' in invitation.edit['note']['content']
         assert 'NeurIPS.cc/2023/Conference/Area_Chairs' in invitation.invitees
+        assert invitation.duedate == openreview.tools.datetime_millis(due_date)
+        assert invitation.expdate == openreview.tools.datetime_millis(due_date + datetime.timedelta(days = 3))
 
     def test_sac_matching(self, client, openreview_client, helpers, request_page, selenium):
 

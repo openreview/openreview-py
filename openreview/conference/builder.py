@@ -2016,10 +2016,10 @@ class ConferenceBuilder(object):
     def set_expertise_selection_stage(self, start_date = None, due_date = None, include_option=False):
         self.expertise_selection_stage = ExpertiseSelectionStage(start_date, due_date, include_option)
 
-    def set_registration_stage(self, committee_id, name = 'Registration', start_date = None, due_date = None, additional_fields = {}, instructions = None):
+    def set_registration_stage(self, committee_id, name = 'Registration', start_date = None, due_date = None, expdate = None, additional_fields = {}, instructions = None):
         default_instructions = 'Help us get to know our committee better and the ways to make the reviewing process smoother by answering these questions. If you don\'t see the form below, click on the blue "Registration" button.\n\nLink to Profile: https://openreview.net/profile/edit \nLink to Expertise Selection interface: https://openreview.net/invitation?id={conference_id}/-/Expertise_Selection'.format(conference_id = self.conference.get_id())
         reviewer_instructions = instructions if instructions else default_instructions
-        self.registration_stages.append(RegistrationStage(committee_id, name, start_date, due_date, additional_fields, reviewer_instructions))
+        self.registration_stages.append(RegistrationStage(committee_id, name, start_date, due_date, expdate, additional_fields, reviewer_instructions))
 
     def set_bid_stages(self, stages):
         for stage in stages:

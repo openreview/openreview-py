@@ -513,7 +513,7 @@ If you would like to change your decision, please follow the link in the previou
         signatures=['~Super_User1']
     ))
 
-    if forum.content['api_version'] == '2':
+    if forum.content.get('api_version') == '2':
         # registration task stages
         client.post_invitation(openreview.Invitation(
             id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Reviewer_Registration',
