@@ -1293,6 +1293,8 @@ def get_profile_info(profile, n_years=None):
 
     :param profile: Profile from which all the relations will be obtained
     :type profile: Profile
+    :param n_years: Number of years to consider when getting the profile information
+    :type n_years: int, optional
 
     :return: Dictionary with the domains, emails, and relations associated with the passed Profile
     :rtype: dict
@@ -1351,16 +1353,30 @@ def get_profile_info(profile, n_years=None):
         'publications': publications
     }
 
-def get_neurips_profile_info(profile, n_years=3):
+def get_neurips_profile_info(profile, n_years=None):
+    """
+    Gets all the domains, emails, relations associated with a Profile
 
+    :param profile: Profile from which all the relations will be obtained
+    :type profile: Profile
+    :param n_years: Number of years to consider when getting the profile information
+    :type n_years: int, optional
+
+    :return: Dictionary with the domains, emails, and relations associated with the passed Profile
+    :rtype: dict
+    """
     domains = set()
     emails=set()
     relations = set()
     publications = set()
     common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
                       'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
-    curr_year = datetime.datetime.now().year
-    cut_off_year = curr_year - n_years - 1
+    if n_years:
+        cut_off_date = datetime.datetime.now()
+        cut_off_date = cut_off_date.replace(year=cut_off_date.year - n_years)
+        cut_off_year = cut_off_date.year
+    else:
+        cut_off_year = -1
 
     ## Institution section, get history within the last n years, excluding internships
     for h in profile.content.get('history', []):
