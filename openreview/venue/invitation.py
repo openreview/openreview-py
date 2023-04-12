@@ -279,7 +279,7 @@ class InvitationBuilder(object):
         if not review_expdate:
             review_expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None
         
-        content = review_stage.get_content(api_version='2', conference=self.venue)
+        content = review_stage.get_content(api_version='2', conference=self.venue, sub_venue_id=sub_venue_id)
 
         invitation = Invitation(
             id=self.venue.get_invitation_id(review_stage.name),
@@ -421,14 +421,6 @@ class InvitationBuilder(object):
         review_cdate = tools.datetime_millis(review_stage.start_date if review_stage.start_date else datetime.datetime.utcnow())
         review_duedate = tools.datetime_millis(review_stage.due_date) if review_stage.due_date else None
         review_expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None
-        content = default_content.review_v2.copy()
-
-        for key in review_stage.additional_fields:
-            content[key] = review_stage.additional_fields[key]
-
-        for field in review_stage.remove_fields:
-            if field in content:
-                del content[field]
 
         if sub_venue_id is not None and sub_venue_invitation is not None:
             invitation=Invitation(id=review_invitation_id,
@@ -444,6 +436,8 @@ class InvitationBuilder(object):
             }
             self.save_invitation(invitation, invitations=sub_venue_invitation.id, content=content)
             return invitation
+
+        content = review_stage.get_content(api_version='2', conference=self.venue)
 
         invitation = Invitation(id=review_invitation_id,
             invitees=[venue_id],
@@ -554,7 +548,7 @@ class InvitationBuilder(object):
         review_rebuttal_duedate = tools.datetime_millis(review_rebuttal_stage.due_date) if review_rebuttal_stage.due_date else None
         review_rebuttal_expdate = tools.datetime_millis(review_rebuttal_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_rebuttal_stage.due_date else None
 
-        content = review_rebuttal_stage.get_content(api_version='2', conference=self.venue)
+        content = review_rebuttal_stage.get_content(api_version='2', conference=self.venue, sub_venue_id=sub_venue_id)
 
         paper_invitation_id = self.venue.get_invitation_id(name='${4/content/subvenueid/value}' + f"/{review_rebuttal_stage.name}", number='${2/content/noteNumber/value}')
         with_invitation = self.venue.get_invitation_id(name='${4/content/subvenueid/value}' + f"/{review_rebuttal_stage.name}", number='${6/content/noteNumber/value}')
@@ -887,7 +881,7 @@ class InvitationBuilder(object):
         if not meta_review_expdate:
             meta_review_expdate = tools.datetime_millis(meta_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if meta_review_stage.due_date else None
 
-        content = meta_review_stage.get_content(api_version='2', conference=self.venue)
+        content = meta_review_stage.get_content(api_version='2', conference=self.venue, sub_venue_id=sub_venue_id)
 
         invitation = Invitation(
             id=self.venue.get_invitation_id(meta_review_stage.name),
@@ -1024,15 +1018,6 @@ class InvitationBuilder(object):
         meta_review_duedate = tools.datetime_millis(meta_review_stage.due_date) if meta_review_stage.due_date else None
         meta_review_expdate = tools.datetime_millis(meta_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if meta_review_stage.due_date else None
 
-        content = default_content.meta_review_v2.copy()
-
-        for key in meta_review_stage.additional_fields:
-            content[key] = meta_review_stage.additional_fields[key]
-
-        for field in meta_review_stage.remove_fields:
-            if field in content:
-                del content[field]
-
         if sub_venue_id is not None and sub_venue_invitation is not None:
             invitation=Invitation(id=meta_review_invitation_id,
                     cdate=meta_review_cdate,
@@ -1047,6 +1032,8 @@ class InvitationBuilder(object):
             }
             self.save_invitation(invitation, invitations=sub_venue_invitation.id, content=content)
             return invitation
+        
+        content = meta_review_stage.get_content(api_version='2', conference=self.venue)
 
         invitation = Invitation(id=meta_review_invitation_id,
             invitees=[venue_id],
@@ -2098,7 +2085,7 @@ class InvitationBuilder(object):
                 'value': tools.pretty_id(self.venue.get_withdrawn_submission_venue_id())
             },
             'venueid': {
-                'value': self.venue.get_withdrawn_submission_venue_id(sub_venue_id)
+                'value': self.venue.get_withdrawn_submission_venue_id()
             }
         }
         if submission_stage.withdrawn_submission_reveal_authors:
@@ -2369,7 +2356,7 @@ class InvitationBuilder(object):
                 'value': tools.pretty_id(self.venue.get_desk_rejected_submission_venue_id())
             },
             'venueid': {
-                'value': self.venue.get_desk_rejected_submission_venue_id(sub_venue_id)
+                'value': self.venue.get_desk_rejected_submission_venue_id()
             }
         }
         if submission_stage.desk_rejected_submission_reveal_authors:
