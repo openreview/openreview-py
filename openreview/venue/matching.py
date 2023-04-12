@@ -915,35 +915,36 @@ class Matching(object):
             score_spec = {}
             
             invitation = openreview.tools.get_invitation(self.client, venue.get_affinity_score_id(self.match_group.id))
-            score_spec[invitation.id] = {
-                'weight': 1,
-                'default': 0
-            }
+            if invitation:
+                score_spec[invitation.id] = {
+                    'weight': 1,
+                    'default': 0
+                }
 
             invitation = openreview.tools.get_invitation(self.client, venue.get_bid_id(self.match_group.id))
-            score_spec[invitation.id] = {
-                'weight': 1,
-                'default': 0,
-                'translate_map' : {
-                    'Very High': 1.0,
-                    'High': 0.5,
-                    'Neutral': 0.0,
-                    'Low': -0.5,
-                    'Very Low': -1.0
+            if invitation:
+                score_spec[invitation.id] = {
+                    'weight': 1,
+                    'default': 0,
+                    'translate_map' : {
+                        'Very High': 1.0,
+                        'High': 0.5,
+                        'Neutral': 0.0,
+                        'Low': -0.5,
+                        'Very Low': -1.0
+                    }
                 }
-            }
 
             invitation = openreview.tools.get_invitation(self.client, venue.get_recommendation_id(self.match_group.id))
-            score_spec[invitation.id] = {
-                'weight': 1,
-                'default': 0
-            }
+            if invitation:
+                score_spec[invitation.id] = {
+                    'weight': 1,
+                    'default': 0
+                }
 
             self._build_config_invitation(score_spec)            
-
-        ## TODO: merge this in a single function so there is only one edit
-        self._create_edge_invitation(venue.get_assignment_id(self.match_group.id, deployed=True))
-        venue.invitation_builder.set_assignment_invitation(self.match_group.id)
+        else:
+            venue.invitation_builder.set_assignment_invitation(self.match_group.id)
 
         self._build_custom_max_papers(user_profiles)
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))
@@ -1133,14 +1134,13 @@ class Matching(object):
 
     def deploy(self, assignment_title, overwrite=False, enable_reviewer_reassignment=False):
 
+        self.venue.invitation_builder.set_assignment_invitation(self.match_group.id)
+        
         ## Deploy assignments creating groups and assignment edges
         if self.match_group.id == self.venue.get_senior_area_chairs_id():
             self.deploy_sac_assignments(assignment_title, overwrite)
         else:
             self.deploy_assignments(assignment_title, overwrite)
-
-        # ## Add sync process function
-        self.venue.invitation_builder.set_assignment_invitation(self.match_group.id)
 
         if self.match_group.id == self.venue.get_reviewers_id() and enable_reviewer_reassignment:
             hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))

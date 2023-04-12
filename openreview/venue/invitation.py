@@ -1923,10 +1923,12 @@ class InvitationBuilder(object):
         return invitation
 
     def set_assignment_invitation(self, committee_id):
-        client = self.client
-        venue = self.venue
         
-        invitation = client.get_invitation(venue.get_assignment_id(committee_id, deployed=True))
+        venue = self.venue
+        venue_id = venue.venue_id
+        
+        assingment_invitation_id = venue.get_assignment_id(committee_id, deployed=True)
+        is_reviewer = committee_id == venue.get_reviewers_id()
         is_area_chair = committee_id == venue.get_area_chairs_id()
         is_senior_area_chair = committee_id == venue.get_senior_area_chairs_id()
 
@@ -1936,13 +1938,6 @@ class InvitationBuilder(object):
         if is_area_chair:
             paper_group_id = venue.get_area_chairs_id(number='{number}')
             group_name = venue.get_area_chairs_name(pretty=True)
-
-        if is_senior_area_chair:
-            with open(os.path.join(os.path.dirname(__file__), 'process/sac_assignment_post_process.py')) as post:
-                post_content = post.read()
-                invitation.process=post_content
-                invitation.signatures=[venue.get_program_chairs_id()] ## Program Chairs can see the reviews
-                return self.save_invitation(invitation)
 
         with open(os.path.join(os.path.dirname(__file__), 'process/assignment_pre_process.py')) as pre:
             pre_content = pre.read()
@@ -1957,10 +1952,113 @@ class InvitationBuilder(object):
                 if venue.use_senior_area_chairs and is_area_chair:
                     post_content = post_content.replace("SYNC_SAC_ID = ''", "SYNC_SAC_ID = '" + venue.get_senior_area_chairs_id(number='{number}') + "'")
                     post_content = post_content.replace("SAC_ASSIGNMENT_INVITATION_ID = ''", "SAC_ASSIGNMENT_INVITATION_ID = '" + venue.get_assignment_id(venue.get_senior_area_chairs_id(), deployed=True) + "'")
-                invitation.process=post_content
-                invitation.preprocess=pre_content
-                invitation.signatures=[venue.get_program_chairs_id()] ## Program Chairs can see the reviews
-                return self.save_invitation(invitation)
+                process=post_content
+                preprocess=pre_content
+
+        invitation_readers = [venue_id]
+        edge_invitees = [venue_id]
+        edge_readers = [venue_id]
+        edge_writers = [venue_id]
+        edge_signatures = [venue_id + '$', venue.get_program_chairs_id()]
+        edge_nonreaders = []
+        edge_head = {
+            'param': {
+                'type': 'note',
+                'withVenueid': venue.get_submission_venue_id()
+            }
+        }  
+        
+        if is_reviewer:
+            edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')] 
+            if venue.use_senior_area_chairs:
+                invitation_readers.append(venue.get_senior_area_chairs_id())
+                edge_invitees.append(venue.get_senior_area_chairs_id())
+                edge_readers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
+                edge_writers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
+                edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
+            if venue.use_area_chairs:
+                invitation_readers.append(venue.get_area_chairs_id())
+                edge_invitees.append(venue.get_area_chairs_id())
+                edge_readers.append(venue.get_area_chairs_id(number='${{2/head}/number}'))
+                edge_writers.append(venue.get_area_chairs_id(number='${{2/head}/number}'))
+                edge_signatures.append(venue.get_area_chairs_id(number='.*', anon=True))
+
+
+        if is_area_chair:
+            invitation_readers.append(venue.get_area_chairs_id())
+            edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')] 
+            if venue.use_senior_area_chairs:
+                invitation_readers.append(venue.get_senior_area_chairs_id())
+                edge_invitees.append(venue.get_senior_area_chairs_id())
+                edge_readers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
+                edge_writers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
+                edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
+
+
+        if is_senior_area_chair:
+            edge_head = {
+                'param': {
+                    'type': 'profile',
+                    'inGroup': venue.get_area_chairs_id()
+                }
+            }
+            with open(os.path.join(os.path.dirname(__file__), 'process/sac_assignment_post_process.py')) as post:
+                post_content = post.read()
+                process=post_content
+                preprocess=None            
+
+            edge_readers.append('${2/head}')
+
+        edge_readers.append('${2/tail}')
+
+        invitation = Invitation(
+            id = assingment_invitation_id,
+            invitees = edge_invitees,
+            readers = invitation_readers,
+            writers = [venue_id],
+            signatures = [venue.get_program_chairs_id()],
+            process=process,
+            preprocess=preprocess,
+            edge = {
+                'id': {
+                    'param': {
+                        'withInvitation': assingment_invitation_id,
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers':  edge_readers,
+                'nonreaders': edge_nonreaders,
+                'writers': edge_writers,
+                'signatures': {
+                    'param': { 
+                        'regex': '|'.join(edge_signatures),
+                        'default': [venue.get_program_chairs_id()]
+                    }
+                },
+                'head': edge_head,
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'inGroup': committee_id
+                    }                
+                },
+                'weight': {
+                    'param': {
+                        'minimum': -1
+                    }            
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)            
+
 
     def set_expertise_selection_invitations(self):
 
