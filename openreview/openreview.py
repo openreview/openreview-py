@@ -1616,6 +1616,19 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
+    def delete_institution(self, institution_id):
+        """
+        Deletes the institution
+
+        :param institution_id: ID of Institution to be deleted
+        :type institution_id: str
+
+        :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
+        :rtype: dict
+        """
+        response = self.session.delete(self.institutions_url + '/' + institution_id, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
 
     def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, useJob=False):
         """
