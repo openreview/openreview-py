@@ -1319,10 +1319,17 @@ def get_profile_info(profile, n_years=3):
     ## Relations section
     relations.update([r['email'] for r in profile.content.get('relations', [])])
 
-    ## TODO:: Parameterize the number of years for publications to consider from
     ## Publications section: get publications within last n years, default is all publications from previous years
-    for pub in profile.content.get('publications', []):
-        publications.add(pub.id)
+    if n_years:
+        cut_off_date = datetime.datetime.now()
+        cut_off_date = cut_off_date.replace(year=cut_off_date.year - n_years)
+        for publication in profile.get('content', {}).get('publications', []):
+            publication_date = publication.get('pdate') or publication.get('cdate') or publication.get('tcdate') or 0
+            if datetime.datetime.fromtimestamp(publication_date/1000).year > cut_off_date.year:
+                publications.add(publication.get('id'))
+    else:
+        for publication in profile.get('content', {}).get('publications', []):
+            publications.add(publication.get('id'))
 
     ## Filter common domains
     for common_domain in common_domains:
