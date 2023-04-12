@@ -1247,7 +1247,7 @@ def get_all_venues(client):
     """
     return client.get_group("host").members
 
-def get_conflicts(author_profiles, user_profile, policy='default', n_years=5):
+def get_conflicts(author_profiles, user_profile, policy='default', n_years=None):
     """
     Finds conflicts between the passed user Profile and the author Profiles passed as arguments
 
@@ -1264,8 +1264,6 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=5):
     author_relations = set()
     author_publications = set()
     info_function = get_neurips_profile_info if policy == 'neurips' else get_profile_info
-    if policy == 'neurips':
-        n_years = 3
 
     for profile in author_profiles:
         author_info = info_function(profile, n_years)
