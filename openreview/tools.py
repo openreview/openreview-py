@@ -4,9 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import json
 import os
-import string
 
-import sys
 import openreview
 import re
 import datetime
