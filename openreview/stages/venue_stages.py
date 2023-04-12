@@ -1012,6 +1012,17 @@ class MetaReviewStage(object):
         readers.append(conference.get_program_chairs_id())
 
         return readers
+    
+    def get_writers(self, conference, number):
+
+        writers = [conference.id]
+
+        if conference.use_senior_area_chairs:
+            writers.append(conference.get_senior_area_chairs_id(number = number))
+
+        writers.append('${3/signatures}')
+
+        return writers
 
     def get_nonreaders(self, conference, number):
 

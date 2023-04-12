@@ -603,7 +603,7 @@ class InvitationBuilder(object):
                             'signatures': ['${3/signatures}'],
                             'readers': meta_review_stage.get_readers(self.venue, '${5/content/noteNumber/value}'),
                             'nonreaders': meta_review_stage.get_nonreaders(self.venue, '${5/content/noteNumber/value}'),
-                            'writers': [venue_id, '${3/signatures}'],
+                            'writers': meta_review_stage.get_writers(self.venue, '${5/content/noteNumber/value}'),
                             'content': content
                         }
                     }
@@ -618,6 +618,76 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['expdate'] = meta_review_expdate         
 
         self.save_invitation(invitation, replacement=False)
+
+        if self.venue.use_senior_area_chairs:
+
+            meta_review_sac_edit_invitation_id = self.venue.get_invitation_id(meta_review_stage.name + '_SAC_Revision')
+            invitation = Invitation(id=meta_review_sac_edit_invitation_id,
+                invitees=[venue_id],
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                cdate=meta_review_cdate,
+                date_processes=[{ 
+                    'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                    'script': self.invitation_edit_process              
+                }],
+                content = {
+                },
+                edit={
+                    'signatures': [venue_id],
+                    'readers': [venue_id],
+                    'writers': [venue_id],
+                    'content': {
+                        'noteNumber': { 
+                            'value': {
+                                'param': {
+                                    'regex': '.*', 'type': 'integer' 
+                                }
+                            }
+                        },
+                        'noteId': {
+                            'value': {
+                                'param': {
+                                    'regex': '.*', 'type': 'string' 
+                                }
+                            }
+                        }
+                    },
+                    'replacement': True,
+                    'invitation': {
+                        'id': self.venue.get_invitation_id(meta_review_stage.name + '_SAC_Revision', '${2/content/noteNumber/value}'),
+                        'signatures': [ venue_id ],
+                        'readers': ['everyone'],
+                        'writers': [venue_id],
+                        'invitees': [venue_id, self.venue.get_senior_area_chairs_id(number='${3/content/noteNumber/value}')],
+                        'maxReplies': 1,
+                        'cdate': meta_review_cdate,
+                        'edit': {
+                            'signatures': { 'param': { 'regex': self.venue.get_senior_area_chairs_id(number='${5/content/noteNumber/value}') }},
+                            'readers': meta_review_stage.get_readers(self.venue, '${4/content/noteNumber/value}'),
+                            'nonreaders': meta_review_stage.get_nonreaders(self.venue, '${4/content/noteNumber/value}'),
+                            'writers': [venue_id],
+                            'note': {
+                                'id': {
+                                    'param': {
+                                        'withInvitation': self.venue.get_invitation_id(meta_review_stage.name, '${6/content/noteNumber/value}')
+                                    }
+                                },
+                                'forum': '${4/content/noteId/value}',
+                                'replyto': '${4/content/noteId/value}',
+                                'content': content
+                            }
+                        }
+                    }
+                }
+            )
+
+            if meta_review_expdate:
+                invitation.edit['invitation']['expdate'] = meta_review_expdate
+
+            self.save_invitation(invitation, replacement=False)
+
         return invitation
 
     def set_recruitment_invitation(self, committee_name, options):
