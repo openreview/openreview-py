@@ -695,8 +695,6 @@ If you would like to change your decision, please follow the link in the previou
         submission_inv = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Submission')
         openreview_client.post_invitation_edit(
             invitations ='NeurIPS.cc/2023/Conference/-/Edit',
-            # readers=[venue_id],
-            # writers=[venue_id],
             signatures=['NeurIPS.cc/2023/Conference'],
             invitation=openreview.api.Invitation(id=submission_inv.id,
                 preprocess = 'def process(client, edit, invitation):\n    domain = client.get_group(invitation.domain)\n  \n    note = edit.note\n    \n    if note.ddate:\n        return\n\n'
