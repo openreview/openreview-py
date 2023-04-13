@@ -1243,7 +1243,7 @@ def get_all_venues(client):
     """
     return client.get_group("host").members
 
-def get_conflicts(author_profiles, user_profile, policy='default', n_years=None, policy_function=None):
+def get_conflicts(author_profiles, user_profile, policy='default', n_years=None):
     """
     Finds conflicts between the passed user Profile and the author Profiles passed as arguments
 
@@ -1251,12 +1251,10 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=None,
     :type author_profiles: list[Profile]
     :param user_profile: Profile for which the conflicts will be found
     :type user_profile: Profile
-    :param policy: Policy to be used to find conflicts. Default is 'default'
-    :type policy: str, optional
+    :param policy: Policy can be either a function or a string. If it is a function, it will be called with the user Profile and the author Profile as arguments. If it is a string, it will be used to find the corresponding function in the default policy dictionary. If no policy is passed, the default policy will be used.
+    :type policy: str or function, optional
     :param n_years: Number of years to be considered for conflict detection.
     :type n_years: int, optional
-    :param policy_function: Function to be used to find conflicts. Default is None
-    :type policy_function: function, optional
 
     :return: List containing all the conflicts between the user Profile and the author Profiles
     :rtype: list[str]
@@ -1288,8 +1286,8 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=None,
     author_relations = set()
     author_publications = set()
 
-    if policy_function:
-        info_function = info_function_builder(policy_function)
+    if callable(policy):
+        info_function = info_function_builder(policy)
     elif policy == 'neurips':
         info_function = info_function_builder(get_neurips_profile_info)
     else:
