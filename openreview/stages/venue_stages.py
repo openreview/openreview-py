@@ -1156,11 +1156,12 @@ class DecisionStage(object):
 
 class RegistrationStage(object):
 
-    def __init__(self, committee_id, name='Registration', start_date=None, due_date=None, additional_fields={}, instructions=None, title=None, remove_fields=[]):
+    def __init__(self, committee_id, name='Registration', start_date=None, due_date=None, expdate=None, additional_fields={}, instructions=None, title=None, remove_fields=[]):
         self.committee_id = committee_id
         self.name = name
         self.start_date = start_date
         self.due_date = due_date
+        self.expdate = expdate
         self.additional_fields = additional_fields
         self.instructions = instructions
         self.title = title
