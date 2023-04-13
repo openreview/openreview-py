@@ -29,6 +29,7 @@ class TestMatching():
         venue = Venue(openreview_client, venue_id, 'openreview.net/Support')
         venue.invitation_builder.update_wait_time = 2000
         venue.invitation_builder.update_date_string = "#{4/mdate} + 2000"        
+        venue.automatic_reviewer_assignment = True
         venue.short_name = 'VV2 2022'
         venue.website = 'www.venuev2.com'
         venue.contact = 'pc_venue@mail.com'
@@ -163,12 +164,6 @@ class TestMatching():
         venue.setup_committee_matching(committee_id=venue.get_area_chairs_id())
         venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
 
-        #check assignment process is set when invitation is created
-        assignment_inv = openreview_client.get_invitation(venue.get_assignment_id(committee_id=venue.get_reviewers_id(), deployed=True))
-        assert assignment_inv
-        assert assignment_inv.process
-        assert 'def process_update(client, edge, invitation, existing_edge):' in assignment_inv.process
-
         notes = venue.get_submissions(sort='number:asc')
 
         ac1_client.post_edge(Edge(invitation = venue.get_bid_id(venue.get_area_chairs_id()),
@@ -228,7 +223,8 @@ class TestMatching():
         assert pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Custom_Max_Papers')
         assert pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Conflict')
         assert pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Aggregate_Score')
-        assert pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Assignment')
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation VenueV2.cc/Program_Committee/-/Assignment was not found'):
+            assert pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Assignment')
         assert pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Proposed_Assignment')
 
         # Set up AC matching
@@ -241,7 +237,8 @@ class TestMatching():
         assert pc_client.get_invitation(id=f'{venue.id}/Senior_Program_Committee/-/Custom_Max_Papers')
         assert pc_client.get_invitation(id=f'{venue.id}/Senior_Program_Committee/-/Conflict')
         assert pc_client.get_invitation(id=f'{venue.id}/Senior_Program_Committee/-/Aggregate_Score')
-        assert pc_client.get_invitation(id=f'{venue.id}/Senior_Program_Committee/-/Assignment')
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation VenueV2.cc/Senior_Program_Committee/-/Assignment was not found'):
+            assert pc_client.get_invitation(id=f'{venue.id}/Senior_Program_Committee/-/Assignment')
 
         bids = pc_client.get_edges_count(invitation = venue.get_bid_id(venue.get_area_chairs_id()))
         assert bids
@@ -398,6 +395,12 @@ class TestMatching():
         assert '~Reviewer_Venue1' in revs_paper2.members
         assert pc_client.get_groups(prefix=venue.get_id()+'/Submission{x}/Program_Committee.*'.format(x=notes[2].number), member='~Reviewer_Venue1')
         assert pc_client.get_groups(prefix=venue.get_id()+'/Submission{x}/Program_Committee.*'.format(x=notes[2].number), member='r3_venue@fb.com')
+
+        #check assignment process is set when invitation is created
+        assignment_inv = openreview_client.get_invitation(venue.get_assignment_id(committee_id=venue.get_reviewers_id(), deployed=True))
+        assert assignment_inv
+        assert assignment_inv.process
+        assert 'def process_update(client, edge, invitation, existing_edge):' in assignment_inv.process
 
         # venue.setup_matching(committee_id=venue.get_reviewers_id(), build_conflicts=True)
 
