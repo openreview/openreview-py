@@ -1341,7 +1341,7 @@ def get_profile_info(profile, n_years=None):
             raise openreview.OpenReviewException("You do not have the required permissions as some emails are obfuscated. Please login with the correct account or contact support.")
         # split email
         domain = email.split('@')[1]
-        domains.update(domain)
+        domains.add(domain)
         emails.add(email)
 
     ## Institution section
@@ -1352,7 +1352,7 @@ def get_profile_info(profile, n_years=None):
             end = 0
         if not end or (int(end) > cut_off_year):
             domain = history.get('institution', {}).get('domain', '')
-            domains.update(domain)
+            domains.add(domain)
 
     ## Relations section
     for relation in profile.content.get('relations', []):
@@ -1407,7 +1407,7 @@ def get_neurips_profile_info(profile, n_years=None):
                 end = 0
             if not end or (int(end) > cut_off_year):
                 domain = h.get('institution', {}).get('domain', '')
-                domains.update(domain)
+                domains.add(domain)
 
     ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
     for r in profile.content.get('relations', []):
@@ -1427,7 +1427,7 @@ def get_neurips_profile_info(profile, n_years=None):
     if not domains:
         for email in profile.content['emails']:
             domain = email.split('@')[1]
-            domains.update(domain)
+            domains.add(domain)
 
     ## Publications section: get publications within last n years
     curr_year = datetime.datetime.now().year
