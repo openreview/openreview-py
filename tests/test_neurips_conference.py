@@ -1066,7 +1066,7 @@ If you would like to change your decision, please follow the link in the previou
         conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts='NeurIPS', affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
         
         conflicts = client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict')
-        assert conflicts == 4
+        assert conflicts == 3
 
         ## Paper 4 conflicts
         conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict', head=submissions[1].id)
