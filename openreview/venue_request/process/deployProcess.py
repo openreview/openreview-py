@@ -516,3 +516,36 @@ If you would like to change your decision, please follow the link in the previou
         },
         signatures=['~Super_User1']
     ))
+
+    if forum.content.get('api_version') == '2':
+        # registration task stages
+        client.post_invitation(openreview.Invitation(
+            id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Reviewer_Registration',
+            super=SUPPORT_GROUP + '/-/Reviewer_Registration',
+            invitees=readers,
+            reply={
+                'forum': forum.id,
+                'referent': forum.id,
+                'readers' : {
+                    'description': 'The users who will be allowed to read the above content.',
+                    'values' : readers
+                }
+            },
+            signatures=['~Super_User1']
+        ))
+
+        if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs"):
+            client.post_invitation(openreview.Invitation(
+            id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Area_Chair_Registration',
+            super=SUPPORT_GROUP + '/-/Area_Chair_Registration',
+            invitees=readers,
+            reply={
+                'forum': forum.id,
+                'referent': forum.id,
+                'readers' : {
+                    'description': 'The users who will be allowed to read the above content.',
+                    'values' : readers
+                }
+            },
+            signatures=['~Super_User1']
+        ))

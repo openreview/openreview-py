@@ -2267,19 +2267,33 @@ class InvitationBuilder(object):
             )
             self.save_invitation(invitation, replacement=True)
 
-            forum_edit = self.client.post_note_edit(invitation=invitation.id,
-                signatures=[venue_id],
-                note = Note(
-                    signatures = [venue_id],
-                    content = {
-                        'instructions': { 'value': registration_stage.instructions },
-                        'title': { 'value': registration_stage.title}
-                    }
+            registration_notes = self.client.get_notes(invitation=registration_parent_invitation_id)
+            if registration_notes:
+                print('Updating existing registration note')
+                forum_edit = self.client.post_note_edit(invitation = self.venue.get_meta_invitation_id(),
+                    signatures=[venue_id],
+                    note = Note(
+                        id = registration_notes[0].id,
+                        content = {
+                            'instructions': { 'value': registration_stage.instructions },
+                            'title': { 'value': registration_stage.title}
+                        }
+                    ))
+            else:
+                forum_edit = self.client.post_note_edit(invitation=invitation.id,
+                    signatures=[venue_id],
+                    note = Note(
+                        signatures = [venue_id],
+                        content = {
+                            'instructions': { 'value': registration_stage.instructions },
+                            'title': { 'value': registration_stage.title}
+                        }
+                    )
                 )
-            )
             forum_note_id = forum_edit['note']['id']
             start_date = registration_stage.start_date
             due_date = registration_stage.due_date
+            expdate = registration_stage.expdate if registration_stage.expdate else due_date
 
             registration_content = registration_stage.get_content(api_version='2', conference=self.venue)        
 
@@ -2291,7 +2305,7 @@ class InvitationBuilder(object):
                 signatures=[venue_id],
                 cdate = tools.datetime_millis(start_date) if start_date else None,
                 duedate = tools.datetime_millis(due_date) if due_date else None,
-                expdate = tools.datetime_millis(due_date),
+                expdate = tools.datetime_millis(expdate) if expdate else None,
                 maxReplies = 1,
                 minReplies = 1,       
                 edit={
@@ -2320,7 +2334,7 @@ class InvitationBuilder(object):
                     }
                 }        
             )
-            self.save_invitation(invitation)                           
+            self.save_invitation(invitation, replacement=True)
 
     def set_paper_recruitment_invitation(self, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title=None, due_date=None, invited_label='Invited', accepted_label='Accepted', declined_label='Declined', proposed=False):
         venue = self.venue

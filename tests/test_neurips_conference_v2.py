@@ -241,6 +241,48 @@ The NeurIPS 2023 program chairs will be contacting you with more information reg
 
 If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
 
+    def test_ac_registration(self, client, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.utcnow()
+        due_date  = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=2)
+        expdate = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=5)
+
+        registration_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'AC_registration_deadline': due_date.strftime('%Y/%m/%d'),
+                'AC_registration_expiration_date': expdate.strftime('%Y/%m/%d'),
+                'AC_registration_name': 'Registration',
+                'AC_form_title': 'NeurIPS 2023 - Area Chair Registration',
+                'AC_form_instructions': "NeurIPS 2023 employs [OpenReview](https://openreview.net/) as our paper submission and peer review system. To match papers to reviewers (including conflict handling and computation of affinity scores), OpenReview requires carefully populated and up-to-date OpenReview profiles. To this end, we require every reviewer to **create (if nonexistent) and update their OpenReview profile** (Section A) and to complete the **Expertise Selection** (Section B) and **Reviewer Registration** (Section C) tasks."
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Area_Chair_Registration'.format(request_form.number),
+            readers=['NeurIPS.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+        assert registration_stage_note
+        helpers.await_queue()
+        process_logs = client.get_process_logs(id=registration_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[0]['invitation'] == 'openreview.net/Support/-/Request{}/Area_Chair_Registration'.format(request_form.number)
+
+        registration_notes = openreview_client.get_notes(invitation='NeurIPS.cc/2023/Conference/Area_Chairs/-/Registration_Form')
+        assert registration_notes and len(registration_notes) == 1
+        assert registration_notes[0].content['title']['value'] == 'NeurIPS 2023 - Area Chair Registration'
+        invitation = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/Area_Chairs/-/Registration')
+        assert invitation
+        assert 'profile_confirmed' in invitation.edit['note']['content']
+        assert 'expertise_confirmed' in invitation.edit['note']['content']
+        assert 'NeurIPS.cc/2023/Conference/Area_Chairs' in invitation.invitees
+        assert invitation.duedate == openreview.tools.datetime_millis(due_date)
+        assert invitation.expdate == openreview.tools.datetime_millis(due_date + datetime.timedelta(days = 3))
 
     def test_sac_matching(self, client, openreview_client, helpers, request_page, selenium):
 

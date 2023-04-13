@@ -4,13 +4,11 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import json
 import os
-import string
 
-import sys
 import openreview
 import re
 import datetime
-import time
+import csv
 from pylatexenc.latexencode import utf8tolatex, unicode_to_latex, UnicodeToLatexConversionRule, UnicodeToLatexEncoder, RULE_REGEX
 from Crypto.Hash import HMAC, SHA256
 from multiprocessing import Pool, cpu_count
@@ -1249,7 +1247,7 @@ def get_all_venues(client):
     """
     return client.get_group("host").members
 
-def get_conflicts(author_profiles, user_profile, policy='default', n_years=5):
+def get_conflicts(author_profiles, user_profile, policy='default', n_years=None):
     """
     Finds conflicts between the passed user Profile and the author Profiles passed as arguments
 
@@ -1266,8 +1264,6 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=5):
     author_relations = set()
     author_publications = set()
     info_function = get_neurips_profile_info if policy == 'NeurIPS' else get_profile_info
-    if policy == 'NeurIPS':
-        n_years = 3
 
     for profile in author_profiles:
         author_info = info_function(profile, n_years)
@@ -1287,12 +1283,14 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=5):
 
     return list(conflicts)
 
-def get_profile_info(profile, n_years=3):
+def get_profile_info(profile, n_years=None):
     """
     Gets all the domains, emails, relations associated with a Profile
 
     :param profile: Profile from which all the relations will be obtained
     :type profile: Profile
+    :param n_years: Number of years to consider when getting the profile information
+    :type n_years: int, optional
 
     :return: Dictionary with the domains, emails, and relations associated with the passed Profile
     :rtype: dict
@@ -1303,6 +1301,12 @@ def get_profile_info(profile, n_years=3):
     publications = set()
     common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
                       'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
+    if n_years:
+        cut_off_date = datetime.datetime.now()
+        cut_off_date = cut_off_date.replace(year=cut_off_date.year - n_years)
+        cut_off_year = cut_off_date.year
+    else:
+        cut_off_year = -1
 
     ## Emails section
     for email in profile.content['emails']:
@@ -1312,17 +1316,25 @@ def get_profile_info(profile, n_years=3):
         emails.add(email)
 
     ## Institution section
-    for h in profile.content.get('history', []):
-        domain = h.get('institution', {}).get('domain', '')
-        domains.update(openreview.tools.subdomains(domain))
+    for history in profile.content.get('history', []):
+        try:
+            end = int(history.get('end', 0) or 0)
+        except:
+            end = 0
+        if not end or (int(end) > cut_off_year):
+            domain = history.get('institution', {}).get('domain', '')
+            domains.update(openreview.tools.subdomains(domain))
 
     ## Relations section
-    relations.update([r['email'] for r in profile.content.get('relations', [])])
+    for relation in profile.content.get('relations', []):
+        if relation.get('end') is None or int(relation.get('end')) > cut_off_year:
+            relations.add(relation['email'])
 
-    ## TODO:: Parameterize the number of years for publications to consider from
     ## Publications section: get publications within last n years, default is all publications from previous years
-    for pub in profile.content.get('publications', []):
-        publications.add(pub.id)
+    for publication in profile.content.get('publications', []):
+        publication_date = publication.pdate or publication.cdate or publication.tcdate or 0
+        if datetime.datetime.fromtimestamp(publication_date/1000).year > cut_off_year:
+            publications.add(publication.id)
 
     ## Filter common domains
     for common_domain in common_domains:
@@ -1337,16 +1349,30 @@ def get_profile_info(profile, n_years=3):
         'publications': publications
     }
 
-def get_neurips_profile_info(profile, n_years=3):
+def get_neurips_profile_info(profile, n_years=None):
+    """
+    Gets all the domains, emails, relations associated with a Profile
 
+    :param profile: Profile from which all the relations will be obtained
+    :type profile: Profile
+    :param n_years: Number of years to consider when getting the profile information
+    :type n_years: int, optional
+
+    :return: Dictionary with the domains, emails, and relations associated with the passed Profile
+    :rtype: dict
+    """
     domains = set()
     emails=set()
     relations = set()
     publications = set()
     common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
                       'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
-    curr_year = datetime.datetime.now().year
-    cut_off_year = curr_year - n_years - 1
+    if n_years:
+        cut_off_date = datetime.datetime.now()
+        cut_off_date = cut_off_date.replace(year=cut_off_date.year - n_years)
+        cut_off_year = cut_off_date.year
+    else:
+        cut_off_year = -1
 
     ## Institution section, get history within the last n years, excluding internships
     for h in profile.content.get('history', []):
@@ -1380,6 +1406,7 @@ def get_neurips_profile_info(profile, n_years=3):
             domains.update(openreview.tools.subdomains(email))
 
     ## Publications section: get publications within last n years
+    curr_year = datetime.datetime.now().year
     for pub in profile.content.get('publications', []):
         year = None
         if 'year' in pub.content and isinstance(pub.content['year'], str):

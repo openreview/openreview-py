@@ -58,6 +58,7 @@ class OpenReviewClient(object):
         self.messages_url = self.baseurl + '/messages'
         self.messages_direct_url = self.baseurl + '/messages/direct'
         self.process_logs_url = self.baseurl + '/logs/process'
+        self.institutions_url = self.baseurl + '/settings/institutions'
         self.jobs_status = self.baseurl + '/jobs/status'
         self.venues_url = self.baseurl + '/venues'
         self.note_edits_url = self.baseurl + '/notes/edits'
@@ -217,6 +218,33 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         self.__handle_token(response.json()['activatable'])
         return self.token
+    
+    def get_institutions(self, id=None, domain=None):
+        """
+        Get a single Institution by id or domain if available
+
+        :param id: id of the Institution as saved in the database
+        :type id: str
+        :param domain: domain of the Institution
+        :type domain: str
+
+        :return: Dictionary with the Institution information
+        :rtype: dict
+
+        Example:
+
+        >>> institution = client.get_institutions(domain='umass.edu')
+        """
+
+        params = {}
+        if id:
+            params['id'] = id
+        if domain:
+            params['domain'] = domain
+
+        response = self.session.get(self.institutions_url, params = tools.format_params(params), headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
 
     def get_group(self, id):
         """
@@ -1410,6 +1438,19 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
+    def delete_institution(self, institution_id):
+        """
+        Deletes the institution
+
+        :param institution_id: ID of Institution to be deleted
+        :type institution_id: str
+
+        :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
+        :rtype: dict
+        """
+        response = self.session.delete(self.institutions_url + '/' + institution_id, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
 
     def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None):
         """
@@ -1643,6 +1684,22 @@ class OpenReviewClient(object):
         response = self.session.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation, 'status': status, 'minsdate': min_sdate }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()['logs']
+
+    def post_institution(self, institution):
+        """
+        Requires Super User permission.
+        Adds an institution if the institution id is not found in the database,
+        otherwise, the institution is updated.
+
+        :param institution: institution to be posted
+        :type institution: dict
+
+        :return: The posted institution
+        :rtype: dict
+        """
+        response = self.session.post(self.institutions_url, json = institution, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
 
     def post_invitation_edit(self, invitations, readers=None, writers=None, signatures=None, invitation=None, content=None, replacement=None):
         """
