@@ -1,6 +1,6 @@
 # This workflow deploys any branch or tag to the staging environment.
 
-name: staging deployment
+name: Staging Deployment
 
 on:
   # Allows you to run this workflow manually from the Actions tab
@@ -41,6 +41,8 @@ jobs:
           create_credentials_file: true
           cleanup_credentials: true
           export_environment_variables: true
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v1
       - name: Run deploy script
         run: |
           instance_prefix='dev-instance'
