@@ -2006,9 +2006,6 @@ class InvitationBuilder(object):
             'reviewers_id': {
                 'value': venue.get_reviewers_id() if is_reviewer else venue.get_area_chairs_id()
             },
-            'review_name': {
-                'value': venue.review_stage.name if is_reviewer else venue.meta_review_stage.name
-            },
             'reviewers_name': {
                 'value': venue.reviewers_name if is_reviewer else venue.area_chairs_name
             },

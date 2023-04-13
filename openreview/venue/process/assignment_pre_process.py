@@ -4,7 +4,8 @@ def process_update(client, edge, invitation, existing_edge):
     venue_id = domain.id
     submission_name = domain.content['submission_name']['value']
 
-    review_name = invitation.content['review_name']['value']
+    reviewers_id = invitation.content['reviewers_id']['value']
+    review_name = domain.content.get('review_name', {}).get('value') if reviewers_id == domain.content['reviewers_id']['value'] else domain.content.get('meta_review_name', {}).get('value')
     reviewers_anon_name = invitation.content['reviewers_anon_name']['value']
     reviewers_name = invitation.content['reviewers_name']['value']
     paper=client.get_note(edge.head)
