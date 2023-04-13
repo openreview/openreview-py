@@ -40,10 +40,10 @@ jobs:
           cleanup_credentials: true
           export_environment_variables: true
       - name: Setup gcloud
-          uses: google-github-actions/setup-gcloud@v1
-          with:
-            project_id: ${{ secrets.GCP_PROJECT_ID }}
-            skip_install: true
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          skip_install: true
       -  name: Run deploy script
         run: |
           gsutil cp gs://openreview-general/conf/deployment.conf ./deployment.conf
