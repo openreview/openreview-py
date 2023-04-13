@@ -976,7 +976,7 @@ class VenueStages():
             'AC_form_title': {
                 'description': 'What should be the title of the registration form. Default name: Area Chair Registration',
                 'value-regex': '.*',
-                'default':'Reviewer Registration'
+                'default':'Area Chair Registration'
             },
             'AC_form_instructions': {
                 'description': 'These will be the instructions area chairs will see when completing the registration task. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
