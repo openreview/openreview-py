@@ -185,6 +185,58 @@ class TestWorkshopV2():
 
         assert openreview_client.get_invitation('PRL/2023/ICAPS/Reviewers/-/Assignment')                    
         assert openreview_client.get_invitation('PRL/2023/ICAPS/Reviewers/-/Custom_Max_Papers')                    
-        assert openreview_client.get_invitation('PRL/2023/ICAPS/Reviewers/-/Custom_User_Demands')                    
+        assert openreview_client.get_invitation('PRL/2023/ICAPS/Reviewers/-/Custom_User_Demands')
 
-        
+        ## try to make an assignment and get an error because the submission deadline has not passed
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, submission reviewers group not found.'):
+            edge = pc_client_v2.post_edge(openreview.api.Edge(
+                invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+                head=submissions[0].id,
+                tail='~Reviewer_ICAPSOne1',
+                weight=1,
+                signatures=['PRL/2023/ICAPS/Program_Chairs']
+            ))
+
+        ## close the submission
+        now = datetime.datetime.utcnow()
+        due_date = now - datetime.timedelta(hours=1)        
+        pc_client.post_note(openreview.Note(
+            content={
+                'title': 'PRL Workshop Series Bridging the Gap Between AI Planning and Reinforcement Learning',
+                'Official Venue Name': 'PRL Workshop Series Bridging the Gap Between AI Planning and Reinforcement Learning',
+                'Abbreviated Venue Name': 'PRL ICAPS 2023',
+                'Official Website URL': 'https://prl-theworkshop.github.io/',
+                'program_chair_emails': ['pc@icaps.cc'],
+                'contact_email': 'pc@icaps.cc',
+                'Venue Start Date': '2023/07/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Manual',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'use_recruitment_template': 'Yes'
+
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['PRL/2023/ICAPS/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_ICAPSChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        edge = pc_client_v2.post_edge(openreview.api.Edge(
+            invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+            head=submissions[0].id,
+            tail='~Reviewer_ICAPSOne1',
+            weight=1,
+            signatures=['PRL/2023/ICAPS/Program_Chairs']
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=edge.id)
+
+        assert client.get_group('PRL/2023/ICAPS/Submission1/Reviewers').members == ['~Reviewer_ICAPSOne1']                  
+

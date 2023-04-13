@@ -2002,28 +2002,30 @@ class InvitationBuilder(object):
         is_area_chair = committee_id == venue.get_area_chairs_id()
         is_senior_area_chair = committee_id == venue.get_senior_area_chairs_id()
 
-        paper_group_id = venue.get_reviewers_id(number='{number}')
-        group_name = venue.get_reviewers_name(pretty=True)
+        content = {
+            'reviewers_id': {
+                'value': venue.get_reviewers_id() if is_reviewer else venue.get_area_chairs_id()
+            },
+            'review_name': {
+                'value': venue.review_stage.name if is_reviewer else venue.meta_review_stage.name
+            },
+            'reviewers_name': {
+                'value': venue.reviewers_name if is_reviewer else venue.area_chairs_name
+            },
+            'reviewers_anon_name': {
+                'value': venue.get_anon_reviewers_name() if is_reviewer else venue.get_anon_area_chairs_name()
+            },
+            'sync_sac_id': {
+                'value': venue.get_senior_area_chairs_id() if is_area_chair else ''
+            },
+            'sac_assignment_id': {
+                'value': venue.get_assignment_id(venue.get_senior_area_chairs_id(), deployed=True) if is_area_chair else ''
+            }
+        }        
 
-        if is_area_chair:
-            paper_group_id = venue.get_area_chairs_id(number='{number}')
-            group_name = venue.get_area_chairs_name(pretty=True)
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/assignment_pre_process.py')) as pre:
-            pre_content = pre.read()
-            if is_area_chair:
-                pre_content = pre_content.replace("REVIEW_NAME_STRING = 'review_name'", "REVIEW_NAME_STRING = 'meta_review_name'")
-                pre_content = pre_content.replace("REVIEWERS_ANON_NAME_STRING = 'reviewers_anon_name'", "REVIEWERS_ANON_NAME_STRING = 'area_chairs_anon_name'")
-            with open(os.path.join(os.path.dirname(__file__), 'process/assignment_post_process.py')) as post:
-                post_content = post.read()
-                post_content = post_content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + paper_group_id + "'")
-                post_content = post_content.replace("GROUP_NAME = ''", "GROUP_NAME = '" + group_name + "'")
-                post_content = post_content.replace("GROUP_ID = ''", "GROUP_ID = '" + committee_id + "'")
-                if venue.use_senior_area_chairs and is_area_chair:
-                    post_content = post_content.replace("SYNC_SAC_ID = ''", "SYNC_SAC_ID = '" + venue.get_senior_area_chairs_id(number='{number}') + "'")
-                    post_content = post_content.replace("SAC_ASSIGNMENT_INVITATION_ID = ''", "SAC_ASSIGNMENT_INVITATION_ID = '" + venue.get_assignment_id(venue.get_senior_area_chairs_id(), deployed=True) + "'")
-                process=post_content
-                preprocess=pre_content
+        preprocess = self.get_process_content('process/assignment_pre_process.py')
+        process = self.get_process_content('process/assignment_post_process.py')
 
         invitation_readers = [venue_id]
         edge_invitees = [venue_id]
@@ -2072,11 +2074,9 @@ class InvitationBuilder(object):
                     'inGroup': venue.get_area_chairs_id()
                 }
             }
-            with open(os.path.join(os.path.dirname(__file__), 'process/sac_assignment_post_process.py')) as post:
-                post_content = post.read()
-                process=post_content
-                preprocess=None            
-
+            process = self.get_process_content('process/sac_assignment_post_process.py')
+            preprocess=None
+            content=None
             edge_readers.append('${2/head}')
 
         edge_readers.append('${2/tail}')
@@ -2089,6 +2089,7 @@ class InvitationBuilder(object):
             signatures = [venue.get_program_chairs_id()],
             process=process,
             preprocess=preprocess,
+            content=content,
             edge = {
                 'id': {
                     'param': {

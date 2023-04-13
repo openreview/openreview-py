@@ -4,15 +4,13 @@ def process_update(client, edge, invitation, existing_edge):
     venue_id = domain.id
     submission_name = domain.content['submission_name']['value']
 
-    REVIEW_NAME_STRING = 'review_name'
-    REVIEWERS_ANON_NAME_STRING = 'reviewers_anon_name'
-    review_name = domain.content.get(REVIEW_NAME_STRING, {}).get('value')
-    reviewers_anon_name = domain.content[REVIEWERS_ANON_NAME_STRING]['value']
-    
-    if edge.ddate:
-        paper=client.get_note(edge.head)
+    review_name = invitation.content['review_name']['value']
+    reviewers_anon_name = invitation.content['reviewers_anon_name']['value']
+    reviewers_name = invitation.content['reviewers_name']['value']
+    paper=client.get_note(edge.head)
+    paper_group_id=f'{venue_id}/{submission_name}{paper.number}'
 
-        paper_group_id=f'{venue_id}/{submission_name}{paper.number}'
+    if edge.ddate:
 
         if not review_name:
             return
@@ -31,4 +29,9 @@ def process_update(client, edge, invitation, existing_edge):
         for review in reviews:
             if review.signatures[0] == groups[0].id:
                 raise openreview.OpenReviewException(f'Can not remove assignment, the user {edge.tail} already posted a {review_name}')
+
+    else:
+        group = openreview.tools.get_group(client, f'{paper_group_id}/{reviewers_name}')
+        if not group:
+            raise openreview.OpenReviewException(f'Can not make assignment, submission reviewers group not found.')
 

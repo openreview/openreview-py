@@ -205,6 +205,10 @@ class Venue(object):
             name=self.reviewers_name.replace('_', ' ')
             return name[:-1] if name.endswith('s') else name
         return self.reviewers_name
+    
+    def get_anon_reviewers_name(self, pretty=True):
+        rev_name = self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
+        return rev_name + '_'    
 
     def get_ethics_reviewers_name(self, pretty=True):
         if pretty:
@@ -217,9 +221,13 @@ class Venue(object):
             name=self.area_chairs_name.replace('_', ' ')
             return name[:-1] if name.endswith('s') else name
         return self.area_chairs_name
-    
+
+    def get_anon_area_chairs_name(self, pretty=True):
+        rev_name = self.area_chairs_name[:-1] if self.area_chairs_name.endswith('s') else self.area_chairs_name
+        return rev_name + '_' 
+
     def get_reviewers_id(self, number = None, anon=False, submitted=False):
-        rev_name = self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
+        rev_name = self.get_anon_reviewers_name()
         reviewers_id = self.get_committee_id(f'{rev_name}_.*' if anon else self.reviewers_name, number)
         if submitted:
             return reviewers_id + '/Submitted'
@@ -235,7 +243,7 @@ class Venue(object):
         return self.get_committee_id(self.program_chairs_name)
 
     def get_area_chairs_id(self, number = None, anon=False):
-        ac_name = self.area_chairs_name[:-1] if self.area_chairs_name.endswith('s') else self.area_chairs_name
+        ac_name = self.get_anon_area_chairs_name()
         return self.get_committee_id(f'{ac_name}_.*' if anon else self.area_chairs_name, number)
 
     ## Compatibility with Conference, refactor conference references to use get_area_chairs_id
