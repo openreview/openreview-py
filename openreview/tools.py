@@ -1265,8 +1265,8 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=5):
     author_emails = set()
     author_relations = set()
     author_publications = set()
-    info_function = get_neurips_profile_info if policy == 'neurips' else get_profile_info
-    if policy == 'neurips':
+    info_function = get_neurips_profile_info if policy == 'NeurIPS' else get_profile_info
+    if policy == 'NeurIPS':
         n_years = 3
 
     for profile in author_profiles:

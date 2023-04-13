@@ -223,7 +223,7 @@ class TestMultipleRoles():
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': 'lifelong-ml.cc/CoLLAs/2022/Conference/First_Group_AC',
-                'compute_conflicts': 'Yes',
+                'compute_conflicts': 'Default',
                 'compute_affinity_scores': 'No'
             },
             forum=request_form.id,
@@ -250,7 +250,7 @@ class TestMultipleRoles():
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': 'lifelong-ml.cc/CoLLAs/2022/Conference/Program_Committee',
-                'compute_conflicts': 'Yes',
+                'compute_conflicts': 'Default',
                 'compute_affinity_scores': 'No'
             },
             forum=request_form.id,
@@ -268,7 +268,7 @@ class TestMultipleRoles():
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': 'lifelong-ml.cc/CoLLAs/2022/Conference/Senior_Program_Committee',
-                'compute_conflicts': 'Yes',
+                'compute_conflicts': 'Default',
                 'compute_affinity_scores': 'No'
             },
             forum=request_form.id,

@@ -1063,7 +1063,7 @@ If you would like to change your decision, please follow the link in the previou
                 writer.writerow([submission.id, '~Area_GoogleChair1', round(random.random(), 2)])
                 writer.writerow([submission.id, '~Area_UMassChair1', round(random.random(), 2)])
 
-        conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts='neurips', affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
+        conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts='NeurIPS', affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
         
         conflicts = client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict')
         assert conflicts == 3
@@ -1096,7 +1096,7 @@ If you would like to change your decision, please follow the link in the previou
                 writer.writerow([submission.id, '~Reviewer_Google1', round(random.random(), 2)])
 
 
-        conference.setup_matching(committee_id=conference.get_reviewers_id(), build_conflicts='neurips', affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
+        conference.setup_matching(committee_id=conference.get_reviewers_id(), build_conflicts='NeurIPS', affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
 
         conference.bid_stages['NeurIPS.cc/2021/Conference/Area_Chairs'] = openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Area_Chairs/-/Affinity_Score'], allow_conflicts_bids=True)
         conference.bid_stages['NeurIPS.cc/2021/Conference/Reviewers'] = openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Reviewers', score_ids=['NeurIPS.cc/2021/Conference/Reviewers/-/Affinity_Score'], allow_conflicts_bids=True)

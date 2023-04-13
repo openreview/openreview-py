@@ -227,18 +227,18 @@ class Matching(object):
         invitation = self.venue.invitation_builder.save_invitation(invitation, replacement=True)
         return invitation
 
-    def _build_conflicts(self, submissions, user_profiles, get_profile_info):
+    def _build_conflicts(self, submissions, user_profiles, get_profile_info, compute_conflicts_n_years):
         if self.alternate_matching_group:
             other_matching_group = self.client.get_group(self.alternate_matching_group)
             other_matching_profiles = tools.get_profiles(self.client, other_matching_group.members)
-            return self._build_profile_conflicts(other_matching_profiles, user_profiles)
-        return self._build_note_conflicts(submissions, user_profiles, get_profile_info)
+            return self._build_profile_conflicts(other_matching_profiles, user_profiles, compute_conflicts_n_years)
+        return self._build_note_conflicts(submissions, user_profiles, get_profile_info, compute_conflicts_n_years)
 
-    def _build_note_conflicts(self, submissions, user_profiles, get_profile_info):
+    def _build_note_conflicts(self, submissions, user_profiles, get_profile_info, compute_conflicts_n_years):
         invitation = self._create_edge_invitation(self.venue.get_conflict_score_id(self.match_group.id))
         invitation_id = invitation.id
         # Get profile info from the match group
-        user_profiles_info = [get_profile_info(p) for p in user_profiles]
+        user_profiles_info = [get_profile_info(p, compute_conflicts_n_years) for p in user_profiles]
         # Get profile info from all the authors
         all_authorids = []
         for submission in submissions:
@@ -254,7 +254,7 @@ class Matching(object):
             sacs_by_ac =  { g['id']['head']: [v['tail'] for v in g['values']] for g in self.client.get_grouped_edges(invitation=self.venue.get_assignment_id(self.venue.get_senior_area_chairs_id()), groupby='head', select=None)}
             if sacs_by_ac:
                 sac_user_profiles = openreview.tools.get_profiles(self.client, self.client.get_group(self.venue.get_senior_area_chairs_id()).members, with_publications=True)
-                sac_user_info_by_id = { p.id: get_profile_info(p) for p in sac_user_profiles }
+                sac_user_info_by_id = { p.id: get_profile_info(p, compute_conflicts_n_years) for p in sac_user_profiles }
 
         edges = []
 
@@ -269,7 +269,7 @@ class Matching(object):
             author_publications = set()
             for authorid in authorids:
                 if author_profile_by_id.get(authorid):
-                    author_info = get_profile_info(author_profile_by_id[authorid])
+                    author_info = get_profile_info(author_profile_by_id[authorid], compute_conflicts_n_years)
                     author_domains.update(author_info['domains'])
                     author_emails.update(author_info['emails'])
                     author_relations.update(author_info['relations'])
@@ -321,13 +321,13 @@ class Matching(object):
             raise openreview.OpenReviewException('Failed during bulk post of Conflict edges! Scores found: {0}, Edges posted: {1}'.format(len(edges), edges_posted))
         return invitation
 
-    def _build_profile_conflicts(self, head_profiles, user_profiles):
+    def _build_profile_conflicts(self, head_profiles, user_profiles, compute_conflicts_n_years):
         
         invitation = self._create_edge_invitation(self.venue.get_conflict_score_id(self.match_group.id))
         invitation_id = invitation.id
         # Get profile info from the match group
-        user_profiles_info = [openreview.tools.get_profile_info(p) for p in user_profiles]
-        head_profiles_info = [openreview.tools.get_profile_info(p) for p in head_profiles]
+        user_profiles_info = [openreview.tools.get_profile_info(p, compute_conflicts_n_years) for p in user_profiles]
+        head_profiles_info = [openreview.tools.get_profile_info(p, compute_conflicts_n_years) for p in head_profiles]
 
         edges = []
 
@@ -844,7 +844,7 @@ class Matching(object):
 
         invitation = venue.invitation_builder.save_invitation(config_inv)
 
-    def setup(self, compute_affinity_scores=False, compute_conflicts=False):
+    def setup(self, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None):
 
         venue = self.venue
         client = self.client
@@ -898,7 +898,7 @@ class Matching(object):
             )
 
         if compute_conflicts:
-            self._build_conflicts(submissions, user_profiles, openreview.tools.get_neurips_profile_info if compute_conflicts == 'neurips' else openreview.tools.get_profile_info)
+            self._build_conflicts(submissions, user_profiles, openreview.tools.get_neurips_profile_info if compute_conflicts == 'NeurIPS' else openreview.tools.get_profile_info, compute_conflicts_n_years)
 
 
         if venue.automatic_reviewer_assignment:
@@ -948,6 +948,7 @@ class Matching(object):
 
         self._build_custom_max_papers(user_profiles)
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))
+        self.venue.update_conflict_policies(self.match_group.id, compute_conflicts, compute_conflicts_n_years)
 
         return matching_status
 

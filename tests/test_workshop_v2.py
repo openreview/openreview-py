@@ -161,7 +161,7 @@ class TestWorkshopV2():
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': 'PRL/2023/ICAPS/Reviewers',
-                'compute_conflicts': 'Yes',
+                'compute_conflicts': 'Default',
                 'compute_affinity_scores': 'No',
                 'upload_affinity_scores': affinity_scores_url
 

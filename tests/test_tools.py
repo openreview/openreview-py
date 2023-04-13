@@ -508,7 +508,7 @@ class TestTools():
         assert 'cmu.edu' in conflicts
         assert 'umass.edu' in conflicts
 
-        neurips_conflicts = openreview.tools.get_conflicts([intern_profile], profile2, policy='neurips')
+        neurips_conflicts = openreview.tools.get_conflicts([intern_profile], profile2, policy='NeurIPS')
         assert len(neurips_conflicts) == 1
         assert 'cmu.edu' in conflicts
 

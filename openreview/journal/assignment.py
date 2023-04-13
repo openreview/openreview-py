@@ -59,7 +59,7 @@ class Assignment(object):
         conflict_edges = []
         for action_editor_profile in tqdm(action_editor_profiles):
 
-            conflicts = tools.get_conflicts(author_profiles, action_editor_profile, policy='neurips')
+            conflicts = tools.get_conflicts(author_profiles, action_editor_profile, policy='NeurIPS', n_years=3)
             if conflicts:
                 print('Compute AE conflict', note.id, action_editor_profile.id, conflicts)
                 edge = Edge(invitation = self.journal.get_ae_conflict_id(),
@@ -113,7 +113,7 @@ class Assignment(object):
         conflict_edges = []
         for reviewer_profile in tqdm(reviewer_profiles):
 
-            conflicts = tools.get_conflicts(author_profiles, reviewer_profile, policy='neurips')
+            conflicts = tools.get_conflicts(author_profiles, reviewer_profile, policy='NeurIPS')
             if conflicts:
                 print('Compute Reviewer conflict', note.id, reviewer_profile.id, conflicts)
                 edge = Edge(invitation = self.journal.get_reviewer_conflict_id(),
@@ -138,7 +138,7 @@ class Assignment(object):
         authors = self.journal.get_authors(number=note.number)
         author_profiles = tools.get_profiles(self.client, authors, with_publications=True)
 
-        return tools.get_conflicts(author_profiles, reviewer_profiles[0], policy='neurips')
+        return tools.get_conflicts(author_profiles, reviewer_profiles[0], policy='NeurIPS')
 
     def compute_affinity_scores(self, note, committee_id):
 

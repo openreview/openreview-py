@@ -974,7 +974,8 @@ To view your submission, click here: https://openreview.net/forum?id={submission
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': 'ICML.cc/2023/Conference/Area_Chairs',
-                'compute_conflicts': 'Yes',
+                'compute_conflicts': 'NeurIPS',
+                'compute_conflicts_N_years': '3',
                 'compute_affinity_scores': 'No',
                 'upload_affinity_scores': affinity_scores_url
 
@@ -1010,7 +1011,8 @@ To view your submission, click here: https://openreview.net/forum?id={submission
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': 'ICML.cc/2023/Conference/Reviewers',
-                'compute_conflicts': 'Yes',
+                'compute_conflicts': 'NeurIPS',
+                'compute_conflicts_N_years': '3',
                 'compute_affinity_scores': 'No',
                 'upload_affinity_scores': affinity_scores_url
             },
@@ -1156,7 +1158,8 @@ To view your submission, click here: https://openreview.net/forum?id={submission
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': 'ICML.cc/2023/Conference/Area_Chairs',
-                'compute_conflicts': 'Yes',
+                'compute_conflicts': 'NeurIPS',
+                'compute_conflicts_N_years': '3',
                 'compute_affinity_scores': 'No'
 
             },
@@ -1313,6 +1316,9 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         due_date = now + datetime.timedelta(days=3)
         venue.setup_assignment_recruitment(committee_id='ICML.cc/2023/Conference/Reviewers', assignment_title='reviewer-matching', hash_seed='1234', due_date=due_date)
 
+        venue_group = pc_client_v2.get_group('ICML.cc/2023/Conference')
+        'NeurIPS' == venue_group.content['reviewers_conflict_policy']['value']
+        
         pc_client_v2.post_group_edit(invitation='ICML.cc/2023/Conference/-/Edit',
             readers = ['ICML.cc/2023/Conference'],
             writers = ['ICML.cc/2023/Conference'],
@@ -1321,8 +1327,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                 id = 'ICML.cc/2023/Conference',
                 content = {
                     'enable_reviewers_reassignment': { 'value': True },
-                    'reviewers_proposed_assignment_title': { 'value': 'reviewer-matching' },
-                    'conflict_policy': { 'value': 'neurips' }
+                    'reviewers_proposed_assignment_title': { 'value': 'reviewer-matching' }
                 }
             )
         )

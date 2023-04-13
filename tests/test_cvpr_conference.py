@@ -343,7 +343,7 @@ class TestCVPRSConference():
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': 'thecvf.com/CVPR/2023/Conference/Area_Chairs',
-                'compute_conflicts': 'Yes',
+                'compute_conflicts': 'Default',
                 'compute_affinity_scores': 'No',
                 'upload_affinity_scores': affinity_scores_url
 
@@ -431,7 +431,7 @@ class TestCVPRSConference():
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': 'thecvf.com/CVPR/2023/Conference/Reviewers',
-                'compute_conflicts': 'Yes',
+                'compute_conflicts': 'Default',
                 'compute_affinity_scores': 'No',
                 'upload_affinity_scores': affinity_scores_url
 

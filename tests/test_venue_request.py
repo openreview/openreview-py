@@ -992,7 +992,7 @@ class TestVenueRequest():
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
-                'compute_conflicts': 'Yes',
+                'compute_conflicts': 'Default',
                 'compute_affinity_scores': 'Yes'
             },
             forum=venue['request_form_note'].forum,
@@ -1023,7 +1023,7 @@ class TestVenueRequest():
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
-                'compute_conflicts': 'Yes',
+                'compute_conflicts': 'Default',
                 'compute_affinity_scores': 'Yes'
             },
             forum=venue['request_form_note'].forum,
@@ -1050,7 +1050,7 @@ class TestVenueRequest():
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
-                'compute_conflicts': 'Yes',
+                'compute_conflicts': 'Default',
                 'compute_affinity_scores': 'Yes'
             },
             forum=venue['request_form_note'].forum,
@@ -1074,7 +1074,7 @@ class TestVenueRequest():
                 content={
                     'title': 'Paper Matching Setup',
                     'matching_group': conference.get_id() + '/Reviewers',
-                    'compute_conflicts': 'No',
+                    'compute_conflicts': 'Default',
                     'compute_affinity_scores': 'No'
                 },
                 forum=venue['request_form_note'].forum,
@@ -1100,7 +1100,7 @@ class TestVenueRequest():
                 content={
                     'title': 'Paper Matching Setup',
                     'matching_group': conference.get_id() + '/Reviewers',
-                    'compute_conflicts': 'No',
+                    'compute_conflicts': 'Default',
                     'compute_affinity_scores': 'Yes',
                     'upload_affinity_scores': url
                 },
@@ -1117,7 +1117,7 @@ class TestVenueRequest():
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
-                'compute_conflicts': 'No',
+                'compute_conflicts': 'Default',
                 'compute_affinity_scores': 'No',
                 'upload_affinity_scores': url
             },
@@ -1159,7 +1159,7 @@ Affinity scores and/or conflicts could not be computed for the users listed unde
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
-                'compute_conflicts': 'Yes',
+                'compute_conflicts': 'Default',
                 'compute_affinity_scores': 'No',
                 'upload_affinity_scores': url
             },

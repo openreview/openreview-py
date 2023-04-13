@@ -116,6 +116,8 @@ class GroupBuilder(object):
         venue_id = self.venue_id
         groups = self.build_groups(venue_id)
         venue_group = groups[-1]
+        if venue_group.content is None:
+            venue_group.content = {}
 
         if venue_group.web is None:
 
@@ -162,7 +164,6 @@ class GroupBuilder(object):
             'reviewers_assignment_id': { 'value': self.venue.get_assignment_id(self.venue.get_reviewers_id(), deployed=True) },
             'reviewers_invite_assignment_id': { 'value': self.venue.get_assignment_id(self.venue.get_reviewers_id(), invite=True) },
             'reviewers_proposed_assignment_id': { 'value': self.venue.get_assignment_id(self.venue.get_reviewers_id()) },
-            'enable_reviewers_reassignment': { 'value': self.venue.enable_reviewers_reassignment },
             'reviewers_recruitment_id': { 'value': self.venue.get_recruitment_id(self.venue.get_reviewers_id()) },
             'authors_id': { 'value': self.venue.get_authors_id() },
             'authors_accepted_id': { 'value': f'{self.venue.get_authors_id()}/Accepted' },
@@ -178,16 +179,12 @@ class GroupBuilder(object):
             'desk_rejection_reversion_id': { 'value': self.venue.get_invitation_id('Desk_Rejection_Reversion') },
             'desk_reject_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
             'desk_rejection_name': { 'value': 'Desk_Rejection'},
-            'conflict_policy': { 'value': self.venue.conflict_policy },
             'automatic_reviewer_assignment': { 'value': self.venue.automatic_reviewer_assignment },
             'decision_heading_map': { 'value': self.venue.decision_heading_map }
         }
 
         if self.venue.submission_stage.subject_areas:
             content['subject_areas'] = { 'value': self.venue.submission_stage.subject_areas }
-
-        if self.venue.reviewers_proposed_assignment_title:
-            content['reviewers_proposed_assignment_title'] = { 'value': self.venue.reviewers_proposed_assignment_title }
 
         if self.venue.use_area_chairs:
             content['area_chairs_id'] = { 'value': self.venue.get_area_chairs_id() }
@@ -237,7 +234,25 @@ class GroupBuilder(object):
         if self.venue.review_rebuttal_stage:
             content['rebuttal_email_pcs'] = { 'value': self.venue.review_rebuttal_stage.email_pcs}
 
-        update_content = self.get_update_content(venue_group.content if venue_group.content else {}, content)
+        if venue_group.content.get('enable_reviewers_reassignment'):
+            content['enable_reviewers_reassignment'] = venue_group.content.get('enable_reviewers_reassignment')
+
+        if venue_group.content.get('reviewers_proposed_assignment_title'):
+            content['reviewers_proposed_assignment_title'] = venue_group.content.get('reviewers_proposed_assignment_title')
+
+        if venue_group.content.get('reviewers_conflict_policy'):
+            content['reviewers_conflict_policy'] = venue_group.content.get('reviewers_conflict_policy')
+
+        if venue_group.content.get('reviewers_conflict_n_years'):
+            content['reviewers_conflict_n_years'] = venue_group.content.get('reviewers_conflict_n_years')
+
+        if venue_group.content.get('area_chairs_conflict_policy'):
+            content['area_chairs_conflict_policy'] = venue_group.content.get('area_chairs_conflict_policy')
+
+        if venue_group.content.get('area_chairs_conflict_n_years'):
+            content['area_chairs_conflict_n_years'] = venue_group.content.get('area_chairs_conflict_n_years')            
+
+        update_content = self.get_update_content(venue_group.content, content)
         if update_content:
             self.client.post_group_edit(
                 invitation = self.venue.get_meta_invitation_id(),

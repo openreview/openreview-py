@@ -414,21 +414,26 @@ If you would like to change your decision, please follow the link in the previou
                     'order': 2
                 },
                 'compute_conflicts': {
-                    'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. By default, conflicts will be computed.',
-                    'value-radio': ['Yes', 'No'],
-                    'default': 'Yes',
+                    'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. Select the conflict policy below or no if you don\' want to compute conflicts.',
+                    'value-radio': ['Default', 'NeurIPS', 'No'],
                     'required': True,
                     'order': 3
                 },
+                'compute_conflicts_N_years': {
+                    'description': 'If conflict policy was selected, enter the number of the years we should use to get the information from the OpenReview profile in order to detect conflicts. Leave it empty if you want to use all the available information.',
+                    'value-regex': '[0-9]+',
+                    'required': False,
+                    'order': 4
+                },            
                 'compute_affinity_scores': {
-                    'description': 'Please select whether you would like affinity scores to be computed by our expertise API and uploaded automatically.',
-                    'order': 4,
+                    'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically.',
+                    'order': 5,
                     'value-radio': ['Yes', 'No'],
                     'required': True,
                 },
                 'upload_affinity_scores': {
                     'description': 'If you would like to use your own affinity scores, upload a CSV file containing affinity scores for reviewer-paper pairs (one reviewer-paper pair per line in the format: submission_id, reviewer_id, affinity_score)',
-                    'order': 4,
+                    'order': 6,
                     'value-file': {
                         'fileTypes': ['csv'],
                         'size': 50
