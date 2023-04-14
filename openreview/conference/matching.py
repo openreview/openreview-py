@@ -250,7 +250,8 @@ class Matching(object):
         if user_profiles[0].active == None:
             raise openreview.OpenReviewException('No profile exists')
         get_profile_info = openreview.tools.get_neurips_profile_info if build_conflicts == 'neurips' else openreview.tools.get_profile_info
-        user_profiles_info = [get_profile_info(p) for p in user_profiles]
+        info_function = openreview.tools.info_function_builder(get_profile_info)
+        user_profiles_info = [info_function(p) for p in user_profiles]
 
         # Re-setup information that would have been initialized in setup()
         submissions = self.conference.client.get_all_notes(
@@ -280,7 +281,7 @@ class Matching(object):
             author_publications = set()
 
             for author_profile in author_profiles:
-                author_info = get_profile_info(author_profile)
+                author_info = info_function(author_profile)
                 author_domains.update(author_info['domains'])
                 author_emails.update(author_info['emails'])
                 author_relations.update(author_info['relations'])
@@ -400,8 +401,9 @@ class Matching(object):
         '''
         invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id))
         # Get profile info from the match group
-        user_profiles_info = [openreview.tools.get_profile_info(p) for p in user_profiles]
-        head_profiles_info = [openreview.tools.get_profile_info(p) for p in head_profiles]
+        info_function = openreview.tools.info_function_builder(openreview.tools.get_profile_info)
+        user_profiles_info = [info_function(p) for p in user_profiles]
+        head_profiles_info = [info_function(p) for p in head_profiles]
 
         edges = []
 
