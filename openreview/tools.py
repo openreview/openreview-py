@@ -1243,6 +1243,27 @@ def get_all_venues(client):
     """
     return client.get_group("host").members
 
+def info_function_builder(policy_function):
+    def inner(profile, n_years=None):
+        common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
+                    'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
+        result = policy_function(profile, n_years)
+        domains = set()
+        subdomains_dict = {}
+        for domain in result['domains']:
+            if domain not in subdomains_dict:
+                subdomains = openreview.tools.subdomains(domain)
+                subdomains_dict[domain] = subdomains
+            domains.update(subdomains_dict[domain])
+
+        # Filter common domains
+        for common_domain in common_domains:
+            domains.discard(common_domain)
+
+        result['domains'] = list(domains)
+        return result
+    return inner
+
 def get_conflicts(author_profiles, user_profile, policy='default', n_years=None):
     """
     Finds conflicts between the passed user Profile and the author Profiles passed as arguments
@@ -1259,27 +1280,6 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=None)
     :return: List containing all the conflicts between the user Profile and the author Profiles
     :rtype: list[str]
     """
-
-    def info_function_builder(policy_function):
-        def inner(profile, n_years):
-            common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
-                      'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
-            result = policy_function(profile, n_years)
-            domains = set()
-            subdomains_dict = {}
-            for domain in result['domains']:
-                if domain not in subdomains_dict:
-                    subdomains = openreview.tools.subdomains(domain)
-                    subdomains_dict[domain] = subdomains
-                domains.update(subdomains_dict[domain])
-
-            # Filter common domains
-            for common_domain in common_domains:
-                domains.discard(common_domain)
-
-            result['domains'] = list(domains)
-            return result
-        return inner
 
     author_domains = set()
     author_emails = set()
