@@ -90,6 +90,8 @@ class VenueStages():
                 'value-regex': '[0-9]*'
             }
         }
+        with open(os.path.join(os.path.dirname(__file__), 'process/bid_stage_pre_process.py')) as pre:
+            pre_process_file_content = pre.read()
 
         return self.venue_request.client.post_invitation(openreview.Invitation(
             id='{}/-/Bid_Stage'.format(self.venue_request.support_group.id),
@@ -99,6 +101,7 @@ class VenueStages():
             invitees=['everyone'],
             multiReply=True,
             process_string=self.file_content,
+            preprocess=pre_process_file_content,
             reply={
                 'readers': {
                     'values-copied': [
