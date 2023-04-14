@@ -228,7 +228,7 @@ class Venue(object):
 
     def get_reviewers_id(self, number = None, anon=False, submitted=False):
         rev_name = self.get_anon_reviewers_name()
-        reviewers_id = self.get_committee_id(f'{rev_name}_.*' if anon else self.reviewers_name, number)
+        reviewers_id = self.get_committee_id(f'{rev_name}.*' if anon else self.reviewers_name, number)
         if submitted:
             return reviewers_id + '/Submitted'
         return reviewers_id
@@ -244,7 +244,7 @@ class Venue(object):
 
     def get_area_chairs_id(self, number = None, anon=False):
         ac_name = self.get_anon_area_chairs_name()
-        return self.get_committee_id(f'{ac_name}_.*' if anon else self.area_chairs_name, number)
+        return self.get_committee_id(f'{ac_name}.*' if anon else self.area_chairs_name, number)
 
     ## Compatibility with Conference, refactor conference references to use get_area_chairs_id
     def get_anon_area_chair_id(self, number, anon_id):
