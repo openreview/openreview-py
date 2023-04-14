@@ -166,7 +166,7 @@ class InvitationBuilder(object):
             process=self.get_process_content('process/submission_process.py')
         )
 
-        submission_invitation = self.save_invitation(submission_invitation, replacement=True)
+        submission_invitation = self.save_invitation(submission_invitation, replacement=False)
 
     def set_post_submission_invitation(self):
         venue_id = self.venue_id
