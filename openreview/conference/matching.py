@@ -325,9 +325,10 @@ class Matching(object):
         '''
         Create conflict edges between the given Notes and Profiles
         '''
+        info_function = tools.info_function_builder(get_profile_info)
         invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id))
         # Get profile info from the match group
-        user_profiles_info = [get_profile_info(p) for p in user_profiles]
+        user_profiles_info = [info_function(p) for p in user_profiles]
         # Get profile info from all the authors
         all_authorids = []
         for submission in submissions:
@@ -353,7 +354,7 @@ class Matching(object):
             author_publications = set()
             for authorid in authorids:
                 if author_profile_by_id.get(authorid):
-                    author_info = get_profile_info(author_profile_by_id[authorid])
+                    author_info = info_function(author_profile_by_id[authorid])
                     author_domains.update(author_info['domains'])
                     author_emails.update(author_info['emails'])
                     author_relations.update(author_info['relations'])
