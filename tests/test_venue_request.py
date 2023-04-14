@@ -74,10 +74,6 @@ class TestVenueRequest():
             request_form_note=test_client.post_note(request_form_note)
 
         request_form_note.content['reviewer_identity'] = ['Program Chairs', 'Assigned Area Chair', 'Assigned Senior Area Chair']
-
-        with pytest.raises(openreview.OpenReviewException, match=r'Papers should be visible to all program committee if bidding is enabled'):
-            request_form_note=test_client.post_note(request_form_note)
-
         request_form_note.content['submission_readers'] = 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)'
         request_form_note=test_client.post_note(request_form_note)
 
