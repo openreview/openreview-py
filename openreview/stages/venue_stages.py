@@ -1157,7 +1157,7 @@ class DecisionStage(object):
 
 class RegistrationStage(object):
 
-    def __init__(self, committee_id, name='Registration', start_date=None, due_date=None, additional_fields={}, instructions=None, title=None, remove_fields=[]):
+    def __init__(self, committee_id, name='Registration', start_date=None, due_date=None, additional_fields={}, instructions=None, title=None, remove_fields=[], sub_venue=False):
         self.committee_id = committee_id
         self.name = name
         self.start_date = start_date
@@ -1166,6 +1166,7 @@ class RegistrationStage(object):
         self.instructions = instructions
         self.title = title
         self.remove_fields = remove_fields
+        self.sub_venue = sub_venue
 
     def get_content(self, api_version='2', conference=None):
         
@@ -1209,7 +1210,11 @@ class RegistrationStage(object):
             invitation_id = conference.get_invitation_id(self.name)
             invitation = openreview.tools.get_invitation(conference.client, invitation_id)
             if invitation:
-                for field, value in invitation.edit['invitation']['edit']['note']['content'].items():
+                if self.sub_venue:
+                    items = invitation.edit['invitation']['edit']['invitation']['edit']['note']['content'].items()
+                else:
+                    items = invitation.edit['invitation']['edit']['note']['content'].items()
+                for field, value in items:
                     if field not in content:
                         content[field] = { 'delete': True }
 

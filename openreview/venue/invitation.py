@@ -2862,7 +2862,7 @@ class InvitationBuilder(object):
         if self.venue.use_senior_area_chairs:
             build_expertise_selection(self.venue.get_senior_area_chairs_id())
 
-    def set_registration_invitations(self):
+    def set_registration_invitations(self, sub_venue_id=None):
 
         venue = self.venue
         venue_id = self.venue_id
@@ -2873,114 +2873,306 @@ class InvitationBuilder(object):
             readers = [venue_id, committee_id]
 
             registration_parent_invitation_id = venue.get_invitation_id(name=f'{registration_stage.name}_Form', prefix=committee_id)
-            invitation = Invitation(
-                id = registration_parent_invitation_id,
-                readers = ['everyone'],
-                writers = [venue_id],
-                signatures = [venue_id],
-                invitees = [venue_id, venue.support_user],
-                edit = {
-                    'signatures': [venue_id],
-                    'readers': [venue_id],
-                    'writers': [venue_id],
-                    'note': {
-                        'id': {
-                            'param': {
-                                'withInvitation': registration_parent_invitation_id,
-                                'optional': True
+
+            if registration_stage.sub_venue:
+                invitation = Invitation(
+                    id = registration_parent_invitation_id,
+                    invitees=[venue_id],
+                    readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    edit={
+                        'signatures': [venue_id],
+                        'readers': [venue_id],
+                        'writers': [venue_id],
+                        'content': {
+                            'subvenueid': {
+                                'value': {
+                                    'param': {
+                                        'regex': '.*', 'type': 'string' 
+                                    }
+                                }
                             }
                         },
-                        'ddate': {
-                            'param': {
-                                'range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'deletable': True
-                            }
-                        },                    
-                        'readers': readers,
-                        'writers': [venue_id],
-                        'signatures': [venue_id],
-                        'content': {
-                            'title': {
-                                'order': 1,
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 250
-                                    }
+                        'invitation': {
+                            'id': venue.get_invitation_id(name='${2/content/subvenueid/value}' + f'/{registration_stage.name}_Form', prefix=committee_id),
+                            'readers': ['everyone'],
+                            'writers': [venue_id],
+                            'signatures': [venue_id],
+                            'invitees': [venue_id, venue.support_user],
+                            'edit': {
+                                'signatures': [venue_id],
+                                'readers': [venue_id],
+                                'writers': [venue_id],
+                                'note': {
+                                    'id': {
+                                        'param': {
+                                            'withInvitation': venue.get_invitation_id(name='${6/content/subvenueid/value}' + f'{registration_stage.name}_Form', prefix=committee_id),
+                                            'optional': True
+                                        }
+                                    },
+                                    'ddate': {
+                                        'param': {
+                                            'range': [ 0, 9999999999999 ],
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    },                    
+                                    'readers': readers,
+                                    'writers': [venue_id],
+                                    'signatures': [venue_id],
+                                    'content': {
+                                        'title': {
+                                            'order': 1,
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'maxLength': 250
+                                                }
+                                            }
+                                        },
+                                        'instructions': {
+                                            'order': 2,
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'maxLength': 250000,
+                                                    'markdown': True,
+                                                    'input': 'textarea'                                    
+                                                }
+                                            }
+                                        }
+                                    }                    
                                 }
-                            },
-                            'instructions': {
-                                'order': 2,
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 250000,
-                                        'markdown': True,
-                                        'input': 'textarea'                                    
-                                    }
-                                }
                             }
-                        }                    
-                    }
-                }
-            )
-            self.save_invitation(invitation, replacement=True)
-
-            forum_edit = self.client.post_note_edit(invitation=invitation.id,
-                signatures=[venue_id],
-                note = Note(
-                    signatures = [venue_id],
-                    content = {
-                        'instructions': { 'value': registration_stage.instructions },
-                        'title': { 'value': registration_stage.title}
+                        }
                     }
                 )
-            )
-            forum_note_id = forum_edit['note']['id']
+            else:
+                invitation = Invitation(
+                    id = registration_parent_invitation_id,
+                    readers = ['everyone'],
+                    writers = [venue_id],
+                    signatures = [venue_id],
+                    invitees = [venue_id, venue.support_user],
+                    edit = {
+                        'signatures': [venue_id],
+                        'readers': [venue_id],
+                        'writers': [venue_id],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': registration_parent_invitation_id,
+                                    'optional': True
+                                }
+                            },
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            },                    
+                            'readers': readers,
+                            'writers': [venue_id],
+                            'signatures': [venue_id],
+                            'content': {
+                                'title': {
+                                    'order': 1,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 250
+                                        }
+                                    }
+                                },
+                                'instructions': {
+                                    'order': 2,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 250000,
+                                            'markdown': True,
+                                            'input': 'textarea'                                    
+                                        }
+                                    }
+                                }
+                            }                    
+                        }
+                    }
+                )
+            self.save_invitation(invitation, replacement=True)
+
+            # TODO: if sub venue do not post forum
+            if sub_venue_id and registration_stage.sub_venue:
+                # Create the sub venue invitation and post note edit to that invitation
+                sub_venue_invitation_id = venue.get_invitation_id(name=sub_venue_id + f'/{registration_stage.name}_Form', prefix=committee_id)
+                sub_venue_invitation=Invitation(id=sub_venue_invitation_id,
+                    signatures=[venue_id]
+                )
+                content = {
+                    'subvenueid': {
+                        'value': sub_venue_id
+                    }
+                }
+                self.save_invitation(sub_venue_invitation, invitations=invitation.id, content=content)
+
+                forum_edit = self.client.post_note_edit(invitation=sub_venue_invitation_id,
+                    signatures=[venue_id],
+                    note = Note(
+                        signatures = [venue_id],
+                        content = {
+                            'instructions': { 'value': registration_stage.instructions },
+                            'title': { 'value': registration_stage.title}
+                        }
+                    )
+                )
+                forum_note_id = forum_edit['note']['id']
+            elif not registration_stage.sub_venue:
+                forum_edit = self.client.post_note_edit(invitation=invitation.id,
+                    signatures=[venue_id],
+                    note = Note(
+                        signatures = [venue_id],
+                        content = {
+                            'instructions': { 'value': registration_stage.instructions },
+                            'title': { 'value': registration_stage.title}
+                        }
+                    )
+                )
+                forum_note_id = forum_edit['note']['id']
             start_date = registration_stage.start_date
             due_date = registration_stage.due_date
 
             registration_content = registration_stage.get_content(api_version='2', conference=self.venue)        
 
             registration_invitation_id = venue.get_invitation_id(name=f'{registration_stage.name}', prefix=committee_id)
-            invitation=Invitation(id=registration_invitation_id,
-                invitees=[committee_id],
-                readers=readers,
-                writers=[venue_id],
-                signatures=[venue_id],
-                cdate = tools.datetime_millis(start_date) if start_date else None,
-                duedate = tools.datetime_millis(due_date) if due_date else None,
-                expdate = tools.datetime_millis(due_date),
-                maxReplies = 1,
-                minReplies = 1,       
-                edit={
-                    'signatures': { 'param': { 'regex': '~.*' }},
-                    'readers': [venue_id, '${2/signatures}'],
-                    'note': {
-                        'id': {
-                            'param': {
-                                'withInvitation': registration_invitation_id,
-                                'optional': True
+
+            if registration_stage.sub_venue:
+                invitation = Invitation(
+                    id=registration_invitation_id,
+                    invitees=[venue_id],
+                    readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    edit={
+                        'signatures': [venue_id],
+                        'readers': [venue_id],
+                        'writers': [venue_id],
+                        'content': {
+                            'subvenueid': {
+                                'value': {
+                                    'param': {
+                                        'regex': '.*', 'type': 'string' 
+                                    }
+                                }
                             }
                         },
-                        'ddate': {
-                            'param': {
-                                'range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'deletable': True
+                        'invitation': {
+                            'id': self.venue.get_invitation_id('${2/content/subvenueid/value}' + f"/{registration_stage.name}", prefix=committee_id),
+                            'invitees': [committee_id],
+                            'readers': readers,
+                            'writers': [venue_id],
+                            'signatures': [venue_id],
+                            'cdate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True, 
+                                }
+                            },
+                            'duedate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True, 
+                                }
+                            },
+                            'expdate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True, 
+                                }
+                            },
+                            'maxReplies': 1,
+                            'minReplies': 1,
+                            'edit': {
+                                'signatures': { 'param': { 'regex': '~.*' }},
+                                'readers': [venue_id, '${2/signatures}'],
+                                'note': {
+                                    'id': {
+                                        'param': {
+                                            'withInvitation': self.venue.get_invitation_id('${2/content/subvenueid/value}' + f"/{registration_stage.name}", prefix=committee_id),
+                                            'optional': True
+                                        }
+                                    },
+                                    'ddate': {
+                                        'param': {
+                                            'range': [ 0, 9999999999999 ],
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    },                    
+                                    'forum': forum_note_id,
+                                    'replyto': forum_note_id,
+                                    'signatures': ['${3/signatures}'],
+                                    'readers': [venue_id, '${3/signatures}'],
+                                    'writers': [venue_id, '${3/signatures}'],
+                                    'content': registration_content
+                                }
                             }
-                        },                    
-                        'forum': forum_note_id,
-                        'replyto': forum_note_id,
-                        'signatures': ['${3/signatures}'],
-                        'readers': [venue_id, '${3/signatures}'],
-                        'writers': [venue_id, '${3/signatures}'],
-                        'content': registration_content
+                        }
                     }
-                }        
-            )
-            self.save_invitation(invitation)                           
+                )
+            else:
+                invitation=Invitation(id=registration_invitation_id,
+                    invitees=[committee_id],
+                    readers=readers,
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    cdate = tools.datetime_millis(start_date) if start_date else None,
+                    duedate = tools.datetime_millis(due_date) if due_date else None,
+                    expdate = tools.datetime_millis(due_date),
+                    maxReplies = 1,
+                    minReplies = 1,       
+                    edit={
+                        'signatures': { 'param': { 'regex': '~.*' }},
+                        'readers': [venue_id, '${2/signatures}'],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': registration_invitation_id,
+                                    'optional': True
+                                }
+                            },
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            },                    
+                            'forum': forum_note_id,
+                            'replyto': forum_note_id,
+                            'signatures': ['${3/signatures}'],
+                            'readers': [venue_id, '${3/signatures}'],
+                            'writers': [venue_id, '${3/signatures}'],
+                            'content': registration_content
+                        }
+                    }        
+                )
+            self.save_invitation(invitation)
+
+            if registration_stage.sub_venue and sub_venue_id:
+                invitation=Invitation(id=self.venue.get_invitation_id(f"{sub_venue_id}/{registration_stage.name}", prefix=committee_id),
+                    cdate = tools.datetime_millis(start_date) if start_date else None,
+                    duedate = tools.datetime_millis(due_date) if due_date else None,
+                    expdate = tools.datetime_millis(due_date),
+                    signatures=[venue_id]
+                )
+                content = {
+                    'subvenueid': {
+                        'value': sub_venue_id
+                    }
+                }
+                self.save_invitation(invitation, invitations=registration_invitation_id, content=content)                          
 
     def set_paper_recruitment_invitation(self, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title=None, due_date=None, invited_label='Invited', accepted_label='Accepted', declined_label='Declined', proposed=False):
         venue = self.venue

@@ -32,6 +32,7 @@ class TestVenueSubmissionARR():
         venue.senior_area_chairs_name = 'Senior_Action_Editors'
 
         venue.use_area_chairs = True
+        venue.use_senior_area_chairs = True
         venue.name = 'ARR'
         venue.short_name = 'ARR'
         venue.website = 'aclrollingreview.org'
@@ -69,17 +70,57 @@ class TestVenueSubmissionARR():
                 }
             }
         )
+
+        venue.registration_stages = [
+            openreview.stages.RegistrationStage(
+                committee_id=venue.get_reviewers_id(),
+                name='Registration',
+                start_date=now,
+                due_date=now + datetime.timedelta(minutes = 30),
+                title=f'{venue.get_reviewers_name()} Registration',
+                instructions='Register Here'
+            ),
+            openreview.stages.RegistrationStage(
+                committee_id=venue.get_reviewers_id(),
+                name='Maximum_Load_And_Unavailability',
+                start_date=now,
+                due_date=now + datetime.timedelta(minutes = 30),
+                title=f'{venue.get_reviewers_name()} Maximum Load and Unavailability',
+                instructions='Register Here',
+                sub_venue=True
+            ),
+            openreview.stages.RegistrationStage(
+                committee_id=venue.get_area_chairs_id(),
+                name='Registration',
+                start_date=now,
+                due_date=now + datetime.timedelta(minutes = 30),
+                title=f'{venue.get_area_chairs_name()} Registration',
+                instructions='Register Here'
+            ),
+            openreview.stages.RegistrationStage(
+                committee_id=venue.get_senior_area_chairs_id(),
+                name='Registration',
+                start_date=now,
+                due_date=now + datetime.timedelta(minutes = 30),
+                title=f'{venue.get_senior_area_chairs_name()} Registration',
+                instructions='Register Here'
+            ),
+        ]
+
         return venue
 
     def test_setup(self, venue, openreview_client, helpers):
         cycle = '2023_March'
         cycleid = f"{cycle}/Submission"
 
+        # Set up unavailability
+
         venue.setup(program_chair_ids=['editors@aclrollingreview.org'], partial_submission_venue_id=cycleid)
         venue.create_submission_stage(sub_venue_id=cycle)
         venue.create_review_stage(sub_venue_id=cycle)
         venue.create_meta_review_stage(sub_venue_id=cycle)
         venue.create_review_rebuttal_stage(sub_venue_id=cycle)
+        venue.create_registration_stages(sub_venue_id=cycle)
         assert openreview_client.get_group('ARR')
         assert openreview_client.get_group('ARR/Authors')
 
@@ -114,6 +155,29 @@ class TestVenueSubmissionARR():
         assert reviewer_group
         assert '~ARR_Reviewer_Venue_One1' in reviewer_group.members    
     
+    def test_march_registration_stage(self, venue, openreview_client, helpers):
+        assert openreview_client.get_invitation('ARR/Reviewers/-/Registration')
+        assert openreview_client.get_invitation('ARR/Action_Editors/-/Registration')
+        assert openreview_client.get_invitation('ARR/Senior_Action_Editors/-/Registration')
+        assert openreview_client.get_invitation('ARR/Reviewers/-/Maximum_Load_And_Unavailability')
+        assert openreview_client.get_invitation('ARR/Reviewers/-/2023_March/Maximum_Load_And_Unavailability')
+
+        reviewer_client = OpenReviewClient(username='arr_reviewer_venue_one@mail.com', password='1234')
+        max_load_note = reviewer_client.post_note_edit(
+            invitation='ARR/Reviewers/-/2023_March/Maximum_Load_And_Unavailability',
+            signatures= ['~ARR_Reviewer_Venue_One1'],
+            note=Note(
+                content={
+                    'profile_confirmed': { 'value': 'Yes' },
+                    'expertise_confirmed': { 'value': 'Yes' }
+                }
+            ))
+
+        submission = openreview_client.get_note(max_load_note['note']['id'])
+        assert len(submission.readers) == 2
+        assert 'ARR' in submission.readers
+        assert ['ARR', '~ARR_Reviewer_Venue_One1'] == submission.readers
+
     def test_submission_stage(self, venue, openreview_client, helpers):
 
         assert openreview_client.get_invitation('ARR/-/Submission')
@@ -301,6 +365,9 @@ class TestVenueSubmissionARR():
         cycle = '2023_May'
         cycleid = f"{cycle}/Submission"
 
+        venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS, SubmissionStage.Readers.AREA_CHAIRS]
+        venue.submission_stage.exp_date = datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
+
         venue.setup(program_chair_ids=['editors@aclrollingreview.org'], partial_submission_venue_id=cycleid)
         venue.create_submission_stage(sub_venue_id=cycle)
         venue.create_review_stage(sub_venue_id=cycle)
@@ -309,7 +376,52 @@ class TestVenueSubmissionARR():
         assert openreview_client.get_group('ARR')
         assert openreview_client.get_group('ARR/Authors')
 
-    def test_withdraw_submission(self, venue, openreview_client, helpers):
+    def test_may_submission_stage(self, venue, openreview_client, helpers):
+
+        assert openreview_client.get_invitation('ARR/-/Submission')
+
+        author_client = OpenReviewClient(username='harold@maileleven.com', password='1234')
+
+        submission_note_1 = author_client.post_note_edit(
+            invitation='ARR/-/Submission',
+            signatures= ['~Harold_Eleven1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper 3 Title' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['Harold Eleven']},
+                    'authorids': { 'value': ['~Harold_Eleven1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'keywords': {'value': ['aa'] }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id']) 
+
+        submission = openreview_client.get_note(submission_note_1['note']['id'])
+        assert len(submission.readers) == 2
+        assert 'ARR' in submission.readers
+        assert ['ARR', '~Harold_Eleven1'] == submission.readers
+
+        #TODO: check emails, check author console
+
+        submission_note_2 = author_client.post_note_edit(
+            invitation='ARR/-/Submission',
+            signatures= ['~Harold_Eleven1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper 4 Title' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['Harold Eleven']},
+                    'authorids': { 'value': ['~Harold_Eleven1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'keywords': {'value': ['aa'] }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id']) 
+
+    def test_withdraw_march_submission(self, venue, openreview_client, helpers):
         cycle = '2023_March'
 
         author_client = OpenReviewClient(username='harold@maileleven.com', password='1234')
@@ -375,7 +487,7 @@ class TestVenueSubmissionARR():
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'The ARR paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
 
-    def test_desk_reject_submission(self, venue, openreview_client, helpers):
+    def test_desk_reject_march_submission(self, venue, openreview_client, helpers):
 
         pc_client = OpenReviewClient(username='editors@aclrollingreview.org', password='1234')
 

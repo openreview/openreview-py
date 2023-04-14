@@ -219,6 +219,12 @@ class Venue(object):
             name=self.area_chairs_name.replace('_', ' ')
             return name[:-1] if name.endswith('s') else name
         return self.area_chairs_name
+
+    def get_senior_area_chairs_name(self, pretty=True):
+        if pretty:
+            name=self.senior_area_chairs_name.replace('_', ' ')
+            return name[:-1] if name.endswith('s') else name
+        return self.area_chairs_name
     
     def get_reviewers_id(self, number = None, anon=False, submitted=False):
         rev_name = self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
@@ -440,8 +446,8 @@ class Venue(object):
             sub_venue_invitation = self.invitation_builder.set_sub_venue_meta_review_invitation(sub_venue_id=sub_venue_id)
         return self.invitation_builder.set_meta_review_invitation(sub_venue_id=sub_venue_id, sub_venue_invitation=sub_venue_invitation)
 
-    def create_registration_stages(self):
-        return self.invitation_builder.set_registration_invitations()
+    def create_registration_stages(self, sub_venue_id=None):
+        return self.invitation_builder.set_registration_invitations(sub_venue_id=sub_venue_id)
     
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
         ## do nothing
