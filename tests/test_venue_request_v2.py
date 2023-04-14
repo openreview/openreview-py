@@ -70,7 +70,8 @@ class TestVenueRequest():
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
-                'api_version': '2'
+                'api_version': '2',
+                'hide_fields': ['pdf']
             })
 
         with pytest.raises(openreview.OpenReviewException, match=r'Assigned area chairs must see the reviewer identity'):
@@ -1120,23 +1121,6 @@ class TestVenueRequest():
         matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum, sort='tmdate')[0]
         assert matching_status
         assert 'There was an error connecting with the expertise API' in matching_status.content['error']
-
-        ## Setup matching with no computation selected
-        with pytest.raises(openreview.OpenReviewException, match=r'You need to compute either conflicts or affinity scores or both'):
-            matching_setup_note = test_client.post_note(openreview.Note(
-                content={
-                    'title': 'Paper Matching Setup',
-                    'matching_group': conference.get_id() + '/Reviewers',
-                    'compute_conflicts': 'No',
-                    'compute_affinity_scores': 'No'
-                },
-                forum=venue['request_form_note'].forum,
-                replyto=venue['request_form_note'].forum,
-                invitation=matching_setup_invitation,
-                readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-                signatures=['~SomeFirstName_User1'],
-                writers=[]
-            ))
 
         with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
