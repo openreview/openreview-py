@@ -58,6 +58,7 @@ class OpenReviewClient(object):
         self.messages_url = self.baseurl + '/messages'
         self.messages_direct_url = self.baseurl + '/messages/direct'
         self.process_logs_url = self.baseurl + '/logs/process'
+        self.institutions_url = self.baseurl + '/settings/institutions'
         self.jobs_status = self.baseurl + '/jobs/status'
         self.venues_url = self.baseurl + '/venues'
         self.note_edits_url = self.baseurl + '/notes/edits'
@@ -217,6 +218,33 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         self.__handle_token(response.json()['activatable'])
         return self.token
+    
+    def get_institutions(self, id=None, domain=None):
+        """
+        Get a single Institution by id or domain if available
+
+        :param id: id of the Institution as saved in the database
+        :type id: str
+        :param domain: domain of the Institution
+        :type domain: str
+
+        :return: Dictionary with the Institution information
+        :rtype: dict
+
+        Example:
+
+        >>> institution = client.get_institutions(domain='umass.edu')
+        """
+
+        params = {}
+        if id:
+            params['id'] = id
+        if domain:
+            params['domain'] = domain
+
+        response = self.session.get(self.institutions_url, params = tools.format_params(params), headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
 
     def get_group(self, id):
         """
@@ -1128,6 +1156,21 @@ class OpenReviewClient(object):
 
         return edits
 
+    def get_group_edit(self, id):
+        """
+        Get a single edit by id if available
+
+        :param id: id of the edit
+        :type id: str
+
+        :return: edit matching the passed id
+        :rtype: Group
+        """
+        response = self.session.get(self.group_edits_url, params = {'id':id}, headers = self.headers)
+        response = self.__handle_response(response)
+        n = response.json()['edits'][0]
+        return Edit.from_json(n)
+
     def get_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None, with_count=False):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
@@ -1410,6 +1453,19 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
+    def delete_institution(self, institution_id):
+        """
+        Deletes the institution
+
+        :param institution_id: ID of Institution to be deleted
+        :type institution_id: str
+
+        :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
+        :rtype: dict
+        """
+        response = self.session.delete(self.institutions_url + '/' + institution_id, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
 
     def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None):
         """
@@ -1644,6 +1700,22 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()['logs']
 
+    def post_institution(self, institution):
+        """
+        Requires Super User permission.
+        Adds an institution if the institution id is not found in the database,
+        otherwise, the institution is updated.
+
+        :param institution: institution to be posted
+        :type institution: dict
+
+        :return: The posted institution
+        :rtype: dict
+        """
+        response = self.session.post(self.institutions_url, json = institution, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
     def post_invitation_edit(self, invitations, readers=None, writers=None, signatures=None, invitation=None, content=None, replacement=None):
         """
         """
@@ -1736,6 +1808,8 @@ class OpenReviewClient(object):
 
         if 'note' in edit_json:
             response = self.session.post(self.note_edits_url, json = edit_json, headers = self.headers)
+        elif 'group' in edit_json:
+            response = self.session.post(self.group_edits_url, json = edit_json, headers = self.headers)
         elif 'invitation' in edit_json:
             response = self.session.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
 
@@ -1910,6 +1984,7 @@ class Edit(object):
         writers = None,
         signatures = None,
         note = None,
+        group = None,
         invitation = None,
         nonreaders = None,
         cdate = None,
@@ -1926,6 +2001,7 @@ class Edit(object):
         self.writers = writers
         self.signatures = signatures
         self.note = note
+        self.group = group
         self.invitation = invitation
         self.tauthor = tauthor
 
@@ -1960,6 +2036,8 @@ class Edit(object):
             body['signatures'] = self.signatures
         if (self.note):
             body['note'] = self.note.to_json()
+        if (self.group):
+            body['group'] = self.group.to_json()
         if isinstance(self.invitation, Invitation):
             body['invitation'] = self.invitation.to_json()
         if isinstance(self.invitation, str):
@@ -1990,6 +2068,7 @@ class Edit(object):
             writers = e.get('writers'),
             signatures = e.get('signatures'),
             note = Note.from_json(e['note']) if 'note' in e else None,
+            group = Group.from_json(e['group']) if 'group' in e else None,
             invitation = e.get('invitation'),
             tauthor = e.get('tauthor')
             )
