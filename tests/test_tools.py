@@ -521,6 +521,54 @@ class TestTools():
         assert len(neurips_conflicts) == 1
         assert 'cmu.edu' in conflicts
 
+        def cmu_is_a_never_conflict(profile, n_years=None):
+            """
+            Gets all the domains, emails, relations associated with a Profile
+
+            :param profile: Profile from which all the relations will be obtained
+            :type profile: Profile
+            :param n_years: Number of years to consider when getting the profile information
+            :type n_years: int, optional
+
+            :return: Dictionary with the domains, emails, and relations associated with the passed Profile
+            :rtype: dict
+            """
+            domains = set()
+            emails = set()
+            relations = set()
+            publications = set()
+
+            ## Emails section
+            for email in profile.content['emails']:
+                # split email
+                domain = email.split('@')[1]
+                if domain != 'cmu.edu':
+                    domains.add(domain)
+                    emails.add(email)
+
+            ## Institution section
+            for history in profile.content.get('history', []):
+                try:
+                    end = int(history.get('end', 0) or 0)
+                except:
+                    end = 0
+                if not end:
+                    domain = history.get('institution', {}).get('domain', '')
+                    if domain != 'cmu.edu':
+                        domains.add(domain)
+
+            return {
+                'id': profile.id,
+                'domains': domains,
+                'emails': emails,
+                'relations': relations,
+                'publications': publications
+            }
+        
+        conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy=cmu_is_a_never_conflict)
+        assert len(conflicts) == 1
+        assert 'umass.edu' in conflicts
+
     def test_group(self, client):
 
         assert openreview.tools.get_group(client, '~Super_User1')
