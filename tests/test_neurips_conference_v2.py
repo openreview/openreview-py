@@ -712,6 +712,7 @@ If you would like to change your decision, please follow the link in the previou
                 'Official Website URL': 'https://neurips.cc',
                 'program_chair_emails': ['pc@neurips.cc'],
                 'contact_email': 'pc@neurips.cc',
+                'submission_reviewer_assignment': 'Automatic',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
                 'Venue Start Date': '2023/12/12',
                 'Submission Deadline': request_form.content['Submission Deadline'],
