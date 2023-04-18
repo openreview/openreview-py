@@ -301,11 +301,11 @@ class GroupBuilder(object):
         authors_accepted_group = openreview.tools.get_group(self.client, authors_accepted_id)
         if not authors_accepted_group:
             authors_accepted_group = self.post_group(Group(id=authors_accepted_id,
-                            readers=[venue_id, authors_accepted_id],
-                            writers=[venue_id],
+                            readers=[venue_id, authors_accepted_id, self.venue.get_committee_id('Publication_Chair')] if self.venue.publication_chair else [venue_id, authors_accepted_id],
+                            writers=[venue_id, self.venue.get_committee_id('Publication_Chair')] if self.venue.publication_chair else [venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id],
-                            members=[]))        
+                            members=[]))
     
     def create_reviewers_group(self):
 
@@ -394,6 +394,29 @@ class GroupBuilder(object):
                             members=[]
                         )                
             self.post_group(ethics_chairs_group)
+
+    def create_publication_chair_group(self):
+        venue_id = self.venue_id
+
+        publication_chair_group_id = self.venue.get_committee_id('Publication_Chair')
+        publication_chair_group = openreview.tools.get_group(self.client, publication_chair_group_id)
+        if not publication_chair_group:
+            publication_chair_group=Group(id=publication_chair_group_id,
+                            readers=['everyone'],
+                            writers=[venue_id, publication_chair_group_id],
+                            signatures=[venue_id],
+                            signatories=[publication_chair_group_id, venue_id],
+                            members=[self.venue.publication_chair]
+                            )
+            self.post_group(publication_chair_group)
+            # with open(os.path.join(os.path.dirname(__file__), 'webfield/programChairsWebfield.js')) as f:
+            #     content = f.read()
+            #     pc_group.web = content
+            #     self.post_group(pc_group)
+
+        elif publication_chair_group.members[0] != self.venue.publication_chair:
+            self.client.add_members_to_group(publication_chair_group, self.venue.publication_chair)
+            self.client.remove_members_from_group(publication_chair_group, publication_chair_group.members[0])
 
     def add_to_active_venues(self):
         active_venues = self.client_v1.get_group('active_venues')

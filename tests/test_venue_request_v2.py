@@ -53,6 +53,7 @@ class TestVenueRequest():
                     'test@mail.com',
                     'tom_venue@mail.com'],
                 'contact_email': 'test@mail.com',
+                'publication_chair_email': 'publicationchair@mail.com',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'Venue Start Date': now.strftime('%Y/%m/%d'),
@@ -432,6 +433,8 @@ class TestVenueRequest():
         title_tag = header_div.find_element_by_tag_name('h1')
         assert title_tag
         assert title_tag.text == '{} Updated'.format(venue['request_form_note'].content['title'])
+
+        assert False
 
     def test_venue_recruitment_email_error(self, client, test_client, selenium, request_page, venue, helpers):
 
