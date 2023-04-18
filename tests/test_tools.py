@@ -512,6 +512,15 @@ class TestTools():
         assert len(neurips_conflicts) == 1
         assert 'cmu.edu' in conflicts
 
+        conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy=openreview.tools.get_profile_info)
+        assert len(conflicts) == 2
+        assert 'cmu.edu' in conflicts
+        assert 'umass.edu' in conflicts
+
+        neurips_conflicts = openreview.tools.get_conflicts([intern_profile], profile2, policy=openreview.tools.get_neurips_profile_info)
+        assert len(neurips_conflicts) == 1
+        assert 'cmu.edu' in conflicts
+
     def test_group(self, client):
 
         assert openreview.tools.get_group(client, '~Super_User1')
