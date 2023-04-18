@@ -2858,7 +2858,7 @@ ICML 2023 Conference Program Chairs'''
             'ICML.cc/2023/Conference/Submission3/Area_Chairs'
         ]
 
-    def test_delete_assignments(self, openreview_client):
+    def test_delete_assignments(self, openreview_client, helpers):
 
         ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password=helpers.strong_password)
 
