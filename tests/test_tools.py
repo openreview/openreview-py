@@ -522,17 +522,6 @@ class TestTools():
         assert 'cmu.edu' in conflicts
 
         def cmu_is_a_never_conflict(profile, n_years=None):
-            """
-            Gets all the domains, emails, relations associated with a Profile
-
-            :param profile: Profile from which all the relations will be obtained
-            :type profile: Profile
-            :param n_years: Number of years to consider when getting the profile information
-            :type n_years: int, optional
-
-            :return: Dictionary with the domains, emails, and relations associated with the passed Profile
-            :rtype: dict
-            """
             domains = set()
             emails = set()
             relations = set()
