@@ -4,9 +4,9 @@ async function process(client, edge, invitation) {
   const { groups } = await client.getGroups({ id: edge.domain })
   const domain = groups[0]
   const venueId = domain.id
-  const submissionName = domain.content.submission_name.value
-  const reviewName = invitation.content.review_name.value
-  const reviewersAnonName = invitation.content.reviewers_anon_name.value
+  const submissionName = domain.content.submission_name?.value
+  const reviewName = invitation.content.review_name?.value
+  const reviewersAnonName = invitation.content.reviewers_anon_name?.value
 
   if (!reviewName) {
     return

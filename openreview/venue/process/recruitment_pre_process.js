@@ -1,12 +1,12 @@
 async function process(client, edit, invitation) {
 
-  const committeeInvitedId = invitation.content.committee_invited_id.value
-  const venueId = invitation.content.venue_id.value
-  const committeeName = invitation.content.committee_id.value.split('/').pop()
+  const committeeInvitedId = invitation.content.committee_invited_id?.value
+  const venueId = invitation.content.venue_id?.value
+  const committeeName = invitation.content.committee_id?.value.split('/').pop()
 
   const note = edit.note
 
-  const hashSeed = invitation.content.hash_seed.value
+  const hashSeed = invitation.content.hash_seed?.value
   const user = decodeURIComponent(note.content.user.value)
 
   const hashkey = crypto.createHmac('sha256', hashSeed)

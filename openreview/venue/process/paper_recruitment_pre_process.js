@@ -1,8 +1,8 @@
 async function process(client, edit, invitation) {
 
-  const committeeInvitedId = invitation.content.committee_invited_id.value
-  const inviteAssignmentInvitation = invitation.content.invite_assignment_invitation_id.value
-  const hashSeed = invitation.content.hash_seed.value
+  const committeeInvitedId = invitation.content.committee_invited_id?.value
+  const inviteAssignmentInvitation = invitation.content.invite_assignment_invitation_id?.value
+  const hashSeed = invitation.content.hash_seed?.value
   
   const { groups: domainGroups } = await client.getGroups({ id: invitation.domain })
   const domain = domainGroups[0]

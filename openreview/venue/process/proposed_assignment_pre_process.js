@@ -1,7 +1,7 @@
 async function process(client, edge, invitation) {
   client.throwErrors = true
 
-  const committeeName = invitation.content.committee_name.value;
+  const committeeName = invitation.content.committee_name?.value;
   const { groups } = await client.getGroups({ id: invitation.domain });
   const domain = groups[0];
 
