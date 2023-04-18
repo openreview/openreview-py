@@ -1291,7 +1291,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         client.add_members_to_group(f'{venue["venue_id"]}/Paper1/Reviewers', '~Venue_Reviewer2')
 
-        reviewer_client = openreview.Client(username='venue_reviewer2@mail.com', password='1234')
+        reviewer_client = openreview.Client(username='venue_reviewer2@mail.com', password=helpers.strong_password)
         reviewer_group = client.get_group('{}/Reviewers'.format(venue['venue_id']))
         assert reviewer_group and len(reviewer_group.members) == 2
 
@@ -2008,7 +2008,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert '~Venue_Author2' in authors_group.members
 
     def test_venue_submission_revision_stage(self, client, test_client, selenium, request_page, helpers, venue):
-        author_client = openreview.Client(baseurl = 'http://localhost:3000', username='venue_author3@mail.com', password='1234')
+        author_client = openreview.Client(baseurl = 'http://localhost:3000', username='venue_author3@mail.com', password=helpers.strong_password)
 
         # extend submission deadline
         now = datetime.datetime.utcnow()
@@ -2394,7 +2394,7 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
 }'''
 
         # Post revision note for a submission
-        author_client = openreview.Client(username='venue_author3@mail.com', password='1234')
+        author_client = openreview.Client(username='venue_author3@mail.com', password=helpers.strong_password)
         with pytest.raises(openreview.OpenReviewException, match=r'The value Venue Author,Andrew McCallum in field authors does not match the invitation definition'):
             revision_note = author_client.post_note(openreview.Note(
                 invitation='{}/Paper{}/-/Camera_Ready_Revision'.format(venue['venue_id'], blind_submissions[2].number),
@@ -2560,7 +2560,7 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
 
         blind_submissions = client.get_notes(invitation='TEST.cc/2030/Conference/-/Blind_Submission', sort='number:asc')
 
-        author_client = openreview.Client(username='venue_author1@mail.com', password='1234')
+        author_client = openreview.Client(username='venue_author1@mail.com', password=helpers.strong_password)
 
         withdrawal_note = author_client.post_note(openreview.Note(
             invitation = 'TEST.cc/2030/Conference/Paper1/-/Withdraw',

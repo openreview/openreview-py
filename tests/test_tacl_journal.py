@@ -15,9 +15,9 @@ class TestTACLJournal():
 
 
     @pytest.fixture(scope="class")
-    def journal(self, openreview_client):
+    def journal(self, openreview_client, helpers):
 
-        eic_client=OpenReviewClient(username='brian@mail.com', password='1234')
+        eic_client=OpenReviewClient(username='brian@mail.com', password=helpers.strong_password)
         eic_client.impersonate('TACL/Editors_In_Chief')
 
         requests = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': 'TACL' })
@@ -78,7 +78,7 @@ class TestTACLJournal():
 
     def test_submission(self, journal, openreview_client, test_client, helpers):
 
-        test_client = OpenReviewClient(username='test@mail.com', password='1234')
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
         ## Post the submission 1
         submission_note_1 = test_client.post_note_edit(invitation='TACL/-/Submission',
@@ -149,8 +149,8 @@ class TestTACLJournal():
 
     def test_review_approval(self, journal, openreview_client, helpers):
 
-        brian_client = OpenReviewClient(username='brian@mail.com', password='1234')
-        graham_client = OpenReviewClient(username='graham@mailseven.com', password='1234')
+        brian_client = OpenReviewClient(username='brian@mail.com', password=helpers.strong_password)
+        graham_client = OpenReviewClient(username='graham@mailseven.com', password=helpers.strong_password)
         note_id_1 = openreview_client.get_notes(invitation='TACL/-/Submission')[0].id
 
         # Assign Action Editor
@@ -235,13 +235,13 @@ note={Under review}
 
     def test_review(self, journal, openreview_client, helpers):
 
-        brian_client = OpenReviewClient(username='brian@mail.com', password='1234')
-        graham_client = OpenReviewClient(username='graham@mailseven.com', password='1234')
+        brian_client = OpenReviewClient(username='brian@mail.com', password=helpers.strong_password)
+        graham_client = OpenReviewClient(username='graham@mailseven.com', password=helpers.strong_password)
         note_id_1 = openreview_client.get_notes(invitation='TACL/-/Submission')[0].id
 
-        david_client = OpenReviewClient(username='david@taclone.com', password='1234')
-        carlos_client = OpenReviewClient(username='carlos@taclthree.com', password='1234')
-        javier_client = OpenReviewClient(username='javier@tacltwo.com', password='1234')
+        david_client = OpenReviewClient(username='david@taclone.com', password=helpers.strong_password)
+        carlos_client = OpenReviewClient(username='carlos@taclthree.com', password=helpers.strong_password)
+        javier_client = OpenReviewClient(username='javier@tacltwo.com', password=helpers.strong_password)
 
         # add David Belanger again
         paper_assignment_edge = graham_client.post_edge(openreview.Edge(invitation='TACL/Reviewers/-/Assignment',
@@ -389,13 +389,13 @@ note: replies to this email will go to the AE, Graham Neubig.
 
     def test_official_recommendation(self, journal, openreview_client, helpers):
 
-        brian_client = OpenReviewClient(username='brian@mail.com', password='1234')
-        graham_client = OpenReviewClient(username='graham@mailseven.com', password='1234')
+        brian_client = OpenReviewClient(username='brian@mail.com', password=helpers.strong_password)
+        graham_client = OpenReviewClient(username='graham@mailseven.com', password=helpers.strong_password)
         note_id_1 = openreview_client.get_notes(invitation='TACL/-/Submission')[0].id
 
-        david_client = OpenReviewClient(username='david@taclone.com', password='1234')
-        carlos_client = OpenReviewClient(username='carlos@taclthree.com', password='1234')
-        javier_client = OpenReviewClient(username='javier@tacltwo.com', password='1234')
+        david_client = OpenReviewClient(username='david@taclone.com', password=helpers.strong_password)
+        carlos_client = OpenReviewClient(username='carlos@taclthree.com', password=helpers.strong_password)
+        javier_client = OpenReviewClient(username='javier@tacltwo.com', password=helpers.strong_password)
 
         invitation = brian_client.get_invitation('TACL/Paper1/-/Official_Recommendation')
         assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
@@ -495,8 +495,8 @@ note: replies to this email will go to the AE, Graham Neubig.
 
     def test_decision(self, journal, openreview_client, helpers):
 
-        brian_client = OpenReviewClient(username='brian@mail.com', password='1234')
-        graham_client = OpenReviewClient(username='graham@mailseven.com', password='1234')
+        brian_client = OpenReviewClient(username='brian@mail.com', password=helpers.strong_password)
+        graham_client = OpenReviewClient(username='graham@mailseven.com', password=helpers.strong_password)
         note_id_1 = openreview_client.get_notes(invitation='TACL/-/Submission')[0].id
         reviews=openreview_client.get_notes(forum=note_id_1, invitation='TACL/Paper1/-/Review', sort= 'number:asc')
 
@@ -549,8 +549,8 @@ note: replies to this email will go to the AE, Graham Neubig.
 
     def test_camera_ready_revision(self, journal, openreview_client, helpers):
 
-        test_client = OpenReviewClient(username='test@mail.com', password='1234')
-        graham_client = OpenReviewClient(username='graham@mailseven.com', password='1234')
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        graham_client = OpenReviewClient(username='graham@mailseven.com', password=helpers.strong_password)
         note_id_1 = openreview_client.get_notes(invitation='TACL/-/Submission')[0].id
         assert openreview_client.get_invitation("TACL/Paper1/-/Camera_Ready_Revision")
 
@@ -635,9 +635,9 @@ note={Featured Certification, Reproducibility Certification}
 
     def test_withdrawn_submission(self, journal, openreview_client, test_client, helpers):
 
-        test_client = OpenReviewClient(username='test@mail.com', password='1234')
-        brian_client = OpenReviewClient(username='brian@mail.com', password='1234')
-        graham_client = OpenReviewClient(username='graham@mailseven.com', password='1234')
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        brian_client = OpenReviewClient(username='brian@mail.com', password=helpers.strong_password)
+        graham_client = OpenReviewClient(username='graham@mailseven.com', password=helpers.strong_password)
 
 
         ## Post the submission 2

@@ -235,7 +235,7 @@ class TestCommentNotification():
 
         pc_client = openreview.Client(baseurl = 'http://localhost:3000')
         assert pc_client is not None, "Client is none"
-        res = pc_client.register_user(email = 'programchair@midl.io', first = 'Program', last = 'Chair', password = '1234')
+        res = pc_client.register_user(email = 'programchair@midl.io', first = 'Program', last = 'Chair', password = helpers.strong_password)
         assert res, "Res i none"
         res = pc_client.activate_user('programchair@midl.io', {
             'names': [
@@ -1163,7 +1163,7 @@ class TestCommentNotification():
         reviewers_group_id = '{conference_id}/Paper{number}/Reviewers'.format(conference_id = conference.id, number = note.number)
         acs_group_id = '{conference_id}/Paper{number}/Area_Chairs'.format(conference_id = conference.id, number = note.number)
 
-        reviewer_client = openreview.Client(username='reviewer@colt17.io', password='1234')
+        reviewer_client = openreview.Client(username='reviewer@colt17.io', password=helpers.strong_password)
         client.add_members_to_group(f'{conference.id}/Paper{note.number}/Reviewers', 'reviewer@colt17.io')
         client.add_members_to_group(f'{conference.id}/Paper{note.number}/Area_Chairs', 'areachair@colt17.io')
         anon_reviewers_group_id = reviewer_client.get_groups(regex=f'{conference.id}/Paper{note.number}/Reviewer_', signatory='reviewer@colt17.io')[0].id
