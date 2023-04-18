@@ -2013,7 +2013,7 @@ class InvitationBuilder(object):
                 'value': venue.get_anon_reviewers_name() if is_reviewer else venue.get_anon_area_chairs_name()
             },
             'sync_sac_id': {
-                'value': venue.get_senior_area_chairs_id() if is_area_chair else ''
+                'value': venue.get_senior_area_chairs_id(number='{number}') if is_area_chair else ''
             },
             'sac_assignment_id': {
                 'value': venue.get_assignment_id(venue.get_senior_area_chairs_id(), deployed=True) if is_area_chair else ''

@@ -10,6 +10,7 @@ def process_update(client, edge, invitation, existing_edge):
     sync_sac_id = invitation.content['sync_sac_id']['value']
     sac_assingment_id = invitation.content['sac_assignment_id']['value']
     pretty_name = openreview.tools.pretty_id(reviewers_name)
+    pretty_name = pretty_name[:-1] if pretty_name.endswith('s') else pretty_name
 
 
     note=client.get_note(edge.head)
