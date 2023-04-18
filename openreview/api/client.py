@@ -1156,6 +1156,21 @@ class OpenReviewClient(object):
 
         return edits
 
+    def get_group_edit(self, id):
+        """
+        Get a single edit by id if available
+
+        :param id: id of the edit
+        :type id: str
+
+        :return: edit matching the passed id
+        :rtype: Group
+        """
+        response = self.session.get(self.group_edits_url, params = {'id':id}, headers = self.headers)
+        response = self.__handle_response(response)
+        n = response.json()['edits'][0]
+        return Edit.from_json(n)
+
     def get_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None, with_count=False):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
@@ -1793,6 +1808,8 @@ class OpenReviewClient(object):
 
         if 'note' in edit_json:
             response = self.session.post(self.note_edits_url, json = edit_json, headers = self.headers)
+        elif 'group' in edit_json:
+            response = self.session.post(self.group_edits_url, json = edit_json, headers = self.headers)
         elif 'invitation' in edit_json:
             response = self.session.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
 
@@ -1967,6 +1984,7 @@ class Edit(object):
         writers = None,
         signatures = None,
         note = None,
+        group = None,
         invitation = None,
         nonreaders = None,
         cdate = None,
@@ -1983,6 +2001,7 @@ class Edit(object):
         self.writers = writers
         self.signatures = signatures
         self.note = note
+        self.group = group
         self.invitation = invitation
         self.tauthor = tauthor
 
@@ -2017,6 +2036,8 @@ class Edit(object):
             body['signatures'] = self.signatures
         if (self.note):
             body['note'] = self.note.to_json()
+        if (self.group):
+            body['group'] = self.group.to_json()
         if isinstance(self.invitation, Invitation):
             body['invitation'] = self.invitation.to_json()
         if isinstance(self.invitation, str):
@@ -2047,6 +2068,7 @@ class Edit(object):
             writers = e.get('writers'),
             signatures = e.get('signatures'),
             note = Note.from_json(e['note']) if 'note' in e else None,
+            group = Group.from_json(e['group']) if 'group' in e else None,
             invitation = e.get('invitation'),
             tauthor = e.get('tauthor')
             )
