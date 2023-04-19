@@ -15,10 +15,8 @@ import os
 import re
 import time
 import jwt
-import traceback
 from openreview import Profile
 from openreview import OpenReviewException
-from .. import tools
 
 class OpenReviewClient(object):
     """
@@ -59,6 +57,7 @@ class OpenReviewClient(object):
         self.messages_direct_url = self.baseurl + '/messages/direct'
         self.process_logs_url = self.baseurl + '/logs/process'
         self.institutions_url = self.baseurl + '/settings/institutions'
+        self.duplicate_domains_url = self.baseurl + '/settings/duplicateDomains'
         self.jobs_status = self.baseurl + '/jobs/status'
         self.venues_url = self.baseurl + '/venues'
         self.note_edits_url = self.baseurl + '/notes/edits'
@@ -245,6 +244,18 @@ class OpenReviewClient(object):
         response = self.session.get(self.institutions_url, params = tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
+    
+    def get_duplicate_domains(self):
+        """
+        Gets a map to canonical domains for duplicate domains
+
+        :return: Dictionary that maps several domains to a canonical domain
+        :rtype: dict
+        """
+
+        response = self.session.get(self.duplicate_domains_url, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()['duplicates']
 
     def get_group(self, id):
         """
