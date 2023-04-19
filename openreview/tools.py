@@ -10,7 +10,7 @@ import openreview
 import re
 import datetime
 import csv
-from pylatexenc.latexencode import utf8tolatex, unicode_to_latex, UnicodeToLatexConversionRule, UnicodeToLatexEncoder, RULE_REGEX
+from pylatexenc.latexencode import utf8tolatex, UnicodeToLatexConversionRule, UnicodeToLatexEncoder, RULE_REGEX
 from Crypto.Hash import HMAC, SHA256
 from multiprocessing import Pool, cpu_count
 from tqdm import tqdm
