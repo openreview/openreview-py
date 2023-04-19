@@ -153,7 +153,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         assert openreview_client.get_invitation('TestVenue.cc/-/Submission')
 
         helpers.create_user('celeste@maileleven.com', 'Celeste', 'MartinezEleven')
-        author_client = OpenReviewClient(username='celeste@maileleven.com', password='1234')
+        author_client = OpenReviewClient(username='celeste@maileleven.com', password=helpers.strong_password)
 
         submission_note_1 = author_client.post_note_edit(
             invitation='TestVenue.cc/-/Submission',
@@ -269,7 +269,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Desk_Rejection')
 
         ## post a submission after the deadline
-        pc_client = OpenReviewClient(username='venue_pc@mail.com', password='1234')
+        pc_client = OpenReviewClient(username='venue_pc@mail.com', password=helpers.strong_password)
         submission_note_3 = pc_client.post_note_edit(
             invitation='TestVenue.cc/-/Submission',
             signatures= ['~PC_Venue_One1'],
@@ -294,7 +294,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
     def test_bid_stage(self, venue, openreview_client, helpers):
         
-        reviewer_client = OpenReviewClient(username='reviewer_venue_one@mail.com', password='1234')
+        reviewer_client = OpenReviewClient(username='reviewer_venue_one@mail.com', password=helpers.strong_password)
         venue.create_bid_stages()
 
         assert openreview_client.get_invitation(venue.id + '/Reviewers/-/Bid')
@@ -533,7 +533,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
     def test_withdraw_submission(self, venue, openreview_client, helpers):
 
-        author_client = OpenReviewClient(username='celeste@maileleven.com', password='1234')
+        author_client = OpenReviewClient(username='celeste@maileleven.com', password=helpers.strong_password)
 
         withdraw_note = author_client.post_note_edit(invitation='TestVenue.cc/Submission2/-/Withdrawal',
                                     signatures=['TestVenue.cc/Submission2/Authors'],
@@ -614,7 +614,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
     def test_desk_reject_submission(self, venue, openreview_client, helpers):
 
-        pc_client = OpenReviewClient(username='venue_pc@mail.com', password='1234')
+        pc_client = OpenReviewClient(username='venue_pc@mail.com', password=helpers.strong_password)
 
         desk_reject_note = pc_client.post_note_edit(invitation='TestVenue.cc/Submission2/-/Desk_Rejection',
                                     signatures=['TestVenue.cc/Program_Chairs'],
@@ -794,7 +794,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         assert invitation.edit['note']['replyto'] == submissions[0].id
         assert not openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Submission2/-/Camera_Ready_Verification')
 
-        pc_client = OpenReviewClient(username='venue_pc@mail.com', password='1234')
+        pc_client = OpenReviewClient(username='venue_pc@mail.com', password=helpers.strong_password)
 
         verification = pc_client.post_note_edit(invitation='TestVenue.cc/Submission1/-/Camera_Ready_Verification',
             signatures=['TestVenue.cc/Program_Chairs'],

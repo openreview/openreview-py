@@ -17,8 +17,8 @@ from selenium.common.exceptions import NoSuchElementException
 class TestMultipleRoles():
 
     @pytest.fixture(scope="class")
-    def conference(self, client):
-        pc_client=openreview.Client(username='pc@lifelong-ml.cc', password='1234')
+    def conference(self, client, helpers):
+        pc_client=openreview.Client(username='pc@lifelong-ml.cc', password=helpers.strong_password)
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         conference=openreview.helpers.get_conference(pc_client, request_form.id)
@@ -94,7 +94,7 @@ class TestMultipleRoles():
 
     def test_recruit_reviewers(self, client, selenium, request_page, helpers):
 
-        pc_client=openreview.Client(username='pc@lifelong-ml.cc', password='1234')
+        pc_client=openreview.Client(username='pc@lifelong-ml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         # Test Reviewer Recruitment
@@ -151,7 +151,7 @@ class TestMultipleRoles():
     def test_submit_papers(self, test_client, client, helpers):
 
         ## Need super user permission to add the venue to the active_venues group
-        pc_client=openreview.Client(username='pc@lifelong-ml.cc', password='1234')
+        pc_client=openreview.Client(username='pc@lifelong-ml.cc', password=helpers.strong_password)
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
         conference=openreview.helpers.get_conference(client, request_form.id)
 
@@ -193,7 +193,7 @@ class TestMultipleRoles():
         assert len(blinded_notes) == 5
 
     def test_ac_assignment_invitation(self, test_client, client, helpers):
-        pc_client=openreview.Client(username='pc@lifelong-ml.cc', password='1234')
+        pc_client=openreview.Client(username='pc@lifelong-ml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
         ac_details = '''ac1@lifelong-ml.cc, AreaChair UMass\nac2@lifelong-ml.cc, ac3@lifelong-ml.cc, AreaChair UMass\nac4@lifelong-ml.cc'''
         recruitment_note = client.post_note(openreview.Note(
@@ -242,7 +242,7 @@ class TestMultipleRoles():
 
     def test_setup_matching(self, conference, client, helpers):
 
-        pc_client=openreview.Client(username='pc@lifelong-ml.cc', password='1234')
+        pc_client=openreview.Client(username='pc@lifelong-ml.cc', password=helpers.strong_password)
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         ## Setup Matching for Program Committee

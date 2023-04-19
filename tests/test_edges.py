@@ -72,9 +72,9 @@ class TestEdges:
         posted_edges = list(openreview.tools.iterget_edges(client, invitation=inv1.id, tail='~Super_User1'))
         assert len(edges) == len(posted_edges)
     
-    def test_rename_edges(self, client):
+    def test_rename_edges(self, client, helpers):
         guest = openreview.Client()
-        to_profile = guest.register_user(email = 'nadia@mail.com', first = 'Nadia', last = 'L', password = '1234')
+        to_profile = guest.register_user(email = 'nadia@mail.com', first = 'Nadia', last = 'L', password = helpers.strong_password)
         assert to_profile
         assert to_profile['id'] == '~Nadia_L1'
         super_user_edges = list(openreview.tools.iterget_edges(client, tail="~Super_User1"))

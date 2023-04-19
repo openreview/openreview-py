@@ -15,9 +15,9 @@ class TestJournal():
 
 
     @pytest.fixture(scope="class")
-    def journal(self, openreview_client):
+    def journal(self, openreview_client, helpers):
 
-        eic_client=OpenReviewClient(username='adalca@mit.edu', password='1234')
+        eic_client=OpenReviewClient(username='adalca@mit.edu', password=helpers.strong_password)
         eic_client.impersonate('MELBA/Editors_In_Chief')
 
         requests = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': 'MELBA' })
@@ -141,7 +141,7 @@ class TestJournal():
     def test_submission(self, journal, openreview_client, test_client, helpers):
 
         venue_id = journal.venue_id
-        test_client = OpenReviewClient(username='test@mail.com', password='1234')
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
         ## Post the submission 1
         submission_note_1 = test_client.post_note_edit(invitation=f'{venue_id}/-/Submission',
@@ -180,9 +180,9 @@ The MELBA Editors-in-Chief
 
         venue_id = journal.venue_id
         
-        aasa_client = OpenReviewClient(username='aasa@mailtwo.com', password='1234')
-        eic_client = OpenReviewClient(username='adalca@mit.edu', password='1234')
-        test_client = OpenReviewClient(username='test@mail.com', password='1234')
+        aasa_client = OpenReviewClient(username='aasa@mailtwo.com', password=helpers.strong_password)
+        eic_client = OpenReviewClient(username='adalca@mit.edu', password=helpers.strong_password)
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
         
         note = openreview_client.get_notes(invitation='MELBA/-/Submission')[0]
         note_id_1 = note.id
@@ -259,7 +259,7 @@ The MELBA Editors-in-Chief
         ))
 
         ## Post a review edit
-        reviewer_one_client = OpenReviewClient(username='rev1@mailone.com', password='1234')
+        reviewer_one_client = OpenReviewClient(username='rev1@mailone.com', password=helpers.strong_password)
         reviewer_one_anon_groups=reviewer_one_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~MELBARev_One1')
         
         review_note = reviewer_one_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
@@ -278,7 +278,7 @@ The MELBA Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
-        reviewer_two_client = OpenReviewClient(username='rev2@mailtwo.com', password='1234')
+        reviewer_two_client = OpenReviewClient(username='rev2@mailtwo.com', password=helpers.strong_password)
         reviewer_two_anon_groups=reviewer_two_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~MELBARev_Two1')
     
         review_note = reviewer_two_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
@@ -297,7 +297,7 @@ The MELBA Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
-        reviewer_three_client = OpenReviewClient(username='rev3@mailthree.com', password='1234')
+        reviewer_three_client = OpenReviewClient(username='rev3@mailthree.com', password=helpers.strong_password)
         reviewer_three_anon_groups=reviewer_two_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~MELBARev_Three1')
 
         review_note = reviewer_three_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
@@ -450,7 +450,7 @@ The MELBA Editors-in-Chief
 
         ## AE verifies the camera ready revision
         openreview_client.add_members_to_group('MELBA/Publication_Chairs', 'publication@melba.com')
-        publication_chair_client = OpenReviewClient(username='publication@melba.com', password='1234')
+        publication_chair_client = OpenReviewClient(username='publication@melba.com', password=helpers.strong_password)
         submission_note = publication_chair_client.get_note(note_id_1)
         verification_note = publication_chair_client.post_note_edit(invitation='MELBA/Paper1/-/Camera_Ready_Verification',
                             signatures=[f"{venue_id}/Publication_Chairs"],

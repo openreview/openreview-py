@@ -238,7 +238,8 @@ class Matching(object):
         invitation = self._create_edge_invitation(self.venue.get_conflict_score_id(self.match_group.id))
         invitation_id = invitation.id
         # Get profile info from the match group
-        user_profiles_info = [get_profile_info(p, compute_conflicts_n_years) for p in user_profiles]
+        info_function = tools.info_function_builder(get_profile_info)
+        user_profiles_info = [info_function(p, compute_conflicts_n_years) for p in user_profiles]
         # Get profile info from all the authors
         all_authorids = []
         for submission in submissions:
@@ -254,8 +255,7 @@ class Matching(object):
             sacs_by_ac =  { g['id']['head']: [v['tail'] for v in g['values']] for g in self.client.get_grouped_edges(invitation=self.venue.get_assignment_id(self.venue.get_senior_area_chairs_id()), groupby='head', select=None)}
             if sacs_by_ac:
                 sac_user_profiles = openreview.tools.get_profiles(self.client, self.client.get_group(self.venue.get_senior_area_chairs_id()).members, with_publications=True)
-                sac_user_info_by_id = { p.id: get_profile_info(p, compute_conflicts_n_years) for p in sac_user_profiles }
-
+                sac_user_info_by_id = { p.id: info_function(p, compute_conflicts_n_years) for p in sac_user_profiles }
         edges = []
 
         for submission in tqdm(submissions, total=len(submissions), desc='_build_conflicts'):
@@ -269,7 +269,7 @@ class Matching(object):
             author_publications = set()
             for authorid in authorids:
                 if author_profile_by_id.get(authorid):
-                    author_info = get_profile_info(author_profile_by_id[authorid], compute_conflicts_n_years)
+                    author_info = info_function(author_profile_by_id[authorid], compute_conflicts_n_years)
                     author_domains.update(author_info['domains'])
                     author_emails.update(author_info['emails'])
                     author_relations.update(author_info['relations'])
@@ -326,8 +326,9 @@ class Matching(object):
         invitation = self._create_edge_invitation(self.venue.get_conflict_score_id(self.match_group.id))
         invitation_id = invitation.id
         # Get profile info from the match group
-        user_profiles_info = [openreview.tools.get_profile_info(p, compute_conflicts_n_years) for p in user_profiles]
-        head_profiles_info = [openreview.tools.get_profile_info(p, compute_conflicts_n_years) for p in head_profiles]
+        info_function = openreview.tools.info_function_builder(openreview.tools.get_profile_info)
+        user_profiles_info = [info_function(p, compute_conflicts_n_years) for p in user_profiles]
+        head_profiles_info = [info_function(p, compute_conflicts_n_years) for p in head_profiles]
 
         edges = []
 

@@ -17,8 +17,8 @@ from selenium.common.exceptions import NoSuchElementException
 class TestCVPRSConference():
 
     @pytest.fixture(scope="class")
-    def conference(self, client):
-        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+    def conference(self, client, helpers):
+        pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         conference=openreview.helpers.get_conference(pc_client, request_form.id)
@@ -161,7 +161,7 @@ class TestCVPRSConference():
         assert client.get_invitation('thecvf.com/CVPR/2023/Conference/Authors/-/Registration')
     
     def test_ac_registration_stage(self, conference, client, helpers):
-        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         conference=openreview.helpers.get_conference(client, request_form.id)
         fields = {
@@ -237,7 +237,7 @@ class TestCVPRSConference():
     
     def test_setup_first_deadline(self, conference, helpers, test_client, client, request_page, selenium):
 
-        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         now = datetime.datetime.utcnow()
@@ -300,7 +300,7 @@ class TestCVPRSConference():
     def test_post_submission_stage(self, conference, helpers, test_client, client, request_page, selenium):
 
         #conference.setup_final_deadline_stage(force=True)
-        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         post_submission_note=pc_client.post_note(openreview.Note(
@@ -323,7 +323,7 @@ class TestCVPRSConference():
     def test_reviewer_recommendation(self, conference, helpers, test_client, client):
 
         now = datetime.datetime.utcnow()
-        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         pc_client.add_members_to_group('thecvf.com/CVPR/2023/Conference/Area_Chairs', ['~AC_CVPROne1', '~AC_CVPRTwo1'])
         pc_client.add_members_to_group('thecvf.com/CVPR/2023/Conference/Reviewers', ['~Reviewer_CVPROne1', '~Reviewer_CVPRTwo1', '~Reviewer_CVPRThree1', '~Reviewer_CVPRFour1', '~Reviewer_CVPRFive1', '~Reviewer_CVPRSix1'])
@@ -512,7 +512,7 @@ class TestCVPRSConference():
         client.add_members_to_group('thecvf.com/CVPR/2023/Conference/Paper5/Area_Chairs', 'thecvf.com/CVPR/2023/Conference/Paper5/Secondary_Area_Chairs')
     
         ## Set the meta review stage
-        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         now = datetime.datetime.utcnow()
@@ -538,8 +538,8 @@ class TestCVPRSConference():
 
         helpers.await_queue() 
 
-        ac1_client = openreview.Client(username='ac1@cvpr.cc', password='1234')       
-        ac2_client = openreview.Client(username='ac2@cvpr.cc', password='1234')
+        ac1_client = openreview.Client(username='ac1@cvpr.cc', password=helpers.strong_password)       
+        ac2_client = openreview.Client(username='ac2@cvpr.cc', password=helpers.strong_password)
 
         invitations = ac1_client.get_invitations(invitee=True, super='thecvf.com/CVPR/2023/Conference/-/Meta_Review')
         assert len(invitations) == 3
@@ -786,7 +786,7 @@ class TestCVPRSConference():
         submissions=conference.get_submissions(number=1)
         assert len(submissions) == 1
 
-        ac_client = openreview.Client(username='ac1@cvpr.cc', password='1234')
+        ac_client = openreview.Client(username='ac1@cvpr.cc', password=helpers.strong_password)
         signatory_groups=client.get_groups(regex='thecvf.com/CVPR/2023/Conference/Paper1/Area_Chair_', signatory='ac1@cvpr.cc')
         assert len(signatory_groups) == 1
 
@@ -878,7 +878,7 @@ class TestCVPRSConference():
 
     def test_decision_stage(self, conference, helpers, client):
 
-        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         now = datetime.datetime.utcnow()
@@ -932,7 +932,7 @@ class TestCVPRSConference():
 
     def test_camera_ready_stage(self, conference, helpers, client):
 
-        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         now = datetime.datetime.utcnow()
@@ -970,7 +970,7 @@ class TestCVPRSConference():
 
     def test_post_decision_stage(self, conference, helpers, client):
 
-        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         invitation = client.get_invitation('openreview.net/Support/-/Request{}/Post_Decision_Stage'.format(request_form.number))

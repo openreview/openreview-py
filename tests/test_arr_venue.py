@@ -12,8 +12,8 @@ import random
 class TestARRVenue():
 
     @pytest.fixture(scope="class")
-    def venue(self, client):
-        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
+    def venue(self, client, helpers):
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         conference=openreview.helpers.get_conference(pc_client, request_form.id)
@@ -102,7 +102,7 @@ class TestARRVenue():
 
     def test_recruit_actions_editors(self, client, helpers, request_page, selenium):
 
-        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         ## Invite ~Area_CMUChair1 as AC
@@ -289,7 +289,7 @@ class TestARRVenue():
 
     def test_recruit_ethic_chairs(self, client, helpers, request_page, selenium):
 
-        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         reviewer_details = '''ethic_chair@arr.org, Ethics Chair'''
@@ -331,7 +331,7 @@ class TestARRVenue():
 
     def test_recruit_ethic_reviewers(self, client, helpers, request_page, selenium):
 
-        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         ## Invite ~Area_CMUChair1 as AC
@@ -371,9 +371,9 @@ class TestARRVenue():
         assert 'ethic_reviewer@arr.org' in accepted_group.members
         assert client.get_messages(to = 'ethic_reviewer@arr.org', subject = '[ARR 2021 - September] Ethics Reviewer Invitation accepted')
 
-    def test_registration_tasks(self, client):
+    def test_registration_tasks(self, client, helpers):
 
-        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
         conference=openreview.helpers.get_conference(pc_client, request_form.id)
 
@@ -508,7 +508,7 @@ class TestARRVenue():
 
         now = datetime.datetime.utcnow()
 
-        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
 
         venue.set_area_chairs(['~Area_CMUChair1', '~Area_MITChair1', '~Area_AmazonChair1'])
 
@@ -742,7 +742,7 @@ If you would like to change your decision, please click the Accept link in the p
 OpenReview Team'''
 
         ## Check the AC console edge browser url
-        ac_client = openreview.Client(username='ac1@gmail.com', password='1234')
+        ac_client = openreview.Client(username='ac1@gmail.com', password=helpers.strong_password)
         request_page(selenium, "http://localhost:3030/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs", ac_client.token, wait_for_element='edge_browser_url')
         header = selenium.find_element_by_id("header")
         assert header
@@ -860,7 +860,7 @@ Please go to the Area Chair console: https://openreview.net/group?id=aclweb.org/
 OpenReview Team'''
 
         ## Check the AC console edge browser url
-        ac_client = openreview.Client(username='ac1@gmail.com', password='1234')
+        ac_client = openreview.Client(username='ac1@gmail.com', password=helpers.strong_password)
         request_page(selenium, "http://localhost:3030/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs", ac_client.token, wait_for_element='edge_browser_url')
         header = selenium.find_element_by_id("header")
         assert header
@@ -911,7 +911,7 @@ OpenReview Team'''
 
     def test_review_stage(self, venue, client, helpers):
 
-        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         # Post a review stage note
@@ -938,7 +938,7 @@ OpenReview Team'''
         assert review_stage_note
         helpers.await_queue()
 
-        reviewer_client = openreview.Client(username='reviewer_arr4@fb.com', password='1234')
+        reviewer_client = openreview.Client(username='reviewer_arr4@fb.com', password=helpers.strong_password)
         signatory_groups=client.get_groups(regex='aclweb.org/ACL/ARR/2021/September/Paper5/Reviewer_', signatory='reviewer_arr4@fb.com')
         assert len(signatory_groups) == 1
 
@@ -966,8 +966,8 @@ OpenReview Team'''
 
     def test_ethics_review_stage(self, venue, client, helpers):
 
-        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
-        ethics_chair_client=openreview.Client(username='ethic_chair@arr.org', password='1234')
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        ethics_chair_client=openreview.Client(username='ethic_chair@arr.org', password=helpers.strong_password)
         ## Need super user permission to add the venue to the active_venues group
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
@@ -1109,7 +1109,7 @@ OpenReview Team'''
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper5/-/Ethics_Review')
 
     def test_comment_email_pcs(self, venue, client, helpers, test_client):
-        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
         now = datetime.datetime.utcnow()
         end_date = now + datetime.timedelta(days=3)
