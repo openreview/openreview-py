@@ -6,14 +6,13 @@ if sys.version_info[0] < 3:
 else:
     string_types = [str]
 
-from . import tools
+import openreview
 import requests
 from requests.adapters import HTTPAdapter, Retry
 import pprint
 import os
 import re
 import jwt
-import traceback
 
 
 class OpenReviewException(Exception):
@@ -248,7 +247,7 @@ class Client(object):
         if domain:
             params['domain'] = domain
 
-        response = self.session.get(self.institutions_url, params = tools.format_params(params), headers = self.headers)
+        response = self.session.get(self.institutions_url, params = openreview.tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
     
@@ -364,7 +363,7 @@ class Client(object):
             else:
                 att = 'confirmedEmail'
             params[att] = email_or_id
-        response = self.session.get(self.profiles_url, params=tools.format_params(params), headers = self.headers)
+        response = self.session.get(self.profiles_url, params=openreview.tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         profiles = response.json()['profiles']
         if profiles:
@@ -489,7 +488,7 @@ class Client(object):
 
         url = self.pdf_revisions_url if is_reference else self.pdf_url
 
-        response = self.session.get(url, params=tools.format_params(params), headers = headers)
+        response = self.session.get(url, params=openreview.tools.format_params(params), headers = headers)
         response = self.__handle_response(response)
         return response.content
 
@@ -538,7 +537,7 @@ class Client(object):
         if invitations is not None:
             params['invitations'] = ','.join(invitations)
 
-        response = self.session.get(self.venues_url, params=tools.format_params(params), headers=self.headers)
+        response = self.session.get(self.venues_url, params=openreview.tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
 
         return response.json()['venues']
@@ -694,7 +693,7 @@ class Client(object):
         params['limit'] = limit
         params['offset'] = offset
 
-        response = self.session.get(self.groups_url, params=tools.format_params(params), headers = self.headers)
+        response = self.session.get(self.groups_url, params=openreview.tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         groups = [Group.from_json(g) for g in response.json()['groups']]
 
@@ -737,7 +736,7 @@ class Client(object):
             'offset': offset,
             'with_count': with_count
         }
-        return tools.concurrent_get(self, self.get_groups, **params)
+        return openreview.tools.concurrent_get(self, self.get_groups, **params)
 
     def get_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False, select=None):
         """
@@ -816,7 +815,7 @@ class Client(object):
         params['offset'] = offset
         params['expired'] = expired
 
-        response = self.session.get(self.invitations_url, params=tools.format_params(params), headers=self.headers)
+        response = self.session.get(self.invitations_url, params=openreview.tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
 
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
@@ -891,7 +890,7 @@ class Client(object):
             'with_count': with_count
        }
 
-        return tools.concurrent_get(self, self.get_invitations, **params)
+        return openreview.tools.concurrent_get(self, self.get_invitations, **params)
 
     def get_notes(self, id = None,
             paperhash = None,
@@ -1014,7 +1013,7 @@ class Client(object):
         params['sort'] = sort
         params['original'] = original
 
-        response = self.session.get(self.notes_url, params=tools.format_params(params), headers=self.headers)
+        response = self.session.get(self.notes_url, params=openreview.tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
 
         notes = [Note.from_json(n) for n in response.json()['notes']]
@@ -1123,7 +1122,7 @@ class Client(object):
             'sort': sort,
             'with_count': with_count
         }
-        return tools.concurrent_get(self, self.get_notes, **params)
+        return openreview.tools.concurrent_get(self, self.get_notes, **params)
 
     def get_reference(self, id):
         """
@@ -1179,7 +1178,7 @@ class Client(object):
         if trash:
             params['trash'] = trash
 
-        response = self.session.get(self.reference_url, params=tools.format_params(params), headers = self.headers)
+        response = self.session.get(self.reference_url, params=openreview.tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         references = [Note.from_json(n) for n in response.json()['references']]
@@ -1221,7 +1220,7 @@ class Client(object):
             'with_count': with_count
         }
 
-        return tools.concurrent_get(self, self.get_references, **params)
+        return openreview.tools.concurrent_get(self, self.get_references, **params)
 
     def get_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None, with_count=False):
         """
@@ -1254,7 +1253,7 @@ class Client(object):
         if offset is not None:
             params['offset'] = offset
 
-        response = self.session.get(self.tags_url, params=tools.format_params(params), headers = self.headers)
+        response = self.session.get(self.tags_url, params=openreview.tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         tags = [Tag.from_json(t) for t in response.json()['tags']]
@@ -1289,7 +1288,7 @@ class Client(object):
             'with_count': with_count
         }
 
-        return tools.concurrent_get(self, self.get_tags, **params)
+        return openreview.tools.concurrent_get(self, self.get_tags, **params)
 
     def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None, with_count=False, trash = None):
         """
@@ -1313,7 +1312,7 @@ class Client(object):
         params['sort'] = sort
         params['trash'] = trash
 
-        response = self.session.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
+        response = self.session.get(self.edges_url, params=openreview.tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         edges = [Edge.from_json(e) for e in response.json()['edges']]
@@ -1346,7 +1345,7 @@ class Client(object):
             'trash': trash
         }
 
-        return tools.concurrent_get(self, self.get_edges, **params)
+        return openreview.tools.concurrent_get(self, self.get_edges, **params)
 
     def get_edges_count(self, id = None, invitation = None, head = None, tail = None, label = None):
         """
@@ -1366,7 +1365,7 @@ class Client(object):
         params['tail'] = tail
         params['label'] = label
 
-        response = self.session.get(self.edges_count_url, params=tools.format_params(params), headers = self.headers)
+        response = self.session.get(self.edges_count_url, params=openreview.tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         count = response.json()['count']
 
@@ -1396,7 +1395,7 @@ class Client(object):
         params['select'] = select
         params['limit'] = limit
         params['offset'] = offset
-        response = self.session.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
+        response = self.session.get(self.edges_url, params=openreview.tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         json = response.json()
         return json['groupedEdges'] # a list of JSON objects holding information about an edge
@@ -1786,7 +1785,7 @@ class Client(object):
         if offset is not None:
             params['offset'] = offset
 
-        response = self.session.get(self.notes_url + '/search', params=tools.format_params(params), headers = self.headers)
+        response = self.session.get(self.notes_url + '/search', params=openreview.tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         return [Note.from_json(n) for n in response.json()['notes']]
 
@@ -1822,7 +1821,7 @@ class Client(object):
             'status': status
        }
 
-        return tools.concurrent_get(self, self.get_messages, **params)
+        return openreview.tools.concurrent_get(self, self.get_messages, **params)
 
 
     def get_messages(self, to = None, subject = None, status = None, offset = None, limit = None, with_count = False):
@@ -1841,7 +1840,7 @@ class Client(object):
         """
 
         params = { 'to': to, 'subject': subject, 'status': status, 'offset': offset, 'limit': limit }
-        response = self.session.get(self.messages_url, params=tools.format_params(params), headers=self.headers)
+        response = self.session.get(self.messages_url, params=openreview.tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
 
         messages = response.json()['messages']
@@ -2746,7 +2745,7 @@ class Profile(object):
             if 'username' in name and name.get('preferred', False):
                 username=name['username']
         if pretty:
-            return tools.pretty_id(username)
+            return openreview.tools.pretty_id(username)
         return username
 
     def get_preferred_email(self):

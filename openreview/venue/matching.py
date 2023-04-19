@@ -240,7 +240,7 @@ class Matching(object):
         invitation = self._create_edge_invitation(self.venue.get_conflict_score_id(self.match_group.id))
         invitation_id = invitation.id
         # Get profile info from the match group
-        info_function = tools.info_function_builder(get_profile_info)
+        info_function = tools.info_function_builder(self.client, get_profile_info)
         user_profiles_info = [info_function(p, compute_conflicts_n_years) for p in user_profiles]
         # Get profile info from all the authors
         all_authorids = []
@@ -331,7 +331,7 @@ class Matching(object):
         invitation = self._create_edge_invitation(self.venue.get_conflict_score_id(self.match_group.id))
         invitation_id = invitation.id
         # Get profile info from the match group
-        info_function = openreview.tools.info_function_builder(openreview.tools.get_profile_info)
+        info_function = openreview.tools.info_function_builder(self.client, openreview.tools.get_profile_info)
         user_profiles_info = [info_function(p, compute_conflicts_n_years) for p in user_profiles]
         head_profiles_info = [info_function(p, compute_conflicts_n_years) for p in head_profiles]
 

@@ -61,7 +61,7 @@ def process(client, edge, invitation):
         if submission.details and submission.details.get('original'):
             authorids = submission.details['original']['content']['authorids']
         author_profiles = openreview.tools.get_profiles(client, authorids)
-        conflicts=openreview.tools.get_conflicts(author_profiles, user_profile)
+        conflicts=openreview.tools.get_conflicts(client, author_profiles, user_profile)
         if conflicts:
             print('Conflicts detected', conflicts)
             raise openreview.OpenReviewException(f'Conflict detected for {user_profile.get_preferred_name(pretty=True)}')

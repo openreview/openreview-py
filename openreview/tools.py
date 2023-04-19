@@ -18,6 +18,7 @@ import tld
 import urllib.parse as urlparse
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
+from multipledispatch import dispatch
 
 def decision_to_venue(venue_id, decision_option):
     """
@@ -550,6 +551,12 @@ def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='un
         ]
         return '\n'.join(rejected_bibtex)
 
+@dispatch(openreview.Client)
+@run_once
+def load_duplicate_domains(client):
+    return client.get_duplicate_domains()
+
+@dispatch()
 @run_once
 def load_duplicate_domains():
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -559,8 +566,7 @@ def load_duplicate_domains():
     f.close()
     return duplicate_domains
 
-
-def subdomains(domain):
+def subdomains(domain, duplicate_domains={}):
     """
     Given an email address, returns a list with the domains and subdomains.
 
@@ -575,8 +581,6 @@ def subdomains(domain):
     >>> subdomains('johnsmith@iesl.cs.umass.edu')
     [u'iesl.cs.umass.edu', u'cs.umass.edu', u'umass.edu']
     """
-
-    duplicate_domains: dict = load_duplicate_domains()
     domain_components = [c for c in domain.split('.') if c and not c.isspace()]
     domains = ['.'.join(domain_components[index:len(domain_components)]) for index, path in enumerate(domain_components)]
     valid_domains = set()
@@ -1244,10 +1248,12 @@ def get_all_venues(client):
     """
     return client.get_group("host").members
 
+@dispatch(object)
 def info_function_builder(policy_function):
-    def inner(profile, n_years=None, submission_venueid=None):
-        common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
+    common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
                     'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
+    duplicate_domains = load_duplicate_domains()
+    def inner(profile, n_years=None):
         argspec = inspect.getfullargspec(policy_function)
         if 'submission_venueid' in argspec.args:
             result = policy_function(profile, n_years, submission_venueid)
@@ -1257,7 +1263,7 @@ def info_function_builder(policy_function):
         subdomains_dict = {}
         for domain in result['domains']:
             if domain not in subdomains_dict:
-                subdomains = openreview.tools.subdomains(domain)
+                subdomains = openreview.tools.subdomains(domain, duplicate_domains)
                 subdomains_dict[domain] = subdomains
             domains.update(subdomains_dict[domain])
 
@@ -1269,6 +1275,82 @@ def info_function_builder(policy_function):
         return result
     return inner
 
+@dispatch(openreview.Client, object)
+def info_function_builder(client, policy_function):
+    common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
+                    'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
+    duplicate_domains = load_duplicate_domains(client)
+    def inner(profile, n_years=None):
+        argspec = inspect.getfullargspec(policy_function)
+        if 'submission_venueid' in argspec.args:
+            result = policy_function(profile, n_years, submission_venueid)
+        else:
+            result = policy_function(profile, n_years)
+        domains = set()
+        subdomains_dict = {}
+        for domain in result['domains']:
+            if domain not in subdomains_dict:
+                subdomains = openreview.tools.subdomains(domain, duplicate_domains)
+                subdomains_dict[domain] = subdomains
+            domains.update(subdomains_dict[domain])
+
+        # Filter common domains
+        for common_domain in common_domains:
+            domains.discard(common_domain)
+
+        result['domains'] = list(domains)
+        return result
+    return inner
+
+@dispatch(openreview.Client, list, openreview.Profile, policy=object, n_years=int)
+def get_conflicts(client, author_profiles, user_profile, policy='default', n_years=None):
+    """
+    Finds conflicts between the passed user Profile and the author Profiles passed as arguments
+
+    :param author_profiles: List of Profiles for which an association is to be found
+    :type author_profiles: list[Profile]
+    :param user_profile: Profile for which the conflicts will be found
+    :type user_profile: Profile
+    :param policy: Policy can be either a function or a string. If it is a function, it will be called with the user Profile and the author Profile as arguments. If it is a string, it will be used to find the corresponding function in the default policy dictionary. If no policy is passed, the default policy will be used.
+    :type policy: str or function, optional
+    :param n_years: Number of years to be considered for conflict detection.
+    :type n_years: int, optional
+
+    :return: List containing all the conflicts between the user Profile and the author Profiles
+    :rtype: list[str]
+    """
+
+    author_domains = set()
+    author_emails = set()
+    author_relations = set()
+    author_publications = set()
+
+    if callable(policy):
+        info_function = info_function_builder(client, policy)
+    elif policy == 'neurips':
+        info_function = info_function_builder(client, get_neurips_profile_info)
+    else:
+        info_function = info_function_builder(client, get_profile_info)
+
+    for profile in author_profiles:
+        author_info = info_function(profile, n_years)
+        author_domains.update(author_info['domains'])
+        author_emails.update(author_info['emails'])
+        author_relations.update(author_info['relations'])
+        author_publications.update(author_info['publications'])
+
+    user_info = info_function(user_profile, n_years)
+
+    conflicts = set()
+    conflicts.update(author_domains.intersection(user_info['domains']))
+    conflicts.update(author_relations.intersection(user_info['emails']))
+    conflicts.update(author_emails.intersection(user_info['relations']))
+    conflicts.update(author_emails.intersection(user_info['emails']))
+    conflicts.update(author_publications.intersection(user_info['publications']))
+
+    return list(conflicts)
+
+@dispatch(list, openreview.Profile, policy=object, n_years=int)
 def get_conflicts(author_profiles, user_profile, policy='default', n_years=None):
     """
     Finds conflicts between the passed user Profile and the author Profiles passed as arguments

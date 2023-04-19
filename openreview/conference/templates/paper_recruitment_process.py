@@ -99,7 +99,7 @@ OpenReview Team'''
             authorids = submission.details['original']['content']['authorids']
         author_profiles = openreview.tools.get_profiles(client, authorids, with_publications=True)
         profiles=openreview.tools.get_profiles(client, [edge.tail], with_publications=True)
-        conflicts=openreview.tools.get_conflicts(author_profiles, profiles[0])
+        conflicts=openreview.tools.get_conflicts(client, author_profiles, profiles[0])
         if conflicts:
             print('Conflicts detected', conflicts)
             edge.label='Conflict Detected'

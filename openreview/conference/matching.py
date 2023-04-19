@@ -239,7 +239,7 @@ class Matching(object):
         if user_profiles[0].active == None:
             raise openreview.OpenReviewException('No profile exists')
         get_profile_info = openreview.tools.get_neurips_profile_info if build_conflicts == 'NeurIPS' else openreview.tools.get_profile_info
-        info_function = openreview.tools.info_function_builder(get_profile_info)
+        info_function = openreview.tools.info_function_builder(self.client, get_profile_info)
         user_profiles_info = [info_function(p) for p in user_profiles]
 
         # Re-setup information that would have been initialized in setup()
@@ -315,7 +315,7 @@ class Matching(object):
         '''
         Create conflict edges between the given Notes and Profiles
         '''
-        info_function = tools.info_function_builder(get_profile_info)
+        info_function = tools.info_function_builder(self.client, get_profile_info)
         invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id))
         # Get profile info from the match group
         user_profiles_info = [info_function(p, compute_conflicts_n_years) for p in user_profiles]
@@ -390,7 +390,7 @@ class Matching(object):
         '''
         invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id))
         # Get profile info from the match group
-        info_function = openreview.tools.info_function_builder(openreview.tools.get_profile_info)
+        info_function = openreview.tools.info_function_builder(self.client, openreview.tools.get_profile_info)
         user_profiles_info = [info_function(p) for p in user_profiles]
         head_profiles_info = [info_function(p) for p in head_profiles]
 

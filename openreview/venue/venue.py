@@ -877,7 +877,7 @@ OpenReview Team'''
 
                                             ## Check conflicts
                                             author_profiles = openreview.tools.get_profiles(client, submission.content['authorids']['value'], with_publications=True)
-                                            conflicts=openreview.tools.get_conflicts(author_profiles, user_profile, policy=venue_group.content.get('reviewers_conflict_policy', {}).get('value'), n_years=venue_group.content.get('reviewers_conflict_n_years', {}).get('value'))
+                                            conflicts=openreview.tools.get_conflicts(client, author_profiles, user_profile, policy=venue_group.content.get('reviewers_conflict_policy', {}).get('value'), n_years=venue_group.content.get('reviewers_conflict_n_years', {}).get('value'))
 
                                             if conflicts:
                                                 print(f'Conflicts detected for {edge.head} and {user_profile.id}', conflicts)

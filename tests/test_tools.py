@@ -350,15 +350,27 @@ class TestTools():
             result = client.search_profiles(term=author)
             assert any([email in p.content['emails'] for p in result])
 
-    def test_subdomains(self):
+    def test_subdomains(self, client):
+        duplicate_domains = openreview.tools.load_duplicate_domains()
         # ensure that two part top-level domains are handled appropriately
         # e.g. "edu.cn", "ac.uk"
-        assert openreview.tools.subdomains('mails.tsinghua.edu.cn') == ['mails.tsinghua.edu.cn', 'tsinghua.edu']
-        assert openreview.tools.subdomains('robots.ox.ac.uk') == ['oxford.ac.uk', 'robots.ox.ac.uk']
-        assert openreview.tools.subdomains('eng.ox.ac.uk') == ['eng.ox.ac.uk', 'oxford.ac.uk']
-        assert openreview.tools.subdomains('ground.ai') == ['ground.ai']
-        assert openreview.tools.subdomains('cs.umass.edu') == ['cs.umass.edu', 'umass.edu']
-        assert openreview.tools.subdomains('   ') == []
+        assert openreview.tools.subdomains('mails.tsinghua.edu.cn', duplicate_domains) == ['tsinghua.edu.cn']
+        assert openreview.tools.subdomains('robots.ox.ac.uk', duplicate_domains) == ['ox.ac.uk']
+        assert openreview.tools.subdomains('eng.ox.ac.uk', duplicate_domains) == ['ox.ac.uk']
+        assert openreview.tools.subdomains('ground.ai', duplicate_domains) == ['ground.ai']
+        assert openreview.tools.subdomains('cs.umass.edu', duplicate_domains) == ['umass.edu']
+        assert openreview.tools.subdomains('   ', duplicate_domains) == []
+
+        duplicate_domains = openreview.tools.load_duplicate_domains(client)
+        # ensure that two part top-level domains are handled appropriately
+        # e.g. "edu.cn", "ac.uk"
+
+        assert openreview.tools.subdomains('mails.tsinghua.edu.cn', duplicate_domains) == ['tsinghua.edu.cn']
+        assert openreview.tools.subdomains('robots.ox.ac.uk', duplicate_domains) == ['ox.ac.uk']
+        assert openreview.tools.subdomains('eng.ox.ac.uk', duplicate_domains) == ['ox.ac.uk']
+        assert openreview.tools.subdomains('ground.ai', duplicate_domains) == ['ground.ai']
+        assert openreview.tools.subdomains('cs.umass.edu', duplicate_domains) == ['umass.edu']
+        assert openreview.tools.subdomains('   ', duplicate_domains) == []
 
     def test_replace_members_with_ids(self, client, test_client):
         posted_group = client.post_group(openreview.Group(id='test.org',
@@ -479,21 +491,21 @@ class TestTools():
         helpers.create_user('user@gmail.com', 'First', 'Last')
         user_profile = client.get_profile(email_or_id='user@gmail.com')
 
-        conflicts = openreview.tools.get_conflicts([user_profile], user_profile)
+        conflicts = openreview.tools.get_conflicts(client, [user_profile], user_profile)
         assert conflicts
         assert conflicts[0] == 'user@gmail.com'
 
         helpers.create_user('user@qq.com', 'First', 'Last')
         user_profile = client.get_profile(email_or_id='user@qq.com')
 
-        conflicts = openreview.tools.get_conflicts([user_profile], user_profile)
+        conflicts = openreview.tools.get_conflicts(client, [user_profile], user_profile)
         assert conflicts
         assert conflicts[0] == 'user@qq.com'
 
         helpers.create_user('user2@qq.com', 'First', 'Last')
         user2_profile = client.get_profile(email_or_id='user2@qq.com')
 
-        conflicts = openreview.tools.get_conflicts([user2_profile], user_profile)
+        conflicts = openreview.tools.get_conflicts(client, [user2_profile], user_profile)
         assert len(conflicts) == 0
 
         guest_client = openreview.Client()
@@ -501,7 +513,7 @@ class TestTools():
         user2_profile = guest_client.get_profile(email_or_id='user2@qq.com')
 
         with pytest.raises(OpenReviewException) as error:
-            openreview.tools.get_conflicts([user2_profile], user_profile)
+            openreview.tools.get_conflicts(client, [user2_profile], user_profile)
         assert "You do not have the required permissions as some emails are obfuscated" in error.value.args[0]
 
         profile1 = openreview.Profile(
@@ -555,21 +567,21 @@ class TestTools():
             }
         )
 
-        conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2)
+        conflicts = openreview.tools.get_conflicts(client, [profile1, intern_profile], profile2)
         assert len(conflicts) == 2
         assert 'cmu.edu' in conflicts
         assert 'umass.edu' in conflicts
 
-        neurips_conflicts = openreview.tools.get_conflicts([intern_profile], profile2, policy='NeurIPS')
+        neurips_conflicts = openreview.tools.get_conflicts(client, [intern_profile], profile2, policy='NeurIPS')
         assert len(neurips_conflicts) == 1
         assert 'cmu.edu' in conflicts
 
-        conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy=openreview.tools.get_profile_info)
+        conflicts = openreview.tools.get_conflicts(client, [profile1, intern_profile], profile2, policy=openreview.tools.get_profile_info)
         assert len(conflicts) == 2
         assert 'cmu.edu' in conflicts
         assert 'umass.edu' in conflicts
 
-        neurips_conflicts = openreview.tools.get_conflicts([intern_profile], profile2, policy=openreview.tools.get_neurips_profile_info)
+        neurips_conflicts = openreview.tools.get_conflicts(client, [intern_profile], profile2, policy=openreview.tools.get_neurips_profile_info)
         assert len(neurips_conflicts) == 1
         assert 'cmu.edu' in conflicts
 
@@ -606,7 +618,7 @@ class TestTools():
                 'publications': publications
             }
         
-        conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy=cmu_is_a_never_conflict)
+        conflicts = openreview.tools.get_conflicts(client, [profile1, intern_profile], profile2, policy=cmu_is_a_never_conflict)
         assert len(conflicts) == 1
         assert 'umass.edu' in conflicts
 
