@@ -16,10 +16,10 @@ class TestJournal():
 
 
     @pytest.fixture(scope="class")
-    def journal(self, openreview_client):
+    def journal(self, openreview_client, helpers):
 
         venue_id = 'TMLR'
-        fabian_client=OpenReviewClient(username='fabian@mail.com', password='1234')
+        fabian_client=OpenReviewClient(username='fabian@mail.com', password=helpers.strong_password)
         fabian_client.impersonate('TMLR/Editors_In_Chief')
 
         requests = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': venue_id })
@@ -154,7 +154,7 @@ class TestJournal():
         assert len(group.members) == 9
         assert '~Joelle_Pineau1' in group.members
 
-        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password='1234')
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password=helpers.strong_password)
         request_page(selenium, "http://localhost:3030/group?id=TMLR/Action_Editors", joelle_client.token, wait_for_element='group-container')
         header = selenium.find_element_by_id('header')
         assert header
@@ -210,17 +210,17 @@ class TestJournal():
         openreview_client.remove_members_from_group('TMLR/Reviewers', 'zach@mail.com')
 
         venue_id = journal.venue_id
-        test_client = OpenReviewClient(username='test@mail.com', password='1234')
-        raia_client = OpenReviewClient(username='raia@mail.com', password='1234')
-        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password='1234')
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        raia_client = OpenReviewClient(username='raia@mail.com', password=helpers.strong_password)
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password=helpers.strong_password)
 
 
         ## Reviewers
-        david_client=OpenReviewClient(username='david@mailone.com', password='1234')
-        javier_client=OpenReviewClient(username='javier@mailtwo.com', password='1234')
-        carlos_client=OpenReviewClient(username='carlos@mailthree.com', password='1234')
-        andrew_client=OpenReviewClient(username='andrewmc@mailfour.com', password='1234')
-        hugo_client=OpenReviewClient(username='hugo@mailsix.com', password='1234')
+        david_client=OpenReviewClient(username='david@mailone.com', password=helpers.strong_password)
+        javier_client=OpenReviewClient(username='javier@mailtwo.com', password=helpers.strong_password)
+        carlos_client=OpenReviewClient(username='carlos@mailthree.com', password=helpers.strong_password)
+        andrew_client=OpenReviewClient(username='andrewmc@mailfour.com', password=helpers.strong_password)
+        hugo_client=OpenReviewClient(username='hugo@mailsix.com', password=helpers.strong_password)
 
         ## Set a max quota
         david_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Custom_Max_Papers',
@@ -233,7 +233,7 @@ class TestJournal():
         ))
 
         peter_client=helpers.create_user('petersnow@yahoo.com', 'Peter', 'Snow')
-        peter_client=OpenReviewClient(username='petersnow@yahoo.com', password='1234')
+        peter_client=OpenReviewClient(username='petersnow@yahoo.com', password=helpers.strong_password)
         if os.environ.get("OPENREVIEW_USERNAME"):
             os.environ.pop("OPENREVIEW_USERNAME")
         if os.environ.get("OPENREVIEW_PASSWORD"):
@@ -947,7 +947,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
 
         ## Create the user
         helpers.create_user('antony@irobot.com', 'Antony', 'Bal')
-        antony_client = OpenReviewClient(username='antony@irobot.com', password='1234')
+        antony_client = OpenReviewClient(username='antony@irobot.com', password=helpers.strong_password)
 
 
         david_anon_groups=david_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~David_Belanger1')
@@ -2301,21 +2301,21 @@ note={Retracted after acceptance}
 
         venue_id = journal.venue_id
         editor_in_chief_group_id = journal.get_editors_in_chief_id()
-        test_client = OpenReviewClient(username='test@mail.com', password='1234')
-        raia_client = OpenReviewClient(username='raia@mail.com', password='1234')
-        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password='1234')
-        peter_client = OpenReviewClient(username='petersnow@yahoo.com', password='1234')
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        raia_client = OpenReviewClient(username='raia@mail.com', password=helpers.strong_password)
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password=helpers.strong_password)
+        peter_client = OpenReviewClient(username='petersnow@yahoo.com', password=helpers.strong_password)
         tom_client=helpers.create_user('tom@mail.com', 'Tom', 'Rain')
-        tom_client = OpenReviewClient(username='tom@mail.com', password='1234')
+        tom_client = OpenReviewClient(username='tom@mail.com', password=helpers.strong_password)
 
 
 
         ## Reviewers
-        david_client=OpenReviewClient(username='david@mailone.com', password='1234')
-        javier_client=OpenReviewClient(username='javier@mailtwo.com', password='1234')
-        carlos_client=OpenReviewClient(username='carlos@mailthree.com', password='1234')
-        andrew_client=OpenReviewClient(username='andrewmc@mailfour.com', password='1234')
-        hugo_client=OpenReviewClient(username='hugo@mailsix.com', password='1234')
+        david_client=OpenReviewClient(username='david@mailone.com', password=helpers.strong_password)
+        javier_client=OpenReviewClient(username='javier@mailtwo.com', password=helpers.strong_password)
+        carlos_client=OpenReviewClient(username='carlos@mailthree.com', password=helpers.strong_password)
+        andrew_client=OpenReviewClient(username='andrewmc@mailfour.com', password=helpers.strong_password)
+        hugo_client=OpenReviewClient(username='hugo@mailsix.com', password=helpers.strong_password)
 
         now = datetime.datetime.utcnow()
 
@@ -2448,7 +2448,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
             assert len(edges[1]['values']) == 2
 
         ## Ask solicit review and then delete it
-        celeste_client = OpenReviewClient(username='celeste@mailnine.com', password='1234')
+        celeste_client = OpenReviewClient(username='celeste@mailnine.com', password=helpers.strong_password)
 
         volunteer_to_review_note = celeste_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Volunteer_to_Review',
             signatures=['~Celeste_Ana_Martinez1'],
@@ -2885,17 +2885,17 @@ note={Rejected}
 
         venue_id = journal.venue_id
         editor_in_chief_group_id = journal.get_editors_in_chief_id()
-        raia_client = OpenReviewClient(username='raia@mail.com', password='1234')
-        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password='1234')
-        cho_client = OpenReviewClient(username='kyunghyun@mail.com', password='1234')
+        raia_client = OpenReviewClient(username='raia@mail.com', password=helpers.strong_password)
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password=helpers.strong_password)
+        cho_client = OpenReviewClient(username='kyunghyun@mail.com', password=helpers.strong_password)
 
 
         ## Reviewers
-        david_client=OpenReviewClient(username='david@mailone.com', password='1234')
-        javier_client=OpenReviewClient(username='javier@mailtwo.com', password='1234')
-        carlos_client=OpenReviewClient(username='carlos@mailthree.com', password='1234')
-        andrew_client=OpenReviewClient(username='andrewmc@mailfour.com', password='1234')
-        hugo_client=OpenReviewClient(username='hugo@mailsix.com', password='1234')
+        david_client=OpenReviewClient(username='david@mailone.com', password=helpers.strong_password)
+        javier_client=OpenReviewClient(username='javier@mailtwo.com', password=helpers.strong_password)
+        carlos_client=OpenReviewClient(username='carlos@mailthree.com', password=helpers.strong_password)
+        andrew_client=OpenReviewClient(username='andrewmc@mailfour.com', password=helpers.strong_password)
+        hugo_client=OpenReviewClient(username='hugo@mailsix.com', password=helpers.strong_password)
 
         now = datetime.datetime.utcnow()
 
@@ -3182,18 +3182,18 @@ The TMLR Editors-in-Chief
 
         venue_id = journal.venue_id
         editor_in_chief_group_id = journal.get_editors_in_chief_id()
-        test_client = OpenReviewClient(username='test@mail.com', password='1234')
-        raia_client = OpenReviewClient(username='raia@mail.com', password='1234')
-        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password='1234')
-        cho_client = OpenReviewClient(username='kyunghyun@mail.com', password='1234')
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        raia_client = OpenReviewClient(username='raia@mail.com', password=helpers.strong_password)
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password=helpers.strong_password)
+        cho_client = OpenReviewClient(username='kyunghyun@mail.com', password=helpers.strong_password)
 
 
         ## Reviewers
-        david_client=OpenReviewClient(username='david@mailone.com', password='1234')
-        javier_client=OpenReviewClient(username='javier@mailtwo.com', password='1234')
-        carlos_client=OpenReviewClient(username='carlos@mailthree.com', password='1234')
-        andrew_client=OpenReviewClient(username='andrewmc@mailfour.com', password='1234')
-        hugo_client=OpenReviewClient(username='hugo@mailsix.com', password='1234')
+        david_client=OpenReviewClient(username='david@mailone.com', password=helpers.strong_password)
+        javier_client=OpenReviewClient(username='javier@mailtwo.com', password=helpers.strong_password)
+        carlos_client=OpenReviewClient(username='carlos@mailthree.com', password=helpers.strong_password)
+        andrew_client=OpenReviewClient(username='andrewmc@mailfour.com', password=helpers.strong_password)
+        hugo_client=OpenReviewClient(username='hugo@mailsix.com', password=helpers.strong_password)
 
         now = datetime.datetime.utcnow()
 
@@ -3484,10 +3484,10 @@ note={Withdrawn}
 
     def test_submitted_submission(self, journal, openreview_client, helpers):
 
-        test_client = OpenReviewClient(username='test@mail.com', password='1234')
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
         venue_id = journal.venue_id
-        raia_client = OpenReviewClient(username='raia@mail.com', password='1234')
-        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password='1234')
+        raia_client = OpenReviewClient(username='raia@mail.com', password=helpers.strong_password)
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password=helpers.strong_password)
         editor_in_chief_group_id = journal.get_editors_in_chief_id()
 
         ## Post the submission 7
@@ -3547,7 +3547,7 @@ note={Withdrawn}
         ))
 
         ## Ask solicit review with a conflict
-        tom_client = OpenReviewClient(username='tom@mail.com', password='1234')
+        tom_client = OpenReviewClient(username='tom@mail.com', password=helpers.strong_password)
         Volunteer_to_Review_note = tom_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/Volunteer_to_Review',
             signatures=['~Tom_Rain1'],
             note=Note(
@@ -3588,7 +3588,7 @@ The TMLR Editors-in-Chief
 '''
 
         ## Solicit review to more than 2 papers
-        peter_client=OpenReviewClient(username='petersnow@yahoo.com', password='1234')
+        peter_client=OpenReviewClient(username='petersnow@yahoo.com', password=helpers.strong_password)
         Volunteer_to_Review_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/Volunteer_to_Review',
             signatures=['~Peter_Snow1'],
             note=Note(
@@ -3673,7 +3673,7 @@ The TMLR Editors-in-Chief
                 weight=1
             ))
 
-        david_client = OpenReviewClient(username='david@mailone.com', password='1234')
+        david_client = OpenReviewClient(username='david@mailone.com', password=helpers.strong_password)
         volunteer_to_review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper8/-/Volunteer_to_Review',
             signatures=['~David_Belanger1'],
             note=Note(
@@ -3786,10 +3786,10 @@ The TMLR Editors-in-Chief
 
     def test_desk_rejected_submission_by_eic(self, journal, openreview_client, helpers):
 
-        test_client = OpenReviewClient(username='test@mail.com', password='1234')
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
         venue_id = journal.venue_id
-        raia_client = OpenReviewClient(username='raia@mail.com', password='1234')
-        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password='1234')
+        raia_client = OpenReviewClient(username='raia@mail.com', password=helpers.strong_password)
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password=helpers.strong_password)
         editor_in_chief_group_id = journal.get_editors_in_chief_id()
 
         ## Post the submission 9
@@ -3856,10 +3856,10 @@ The TMLR Editors-in-Chief
 
     def test_resubmission(self, journal, openreview_client, helpers):
 
-        test_client = OpenReviewClient(username='test@mail.com', password='1234')
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
         venue_id = journal.venue_id
-        raia_client = OpenReviewClient(username='raia@mail.com', password='1234')
-        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password='1234')
+        raia_client = OpenReviewClient(username='raia@mail.com', password=helpers.strong_password)
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password=helpers.strong_password)
         editor_in_chief_group_id = journal.get_editors_in_chief_id()
 
         rejected_submission = openreview_client.get_notes(invitation='TMLR/-/Submission', number=4)[0]
@@ -3946,10 +3946,10 @@ The TMLR Editors-in-Chief
 
     def test_submission_with_many_authors(self, journal, openreview_client, test_client, helpers):
 
-        test_client = OpenReviewClient(username='test@mail.com', password='1234')
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
         venue_id = journal.venue_id
-        raia_client = OpenReviewClient(username='raia@mail.com', password='1234')
-        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password='1234')
+        raia_client = OpenReviewClient(username='raia@mail.com', password=helpers.strong_password)
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password=helpers.strong_password)
         editor_in_chief_group_id = journal.get_editors_in_chief_id()
 
         authors = ['SomeFirstName User']
@@ -4010,9 +4010,9 @@ The TMLR Editors-in-Chief
 
         venue_id = journal.venue_id
         editor_in_chief_group_id = journal.get_editors_in_chief_id()
-        test_client = OpenReviewClient(username='test@mail.com', password='1234')
-        raia_client = OpenReviewClient(username='raia@mail.com', password='1234')
-        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password='1234')        
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        raia_client = OpenReviewClient(username='raia@mail.com', password=helpers.strong_password)
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password=helpers.strong_password)        
 
         ## Post the submission 12
         submission_note_12 = test_client.post_note_edit(invitation='TMLR/-/Submission',

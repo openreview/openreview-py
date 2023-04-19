@@ -19,7 +19,7 @@ class TestSingleBlindPrivateConference():
     @pytest.fixture(scope="class")
     def conference(self, client):
         now = datetime.datetime.utcnow()
-        #pc_client = openreview.Client(username='pc@eccv.org', password='1234')
+        #pc_client = openreview.Client(username='pc@eccv.org', password=helpers.strong_password)
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
@@ -44,7 +44,7 @@ class TestSingleBlindPrivateConference():
 
         helpers.create_user('pc@miccai.org', 'Program', 'MICCAIChair')
 
-        pc_client = openreview.Client(username='pc@miccai.org', password='1234')
+        pc_client = openreview.Client(username='pc@miccai.org', password=helpers.strong_password)
 
         group = pc_client.get_group('MICCAI.org/2021/Challenges')
         assert group
