@@ -27,17 +27,6 @@ def _jaccard_similarity(list1, list2):
     union = set1.union(set2)
     return len(intersection) / len(union)
 
-def _conflict_label(conflicts):
-    if len(conflicts) == 0:
-        return 'None'
-
-    if any([('@' in c or '~' in c) for c in conflicts]):
-        return 'Personal'
-
-    return 'Institutional (level {})'.format(
-        max([len(openreview.tools.subdomains(c)) for c in conflicts]))
-
-
 class Matching(object):
     '''
     Represents a Matching instance.
