@@ -261,7 +261,7 @@ class TestClient():
         guest = openreview.Client()
         from_profile = guest.register_user(email = 'celeste@mail.com', first = 'Celeste', last = 'Bok', password = helpers.strong_password)
         assert from_profile
-        to_profile = guest.register_user(email = 'melisab@mail.com', first = 'Melissa', last = 'Bok', password = '5678')
+        to_profile = guest.register_user(email = 'melisab@mail.com', first = 'Melissa', last = 'Bok', password = helpers.strong_password)
         assert to_profile
 
         assert from_profile['id'] == '~Celeste_Bok1'
@@ -282,7 +282,7 @@ class TestClient():
         guest = openreview.Client()
         from_profile = guest.register_user(email = 'lbahy@mail.com', first = 'Nadia', last = 'LBahy', password = helpers.strong_password)
         assert from_profile
-        to_profile = guest.register_user(email = 'steph@mail.com', first = 'David', last = 'Steph', password = '5678')
+        to_profile = guest.register_user(email = 'steph@mail.com', first = 'David', last = 'Steph', password = helpers.strong_password)
         assert to_profile
 
         assert from_profile['id'] == '~Nadia_LBahy1'
