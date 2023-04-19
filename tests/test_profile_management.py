@@ -341,7 +341,7 @@ The OpenReview Team.
 
         helpers.await_queue()
 
-        ana_client = openreview.Client(username='ana@profile.org', password='1234')
+        ana_client = openreview.Client(username='ana@profile.org', password=helpers.strong_password)
         note = ana_client.get_note(request_note.id)
         assert note.content['status'] == 'Accepted'
 
@@ -729,7 +729,7 @@ The OpenReview Team.
 
         helpers.await_queue()
 
-        javier_client = openreview.Client(username='javier@profile.org', password='1234')
+        javier_client = openreview.Client(username='javier@profile.org', password=helpers.strong_password)
         note = javier_client.get_note(request_note.id)
         assert note.content['status'] == 'Accepted'
 
@@ -812,7 +812,7 @@ The OpenReview Team.
             }
         ))
 
-        paul_client_v2 = openreview.api.OpenReviewClient(username='paul@profile.org', password='1234')
+        paul_client_v2 = openreview.api.OpenReviewClient(username='paul@profile.org', password=helpers.strong_password)
         submission_note_1 = paul_client_v2.post_note_edit(invitation='CABJ/-/Submission',
             signatures=['~Paul_Alternate_Last1'],
             note=Note(
@@ -861,7 +861,7 @@ The OpenReview Team.
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
-        carlos_client = openreview.api.OpenReviewClient(username='carlos@cabj.org', password='1234')
+        carlos_client = openreview.api.OpenReviewClient(username='carlos@cabj.org', password=helpers.strong_password)
 
         under_review_note = carlos_client.post_note_edit(invitation= 'CABJ/Paper2/-/Review_Approval',
                                     signatures=['CABJ/Paper2/Action_Editors'],

@@ -688,7 +688,7 @@ class TestDoubleBlindConference():
         notes = client.get_notes(invitation='AKBC.ws/2019/Conference/-/Recruit_Reviewers', content = {'user' : 'test@mail.com'} )
         assert not notes
 
-    def test_set_program_chairs(self, client, selenium, request_page):
+    def test_set_program_chairs(self, client, helpers, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
@@ -706,7 +706,7 @@ class TestDoubleBlindConference():
         #Sign up as Program Chair
         pc_client = openreview.Client(baseurl = 'http://localhost:3000')
         assert pc_client is not None, "Client is none"
-        res = pc_client.register_user(email = 'pc@mail.com', first = 'Pc', last = 'Chair', password = '1234')
+        res = pc_client.register_user(email = 'pc@mail.com', first = 'Pc', last = 'Chair', password = helpers.strong_password)
         assert res, "Res i none"
         res = pc_client.activate_user('pc@mail.com', {
             'names': [
@@ -1059,7 +1059,7 @@ class TestDoubleBlindConference():
     def test_open_reviews(self, client, test_client, selenium, request_page, helpers):
 
         now = datetime.datetime.utcnow()
-        reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer2@mail.com', password='1234')
+        reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer2@mail.com', password=helpers.strong_password)
 
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
@@ -1155,7 +1155,7 @@ class TestDoubleBlindConference():
     def test_open_revise_reviews(self, client, test_client, selenium, request_page, helpers):
 
         now = datetime.datetime.utcnow()
-        reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer2@mail.com', password='1234')
+        reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer2@mail.com', password=helpers.strong_password)
 
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
@@ -1227,7 +1227,7 @@ class TestDoubleBlindConference():
     def test_open_meta_reviews(self, client, test_client, selenium, request_page, helpers):
 
         now = datetime.datetime.utcnow()
-        ac_client = openreview.Client(baseurl = 'http://localhost:3000', username='ac@mail.com', password='1234')
+        ac_client = openreview.Client(baseurl = 'http://localhost:3000', username='ac@mail.com', password=helpers.strong_password)
         assert ac_client is not None, "Client is none"
 
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
@@ -1315,7 +1315,7 @@ class TestDoubleBlindConference():
     def test_open_meta_reviews_remove_fields(self, client, test_client, selenium, request_page, helpers):
 
         now = datetime.datetime.utcnow()
-        ac_client = openreview.Client(baseurl = 'http://localhost:3000', username='meta_additional@mail.com', password='1234')
+        ac_client = openreview.Client(baseurl = 'http://localhost:3000', username='meta_additional@mail.com', password=helpers.strong_password)
         assert ac_client is not None, "Client is none"
 
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
@@ -1485,7 +1485,7 @@ class TestDoubleBlindConference():
         assert len(accepted_author_group.members) == 1
         assert accepted_author_group.members == [conference.id + '/Paper{}/Authors'.format(submission.number)]
 
-    def test_consoles(self, client, test_client, selenium, request_page):
+    def test_consoles(self, client, test_client, selenium, request_page, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
@@ -1497,7 +1497,7 @@ class TestDoubleBlindConference():
         builder.get_result()
 
         #Program chair user
-        pc_client = openreview.Client(baseurl = 'http://localhost:3000', username='pc@mail.com', password='1234')
+        pc_client = openreview.Client(baseurl = 'http://localhost:3000', username='pc@mail.com', password=helpers.strong_password)
 
         request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference", pc_client.token, wait_for_element='your-consoles')
         notes_panel = selenium.find_element_by_id('notes')
@@ -1526,7 +1526,7 @@ class TestDoubleBlindConference():
         assert 'Status' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4').text
         assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-5').text
 
-    def test_reassign_reviewers_with_conflict_of_interest(self,client,test_client,selenium,request_page):
+    def test_reassign_reviewers_with_conflict_of_interest(self, client, test_client, selenium, request_page, helpers):
         builder=openreview.conference.ConferenceBuilder(client)
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_submission_stage(double_blind = True, public = True)
@@ -1536,7 +1536,7 @@ class TestDoubleBlindConference():
         builder.get_result()
 
         #area chair to reassign reviewer
-        ac_client=openreview.Client(baseurl = 'http://localhost:3000', username='ac@mail.com', password='1234')
+        ac_client=openreview.Client(baseurl = 'http://localhost:3000', username='ac@mail.com', password=helpers.strong_password)
         request_page(selenium,"http://localhost:3030/group?id=AKBC.ws/2019/Conference/Area_Chairs",ac_client.token, by=By.XPATH, wait_for_element='//*[@id="1-reviewer-progress"]/a')
 
         show_Reviewers_AnchorTag=selenium.find_element_by_xpath('//*[@id="1-reviewer-progress"]/a')
@@ -1691,7 +1691,7 @@ class TestDoubleBlindConference():
         assert ex.value.args[0].get('name') == 'ForbiddenError'
 
         # Undo withdraw using pc client
-        pc_client = openreview.Client(baseurl='http://localhost:3000', username='pc@mail.com', password='1234')
+        pc_client = openreview.Client(baseurl='http://localhost:3000', username='pc@mail.com', password=helpers.strong_password)
 
         withdraw_note = pc_client.get_note(posted_note.id)
         withdraw_note.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
@@ -1750,7 +1750,7 @@ class TestDoubleBlindConference():
             }
         )
 
-        pc_client = openreview.Client(baseurl = 'http://localhost:3000', username='pc@mail.com', password='1234')
+        pc_client = openreview.Client(baseurl = 'http://localhost:3000', username='pc@mail.com', password=helpers.strong_password)
 
         posted_note = pc_client.post_note(desk_reject_note)
         assert posted_note
@@ -1800,7 +1800,7 @@ class TestDoubleBlindConference():
         submission_note = client.get_note(desk_reject_note.forum)
         assert submission_note.invitation == 'AKBC.ws/2019/Conference/-/Desk_Rejected_Submission'
 
-    def test_paper_ranking(self, client, selenium, request_page):
+    def test_paper_ranking(self, client, selenium, request_page, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
@@ -1816,7 +1816,7 @@ class TestDoubleBlindConference():
         now = datetime.datetime.utcnow()
         conference.open_paper_ranking(conference.get_reviewers_id(), due_date = now + datetime.timedelta(minutes = 10))
 
-        reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer2@mail.com', password='1234')
+        reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer2@mail.com', password=helpers.strong_password)
 
         request_page(selenium, "http://localhost:3030/invitation?id=AKBC.ws/2019/Conference/Reviewer/-/Paper_Ranking", reviewer_client.token)
 

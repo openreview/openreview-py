@@ -16,8 +16,8 @@ from selenium.common.exceptions import NoSuchElementException
 class TestMatching():
 
     @pytest.fixture(scope="class")
-    def pc_client(self):
-        return openreview.Client(username='pc1@uai.com', password='1234')
+    def pc_client(self, helpers):
+        return openreview.Client(username='pc1@uai.com', password=helpers.strong_password)
 
     @pytest.fixture(scope="class")
     def conference(self, client, helpers):

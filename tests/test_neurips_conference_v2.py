@@ -112,7 +112,7 @@ class TestNeurIPSConference():
 
     def test_recruit_senior_area_chairs(self, client, openreview_client, selenium, request_page, helpers):
 
-        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # Test Reviewer Recruitment
@@ -180,7 +180,7 @@ If you would like to change your decision, please follow the link in the previou
         assert 'sac1@google.com' in sac_group.members
         assert 'sac2@gmail.com' in sac_group.members
 
-        sac_client = openreview.api.OpenReviewClient(username='sac1@google.com', password='1234')
+        sac_client = openreview.api.OpenReviewClient(username='sac1@google.com', password=helpers.strong_password)
         request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2023/Conference", sac_client.token, wait_for_element='notes')
         notes_panel = selenium.find_element_by_id('notes')
         assert notes_panel
@@ -189,7 +189,7 @@ If you would like to change your decision, please follow the link in the previou
 
     def test_recruit_area_chairs(self, client, openreview_client, selenium, request_page, helpers):
 
-        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         reviewer_details = '''ac1@mit.edu\n'''
@@ -245,7 +245,7 @@ If you would like to change your decision, please follow the link in the previou
 
     def test_ac_registration(self, client, openreview_client, helpers):
 
-        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         now = datetime.datetime.utcnow()
@@ -294,7 +294,7 @@ If you would like to change your decision, please follow the link in the previou
         #remove AC from AC group
         openreview_client.remove_members_from_group('NeurIPS.cc/2023/Conference/Area_Chairs', 'ac1@mit.edu')
 
-        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
@@ -313,7 +313,7 @@ If you would like to change your decision, please follow the link in the previou
 
     def test_sac_bidding(self, client, openreview_client, helpers, request_page, selenium):
 
-        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
@@ -326,13 +326,13 @@ If you would like to change your decision, please follow the link in the previou
         edges=pc_client.get_edges_count(invitation='NeurIPS.cc/2023/Conference/Senior_Area_Chairs/-/Affinity_Score')
         assert edges == 6
 
-        pc_client=openreview.api.OpenReviewClient(username='pc@neurips.cc', password='1234')
+        pc_client=openreview.api.OpenReviewClient(username='pc@neurips.cc', password=helpers.strong_password)
         invitation=pc_client.get_invitation('NeurIPS.cc/2023/Conference/Senior_Area_Chairs/-/Assignment_Configuration')
         assert invitation
         assert invitation.edit['note']['content']['paper_invitation']['value']['param']['regex'] == 'NeurIPS.cc/2023/Conference/Area_Chairs'
         assert invitation.edit['note']['content']['paper_invitation']['value']['param']['default'] == 'NeurIPS.cc/2023/Conference/Area_Chairs'
 
-        sac_client=openreview.api.OpenReviewClient(username='sac1@google.com', password='1234')
+        sac_client=openreview.api.OpenReviewClient(username='sac1@google.com', password=helpers.strong_password)
         assert sac_client.get_group(id='NeurIPS.cc/2023/Conference/Area_Chairs')
 
         edges=sac_client.get_edges_count(invitation='NeurIPS.cc/2023/Conference/Senior_Area_Chairs/-/Affinity_Score', tail='~SeniorArea_GoogleChair1')
@@ -381,7 +381,7 @@ If you would like to change your decision, please follow the link in the previou
             label = 'Very Low'
         ))
 
-        sac2_client=openreview.api.OpenReviewClient(username='sac2@gmail.com', password='1234')
+        sac2_client=openreview.api.OpenReviewClient(username='sac2@gmail.com', password=helpers.strong_password)
 
         sac2_client.post_edge(openreview.api.Edge(
             invitation='NeurIPS.cc/2023/Conference/Senior_Area_Chairs/-/Bid',
@@ -441,7 +441,7 @@ If you would like to change your decision, please follow the link in the previou
 
     def test_recruit_reviewers(self, client, openreview_client, selenium, request_page, helpers):
 
-        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # Test Reviewer Recruitment
@@ -546,7 +546,7 @@ The NeurIPS 2023 program chairs will be contacting you with more information reg
 If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''        
 
         ## Check reviewers console load
-        reviewer_client=openreview.api.OpenReviewClient(username='reviewer1@umass.edu', password='1234')
+        reviewer_client=openreview.api.OpenReviewClient(username='reviewer1@umass.edu', password=helpers.strong_password)
         request_page(selenium, 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference/Reviewers', reviewer_client.token, by=By.ID, wait_for_element='header')
         header = selenium.find_element_by_id('header')
         strong_elements = header.find_elements_by_tag_name('strong')
@@ -595,7 +595,7 @@ If you would like to change your decision, please follow the link in the previou
 
     def test_enable_ethics_reviewers(self, client, helpers):
 
-        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0] 
 
         now = datetime.datetime.utcnow()
@@ -637,7 +637,7 @@ If you would like to change your decision, please follow the link in the previou
     def test_recruit_ethics_reviewers(self, client, request_page, selenium, helpers):
 
         ## Need super user permission to add the venue to the active_venues group
-        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
         conference=openreview.helpers.get_conference(client, request_form.id)
 
@@ -702,7 +702,7 @@ If you would like to change your decision, please follow the link in the previou
         )
         
         # use revision button
-        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         venue_revision_note = pc_client.post_note(openreview.Note(
@@ -738,10 +738,10 @@ If you would like to change your decision, please follow the link in the previou
 
     def test_submit_papers(self, test_client, client, helpers, openreview_client):
 
-        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
-        test_client = openreview.api.OpenReviewClient(username='test@mail.com', password='1234')
+        test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
         domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu']
         for i in range(1,6):
@@ -948,7 +948,7 @@ If you would like to change your decision, please follow the link in the previou
 
     def test_post_submission_stage(self, helpers, openreview_client, client, request_page, selenium):
 
-        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         post_submission_note=pc_client.post_note(openreview.Note(
@@ -1014,7 +1014,7 @@ If you would like to change your decision, please follow the link in the previou
         # assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Reviewers').nonreaders == ['NeurIPS.cc/2023/Conference/Paper5/Authors']
 
 #     def test_update_withdraw_desk_reject_invitations(self, conference, client, helpers):
-#         pc_client = openreview.Client(username='pc@neurips.cc', password='1234')
+#         pc_client = openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
 #         request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
 #         now = datetime.datetime.utcnow()
@@ -1101,7 +1101,7 @@ If you would like to change your decision, please follow the link in the previou
 
 #         now = datetime.datetime.utcnow()
 
-#         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+#         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
 #         request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 #         submissions=conference.get_submissions(sort='tmdate')
 
@@ -1360,7 +1360,7 @@ If you would like to change your decision, please follow the link in the previou
 
 #     def test_ac_reassignment(self, conference, helpers, client):
 
-#         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+#         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
 #         submissions=conference.get_submissions(sort='tmdate')
 
 #         assert pc_client.get_edges_count(invitation='NeurIPS.cc/2023/Conference/Senior_Area_Chairs/-/Assignment') == 3
@@ -1429,7 +1429,7 @@ If you would like to change your decision, please follow the link in the previou
 #     def test_reassignment_stage(self, conference, helpers, client, selenium, request_page):
 
 #         now = datetime.datetime.utcnow()
-#         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+#         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
 #         email_template='''
 # As an Area Chair for NeurIPS 2023, I'd like to ask for your expert review of a submission, titled: {title}:
 
@@ -1461,7 +1461,7 @@ If you would like to change your decision, please follow the link in the previou
 
 #         print(url)
 
-#         ac_client=openreview.Client(username='ac1@mit.edu', password='1234')
+#         ac_client=openreview.Client(username='ac1@mit.edu', password=helpers.strong_password)
 #         submission=conference.get_submissions(sort='tmdate')[0]
 #         signatory_group=ac_client.get_groups(regex='NeurIPS.cc/2023/Conference/Paper5/Area_Chair_')[0]
 
@@ -1953,7 +1953,7 @@ If you would like to change your decision, please follow the link in the previou
 
 #     def test_deployment_stage(self, conference, client, helpers):
 
-#         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+#         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
 #         submissions=conference.get_submissions(sort='tmdate')
 
 #         conference.set_assignments(assignment_title='reviewer-matching', committee_id='NeurIPS.cc/2023/Conference/Reviewers', overwrite=True, enable_reviewer_reassignment=True)
@@ -2061,7 +2061,7 @@ If you would like to change your decision, please follow the link in the previou
 #         now = datetime.datetime.utcnow()
 #         due_date = now + datetime.timedelta(days=3)
 
-#         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+#         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
 #         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 #         stage_note=client.post_note(openreview.Note(
 #             content={
@@ -2209,7 +2209,7 @@ If you would like to change your decision, please follow the link in the previou
 #         anon_groups=client.get_groups('NeurIPS.cc/2023/Conference/Paper5/Reviewer_.*')
 #         assert len(anon_groups) == 3
 
-#         reviewer_client=openreview.Client(username='reviewer1@umass.edu', password='1234')
+#         reviewer_client=openreview.Client(username='reviewer1@umass.edu', password=helpers.strong_password)
 
 #         signatory_groups=client.get_groups(regex='NeurIPS.cc/2023/Conference/Paper5/Reviewer_', signatory='reviewer1@umass.edu')
 #         assert len(signatory_groups) == 1
@@ -2255,7 +2255,7 @@ If you would like to change your decision, please follow the link in the previou
 #     def test_emergency_reviewer_stage(self, conference, helpers, client, request_page, selenium):
 
 #         now = datetime.datetime.utcnow()
-#         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+#         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
 
 #         start='NeurIPS.cc/2023/Conference/Area_Chairs/-/Assignment,tail:~Area_IBMChair1'
 #         traverse='NeurIPS.cc/2023/Conference/Reviewers/-/Assignment'
@@ -2266,7 +2266,7 @@ If you would like to change your decision, please follow the link in the previou
 
 #         print(url)
 
-#         ac_client=openreview.Client(username='ac1@mit.edu', password='1234')
+#         ac_client=openreview.Client(username='ac1@mit.edu', password=helpers.strong_password)
 #         submission=conference.get_submissions(sort='tmdate')[1]
 #         signatory_group=ac_client.get_groups(regex='NeurIPS.cc/2023/Conference/Paper4/Area_Chair_')[0]
 
@@ -2483,7 +2483,7 @@ If you would like to change your decision, please follow the link in the previou
 #         conference.comment_stage = openreview.stages.CommentStage(reader_selection=True, check_mandatory_readers=True, invitees=comment_invitees, readers=comment_invitees)
 #         conference.create_comment_stage()
 
-#         reviewer_client=openreview.Client(username='reviewer1@umass.edu', password='1234')
+#         reviewer_client=openreview.Client(username='reviewer1@umass.edu', password=helpers.strong_password)
 
 #         signatory_groups=client.get_groups(regex='NeurIPS.cc/2023/Conference/Paper5/Reviewer_', signatory='reviewer1@umass.edu')
 #         assert len(signatory_groups) == 1
@@ -2520,7 +2520,7 @@ If you would like to change your decision, please follow the link in the previou
 #         messages = client.get_messages(to='sac1@google.com', subject='\[NeurIPS 2023\] Reviewer .* commented on a paper in your area. Paper Number: 5, Paper Title: \"Paper title 5\"')
 #         assert not messages
 
-#         ac_client=openreview.Client(username='ac1@mit.edu', password='1234')
+#         ac_client=openreview.Client(username='ac1@mit.edu', password=helpers.strong_password)
 
 #         signatory_groups=client.get_groups(regex='NeurIPS.cc/2023/Conference/Paper5/Area_Chair_', signatory='ac1@mit.edu')
 #         assert len(signatory_groups) == 1
@@ -2551,7 +2551,7 @@ If you would like to change your decision, please follow the link in the previou
 #         messages = client.get_messages(to='sac1@google.com', subject='\[NeurIPS 2023\] Area Chair .* commented on a paper in your area. Paper Number: 5, Paper Title: \"Paper title 5\"')
 #         assert messages and len(messages) == 1
 
-#         sac_client=openreview.Client(username='sac1@google.com', password='1234')
+#         sac_client=openreview.Client(username='sac1@google.com', password=helpers.strong_password)
 
 #         comment_note=sac_client.post_note(openreview.Note(
 #             invitation='NeurIPS.cc/2023/Conference/Paper5/-/Official_Comment',
@@ -2580,7 +2580,7 @@ If you would like to change your decision, please follow the link in the previou
 #         now = datetime.datetime.utcnow()
 #         due_date = now + datetime.timedelta(days=3)
 
-#         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+#         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
 #         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 #         stage_note=client.post_note(openreview.Note(
 #             content={
@@ -2651,7 +2651,7 @@ If you would like to change your decision, please follow the link in the previou
 #         conference.meta_review_stage = openreview.stages.MetaReviewStage(due_date=due_date)
 #         conference.create_meta_review_stage()
 
-#         ac_client=openreview.Client(username='ac1@mit.edu', password='1234')
+#         ac_client=openreview.Client(username='ac1@mit.edu', password=helpers.strong_password)
 
 #         signatory_groups=client.get_groups(regex='NeurIPS.cc/2023/Conference/Paper5/Area_Chair_', signatory='ac1@mit.edu')
 #         assert len(signatory_groups) == 1
@@ -2676,7 +2676,7 @@ If you would like to change your decision, please follow the link in the previou
 
 #     def test_paper_ranking_stage(self, conference, client, test_client, selenium, request_page):
 
-#         ac_client=openreview.Client(username='ac1@mit.edu', password='1234')
+#         ac_client=openreview.Client(username='ac1@mit.edu', password=helpers.strong_password)
 #         signatory_groups=client.get_groups(regex='NeurIPS.cc/2023/Conference/Paper5/Area_Chair_', signatory='ac1@mit.edu')
 #         assert len(signatory_groups) == 1
 #         ac_anon_id=signatory_groups[0].id
@@ -2689,7 +2689,7 @@ If you would like to change your decision, please follow the link in the previou
 
 #         assert not status.find_elements_by_class_name('tag-widget')
 
-#         reviewer_client=openreview.Client(username='reviewer1@umass.edu', password='1234')
+#         reviewer_client=openreview.Client(username='reviewer1@umass.edu', password=helpers.strong_password)
 
 #         signatory_groups=client.get_groups(regex='NeurIPS.cc/2023/Conference/Paper5/Reviewer_', signatory='reviewer1@umass.edu')
 #         assert len(signatory_groups) == 1
@@ -2751,7 +2751,7 @@ If you would like to change your decision, please follow the link in the previou
 #             signatures = [reviewer_anon_id])
 #         )
 
-#         reviewer2_client = openreview.Client(username='reviewer2@mit.edu', password='1234')
+#         reviewer2_client = openreview.Client(username='reviewer2@mit.edu', password=helpers.strong_password)
 #         signatory_groups=client.get_groups(regex='NeurIPS.cc/2023/Conference/Paper1/Reviewer_', signatory='reviewer2@mit.edu')
 #         assert len(signatory_groups) == 1
 #         reviewer2_anon_id=signatory_groups[0].id
@@ -2777,7 +2777,7 @@ If you would like to change your decision, please follow the link in the previou
 #         now = datetime.datetime.utcnow()
 #         conference.set_review_rating_stage(openreview.ReviewRatingStage(due_date = now + datetime.timedelta(minutes = 40)))
 
-#         ac_client = openreview.Client(username='ac1@mit.edu', password='1234')
+#         ac_client = openreview.Client(username='ac1@mit.edu', password=helpers.strong_password)
 #         signatory_groups=client.get_groups(regex='NeurIPS.cc/2023/Conference/Paper5/Area_Chair_', signatory='ac1@mit.edu')
 #         assert len(signatory_groups) == 1
 #         ac_anon_id=signatory_groups[0].id
@@ -2808,7 +2808,7 @@ If you would like to change your decision, please follow the link in the previou
 
 #         conference.set_impersonators(group_ids=['pc@neurips.cc'])
 
-#         pc_client = openreview.Client(username='pc@neurips.cc', password='1234')
+#         pc_client = openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
 #         reviewers_id = conference.get_reviewers_id()
 #         reviewers = client.get_group(reviewers_id).members
 #         assert len(reviewers) > 0
@@ -2856,7 +2856,7 @@ If you would like to change your decision, please follow the link in the previou
 #                 'NeurIPS.cc/2023/Conference/Program_Chairs']
 #         assert withdrawn_submission.content['keywords'] == ''
 
-#         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+#         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
 
 #         request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2023/Conference/Program_Chairs#paper-status", pc_client.token, wait_for_element='notes')
 #         assert "NeurIPS 2023 Conference Program Chairs | OpenReview" in selenium.title
@@ -2880,7 +2880,7 @@ If you would like to change your decision, please follow the link in the previou
 #         submissions = test_client.get_notes(invitation='NeurIPS.cc/2023/Conference/-/Blind_Submission', sort='tmdate')
 #         assert len(submissions) == 4
 
-#         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+#         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
 
 #         desk_reject_note = pc_client.post_note(openreview.Note(
 #             forum=submissions[0].id,
@@ -2929,7 +2929,7 @@ If you would like to change your decision, please follow the link in the previou
 #         assert submission_note.content['keywords'] == ''
 
 #     def test_submission_revision_deadline(self, conference, helpers, test_client, client, selenium, request_page):
-#         pc_client = openreview.Client(username='pc@neurips.cc', password='1234')
+#         pc_client = openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
 #         request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
 #         now = datetime.datetime.utcnow()
