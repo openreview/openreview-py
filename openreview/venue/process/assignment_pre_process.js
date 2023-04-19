@@ -20,13 +20,13 @@ async function process(client, edge, invitation) {
   const submission = notes[0]
   const submissionGroupId = `${venueId}/${submissionName}${submission.number}`
 
-  const { count: groupCount } = await client.getGroups({ prefix: `${submissionGroupId}/${reviewersAnonName}`, signatory: edge.tail })
+  const { groups: anonGroups, count: groupCount } = await client.getGroups({ prefix: `${submissionGroupId}/${reviewersAnonName}`, signatory: edge.tail })
 
   if (groupCount.length == 0) { 
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can remove assignment, signatory groups not found for ${edge.tail}` }))
   }
 
-  const { count: noteCount } = await client.getNotes({ invitation: `${submissionGroupId}/-/` + reviewName, signatures: groups[0].id })
+  const { count: noteCount } = await client.getNotes({ invitation: `${submissionGroupId}/-/` + reviewName, signatures: anonGroups[0].id })
 
   if (noteCount > 0) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not remove assignment, the user ${edge.tail} already posted a ${reviewName.replace('_', ' ')}` }))

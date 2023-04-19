@@ -1342,12 +1342,32 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         anon_group_id = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLOne1')[0].id
         
         ## recruit external reviewer
-        with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for danielle@mail'):
+        with pytest.raises(openreview.OpenReviewException, match=r'the user has a conflict'):
             ac_client.post_edge(
                 openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
                     signatures=[anon_group_id],
                     head=submissions[0].id,
                     tail='danielle@mail.com',
+                    label='Invitation Sent',
+                    weight=1
+            ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'the user is already assigned'):
+            ac_client.post_edge(
+                openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
+                    signatures=[anon_group_id],
+                    head=submissions[0].id,
+                    tail='~Reviewer_ICMLOne1',
+                    label='Invitation Sent',
+                    weight=1
+            ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'the user is an official reviewer'):
+            ac_client.post_edge(
+                openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
+                    signatures=[anon_group_id],
+                    head=submissions[0].id,
+                    tail='~Reviewer_ICMLFive1',
                     label='Invitation Sent',
                     weight=1
             ))
@@ -1360,8 +1380,29 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                 label='Invitation Sent',
                 weight=1
         ))
-
         helpers.await_queue(openreview_client)
+
+        helpers.create_user('javier@icml.cc', 'Javier', 'ICML')
+
+        ac_client.post_edge(
+            openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
+                signatures=[anon_group_id],
+                head=submissions[0].id,
+                tail='~Javier_ICML1',
+                label='Invitation Sent',
+                weight=1
+        ))
+        helpers.await_queue(openreview_client)
+
+        with pytest.raises(openreview.OpenReviewException, match=r'the user is already invited'):
+            ac_client.post_edge(
+                openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
+                    signatures=[anon_group_id],
+                    head=submissions[0].id,
+                    tail='javier@icml.cc',
+                    label='Invitation Sent',
+                    weight=1
+            ))        
 
         assert openreview_client.get_groups('ICML.cc/2023/Conference/Submission1/External_Reviewers/Invited', member='melisa@icml.cc')
         assert openreview_client.get_groups('ICML.cc/2023/Conference/External_Reviewers/Invited', member='melisa@icml.cc')
