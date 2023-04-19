@@ -1996,7 +1996,7 @@ class InvitationBuilder(object):
         venue = self.venue
         content = {
             'review_name': {
-                'value': venue.review_stage.name
+                'value': venue.review_stage.name if venue.review_stage else 'Official_Review'
             },
             'reviewers_anon_name': {
                 'value': venue.get_anon_reviewers_name()
@@ -2015,7 +2015,7 @@ class InvitationBuilder(object):
             group_name = venue.get_area_chairs_name(pretty=True)
             content = {
                 'review_name': {
-                    'value': venue.meta_review_stage.name
+                    'value': venue.meta_review_stage.name if venue.meta_review_stage else 'Meta_Review'
                 },
                 'reviewers_anon_name': {
                     'value': venue.get_anon_area_chairs_name()
