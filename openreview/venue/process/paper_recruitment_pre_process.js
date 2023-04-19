@@ -1,5 +1,6 @@
 async function process(client, edit, invitation) {
-
+  client.throwErrors = true
+ 
   const committeeInvitedId = invitation.content.committee_invited_id?.value
   const inviteAssignmentInvitation = invitation.content.invite_assignment_invitation_id?.value
   const hashSeed = invitation.content.hash_seed?.value
