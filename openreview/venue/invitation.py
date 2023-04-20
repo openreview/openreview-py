@@ -733,7 +733,7 @@ class InvitationBuilder(object):
             content['reduced_load'] = reduced_load_dict
         
         process_content = self.get_process_content('process/recruitment_process.py')
-        pre_process_content = self.get_process_content('process/recruitment_pre_process.py')
+        pre_process_content = self.get_process_content('process/recruitment_pre_process.js')
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
             webfield_content = webfield_reader.read()
@@ -901,7 +901,7 @@ class InvitationBuilder(object):
             }],
             content={
                 'comment_preprocess_script': {
-                    'value': self.get_process_content('process/comment_pre_process.py')
+                    'value': self.get_process_content('process/comment_pre_process.js')
                 },
                 'comment_process_script': {
                     'value': self.get_process_content('process/comment_process.py')
@@ -935,15 +935,14 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'invitees': invitees,
                     'cdate': comment_cdate,
-                    'preprocess': '''def process(client, edit, invitation):
-    meta_invitation = client.get_invitation(invitation.invitations[0])
-    script = meta_invitation.content['comment_preprocess_script']['value']
-    funcs = {
-        'openreview': openreview
-    }
-    exec(script, funcs)
-    funcs['process'](client, edit, invitation)
-''' if comment_stage.check_mandatory_readers and comment_stage.reader_selection else None,
+                    'preprocess': '''async function process(client, edit, invitation) {
+  client.throwErrors = true;
+  const { invitations } = await client.getInvitations({ id: invitation.invitations[0] })
+  const metaInvitation = invitations[0];
+  const script = metaInvitation.content.comment_preprocess_script.value;
+  eval(`var process = ${script}`);
+  await process(client, edit, invitation);
+}''' if comment_stage.check_mandatory_readers and comment_stage.reader_selection else None,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['comment_process_script']['value']
@@ -1995,14 +1994,17 @@ class InvitationBuilder(object):
     def set_assignment_invitation(self, committee_id):
         
         venue = self.venue
-        venue_id = venue.venue_id
-        
+        venue_id = venue.get_id()
         assingment_invitation_id = venue.get_assignment_id(committee_id, deployed=True)
         is_reviewer = committee_id == venue.get_reviewers_id()
         is_area_chair = committee_id == venue.get_area_chairs_id()
         is_senior_area_chair = committee_id == venue.get_senior_area_chairs_id()
+        review_stage = venue.review_stage if is_reviewer else venue.meta_review_stage
 
         content = {
+            'review_name': {
+                'value': review_stage.name if review_stage else 'Official_Review'
+            },
             'reviewers_id': {
                 'value': venue.get_reviewers_id() if is_reviewer else venue.get_area_chairs_id()
             },
@@ -2021,7 +2023,7 @@ class InvitationBuilder(object):
         }        
 
 
-        preprocess = self.get_process_content('process/assignment_pre_process.py')
+        preprocess = self.get_process_content('process/assignment_pre_process.js')
         process = self.get_process_content('process/assignment_post_process.py')
 
         invitation_readers = [venue_id]
@@ -2339,7 +2341,7 @@ class InvitationBuilder(object):
 
         process_file='process/simple_paper_recruitment_process.py' if proposed else 'process/paper_recruitment_process.py'
         process_content = self.get_process_content(process_file)
-        preprocess_content = self.get_process_content('process/paper_recruitment_pre_process.py')
+        preprocess_content = self.get_process_content('process/paper_recruitment_pre_process.js')
 
         edge_readers = []
         edge_writers = []

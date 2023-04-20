@@ -210,6 +210,10 @@ class Venue(object):
         rev_name = self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
         return rev_name + '_'    
 
+    def get_anon_reviewers_name(self, pretty=True):
+        rev_name = self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
+        return rev_name + '_'
+
     def get_ethics_reviewers_name(self, pretty=True):
         if pretty:
             name=self.ethics_reviewers_name.replace('_', ' ')

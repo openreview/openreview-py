@@ -906,7 +906,7 @@ class Matching(object):
             invitation = self._create_edge_invitation(venue.get_assignment_id(self.match_group.id))
             
             if not self.is_senior_area_chair:
-                with open(os.path.join(os.path.dirname(__file__), 'process/proposed_assignment_pre_process.py')) as f:
+                with open(os.path.join(os.path.dirname(__file__), 'process/proposed_assignment_pre_process.js')) as f:
                     content = f.read()
                     invitation.content = { 'committee_name': { 'value': self.get_committee_name() }}
                     invitation.preprocess = content
@@ -967,6 +967,7 @@ class Matching(object):
         invitation_content = {
             'match_group': { 'value':  self.match_group.id },
             'assignment_invitation_id': { 'value': venue.get_assignment_id(self.match_group.id) if assignment_title else venue.get_assignment_id(self.match_group.id, deployed=True)},
+            'conflict_invitation_id': { 'value': venue.get_conflict_score_id(self.match_group.id) },
             'assignment_label': { 'value': assignment_title } if assignment_title else { 'delete': True },
             'invite_label': { 'value': invite_label },
             'invited_label': { 'value': invited_label },
@@ -978,7 +979,7 @@ class Matching(object):
         }
 
         # set invite assignment invitation
-        pre_process_content = venue.invitation_builder.get_process_content('process/invite_assignment_pre_process.py')
+        pre_process_content = venue.invitation_builder.get_process_content('process/invite_assignment_pre_process.js')
         post_process_content = venue.invitation_builder.get_process_content('process/invite_assignment_post_process.py')
 
         invitation.preprocess = pre_process_content
