@@ -733,7 +733,7 @@ class InvitationBuilder(object):
             content['reduced_load'] = reduced_load_dict
         
         process_content = self.get_process_content('process/recruitment_process.py')
-        pre_process_content = self.get_process_content('process/recruitment_pre_process.py')
+        pre_process_content = self.get_process_content('process/recruitment_pre_process.js')
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
             webfield_content = webfield_reader.read()
@@ -901,7 +901,7 @@ class InvitationBuilder(object):
             }],
             content={
                 'comment_preprocess_script': {
-                    'value': self.get_process_content('process/comment_pre_process.py')
+                    'value': self.get_process_content('process/comment_pre_process.js')
                 },
                 'comment_process_script': {
                     'value': self.get_process_content('process/comment_process.py')
@@ -935,15 +935,14 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'invitees': invitees,
                     'cdate': comment_cdate,
-                    'preprocess': '''def process(client, edit, invitation):
-    meta_invitation = client.get_invitation(invitation.invitations[0])
-    script = meta_invitation.content['comment_preprocess_script']['value']
-    funcs = {
-        'openreview': openreview
-    }
-    exec(script, funcs)
-    funcs['process'](client, edit, invitation)
-''' if comment_stage.check_mandatory_readers and comment_stage.reader_selection else None,
+                    'preprocess': '''async function process(client, edit, invitation) {
+  client.throwErrors = true;
+  const { invitations } = await client.getInvitations({ id: invitation.invitations[0] })
+  const metaInvitation = invitations[0];
+  const script = metaInvitation.content.comment_preprocess_script.value;
+  eval(`var process = ${script}`);
+  await process(client, edit, invitation);
+}''' if comment_stage.check_mandatory_readers and comment_stage.reader_selection else None,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['comment_process_script']['value']
@@ -1995,6 +1994,14 @@ class InvitationBuilder(object):
     def set_assignment_invitation(self, committee_id):
         client = self.client
         venue = self.venue
+        content = {
+            'review_name': {
+                'value': venue.review_stage.name if venue.review_stage else 'Official_Review'
+            },
+            'reviewers_anon_name': {
+                'value': venue.get_anon_reviewers_name()
+            }
+        }
         
         invitation = client.get_invitation(venue.get_assignment_id(committee_id, deployed=True))
         is_area_chair = committee_id == venue.get_area_chairs_id()
@@ -2006,6 +2013,14 @@ class InvitationBuilder(object):
         if is_area_chair:
             paper_group_id = venue.get_area_chairs_id(number='{number}')
             group_name = venue.get_area_chairs_name(pretty=True)
+            content = {
+                'review_name': {
+                    'value': venue.meta_review_stage.name if venue.meta_review_stage else 'Meta_Review'
+                },
+                'reviewers_anon_name': {
+                    'value': venue.get_anon_area_chairs_name()
+                }
+            }            
 
         if is_senior_area_chair:
             with open(os.path.join(os.path.dirname(__file__), 'process/sac_assignment_post_process.py')) as post:
@@ -2014,11 +2029,8 @@ class InvitationBuilder(object):
                 invitation.signatures=[venue.get_program_chairs_id()] ## Program Chairs can see the reviews
                 return self.save_invitation(invitation)
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/assignment_pre_process.py')) as pre:
+        with open(os.path.join(os.path.dirname(__file__), 'process/assignment_pre_process.js')) as pre:
             pre_content = pre.read()
-            if is_area_chair:
-                pre_content = pre_content.replace("REVIEW_NAME_STRING = 'review_name'", "REVIEW_NAME_STRING = 'meta_review_name'")
-                pre_content = pre_content.replace("REVIEWERS_ANON_NAME_STRING = 'reviewers_anon_name'", "REVIEWERS_ANON_NAME_STRING = 'area_chairs_anon_name'")
             with open(os.path.join(os.path.dirname(__file__), 'process/assignment_post_process.py')) as post:
                 post_content = post.read()
                 post_content = post_content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + paper_group_id + "'")
@@ -2030,6 +2042,7 @@ class InvitationBuilder(object):
                 invitation.process=post_content
                 invitation.preprocess=pre_content
                 invitation.signatures=[venue.get_program_chairs_id()] ## Program Chairs can see the reviews
+                invitation.content = content
                 return self.save_invitation(invitation)
 
     def set_expertise_selection_invitations(self):
@@ -2243,7 +2256,7 @@ class InvitationBuilder(object):
 
         process_file='process/simple_paper_recruitment_process.py' if proposed else 'process/paper_recruitment_process.py'
         process_content = self.get_process_content(process_file)
-        preprocess_content = self.get_process_content('process/paper_recruitment_pre_process.py')
+        preprocess_content = self.get_process_content('process/paper_recruitment_pre_process.js')
 
         edge_readers = []
         edge_writers = []
