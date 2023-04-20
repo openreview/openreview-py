@@ -188,7 +188,7 @@ class TestWorkshopV2():
         assert openreview_client.get_invitation('PRL/2023/ICAPS/Reviewers/-/Custom_User_Demands')
 
         ## try to make an assignment and get an error because the submission deadline has not passed
-        with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, submission reviewers group not found.'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, submission Reviewers group not found.'):
             edge = pc_client_v2.post_edge(openreview.api.Edge(
                 invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
                 head=submissions[0].id,
