@@ -19,8 +19,8 @@ from openreview.api import Group
 class TestMatching():
 
     @pytest.fixture(scope="class")
-    def pc_client(self):
-        return OpenReviewClient(username='pc1_venue@mail.com', password='1234')
+    def pc_client(self, openreview_client, helpers):
+        return OpenReviewClient(username='pc1_venue@mail.com', password=helpers.strong_password)
 
     @pytest.fixture(scope="class")
     def venue(self, openreview_client, helpers):
@@ -89,16 +89,16 @@ class TestMatching():
         ac_group = openreview_client.get_group(venue.id + '/Senior_Program_Committee')
         openreview_client.add_members_to_group(ac_group, ['ac1_venue@cmu.edu', 'ac2_venue@umass.edu'])
         helpers.create_user('ac1_venue@cmu.edu', 'AreaChair', 'Venue')
-        ac1_client = OpenReviewClient(username='ac1_venue@cmu.edu', password='1234')
+        ac1_client = OpenReviewClient(username='ac1_venue@cmu.edu', password=helpers.strong_password)
         helpers.create_user('r1_venue@mit.edu', 'Reviewer', 'Venue')
-        r1_client = OpenReviewClient(username='r1_venue@mit.edu', password='1234')
+        r1_client = OpenReviewClient(username='r1_venue@mit.edu', password=helpers.strong_password)
 
         helpers.create_user('celeste@mailten.com', 'Celeste', 'MartinezG')
         helpers.create_user('a1_venue@cmu.edu', 'Author', 'A')
         helpers.create_user('a2_venue@mit.edu', 'Author', 'B')
         helpers.create_user('a3_venue@umass.edu', 'Author', 'C')
         helpers.create_user('pc3_venue@mail.com', 'PC', 'Author')
-        author_client = OpenReviewClient(username='celeste@mailten.com', password='1234')
+        author_client = OpenReviewClient(username='celeste@mailten.com', password=helpers.strong_password)
 
         ## setup matching with no submissions
         with pytest.raises(openreview.OpenReviewException, match=r'Submissions not found'):
@@ -656,7 +656,7 @@ class TestMatching():
 
     def test_set_reviewers_assignments_as_author(self, venue, pc_client, helpers):
 
-        pc3_client = OpenReviewClient(username='pc3_venue@mail.com', password='1234')
+        pc3_client = OpenReviewClient(username='pc3_venue@mail.com', password=helpers.strong_password)
         # pc3_client.impersonate(venue.id) #ForbiddenError
 
         venue.client = pc3_client

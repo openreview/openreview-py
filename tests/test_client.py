@@ -28,7 +28,7 @@ class TestClient():
         assert 'active_venues' in group_names
         assert 'host' in group_names
 
-    def test_create_client(self, client, test_client):
+    def test_create_client(self, client, helpers, test_client):
 
         client = openreview.Client()
         assert client
@@ -40,7 +40,7 @@ class TestClient():
         with pytest.raises(openreview.OpenReviewException, match=r'.*Password is missing.*'):
             client = openreview.Client()
 
-        os.environ["OPENREVIEW_PASSWORD"] = "1234"
+        os.environ["OPENREVIEW_PASSWORD"] = helpers.strong_password
 
         client = openreview.Client()
         assert client
@@ -58,7 +58,7 @@ class TestClient():
             client = openreview.Client(username='nouser@mail.com')
 
         with pytest.raises(openreview.OpenReviewException, match=r'.*Invalid username or password.*'):
-            client = openreview.Client(username='nouser@mail.com', password='1234')
+            client = openreview.Client(username='nouser@mail.com', password=helpers.strong_password)
 
         client = openreview.Client(token='Bearer ' + test_client.token)
         assert client
@@ -66,13 +66,13 @@ class TestClient():
         assert client.profile
         assert '~SomeFirstName_User1' == client.profile.id
 
-        client = openreview.Client(token='Bearer ' + test_client.token, username='test@mail.com', password='1234')
+        client = openreview.Client(token='Bearer ' + test_client.token, username='test@mail.com', password=helpers.strong_password)
         assert client
         assert client.token
         assert client.profile
         assert '~SomeFirstName_User1' == client.profile.id
 
-    def test_login_user(self):
+    def test_login_user(self, client, helpers):
 
         guest = openreview.Client()
 
@@ -85,14 +85,14 @@ class TestClient():
         with pytest.raises(openreview.OpenReviewException, match=r'.*Invalid username or password.*'):
             guest.login_user(username = "openreview.net", password = "1111")
 
-        response = guest.login_user(username = "openreview.net", password = "1234")
+        response = guest.login_user(username = "openreview.net", password = helpers.strong_password)
         assert response
 
-        response = guest.login_user(username = "openreview.net", password = "1234", expiresIn=4000)
+        response = guest.login_user(username = "openreview.net", password = helpers.strong_password, expiresIn=4000)
         assert response
 
-    def test_login_expiration(self):
-        client = openreview.Client(username = "openreview.net", password = "1234", tokenExpiresIn=3)
+    def test_login_expiration(self, client, helpers):
+        client = openreview.Client(username = "openreview.net", password = helpers.strong_password, tokenExpiresIn=3)
         group = client.get_group("openreview.net")
         assert group
         assert group.members == ['~Super_User1']
@@ -103,7 +103,7 @@ class TestClient():
             error = e.args[0]
             assert e.args[0]['name'] == 'TokenExpiredError'
 
-        client_v2 = openreview.api.OpenReviewClient(username = "openreview.net", password = "1234", tokenExpiresIn=3)
+        client_v2 = openreview.api.OpenReviewClient(username = "openreview.net", password = helpers.strong_password, tokenExpiresIn=3)
         group = client_v2.get_group("openreview.net")
         assert group
         assert group.members == ['~Super_User1']
@@ -137,8 +137,8 @@ class TestClient():
 
     def test_search_profiles(self, client, helpers):
         guest = openreview.Client()
-        guest.register_user(email = 'mbok@mail.com', first = 'Melisa', last = 'Bok', password = '1234')
-        guest.register_user(email = 'andrew@mail.com', first = 'Andrew', last = 'McCallum', password = '1234')
+        guest.register_user(email = 'mbok@mail.com', first = 'Melisa', last = 'Bok', password = helpers.strong_password)
+        guest.register_user(email = 'andrew@mail.com', first = 'Andrew', last = 'McCallum', password = helpers.strong_password)
 
         profiles = client.search_profiles(confirmedEmails=['mbok@mail.com'])
         assert profiles, "Could not get the profile by email"
@@ -209,7 +209,7 @@ class TestClient():
     #     invitations = client.get_invitations(invitee = True, duedate = True, tags = True, details = 'repliedTags')
     #     assert len(invitations) == 0
 
-    def test_get_notes_by_content(self, client, test_client):
+    def test_get_notes_by_content(self, client, helpers):
 
         now = datetime.datetime.utcnow()
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
@@ -223,7 +223,7 @@ class TestClient():
 
         invitation = conference.get_submission_id()
 
-        author_client = openreview.Client(username='mbok@mail.com', password='1234')
+        author_client = openreview.Client(username='mbok@mail.com', password=helpers.strong_password)
         note = openreview.Note(invitation = invitation,
             readers = ['mbok@mail.com', 'andrew@mail.com'],
             writers = ['mbok@mail.com', 'andrew@mail.com'],
@@ -257,11 +257,11 @@ class TestClient():
         notes = client.get_all_notes(invitation=invitation, content = { 'title': 'Paper title333'})
         assert len(notes) == 0
 
-    def test_merge_profile(self, client):
+    def test_merge_profile(self, client, helpers):
         guest = openreview.Client()
-        from_profile = guest.register_user(email = 'celeste@mail.com', first = 'Celeste', last = 'Bok', password = '1234')
+        from_profile = guest.register_user(email = 'celeste@mail.com', first = 'Celeste', last = 'Bok', password = helpers.strong_password)
         assert from_profile
-        to_profile = guest.register_user(email = 'melisab@mail.com', first = 'Melissa', last = 'Bok', password = '5678')
+        to_profile = guest.register_user(email = 'melisab@mail.com', first = 'Melissa', last = 'Bok', password = helpers.strong_password)
         assert to_profile
 
         assert from_profile['id'] == '~Celeste_Bok1'
@@ -278,11 +278,11 @@ class TestClient():
 
         
 
-    def test_rename_profile(self, client):
+    def test_rename_profile(self, client, helpers):
         guest = openreview.Client()
-        from_profile = guest.register_user(email = 'lbahy@mail.com', first = 'Nadia', last = 'LBahy', password = '1234')
+        from_profile = guest.register_user(email = 'lbahy@mail.com', first = 'Nadia', last = 'LBahy', password = helpers.strong_password)
         assert from_profile
-        to_profile = guest.register_user(email = 'steph@mail.com', first = 'David', last = 'Steph', password = '5678')
+        to_profile = guest.register_user(email = 'steph@mail.com', first = 'David', last = 'Steph', password = helpers.strong_password)
         assert to_profile
 
         assert from_profile['id'] == '~Nadia_LBahy1'
@@ -301,9 +301,9 @@ class TestClient():
         assert profile.id == '~Nadia_LBahy1'
 
     @pytest.mark.xfail
-    def test_post_venue(self, client):
+    def test_post_venue(self, client, helpers):
         os.environ["OPENREVIEW_USERNAME"] = "openreview.net"
-        os.environ["OPENREVIEW_PASSWORD"] = "1234"
+        os.environ["OPENREVIEW_PASSWORD"] = helpers.strong_password
         super_user = openreview.Client()
         assert '~Super_User1' == super_user.profile.id
 
@@ -332,9 +332,9 @@ class TestClient():
         assert venue == venueRes
 
     @pytest.mark.xfail
-    def test_get_venues(self, client):
+    def test_get_venues(self, client, helpers):
         os.environ["OPENREVIEW_USERNAME"] = "openreview.net"
-        os.environ["OPENREVIEW_PASSWORD"] = "1234"
+        os.environ["OPENREVIEW_PASSWORD"] = helpers.strong_password
         super_user = openreview.Client()
         assert '~Super_User1' == super_user.profile.id
 

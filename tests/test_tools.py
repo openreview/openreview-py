@@ -353,11 +353,11 @@ class TestTools():
     def test_subdomains(self):
         # ensure that two part top-level domains are handled appropriately
         # e.g. "edu.cn", "ac.uk"
-        assert openreview.tools.subdomains('michael@mails.tsinghua.edu.cn') == ['mails.tsinghua.edu.cn', 'tsinghua.edu']
-        assert openreview.tools.subdomains('michael@robots.ox.ac.uk') == ['oxford.ac.uk', 'robots.ox.ac.uk']
-        assert openreview.tools.subdomains('michael@eng.ox.ac.uk') == ['eng.ox.ac.uk', 'oxford.ac.uk']
-        assert openreview.tools.subdomains('michael@ground.ai') == ['ground.ai']
-        assert openreview.tools.subdomains('michael@cs.umass.edu') == ['cs.umass.edu', 'umass.edu']
+        assert openreview.tools.subdomains('mails.tsinghua.edu.cn') == ['mails.tsinghua.edu.cn', 'tsinghua.edu']
+        assert openreview.tools.subdomains('robots.ox.ac.uk') == ['oxford.ac.uk', 'robots.ox.ac.uk']
+        assert openreview.tools.subdomains('eng.ox.ac.uk') == ['eng.ox.ac.uk', 'oxford.ac.uk']
+        assert openreview.tools.subdomains('ground.ai') == ['ground.ai']
+        assert openreview.tools.subdomains('cs.umass.edu') == ['cs.umass.edu', 'umass.edu']
         assert openreview.tools.subdomains('   ') == []
 
     def test_replace_members_with_ids(self, client, test_client):
@@ -511,6 +511,52 @@ class TestTools():
         neurips_conflicts = openreview.tools.get_conflicts([intern_profile], profile2, policy='neurips')
         assert len(neurips_conflicts) == 1
         assert 'cmu.edu' in conflicts
+
+        conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy=openreview.tools.get_profile_info)
+        assert len(conflicts) == 2
+        assert 'cmu.edu' in conflicts
+        assert 'umass.edu' in conflicts
+
+        neurips_conflicts = openreview.tools.get_conflicts([intern_profile], profile2, policy=openreview.tools.get_neurips_profile_info)
+        assert len(neurips_conflicts) == 1
+        assert 'cmu.edu' in conflicts
+
+        def cmu_is_a_never_conflict(profile, n_years=None):
+            domains = set()
+            emails = set()
+            relations = set()
+            publications = set()
+
+            ## Emails section
+            for email in profile.content['emails']:
+                # split email
+                domain = email.split('@')[1]
+                if domain != 'cmu.edu':
+                    domains.add(domain)
+                    emails.add(email)
+
+            ## Institution section
+            for history in profile.content.get('history', []):
+                try:
+                    end = int(history.get('end', 0) or 0)
+                except:
+                    end = 0
+                if not end:
+                    domain = history.get('institution', {}).get('domain', '')
+                    if domain != 'cmu.edu':
+                        domains.add(domain)
+
+            return {
+                'id': profile.id,
+                'domains': domains,
+                'emails': emails,
+                'relations': relations,
+                'publications': publications
+            }
+        
+        conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy=cmu_is_a_never_conflict)
+        assert len(conflicts) == 1
+        assert 'umass.edu' in conflicts
 
     def test_group(self, client):
 

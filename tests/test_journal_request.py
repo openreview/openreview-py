@@ -75,7 +75,7 @@ class TestJournalRequest():
         request_page(selenium, 'http://localhost:3030/forum?id=' + request_form['note']['id'], openreview_client.token)
 
         helpers.create_user('support_role@mail.com', 'Support', 'Role')
-        test_client = OpenReviewClient(username='support_role@mail.com', password='1234')
+        test_client = OpenReviewClient(username='support_role@mail.com', password=helpers.strong_password)
 
         request_page(selenium, 'http://localhost:3030/forum?id=' + request_form['note']['id'], openreview_client.token, by=By.CLASS_NAME, wait_for_element='invitations-container')
         invitations_container = selenium.find_element_by_class_name('invitations-container')
@@ -105,7 +105,7 @@ TJ22 Editors-in-Chief
 '''
         journal_request.setup_recruitment_invitations(journal.request_form_id, reviewer_template=rev_template)
 
-        test_client = OpenReviewClient(username='support_role@mail.com', password='1234')
+        test_client = OpenReviewClient(username='support_role@mail.com', password=helpers.strong_password)
 
         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal.request_form_id), test_client.token, by=By.CLASS_NAME, wait_for_element='invitations-container')
         invitations_container = selenium.find_element_by_class_name('invitations-container')
@@ -169,7 +169,7 @@ TJ22 Editors-in-Chief
 
     def test_journal_action_editor_recruitment(self, openreview_client, selenium, request_page, helpers, journal, journal_number):
 
-        test_client = OpenReviewClient(username='support_role@mail.com', password='1234')
+        test_client = OpenReviewClient(username='support_role@mail.com', password=helpers.strong_password)
 
         invitation = test_client.get_invitation(id=f'openreview.net/Support/Journal_Request{journal_number}/-/Action_Editor_Recruitment')
         assert 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of TJ22' in invitation.edit['note']['content']['email_content']['value']['param']['default']
@@ -228,7 +228,7 @@ TJ22 Editors-in-Chief
         openreview_client.add_members_to_group('TJ22/Action_Editors', ['ae_journal1@mail.com', 'ae_journal2@mail.com'])
 
         helpers.create_user('ae_journal1@mail.com', 'First', 'AE')
-        ae_client = OpenReviewClient(username='ae_journal1@mail.com', password='1234')
+        ae_client = OpenReviewClient(username='ae_journal1@mail.com', password=helpers.strong_password)
 
         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal.request_form_id), ae_client.token, by=By.CLASS_NAME, wait_for_element='invitations-container')
         invitations_container = selenium.find_element_by_class_name('invitations-container')
@@ -299,7 +299,7 @@ TJ22 Editors-in-Chief
         assert recruitment_status[0].readers == ['openreview.net/Support', 'TJ22', '~First_AE1']
 
         helpers.create_user('ae_journal2@mail.com', 'Second', 'AE')
-        ae2_client = OpenReviewClient(username='ae_journal2@mail.com', password='1234')
+        ae2_client = OpenReviewClient(username='ae_journal2@mail.com', password=helpers.strong_password)
 
         #re-invite reviewer by another AE
         recruitment_note = ae2_client.post_note_edit(

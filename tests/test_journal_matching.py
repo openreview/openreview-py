@@ -15,9 +15,9 @@ class TestJournalMatching():
 
 
     @pytest.fixture(scope="class")
-    def journal(self, openreview_client):
+    def journal(self, openreview_client, helpers):
 
-        manuel_client=OpenReviewClient(username='manuel@mail.com', password='1234')
+        manuel_client=OpenReviewClient(username='manuel@mail.com', password=helpers.strong_password)
         manuel_client.impersonate('CARP/Editors_In_Chief')
 
         requests = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': 'CARP' })
@@ -70,9 +70,9 @@ class TestJournalMatching():
     def test_submission(self, journal, openreview_client, test_client, helpers):
 
         venue_id = journal.venue_id
-        test_client = OpenReviewClient(username='test@mail.com', password='1234')
-        ana_client = OpenReviewClient(username='ana@prada.com', password='1234')
-        ken_client = OpenReviewClient(username='ken@beck.com', password='1234')
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        ana_client = OpenReviewClient(username='ana@prada.com', password=helpers.strong_password)
+        ken_client = OpenReviewClient(username='ken@beck.com', password=helpers.strong_password)
 
         ## Set a max quota
         ana_client.post_edge(openreview.Edge(invitation='CARP/Action_Editors/-/Custom_Max_Papers',
