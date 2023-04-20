@@ -42,11 +42,13 @@ class Venue(object):
         self.expertise_selection_stage = None       
         self.submission_stage = None
         self.review_stage = None
+        self.review_rebuttal_stage = None
         self.ethics_review_stage = None
         self.bid_stages = []
         self.meta_review_stage = None
         self.comment_stage = None
         self.decision_stage = None
+        self.custom_stage = None
         self.submission_revision_stage = None
         self.registration_stages = []
         self.use_area_chairs = False
@@ -64,6 +66,7 @@ class Venue(object):
         self.enable_reviewers_reassignment = False
         self.reviewers_proposed_assignment_title = None
         self.conflict_policy = 'default'
+        self.decision_heading_map = {}
 
     def get_id(self):
         return self.venue_id
@@ -97,6 +100,10 @@ class Venue(object):
             roles = self.reviewer_roles + [self.area_chairs_name]
         if self.use_senior_area_chairs:
             roles = roles + [self.senior_area_chairs_name]
+        if self.use_ethics_chairs:
+            roles = roles + [self.ethics_chairs_name]
+        if self.use_ethics_reviewers:
+            roles = roles + [self.ethics_reviewers_name]            
         return roles
 
     def get_meta_invitation_id(self):
@@ -157,7 +164,7 @@ class Venue(object):
         return invitation_id
 
     def get_committee(self, number = None, submitted_reviewers = False, with_authors = False):
-        committee = [self.id]
+        committee = []
 
         if with_authors:
             committee.append(self.get_authors_id(number))
@@ -201,6 +208,10 @@ class Venue(object):
             return name[:-1] if name.endswith('s') else name
         return self.reviewers_name
 
+    def get_anon_reviewers_name(self, pretty=True):
+        rev_name = self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
+        return rev_name + '_'
+
     def get_ethics_reviewers_name(self, pretty=True):
         if pretty:
             name=self.ethics_reviewers_name.replace('_', ' ')
@@ -213,9 +224,13 @@ class Venue(object):
             return name[:-1] if name.endswith('s') else name
         return self.area_chairs_name
     
+    def get_anon_area_chairs_name(self, pretty=True):
+        rev_name = self.area_chairs_name[:-1] if self.area_chairs_name.endswith('s') else self.area_chairs_name
+        return rev_name + '_'    
+    
     def get_reviewers_id(self, number = None, anon=False, submitted=False):
-        rev_name = self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
-        reviewers_id = self.get_committee_id(f'{rev_name}_.*' if anon else self.reviewers_name, number)
+        rev_name = self.get_anon_reviewers_name()
+        reviewers_id = self.get_committee_id(f'{rev_name}.*' if anon else self.reviewers_name, number)
         if submitted:
             return reviewers_id + '/Submitted'
         return reviewers_id
@@ -230,8 +245,8 @@ class Venue(object):
         return self.get_committee_id(self.program_chairs_name)
 
     def get_area_chairs_id(self, number = None, anon=False):
-        ac_name = self.area_chairs_name[:-1] if self.area_chairs_name.endswith('s') else self.area_chairs_name
-        return self.get_committee_id(f'{ac_name}_.*' if anon else self.area_chairs_name, number)
+        ac_name = self.get_anon_area_chairs_name()
+        return self.get_committee_id(f'{ac_name}.*' if anon else self.area_chairs_name, number)
 
     ## Compatibility with Conference, refactor conference references to use get_area_chairs_id
     def get_anon_area_chair_id(self, number, anon_id):
@@ -315,7 +330,7 @@ class Venue(object):
             notes = self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.get_submission_venue_id()}'}, sort=sort, details=details)
             if len(notes) == 0:
                 notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort, details=details)
-                rejected = self.client.get_all_notes(content={ 'venueid': f'{self.venue_id}/Rejected'}, sort=sort, details=details)
+                rejected = self.client.get_all_notes(content={ 'venueid': self.get_rejected_submission_venue_id()}, sort=sort, details=details)
                 if rejected:
                     notes.extend(rejected)
             return notes
@@ -346,7 +361,13 @@ class Venue(object):
             self.group_builder.create_area_chairs_group()
 
         if self.use_senior_area_chairs:
-            self.group_builder.create_senior_area_chairs_group()            
+            self.group_builder.create_senior_area_chairs_group()
+
+        if self.use_ethics_reviewers:
+            self.group_builder.create_ethics_reviewers_group()
+
+        if self.use_ethics_chairs:
+            self.group_builder.create_ethics_chairs_group()
 
     def recruit_reviewers(self,
         title,
@@ -378,94 +399,71 @@ class Venue(object):
         self.invitation_builder.set_submission_invitation()
         self.invitation_builder.set_withdrawal_invitation()
         self.invitation_builder.set_desk_rejection_invitation()
+        self.invitation_builder.set_post_submission_invitation()
+        self.invitation_builder.set_pc_submission_revision_invitation()
+        self.invitation_builder.set_submission_reviewer_group_invitation()
+        if self.use_area_chairs:
+            self.invitation_builder.set_submission_area_chair_group_invitation()
+        if self.use_senior_area_chairs:
+            self.invitation_builder.set_submission_senior_area_chair_group_invitation()
         if self.expertise_selection_stage:
             self.invitation_builder.set_expertise_selection_invitations()
 
+        if self.submission_stage.second_due_date:
+            submission_revision_stage = openreview.stages.SubmissionRevisionStage(name='Revision',
+                start_date=self.submission_stage.exp_date,
+                due_date=self.submission_stage.second_due_date,
+                additional_fields=self.submission_stage.additional_fields,
+                remove_fields=self.submission_stage.remove_fields,
+                only_accepted=False,
+                multiReply=True,
+                allow_author_reorder=True
+            )
+            self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)                        
+
+    def create_post_submission_stage(self):
+
+        self.invitation_builder.set_post_submission_invitation()
+        
+        self.group_builder.add_to_active_venues()        
+    
+    def create_submission_revision_stage(self):
+        return self.invitation_builder.set_submission_revision_invitation()
+
     def create_review_stage(self):
-        invitation = self.invitation_builder.set_review_invitation()
-        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions())
+        return self.invitation_builder.set_review_invitation()
+        
+    def create_review_rebuttal_stage(self):
+        return self.invitation_builder.set_review_rebuttal_invitation()
 
     def create_meta_review_stage(self):
-        invitation = self.invitation_builder.set_meta_review_invitation()
-        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions())
+        return self.invitation_builder.set_meta_review_invitation()
 
     def create_registration_stages(self):
-        self.invitation_builder.set_registration_invitations()
+        return self.invitation_builder.set_registration_invitations()
     
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
-        venue_id = self.venue_id
-        submissions = self.get_submissions()
-        hide_author_fields = ['authors', 'authorids'] if self.submission_stage.double_blind else []
-        final_hide_fields = hide_author_fields + hide_fields
-        
-        self.group_builder.create_paper_committee_groups(submissions)
-        
-        def update_submission_readers(submission):
-
-            if submission.content['venueid']['value'] == self.get_submission_venue_id():
-
-                note_content = {}
-                for field, value in submission.content.items():
-                    if field in final_hide_fields and 'readers' not in value:
-                        note_content[field] = {
-                            'readers': [venue_id, self.get_authors_id(submission.number)]
-                        }
-                                           
-                    if field not in final_hide_fields and 'readers' in value:
-                        note_content[field] = {
-                            'readers': { 'delete': True }
-                        }                        
-
-                new_readers = self.submission_stage.get_readers(self, submission.number)
-                note_readers = new_readers if submission.readers != new_readers else None
-               
-                note_writers = [venue_id, self.get_authors_id(submission.number)] if submission.writers != [venue_id, self.get_authors_id(submission.number)] else None
-                note_signatures = [self.get_authors_id(submission.number)]
-
-                note_odate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if (submission.odate is None and note_readers and 'everyone' in note_readers) else None
-
-                if note_readers or note_writers or note_content or note_odate:
-                    return self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
-                        readers=[venue_id, self.get_authors_id(submission.number)],
-                        writers=[venue_id],
-                        signatures=[venue_id],
-                        note=openreview.api.Note(id=submission.id,
-                                odate = note_odate,
-                                readers = note_readers,
-                                writers = note_writers,
-                                signatures = note_signatures,
-                                content = note_content 
-                            )
-                        )
-                else:
-                    return submission
-        ## Release the submissions to specified readers if venueid is still submission
-        openreview.tools.concurrent_requests(update_submission_readers, submissions, desc='update_submission_readers')
-
-        ## Open PC Revision
-        self.invitation_builder.set_pc_submission_revision_invitation()
-             
-        ## Create revision invitation if there is a second deadline?
-        ## Create withdraw and desk reject invitations
-        self.invitation_builder.create_paper_invitations(self.get_withdrawal_id(), submissions)
-        self.invitation_builder.create_paper_invitations(self.get_desk_rejection_id(), submissions)
-
-        self.group_builder.add_to_active_venues()
+        ## do nothing
+        return True
+    
+    def create_withdraw_invitations(self, reveal_authors=None, reveal_submission=None, email_pcs=None, hide_fields=[]):
+        ## deprecated
+        return self.invitation_builder.set_withdrawal_invitation()
+    
+    def create_desk_reject_invitations(self, reveal_authors=None, reveal_submission=None, hide_fields=[]):
+        ## deprecated
+        return self.invitation_builder.set_desk_rejection_invitation()
 
     def create_bid_stages(self):
         self.invitation_builder.set_bid_invitations()
 
     def create_comment_stage(self):
-        comment_invitation = self.invitation_builder.set_official_comment_invitation()
-        self.invitation_builder.create_paper_invitations(comment_invitation.id, self.get_submissions())
+        self.invitation_builder.set_official_comment_invitation()
         if self.comment_stage.allow_public_comments:
-            public_notes = [note for note in self.get_submissions() if 'everyone' in note.readers]
-            comment_invitation = self.invitation_builder.set_public_comment_invitation()
-            self.invitation_builder.create_paper_invitations(comment_invitation.id, public_notes)
+            self.invitation_builder.set_public_comment_invitation()
 
     def create_decision_stage(self):
         invitation = self.invitation_builder.set_decision_invitation()
-        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions())
 
         decision_file = self.decision_stage.decisions_file
         if decision_file:
@@ -485,6 +483,9 @@ class Venue(object):
                     decisions = file_handle.read()
 
             self.post_decisions(decisions, api1_client)
+
+    def create_custom_stage(self):
+        return self.invitation_builder.set_custom_stage_invitation()
 
     def post_decisions(self, decisions_file, api1_client):
 
@@ -592,7 +593,7 @@ Total Errors: {len(errors)}
 
             api1_client.post_note(status_note)
 
-    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None):
+    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None, hide_fields=[]):
 
         venue_id = self.venue_id
         submissions = self.get_submissions(sort='number:asc', details='directReplies')
@@ -604,7 +605,7 @@ Total Errors: {len(errors)}
             if 'Accept' in decision:
                 return venue_id
             else:
-                return f'{venue_id}/Rejected'
+                return self.get_rejected_submission_venue_id()
 
         if submission_readers:
             self.submission_stage.readers = submission_readers
@@ -674,19 +675,6 @@ Total Errors: {len(errors)}
                 self.client.post_message(subject, recipients=note.content['authorids']['value'], message=final_message)
 
         tools.concurrent_requests(send_notification, paper_notes)
-
-    def create_submission_revision_stage(self):
-        invitation = tools.get_invitation(self.client, self.get_submission_id())
-        if invitation:
-            notes = self.get_submissions(accepted=self.submission_revision_stage.only_accepted)
-            if self.submission_revision_stage.only_accepted:
-                all_notes = self.get_submissions()
-                accepted_note_ids = [note.id for note in notes]
-                non_accepted_notes = [note for note in all_notes if note.id not in accepted_note_ids]
-                expire_invitation_ids = [self.get_invitation_id(self.submission_revision_stage.name, note.number) for note in non_accepted_notes]
-                tools.concurrent_requests(self.invitation_builder.expire_invitation, expire_invitation_ids)
-            revision_invitation = self.invitation_builder.set_submission_revision_invitation(invitation.edit['note']['content'])
-            self.invitation_builder.create_paper_invitations(revision_invitation.id, notes)
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, alternate_matching_group=None):
         if committee_id is None:

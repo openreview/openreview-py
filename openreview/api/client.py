@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function, unicode_literals
-from datetime import date
+import datetime
 import sys
 if sys.version_info[0] < 3:
     string_types = [str, unicode]
@@ -58,6 +58,7 @@ class OpenReviewClient(object):
         self.messages_url = self.baseurl + '/messages'
         self.messages_direct_url = self.baseurl + '/messages/direct'
         self.process_logs_url = self.baseurl + '/logs/process'
+        self.institutions_url = self.baseurl + '/settings/institutions'
         self.jobs_status = self.baseurl + '/jobs/status'
         self.venues_url = self.baseurl + '/venues'
         self.note_edits_url = self.baseurl + '/notes/edits'
@@ -217,6 +218,33 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         self.__handle_token(response.json()['activatable'])
         return self.token
+    
+    def get_institutions(self, id=None, domain=None):
+        """
+        Get a single Institution by id or domain if available
+
+        :param id: id of the Institution as saved in the database
+        :type id: str
+        :param domain: domain of the Institution
+        :type domain: str
+
+        :return: Dictionary with the Institution information
+        :rtype: dict
+
+        Example:
+
+        >>> institution = client.get_institutions(domain='umass.edu')
+        """
+
+        params = {}
+        if id:
+            params['id'] = id
+        if domain:
+            params['domain'] = domain
+
+        response = self.session.get(self.institutions_url, params = tools.format_params(params), headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
 
     def get_group(self, id):
         """
@@ -881,6 +909,8 @@ class OpenReviewClient(object):
             replyto = None,
             tauthor = None,
             signature = None,
+            transitive_members = None,
+            signatures = None,
             writer = None,
             trash = None,
             number = None,
@@ -913,6 +943,10 @@ class OpenReviewClient(object):
         :type tauthor: str, optional
         :param signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
         :type signature: str, optional
+        :param transitive_members: If true, returns Notes whose tauthor field is a transitive member of the Group represented by the given Group ID.
+        :type transitive_members: bool, optional
+        :param signatures: Group IDs. If provided, returns Notes whose signatures field contains the given Group IDs.
+        :type signatures: list[str], optional
         :param writer: A Group ID. If provided, returns Notes whose writers field contains the given Group ID.
         :type writer: str, optional
         :param trash: If True, includes Notes that have been deleted (i.e. the ddate field is less than the
@@ -952,6 +986,10 @@ class OpenReviewClient(object):
             params['tauthor'] = tauthor
         if signature is not None:
             params['signature'] = signature
+        if transitive_members is not None:
+            params['transitiveMembers'] = transitive_members
+        if signatures is not None:
+            params['signatures'] = signatures
         if writer is not None:
             params['writer'] = writer
         if trash == True:
@@ -990,6 +1028,8 @@ class OpenReviewClient(object):
             replyto = None,
             tauthor = None,
             signature = None,
+            transitive_members = None,
+            signatures = None,
             writer = None,
             trash = None,
             number = None,
@@ -1022,6 +1062,10 @@ class OpenReviewClient(object):
         :type tauthor: str, optional
         :param signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
         :type signature: str, optional
+        :param transitive_members: If true, returns Notes whose tauthor field is a transitive member of the Group represented by the given Group ID.
+        :type transitive_members: bool, optional
+        :param signatures: Group IDs. If provided, returns Notes whose signatures field contains the given Group IDs.
+        :type signatures: list[str], optional
         :param writer: A Group ID. If provided, returns Notes whose writers field contains the given Group ID.
         :type writer: str, optional
         :param trash: If True, includes Notes that have been deleted (i.e. the ddate field is less than the
@@ -1056,6 +1100,8 @@ class OpenReviewClient(object):
             'replyto': replyto,
             'tauthor': tauthor,
             'signature': signature,
+            'transitive_members': transitive_members,
+            'signatures': signatures,
             'writer': writer,
             'trash': trash,
             'number': number,
@@ -1109,6 +1155,21 @@ class OpenReviewClient(object):
             return edits, response.json()['count']
 
         return edits
+
+    def get_group_edit(self, id):
+        """
+        Get a single edit by id if available
+
+        :param id: id of the edit
+        :type id: str
+
+        :return: edit matching the passed id
+        :rtype: Group
+        """
+        response = self.session.get(self.group_edits_url, params = {'id':id}, headers = self.headers)
+        response = self.__handle_response(response)
+        n = response.json()['edits'][0]
+        return Edit.from_json(n)
 
     def get_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None, with_count=False):
         """
@@ -1392,6 +1453,19 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
+    def delete_institution(self, institution_id):
+        """
+        Deletes the institution
+
+        :param institution_id: ID of Institution to be deleted
+        :type institution_id: str
+
+        :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
+        :rtype: dict
+        """
+        response = self.session.delete(self.institutions_url + '/' + institution_id, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
 
     def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None):
         """
@@ -1467,7 +1541,7 @@ class OpenReviewClient(object):
         def add_member(group, members):
             group = self.get_group(group) if type(group) in string_types else group
             if group.invitations:
-                self.post_group_edit(invitation = group.invitations[0], 
+                self.post_group_edit(invitation = f'{group.domain}/-/Edit', 
                     signatures = group.signatures, 
                     group = Group(
                         id = group.id, 
@@ -1507,7 +1581,7 @@ class OpenReviewClient(object):
         def remove_member(group, members):
             group = self.get_group(group) if type(group) in string_types else group
             if group.invitations:
-                self.post_group_edit(invitation = group.invitations[0], 
+                self.post_group_edit(invitation = f'{group.domain}/-/Edit', 
                     signatures = group.signatures, 
                     group = Group(
                         id = group.id, 
@@ -1609,7 +1683,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()['messages']
 
-    def get_process_logs(self, id = None, invitation = None, status = None):
+    def get_process_logs(self, id = None, invitation = None, status = None, min_sdate = None):
         """
         **Only for Super User**. Retrieves the logs of the process function executed by an Invitation
 
@@ -1622,9 +1696,25 @@ class OpenReviewClient(object):
         :rtype: dict
         """
 
-        response = self.session.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation, 'status': status }, headers = self.headers)
+        response = self.session.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation, 'status': status, 'minsdate': min_sdate }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()['logs']
+
+    def post_institution(self, institution):
+        """
+        Requires Super User permission.
+        Adds an institution if the institution id is not found in the database,
+        otherwise, the institution is updated.
+
+        :param institution: institution to be posted
+        :type institution: dict
+
+        :return: The posted institution
+        :rtype: dict
+        """
+        response = self.session.post(self.institutions_url, json = institution, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
 
     def post_invitation_edit(self, invitations, readers=None, writers=None, signatures=None, invitation=None, content=None, replacement=None):
         """
@@ -1680,13 +1770,15 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    def post_group_edit(self, invitation, signatures, group=None, readers=None, writers=None):
+    def post_group_edit(self, invitation, signatures=None, group=None, readers=None, writers=None, content=None, replacement=None):
         """
         """
         edit_json = {
-            'invitation': invitation,
-            'group': group.to_json() if group else {}
+            'invitation': invitation
         }
+
+        if group is not None:
+            edit_json['group'] = group.to_json()
 
         if signatures is not None:
             edit_json['signatures'] = signatures
@@ -1696,6 +1788,12 @@ class OpenReviewClient(object):
 
         if writers is not None:
             edit_json['writers'] = writers
+
+        if content is not None:
+            edit_json['content'] = content
+
+        if replacement is not None:
+            edit_json['replacement'] = replacement            
 
         response = requests.post(self.group_edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
@@ -1710,6 +1808,8 @@ class OpenReviewClient(object):
 
         if 'note' in edit_json:
             response = self.session.post(self.note_edits_url, json = edit_json, headers = self.headers)
+        elif 'group' in edit_json:
+            response = self.session.post(self.group_edits_url, json = edit_json, headers = self.headers)
         elif 'invitation' in edit_json:
             response = self.session.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
 
@@ -1884,6 +1984,7 @@ class Edit(object):
         writers = None,
         signatures = None,
         note = None,
+        group = None,
         invitation = None,
         nonreaders = None,
         cdate = None,
@@ -1900,6 +2001,7 @@ class Edit(object):
         self.writers = writers
         self.signatures = signatures
         self.note = note
+        self.group = group
         self.invitation = invitation
         self.tauthor = tauthor
 
@@ -1934,6 +2036,8 @@ class Edit(object):
             body['signatures'] = self.signatures
         if (self.note):
             body['note'] = self.note.to_json()
+        if (self.group):
+            body['group'] = self.group.to_json()
         if isinstance(self.invitation, Invitation):
             body['invitation'] = self.invitation.to_json()
         if isinstance(self.invitation, str):
@@ -1964,6 +2068,7 @@ class Edit(object):
             writers = e.get('writers'),
             signatures = e.get('signatures'),
             note = Note.from_json(e['note']) if 'note' in e else None,
+            group = Group.from_json(e['group']) if 'group' in e else None,
             invitation = e.get('invitation'),
             tauthor = e.get('tauthor')
             )
@@ -2169,6 +2274,12 @@ class Invitation(object):
     def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
+    
+    def is_active(self):
+        now = tools.datetime_millis(datetime.datetime.utcnow())
+        cdate = self.cdate if self.cdate else now
+        edate = self.expdate if self.expdate else now
+        return cdate <= now and now <= edate
 
     def pretty_id(self):
         tokens = self.id.split('/')[-2:]
@@ -2420,7 +2531,7 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, content=None, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, parent = None, details = None):
+    def __init__(self, id=None, content=None, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, parent = None, details = None):
         # post attributes
         self.id=id
         self.invitation=invitation

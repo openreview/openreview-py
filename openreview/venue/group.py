@@ -154,8 +154,8 @@ class GroupBuilder(object):
             'program_chairs_id': { 'value': self.venue.get_program_chairs_id() },
             'reviewers_id': { 'value': self.venue.get_reviewers_id() },
             'reviewers_name': { 'value': self.venue.reviewers_name },
-            'reviewers_anon_name': { 'value': 'Reviewer_' },
-            'reviewers_submitted_name': { 'value': f'{self.venue.reviewers_name}/Submitted' },
+            'reviewers_anon_name': { 'value': self.venue.get_anon_reviewers_name() },
+            'reviewers_submitted_name': { 'value': 'Submitted' },
             'reviewers_custom_max_papers_id': { 'value': self.venue.get_custom_max_papers_id(self.venue.get_reviewers_id()) },
             'reviewers_affinity_score_id': { 'value': self.venue.get_affinity_score_id(self.venue.get_reviewers_id()) },
             'reviewers_conflict_id': { 'value': self.venue.get_conflict_score_id(self.venue.get_reviewers_id()) },
@@ -172,20 +172,26 @@ class GroupBuilder(object):
             'withdraw_reversion_id': { 'value': self.venue.get_invitation_id('Withdrawal_Reversion') },
             'withdraw_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
             'withdrawal_name': { 'value': 'Withdrawal'},
+            'withdrawal_email_pcs': { 'value': self.venue.submission_stage.email_pcs_on_withdraw },
             'desk_rejected_submission_id': { 'value': self.venue.get_desk_rejected_id() },
             'desk_reject_expiration_id': { 'value': self.venue.get_invitation_id('Desk_Reject_Expiration') },
             'desk_rejection_reversion_id': { 'value': self.venue.get_invitation_id('Desk_Rejection_Reversion') },
             'desk_reject_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
             'desk_rejection_name': { 'value': 'Desk_Rejection'},
-            'conflict_policy': { 'value': self.venue.conflict_policy }
+            'conflict_policy': { 'value': self.venue.conflict_policy },
+            'decision_heading_map': { 'value': self.venue.decision_heading_map }
         }
+
+        if self.venue.submission_stage.subject_areas:
+            content['subject_areas'] = { 'value': self.venue.submission_stage.subject_areas }
+
         if self.venue.reviewers_proposed_assignment_title:
             content['reviewers_proposed_assignment_title'] = { 'value': self.venue.reviewers_proposed_assignment_title }
 
         if self.venue.use_area_chairs:
             content['area_chairs_id'] = { 'value': self.venue.get_area_chairs_id() }
             content['area_chairs_name'] = { 'value': self.venue.area_chairs_name }
-            content['area_chairs_anon_name'] = { 'value': 'Area_Chair_' }
+            content['area_chairs_anon_name'] = { 'value': self.venue.get_anon_area_chairs_name() }
             content['area_chairs_custom_max_papers_id'] = { 'value': self.venue.get_custom_max_papers_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_affinity_score_id'] = { 'value': self.venue.get_affinity_score_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_conflict_id'] = { 'value': self.venue.get_conflict_score_id(self.venue.get_area_chairs_id()) }
@@ -196,6 +202,7 @@ class GroupBuilder(object):
         if self.venue.use_senior_area_chairs:
             content['senior_area_chairs_id'] = { 'value': self.venue.get_senior_area_chairs_id() }
             content['senior_area_chairs_assignment_id'] = { 'value': self.venue.get_assignment_id(self.venue.get_senior_area_chairs_id(), deployed=True) }
+            content['senior_area_chairs_affinity_score_id'] = { 'value': self.venue.get_affinity_score_id(self.venue.get_senior_area_chairs_id()) }
             content['senior_area_chairs_name'] = { 'value': self.venue.senior_area_chairs_name }
 
         if self.venue.bid_stages:
@@ -214,6 +221,7 @@ class GroupBuilder(object):
         if self.venue.decision_stage:
             content['decision_name'] = { 'value': self.venue.decision_stage.name }
             content['decision_email_authors'] = { 'value': self.venue.decision_stage.email_authors }
+            content['decision_field_name'] = { 'value': self.venue.decision_stage.decision_field_name }
 
         if self.venue.submission_revision_stage:
             content['submission_revision_accepted'] = { 'value': self.venue.submission_revision_stage.only_accepted }            
@@ -224,6 +232,9 @@ class GroupBuilder(object):
         if self.venue.comment_stage:
             content['comment_mandatory_readers'] = { 'value': self.venue.comment_stage.get_mandatory_readers(self.venue, '{number}') }
             content['comment_email_pcs'] = { 'value': self.venue.comment_stage.email_pcs }
+
+        if self.venue.review_rebuttal_stage:
+            content['rebuttal_email_pcs'] = { 'value': self.venue.review_rebuttal_stage.email_pcs}
 
         update_content = self.get_update_content(venue_group.content if venue_group.content else {}, content)
         if update_content:
@@ -356,75 +367,33 @@ class GroupBuilder(object):
                 senior_area_chairs_group.web = content
                 self.post_group(senior_area_chairs_group)
 
-    def create_paper_committee_groups(self, submissions, overwrite=False):
-
-        group_by_id = { g.id: g for g in self.client.get_all_groups(prefix=f'{self.venue.id}/{self.venue.submission_stage.name}.*') }
-
-        def create_paper_commmitee_group(note):
-            # Reviewers Paper group
-            reviewers_id=self.venue.get_reviewers_id(number=note.number)
-            group = group_by_id.get(reviewers_id)
-            if not group or overwrite:
-                self.post_group(openreview.api.Group(id=reviewers_id,
-                    readers=self.get_reviewer_paper_group_readers(note.number),
-                    nonreaders=[self.venue.get_authors_id(note.number)],
-                    deanonymizers=self.get_reviewer_identity_readers(note.number),
-                    writers=self.get_reviewer_paper_group_writers(note.number),
-                    signatures=[self.venue.id],
-                    signatories=[self.venue.id],
-                    anonids=True,
-                    members=group.members if group else []
-                ))
-
-            # Reviewers Submitted Paper group
-            reviewers_submitted_id = self.venue.get_reviewers_id(number=note.number) + '/Submitted'
-            group = group_by_id.get(reviewers_submitted_id)
-            if not group or overwrite:
-                readers=[self.venue.id]
-                if self.venue.use_senior_area_chairs:
-                    readers.append(self.venue.get_senior_area_chairs_id(note.number))
-                if self.venue.use_area_chairs:
-                    readers.append(self.venue.get_area_chairs_id(note.number))
-                readers.append(reviewers_submitted_id)
-                self.post_group(openreview.api.Group(id=reviewers_submitted_id,
-                    readers=readers,
-                    writers=[self.venue.id],
-                    signatures=[self.venue.id],
-                    signatories=[self.venue.id],
-                    members=group.members if group else []
-                ))
-
-            # Area Chairs Paper group
-            if self.venue.use_area_chairs:
-                area_chairs_id=self.venue.get_area_chairs_id(number=note.number)
-                group = group_by_id.get(area_chairs_id)
-                if not group or overwrite:
-                    self.post_group(openreview.api.Group(id=area_chairs_id,
-                        readers=self.get_area_chair_paper_group_readers(note.number),
-                        nonreaders=[self.venue.get_authors_id(note.number)],
-                        deanonymizers=self.get_area_chair_identity_readers(note.number),
-                        writers=[self.venue.id],
-                        signatures=[self.venue.id],
-                        signatories=[self.venue.id],
-                        anonids=True,
-                        members=group.members if group else []
-                    ))
-
-            # Senior Area Chairs Paper group
-            if self.venue.use_senior_area_chairs:
-                senior_area_chairs_id=self.venue.get_senior_area_chairs_id(number=note.number)
-                group = group_by_id.get(senior_area_chairs_id)
-                if not group or overwrite:
-                    self.post_group(openreview.api.Group(id=senior_area_chairs_id,
-                        readers=self.get_senior_area_chair_identity_readers(note.number),
-                        nonreaders=[self.venue.get_authors_id(note.number)],
-                        writers=[self.venue.id],
-                        signatures=[self.venue.id],
-                        signatories=[self.venue.id, senior_area_chairs_id],
-                        members=group.members if group else []
-                    ))
-
-        openreview.tools.concurrent_requests(create_paper_commmitee_group, submissions, desc='create_paper_committee_groups')
+    def create_ethics_reviewers_group(self):
+        venue_id = self.venue.id
+        ethics_reviewers_id = self.venue.get_ethics_reviewers_id()
+        ethics_reviewers_group = openreview.tools.get_group(self.client, ethics_reviewers_id)
+        if not ethics_reviewers_group:
+            ethics_reviewers_group = Group(id=ethics_reviewers_id,
+                            readers=[venue_id, ethics_reviewers_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=[]
+                        )
+            self.post_group(ethics_reviewers_group)
+                
+    def create_ethics_chairs_group(self):
+        venue_id = self.venue.id
+        ethics_chairs_id = self.venue.get_ethics_chairs_id()
+        ethics_chairs_group = openreview.tools.get_group(self.client, ethics_chairs_id)
+        if not ethics_chairs_group:
+            ethics_chairs_group = Group(id=ethics_chairs_id,
+                            readers=[venue_id, ethics_chairs_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=[]
+                        )                
+            self.post_group(ethics_chairs_group)
 
     def add_to_active_venues(self):
         active_venues = self.client_v1.get_group('active_venues')

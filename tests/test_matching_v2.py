@@ -19,14 +19,16 @@ from openreview.api import Group
 class TestMatching():
 
     @pytest.fixture(scope="class")
-    def pc_client(self):
-        return OpenReviewClient(username='pc1_venue@mail.com', password='1234')
+    def pc_client(self, openreview_client, helpers):
+        return OpenReviewClient(username='pc1_venue@mail.com', password=helpers.strong_password)
 
     @pytest.fixture(scope="class")
     def venue(self, openreview_client, helpers):
         pc_client = helpers.create_user('pc1_venue@mail.com', 'PCFirstName', 'UAI')
         venue_id = 'VenueV2.cc'
         venue = Venue(openreview_client, venue_id, 'openreview.net/Support')
+        venue.invitation_builder.update_wait_time = 2000
+        venue.invitation_builder.update_date_string = "#{4/mdate} + 2000"        
         venue.short_name = 'VV2 2022'
         venue.website = 'www.venuev2.com'
         venue.contact = 'pc_venue@mail.com'
@@ -87,16 +89,16 @@ class TestMatching():
         ac_group = openreview_client.get_group(venue.id + '/Senior_Program_Committee')
         openreview_client.add_members_to_group(ac_group, ['ac1_venue@cmu.edu', 'ac2_venue@umass.edu'])
         helpers.create_user('ac1_venue@cmu.edu', 'AreaChair', 'Venue')
-        ac1_client = OpenReviewClient(username='ac1_venue@cmu.edu', password='1234')
+        ac1_client = OpenReviewClient(username='ac1_venue@cmu.edu', password=helpers.strong_password)
         helpers.create_user('r1_venue@mit.edu', 'Reviewer', 'Venue')
-        r1_client = OpenReviewClient(username='r1_venue@mit.edu', password='1234')
+        r1_client = OpenReviewClient(username='r1_venue@mit.edu', password=helpers.strong_password)
 
         helpers.create_user('celeste@mailten.com', 'Celeste', 'MartinezG')
         helpers.create_user('a1_venue@cmu.edu', 'Author', 'A')
         helpers.create_user('a2_venue@mit.edu', 'Author', 'B')
         helpers.create_user('a3_venue@umass.edu', 'Author', 'C')
         helpers.create_user('pc3_venue@mail.com', 'PC', 'Author')
-        author_client = OpenReviewClient(username='celeste@mailten.com', password='1234')
+        author_client = OpenReviewClient(username='celeste@mailten.com', password=helpers.strong_password)
 
         ## setup matching with no submissions
         with pytest.raises(openreview.OpenReviewException, match=r'Submissions not found'):
@@ -153,7 +155,10 @@ class TestMatching():
 
         helpers.await_queue_edit(openreview_client, edit_id=note_3['id'])
 
-        venue.setup_post_submission_stage()
+        venue.submission_stage.due_date = datetime.datetime.utcnow()
+        venue.submission_stage.exp_date = datetime.datetime.utcnow() + datetime.timedelta(seconds = 60)
+        venue.create_submission_stage()
+        helpers.await_queue_edit(openreview_client, f'{venue.id}/-/Post_Submission-0-0')
         # Set up reviewer matching
         venue.setup_committee_matching(committee_id=venue.get_area_chairs_id())
         venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
@@ -368,6 +373,8 @@ class TestMatching():
             label='rev-matching'
         )
         assert 6 == edges
+
+        venue.create_post_submission_stage()
 
         venue.set_assignments(assignment_title='rev-matching', committee_id=f'{venue.id}/Program_Committee', enable_reviewer_reassignment=True)
 
@@ -649,7 +656,7 @@ class TestMatching():
 
     def test_set_reviewers_assignments_as_author(self, venue, pc_client, helpers):
 
-        pc3_client = OpenReviewClient(username='pc3_venue@mail.com', password='1234')
+        pc3_client = OpenReviewClient(username='pc3_venue@mail.com', password=helpers.strong_password)
         # pc3_client.impersonate(venue.id) #ForbiddenError
 
         venue.client = pc3_client

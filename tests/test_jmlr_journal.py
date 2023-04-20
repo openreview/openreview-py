@@ -15,9 +15,9 @@ class TestJMLRJournal():
 
 
     @pytest.fixture(scope="class")
-    def journal(self, openreview_client):
+    def journal(self, openreview_client, helpers):
 
-        eic_client=OpenReviewClient(username='rajarshi@mail.com', password='1234')
+        eic_client=OpenReviewClient(username='rajarshi@mail.com', password=helpers.strong_password)
         eic_client.impersonate('JMLR/Editors_In_Chief')
 
         requests = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': 'JMLR' })
@@ -62,7 +62,7 @@ class TestJMLRJournal():
     
     def test_submission(self, journal, openreview_client, test_client, helpers):
 
-        test_client = OpenReviewClient(username='test@mail.com', password='1234')
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
         ## Post the submission 1
         submission_note_1 = test_client.post_note_edit(invitation='JMLR/-/Submission',
@@ -76,8 +76,7 @@ class TestJMLRJournal():
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'},
-                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'}
                 }
             ))
 

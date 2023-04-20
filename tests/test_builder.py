@@ -167,7 +167,7 @@ class TestBuilder():
         conference = builder.get_result()
         conference.set_program_chairs(emails=['pc_testconsole1@mail.com'])
 
-        author_client = openreview.Client(username='author_test1@mail.com', password='1234')
+        author_client = openreview.Client(username='author_test1@mail.com', password=helpers.strong_password)
 
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['~SomeFirstName_Author1', 'drew@mail.com', 'sortTest.org/2019/Conference'],

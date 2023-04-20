@@ -15,9 +15,9 @@ class TestTACLJournal():
 
 
     @pytest.fixture(scope="class")
-    def journal(self, openreview_client):
+    def journal(self, openreview_client, helpers):
 
-        eic_client=OpenReviewClient(username='brian@mail.com', password='1234')
+        eic_client=OpenReviewClient(username='brian@mail.com', password=helpers.strong_password)
         eic_client.impersonate('TACL/Editors_In_Chief')
 
         requests = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': 'TACL' })
@@ -46,6 +46,7 @@ class TestTACLJournal():
                     'settings': {
                         'value': {
                             'submission_public': False,
+                            'skip_ac_recommendation': True,
                             'assignment_delay': 0,
                             'certifications': [
                                 'Featured Certification',
@@ -77,7 +78,7 @@ class TestTACLJournal():
 
     def test_submission(self, journal, openreview_client, test_client, helpers):
 
-        test_client = OpenReviewClient(username='test@mail.com', password='1234')
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
         ## Post the submission 1
         submission_note_1 = test_client.post_note_edit(invitation='TACL/-/Submission',
@@ -91,8 +92,7 @@ class TestTACLJournal():
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'},
-                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'}
                 }
             ))
 
@@ -100,19 +100,7 @@ class TestTACLJournal():
         note_id_1=submission_note_1['note']['id']
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TACL] Suggest candidate Action Editor for your new TACL submission')
-        assert len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi SomeFirstName User,
-
-Thank you for submitting your work titled "Paper title" to TACL.
-
-Before the review process starts, you need to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
-
-To do so, please follow this link: https://openreview.net/invitation?id=TACL/Paper1/Action_Editors/-/Recommendation or check your tasks in the Author Console: https://openreview.net/group?id=TACL/Authors
-
-For more details and guidelines on the TACL review process, visit transacl.org.
-
-The TACL Editors-in-Chief
-'''
+        assert len(messages) == 0
 
         author_group=openreview_client.get_group("TACL/Paper1/Authors")
         assert author_group
@@ -140,8 +128,7 @@ The TACL Editors-in-Chief
                     'supplementary_material': { 'value': '/attachment/' + 'z' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                     'human_subjects_reporting': { 'value': 'Not applicable'},
-                    'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' },
-                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                    'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' }
                 }
             ))
         helpers.await_queue_edit(openreview_client, edit_id=updated_submission_note_1['id'])
@@ -162,8 +149,8 @@ The TACL Editors-in-Chief
 
     def test_review_approval(self, journal, openreview_client, helpers):
 
-        brian_client = OpenReviewClient(username='brian@mail.com', password='1234')
-        graham_client = OpenReviewClient(username='graham@mailseven.com', password='1234')
+        brian_client = OpenReviewClient(username='brian@mail.com', password=helpers.strong_password)
+        graham_client = OpenReviewClient(username='graham@mailseven.com', password=helpers.strong_password)
         note_id_1 = openreview_client.get_notes(invitation='TACL/-/Submission')[0].id
 
         # Assign Action Editor
@@ -181,11 +168,11 @@ The TACL Editors-in-Chief
         ae_group = brian_client.get_group('TACL/Paper1/Action_Editors')
         assert ae_group.members == ['~Graham_Neubig1']
 
-        messages = journal.client.get_messages(to = 'graham@mailseven.com', subject = '[TACL] Assignment to new TACL submission Paper title UPDATED')
+        messages = journal.client.get_messages(to = 'graham@mailseven.com', subject = '[TACL] Assignment to new TACL submission 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Graham Neubig,
 
-With this email, we request that you manage the review process for a new TACL submission titled "Paper title UPDATED".
+With this email, we request that you manage the review process for a new TACL submission "1: Paper title UPDATED".
 
 As a reminder, TACL Action Editors (AEs) are **expected to accept all AE requests** to manage submissions that fall within your expertise and quota. Reasonable exceptions are 1) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of fully performing your AE duties or 2) you have a conflict of interest with one of the authors. If any such exception applies to you, contact us at tacl@venue.org.
 
@@ -248,13 +235,13 @@ note={Under review}
 
     def test_review(self, journal, openreview_client, helpers):
 
-        brian_client = OpenReviewClient(username='brian@mail.com', password='1234')
-        graham_client = OpenReviewClient(username='graham@mailseven.com', password='1234')
+        brian_client = OpenReviewClient(username='brian@mail.com', password=helpers.strong_password)
+        graham_client = OpenReviewClient(username='graham@mailseven.com', password=helpers.strong_password)
         note_id_1 = openreview_client.get_notes(invitation='TACL/-/Submission')[0].id
 
-        david_client = OpenReviewClient(username='david@taclone.com', password='1234')
-        carlos_client = OpenReviewClient(username='carlos@taclthree.com', password='1234')
-        javier_client = OpenReviewClient(username='javier@tacltwo.com', password='1234')
+        david_client = OpenReviewClient(username='david@taclone.com', password=helpers.strong_password)
+        carlos_client = OpenReviewClient(username='carlos@taclthree.com', password=helpers.strong_password)
+        javier_client = OpenReviewClient(username='javier@tacltwo.com', password=helpers.strong_password)
 
         # add David Belanger again
         paper_assignment_edge = graham_client.post_edge(openreview.Edge(invitation='TACL/Reviewers/-/Assignment',
@@ -269,11 +256,11 @@ note={Under review}
 
          # wait for process function delay (5 seconds) and check email has been sent
         time.sleep(6)
-        messages = journal.client.get_messages(to = 'david@taclone.com', subject = '[TACL] Assignment to review new TACL submission Paper title UPDATED')
+        messages = journal.client.get_messages(to = 'david@taclone.com', subject = '[TACL] Assignment to review new TACL submission 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi David Bensusan,
 
-With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TACL submission "Paper title UPDATED". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
+With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TACL submission "1: Paper title UPDATED".
 
 Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_1}&invitationId=TACL/Paper1/Reviewers/-/~David_Bensusan1/Assignment/Acknowledgement
 
@@ -281,7 +268,7 @@ As a reminder, reviewers are **expected to accept all assignments** for submissi
 
 To submit your review, please follow this link: https://openreview.net/forum?id={note_id_1}&invitationId=TACL/Paper1/-/Review or check your tasks in the Reviewers Console: https://openreview.net/group?id=TACL/Reviewers#reviewer-tasks
 
-Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit transacl.org.
+Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become visible to all the reviewers. For more details and guidelines on performing your review, visit transacl.org.
 
 We thank you for your essential contribution to TACL!
 
@@ -402,13 +389,13 @@ note: replies to this email will go to the AE, Graham Neubig.
 
     def test_official_recommendation(self, journal, openreview_client, helpers):
 
-        brian_client = OpenReviewClient(username='brian@mail.com', password='1234')
-        graham_client = OpenReviewClient(username='graham@mailseven.com', password='1234')
+        brian_client = OpenReviewClient(username='brian@mail.com', password=helpers.strong_password)
+        graham_client = OpenReviewClient(username='graham@mailseven.com', password=helpers.strong_password)
         note_id_1 = openreview_client.get_notes(invitation='TACL/-/Submission')[0].id
 
-        david_client = OpenReviewClient(username='david@taclone.com', password='1234')
-        carlos_client = OpenReviewClient(username='carlos@taclthree.com', password='1234')
-        javier_client = OpenReviewClient(username='javier@tacltwo.com', password='1234')
+        david_client = OpenReviewClient(username='david@taclone.com', password=helpers.strong_password)
+        carlos_client = OpenReviewClient(username='carlos@taclthree.com', password=helpers.strong_password)
+        javier_client = OpenReviewClient(username='javier@tacltwo.com', password=helpers.strong_password)
 
         invitation = brian_client.get_invitation('TACL/Paper1/-/Official_Recommendation')
         assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
@@ -427,12 +414,12 @@ note: replies to this email will go to the AE, Graham Neubig.
         time.sleep(5) ## wait until the process function runs
 
         ## Check emails being sent to Reviewers and AE
-        messages = journal.client.get_messages(subject = '[TACL] Submit official recommendation for TACL submission Paper title UPDATED')
+        messages = journal.client.get_messages(subject = '[TACL] Submit official recommendation for TACL submission 1: Paper title UPDATED')
         assert len(messages) == 3
-        messages = journal.client.get_messages(to= 'david@taclone.com', subject = '[TACL] Submit official recommendation for TACL submission Paper title UPDATED')
+        messages = journal.client.get_messages(to= 'david@taclone.com', subject = '[TACL] Submit official recommendation for TACL submission 1: Paper title UPDATED')
         assert messages[0]['content']['text'] == f'''Hi David Bensusan,
 
-Thank you for submitting your review and engaging with the authors of TACL submission "Paper title UPDATED".
+Thank you for submitting your review and engaging with the authors of TACL submission "1: Paper title UPDATED".
 
 You may now submit your official recommendation for the submission. Before doing so, make sure you have sufficiently discussed with the authors (and possibly the other reviewers and AE) any concerns you may have about the submission.
 
@@ -445,7 +432,7 @@ We thank you for your essential contribution to TACL!
 The TACL Editors-in-Chief
 note: replies to this email will go to the AE, Graham Neubig.
 '''
-        messages = journal.client.get_messages(subject = '[TACL] Reviewers must submit official recommendation for TACL submission Paper title UPDATED')
+        messages = journal.client.get_messages(subject = '[TACL] Reviewers must submit official recommendation for TACL submission 1: Paper title UPDATED')
         assert len(messages) == 1
 
         david_anon_groups=david_client.get_groups(prefix='TACL/Paper1/Reviewer_.*', signatory='~David_Bensusan1')
@@ -508,8 +495,8 @@ note: replies to this email will go to the AE, Graham Neubig.
 
     def test_decision(self, journal, openreview_client, helpers):
 
-        brian_client = OpenReviewClient(username='brian@mail.com', password='1234')
-        graham_client = OpenReviewClient(username='graham@mailseven.com', password='1234')
+        brian_client = OpenReviewClient(username='brian@mail.com', password=helpers.strong_password)
+        graham_client = OpenReviewClient(username='graham@mailseven.com', password=helpers.strong_password)
         note_id_1 = openreview_client.get_notes(invitation='TACL/-/Submission')[0].id
         reviews=openreview_client.get_notes(forum=note_id_1, invitation='TACL/Paper1/-/Review', sort= 'number:asc')
 
@@ -562,8 +549,8 @@ note: replies to this email will go to the AE, Graham Neubig.
 
     def test_camera_ready_revision(self, journal, openreview_client, helpers):
 
-        test_client = OpenReviewClient(username='test@mail.com', password='1234')
-        graham_client = OpenReviewClient(username='graham@mailseven.com', password='1234')
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        graham_client = OpenReviewClient(username='graham@mailseven.com', password=helpers.strong_password)
         note_id_1 = openreview_client.get_notes(invitation='TACL/-/Submission')[0].id
         assert openreview_client.get_invitation("TACL/Paper1/-/Camera_Ready_Revision")
 
@@ -591,14 +578,14 @@ note: replies to this email will go to the AE, Graham Neubig.
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Under_Review', 'TACL/Paper1/-/Camera_Ready_Revision']
+        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Under_Review', 'TACL/-/Edit', 'TACL/Paper1/-/Camera_Ready_Revision']
         assert note.readers == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert note.writers == ['TACL', 'TACL/Paper1/Authors']
         assert note.signatures == ['TACL/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~Melisa_Andersen1', '~SomeFirstName_User1']
         assert note.content['authors']['value'] == ['Melisa Andersen', 'SomeFirstName User']
-        assert note.content['venue']['value'] == 'Under review for TACL'
-        assert note.content['venueid']['value'] == 'TACL/Under_Review'
+        assert note.content['venue']['value'] == 'Decision pending for TACL'
+        assert note.content['venueid']['value'] == 'TACL/Decision_Pending'
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
 
@@ -618,7 +605,7 @@ note: replies to this email will go to the AE, Graham Neubig.
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Under_Review', 'TACL/Paper1/-/Camera_Ready_Revision', 'TACL/-/Accepted']
+        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Under_Review', 'TACL/-/Edit', 'TACL/Paper1/-/Camera_Ready_Revision', 'TACL/-/Accepted']
         assert note.readers == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert note.writers == ['TACL']
         assert note.signatures == ['TACL/Paper1/Authors']
@@ -642,15 +629,15 @@ note={Featured Certification, Reproducibility Certification}
 }'''
 
         edits = openreview_client.get_note_edits(note.id)
-        assert len(edits) == 5
+        assert len(edits) == 6
         for edit in edits:
             assert edit.readers == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
 
     def test_withdrawn_submission(self, journal, openreview_client, test_client, helpers):
 
-        test_client = OpenReviewClient(username='test@mail.com', password='1234')
-        brian_client = OpenReviewClient(username='brian@mail.com', password='1234')
-        graham_client = OpenReviewClient(username='graham@mailseven.com', password='1234')
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        brian_client = OpenReviewClient(username='brian@mail.com', password=helpers.strong_password)
+        graham_client = OpenReviewClient(username='graham@mailseven.com', password=helpers.strong_password)
 
 
         ## Post the submission 2
@@ -665,8 +652,7 @@ note={Featured Certification, Reproducibility Certification}
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'},
-                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'}
                 }
             ))
 

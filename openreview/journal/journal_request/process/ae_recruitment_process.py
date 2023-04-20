@@ -40,7 +40,7 @@ def process(client, edit, invitation):
 {status.get('errors')}''' if status.get('errors') else ''
 
     comment_content = f'''
-Invited: {len(status.get('invited'))} reviewers.
+**Invited**: {len(status.get('invited'))} reviewers.
 
 {already_member_status}
 
@@ -48,9 +48,9 @@ Please check the invitee group to see more details: https://openreview.net/group
 '''
     if status['errors']:
         error_status=f'''No recruitment invitation was sent to the following users due to the error(s) in the recruitment process: \n
-        {status.get('errors') }'''
+{status.get('errors') }'''
         
-        comment_content += f'''\nError: {error_status}'''
+        comment_content += f'''\n**Error**: {error_status}'''
 
     comment_note = client.post_note_edit(invitation=recruitment_note.invitations[0].replace('Reviewer_Recruitment_by_AE', 'Comment'),
         signatures=[SUPPORT_GROUP],

@@ -113,7 +113,7 @@ class TestAgora():
 
     def test_assign_editor(self, client, helpers):
 
-        editor_client = openreview.Client(username='editor@agora.net', password='1234')
+        editor_client = openreview.Client(username='editor@agora.net', password=helpers.strong_password)
 
         articles = editor_client.get_notes(invitation='-Agora/COVID-19/-/Article')
         assert articles
@@ -266,7 +266,7 @@ class TestAgora():
 
     def test_post_comment(self, client, helpers):
 
-        reviewer_client = openreview.Client(username = 'reviewer@agora.net', password = '1234')
+        reviewer_client = openreview.Client(username = 'reviewer@agora.net', password = helpers.strong_password)
 
         reviews = reviewer_client.get_notes(invitation='-Agora/COVID-19/Article1/-/Review')
         assert reviews
@@ -307,7 +307,7 @@ class TestAgora():
         assert 'article_editor@agora.net' in recipients
         assert 'reviewer2@agora.net' in recipients
 
-        author_client = openreview.Client(username = 'author@agora.net', password = '1234')
+        author_client = openreview.Client(username = 'author@agora.net', password = helpers.strong_password)
         note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Comment',
             readers = ['everyone'],
             writers = ['openreview.net/Support', '-Agora/COVID-19/Article1/Authors'],
@@ -343,7 +343,7 @@ class TestAgora():
 
     def test_suggest_reviewer(self, client, helpers):
 
-        melisa_client = helpers.create_user(email = 'melisa@mail.com', first = 'Melissa', last = 'Agora')
+        melisa_client = helpers.create_user(email = 'melisa_agora@mail.com', first = 'Melissa', last = 'Agora')
 
         articles = melisa_client.get_notes(invitation='-Agora/COVID-19/-/Article')
         assert articles
@@ -371,7 +371,7 @@ class TestAgora():
         messages = client.get_messages(subject = '[Agora/COVID-19] Your suggestion has been posted on the article titled "Paper title"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
-        assert 'melisa@mail.com' in recipients
+        assert 'melisa_agora@mail.com' in recipients
 
         messages = client.get_messages(subject = '[Agora/COVID-19] A reviewer has been suggested on the article titled "Paper title"')
         assert len(messages) == 1
@@ -381,7 +381,7 @@ class TestAgora():
 
     def test_add_revision(self, client, helpers):
 
-        author_client = openreview.Client(username = 'author@agora.net', password = '1234')
+        author_client = openreview.Client(username = 'author@agora.net', password = helpers.strong_password)
 
         articles = author_client.get_notes(invitation='-Agora/COVID-19/-/Article')
         assert articles
@@ -424,7 +424,7 @@ class TestAgora():
 
     def test_post_metareview(self, client, helpers):
 
-        article_editor_client = openreview.Client(username='article_editor@agora.net', password='1234')
+        article_editor_client = openreview.Client(username='article_editor@agora.net', password=helpers.strong_password)
 
         articles = article_editor_client.get_notes(invitation='-Agora/COVID-19/-/Article')
         assert articles
@@ -468,7 +468,7 @@ class TestAgora():
 
     def test_desk_reject(self, client, helpers):
 
-        author_client = openreview.Client(username = 'author@agora.net', password = '1234')
+        author_client = openreview.Client(username = 'author@agora.net', password = helpers.strong_password)
 
         note = openreview.Note(invitation = '-Agora/COVID-19/-/Submission',
             readers = ['openreview.net/Support', '-Agora/COVID-19/Editors', '~Author_One1'],
@@ -492,7 +492,7 @@ class TestAgora():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        editor_client = openreview.Client(username='editor@agora.net', password='1234')
+        editor_client = openreview.Client(username='editor@agora.net', password=helpers.strong_password)
 
         submissions = editor_client.get_notes(invitation='-Agora/COVID-19/-/Submission')
         assert submissions

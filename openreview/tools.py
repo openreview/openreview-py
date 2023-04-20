@@ -4,13 +4,11 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import json
 import os
-import string
 
-import sys
 import openreview
 import re
 import datetime
-import time
+import csv
 from pylatexenc.latexencode import utf8tolatex, unicode_to_latex, UnicodeToLatexConversionRule, UnicodeToLatexEncoder, RULE_REGEX
 from Crypto.Hash import HMAC, SHA256
 from multiprocessing import Pool, cpu_count
@@ -578,11 +576,7 @@ def subdomains(domain):
     """
 
     duplicate_domains: dict = load_duplicate_domains()
-    if '@' in domain:
-        full_domain = domain.split('@')[1]
-    else:
-        full_domain = domain
-    domain_components = [c for c in full_domain.split('.') if c and not c.isspace()]
+    domain_components = [c for c in domain.split('.') if c and not c.isspace()]
     domains = ['.'.join(domain_components[index:len(domain_components)]) for index, path in enumerate(domain_components)]
     valid_domains = set()
     for d in domains:
@@ -1225,7 +1219,10 @@ def recruit_reviewer(client, user, first,
 
     personalized_message.format()
 
-    client.add_members_to_group(reviewers_invited_id, [user])
+    try:
+        client.add_members_to_group(reviewers_invited_id, [user])
+    except openreview.OpenReviewException as e:
+        raise e
 
     # send the email through openreview
     response = client.post_message(recruit_message_subj, [user], personalized_message, parentGroup=reviewers_invited_id, replyTo=replyTo)
@@ -1246,7 +1243,28 @@ def get_all_venues(client):
     """
     return client.get_group("host").members
 
-def get_conflicts(author_profiles, user_profile, policy='default', n_years=5):
+def info_function_builder(policy_function):
+    def inner(profile, n_years=None):
+        common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
+                    'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
+        result = policy_function(profile, n_years)
+        domains = set()
+        subdomains_dict = {}
+        for domain in result['domains']:
+            if domain not in subdomains_dict:
+                subdomains = openreview.tools.subdomains(domain)
+                subdomains_dict[domain] = subdomains
+            domains.update(subdomains_dict[domain])
+
+        # Filter common domains
+        for common_domain in common_domains:
+            domains.discard(common_domain)
+
+        result['domains'] = list(domains)
+        return result
+    return inner
+
+def get_conflicts(author_profiles, user_profile, policy='default', n_years=None):
     """
     Finds conflicts between the passed user Profile and the author Profiles passed as arguments
 
@@ -1254,17 +1272,26 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=5):
     :type author_profiles: list[Profile]
     :param user_profile: Profile for which the conflicts will be found
     :type user_profile: Profile
+    :param policy: Policy can be either a function or a string. If it is a function, it will be called with the user Profile and the author Profile as arguments. If it is a string, it will be used to find the corresponding function in the default policy dictionary. If no policy is passed, the default policy will be used.
+    :type policy: str or function, optional
+    :param n_years: Number of years to be considered for conflict detection.
+    :type n_years: int, optional
 
     :return: List containing all the conflicts between the user Profile and the author Profiles
     :rtype: list[str]
     """
+
     author_domains = set()
     author_emails = set()
     author_relations = set()
     author_publications = set()
-    info_function = get_neurips_profile_info if policy == 'neurips' else get_profile_info
-    if policy == 'neurips':
-        n_years = 3
+
+    if callable(policy):
+        info_function = info_function_builder(policy)
+    elif policy == 'neurips':
+        info_function = info_function_builder(get_neurips_profile_info)
+    else:
+        info_function = info_function_builder(get_profile_info)
 
     for profile in author_profiles:
         author_info = info_function(profile, n_years)
@@ -1284,12 +1311,14 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=5):
 
     return list(conflicts)
 
-def get_profile_info(profile, n_years=3):
+def get_profile_info(profile, n_years=None):
     """
     Gets all the domains, emails, relations associated with a Profile
 
     :param profile: Profile from which all the relations will be obtained
     :type profile: Profile
+    :param n_years: Number of years to consider when getting the profile information
+    :type n_years: int, optional
 
     :return: Dictionary with the domains, emails, and relations associated with the passed Profile
     :rtype: dict
@@ -1298,33 +1327,43 @@ def get_profile_info(profile, n_years=3):
     emails = set()
     relations = set()
     publications = set()
-    common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
-                      'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
+
+    if n_years:
+        cut_off_date = datetime.datetime.now()
+        cut_off_date = cut_off_date.replace(year=cut_off_date.year - n_years)
+        cut_off_year = cut_off_date.year
+    else:
+        cut_off_year = -1
 
     ## Emails section
     for email in profile.content['emails']:
         if email.startswith("****@"):
             raise openreview.OpenReviewException("You do not have the required permissions as some emails are obfuscated. Please login with the correct account or contact support.")
-        domains.update(openreview.tools.subdomains(email))
+        # split email
+        domain = email.split('@')[1]
+        domains.add(domain)
         emails.add(email)
 
     ## Institution section
-    for h in profile.content.get('history', []):
-        domain = h.get('institution', {}).get('domain', '')
-        domains.update(openreview.tools.subdomains(domain))
+    for history in profile.content.get('history', []):
+        try:
+            end = int(history.get('end', 0) or 0)
+        except:
+            end = 0
+        if not end or (int(end) > cut_off_year):
+            domain = history.get('institution', {}).get('domain', '')
+            domains.add(domain)
 
     ## Relations section
-    relations.update([r['email'] for r in profile.content.get('relations', [])])
+    for relation in profile.content.get('relations', []):
+        if relation.get('end') is None or int(relation.get('end')) > cut_off_year:
+            relations.add(relation['email'])
 
-    ## TODO:: Parameterize the number of years for publications to consider from
     ## Publications section: get publications within last n years, default is all publications from previous years
-    for pub in profile.content.get('publications', []):
-        publications.add(pub.id)
-
-    ## Filter common domains
-    for common_domain in common_domains:
-        if common_domain in domains:
-            domains.remove(common_domain)
+    for publication in profile.content.get('publications', []):
+        publication_date = publication.pdate or publication.cdate or publication.tcdate or 0
+        if datetime.datetime.fromtimestamp(publication_date/1000).year > cut_off_year:
+            publications.add(publication.id)
 
     return {
         'id': profile.id,
@@ -1334,16 +1373,29 @@ def get_profile_info(profile, n_years=3):
         'publications': publications
     }
 
-def get_neurips_profile_info(profile, n_years=3):
+def get_neurips_profile_info(profile, n_years=None):
+    """
+    Gets all the domains, emails, relations associated with a Profile
 
+    :param profile: Profile from which all the relations will be obtained
+    :type profile: Profile
+    :param n_years: Number of years to consider when getting the profile information
+    :type n_years: int, optional
+
+    :return: Dictionary with the domains, emails, and relations associated with the passed Profile
+    :rtype: dict
+    """
     domains = set()
     emails=set()
     relations = set()
     publications = set()
-    common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
-                      'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
-    curr_year = datetime.datetime.now().year
-    cut_off_year = curr_year - n_years - 1
+
+    if n_years:
+        cut_off_date = datetime.datetime.now()
+        cut_off_date = cut_off_date.replace(year=cut_off_date.year - n_years)
+        cut_off_year = cut_off_date.year
+    else:
+        cut_off_year = -1
 
     ## Institution section, get history within the last n years, excluding internships
     for h in profile.content.get('history', []):
@@ -1355,7 +1407,7 @@ def get_neurips_profile_info(profile, n_years=3):
                 end = 0
             if not end or (int(end) > cut_off_year):
                 domain = h.get('institution', {}).get('domain', '')
-                domains.update(openreview.tools.subdomains(domain))
+                domains.add(domain)
 
     ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
     for r in profile.content.get('relations', []):
@@ -1374,9 +1426,11 @@ def get_neurips_profile_info(profile, n_years=3):
     ## if institution section is empty, add email domains
     if not domains:
         for email in profile.content['emails']:
-            domains.update(openreview.tools.subdomains(email))
+            domain = email.split('@')[1]
+            domains.add(domain)
 
     ## Publications section: get publications within last n years
+    curr_year = datetime.datetime.now().year
     for pub in profile.content.get('publications', []):
         year = None
         if 'year' in pub.content and isinstance(pub.content['year'], str):
@@ -1391,11 +1445,6 @@ def get_neurips_profile_info(profile, n_years=3):
             year = int(datetime.datetime.fromtimestamp(timtestamp/1000).year)
         if year > cut_off_year:
             publications.add(pub.id)
-
-    ## Filter common domains
-    for common_domain in common_domains:
-        if common_domain in domains:
-            domains.remove(common_domain)
 
     return {
         'id': profile.id,
@@ -1473,6 +1522,87 @@ def export_committee(client, committee_id, file_name):
         csvwriter = csv.writer(outfile, delimiter=',')
         for profile in tqdm(profiles):
             s = csvwriter.writerow([profile.get_preferred_email(), profile.get_preferred_name(pretty=True)])
+
+def get_own_reviews(client):
+    baseurl_v1, baseurl_v2 = get_base_urls(client)
+    client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
+    client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
+
+    # Get all the reviews from v1
+    notes_v1 = client_v1.get_all_notes(tauthor=True)
+
+    submissions_and_official_reviews = []
+
+    # Filter Official Reviews
+    for note in notes_v1:
+        # Make sure that the Official Review is public
+        if 'Official_Review' not in note.invitation or 'everyone' not in note.readers:
+            continue
+        submission_id = note.forum
+        # Make sure that the submission is public
+        submission = client_v1.get_note(submission_id)
+        if 'everyone' not in submission.readers:
+            continue
+        # Add both submission and note
+        submissions_and_official_reviews.append((submission, note, 1))
+
+    # Get all the reviews from v2
+    profile_id = 'Guest' if not getattr(client, 'profile') else getattr(getattr(client, 'profile'), 'id')
+    if profile_id == 'Guest':
+        notes_v2 = []
+    else:
+        notes_v2 = client_v2.get_all_notes(signature=profile_id, transitive_members=True)
+
+    # TMLR was created before the invitation names were added to the
+    # group content, so we need to hardcode it
+    domain_to_reviewer_invitation_suffix = {
+        'TMLR': '/-/Review'
+    }
+
+    # Filter Official Reviews
+    for note in notes_v2:
+        # Get review invitation name from domain group content
+        if domain_to_reviewer_invitation_suffix.get(note.domain) is None:
+            domain = note.domain
+            group = client_v2.get_group(domain)
+            reviewer_invitation_suffix = getattr(group, 'content', {}).get('review_name', {}).get('value', None)
+            if reviewer_invitation_suffix is None:
+                continue
+            domain_to_reviewer_invitation_suffix[domain] = '/-/' + reviewer_invitation_suffix
+        
+        reviewer_invitation_suffix = domain_to_reviewer_invitation_suffix[note.domain]
+
+        # Make sure that the Official Review is public
+        official_review = None
+        for invitation in note.invitations:
+            if reviewer_invitation_suffix in invitation:
+                official_review = note
+        if official_review is None or 'everyone' not in note.readers:
+            continue
+        submission_id = official_review.forum
+        # Make sure that the submission is public
+        submission = client_v2.get_note(submission_id)
+        if 'everyone' not in submission.readers:
+            continue
+        # Add both submission and note
+        submissions_and_official_reviews.append((submission, official_review, 2))
+
+    links = []
+    for submission, official_review, version in submissions_and_official_reviews:
+        submission_link = f'https://openreview.net/forum?id={submission.id}'
+        review_link = f'https://openreview.net/forum?id={submission.id}&noteId={official_review.id}'
+        submission_title = ''
+        if version == 1:
+            submission_title = submission.content.get('title', '')
+        else:
+            submission_title = submission.content.get('title', {}).get('value', '')
+        links.append({
+            'submission_title': submission_title,
+            'submission_link': submission_link,
+            'review_link': review_link
+        })
+    
+    return links
 
 def get_base_urls(client):
 

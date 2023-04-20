@@ -17,9 +17,9 @@ from selenium.common.exceptions import NoSuchElementException
 class TestESWCConference():
 
     @pytest.fixture(scope="class")
-    def conference(self, client):
+    def conference(self, client, helpers):
         now = datetime.datetime.utcnow()
-        #pc_client = openreview.Client(username='pc@eccv.org', password='1234')
+        #pc_client = openreview.Client(username='pc@eccv.org', password=helpers.strong_password)
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
@@ -95,7 +95,7 @@ class TestESWCConference():
         # client.add_members_to_group('~ReviewerSix_ICLR1', 'iclr2021_six@mail.com')
         # client.add_members_to_group('iclr2021_six@mail.com', '~ReviewerSix_ICLR1')
 
-        pc_client = openreview.Client(username='pc@eswc-conferences.org', password='1234')
+        pc_client = openreview.Client(username='pc@eswc-conferences.org', password=helpers.strong_password)
 
         group = pc_client.get_group('eswc-conferences.org/ESWC/2021/Conference')
         assert group
@@ -286,7 +286,7 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
         assert 'To view your submission, click here:' in text
 
         ## Desk Reject paper
-        pc_client = openreview.Client(username='pc@eswc-conferences.org', password='1234')
+        pc_client = openreview.Client(username='pc@eswc-conferences.org', password=helpers.strong_password)
         desk_reject_note = pc_client.post_note(openreview.Note(invitation='eswc-conferences.org/ESWC/2021/Conference/Paper3/-/Desk_Reject',
             forum = notes[2].id,
             replyto = notes[2].id,

@@ -72,6 +72,7 @@ class Conference(object):
         self.submission_revision_stage = None
         self.comment_stage = CommentStage()
         self.meta_review_stage = MetaReviewStage()
+        self.meta_review_revision_stage = None
         self.decision_stage = DecisionStage()
         self.layout = 'tabs'
         self.venue_heading_map = {}
@@ -274,6 +275,15 @@ class Conference(object):
         notes = list(self.get_submissions())
         return self.invitation_builder.set_meta_review_invitation(self, notes)
 
+    def __create_meta_review_revision_stage(self):
+        submissions = self.get_submissions(details='directReplies')
+        metareviews = []
+        for submission in submissions:
+            for reply in submission.details['directReplies']:
+                if reply['invitation'] == self.get_invitation_id(self.meta_review_stage.name, submission.number):
+                    metareviews.append(openreview.Note.from_json(reply))
+        return self.invitation_builder.set_meta_review_revision_invitation(self, metareviews)
+
     def __create_decision_stage(self):
 
         notes = list(self.get_submissions())
@@ -348,6 +358,10 @@ class Conference(object):
     def set_submission_stage(self, stage):
         self.submission_stage = stage
         return self.__create_submission_stage()
+    
+    ## API2 only
+    def create_submission_stage(self):
+        return
 
     def set_expertise_selection_stage(self, stage):
         self.expertise_selection_stage = stage
@@ -373,13 +387,17 @@ class Conference(object):
         if self.meta_review_stage:
             return self.__create_meta_review_stage()
 
+    def create_meta_review_revision_stage(self):
+        if self.meta_review_revision_stage:
+            return self.__create_meta_review_revision_stage()
+
     def create_comment_stage(self):
         if self.comment_stage:
             return self.__create_comment_stage()
 
-    def set_review_rebuttal_stage(self, stage):
-        self.review_rebuttal_stage = stage
-        return self.__create_review_rebuttal_stage()
+    def create_review_rebuttal_stage(self):
+        if self.review_rebuttal_stage:
+            return self.__create_review_rebuttal_stage()
 
     def create_review_revision_stage(self):
         if self.review_revision_stage:
@@ -1589,7 +1607,7 @@ Program Chairs
         for future in futures:
             result = future.result()
 
-    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None):
+    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None, hide_fields=[]):
         
         publication_date = openreview.tools.datetime_millis(datetime.datetime.utcnow())
         submissions = self.get_submissions(details='original,directReplies')
@@ -1600,7 +1618,7 @@ Program Chairs
         if submission_readers:
             self.submission_stage.readers = submission_readers
 
-        for submission in tqdm(submissions):
+        def update_note(submission):
             decisions = [reply for reply in submission.details['directReplies'] if self.get_invitation_id(self.decision_stage.name, submission.number) == reply['invitation']]
             decision_note = openreview.Note.from_json(decisions[0]) if decisions else None
             note_accepted = decision_note and 'Accept' in decision_note.content['decision']
@@ -1612,6 +1630,8 @@ Program Chairs
                 if not release_authors:
                     submission.content['authors'] = ['Anonymous']
                     submission.content['authorids'] = [self.get_authors_id(number=submission.number)]
+                for field in hide_fields:
+                    submission.content[field] = ''
 
                 bibtex = tools.generate_bibtex(
                         openreview.Note.from_json(submission.details['original']),
@@ -1655,6 +1675,8 @@ Program Chairs
                 pdate = publication_date if (note_accepted and submission.pdate is None) else submission.pdate,
                 odate = publication_date if ('everyone' in submission.readers and submission.odate is None) else submission.odate
             ))
+
+        tools.concurrent_requests(update_note, submissions)
 
         venue_heading_map = {}
         if decision_heading_map:
@@ -1935,6 +1957,7 @@ class ConferenceBuilder(object):
             double_blind=False,
             additional_fields={},
             remove_fields=[],
+            hide_fields=[],
             subject_areas=[],
             email_pcs=False,
             create_groups=False,
@@ -1950,7 +1973,8 @@ class ConferenceBuilder(object):
             papers_released=False,
             readers=None,
             author_reorder_after_first_deadline=False,
-            submission_email=None
+            submission_email=None,
+            force_profiles=False
         ):
 
         submissions_readers=[SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, SubmissionStage.Readers.REVIEWERS_ASSIGNED]
@@ -1970,6 +1994,7 @@ class ConferenceBuilder(object):
             double_blind,
             additional_fields,
             remove_fields,
+            hide_fields,
             subject_areas,
             email_pcs,
             create_groups,
@@ -1984,16 +2009,17 @@ class ConferenceBuilder(object):
             author_names_revealed,
             papers_released,
             author_reorder_after_first_deadline,
-            submission_email
+            submission_email,
+            force_profiles
         )
 
     def set_expertise_selection_stage(self, start_date = None, due_date = None, include_option=False):
         self.expertise_selection_stage = ExpertiseSelectionStage(start_date, due_date, include_option)
 
-    def set_registration_stage(self, committee_id, name = 'Registration', start_date = None, due_date = None, additional_fields = {}, instructions = None):
+    def set_registration_stage(self, committee_id, name = 'Registration', start_date = None, due_date = None, expdate = None, additional_fields = {}, instructions = None):
         default_instructions = 'Help us get to know our committee better and the ways to make the reviewing process smoother by answering these questions. If you don\'t see the form below, click on the blue "Registration" button.\n\nLink to Profile: https://openreview.net/profile/edit \nLink to Expertise Selection interface: https://openreview.net/invitation?id={conference_id}/-/Expertise_Selection'.format(conference_id = self.conference.get_id())
         reviewer_instructions = instructions if instructions else default_instructions
-        self.registration_stages.append(RegistrationStage(committee_id, name, start_date, due_date, additional_fields, reviewer_instructions))
+        self.registration_stages.append(RegistrationStage(committee_id, name, start_date, due_date, expdate, additional_fields, reviewer_instructions))
 
     def set_bid_stages(self, stages):
         for stage in stages:
@@ -2002,8 +2028,8 @@ class ConferenceBuilder(object):
     def set_review_stage(self, stage):
         self.conference.review_stage = stage
 
-    def set_review_rebuttal_stage(self, start_date = None, due_date = None, name = None,  email_pcs = False, additional_fields = {}):
-        self.review_rebuttal_stage = ReviewRebuttalStage(start_date, due_date, name, email_pcs, additional_fields)
+    def set_review_rebuttal_stage(self, stage):
+        self.conference.review_rebuttal_stage = stage
 
     def set_review_rating_stage(self, start_date = None, due_date = None,  name = None, additional_fields = {}, remove_fields = [], public = False, release_to_reviewers=ReviewRatingStage.Readers.NO_REVIEWERS):
         self.review_rating_stage = ReviewRatingStage(start_date, due_date, name, additional_fields, remove_fields, public, release_to_reviewers)
@@ -2105,8 +2131,5 @@ class ConferenceBuilder(object):
 
         for s in self.registration_stages:
             self.conference.set_registration_stage(s)
-
-        if self.review_rebuttal_stage:
-            self.conference.set_review_rebuttal_stage(self.review_rebuttal_stage)
 
         return self.conference

@@ -17,8 +17,8 @@ from selenium.common.exceptions import NoSuchElementException
 class TestCVPRSConference():
 
     @pytest.fixture(scope="class")
-    def conference(self, client):
-        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+    def conference(self, client, helpers):
+        pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         conference=openreview.helpers.get_conference(pc_client, request_form.id)
@@ -163,7 +163,7 @@ class TestCVPRSConference():
         assert client.get_invitation('thecvf.com/CVPR/2023/Conference/Authors/-/Registration')
     
     def test_ac_registration_stage(self, conference, client, helpers):
-        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         conference=openreview.helpers.get_conference(client, request_form.id)
         fields = {
@@ -239,7 +239,7 @@ class TestCVPRSConference():
     
     def test_setup_first_deadline(self, conference, helpers, test_client, client, request_page, selenium):
 
-        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         now = datetime.datetime.utcnow()
@@ -301,7 +301,7 @@ class TestCVPRSConference():
     def test_post_submission_stage(self, conference, helpers, test_client, client, request_page, selenium):
 
         #conference.setup_final_deadline_stage(force=True)
-        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         post_submission_note=pc_client.post_note(openreview.Note(
@@ -324,7 +324,7 @@ class TestCVPRSConference():
     def test_reviewer_recommendation(self, conference, helpers, test_client, client):
 
         now = datetime.datetime.utcnow()
-        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         pc_client.add_members_to_group('thecvf.com/CVPR/2023/Conference/Area_Chairs', ['~AC_CVPROne1', '~AC_CVPRTwo1'])
         pc_client.add_members_to_group('thecvf.com/CVPR/2023/Conference/Reviewers', ['~Reviewer_CVPROne1', '~Reviewer_CVPRTwo1', '~Reviewer_CVPRThree1', '~Reviewer_CVPRFour1', '~Reviewer_CVPRFive1', '~Reviewer_CVPRSix1'])
@@ -513,7 +513,7 @@ class TestCVPRSConference():
         client.add_members_to_group('thecvf.com/CVPR/2023/Conference/Paper5/Area_Chairs', 'thecvf.com/CVPR/2023/Conference/Paper5/Secondary_Area_Chairs')
     
         ## Set the meta review stage
-        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         now = datetime.datetime.utcnow()
@@ -539,8 +539,8 @@ class TestCVPRSConference():
 
         helpers.await_queue() 
 
-        ac1_client = openreview.Client(username='ac1@cvpr.cc', password='1234')       
-        ac2_client = openreview.Client(username='ac2@cvpr.cc', password='1234')
+        ac1_client = openreview.Client(username='ac1@cvpr.cc', password=helpers.strong_password)       
+        ac2_client = openreview.Client(username='ac2@cvpr.cc', password=helpers.strong_password)
 
         invitations = ac1_client.get_invitations(invitee=True, super='thecvf.com/CVPR/2023/Conference/-/Meta_Review')
         assert len(invitations) == 3
@@ -661,7 +661,7 @@ class TestCVPRSConference():
 
         now = datetime.datetime.utcnow()
 
-        conference.set_review_rebuttal_stage(openreview.ReviewRebuttalStage(
+        conference.review_rebuttal_stage = openreview.stages.ReviewRebuttalStage(
             due_date=now + datetime.timedelta(minutes = 40),
             single_rebuttal=True,
             additional_fields={
@@ -675,7 +675,8 @@ class TestCVPRSConference():
                     'required':True
                 }                
             }
-        ))
+        )
+        conference.create_review_rebuttal_stage()
 
         assert client.get_invitation('thecvf.com/CVPR/2023/Conference/Paper5/-/Rebuttal')
 
@@ -701,7 +702,7 @@ class TestCVPRSConference():
         helpers.await_queue()
 
         ## release the rebuttals
-        conference.set_review_rebuttal_stage(openreview.ReviewRebuttalStage(
+        conference.review_rebuttal_stage = openreview.stages.ReviewRebuttalStage(
             due_date=now + datetime.timedelta(minutes = 40),
             single_rebuttal=True,
             additional_fields={
@@ -720,7 +721,8 @@ class TestCVPRSConference():
                 openreview.conference.ReviewRebuttalStage.Readers.AREA_CHAIRS_ASSIGNED,
                 openreview.conference.ReviewRebuttalStage.Readers.REVIEWERS_ASSIGNED
             ]
-        ))
+        )
+        conference.create_review_rebuttal_stage()
 
         rebuttals = client.get_notes(invitation='thecvf.com/CVPR/2023/Conference/Paper5/-/Rebuttal')
         assert len(rebuttals) == 1
@@ -733,9 +735,151 @@ class TestCVPRSConference():
             'thecvf.com/CVPR/2023/Conference/Paper5/Authors'
         ]
 
+    def test_metareview_revision_stage(self, conference, helpers, test_client, client):
+
+        now = datetime.datetime.utcnow()
+
+        conference.meta_review_stage = openreview.stages.MetaReviewStage(
+            due_date=now + datetime.timedelta(minutes = 40),
+            additional_fields={
+                "preliminary_recommendation": {
+                "order": 1,
+                "value-radio": [
+                    "Clear accept",
+                    "Needs discussion",
+                    "Clear reject"
+                ],
+                "required": True
+                },
+                "final_recommendation": {
+                "order": 2,
+                "value-radio": [
+                    "Accept and select as a higlight",
+                    "Accept",
+                    "Reject"
+                ],
+                "required": False
+                },
+                'metareview': {
+                    'order': 3,
+                    'value-regex': '[\\S\\s]{1,5000}',
+                    'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons. Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                    'required': True,
+                    'markdown': True
+                },
+                "award_candidate": {
+                    'description': '',
+                    "order": 4,
+                    "value-radio": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": True
+                }
+            },
+            remove_fields=['recommendation', 'confidence']
+        )
+
+        conference.create_meta_review_stage()
+
+        assert client.get_invitation('thecvf.com/CVPR/2023/Conference/Paper5/-/Meta_Review')
+
+        submissions=conference.get_submissions(number=1)
+        assert len(submissions) == 1
+
+        ac_client = openreview.Client(username='ac1@cvpr.cc', password=helpers.strong_password)
+        signatory_groups=client.get_groups(regex='thecvf.com/CVPR/2023/Conference/Paper1/Area_Chair_', signatory='ac1@cvpr.cc')
+        assert len(signatory_groups) == 1
+
+        metareview_note=ac_client.post_note(openreview.Note(
+            invitation='thecvf.com/CVPR/2023/Conference/Paper1/-/Meta_Review',
+            forum=submissions[0].id,
+            replyto=submissions[0].id,
+            readers=[
+                'thecvf.com/CVPR/2023/Conference/Program_Chairs',
+                'thecvf.com/CVPR/2023/Conference/Paper1/Senior_Area_Chairs',
+                'thecvf.com/CVPR/2023/Conference/Paper1/Area_Chairs'
+            ],
+            nonreaders=['thecvf.com/CVPR/2023/Conference/Paper1/Authors'],
+            writers=['thecvf.com/CVPR/2023/Conference/Program_Chairs', 'thecvf.com/CVPR/2023/Conference/Paper1/Area_Chairs'],
+            signatures=[signatory_groups[0].id],
+            content={
+                'preliminary_recommendation': 'Needs discussion',
+                'metareview': 'This is a metareview',
+                'award_candidate': 'No'
+            }
+        ))
+
+        helpers.await_queue()
+
+        now = datetime.datetime.utcnow()
+
+        conference.meta_review_revision_stage = openreview.stages.MetaReviewRevisionStage(
+            due_date=now + datetime.timedelta(minutes = 40),
+            additional_fields={
+                "final_recommendation": {
+                "order": 1,
+                "value-radio": [
+                    "Accept and select as a higlight",
+                    "Accept",
+                    "Reject"
+                ],
+                "required": False
+                },
+                'metareview': {
+                    'order': 2,
+                    'value-regex': '[\\S\\s]{1,5000}',
+                    'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons. Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                    'required': True,
+                    'markdown': True
+                },
+                "award_candidate": {
+                    'description': '',
+                    "order": 3,
+                    "value-radio": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": True
+                }
+            },
+            remove_fields=['recommendation', 'confidence']
+        )
+
+        conference.create_meta_review_revision_stage()
+
+        assert client.get_invitation('thecvf.com/CVPR/2023/Conference/-/Meta_Review_Revision')
+        invitations = client.get_invitations(super='thecvf.com/CVPR/2023/Conference/-/Meta_Review_Revision')
+        assert invitations and len(invitations) == 1
+
+        metareview_revision=ac_client.post_note(openreview.Note(
+            invitation=f'{signatory_groups[0].id}/-/Meta_Review_Revision',
+            forum=submissions[0].id,
+            referent=metareview_note.id,
+            readers=[
+                'thecvf.com/CVPR/2023/Conference/Program_Chairs',
+                'thecvf.com/CVPR/2023/Conference/Paper1/Senior_Area_Chairs',
+                'thecvf.com/CVPR/2023/Conference/Paper1/Area_Chairs'
+            ],
+            nonreaders=['thecvf.com/CVPR/2023/Conference/Paper1/Authors'],
+            writers=['thecvf.com/CVPR/2023/Conference/Program_Chairs', signatory_groups[0].id],
+            signatures=[signatory_groups[0].id],
+            content={
+                'final_recommendation': 'Accept',
+                'metareview': 'This is a metareview UPDATED',
+                'award_candidate': 'No'
+            }
+        ))
+
+        helpers.await_queue()
+        assert metareview_revision
+
+        references = client.get_references(referent=metareview_note.id)
+        assert references and len(references) == 2
+
     def test_decision_stage(self, conference, helpers, client):
 
-        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         now = datetime.datetime.utcnow()
@@ -787,10 +931,9 @@ class TestCVPRSConference():
 
         helpers.await_queue()
 
-
     def test_camera_ready_stage(self, conference, helpers, client):
 
-        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         now = datetime.datetime.utcnow()
@@ -824,4 +967,53 @@ class TestCVPRSConference():
         helpers.await_queue()
 
         author_group = client.get_group('thecvf.com/CVPR/2023/Conference/Authors')
-        assert 'showIEEECopyright: true' in author_group.web              
+        assert 'showIEEECopyright: true' in author_group.web
+
+    def test_post_decision_stage(self, conference, helpers, client):
+
+        pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        invitation = client.get_invitation('openreview.net/Support/-/Request{}/Post_Decision_Stage'.format(request_form.number))
+        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        client.post_invitation(invitation)
+
+        request_form_note = pc_client.post_note(openreview.Note(
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Post_Decision_Stage',
+            referent=request_form.id,
+            forum=request_form.id,
+            signatures=['~Program_CVPRChair1'],
+            readers=['thecvf.com/CVPR/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            writers=[],
+            content= {
+                'reveal_authors': 'No, I don\'t want to reveal any author identities.',
+                'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
+                'send_decision_notifications': 'No, I will send the emails to the authors',
+                'home_page_tab_names': {
+                    'Accept': 'Accept',
+                    'Reject': 'Submitted'
+                }
+            }
+            ))
+
+        helpers.await_queue()
+
+        submissions=conference.get_submissions(number=5)
+        assert len(submissions) == 1
+        submission = submissions[0]
+
+        assert submission.content['keywords'] == ''
+        assert submission.content['venue'] == 'CVPR 2023'
+        assert submission.content['venueid'] == 'thecvf.com/CVPR/2023/Conference'
+        assert submission.pdate
+        assert not submission.odate
+
+        submissions=conference.get_submissions(number=4)
+        assert len(submissions) == 1
+        submission = submissions[0]
+
+        assert submission.content['keywords'] == ''
+        assert submission.content['venue'] == 'Submitted to CVPR 2023'
+        assert submission.content['venueid'] == 'thecvf.com/CVPR/2023/Conference'
+        assert not submission.pdate
+        assert not submission.odate

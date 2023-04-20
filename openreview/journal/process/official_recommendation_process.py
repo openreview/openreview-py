@@ -14,10 +14,10 @@ def process(client, edit, invitation):
     print(f'find recommendations by forum={note.forum} and invitation={edit.invitation}')
     recommendations = client.get_notes(forum=note.forum, invitation=edit.invitation)
     print('# recommendations', len(recommendations))
-    if len(recommendations) == 3:
+    if len(recommendations) == journal.get_number_of_reviewers():
 
         submission = client.get_note(note.forum)
-        duedate = journal.get_due_date(weeks = 1)
+        duedate = journal.get_due_date(weeks = journal.get_decision_period_length())
 
         print('Enable review rating')
         journal.invitation_builder.set_note_review_rating_invitation(submission, duedate)
@@ -26,17 +26,17 @@ def process(client, edit, invitation):
         print('Send email to AEs')
         client.post_message(
             recipients=[journal.get_action_editors_id(number=submission.number)],
-            subject=f'''[{journal.short_name}] Evaluate reviewers and submit decision for {journal.short_name} submission {submission.content['title']['value']}''',
+            subject=f'''[{journal.short_name}] Evaluate reviewers and submit decision for {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
             message=f'''Hi {{{{fullname}}}},
 
-Thank you for overseeing the review process for {journal.short_name} submission "{submission.content['title']['value']}".
+Thank you for overseeing the review process for {journal.short_name} submission "{submission.number}: {submission.content['title']['value']}".
 
 All reviewers have submitted their official recommendation of a decision for the submission. Therefore it is now time for you to determine a decision for the submission. Before doing so:
 
 - Make sure you have sufficiently discussed with the authors (and possibly the reviewers) any concern you may have about the submission.
 - Rate the quality of the reviews submitted by the reviewers. **You will not be able to submit your decision until these ratings have been submitted**. To rate a review, go on the submission's page and click on button "Rating" for each of the reviews.
 
-We ask that you submit your decision **within 1 week** ({duedate.strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={submission.id}&invitationId={journal.get_ae_decision_id(number=submission.number)}
+We ask that you submit your decision **within {journal.get_decision_period_length()} week** ({duedate.strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={submission.id}&invitationId={journal.get_ae_decision_id(number=submission.number)}
 
 The possible decisions are:
 - **Accept as is**: once its camera ready version is submitted, the manuscript will be marked as accepted.

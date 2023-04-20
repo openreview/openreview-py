@@ -20,9 +20,9 @@ from openreview.conference import invitation
 class TestECCVConference():
 
     @pytest.fixture(scope="class")
-    def conference(self, client):
+    def conference(self, client, helpers):
         now = datetime.datetime.utcnow()
-        #pc_client = openreview.Client(username='pc@eccv.org', password='1234')
+        #pc_client = openreview.Client(username='pc@eccv.org', password=helpers.strong_password)
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
@@ -427,7 +427,7 @@ Please contact info@openreview.net with any questions or concerns about this int
 
     def test_open_registration(self, conference, helpers, selenium, request_page):
 
-        reviewer_client = openreview.Client(username='test_reviewer_eccv@mail.com', password='1234')
+        reviewer_client = openreview.Client(username='test_reviewer_eccv@mail.com', password=helpers.strong_password)
         reviewer_tasks_url = 'http://localhost:3030/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
         request_page(selenium, reviewer_tasks_url, reviewer_client.token, by=By.LINK_TEXT, wait_for_element='Reviewer Profile Confirmation')
 
@@ -635,7 +635,7 @@ Please contact info@openreview.net with any questions or concerns about this int
 
     def test_bid_stage(self, conference, helpers, selenium, request_page):
 
-        reviewer_client = openreview.Client(username='test_reviewer_eccv@mail.com', password='1234')
+        reviewer_client = openreview.Client(username='test_reviewer_eccv@mail.com', password=helpers.strong_password)
         reviewer_tasks_url = 'http://localhost:3030/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
         request_page(selenium, reviewer_tasks_url, reviewer_client.token, by=By.LINK_TEXT, wait_for_element='Reviewer Bid')
 
@@ -649,7 +649,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert len(notes) == 6
         assert notes[4].text == 'Ensure that you have at least 40 bids, which are "Very High" or "High".'
 
-        ac_client = openreview.Client(username='test_ac_eccv@mail.com', password='1234')
+        ac_client = openreview.Client(username='test_ac_eccv@mail.com', password=helpers.strong_password)
         request_page(selenium, 'http://localhost:3030/group?id=' + conference.get_area_chairs_id() + '#areachair-tasks', ac_client.token, by=By.LINK_TEXT, wait_for_element='Area Chair Bid')
 
         assert selenium.find_element_by_link_text('Area Chair Bid')
@@ -835,7 +835,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         ))
 
         ## Area chairs assignments
-        pc_client = openreview.Client(username='pc@eccv.org', password='1234')
+        pc_client = openreview.Client(username='pc@eccv.org', password=helpers.strong_password)
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
             readers = [conference.id, '~AreaChair_ECCV_One1'],
             nonreaders = [conference.get_authors_id(number=blinded_notes[0].number)],
@@ -934,9 +934,9 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert url == links[0].get_attribute("href")
 
 
-    def test_reviewer_matching(self, conference):
+    def test_reviewer_matching(self, conference, helpers):
 
-        pc_client = openreview.Client(username='pc@eccv.org', password='1234')
+        pc_client = openreview.Client(username='pc@eccv.org', password=helpers.strong_password)
 
         ### Custom loads
         pc_client.post_edge(openreview.Edge(invitation = conference.get_invitation_id(name='Custom_Max_Papers', prefix=conference.get_reviewers_id()),
@@ -983,7 +983,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             }
         )
 
-        pc_client = openreview.Client(username='pc@eccv.org', password='1234')
+        pc_client = openreview.Client(username='pc@eccv.org', password=helpers.strong_password)
         posted_note = pc_client.post_note(desk_reject_note)
         assert posted_note
 
@@ -1159,8 +1159,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         conference.create_review_stage()
 
-        r1_client = openreview.Client(username='reviewer1@fb.com', password='1234')
-        r2_client = openreview.Client(username='reviewer2@google.com', password='1234')
+        r1_client = openreview.Client(username='reviewer1@fb.com', password=helpers.strong_password)
+        r2_client = openreview.Client(username='reviewer2@google.com', password=helpers.strong_password)
 
 
         blinded_notes = conference.get_submissions(sort='tmdate')
@@ -1286,7 +1286,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         conference.comment_stage = openreview.stages.CommentStage(official_comment_name='Confidential_Comment', reader_selection=True, invitees=comment_invitees, readers=comment_invitees)
         conference.create_comment_stage()
 
-        r2_client = openreview.Client(username='reviewer2@google.com', password='1234')
+        r2_client = openreview.Client(username='reviewer2@google.com', password=helpers.strong_password)
 
         blinded_notes = conference.get_submissions(sort='tmdate')
 
@@ -1394,9 +1394,9 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         notes = selenium.find_elements_by_class_name('note_with_children')
         assert len(notes) == 2
 
-    def test_paper_ranking_stage(self, conference, client, test_client, selenium, request_page):
+    def test_paper_ranking_stage(self, conference, client, test_client, selenium, request_page, helpers):
 
-        ac_client = openreview.Client(username='ac1@eccv.org', password='1234')
+        ac_client = openreview.Client(username='ac1@eccv.org', password=helpers.strong_password)
         ac_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'
         request_page(selenium, ac_url, ac_client.token, wait_for_element='1-metareview-status')
 
@@ -1405,7 +1405,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         assert not status.find_elements_by_class_name('tag-widget')
 
-        reviewer_client = openreview.Client(username='reviewer1@fb.com', password='1234')
+        reviewer_client = openreview.Client(username='reviewer1@fb.com', password=helpers.strong_password)
         reviewer_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Reviewers'
         request_page(selenium, reviewer_url, reviewer_client.token, by=By.CLASS_NAME, wait_for_element='tag-widget')
 
@@ -1466,7 +1466,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             signatures = [signatory])
         )
 
-        reviewer2_client = openreview.Client(username='reviewer2@google.com', password='1234')
+        reviewer2_client = openreview.Client(username='reviewer2@google.com', password=helpers.strong_password)
 
         signatory = reviewer2_client.get_groups(regex='thecvf.com/ECCV/2020/Conference/Paper1/Reviewer_.*', signatory='reviewer2@google.com')[0].id
 
@@ -1492,7 +1492,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         now = datetime.datetime.utcnow()
 
-        conference.set_review_rebuttal_stage(openreview.ReviewRebuttalStage(due_date=now + datetime.timedelta(minutes = 40)))
+        conference.review_rebuttal_stage = openreview.stages.ReviewRebuttalStage(due_date=now + datetime.timedelta(minutes = 40))
+        conference.create_review_rebuttal_stage()
         request_page(selenium, 'http://localhost:3030/forum?id=' + blinded_notes[2].id , test_client.token, by=By.CLASS_NAME, wait_for_element='note_with_children')
         notes = selenium.find_elements_by_class_name('note_with_children')
         assert len(notes) == 2
@@ -1571,7 +1572,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         }, remove_fields = ['title', 'rating', 'review', 'confidence'])
         conference.create_review_revision_stage()
 
-        reviewer_client = openreview.Client(username='reviewer2@google.com', password='1234')
+        reviewer_client = openreview.Client(username='reviewer2@google.com', password=helpers.strong_password)
 
         request_page(selenium, 'http://localhost:3030/forum?id=' + blinded_notes[2].id , reviewer_client.token, by=By.CLASS_NAME, wait_for_element='note_with_children')
         notes = selenium.find_elements_by_class_name('note_with_children')
@@ -1626,7 +1627,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert 'reviewer1@fb.com' in recipients
         assert 'ac1@eccv.org' in recipients
 
-    def test_review_rating_stage(self, conference, client, test_client, selenium, request_page):
+    def test_review_rating_stage(self, conference, client, test_client, selenium, request_page, helpers):
 
         now = datetime.datetime.utcnow()
 
@@ -1644,7 +1645,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             }
         }, remove_fields = ['review_quality']))
 
-        ac_client = openreview.Client(username='ac1@eccv.org', password='1234')
+        ac_client = openreview.Client(username='ac1@eccv.org', password=helpers.strong_password)
 
         blinded_notes = conference.get_submissions(sort='tmdate')
 
@@ -1678,14 +1679,14 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         ))
         assert review_rating_note
 
-    def test_secondary_assignments(self, conference, client, test_client, selenium, request_page):
+    def test_secondary_assignments(self, conference, client, test_client, selenium, request_page, helpers):
 
         now = datetime.datetime.utcnow()
 
         conference.meta_review_stage = openreview.stages.MetaReviewStage(due_date =  now + datetime.timedelta(minutes = 1440))
         conference.create_meta_review_stage()
 
-        ac_client = openreview.Client(username='ac1@eccv.org', password='1234')
+        ac_client = openreview.Client(username='ac1@eccv.org', password=helpers.strong_password)
         ac_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'
         request_page(selenium, ac_url, ac_client.token, by=By.LINK_TEXT, wait_for_element='Assigned Papers')
 
@@ -1715,7 +1716,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             client.add_members_to_group(ac_group, secondary_group.id)
 
         # Check that Secondary AC Assignments tab is visible after it is enabled
-        ac_client2 = openreview.Client(username='ac2@eccv.org', password='1234')
+        ac_client2 = openreview.Client(username='ac2@eccv.org', password=helpers.strong_password)
         request_page(selenium, ac_url, ac_client2.token, by=By.LINK_TEXT, wait_for_element='Assigned Papers')
 
         notes_div = selenium.find_element_by_id('notes')
@@ -1727,7 +1728,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         for i in range(1,3):
             assert secondary_assignments_div.find_elements_by_id('note-summary-{}'.format(i))
 
-    def test_chronological_pc_timeline(self, conference, selenium, request_page):
+    def test_chronological_pc_timeline(self, conference, selenium, request_page, helpers):
         # Assumptions: 1) Items are in list elements
         #              2) Dates are stated in plain English
         def convert_text_to_datetime(text):
@@ -1747,7 +1748,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
             return date_obj
 
-        ac_client = openreview.Client(username='openreview.net', password='1234')
+        ac_client = openreview.Client(username='openreview.net', password=helpers.strong_password)
         ac_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Program_Chairs'
         request_page(selenium, ac_url, ac_client.token, by=By.TAG_NAME, wait_for_element='li')
 

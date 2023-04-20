@@ -185,6 +185,7 @@ class TestVenueRequest():
                     'Reviewer Recommendation Scores'],
                 'Author and Reviewer Anonymity': 'Single-blind (Reviewers are anonymous)',
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
+                'force_profiles_only': 'Yes, require all authors to have an OpenReview profile',
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
                 'withdrawn_submissions_visibility': 'No, withdrawn submissions should not be made public.',
@@ -270,8 +271,10 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Deploy'.format(support_group_id, request_form_note.number)
 
-        assert openreview.tools.get_invitation(pc_client, 'TEST.cc/2021/Conference/-/Submission_Test')
+        submission_inv = openreview.tools.get_invitation(pc_client, 'TEST.cc/2021/Conference/-/Submission_Test')
+        assert submission_inv
         assert not openreview.tools.get_invitation(pc_client, 'TEST.cc/2021/Conference/-/Submission')
+        assert '~.*' == submission_inv.reply['content']['authorids']['values-regex'] 
 
         assert pc_client.get_notes(invitation='openreview.net/Support/-/Request{number}/Comment'.format(number=request_form_note.number))
 
@@ -1239,10 +1242,12 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
+        exp_date = due_date - datetime.timedelta(days=1)
         review_stage_note = openreview.Note(
             content={
                 'review_start_date': start_date.strftime('%Y/%m/%d'),
                 'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'review_expiration_date': exp_date.strftime('%Y/%m/%d'),
                 'make_reviews_public': 'Yes, reviews should be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
@@ -1263,6 +1268,12 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             review_stage_note=test_client.post_note(review_stage_note)
 
         review_stage_note.content['make_reviews_public'] = 'No, reviews should NOT be revealed publicly when they are posted'
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Review expiration date should be after review deadline.'):
+            review_stage_note=test_client.post_note(review_stage_note)
+
+        exp_date = due_date + datetime.timedelta(days=1)
+        review_stage_note.content['review_expiration_date'] = exp_date.strftime('%Y/%m/%d')
         review_stage_note=test_client.post_note(review_stage_note)
 
         assert review_stage_note
@@ -1272,9 +1283,15 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
+        assert len(client.get_invitations(super='TEST.cc/2030/Conference/-/Official_Review')) == 2
+        invitation = client.get_invitation('TEST.cc/2030/Conference/Paper1/-/Official_Review')
+        # duedate + 1 day
+        exp_date = invitation.duedate + (24*60*60*1000)
+        assert invitation.expdate == exp_date
+
         client.add_members_to_group(f'{venue["venue_id"]}/Paper1/Reviewers', '~Venue_Reviewer2')
 
-        reviewer_client = openreview.Client(username='venue_reviewer2@mail.com', password='1234')
+        reviewer_client = openreview.Client(username='venue_reviewer2@mail.com', password=helpers.strong_password)
         reviewer_group = client.get_group('{}/Reviewers'.format(venue['venue_id']))
         assert reviewer_group and len(reviewer_group.members) == 2
 
@@ -1353,11 +1370,13 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
-        meta_review_stage_note = test_client.post_note(openreview.Note(
+        exp_date = due_date - datetime.timedelta(days=1)
+        meta_review_stage_note = openreview.Note(
             content={
                 'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
                 'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
                 'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'meta_review_expiration_date': exp_date.strftime('%Y/%m/%d'),
                 'recommendation_options': 'Accept, Reject',
                 'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
@@ -1377,7 +1396,14 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             replyto=venue['request_form_note'].forum,
             signatures=['~SomeFirstName_User1'],
             writers=[]
-        ))
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Meta review expiration date should be after meta review deadline.'):
+            meta_review_stage_note=test_client.post_note(meta_review_stage_note)
+
+        exp_date = due_date + datetime.timedelta(days=1)
+        meta_review_stage_note.content['meta_review_expiration_date'] = exp_date.strftime('%Y/%m/%d')
+        meta_review_stage_note=test_client.post_note(meta_review_stage_note)
         assert meta_review_stage_note
         helpers.await_queue()
 
@@ -1407,6 +1433,10 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'suggestions' in meta_review_invitations[0].reply['content']
         assert 'Accept' in meta_review_invitations[0].reply['content']['recommendation']['value-dropdown']
         assert len(meta_review_invitations[0].reply['readers']['values']) == 4
+
+        # duedate + 1 day
+        exp_date = meta_review_invitations[0].duedate + (24*60*60*1000)
+        assert meta_review_invitations[0].expdate == exp_date
 
     def test_venue_comment_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
@@ -1978,7 +2008,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert '~Venue_Author2' in authors_group.members
 
     def test_venue_submission_revision_stage(self, client, test_client, selenium, request_page, helpers, venue):
-        author_client = openreview.Client(baseurl = 'http://localhost:3000', username='venue_author3@mail.com', password='1234')
+        author_client = openreview.Client(baseurl = 'http://localhost:3000', username='venue_author3@mail.com', password=helpers.strong_password)
 
         # extend submission deadline
         now = datetime.datetime.utcnow()
@@ -2364,7 +2394,7 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
 }'''
 
         # Post revision note for a submission
-        author_client = openreview.Client(username='venue_author3@mail.com', password='1234')
+        author_client = openreview.Client(username='venue_author3@mail.com', password=helpers.strong_password)
         with pytest.raises(openreview.OpenReviewException, match=r'The value Venue Author,Andrew McCallum in field authors does not match the invitation definition'):
             revision_note = author_client.post_note(openreview.Note(
                 invitation='{}/Paper{}/-/Camera_Ready_Revision'.format(venue['venue_id'], blind_submissions[2].number),
@@ -2530,7 +2560,7 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
 
         blind_submissions = client.get_notes(invitation='TEST.cc/2030/Conference/-/Blind_Submission', sort='number:asc')
 
-        author_client = openreview.Client(username='venue_author1@mail.com', password='1234')
+        author_client = openreview.Client(username='venue_author1@mail.com', password=helpers.strong_password)
 
         withdrawal_note = author_client.post_note(openreview.Note(
             invitation = 'TEST.cc/2030/Conference/Paper1/-/Withdraw',

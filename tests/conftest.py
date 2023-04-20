@@ -9,11 +9,20 @@ from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import UnexpectedAlertPresentException
 
 class Helpers:
+    strong_password = 'Or$3cur3P@ssw0rd'
+
     @staticmethod
     def create_user(email, first, last, alternates=[], institution=None):
+
+        super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password=Helpers.strong_password)
+        profile = openreview.tools.get_profile(super_client, email)
+        if profile:
+            return Helpers.get_user(email)
+
         client = openreview.Client(baseurl = 'http://localhost:3000')
         assert client is not None, "Client is none"
-        res = client.register_user(email = email, first = first, last = last, password = '1234')
+
+        res = client.register_user(email = email, first = first, last = last, password = Helpers.strong_password)
         username = res.get('id')
         assert res, "Res i none"
         profile_content={
@@ -43,12 +52,12 @@ class Helpers:
 
     @staticmethod
     def get_user(email):
-        return openreview.Client(baseurl = 'http://localhost:3000', username = email, password = '1234')
+        return openreview.Client(baseurl = 'http://localhost:3000', username = email, password = Helpers.strong_password)
 
     @staticmethod
     def await_queue(super_client=None):
         if super_client is None:
-            super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password='1234')
+            super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password=Helpers.strong_password)
             assert super_client is not None, 'Super Client is none'
 
         while True:
@@ -65,11 +74,10 @@ class Helpers:
         assert not super_client.get_process_logs(status='error')
 
     @staticmethod
-    def await_queue_edit(super_client, edit_id=None, invitation=None):
-        print('await_queue_edit', edit_id)
+    def await_queue_edit(super_client, edit_id=None, invitation=None, count=1):
         while True:
             process_logs = super_client.get_process_logs(id=edit_id, invitation=invitation)
-            if process_logs:
+            if len(process_logs) >= count:
                 break
 
             time.sleep(0.5)
@@ -94,7 +102,7 @@ class Helpers:
         ))
 
     @staticmethod
-    def respond_invitation(selenium, request_page, url, accept, quota=None):
+    def respond_invitation(selenium, request_page, url, accept, quota=None, comment=None):
 
         request_page(selenium, url, by=By.CLASS_NAME, wait_for_element='note_editor')
 
@@ -118,6 +126,13 @@ class Helpers:
             time.sleep(1)
             button = selenium.find_element_by_xpath('//button[text()="Submit"]')
             button.click()
+        elif comment:
+            buttons[1].click()
+            time.sleep(1)
+            text_area = selenium.find_element_by_class_name("note_content_value")
+            text_area.send_keys("I am too busy.")
+            button = selenium.find_element_by_xpath('//button[text()="Submit"]')
+            button.click()
         elif accept:
             buttons[0].click()
         else:
@@ -133,11 +148,11 @@ def helpers():
 
 @pytest.fixture(scope="session")
 def client():
-    yield openreview.Client(baseurl = 'http://localhost:3000', username='openreview.net', password='1234')
+    yield openreview.Client(baseurl = 'http://localhost:3000', username='openreview.net', password=Helpers.strong_password)
 
 @pytest.fixture(scope="session")
 def openreview_client():
-    client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', username='openreview.net', password='1234')
+    client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', username='openreview.net', password=Helpers.strong_password)
     client.post_invitation_edit(invitations=None,
         readers=['openreview.net'],
         writers=['openreview.net'],
@@ -153,7 +168,7 @@ def openreview_client():
 
 @pytest.fixture(scope="session")
 def journal_request():
-    client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', username='openreview.net', password='1234')
+    client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', username='openreview.net', password=Helpers.strong_password)
     journal_request = openreview.journal.JournalRequest(client, 'openreview.net/Support')
     journal_request.setup_journal_request()
     yield journal_request

@@ -11,6 +11,7 @@ var VENUE_ID = '';
 var SHORT_PHRASE = '';
 var SUBMISSION_ID = '';
 var EDITORS_IN_CHIEF_NAME = '';
+var EDITORS_IN_CHIEF_EMAIL = '';
 var REVIEWERS_NAME = '';
 var ACTION_EDITOR_NAME = '';
 var JOURNAL_REQUEST_ID = '';
@@ -68,6 +69,7 @@ var WITHDRAWN_STATUS = VENUE_ID + '/Withdrawn_Submission';
 var RETRACTED_STATUS = VENUE_ID + '/Retracted_Acceptance';
 var REJECTED_STATUS = VENUE_ID + '/Rejected';
 var DESK_REJECTED_STATUS = VENUE_ID + '/Desk_Rejected'
+var DECISION_PENDING_STATUS = VENUE_ID + '/Decision_Pending';
 
 var referrerUrl = encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')');
 var ae_url = '/edges/browse?traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
@@ -77,7 +79,9 @@ var ae_url = '/edges/browse?traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
 var reviewers_url = '/edges/browse?traverse=' + REVIEWERS_ASSIGNMENT_ID +
   '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
   '&browse=' + REVIEWERS_ARCHIVED_ASSIGNMENT_ID + ';' + REVIEWERS_AFFINITY_SCORE_ID+ ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + 
-  '&version=2&referrer=' + referrerUrl;
+  '&version=2' +
+  '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available' +
+  '&referrer=' + referrerUrl;  
 HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Assignments Browser:</strong></li>' +
   '<li><a href="' + ae_url + '">Modify Action Editor Assignments</a></li>' +
   '<li><a href="' + reviewers_url + '">Modify Reviewer Assignments</a></li>' +
@@ -124,6 +128,7 @@ var main = function() {
       'Under Review',
       'Under Discussion',
       'Under Decision',
+      'Decision Pending',
       'Camera Ready',
       'All Submissions',
       'Action Editor Status',
@@ -710,7 +715,8 @@ var formatData = function(
             '&traverse='+ REVIEWERS_ASSIGNMENT_ID +
             '&edit='+ REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
             '&browse=' + REVIEWERS_ARCHIVED_ASSIGNMENT_ID + ';' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + 
-            '&version=2'
+            '&version=2' +
+            '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available'
           }
         ] : [],
         duedate: reviewInvitation && reviewInvitation.duedate || 0
@@ -766,8 +772,12 @@ var formatData = function(
     return row.submission.content.venueid === UNDER_REVIEW_STATUS
       && (row.actionEditorProgressData.ratingPending || row.actionEditorProgressData.decisionPending || row.actionEditorProgressData.decisionApprovalPending);
   });
+  var decisionPendingStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid === DECISION_PENDING_STATUS
+      && row.actionEditorProgressData.decisionApprovalPending;
+  });
   var cameraReadyStatusRows = paperStatusRows.filter(function(row) {
-    return row.submission.content.venueid === UNDER_REVIEW_STATUS
+    return row.submission.content.venueid === DECISION_PENDING_STATUS
       && row.actionEditorProgressData.cameraReadyPending;
   });
   var submissionStatusRows = paperStatusRows;
@@ -821,6 +831,7 @@ var formatData = function(
     underReviewStatusRows: underReviewStatusRows,
     underDiscussionStatusRows: underDiscussionStatusRows,
     underDecisionStatusRows: underDecisionStatusRows,
+    decisionPendingStatusRows: decisionPendingStatusRows,
     cameraReadyStatusRows: cameraReadyStatusRows,
     reviewerStatusRows: Object.values(reviewerStatusById),
     actionEditorStatusRows: Object.values(actionEditorStatusById),
@@ -908,7 +919,7 @@ var renderTable = function(container, rows) {
       defaultBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n' +
         'Click on the link below to go to the submission page:\n\n{{forumUrl}}\n\n' +
         'Thank you,\n' + SHORT_PHRASE + ' Editor-in-Chief',
-      replyTo: 'tmlr-editors@jmlr.org',
+      replyTo: EDITORS_IN_CHIEF_EMAIL,
       menu: [{
         id: 'all-reviewers',
         name: 'All reviewers of selected papers',
@@ -1197,6 +1208,7 @@ var renderData = function(venueStatusData) {
   renderTable('under-review', venueStatusData.underReviewStatusRows);
   renderTable('under-discussion', venueStatusData.underDiscussionStatusRows);
   renderTable('under-decision', venueStatusData.underDecisionStatusRows);
+  renderTable('decision-pending', venueStatusData.decisionPendingStatusRows);
   renderTable('camera-ready', venueStatusData.cameraReadyStatusRows);
   renderTable('all-submissions', venueStatusData.submissionStatusRows);
 

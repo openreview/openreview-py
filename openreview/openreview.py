@@ -61,7 +61,7 @@ class Client(object):
         self.messages_direct_url = self.baseurl + '/messages/direct'
         self.process_logs_url = self.baseurl + '/logs/process'
         self.jobs_status = self.baseurl + '/jobs/status'
-        self.institutions = self.baseurl + '/settings/institutions'
+        self.institutions_url = self.baseurl + '/settings/institutions'
         self.venues_url = self.baseurl + '/venues'
         self.note_edits_url = self.baseurl + '/notes/edits'
         self.invitation_edits_url = self.baseurl + '/invitations/edits'
@@ -224,10 +224,12 @@ class Client(object):
         self.__handle_token(response.json()['activatable'])
         return self.token
 
-    def get_institution(self, domain):
+    def get_institutions(self, id=None, domain=None):
         """
-        Get a single Institution by id (domain) if available
+        Get a single Institution by id or domain if available
 
+        :param id: id of the Institution as saved in the database
+        :type id: str
         :param domain: domain of the Institution
         :type domain: str
 
@@ -236,9 +238,16 @@ class Client(object):
 
         Example:
 
-        >>> institution = client.get_institution('umass.edu')
+        >>> institution = client.get_institutions(domain='umass.edu')
         """
-        response = self.session.get(self.institutions, params = { 'id': domain }, headers = self.headers)
+
+        params = {}
+        if id:
+            params['id'] = id
+        if domain:
+            params['domain'] = domain
+
+        response = self.session.get(self.institutions_url, params = tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -879,6 +888,7 @@ class Client(object):
             replyto = None,
             tauthor = None,
             signature = None,
+            signatures = None,
             writer = None,
             trash = None,
             number = None,
@@ -912,6 +922,8 @@ class Client(object):
         :type tauthor: bool, optional
         :param signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
         :type signature: str, optional
+        :param signatures: Group IDs. If provided, returns Notes whose signatures field contains the given Group IDs.
+        :type signatures: list[str], optional
         :param writer: A Group ID. If provided, returns Notes whose writers field contains the given Group ID.
         :type writer: str, optional
         :param trash: If True, includes Notes that have been deleted (i.e. the ddate field is less than the
@@ -964,6 +976,8 @@ class Client(object):
             params['tauthor'] = tauthor
         if signature is not None:
             params['signature'] = signature
+        if signatures is not None:
+            params['signatures'] = signatures
         if writer is not None:
             params['writer'] = writer
         if trash == True:
@@ -1005,6 +1019,7 @@ class Client(object):
             replyto = None,
             tauthor = None,
             signature = None,
+            signatures = None,
             writer = None,
             trash = None,
             number = None,
@@ -1036,6 +1051,8 @@ class Client(object):
         :type tauthor: bool, optional
         :param signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
         :type signature: str, optional
+        :param signatures: Group IDs. If provided, returns Notes whose signatures field contains the given Group IDs.
+        :type signatures: list[str], optional
         :param writer: A Group ID. If provided, returns Notes whose writers field contains the given Group ID.
         :type writer: str, optional
         :param trash: If True, includes Notes that have been deleted (i.e. the ddate field is less than the
@@ -1081,6 +1098,7 @@ class Client(object):
             'replyto': replyto,
             'tauthor': tauthor,
             'signature': signature,
+            'signatures': signatures,
             'writer': writer,
             'trash': trash,
             'number': number,
@@ -1406,7 +1424,7 @@ class Client(object):
         :return: The posted institution
         :rtype: dict
         """
-        response = self.session.post(self.institutions, json = institution, headers = self.headers)
+        response = self.session.post(self.institutions_url, json = institution, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -1598,6 +1616,19 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
+    def delete_institution(self, institution_id):
+        """
+        Deletes the institution
+
+        :param institution_id: ID of Institution to be deleted
+        :type institution_id: str
+
+        :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
+        :rtype: dict
+        """
+        response = self.session.delete(self.institutions_url + '/' + institution_id, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
 
     def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, useJob=False):
         """

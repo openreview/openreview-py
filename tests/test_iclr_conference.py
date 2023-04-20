@@ -17,9 +17,9 @@ from selenium.common.exceptions import NoSuchElementException
 class TestICLRConference():
 
     @pytest.fixture(scope="class")
-    def conference(self, client):
+    def conference(self, client, helpers):
         now = datetime.datetime.utcnow()
-        #pc_client = openreview.Client(username='pc@eccv.org', password='1234')
+        #pc_client = openreview.Client(username='pc@eccv.org', password=helpers.strong_password)
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
@@ -195,7 +195,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         client.add_members_to_group('~ReviewerSix_ICLR1', 'iclr2021_six@mail.com')
         client.add_members_to_group('iclr2021_six@mail.com', '~ReviewerSix_ICLR1')
 
-        pc_client = openreview.Client(username='pc@iclr.cc', password='1234')
+        pc_client = openreview.Client(username='pc@iclr.cc', password=helpers.strong_password)
 
         group = pc_client.get_group('ICLR.cc/2021/Conference')
         assert group
@@ -297,7 +297,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
     def test_registration(self, conference, helpers, selenium, request_page):
 
-        reviewer_client = openreview.Client(username='iclr2021_one@mail.com', password='1234')
+        reviewer_client = openreview.Client(username='iclr2021_one@mail.com', password=helpers.strong_password)
         reviewer_tasks_url = 'http://localhost:3030/group?id=ICLR.cc/2021/Conference/Reviewers#reviewer-tasks'
         request_page(selenium, reviewer_tasks_url, reviewer_client.token, by=By.LINK_TEXT, wait_for_element='Reviewer Registration')
 
@@ -356,8 +356,8 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
     def test_remind_registration(self, conference, helpers, client):
 
-        five_reviewer_client = openreview.Client(username='iclr2021_five@mail.com', password='1234')
-        six_reviewer_client = openreview.Client(username='iclr2021_six_alternate@mail.com', password='1234')
+        five_reviewer_client = openreview.Client(username='iclr2021_five@mail.com', password=helpers.strong_password)
+        six_reviewer_client = openreview.Client(username='iclr2021_six_alternate@mail.com', password=helpers.strong_password)
 
         subject = '[ICLR 2021] Please complete your profile'
         message = '''
