@@ -139,8 +139,8 @@ class TestWorkshopV2():
 
     def test_setup_matching(self, client, openreview_client, helpers):
 
-        pc_client=openreview.Client(username='pc@icaps.cc', password='1234')
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icaps.cc', password='1234')
+        pc_client=openreview.Client(username='pc@icaps.cc', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icaps.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         submissions = pc_client_v2.get_notes(invitation='PRL/2023/ICAPS/-/Submission', sort='number:asc')
