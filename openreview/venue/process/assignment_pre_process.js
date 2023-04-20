@@ -22,7 +22,7 @@ async function process(client, edge, invitation) {
 
   const { groups: anonGroups, count: groupCount } = await client.getGroups({ prefix: `${submissionGroupId}/${reviewersAnonName}`, signatory: edge.tail })
 
-  if (groupCount.length == 0) { 
+  if (groupCount.length === 0) { 
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can remove assignment, signatory groups not found for ${edge.tail}` }))
   }
 

@@ -3,7 +3,7 @@ async function process(client, edit, invitation) {
 
   const { note } = edit
   
-  if (note.ddate || note.readers === ['everyone']) {
+  if (note.ddate || note.readers.includes('everyone')) {
     return
   }
 
