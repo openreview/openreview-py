@@ -92,7 +92,7 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
 
     #send email to author of comment
     client.post_message(
-        recipients=[edit.tauthor],
+        recipients=[edit.tauthor] if edit.tauthor != 'OpenReview.net' else [],
         subject=f'''[{short_name}] Your comment was received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
         message=f'''Your comment was received on a submission to {short_name}.{content}'''
     )
