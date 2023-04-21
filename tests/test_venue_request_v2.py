@@ -2293,7 +2293,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
     def test_venue_submission_revision_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
         submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number:asc')
-        assert submissions and len(submissions) == 2
+        assert submissions and len(submissions) == 3
         submission = submissions[0]
 
         helpers.create_user('venue_author3_v2@mail.com', 'VenueFour', 'Author')
