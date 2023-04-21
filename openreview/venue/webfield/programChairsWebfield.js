@@ -1,16 +1,16 @@
 // Webfield component
-const automaticAssignment = domain.content.automatic_reviewer_assignment.value
+const automaticAssignment = domain.content.automatic_reviewer_assignment?.value
 const assignmentUrls = {}
 
-const manualReviewerAssignmentUrl = `/edges/browse?traverse=${domain.content.reviewers_assignment_id.value}&edit=${domain.content.reviewers_assignment_id.value};${domain.content.reviewers_custom_max_papers_id.value},tail:ignore&browse=${domain.content.reviewers_affinity_score_id.value};${domain.content.reviewers_conflict_id.value}&version=2`
-assignmentUrls[domain.content.reviewers_name.value] = {
+const manualReviewerAssignmentUrl = `/edges/browse?traverse=${domain.content.reviewers_assignment_id?.value}&edit=${domain.content.reviewers_assignment_id?.value};${domain.content.reviewers_custom_max_papers_id?.value},tail:ignore&browse=${domain.content.reviewers_affinity_score_id?.value};${domain.content.reviewers_conflict_id?.value}&version=2`
+assignmentUrls[domain.content.reviewers_name?.value] = {
   manualAssignmentUrl: manualReviewerAssignmentUrl,
   automaticAssignment: automaticAssignment
 }
 
 const areaChairName = domain.content.area_chairs_name?.value
 if (areaChairName) {
-  const manualAreaChairAssignmentUrl = `/edges/browse?traverse=${domain.content.area_chairs_assignment_id.value}&edit=${domain.content.area_chairs_assignment_id.value};${domain.content.area_chairs_custom_max_papers_id.value},tail:ignore&browse=${domain.content.area_chairs_affinity_score_id.value};${domain.content.area_chairs_conflict_id.value}&version=2`
+  const manualAreaChairAssignmentUrl = `/edges/browse?traverse=${domain.content.area_chairs_assignment_id?.value}&edit=${domain.content.area_chairs_assignment_id?.value};${domain.content.area_chairs_custom_max_papers_id?.value},tail:ignore&browse=${domain.content.area_chairs_affinity_score_id?.value};${domain.content.area_chairs_conflict_id?.value}&version=2`
   assignmentUrls[areaChairName] = {
     manualAssignmentUrl: manualAreaChairAssignmentUrl,
     automaticAssignment: automaticAssignment
@@ -23,7 +23,7 @@ return {
   properties: {
     header: {
       title: 'Program Chairs Console',
-      instructions: `This page provides information and status updates for the ${domain.content.subtitle.value}. It will be regularly updated as the conference progresses, so please check back frequently.`
+      instructions: `This page provides information and status updates for the ${domain.content.subtitle?.value}. It will be regularly updated as the conference progresses, so please check back frequently.`
     },
     apiVersion: 2,
     venueId: domain.id,
