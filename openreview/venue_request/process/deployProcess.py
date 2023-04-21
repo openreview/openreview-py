@@ -414,7 +414,7 @@ If you would like to change your decision, please follow the link in the previou
                     'order': 2
                 },
                 'compute_conflicts': {
-                    'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. Select the conflict policy below or no if you don\' want to compute conflicts.',
+                    'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. Select the conflict policy below or "No" if you don\'t want to compute conflicts.',
                     'value-radio': ['Default', 'NeurIPS', 'No'],
                     'required': True,
                     'order': 3
