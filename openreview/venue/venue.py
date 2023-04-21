@@ -602,7 +602,7 @@ Total Errors: {len(errors)}
         if submission_readers:
             self.submission_stage.readers = submission_readers
 
-        for submission in submissions:
+        def update_note(submission):
             decision_note = None
             if submission.details:
                 for reply in submission.details['directReplies']:
@@ -645,6 +645,7 @@ Total Errors: {len(errors)}
                         pdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if (submission.pdate is None and note_accepted) else None
                     )
                 )
+        tools.concurrent_requests(update_note, submissions)
 
     def send_decision_notifications(self, decision_options, messages):
         paper_notes = self.get_submissions(venueid=self.venue_id, details='directReplies')
