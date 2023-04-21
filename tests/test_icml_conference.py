@@ -3705,7 +3705,7 @@ ICML 2023 Conference Program Chairs'''
         )
 
 
-    def test_decision_stage(self, openreview_client, helpers):
+    def test_decision_stage(self, client, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -3755,6 +3755,262 @@ ICML 2023 Conference Program Chairs'''
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission3/-/Decision')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Decision')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Decision')
+
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+        submissions = venue.get_submissions(sort='number:asc')
+        assert len(submissions) == 100
+        decisions = ['Accept', 'Revision Needed', 'Reject']
+        comment = {
+            'Accept': 'Congratulations on your acceptance.',
+            'Revision Needed': 'A revision is needed from the authors.',
+            'Reject': 'We regret to inform you...'
+        }
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/ICML_decisions.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            writer.writerow([submissions[0].number, 'Accept', comment["Accept"]])
+            writer.writerow([submissions[1].number, 'Reject', comment["Reject"]])
+            writer.writerow([submissions[2].number, 'Revision Needed', comment["Revision Needed"]])
+            for submission in submissions[3:]:
+                decision = random.choice(decisions)
+                writer.writerow([submission.number, decision, comment[decision]])
+
+        decision_stage_invitation = f'openreview.net/Support/-/Request{request_form.number}/Decision_Stage'
+        url = pc_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/ICML_decisions.csv'),
+                                         decision_stage_invitation, 'decisions_file')
+
+        #post decisions from request form
+        decision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Revision Needed, Reject',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                'notify_authors': 'No, I will send the emails to the authors',
+                'additional_decision_form_options': {
+                    'suggestions': {
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 5000,
+                                'input': 'textarea',
+                                'optional': True
+                            }
+                        }
+                    }
+                },
+                'decisions_file': url
+            },
+            forum=request_form.forum,
+            invitation=decision_stage_invitation,
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+        assert decision_stage_note
+        helpers.await_queue()
+
+        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Decision')[0]
+        assert 'Accept' == decision.content['decision']['value']
+        assert 'Congratulations on your acceptance.' in decision.content['comment']['value']
+        assert decision.readers == [
+            'ICML.cc/2023/Conference/Program_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Area_Chairs'
+        ]
+        assert decision.nonreaders == [
+            'ICML.cc/2023/Conference/Submission1/Authors'
+        ]
+
+        #release decisions to authors and reviewers
+        #post decisions from request form
+        decision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Revision Needed, Reject',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'Yes, decisions should be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                'notify_authors': 'No, I will send the emails to the authors',
+                'additional_decision_form_options': {
+                    'suggestions': {
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 5000,
+                                'input': 'textarea',
+                                'optional': True
+                            }
+                        }
+                    }
+                },
+                'decisions_file': url
+            },
+            forum=request_form.forum,
+            invitation=decision_stage_invitation,
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+        assert decision_stage_note
+        helpers.await_queue()
+
+        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Decision')[0]
+        assert decision.readers == [
+            'ICML.cc/2023/Conference/Program_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Area_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Reviewers',
+            'ICML.cc/2023/Conference/Submission1/Authors'
+        ]
+        assert not decision.nonreaders
+
+    def test_post_decision_stage(self, client, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        submissions = openreview_client.get_notes(content= { 'venueid': 'ICML.cc/2023/Conference/Submission'}, sort='number:asc')
+        assert submissions and len(submissions) == 100
+
+        # Assert that submissions are still blind
+        assert submissions[0].content['authors']['readers'] == ["ICML.cc/2023/Conference","ICML.cc/2023/Conference/Submission1/Authors"]
+        assert submissions[0].content['authorids']['readers'] == ["ICML.cc/2023/Conference","ICML.cc/2023/Conference/Submission1/Authors"]
+        assert submissions[1].content['authors']['readers'] == ["ICML.cc/2023/Conference","ICML.cc/2023/Conference/Submission2/Authors"]
+        assert submissions[1].content['authorids']['readers'] == ["ICML.cc/2023/Conference","ICML.cc/2023/Conference/Submission2/Authors"]
+        # Assert that submissions are private
+        assert submissions[0].readers == [
+            "ICML.cc/2023/Conference",
+            "ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs",
+            "ICML.cc/2023/Conference/Submission1/Area_Chairs",
+            "ICML.cc/2023/Conference/Submission1/Reviewers",
+            "ICML.cc/2023/Conference/Submission1/Authors"
+        ]
+        assert submissions[1].readers == [
+            "ICML.cc/2023/Conference",
+            "ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs",
+            "ICML.cc/2023/Conference/Submission2/Area_Chairs",
+            "ICML.cc/2023/Conference/Submission2/Reviewers",
+            "ICML.cc/2023/Conference/Submission2/Authors"
+        ]
+
+        invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Post_Decision_Stage')
+        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        client.post_invitation(invitation)
+
+        invitation = pc_client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Post_Decision_Stage')
+
+        assert 'Accept' in invitation.reply['content']['home_page_tab_names']['default']
+        assert invitation.reply['content']['home_page_tab_names']['default']['Accept'] == 'Accept'
+        assert 'Revision Needed' in invitation.reply['content']['home_page_tab_names']['default']
+        assert invitation.reply['content']['home_page_tab_names']['default']['Revision Needed'] == 'Revision Needed'
+        assert 'Reject' in invitation.reply['content']['home_page_tab_names']['default']
+        assert invitation.reply['content']['home_page_tab_names']['default']['Reject'] == 'Reject'
+
+        #Post a post decision note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        short_name = 'ICML 2023'
+        post_decision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'reveal_authors': 'Reveal author identities of only accepted submissions to the public',
+                'submission_readers': 'Make accepted submissions public and hide rejected submissions',
+                'home_page_tab_names': {
+                    'Accept': 'Accept',
+                    'Revision Needed': 'Revision Needed',
+                    'Reject': 'Submitted'
+                },
+                'send_decision_notifications': 'Yes, send an email notification to the authors',
+                'accept_email_content': f'''Dear {{{{fullname}}}},
+
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+
+Best,
+{short_name} Program Chairs
+''',
+                'reject_email_content': f'''Dear {{{{fullname}}}},
+
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted. 
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+
+Best,
+{short_name} Program Chairs
+''',
+                'revision_needed_email_content': f'''Dear {{{{fullname}}}},
+
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}.
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+
+Best,
+{short_name} Program Chairs
+'''
+            },
+            forum=request_form.forum,
+            invitation=invitation.id,
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+        assert post_decision_stage_note
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id = post_decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+        accepted_submissions = venue.get_submissions(accepted=True, sort='number:asc')
+        rejected_submissions = venue.get_submissions(venueid='ICML.cc/2023/Conference/Rejected_Submission', sort='number:asc')
+        assert (len(accepted_submissions)+len(rejected_submissions)) == 100
+
+        messages = client.get_messages(subject='[ICML 2023] Decision notification for your submission 1: Paper title 1 Version 2')
+        assert len(messages) == 5
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'sac1@gmail.com' in recipients
+        assert 'test@mail.com' in recipients
+        assert 'peter@mail.com' in recipients
+        assert 'melisa@yahoo.com' in recipients
+        assert 'andrew@amazon.com' in recipients
+        assert 'We are delighted to inform you that your submission has been accepted.' in messages[0]['content']['text']
+
+        # Assert accepted submissions are not blind
+        assert accepted_submissions[0].content['venue']['value'] == 'ICML 2023'
+        assert accepted_submissions[0].content['venueid']['value'] == 'ICML.cc/2023/Conference'
+        assert 'readers' not in accepted_submissions[0].content['authors']
+        assert 'readers' not in accepted_submissions[0].content['authorids']
+        assert rejected_submissions[0].content['venue']['value'] == 'Submitted to ICML 2023'
+        assert rejected_submissions[0].content['venueid']['value'] == 'ICML.cc/2023/Conference/Rejected_Submission'
+        assert rejected_submissions[0].content['authors']['readers'] == ["ICML.cc/2023/Conference",f"ICML.cc/2023/Conference/Submission2/Authors"]
+        assert rejected_submissions[0].content['authorids']['readers'] == ["ICML.cc/2023/Conference",f"ICML.cc/2023/Conference/Submission2/Authors"]
+
+        # Assert that accepted submissions are public
+        assert accepted_submissions[0].readers == ['everyone']
+        assert accepted_submissions[0].pdate
+        assert accepted_submissions[0].odate
+        assert rejected_submissions[0].readers == [
+            "ICML.cc/2023/Conference",
+            "ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs",
+            "ICML.cc/2023/Conference/Submission2/Area_Chairs",
+            "ICML.cc/2023/Conference/Submission2/Reviewers",
+            "ICML.cc/2023/Conference/Submission2/Authors"
+        ]
+        assert not rejected_submissions[0].pdate
+        assert not rejected_submissions[0].odate
 
     def test_forum_chat(self, openreview_client, helpers):
 
