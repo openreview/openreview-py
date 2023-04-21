@@ -215,6 +215,9 @@ class TestICMLConference():
         assert 'financial_aid' in submission_invitation.edit['note']['content']
         assert 'subject_areas' in submission_invitation.edit['note']['content']
 
+        domain = openreview_client.get_group('ICML.cc/2023/Conference')
+        assert 'recommendation' == domain.content['meta_review_recommendation']['value'] 
+
     def test_add_pcs(self, client, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
