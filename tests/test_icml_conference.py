@@ -3860,7 +3860,7 @@ ICML 2023 Conference Program Chairs'''
             )
         )
 
-        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password='1234')
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
 
         anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLOne1')
         anon_group_id = anon_groups[0].id
@@ -3876,7 +3876,7 @@ ICML 2023 Conference Program Chairs'''
             )
         )
 
-        pc_client=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+        pc_client=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
 
         note_edit = pc_client.post_note_edit(
             invitation='ICML.cc/2023/Conference/Submission1/-/Chat',
