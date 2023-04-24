@@ -733,7 +733,7 @@ class InvitationBuilder(object):
             content['reduced_load'] = reduced_load_dict
         
         process_content = self.get_process_content('process/recruitment_process.py')
-        pre_process_content = self.get_process_content('process/recruitment_pre_process.js')
+        pre_process_content = self.get_process_content('process/recruitment_pre_process.py')
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
             webfield_content = webfield_reader.read()
@@ -901,7 +901,7 @@ class InvitationBuilder(object):
             }],
             content={
                 'comment_preprocess_script': {
-                    'value': self.get_process_content('process/comment_pre_process.js')
+                    'value': self.get_process_content('process/comment_pre_process.py')
                 },
                 'comment_process_script': {
                     'value': self.get_process_content('process/comment_process.py')
@@ -2029,7 +2029,7 @@ class InvitationBuilder(object):
                 invitation.signatures=[venue.get_program_chairs_id()] ## Program Chairs can see the reviews
                 return self.save_invitation(invitation)
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/assignment_pre_process.js')) as pre:
+        with open(os.path.join(os.path.dirname(__file__), 'process/assignment_pre_proces.py')) as pre:
             pre_content = pre.read()
             with open(os.path.join(os.path.dirname(__file__), 'process/assignment_post_process.py')) as post:
                 post_content = post.read()
@@ -2256,7 +2256,7 @@ class InvitationBuilder(object):
 
         process_file='process/simple_paper_recruitment_process.py' if proposed else 'process/paper_recruitment_process.py'
         process_content = self.get_process_content(process_file)
-        preprocess_content = self.get_process_content('process/paper_recruitment_pre_process.js')
+        preprocess_content = self.get_process_content('process/paper_recruitment_pre_process.py')
 
         edge_readers = []
         edge_writers = []
