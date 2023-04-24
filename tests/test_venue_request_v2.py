@@ -2297,7 +2297,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         submission = submissions[0]
 
         helpers.create_user('venue_author3_v2@mail.com', 'VenueFour', 'Author')
-        author_client = OpenReviewClient(username='venue_author3_v2@mail.com', password='1234')
+        author_client = OpenReviewClient(username='venue_author3_v2@mail.com', password=helpers.strong_password)
 
         submission = author_client.post_note_edit(
             invitation='V2.cc/2030/Conference/-/Submission',
