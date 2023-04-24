@@ -1064,7 +1064,7 @@ class TestVenueRequest():
                     'authors': { 'value': ['VenueFour Author']},
                     'authorids': { 'value': ['~VenueFour_Author1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'keywords': {'value': ['keyword1, keyword2'] }
+                    'keywords': {'value': ['keyword1', 'keyword2'] }
                 }
         ))
 
@@ -2309,7 +2309,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                     'authors': { 'value': ['VenueFour Author']},
                     'authorids': { 'value': ['~VenueFour_Author1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'keywords': {'value': ['keyword1, keyword2'] }
+                    'keywords': {'value': ['keyword1', 'keyword2'] }
                 }
         ))
         helpers.await_queue_edit(openreview_client, edit_id=submission['id'])
