@@ -1342,7 +1342,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         anon_group_id = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLOne1')[0].id
         
         ## recruit external reviewer
-        with pytest.raises(openreview.OpenReviewException, match=r'the user has a conflict'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for'):
             ac_client.post_edge(
                 openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
                     signatures=[anon_group_id],
@@ -1352,7 +1352,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     weight=1
             ))
 
-        with pytest.raises(openreview.OpenReviewException, match=r'the user is already assigned'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Already assigned'):
             ac_client.post_edge(
                 openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
                     signatures=[anon_group_id],
@@ -1362,7 +1362,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     weight=1
             ))
 
-        with pytest.raises(openreview.OpenReviewException, match=r'the user is an official reviewer'):
+        with pytest.raises(openreview.OpenReviewException, match=r'is an official reviewer'):
             ac_client.post_edge(
                 openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
                     signatures=[anon_group_id],
@@ -1394,7 +1394,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         ))
         helpers.await_queue(openreview_client)
 
-        with pytest.raises(openreview.OpenReviewException, match=r'the user is already invited'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Already invited'):
             ac_client.post_edge(
                 openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
                     signatures=[anon_group_id],

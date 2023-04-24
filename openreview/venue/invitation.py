@@ -2029,7 +2029,7 @@ class InvitationBuilder(object):
                 invitation.signatures=[venue.get_program_chairs_id()] ## Program Chairs can see the reviews
                 return self.save_invitation(invitation)
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/assignment_pre_proces.py')) as pre:
+        with open(os.path.join(os.path.dirname(__file__), 'process/assignment_pre_process.py')) as pre:
             pre_content = pre.read()
             with open(os.path.join(os.path.dirname(__file__), 'process/assignment_post_process.py')) as post:
                 post_content = post.read()
