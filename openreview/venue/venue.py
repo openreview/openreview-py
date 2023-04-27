@@ -680,7 +680,7 @@ Total Errors: {len(errors)}
         tools.concurrent_requests(update_note, submissions)
 
     def send_decision_notifications(self, decision_options, messages):
-        paper_notes = self.get_submissions(venueid=self.venue_id, details='directReplies')
+        paper_notes = self.get_submissions(details='directReplies')
 
         def send_notification(note):
             decision_note = None
