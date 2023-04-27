@@ -560,3 +560,49 @@ class TestVenueSubmissionARR():
         messages = openreview_client.get_messages(to='editors@aclrollingreview.org', subject='[ARR]: Paper #2 restored by venue organizers')
         assert len(messages) == 2
         assert messages[1]['content']['text'] == f'The desk-rejected ARR paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
+
+    def test_setup_matching(self, venue, openreview_client, helpers):
+
+        submissions = venue.get_submissions(sort='number:asc')
+
+        helpers.create_user('reviewer_venue_two@mail.com', 'Reviewer Venue', 'Two')
+        helpers.create_user('reviewer_venue_three@mail.com', 'Reviewer Venue', 'Three')
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/venue_affinity_scores.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in submissions:
+                writer.writerow([submission.id, '~Reviewer_Venue_One1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~Reviewer_Venue_Two1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~Reviewer_Venue_Three1', round(random.random(), 2)])
+
+        venue.setup_committee_matching(
+            committee_id='TestVenue.cc/Reviewers',
+            compute_affinity_scores=os.path.join(os.path.dirname(__file__), 'data/venue_affinity_scores.csv'),
+            compute_conflicts=True)
+
+        scores_invitation = openreview.tools.get_invitation(openreview_client, 'ARR/Reviewers/-/Affinity_Score')
+        assert scores_invitation
+
+        affinity_edges = openreview_client.get_edges_count(invitation='ARR/Reviewers/-/Affinity_Score')
+        assert affinity_edges == 9
+
+        conflict_invitation = openreview.tools.get_invitation(openreview_client, 'ARR/Reviewers/-/Conflict')
+        assert conflict_invitation
+
+        # #test posting proposed assignment edge
+        proposed_assignment_edge = openreview_client.post_edge(Edge(
+            invitation = venue.id + '/Reviewers/-/Proposed_Assignment',
+            signatures = ['ARR'],
+            head = submissions[0].id,
+            tail = '~Reviewer_Venue_One1',
+            readers = ['ARR','ARR/Submission1/Area_Chairs','~Reviewer_Venue_One1'],
+            writers = ['ARR','ARR/Submission1/Area_Chairs'],
+            weight = 0.92,
+            label = 'test-matching-1'
+        ))
+
+        assert proposed_assignment_edge
+        assert proposed_assignment_edge.nonreaders == ['ARR/Submission1/Authors']
+
+        custom_load_edges = openreview_client.get_edges_count(invitation='ARR/Reviewers/-/Custom_Max_Papers')
+        assert custom_load_edges == 1
