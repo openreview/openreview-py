@@ -208,6 +208,10 @@ class Venue(object):
             return name[:-1] if name.endswith('s') else name
         return self.reviewers_name
 
+    def get_anon_reviewers_name(self, pretty=True):
+        rev_name = self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
+        return rev_name + '_'
+
     def get_ethics_reviewers_name(self, pretty=True):
         if pretty:
             name=self.ethics_reviewers_name.replace('_', ' ')
@@ -226,9 +230,13 @@ class Venue(object):
             return name[:-1] if name.endswith('s') else name
         return self.area_chairs_name
     
+    def get_anon_area_chairs_name(self, pretty=True):
+        rev_name = self.area_chairs_name[:-1] if self.area_chairs_name.endswith('s') else self.area_chairs_name
+        return rev_name + '_'    
+    
     def get_reviewers_id(self, number = None, anon=False, submitted=False):
-        rev_name = self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
-        reviewers_id = self.get_committee_id(f'{rev_name}_.*' if anon else self.reviewers_name, number)
+        rev_name = self.get_anon_reviewers_name()
+        reviewers_id = self.get_committee_id(f'{rev_name}.*' if anon else self.reviewers_name, number)
         if submitted:
             return reviewers_id + '/Submitted'
         return reviewers_id
@@ -243,8 +251,8 @@ class Venue(object):
         return self.get_committee_id(self.program_chairs_name)
 
     def get_area_chairs_id(self, number = None, anon=False):
-        ac_name = self.area_chairs_name[:-1] if self.area_chairs_name.endswith('s') else self.area_chairs_name
-        return self.get_committee_id(f'{ac_name}_.*' if anon else self.area_chairs_name, number)
+        ac_name = self.get_anon_area_chairs_name()
+        return self.get_committee_id(f'{ac_name}.*' if anon else self.area_chairs_name, number)
 
     ## Compatibility with Conference, refactor conference references to use get_area_chairs_id
     def get_anon_area_chair_id(self, number, anon_id):
@@ -625,7 +633,7 @@ Total Errors: {len(errors)}
         if submission_readers:
             self.submission_stage.readers = submission_readers
 
-        for submission in submissions:
+        def update_note(submission):
             decision_note = None
             if submission.details:
                 for reply in submission.details['directReplies']:
@@ -668,9 +676,10 @@ Total Errors: {len(errors)}
                         pdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if (submission.pdate is None and note_accepted) else None
                     )
                 )
+        tools.concurrent_requests(update_note, submissions)
 
     def send_decision_notifications(self, decision_options, messages):
-        paper_notes = self.get_submissions(venueid=self.venue_id, details='directReplies')
+        paper_notes = self.get_submissions(details='directReplies')
 
         def send_notification(note):
             decision_note = None

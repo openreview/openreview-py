@@ -217,7 +217,7 @@ class TestICMLConference():
 
     def test_add_pcs(self, client, openreview_client, helpers):
 
-        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         now = datetime.datetime.utcnow()
@@ -369,7 +369,7 @@ class TestICMLConference():
     
     def test_sac_recruitment(self, client, openreview_client, helpers, request_page, selenium):
 
-        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         reviewer_details = '''sac1@gmail.com, SAC ICMLOne\nsac2@icml.cc, SAC ICMLTwo'''
@@ -413,7 +413,7 @@ class TestICMLConference():
 
     def test_ac_recruitment(self, client, openreview_client, helpers, request_page, selenium):
 
-        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         reviewer_details = '''ac1@icml.cc, AC ICMLOne\nac2@icml.cc, AC ICMLTwo'''
@@ -457,7 +457,7 @@ class TestICMLConference():
 
     def test_reviewer_recruitment(self, client, openreview_client, helpers, request_page, selenium):
 
-        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         reviewer_details = '''reviewer1@icml.cc, Reviewer ICMLOne
@@ -518,7 +518,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers/Invited').members) == 6
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers/Declined').members) == 1
 
-        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password='1234')
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
 
         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2023/Conference/Reviewers", reviewer_client.token, wait_for_element='header')
         header = selenium.find_element_by_id('header')
@@ -526,7 +526,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
 
     def test_registrations(self, client, openreview_client, helpers, test_client):
 
-        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
@@ -582,7 +582,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
 
         venue.create_registration_stages()
 
-        sac_client = openreview.api.OpenReviewClient(username = 'sac1@gmail.com', password='1234')
+        sac_client = openreview.api.OpenReviewClient(username = 'sac1@gmail.com', password=helpers.strong_password)
 
         registration_forum = sac_client.get_notes(invitation='ICML.cc/2023/Conference/Senior_Area_Chairs/-/Registration_Form')
         assert len(registration_forum) == 1
@@ -596,14 +596,14 @@ reviewer6@gmail.com, Reviewer ICMLSix
                     }
                 ))
 
-        ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password='1234')
+        ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
 
         invitation = ac_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Registration')
         assert 'statement' in invitation.edit['note']['content']
         assert 'profile_confirmed' in invitation.edit['note']['content']
         assert 'expertise_confirmed' in invitation.edit['note']['content']
 
-        reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@icml.cc', password='1234')
+        reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@icml.cc', password=helpers.strong_password)
 
         invitation = reviewer_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Registration')
         assert 'statement' in invitation.edit['note']['content']
@@ -707,7 +707,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
 
     def test_post_submission(self, client, openreview_client, helpers):
 
-        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
@@ -795,7 +795,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
 
         helpers.await_queue()
 
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
         submission_invitation = pc_client_v2.get_invitation('ICML.cc/2023/Conference/-/Submission')
         assert submission_invitation.expdate < openreview.tools.datetime_millis(now)
 
@@ -821,7 +821,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
 
         helpers.await_queue()
 
-        ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password='1234')
+        ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 101
         assert ['ICML.cc/2023/Conference',
@@ -857,7 +857,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
         assert len(submissions) == 101
 
         #desk-reject paper
-        pc_openreview_client = openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+        pc_openreview_client = openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
 
         submission = submissions[-1]
         desk_reject_note = pc_openreview_client.post_note_edit(invitation=f'ICML.cc/2023/Conference/Submission{submission.number}/-/Desk_Rejection',
@@ -878,7 +878,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
         submissions = venue.get_submissions(sort='number:asc')
         assert len(submissions) == 100
 
-        ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password='1234')
+        ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 101
         assert ['ICML.cc/2023/Conference', 
@@ -951,8 +951,8 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
     def test_ac_bidding(self, client, openreview_client, helpers, test_client):
 
-        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         submissions = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
@@ -1070,7 +1070,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
         helpers.await_queue()        
 
-        ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password='1234')
+        ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 101
         assert ['ICML.cc/2023/Conference',
@@ -1089,8 +1089,8 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
     def test_assignment(self, client, openreview_client, helpers, request_page, selenium):
 
-        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group('ICML.cc/2023/Conference/Senior_Area_Chairs'))
@@ -1330,7 +1330,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         quota_edge.weight = 15
         pc_client_v2.post_edge(quota_edge)
 
-        ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password='1234')
+        ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password=helpers.strong_password)
         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2023/Conference/Area_Chairs", ac_client.token, wait_for_element='header')
         header = selenium.find_element_by_id('header')
         assert 'Reviewer Assignment Browser:' in header.text
@@ -1342,12 +1342,32 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         anon_group_id = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLOne1')[0].id
         
         ## recruit external reviewer
-        with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for danielle@mail'):
+        with pytest.raises(openreview.OpenReviewException, match=r'the user has a conflict'):
             ac_client.post_edge(
                 openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
                     signatures=[anon_group_id],
                     head=submissions[0].id,
                     tail='danielle@mail.com',
+                    label='Invitation Sent',
+                    weight=1
+            ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'the user is already assigned'):
+            ac_client.post_edge(
+                openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
+                    signatures=[anon_group_id],
+                    head=submissions[0].id,
+                    tail='~Reviewer_ICMLOne1',
+                    label='Invitation Sent',
+                    weight=1
+            ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'the user is an official reviewer'):
+            ac_client.post_edge(
+                openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
+                    signatures=[anon_group_id],
+                    head=submissions[0].id,
+                    tail='~Reviewer_ICMLFive1',
                     label='Invitation Sent',
                     weight=1
             ))
@@ -1360,8 +1380,29 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                 label='Invitation Sent',
                 weight=1
         ))
-
         helpers.await_queue(openreview_client)
+
+        helpers.create_user('javier@icml.cc', 'Javier', 'ICML')
+
+        ac_client.post_edge(
+            openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
+                signatures=[anon_group_id],
+                head=submissions[0].id,
+                tail='~Javier_ICML1',
+                label='Invitation Sent',
+                weight=1
+        ))
+        helpers.await_queue(openreview_client)
+
+        with pytest.raises(openreview.OpenReviewException, match=r'the user is already invited'):
+            ac_client.post_edge(
+                openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
+                    signatures=[anon_group_id],
+                    head=submissions[0].id,
+                    tail='javier@icml.cc',
+                    label='Invitation Sent',
+                    weight=1
+            ))        
 
         assert openreview_client.get_groups('ICML.cc/2023/Conference/Submission1/External_Reviewers/Invited', member='melisa@icml.cc')
         assert openreview_client.get_groups('ICML.cc/2023/Conference/External_Reviewers/Invited', member='melisa@icml.cc')
@@ -1512,8 +1553,8 @@ OpenReview Team'''
 
     def test_reviewer_reassignment(self, client, openreview_client, helpers, selenium, request_page):
 
-        pc_client = openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
-        ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password='1234')
+        pc_client = openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
+        ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password=helpers.strong_password)
 
         pc_client.post_group_edit(invitation='ICML.cc/2023/Conference/-/Edit',
             readers = ['ICML.cc/2023/Conference'],
@@ -1818,7 +1859,7 @@ ICML 2023 Conference Program Chairs'''
         assert 'Invitation no longer exists. No action is required from your end.' == error_message.text
 
         #delete assignments before review stage and not get key error
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
 
         assignment = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment', head=submissions[10].id, tail='~Reviewer_ICMLThree1')[0]
         assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
@@ -1830,7 +1871,7 @@ ICML 2023 Conference Program Chairs'''
 
     def test_review_stage(self, client, openreview_client, helpers):
 
-        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]        
 
         ## Show the pdf and supplementary material to assigned reviewers
@@ -1851,7 +1892,7 @@ ICML 2023 Conference Program Chairs'''
 
         helpers.await_queue()
 
-        ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password='1234')
+        ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 59
         assert ['ICML.cc/2023/Conference',
@@ -2307,7 +2348,7 @@ ICML 2023 Conference Program Chairs'''
         exp_date = invitation.duedate + (2*24*60*60*1000)
         assert invitation.expdate == exp_date
 
-        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password='1234')
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
 
         anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLOne1')
         anon_group_id = anon_groups[0].id
@@ -2369,7 +2410,7 @@ ICML 2023 Conference Program Chairs'''
         messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your official review has been received on your assigned Paper number: 1, Paper title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
 
-        reviewer_client_2 = openreview.api.OpenReviewClient(username='reviewer2@icml.cc', password='1234')
+        reviewer_client_2 = openreview.api.OpenReviewClient(username='reviewer2@icml.cc', password=helpers.strong_password)
 
         anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLTwo1')
         anon_group_id = anon_groups[0].id
@@ -2631,7 +2672,7 @@ ICML 2023 Conference Program Chairs'''
 
         helpers.await_queue()
 
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
 
         anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLOne1')
         anon_group_id = anon_groups[0].id
@@ -2674,7 +2715,7 @@ ICML 2023 Conference Program Chairs'''
 
     def test_review_rating(self, client, openreview_client, helpers):
         
-        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
@@ -2713,7 +2754,7 @@ ICML 2023 Conference Program Chairs'''
         first_submission = submissions[0]
         reviews = [reply for reply in first_submission.details['directReplies'] if f'ICML.cc/2023/Conference/Submission{first_submission.number}/-/Official_Review']
 
-        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password='1234')
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
         anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLOne1')
         anon_group_id = anon_groups[0].id
 
@@ -2730,7 +2771,7 @@ ICML 2023 Conference Program Chairs'''
             'ICML.cc/2023/Conference/Submission1/Area_Chairs'
         ]
 
-        ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password='1234')
+        ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password=helpers.strong_password)
         ac_anon_groups = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLTwo1')
         ac_anon_group_id = ac_anon_groups[0].id
 
@@ -2747,7 +2788,7 @@ ICML 2023 Conference Program Chairs'''
 
         helpers.await_queue(openreview_client)
 
-        reviewer_client = openreview.api.OpenReviewClient(username='reviewer2@icml.cc', password='1234')
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer2@icml.cc', password=helpers.strong_password)
         anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLTwo1')
         anon_group_id = anon_groups[0].id
         invitation = openreview_client.get_invitation(f'{anon_group_id}/-/Review_Rating')
@@ -2765,7 +2806,7 @@ ICML 2023 Conference Program Chairs'''
 
         helpers.await_queue(openreview_client)
 
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
 
         notes = pc_client_v2.get_notes(invitation=invitation.id)
         assert len(notes) == 1
@@ -2820,7 +2861,7 @@ ICML 2023 Conference Program Chairs'''
         assert 'We have received your review rating on a submission to ICML 2023.' in messages[0]['content']['text']
 
         # post review and check review rating inv is created
-        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password='1234')
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
         anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission3/Reviewer_', signatory='~Reviewer_ICMLOne1')
         anon_group_id = anon_groups[0].id
 
@@ -2858,9 +2899,9 @@ ICML 2023 Conference Program Chairs'''
             'ICML.cc/2023/Conference/Submission3/Area_Chairs'
         ]
 
-    def test_delete_assignments(self, openreview_client):
+    def test_delete_assignments(self, openreview_client, helpers):
 
-        ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password='1234')
+        ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password=helpers.strong_password)
 
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
         assignment = ac_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment', head=submissions[0].id, tail='~Reviewer_ICMLOne1')[0]
@@ -2869,7 +2910,7 @@ ICML 2023 Conference Program Chairs'''
         assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
         assignment.signatures = [anon_group_id]
         
-        with pytest.raises(openreview.OpenReviewException, match=r'Can not remove assignment, the user ~Reviewer_ICMLOne1 already posted a Official_Review.'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not remove assignment, the user ~Reviewer_ICMLOne1 already posted a Official Review.'):
             ac_client.post_edge(assignment)
 
         assignment = ac_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment', head=submissions[0].id, tail='~Celeste_ICML1')[0]
@@ -2878,7 +2919,7 @@ ICML 2023 Conference Program Chairs'''
         ac_client.post_edge(assignment)
 
         #delete AC assignment of paper with a review with no error
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
 
         assignment = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Assignment', head=submissions[0].id, tail='~AC_ICMLTwo1')[0]
         assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
@@ -2891,7 +2932,7 @@ ICML 2023 Conference Program Chairs'''
 
     def test_comment_stage(self, openreview_client, helpers):
 
-        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # Post an official comment stage note
@@ -2924,7 +2965,7 @@ ICML 2023 Conference Program Chairs'''
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Official_Comment')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Official_Comment')
 
-        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password='1234')
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
 
         submissions = reviewer_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
 
@@ -3013,7 +3054,7 @@ ICML 2023 Conference Program Chairs'''
 
     def test_rebuttal_stage(self, client, openreview_client, helpers):
 
-        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         ## release reviews to authors
@@ -3228,7 +3269,7 @@ ICML 2023 Conference Program Chairs'''
 
         helpers.await_queue()
 
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
         
         reviews = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Official_Review')
         assert len(reviews) == 2
@@ -3264,7 +3305,7 @@ ICML 2023 Conference Program Chairs'''
 
         helpers.await_queue()
 
-        test_client = openreview.api.OpenReviewClient(username='test@mail.com', password='1234')
+        test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
         comment_edit = test_client.post_note_edit(
             invitation='ICML.cc/2023/Conference/Submission1/-/Official_Comment',
@@ -3322,7 +3363,7 @@ ICML 2023 Conference Program Chairs'''
                 }
         }
 
-        test_client = openreview.api.OpenReviewClient(username='test@mail.com', password='1234')
+        test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
         review = reviews[0]
 
         rebuttal_edit = test_client.post_note_edit(
@@ -3396,8 +3437,8 @@ ICML 2023 Conference Program Chairs'''
 
     def test_release_rebuttals(self, openreview_client, helpers):
 
-        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # post a rebuttal stage note
@@ -3442,7 +3483,7 @@ ICML 2023 Conference Program Chairs'''
 
     def test_meta_review_stage(self, client, openreview_client, helpers):
 
-        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         now = datetime.datetime.utcnow()
@@ -3496,7 +3537,7 @@ ICML 2023 Conference Program Chairs'''
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Meta_Review')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Meta_Review')
 
-        ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password='1234')
+        ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
 
         anon_groups = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLTwo1')
@@ -3516,17 +3557,17 @@ ICML 2023 Conference Program Chairs'''
         helpers.await_queue(openreview_client)
 
         #try to delete AC assignment of paper with a submitted metareview
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
 
         assignment = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Assignment', head=submissions[0].id, tail='~AC_ICMLTwo1')[0]
         assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Can not remove assignment, the user ~AC_ICMLTwo1 already posted a Meta_Review.'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not remove assignment, the user ~AC_ICMLTwo1 already posted a Meta Review.'):
             pc_client_v2.post_edge(assignment)
 
     def test_meta_review_agreement(self, client, openreview_client, helpers):
 
-        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
@@ -3574,10 +3615,10 @@ ICML 2023 Conference Program Chairs'''
 
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review_Agreement')) == 1
 
-        sac_client = openreview.api.OpenReviewClient(username = 'sac2@icml.cc', password='1234')
+        sac_client = openreview.api.OpenReviewClient(username = 'sac2@icml.cc', password=helpers.strong_password)
         submissions = sac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
 
-        ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password='1234')
+        ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password=helpers.strong_password)
         anon_groups = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLTwo1')
         anon_group_id = anon_groups[0].id
 
@@ -3595,7 +3636,7 @@ ICML 2023 Conference Program Chairs'''
 
         helpers.await_queue(openreview_client)
 
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
         metareviews = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Meta_Review')
         agreements = pc_client_v2.get_notes(invitation=invitation_id)
         assert agreements[0].replyto == metareviews[0].id
@@ -3604,7 +3645,7 @@ ICML 2023 Conference Program Chairs'''
             'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs'
         ]
 
-        ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password='1234')
+        ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
 
         anon_groups = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission2/Area_Chair_', signatory='~AC_ICMLOne1')
@@ -3627,7 +3668,7 @@ ICML 2023 Conference Program Chairs'''
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review_Agreement')) == 2
 
         invitation_id = f'{anon_group_id}/-/Meta_Review_Agreement'
-        sac_client = openreview.api.OpenReviewClient(username = 'sac1@gmail.com', password='1234')
+        sac_client = openreview.api.OpenReviewClient(username = 'sac1@gmail.com', password=helpers.strong_password)
 
         agreement_edit = sac_client.post_note_edit(
             invitation=invitation_id,
@@ -3642,7 +3683,7 @@ ICML 2023 Conference Program Chairs'''
 
         helpers.await_queue(openreview_client)
 
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password='1234')
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
         metareviews = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/Submission2/-/Meta_Review')
         agreements = pc_client_v2.get_notes(invitation=invitation_id)
         assert agreements[0].replyto == metareviews[0].id
@@ -3651,9 +3692,23 @@ ICML 2023 Conference Program Chairs'''
             'ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs'
         ]
 
-    def test_decision_stage(self, openreview_client, helpers):
+        ## SAC can edit the meta review
+        meta_review_edit = sac_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission2/-/Meta_Review_SAC_Revision',
+            signatures=['ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs'],
+            note=openreview.api.Note(
+                id=metareviews[0].id,
+                content={
+                    'metareview': { 'value': 'I reverted the AC decision' },
+                    'recommendation': { 'value': 'Accept'}
+                }
+            )
+        )
 
-        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+
+    def test_decision_stage(self, client, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # Post a decision stage note
@@ -3701,3 +3756,259 @@ ICML 2023 Conference Program Chairs'''
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission3/-/Decision')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Decision')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Decision')
+
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+        submissions = venue.get_submissions(sort='number:asc')
+        assert len(submissions) == 100
+        decisions = ['Accept', 'Revision Needed', 'Reject']
+        comment = {
+            'Accept': 'Congratulations on your acceptance.',
+            'Revision Needed': 'A revision is needed from the authors.',
+            'Reject': 'We regret to inform you...'
+        }
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/ICML_decisions.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            writer.writerow([submissions[0].number, 'Accept', comment["Accept"]])
+            writer.writerow([submissions[1].number, 'Reject', comment["Reject"]])
+            writer.writerow([submissions[2].number, 'Revision Needed', comment["Revision Needed"]])
+            for submission in submissions[3:]:
+                decision = random.choice(decisions)
+                writer.writerow([submission.number, decision, comment[decision]])
+
+        decision_stage_invitation = f'openreview.net/Support/-/Request{request_form.number}/Decision_Stage'
+        url = pc_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/ICML_decisions.csv'),
+                                         decision_stage_invitation, 'decisions_file')
+
+        #post decisions from request form
+        decision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Revision Needed, Reject',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                'notify_authors': 'No, I will send the emails to the authors',
+                'additional_decision_form_options': {
+                    'suggestions': {
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 5000,
+                                'input': 'textarea',
+                                'optional': True
+                            }
+                        }
+                    }
+                },
+                'decisions_file': url
+            },
+            forum=request_form.forum,
+            invitation=decision_stage_invitation,
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+        assert decision_stage_note
+        helpers.await_queue()
+
+        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Decision')[0]
+        assert 'Accept' == decision.content['decision']['value']
+        assert 'Congratulations on your acceptance.' in decision.content['comment']['value']
+        assert decision.readers == [
+            'ICML.cc/2023/Conference/Program_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Area_Chairs'
+        ]
+        assert decision.nonreaders == [
+            'ICML.cc/2023/Conference/Submission1/Authors'
+        ]
+
+        #release decisions to authors and reviewers
+        #post decisions from request form
+        decision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Revision Needed, Reject',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'Yes, decisions should be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                'notify_authors': 'No, I will send the emails to the authors',
+                'additional_decision_form_options': {
+                    'suggestions': {
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 5000,
+                                'input': 'textarea',
+                                'optional': True
+                            }
+                        }
+                    }
+                },
+                'decisions_file': url
+            },
+            forum=request_form.forum,
+            invitation=decision_stage_invitation,
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+        assert decision_stage_note
+        helpers.await_queue()
+
+        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Decision')[0]
+        assert decision.readers == [
+            'ICML.cc/2023/Conference/Program_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Area_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Reviewers',
+            'ICML.cc/2023/Conference/Submission1/Authors'
+        ]
+        assert not decision.nonreaders
+
+    def test_post_decision_stage(self, client, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        submissions = openreview_client.get_notes(content= { 'venueid': 'ICML.cc/2023/Conference/Submission'}, sort='number:asc')
+        assert submissions and len(submissions) == 100
+
+        # Assert that submissions are still blind
+        assert submissions[0].content['authors']['readers'] == ["ICML.cc/2023/Conference","ICML.cc/2023/Conference/Submission1/Authors"]
+        assert submissions[0].content['authorids']['readers'] == ["ICML.cc/2023/Conference","ICML.cc/2023/Conference/Submission1/Authors"]
+        assert submissions[1].content['authors']['readers'] == ["ICML.cc/2023/Conference","ICML.cc/2023/Conference/Submission2/Authors"]
+        assert submissions[1].content['authorids']['readers'] == ["ICML.cc/2023/Conference","ICML.cc/2023/Conference/Submission2/Authors"]
+        # Assert that submissions are private
+        assert submissions[0].readers == [
+            "ICML.cc/2023/Conference",
+            "ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs",
+            "ICML.cc/2023/Conference/Submission1/Area_Chairs",
+            "ICML.cc/2023/Conference/Submission1/Reviewers",
+            "ICML.cc/2023/Conference/Submission1/Authors"
+        ]
+        assert submissions[1].readers == [
+            "ICML.cc/2023/Conference",
+            "ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs",
+            "ICML.cc/2023/Conference/Submission2/Area_Chairs",
+            "ICML.cc/2023/Conference/Submission2/Reviewers",
+            "ICML.cc/2023/Conference/Submission2/Authors"
+        ]
+
+        invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Post_Decision_Stage')
+        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        client.post_invitation(invitation)
+
+        invitation = pc_client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Post_Decision_Stage')
+
+        assert 'Accept' in invitation.reply['content']['home_page_tab_names']['default']
+        assert invitation.reply['content']['home_page_tab_names']['default']['Accept'] == 'Accept'
+        assert 'Revision Needed' in invitation.reply['content']['home_page_tab_names']['default']
+        assert invitation.reply['content']['home_page_tab_names']['default']['Revision Needed'] == 'Revision Needed'
+        assert 'Reject' in invitation.reply['content']['home_page_tab_names']['default']
+        assert invitation.reply['content']['home_page_tab_names']['default']['Reject'] == 'Reject'
+
+        #Post a post decision note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        short_name = 'ICML 2023'
+        post_decision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'reveal_authors': 'Reveal author identities of only accepted submissions to the public',
+                'submission_readers': 'Make accepted submissions public and hide rejected submissions',
+                'home_page_tab_names': {
+                    'Accept': 'Accept',
+                    'Revision Needed': 'Revision Needed',
+                    'Reject': 'Submitted'
+                },
+                'send_decision_notifications': 'Yes, send an email notification to the authors',
+                'accept_email_content': f'''Dear {{{{fullname}}}},
+
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+
+Best,
+{short_name} Program Chairs
+''',
+                'reject_email_content': f'''Dear {{{{fullname}}}},
+
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted. 
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+
+Best,
+{short_name} Program Chairs
+''',
+                'revision_needed_email_content': f'''Dear {{{{fullname}}}},
+
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}.
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+
+Best,
+{short_name} Program Chairs
+'''
+            },
+            forum=request_form.forum,
+            invitation=invitation.id,
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+        assert post_decision_stage_note
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id = post_decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+        accepted_submissions = venue.get_submissions(accepted=True, sort='number:asc')
+        rejected_submissions = venue.get_submissions(venueid='ICML.cc/2023/Conference/Rejected_Submission', sort='number:asc')
+        assert (len(accepted_submissions)+len(rejected_submissions)) == 100
+
+        messages = client.get_messages(subject='[ICML 2023] Decision notification for your submission 1: Paper title 1 Version 2')
+        assert len(messages) == 5
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'sac1@gmail.com' in recipients
+        assert 'test@mail.com' in recipients
+        assert 'peter@mail.com' in recipients
+        assert 'melisa@yahoo.com' in recipients
+        assert 'andrew@amazon.com' in recipients
+        assert 'We are delighted to inform you that your submission has been accepted.' in messages[0]['content']['text']
+
+        # Assert accepted submissions are not blind
+        assert accepted_submissions[0].content['venue']['value'] == 'ICML 2023'
+        assert accepted_submissions[0].content['venueid']['value'] == 'ICML.cc/2023/Conference'
+        assert 'readers' not in accepted_submissions[0].content['authors']
+        assert 'readers' not in accepted_submissions[0].content['authorids']
+        assert rejected_submissions[0].content['venue']['value'] == 'Submitted to ICML 2023'
+        assert rejected_submissions[0].content['venueid']['value'] == 'ICML.cc/2023/Conference/Rejected_Submission'
+        assert rejected_submissions[0].content['authors']['readers'] == ["ICML.cc/2023/Conference",f"ICML.cc/2023/Conference/Submission2/Authors"]
+        assert rejected_submissions[0].content['authorids']['readers'] == ["ICML.cc/2023/Conference",f"ICML.cc/2023/Conference/Submission2/Authors"]
+
+        # Assert that accepted submissions are public
+        assert accepted_submissions[0].readers == ['everyone']
+        assert accepted_submissions[0].pdate
+        assert accepted_submissions[0].odate
+        assert rejected_submissions[0].readers == [
+            "ICML.cc/2023/Conference",
+            "ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs",
+            "ICML.cc/2023/Conference/Submission2/Area_Chairs",
+            "ICML.cc/2023/Conference/Submission2/Reviewers",
+            "ICML.cc/2023/Conference/Submission2/Authors"
+        ]
+        assert not rejected_submissions[0].pdate
+        assert not rejected_submissions[0].odate

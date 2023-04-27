@@ -613,7 +613,7 @@ class TestVenueRequest():
         # assert [btn for btn in buttons if btn.text == 'Recruitment']
         helpers.create_user('reviewer_one_tilde_v2@mail.com', 'Reviewer', 'OneTildeV')
         helpers.create_user('reviewer_two_tilde_v2@mail.com', 'Reviewer', 'TwoTildeV')
-        reviewer_details = '''~Reviewer_OneTildeV1\n~Reviewer_TwoTildeV1\n~Celeste_Martinez1\n~Melisa_Bok'''
+        reviewer_details = '''~Reviewer_OneTildeV1\n~Reviewer_TwoTildeV1\n~Celeste_Martinez2\n~Melisa_Bok'''
 
         recruitment_note = test_client.post_note(openreview.Note(
             content={
@@ -654,7 +654,7 @@ class TestVenueRequest():
                                                                                    venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
         assert '2 users' in last_comment.content['invited']
-        assert '"profile_not_found\": [\n    \"~Celeste_Martinez1\"\n  ]' in last_comment.content['error']
+        assert '"profile_not_found\": [\n    \"~Celeste_Martinez2\"\n  ]' in last_comment.content['error']
         assert '"invalid_profile_ids\": [\n    \"~Melisa_Bok\"\n  ]' in last_comment.content['error']
 
     def test_venue_AC_recruitment_(self, client, test_client, openreview_client, selenium, request_page, venue, helpers):
@@ -769,6 +769,94 @@ class TestVenueRequest():
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Remind Recruitment Status' not in last_message['content']['text']
 
+    def test_reviewer_registration_stage(self, client, test_client, selenium, request_page, venue, helpers, openreview_client):
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=2)
+        registration_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'reviewer_registration_deadline': due_date.strftime('%Y/%m/%d'),
+                'reviewer_registration_name': 'Registration',
+                'reviewer_form_title': 'Test 2030 Venue V2 - Reviewer Registration',
+                'reviewer_form_instructions': "TestVenue@OR'2030V2 employs [OpenReview](https://openreview.net/) as our paper submission and peer review system. To match papers to reviewers (including conflict handling and computation of affinity scores), OpenReview requires carefully populated and up-to-date OpenReview profiles. To this end, we require every reviewer to **create (if nonexistent) and update their OpenReview profile** (Section A) and to complete the **Expertise Selection** (Section B) and **Reviewer Registration** (Section C) tasks.\n\n### **A) OpenReview Profile Update**  \n(If you are an author of a submission, you should have already completed Steps 1-4.)",
+                'additional_reviewer_form_options' : {
+                    "emergency_reviews": {
+                        "description": "Would you be willing to act as emergency reviewer?",
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "Yes",
+                                    "No"
+                                ],
+                                "input": "radio"
+                            }
+                        }
+                    }
+                }
+            },
+            forum=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            referent=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Reviewer_Registration'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert registration_stage_note
+        helpers.await_queue()
+
+        registration_notes = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Reviewers/-/Registration_Form')
+        assert registration_notes and len(registration_notes) == 1
+        assert registration_notes[0].content['title']['value'] == 'Test 2030 Venue V2 - Reviewer Registration'
+        invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Reviewers/-/Registration')
+        assert invitation
+        assert 'profile_confirmed' in invitation.edit['note']['content']
+        assert 'expertise_confirmed' in invitation.edit['note']['content']
+        assert 'emergency_reviews' in invitation.edit['note']['content']
+
+        #update registration note
+        registration_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'reviewer_registration_deadline': due_date.strftime('%Y/%m/%d'),
+                'reviewer_form_title': 'Test 2030 Venue V2 - Reviewer Registration UPDATED',
+                'reviewer_form_instructions': "TestVenue@OR'2030V2 employs [OpenReview](https://openreview.net/) as our paper submission and peer review system. To match papers to reviewers (including conflict handling and computation of affinity scores), OpenReview requires carefully populated and up-to-date OpenReview profiles. To this end, we require every reviewer to **create (if nonexistent) and update their OpenReview profile** (Section A) and to complete the **Expertise Selection** (Section B) and **Reviewer Registration** (Section C) tasks.\n\n### **A) OpenReview Profile Update**  \n(If you are an author of a submission, you should have already completed Steps 1-4.)",
+                'additional_reviewer_form_options' : {
+                    "emergency_reviews": {
+                        "description": "Would you be willing to act as emergency reviewer?",
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "Yes",
+                                    "No"
+                                ],
+                                "input": "radio"
+                            }
+                        }
+                    }
+                },
+                'remove_reviewer_form_options': ['expertise_confirmed']
+            },
+            forum=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            referent=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Reviewer_Registration'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert registration_stage_note
+        helpers.await_queue()
+
+        registration_notes = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Reviewers/-/Registration_Form')
+        assert registration_notes and len(registration_notes) == 1
+        assert registration_notes[0].content['title']['value'] == 'Test 2030 Venue V2 - Reviewer Registration UPDATED'
+        invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Reviewers/-/Registration')
+        assert invitation
+        assert 'profile_confirmed' in invitation.edit['note']['content']
+        assert 'expertise_confirmed' not in invitation.edit['note']['content']
+        assert 'emergency_reviews' in invitation.edit['note']['content']
+
     def test_venue_bid_stage_error(self, client, test_client, selenium, request_page, helpers, venue):
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
@@ -850,7 +938,7 @@ class TestVenueRequest():
     def test_venue_matching_setup(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
         helpers.create_user('venue_author_v2@mail.com', 'VenueTwo', 'Author')
-        author_client = OpenReviewClient(username='venue_author_v2@mail.com', password='1234')
+        author_client = OpenReviewClient(username='venue_author_v2@mail.com', password=helpers.strong_password)
         reviewer_client = helpers.create_user('venue_reviewer_v2_@mail.com', 'VenueThree', 'Reviewer')
 
         venue_id = venue['venue_id']
@@ -932,7 +1020,7 @@ class TestVenueRequest():
         assert 'tom_venue@mail.com' in recipients
 
         helpers.create_user('venue_author_v2_2@mail.com', 'VenueThree', 'Author')
-        author_client2 = OpenReviewClient(username='venue_author_v2_2@mail.com', password='1234')
+        author_client2 = OpenReviewClient(username='venue_author_v2_2@mail.com', password=helpers.strong_password)
 
         submission_note_2 = author_client2.post_note_edit(
             invitation=f'{venue_id}/-/Submission',
@@ -963,7 +1051,7 @@ class TestVenueRequest():
         assert 'If you are not an author of this submission and would like to be removed, please contact the author who added you at venue_author_v2_2@mail.com' not in messages[0]['content']['text']
 
         helpers.create_user('venue_author3_v2@mail.com', 'VenueFour', 'Author')
-        author_client = OpenReviewClient(username='venue_author3_v2@mail.com', password='1234')
+        author_client = OpenReviewClient(username='venue_author3_v2@mail.com', password=helpers.strong_password)
 
         ## post the submission as super user becuase the submission invitation is already expired
         submission = author_client.post_note_edit(
@@ -1288,7 +1376,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Reviewers', '~VenueThree_Reviewer1')
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission2/Reviewers', '~VenueTwo_Reviewer1')
 
-        reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2_@mail.com', password='1234')
+        reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2_@mail.com', password=helpers.strong_password)
         reviewer_group = openreview_client.get_group('V2.cc/2030/Conference/Reviewers')
         assert reviewer_group and len(reviewer_group.members) == 2
 
@@ -1429,7 +1517,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert invitation
         assert invitation.edit['note']['id']['param']['withInvitation'] == invitation.id
 
-        author_client = OpenReviewClient(username='venue_author_v2@mail.com', password='1234')
+        author_client = OpenReviewClient(username='venue_author_v2@mail.com', password=helpers.strong_password)
 
         rebuttal_edit = author_client.post_note_edit(
             invitation=f'{reviews[0].signatures[0]}/-/Rebuttal',
@@ -1451,7 +1539,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert len(messages) == 1
         assert 'venue_reviewer_v2_@mail.com' in messages[0]['content']['to']
 
-        reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2@mail.com', password='1234')
+        reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2@mail.com', password=helpers.strong_password)
         ## Post a review
         reviewer_anon_groups=reviewer_client.get_groups(prefix=f'V2.cc/2030/Conference/Submission2/Reviewer_.*', signatory='~VenueTwo_Reviewer1')
         assert len(reviewer_anon_groups) == 1
@@ -1479,7 +1567,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
         helpers.create_user('venue_ac_v2@mail.com', 'VenueTwo', 'Ac')
-        meta_reviewer_client = openreview.api.OpenReviewClient(username='venue_ac_v2@mail.com', password='1234')
+        meta_reviewer_client = openreview.api.OpenReviewClient(username='venue_ac_v2@mail.com', password=helpers.strong_password)
 
         submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='tmdate')
         print(len(submissions))
@@ -1707,7 +1795,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'V2.cc/2030/Conference/Submission1/Reviewers' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
         assert 'V2.cc/2030/Conference/Submission1/Authors' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
 
-        author_client = OpenReviewClient(username='venue_author_v2@mail.com', password='1234')
+        author_client = OpenReviewClient(username='venue_author_v2@mail.com', password=helpers.strong_password)
         # Assert that an official comment can be posted by the paper author
         official_comment_note = author_client.post_note_edit(invitation='V2.cc/2030/Conference/Submission1/-/Official_Comment',
         signatures=['V2.cc/2030/Conference/Submission1/Authors'],
@@ -1738,7 +1826,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         submission = submissions[0]
 
         helpers.create_user('tom_venue@mail.com', 'ProgramChair', 'Venue')
-        pc_client = openreview.api.OpenReviewClient(username='tom_venue@mail.com', password='1234')
+        pc_client = openreview.api.OpenReviewClient(username='tom_venue@mail.com', password=helpers.strong_password)
 
         # Assert that PC does not have access to the Decision invitation
         decision_invitation = openreview.tools.get_invitation(pc_client, '{}/Submission{}/-/Decision'.format(venue['venue_id'], submission.number))
@@ -2234,7 +2322,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         helpers.await_queue()
 
         # post revision for a submission
-        author_client = OpenReviewClient(username='venue_author3_v2@mail.com', password='1234')
+        author_client = OpenReviewClient(username='venue_author3_v2@mail.com', password=helpers.strong_password)
         updated_submission = author_client.post_note_edit(invitation='V2.cc/2030/Conference/Submission3/-/Revision',
             signatures=['V2.cc/2030/Conference/Submission3/Authors'],
             note=Note(
@@ -2516,7 +2604,7 @@ Best,
         assert not openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission3/-/Camera_Ready_Revision')
 
         # post revision for a submission
-        author_client = OpenReviewClient(username='venue_author_v2@mail.com', password='1234')
+        author_client = OpenReviewClient(username='venue_author_v2@mail.com', password=helpers.strong_password)
         with pytest.raises(openreview.OpenReviewException):
             updated_submission = author_client.post_note_edit(invitation='V2.cc/2030/Conference/Submission1/-/Camera_Ready_Revision',
                 signatures=['V2.cc/2030/Conference/Submission1/Authors'],

@@ -24,7 +24,16 @@ Regards,
 The OpenReview Team.
 ''')
         return       
-    
+
+    def replace_group_members(group, current_member, new_member):
+        if group.domain is not None:
+            client_v2.remove_members_from_group(group.id, current_member)
+            client_v2.add_members_to_group(group.id, new_member)
+        else:
+            client.remove_members_from_group(group.id, current_member)
+            client.add_members_to_group(group.id, new_member)
+
+
     for username in usernames:
         print('Check if we need to rename the profile')
         if username == profile.id:
@@ -173,17 +182,23 @@ The OpenReview Team.
             client.rename_edges(username, profile.id)
         
         print('Replace all the group members that contain the name to remove')
-        memberships = client.get_all_groups(member=username)
+        memberships = [ g for g in client.get_all_groups(member=username) if username in g.members ]
+
+        anon_groups = [g for g in memberships if g.anonids == True ]
+        processed_group_ids = []
+
+        for anon_group in anon_groups:
+            regex = anon_group.id[:-1] if anon_group.id.endswith('s') else anon_group.id
+            for group in memberships:
+                if group.id.startswith(regex + '_'):
+                    replace_group_members(group, username, profile.id)
+                    processed_group_ids.append(group.id)
+            replace_group_members(anon_group, username, profile.id)
+            processed_group_ids.append(anon_group.id)
 
         for group in memberships:
-            if username in group.members:
-                if group.domain is not None:
-                    client_v2.remove_members_from_group(group.id, username)
-                    client_v2.add_members_to_group(group.id, profile.id)
-                else:
-                    client.remove_members_from_group(group.id, username)
-                    client.add_members_to_group(group.id, profile.id)
-
+            if group.id not in processed_group_ids:
+                replace_group_members(group, username, profile.id)
 
         print('Post a profile reference to remove the name')
         requested_name = {}

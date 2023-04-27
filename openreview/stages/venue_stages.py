@@ -1020,6 +1020,17 @@ class MetaReviewStage(object):
         readers.append(conference.get_program_chairs_id())
 
         return readers
+    
+    def get_writers(self, conference, number):
+
+        writers = [conference.id]
+
+        if conference.use_senior_area_chairs:
+            writers.append(conference.get_senior_area_chairs_id(number = number))
+
+        writers.append('${3/signatures}')
+
+        return writers
 
     def get_nonreaders(self, conference, number):
 
@@ -1157,11 +1168,12 @@ class DecisionStage(object):
 
 class RegistrationStage(object):
 
-    def __init__(self, committee_id, name='Registration', start_date=None, due_date=None, additional_fields={}, instructions=None, title=None, remove_fields=[], sub_venue=False):
+    def __init__(self, committee_id, name='Registration', start_date=None, due_date=None, expdate=None, additional_fields={}, instructions=None, title=None, remove_fields=[], sub_venue=False):
         self.committee_id = committee_id
         self.name = name
         self.start_date = start_date
         self.due_date = due_date
+        self.expdate = expdate
         self.additional_fields = additional_fields
         self.instructions = instructions
         self.title = title

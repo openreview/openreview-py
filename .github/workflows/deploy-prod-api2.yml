@@ -14,17 +14,33 @@ on:
 
 jobs:
   deploy:
+    # Allow the job to fetch a GitHub ID token
+    permissions:
+      id-token: write
+      contents: read
     runs-on: ubuntu-latest
     env:
       TAG: ${{ github.event.inputs.tag }}
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v0
+      - name: Add SSH key
+        run: |
+          mkdir -p /home/runner/.ssh
+          echo "${{ secrets.GCLOUD_SSH_KEY }}" > /home/runner/.ssh/google_compute_engine
+          echo "${{ secrets.GCLOUD_SSH_KEY_PUB }}" > /home/runner/.ssh/google_compute_engine.pub
+          chmod 600 /home/runner/.ssh/google_compute_engine
+          chmod 600 /home/runner/.ssh/google_compute_engine.pub
+      - name: Authenticate with Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v1
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
+          workload_identity_provider: projects/997553930042/locations/global/workloadIdentityPools/github-identity-pool/providers/github-identity-provider
+          service_account: github-actions@sunlit-realm-131518.iam.gserviceaccount.com
+          create_credentials_file: true
+          cleanup_credentials: true
+          export_environment_variables: true
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v1
       - name: Run deploy script
         run: |
           gsutil cp gs://openreview-general/conf/deployment.conf ./deployment.conf

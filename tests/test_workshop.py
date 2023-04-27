@@ -17,7 +17,7 @@ class TestWorkshop():
     @pytest.fixture(scope="class")
     def conference(self, client):
         now = datetime.datetime.utcnow()
-        #pc_client = openreview.Client(username='pc@eccv.org', password='1234')
+        #pc_client = openreview.Client(username='pc@eccv.org', password=helpers.strong_password)
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
@@ -327,7 +327,7 @@ class TestWorkshop():
         assert reviews
         review = reviews[0]
 
-        reviewer_client = openreview.Client(username='reviewer4@mail.com', password='1234')
+        reviewer_client = openreview.Client(username='reviewer4@mail.com', password=helpers.strong_password)
         anon_reviewers_group_id = reviewer_client.get_groups(regex=f'{conference.id}/Paper1/Reviewer_', signatory='reviewer4@mail.com')[0].id
         anon_reviewer_id = anon_reviewers_group_id.split('/')[-1]
         pretty_anon_reviewer_id = anon_reviewer_id.replace('_', ' ')
@@ -407,7 +407,7 @@ class TestWorkshop():
         conference.review_revision_stage = openreview.ReviewRevisionStage(due_date = now + datetime.timedelta(minutes = 10))
         conference.create_review_revision_stage()
 
-        reviewer_client = openreview.Client(username='reviewer4@mail.com', password='1234')
+        reviewer_client = openreview.Client(username='reviewer4@mail.com', password=helpers.strong_password)
         anon_reviewers_group_id = reviewer_client.get_groups(regex=f'{conference.id}/Paper1/Reviewer_', signatory='reviewer4@mail.com')[0].id
 
         note = openreview.Note(invitation = f'{anon_reviewers_group_id}/-/Review_Revision',
@@ -477,7 +477,7 @@ class TestWorkshop():
         conference.decision_stage = openreview.DecisionStage()
         conference.create_decision_stage()
 
-        pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = '1234')
+        pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = helpers.strong_password)
 
         notes = pc_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission', sort='tmdate')
         assert len(notes) == 3
@@ -535,7 +535,7 @@ class TestWorkshop():
         assert len(notes) == 3
 
 
-    def test_release_decisions(self, client, conference, selenium, request_page):
+    def test_release_decisions(self, client, conference, selenium, request_page, helpers):
 
         conference.post_decision_stage(reveal_authors_accepted=True, decision_heading_map = {
             'Accept (Oral)': 'Oral Presentations',
@@ -562,14 +562,14 @@ class TestWorkshop():
         assert accepted_notes
         assert len(accepted_notes) == 1
 
-        pc_client = openreview.Client(username='program_chairs@hsdip.org', password='1234')
+        pc_client = openreview.Client(username='program_chairs@hsdip.org', password=helpers.strong_password)
         request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", pc_client.token, wait_for_element='your-consoles')
         consoles_tab = selenium.find_element_by_id('your-consoles')
         assert consoles_tab
 
-    def test_pc_console(self, client, conference, selenium, request_page):
+    def test_pc_console(self, client, conference, selenium, request_page, helpers):
 
-        pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = '1234')
+        pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = helpers.strong_password)
 
         request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs#paper-status", pc_client.token, wait_for_element='paper-status')
         assert "ICAPS 2019 Workshop HSDIP Program Chairs | OpenReview" in selenium.title
