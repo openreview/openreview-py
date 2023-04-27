@@ -162,7 +162,7 @@ class TestVenueSubmissionARR():
         assert openreview_client.get_invitation('ARR/Reviewers/-/Maximum_Load_And_Unavailability')
         assert openreview_client.get_invitation('ARR/Reviewers/-/2023_March/Maximum_Load_And_Unavailability')
 
-        reviewer_client = OpenReviewClient(username='arr_reviewer_venue_one@mail.com', password='1234')
+        reviewer_client = OpenReviewClient(username='arr_reviewer_venue_one@mail.com', password=helpers.strong_password)
         max_load_note = reviewer_client.post_note_edit(
             invitation='ARR/Reviewers/-/2023_March/Maximum_Load_And_Unavailability',
             signatures= ['~ARR_Reviewer_Venue_One1'],
@@ -183,7 +183,7 @@ class TestVenueSubmissionARR():
         assert openreview_client.get_invitation('ARR/-/Submission')
 
         helpers.create_user('harold@maileleven.com', 'Harold', 'Eleven')
-        author_client = OpenReviewClient(username='harold@maileleven.com', password='1234')
+        author_client = OpenReviewClient(username='harold@maileleven.com', password=helpers.strong_password)
 
         submission_note_1 = author_client.post_note_edit(
             invitation='ARR/-/Submission',
@@ -380,7 +380,7 @@ class TestVenueSubmissionARR():
 
         assert openreview_client.get_invitation('ARR/-/Submission')
 
-        author_client = OpenReviewClient(username='harold@maileleven.com', password='1234')
+        author_client = OpenReviewClient(username='harold@maileleven.com', password=helpers.strong_password)
 
         submission_note_1 = author_client.post_note_edit(
             invitation='ARR/-/Submission',
@@ -424,7 +424,7 @@ class TestVenueSubmissionARR():
     def test_withdraw_march_submission(self, venue, openreview_client, helpers):
         cycle = '2023_March'
 
-        author_client = OpenReviewClient(username='harold@maileleven.com', password='1234')
+        author_client = OpenReviewClient(username='harold@maileleven.com', password=helpers.strong_password)
 
         withdraw_note = author_client.post_note_edit(invitation='ARR/Submission2/-/Withdrawal',
                                     signatures=['ARR/Submission2/Authors'],
@@ -489,7 +489,7 @@ class TestVenueSubmissionARR():
 
     def test_desk_reject_march_submission(self, venue, openreview_client, helpers):
 
-        pc_client = OpenReviewClient(username='editors@aclrollingreview.org', password='1234')
+        pc_client = OpenReviewClient(username='editors@aclrollingreview.org', password=helpers.strong_password)
 
         desk_reject_note = pc_client.post_note_edit(invitation='ARR/Submission2/-/Desk_Rejection',
                                     signatures=['ARR/Editors_In_Chief'],
@@ -565,18 +565,18 @@ class TestVenueSubmissionARR():
 
         submissions = venue.get_submissions(sort='number:asc')
 
-        helpers.create_user('reviewer_venue_two@mail.com', 'Reviewer Venue', 'Two')
-        helpers.create_user('reviewer_venue_three@mail.com', 'Reviewer Venue', 'Three')
+        helpers.create_user('arr_reviewer_venue_two@mail.com', 'ARR Reviewer Venue', 'Two')
+        helpers.create_user('arr_reviewer_venue_three@mail.com', 'ARR Reviewer Venue', 'Three')
 
         with open(os.path.join(os.path.dirname(__file__), 'data/venue_affinity_scores.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
             for submission in submissions:
-                writer.writerow([submission.id, '~Reviewer_Venue_One1', round(random.random(), 2)])
-                writer.writerow([submission.id, '~Reviewer_Venue_Two1', round(random.random(), 2)])
-                writer.writerow([submission.id, '~Reviewer_Venue_Three1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~ARR_Reviewer_Venue_One1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~ARR_Reviewer_Venue_Two1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~ARR_Reviewer_Venue_Three1', round(random.random(), 2)])
 
         venue.setup_committee_matching(
-            committee_id='TestVenue.cc/Reviewers',
+            committee_id='ARR/Reviewers',
             compute_affinity_scores=os.path.join(os.path.dirname(__file__), 'data/venue_affinity_scores.csv'),
             compute_conflicts=True)
 
@@ -594,8 +594,8 @@ class TestVenueSubmissionARR():
             invitation = venue.id + '/Reviewers/-/Proposed_Assignment',
             signatures = ['ARR'],
             head = submissions[0].id,
-            tail = '~Reviewer_Venue_One1',
-            readers = ['ARR','ARR/Submission1/Area_Chairs','~Reviewer_Venue_One1'],
+            tail = '~ARR_Reviewer_Venue_One1',
+            readers = ['ARR','ARR/Submission1/Area_Chairs','~ARR_Reviewer_Venue_One1'],
             writers = ['ARR','ARR/Submission1/Area_Chairs'],
             weight = 0.92,
             label = 'test-matching-1'
