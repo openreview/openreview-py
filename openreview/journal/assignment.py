@@ -59,7 +59,7 @@ class Assignment(object):
         conflict_edges = []
         for action_editor_profile in tqdm(action_editor_profiles):
 
-            conflicts = tools.get_conflicts(author_profiles, action_editor_profile, policy='neurips')
+            conflicts = tools.get_conflicts(author_profiles, action_editor_profile, policy='NeurIPS', n_years=3)
             if conflicts:
                 print('Compute AE conflict', note.id, action_editor_profile.id, conflicts)
                 edge = Edge(invitation = self.journal.get_ae_conflict_id(),
@@ -77,7 +77,7 @@ class Assignment(object):
         print('Finished setup AE assignment.')
         
 
-    def setup_reviewer_assignment(self, note):
+    def setup_reviewer_assignment(self, note, job_id=None):
         print('Start setup Reviewer assignment...')
         
         venue_id=self.journal.venue_id
@@ -92,7 +92,7 @@ class Assignment(object):
 
         ## Create affinity scores
         affinity_score_edges = []
-        entries = self.compute_affinity_scores(note, self.journal.get_reviewers_id())
+        entries = self.compute_affinity_scores(note, self.journal.get_reviewers_id(), job_id=job_id)
         for entry in entries:
             reviewer = entry.get('user')
             if note.id == entry.get('submission'):
@@ -113,7 +113,7 @@ class Assignment(object):
         conflict_edges = []
         for reviewer_profile in tqdm(reviewer_profiles):
 
-            conflicts = tools.get_conflicts(author_profiles, reviewer_profile, policy='neurips')
+            conflicts = tools.get_conflicts(author_profiles, reviewer_profile, policy='NeurIPS', n_years=3)
             if conflicts:
                 print('Compute Reviewer conflict', note.id, reviewer_profile.id, conflicts)
                 edge = Edge(invitation = self.journal.get_reviewer_conflict_id(),
@@ -138,17 +138,18 @@ class Assignment(object):
         authors = self.journal.get_authors(number=note.number)
         author_profiles = tools.get_profiles(self.client, authors, with_publications=True)
 
-        return tools.get_conflicts(author_profiles, reviewer_profiles[0], policy='neurips')
+        return tools.get_conflicts(author_profiles, reviewer_profiles[0], policy='NeurIPS')
 
-    def compute_affinity_scores(self, note, committee_id):
+    def compute_affinity_scores(self, note, committee_id, job_id=None):
 
         try:
-            job = self.client.request_single_paper_expertise(
-                name=f'{self.journal.venue_id}_{note.id}',
-                group_id=committee_id,
-                paper_id=note.id,
-                model='specter+mfr')
-            job_id = job.get('jobId')
+            if job_id is None:
+                job = self.client.request_single_paper_expertise(
+                    name=f'{self.journal.venue_id}_{note.id}',
+                    group_id=committee_id,
+                    paper_id=note.id,
+                    model='specter+mfr')
+                job_id = job.get('jobId')
             response = self.client.get_expertise_results(job_id, wait_for_complete=True)
             return response.get('results', [])
         except Exception as e:

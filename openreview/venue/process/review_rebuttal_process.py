@@ -29,7 +29,7 @@ Title: {submission.content['title']['value']}
 
     #send email to author of comment
     client.post_message(
-        recipients=[edit.tauthor],
+        recipients=[edit.tauthor] if edit.tauthor != 'OpenReview.net' else [],
         subject=f'''[{short_name}] Your author rebuttal was {action} on Submission Number: {submission.number}, Submission Title: "{submission.content['title']['value']}"''',
         message=author_message
     )
