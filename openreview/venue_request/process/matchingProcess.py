@@ -6,7 +6,8 @@ def process(client, note, invitation):
     request_form = client.get_note(note.forum)
     conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP, setup=False)
 
-    compute_conflicts = note.content.get('compute_conflicts') == 'Yes'
+    compute_conflicts = note.content.get('compute_conflicts', 'No')
+    compute_conflicts_N_years = note.content.get('compute_conflicts_N_years')
 
     matching_group = note.content['matching_group']
     compute_affinity_scores = note.content.get('compute_affinity_scores') == 'Yes'
@@ -20,7 +21,7 @@ def process(client, note, invitation):
     matching_status = {}
 
     try:
-        matching_status = conference.setup_committee_matching(matching_group, compute_affinity_scores, compute_conflicts)
+        matching_status = conference.setup_committee_matching(matching_group, compute_affinity_scores, None if compute_conflicts == 'No' else compute_conflicts, int(compute_conflicts_N_years) if compute_conflicts_N_years else None)
     except Exception as e:
         if 'Submissions not found.' in str(e):
             matching_status['error'] = 'Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button.'
