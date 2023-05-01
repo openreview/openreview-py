@@ -63,9 +63,7 @@ class Venue(object):
         self.reviewer_identity_readers = []
         self.area_chair_identity_readers = []
         self.senior_area_chair_identity_readers = []
-        self.enable_reviewers_reassignment = False
-        self.reviewers_proposed_assignment_title = None
-        self.conflict_policy = 'default'
+        self.automatic_reviewer_assignment = False
         self.decision_heading_map = {}
 
     def get_id(self):
@@ -207,6 +205,10 @@ class Venue(object):
             name=self.reviewers_name.replace('_', ' ')
             return name[:-1] if name.endswith('s') else name
         return self.reviewers_name
+    
+    def get_anon_reviewers_name(self, pretty=True):
+        rev_name = self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
+        return rev_name + '_'    
 
     def get_anon_reviewers_name(self, pretty=True):
         rev_name = self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
@@ -223,11 +225,11 @@ class Venue(object):
             name=self.area_chairs_name.replace('_', ' ')
             return name[:-1] if name.endswith('s') else name
         return self.area_chairs_name
-    
+
     def get_anon_area_chairs_name(self, pretty=True):
         rev_name = self.area_chairs_name[:-1] if self.area_chairs_name.endswith('s') else self.area_chairs_name
-        return rev_name + '_'    
-    
+        return rev_name + '_' 
+
     def get_reviewers_id(self, number = None, anon=False, submitted=False):
         rev_name = self.get_anon_reviewers_name()
         reviewers_id = self.get_committee_id(f'{rev_name}.*' if anon else self.reviewers_name, number)
@@ -486,6 +488,28 @@ class Venue(object):
 
     def create_custom_stage(self):
         return self.invitation_builder.set_custom_stage_invitation()
+    
+    def update_conflict_policies(self, committee_id, compute_conflicts, compute_conflicts_n_years):
+        content = {}
+        if committee_id == self.get_reviewers_id():
+            content['reviewers_conflict_policy'] = { 'value': compute_conflicts } if compute_conflicts else { 'delete': True}
+            content['reviewers_conflict_n_years'] = { 'value': compute_conflicts_n_years } if compute_conflicts_n_years else { 'delete': True}
+
+        if committee_id == self.get_area_chairs_id():
+            content['area_chairs_conflict_policy'] = { 'value': compute_conflicts } if compute_conflicts else { 'delete': True}
+            content['area_chairs_conflict_n_years'] = { 'value': compute_conflicts_n_years } if compute_conflicts_n_years else { 'delete': True}
+
+        if content:
+            self.client.post_group_edit(
+                invitation=self.get_meta_invitation_id(),
+                readers=[self.venue_id],
+                writers=[self.venue_id],
+                signatures=[self.venue_id],
+                group=openreview.api.Group(
+                    id=self.venue_id,
+                    content=content
+                )
+            )
 
     def post_decisions(self, decisions_file, api1_client):
 
@@ -656,7 +680,7 @@ Total Errors: {len(errors)}
         tools.concurrent_requests(update_note, submissions)
 
     def send_decision_notifications(self, decision_options, messages):
-        paper_notes = self.get_submissions(venueid=self.venue_id, details='directReplies')
+        paper_notes = self.get_submissions(details='directReplies')
 
         def send_notification(note):
             decision_note = None
@@ -677,14 +701,14 @@ Total Errors: {len(errors)}
 
         tools.concurrent_requests(send_notification, paper_notes)
 
-    def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, alternate_matching_group=None):
+    def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None):
         if committee_id is None:
             committee_id=self.get_reviewers_id()
         if self.use_senior_area_chairs and committee_id == self.get_senior_area_chairs_id() and not alternate_matching_group:
             alternate_matching_group = self.get_area_chairs_id()
         venue_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
 
-        return venue_matching.setup(compute_affinity_scores, self.conflict_policy if compute_conflicts else False)
+        return venue_matching.setup(compute_affinity_scores, compute_conflicts, compute_conflicts_n_years)
 
     def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
 
@@ -851,7 +875,7 @@ OpenReview Team'''
 
                                             ## Check conflicts
                                             author_profiles = openreview.tools.get_profiles(client, submission.content['authorids']['value'], with_publications=True)
-                                            conflicts=openreview.tools.get_conflicts(author_profiles, user_profile, policy=venue_group.content.get('conflict_policy', {}).get('value'))
+                                            conflicts=openreview.tools.get_conflicts(author_profiles, user_profile, policy=venue_group.content.get('reviewers_conflict_policy', {}).get('value'), n_years=venue_group.content.get('reviewers_conflict_n_years', {}).get('value'))
 
                                             if conflicts:
                                                 print(f'Conflicts detected for {edge.head} and {user_profile.id}', conflicts)

@@ -58,9 +58,7 @@ class TestVenueRequest():
                 'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
-                'Paper Matching': [
-                    'Reviewer Bid Scores',
-                    'Reviewer Recommendation Scores'],
+                'submission_reviewer_assignment': 'Automatic',
                 'Author and Reviewer Anonymity': 'Double-blind',
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'force_profiles_only': 'Yes, require all authors to have an OpenReview profile',
@@ -72,17 +70,14 @@ class TestVenueRequest():
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
-                'api_version': '2'
+                'api_version': '2',
+                'hide_fields': ['pdf']
             })
 
         with pytest.raises(openreview.OpenReviewException, match=r'Assigned area chairs must see the reviewer identity'):
             request_form_note=test_client.post_note(request_form_note)
 
         request_form_note.content['reviewer_identity'] = ['Program Chairs', 'Assigned Area Chair', 'Assigned Senior Area Chair']
-
-        with pytest.raises(openreview.OpenReviewException, match=r'Papers should be visible to all program committee if bidding is enabled'):
-            request_form_note=test_client.post_note(request_form_note)
-
         request_form_note.content['submission_readers'] = 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)'
         request_form_note=test_client.post_note(request_form_note)
 
@@ -185,9 +180,7 @@ class TestVenueRequest():
                 'abstract_registration_deadline': abstract_due_date.strftime('%Y/%m/%d %H:%M'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',
-                'Paper Matching': [
-                    'Reviewer Bid Scores',
-                    'Reviewer Recommendation Scores'],
+                'submission_reviewer_assignment': 'Automatic',
                 'Author and Reviewer Anonymity': 'Single-blind (Reviewers are anonymous)',
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
@@ -279,6 +272,7 @@ class TestVenueRequest():
             'Expected Submissions': '100',
             'How did you hear about us?': 'ML conferences',
             'Location': 'Virtual',
+            'submission_reviewer_assignment': 'Automatic',
             'Submission Deadline': request_form_note.content['Submission Deadline'],
             'Venue Start Date': request_form_note.content['Venue Start Date'],
             'contact_email': request_form_note.content['contact_email'],
@@ -404,6 +398,7 @@ class TestVenueRequest():
                 'Expected Submissions': '100',
                 'How did you hear about us?': 'ML conferences',
                 'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
@@ -959,7 +954,7 @@ class TestVenueRequest():
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group':  venue['venue_id'] + '/Reviewers',
-                'compute_conflicts': 'Yes',
+                'compute_conflicts': 'Default',
                 'compute_affinity_scores': 'Yes'
             },
             forum=venue['request_form_note'].forum,
@@ -1082,7 +1077,7 @@ class TestVenueRequest():
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
-                'compute_conflicts': 'Yes',
+                'compute_conflicts': 'Default',
                 'compute_affinity_scores': 'Yes'
             },
             forum=venue['request_form_note'].forum,
@@ -1109,7 +1104,7 @@ class TestVenueRequest():
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
-                'compute_conflicts': 'Yes',
+                'compute_conflicts': 'Default',
                 'compute_affinity_scores': 'Yes'
             },
             forum=venue['request_form_note'].forum,
@@ -1126,23 +1121,6 @@ class TestVenueRequest():
         matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum, sort='tmdate')[0]
         assert matching_status
         assert 'There was an error connecting with the expertise API' in matching_status.content['error']
-
-        ## Setup matching with no computation selected
-        with pytest.raises(openreview.OpenReviewException, match=r'You need to compute either conflicts or affinity scores or both'):
-            matching_setup_note = test_client.post_note(openreview.Note(
-                content={
-                    'title': 'Paper Matching Setup',
-                    'matching_group': conference.get_id() + '/Reviewers',
-                    'compute_conflicts': 'No',
-                    'compute_affinity_scores': 'No'
-                },
-                forum=venue['request_form_note'].forum,
-                replyto=venue['request_form_note'].forum,
-                invitation=matching_setup_invitation,
-                readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-                signatures=['~SomeFirstName_User1'],
-                writers=[]
-            ))
 
         with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
@@ -1176,7 +1154,7 @@ class TestVenueRequest():
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
-                'compute_conflicts': 'Yes',
+                'compute_conflicts': 'Default',
                 'compute_affinity_scores': 'No',
                 'upload_affinity_scores': url
             },
@@ -1215,7 +1193,7 @@ Affinity scores and/or conflicts could not be computed for the users listed unde
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
-                'compute_conflicts': 'Yes',
+                'compute_conflicts': 'Default',
                 'compute_affinity_scores': 'No',
                 'upload_affinity_scores': url
             },
@@ -1305,6 +1283,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                 'Expected Submissions': '100',
                 'How did you hear about us?': 'ML conferences',
                 'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],

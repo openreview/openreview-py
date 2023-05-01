@@ -8,8 +8,13 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
     if note.content.get('api_version') == '2':
         urls = openreview.tools.get_base_urls(client)
         openreview_client = openreview.api.OpenReviewClient(baseurl = urls[1], token=client.token)
-        domain_group = openreview.tools.get_group(openreview_client, note.content['venue_id'])
         venue = openreview.venue.Venue(openreview_client, note.content['venue_id'], support_user)
+        
+        ## Run test faster
+        if 'openreview.net' in support_user:
+            venue.invitation_builder.update_wait_time = 2000
+            venue.invitation_builder.update_date_string = "#{4/mdate} + 2000"
+
         venue.request_form_id = request_form_id
         venue.use_area_chairs = note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs'
         venue.use_senior_area_chairs = note.content.get('senior_area_chairs') == 'Yes, our venue has Senior Area Chairs'
@@ -19,16 +24,12 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.name = note.content.get('Official Venue Name')
         venue.website = note.content.get('Official Website URL')
         venue.contact = note.content.get('contact_email')
+        venue.automatic_reviewer_assignment = note.content.get('submission_reviewer_assignment', '') == 'Automatic'
         venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')
         venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
         venue.senior_area_chair_identity_readers = get_identity_readers(note, 'senior_area_chair_identity')
         venue.decision_heading_map = get_decision_heading_map(venue.short_name, note)
         
-        if domain_group:
-            venue.enable_reviewers_reassignment = domain_group.content.get('enable_reviewers_reassignment', {}).get('value', False)
-            venue.reviewers_proposed_assignment_title = domain_group.content.get('reviewers_proposed_assignment_title', {}).get('value')
-            venue.conflict_policy = domain_group.content.get('conflict_policy', {}).get('value', 'default')
-
         venue.submission_stage = get_submission_stage(note)
         venue.review_stage = get_review_stage(note)
         venue.bid_stages = get_bid_stages(note)
@@ -39,10 +40,8 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.review_rebuttal_stage = get_rebuttal_stage(note)
         venue.registration_stages = get_registration_stages(note, venue)
 
-        paper_matching_options = note.content.get('Paper Matching', [])
         include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
-        if 'OpenReview Affinity' in paper_matching_options:
-            venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date, include_option=include_expertise_selection)
+        venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date, include_option=include_expertise_selection)
 
         if setup:
             venue.setup(note.content.get('program_chair_emails'))
@@ -237,12 +236,12 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         submission_email=submission_email,
         force_profiles=force_profiles)
 
-    paper_matching_options = note.content.get('Paper Matching', [])
     include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
-    if 'OpenReview Affinity' in paper_matching_options:
-        builder.set_expertise_selection_stage(due_date=submission_due_date, include_option=include_expertise_selection)
+    builder.set_expertise_selection_stage(due_date=submission_due_date, include_option=include_expertise_selection)
 
-    if not paper_matching_options or 'Organizers will assign papers manually' in paper_matching_options:
+    paper_matching_options = note.content.get('Paper Matching', [])
+    
+    if not paper_matching_options or 'Organizers will assign papers manually' in paper_matching_options or 'Manual' in note.content.get('submission_reviewer_assignment', ''):
         builder.enable_reviewer_reassignment(enable=True)
 
     ## Contact Emails is deprecated
@@ -319,18 +318,8 @@ def get_submission_stage(request_forum):
     }
 
     # Prioritize submission_readers over Open Reviewing Policy (because PCs can keep changing this)
-    if 'submission_readers' in request_forum.content:
-        readers = readers_map[request_forum.content.get('submission_readers')]
-        public = 'Everyone (submissions are public)' in readers
-    else:
-        public = (request_forum.content.get('Open Reviewing Policy', '') in ['Submissions and reviews should both be public.', 'Submissions should be public, but reviews should be private.'])
-        bidding_enabled = 'Reviewer Bid Scores' in request_forum.content.get('Paper Matching', '') or 'Reviewer Recommendation Scores' in request_forum.content.get('Paper Matching', '')
-        if bidding_enabled and not public:
-            readers = [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.REVIEWERS]
-        elif public:
-            readers = [openreview.stages.SubmissionStage.Readers.EVERYONE]
-        else:
-            readers = [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.REVIEWERS_ASSIGNED]
+    readers = readers_map[request_forum.content.get('submission_readers', [])]
+    public = 'Everyone (submissions are public)' in readers
 
     submission_start_date = request_forum.content.get('Submission Start Date', '').strip()
     if submission_start_date:

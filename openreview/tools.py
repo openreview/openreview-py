@@ -1288,7 +1288,7 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=None)
 
     if callable(policy):
         info_function = info_function_builder(policy)
-    elif policy == 'neurips':
+    elif policy == 'NeurIPS':
         info_function = info_function_builder(get_neurips_profile_info)
     else:
         info_function = info_function_builder(get_profile_info)

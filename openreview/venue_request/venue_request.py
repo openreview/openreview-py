@@ -18,7 +18,7 @@ class VenueStages():
 
     def setup_venue_revision(self):
 
-        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Paper Matching', 'reviewer_identity', 'area_chair_identity', 'senior_area_chair_identity', 'submissions_visibility', 'submission_readers', 'api_version', 'secondary_area_chairs', 'force_profiles_only']
+        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'reviewer_identity', 'area_chair_identity', 'senior_area_chair_identity', 'submissions_visibility', 'submission_readers', 'api_version', 'secondary_area_chairs', 'force_profiles_only']
         revision_content = {key: self.venue_request.request_content[key] for key in self.venue_request.request_content if key not in remove_fields}
         revision_content['Additional Submission Options'] = {
             'order': 18,
@@ -90,6 +90,8 @@ class VenueStages():
                 'value-regex': '[0-9]*'
             }
         }
+        with open(os.path.join(os.path.dirname(__file__), 'process/bid_stage_pre_process.py')) as pre:
+            pre_process_file_content = pre.read()
 
         return self.venue_request.client.post_invitation(openreview.Invitation(
             id='{}/-/Bid_Stage'.format(self.venue_request.support_group.id),
@@ -99,6 +101,7 @@ class VenueStages():
             invitees=['everyone'],
             multiReply=True,
             process_string=self.file_content,
+            preprocess=pre_process_file_content,
             reply={
                 'readers': {
                     'values-copied': [
@@ -1175,15 +1178,14 @@ class VenueRequest():
                 'value-regex': '.*',
                 'order': 14
             },
-            'Paper Matching': {
-                'description': 'Choose options for assigning papers to reviewers (and ACs, if present). If using the OpenReview Paper Matching System, see the top of the page for a description of each feature type. If you want to make manual assignments, do not select any options.',
-                'values-checkbox': [
-                    'Reviewer Bid Scores',
-                    'Reviewer Recommendation Scores',
-                    'OpenReview Affinity'
+            'submission_reviewer_assignment': {
+                'description': 'How do you want to assign reviewers to submissions?. Automatic assignment will assign reviewers to submissions based on their expertise and/or bids. Manual assignment will allow you to assign reviewers to submissions manually.',
+                'value-radio': [
+                    'Automatic',
+                    'Manual'
                 ],
                 'order': 15,
-                'required': False
+                'required': True
             },
             'Author and Reviewer Anonymity': {
                 'description': 'What policy best describes your anonymity policy? (If none of the options apply then please describe your request below)',
@@ -1926,21 +1928,26 @@ If you would like to change your decision, please follow the link in the previou
                 'order': 2
             },
             'compute_conflicts': {
-                'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. By default, conflicts will be computed.',
-                'value-radio': ['Yes', 'No'],
-                'default': 'Yes',
+                'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. Select the conflict policy below or "No" if you don\'t want to compute conflicts.',
+                'value-radio': ['Default', 'NeurIPS', 'No'],
                 'required': True,
                 'order': 3
             },
+            'compute_conflicts_N_years': {
+                'description': 'If conflict policy was selected, enter the number of the years we should use to get the information from the OpenReview profile in order to detect conflicts. Leave it empty if you want to use all the available information.',
+                'value-regex': '[0-9]+',
+                'required': False,
+                'order': 4
+            },            
             'compute_affinity_scores': {
                 'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically.',
-                'order': 4,
+                'order': 5,
                 'value-radio': ['Yes', 'No'],
                 'required': True,
             },
             'upload_affinity_scores': {
                 'description': 'If you would like to use your own affinity scores, upload a CSV file containing affinity scores for reviewer-paper pairs (one reviewer-paper pair per line in the format: submission_id, reviewer_id, affinity_score)',
-                'order': 5,
+                'order': 6,
                 'value-file': {
                     'fileTypes': ['csv'],
                     'size': 50

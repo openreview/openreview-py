@@ -61,9 +61,7 @@ class TestARRVenue():
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
-                'Paper Matching': [
-                    'Reviewer Bid Scores',
-                    'OpenReview Affinity'],
+                'submission_reviewer_assignment': 'Automatic',
                 'Author and Reviewer Anonymity': 'Double-blind',
                 'reviewer_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair'],
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
