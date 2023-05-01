@@ -69,7 +69,6 @@ class TestNeurIPSConference():
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'submission_readers': 'Program chairs and paper authors only',
-                'hide_fields': ['keywords'],
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'api_version': '2'
@@ -106,7 +105,6 @@ class TestNeurIPSConference():
         post_submission =  openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Post_Submission')
         assert 'authors' in post_submission.edit['note']['content']
         assert 'authorids' in post_submission.edit['note']['content']
-        assert 'keywords' in post_submission.edit['note']['content']
 
     def test_recruit_senior_area_chairs(self, client, openreview_client, selenium, request_page, helpers):
 
@@ -784,7 +782,8 @@ If you would like to change your decision, please follow the link in the previou
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
-                'Expected Submissions': '100'
+                'Expected Submissions': '100',
+                'hide_fields': ['keywords']
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
@@ -805,10 +804,16 @@ If you would like to change your decision, please follow the link in the previou
         assert len(notes) == 5
 
         assert notes[0].readers == ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Submission5/Authors']
+        assert notes[0].content['keywords']['readers'] == ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Submission5/Authors']
 
         assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Withdrawal')
         assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Desk_Rejection')
         assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Revision')
+
+        post_submission =  openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Post_Submission')
+        assert 'authors' in post_submission.edit['note']['content']
+        assert 'authorids' in post_submission.edit['note']['content']
+        assert 'keywords' in post_submission.edit['note']['content']
 
         ## update submission
         revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission4/-/Revision',
