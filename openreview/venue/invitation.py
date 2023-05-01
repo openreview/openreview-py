@@ -126,7 +126,7 @@ class InvitationBuilder(object):
         submission_invitation = Invitation(
             id=submission_id,
             invitees = ['~'],
-            signatures = [venue_id],
+            signatures = [self.venue.get_program_chairs_id()],
             readers = ['everyone'],
             writers = [venue_id],
             cdate=submission_cdate,
@@ -135,7 +135,7 @@ class InvitationBuilder(object):
             edit = {
                 'signatures': { 'param': { 'regex': f'~.*|{self.venue.get_program_chairs_id()}' } },
                 'readers': edit_readers,
-                'writers': [venue_id],
+                'writers': [venue_id, '${2/note/content/authorids/value}'],
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
