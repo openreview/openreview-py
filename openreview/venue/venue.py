@@ -26,6 +26,10 @@ class Venue(object):
         self.short_name = 'TBD'
         self.website = None
         self.contact = None
+        self.location = None
+        self.instructions = None
+        self.start_date = 'TBD'
+        self.date = 'TBD'
         self.id = venue_id # get compatibility with conference
         self.program_chairs_name = 'Program_Chairs'
         self.reviewers_name = 'Reviewers'

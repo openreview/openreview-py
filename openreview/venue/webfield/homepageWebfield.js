@@ -20,7 +20,7 @@ if (decisionHeadingMap) {
   }
 }
 
-if (domain.content.public_submissions?.value) {
+if (domain.content.public_submissions.value && !decisionHeadingMap) {
   tabs.push({
     name: 'Active Submissions',
     query: {
@@ -66,10 +66,21 @@ return {
   version: 1,
   properties: {
     header: {
+<<<<<<< Updated upstream
       title: domain.content.title?.value,
       subtitle: domain.content.subtitle?.value,
       website: domain.content.website?.value,
       contact: domain.content.contact?.value,
+=======
+      title: domain.content.title.value,
+      subtitle: domain.content.subtitle.value,
+      website: domain.content.website.value,
+      contact: domain.content.contact.value,
+      location: domain.content.location.value,
+      instructions: domain.content.instructions.value,
+      date: domain.content.start_date.value,
+      deadline: domain.content.date.value
+>>>>>>> Stashed changes
     },
     submissionId: domain.content.submission_id?.value,
     parentGroupId: domain.parent,
