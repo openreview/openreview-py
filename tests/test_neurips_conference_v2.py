@@ -767,7 +767,7 @@ If you would like to change your decision, please follow the link in the previou
         due_date = now + datetime.timedelta(days=3)
         first_date = now - datetime.timedelta(minutes=28)               
 
-        venue_revision_note = pc_client.post_note(openreview.Note(
+        venue_revision_note = openreview.Note(
             content={
                 'title': 'Conference on Neural Information Processing Systems',
                 'Official Venue Name': 'Conference on Neural Information Processing Systems',
@@ -783,7 +783,7 @@ If you would like to change your decision, please follow the link in the previou
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
-                'hide_fields': ['keywords']
+                'hide_fields': ['keywords', 'financial_support']
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
@@ -792,7 +792,13 @@ If you would like to change your decision, please follow the link in the previou
             replyto=request_form.forum,
             signatures=['~Program_NeurIPSChair1'],
             writers=[]
-        ))
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid field to hide: financial_support'):
+            pc_client.post_note(venue_revision_note)
+
+        venue_revision_note.content['hide_fields'] = ['keywords']
+        pc_client.post_note(venue_revision_note)
         
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Post_Submission-0-0')
