@@ -744,7 +744,7 @@ If you would like to change your decision, please follow the link in the previou
             'NeurIPS.cc/2023/Conference',
             '${2/note/content/authorids/value}'
             ]
-        assert submission_inv.signatures == ['NeurIPS.cc/2023/Conference/Program_Chairs']
+        assert submission_inv.signatures == ['NeurIPS.cc/2023/Conference']
 
     def test_submit_papers(self, test_client, client, helpers, openreview_client):
 

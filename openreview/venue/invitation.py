@@ -126,7 +126,7 @@ class InvitationBuilder(object):
         submission_invitation = Invitation(
             id=submission_id,
             invitees = ['~'],
-            signatures = [self.venue.get_program_chairs_id()],
+            signatures = [venue_id],
             readers = ['everyone'],
             writers = [venue_id],
             cdate=submission_cdate,
