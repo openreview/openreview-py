@@ -1407,9 +1407,9 @@ class VenueRequest():
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'api_version': {
-                'description': 'Which API version would you like to use? API 2 is still in the experimental phase, contact us if you would like more information.',
+                'description': 'Which API version would you like to use? All new venues should use the latest API version, unless previously discussed. If you are unsure, please select the latest version.',
                 'value-radio': ['1', '2'],
-                'default': '1',
+                'default': '2',
                 'order': 40
             },
             'include_expertise_selection': {
