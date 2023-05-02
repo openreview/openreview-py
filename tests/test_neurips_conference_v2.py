@@ -736,6 +736,16 @@ If you would like to change your decision, please follow the link in the previou
         assert submission_inv.preprocess
         assert 'def process(client, edit, invitation):' in submission_inv.preprocess
 
+        assert submission_inv.edit['readers'] == [
+            'NeurIPS.cc/2023/Conference',
+            '${2/note/content/authorids/value}'
+            ]
+        assert submission_inv.edit['writers'] == [
+            'NeurIPS.cc/2023/Conference',
+            '${2/note/content/authorids/value}'
+            ]
+        assert submission_inv.signatures == ['NeurIPS.cc/2023/Conference']
+
     def test_submit_papers(self, test_client, client, helpers, openreview_client):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
