@@ -2956,9 +2956,9 @@ ICML 2023 Conference Program Chairs'''
 
         assignment = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Assignment', head=submissions[0].id, tail='~AC_ICMLTwo1')[0]
         assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        edge = pc_client_v2.post_edge(assignment)
+        pc_client_v2.post_edge(assignment)
 
-        helpers.await_queue_edit(openreview_client, edit_id=edge.id)
+        helpers.await_queue(openreview_client)
 
         ac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Area_Chairs')
         assert [] == ac_group.members
@@ -2968,10 +2968,10 @@ ICML 2023 Conference Program Chairs'''
 
         #re-add AC to paper 1
         assignment = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Assignment', head=submissions[0].id, tail='~AC_ICMLTwo1', trash=True)[0]
-        assignment.ddate = None
+        assignment.ddate = { 'delete': True }
         pc_client_v2.post_edge(assignment)
 
-        helpers.await_queue_edit(openreview_client, edit_id=edge.id)
+        helpers.await_queue(openreview_client)
 
         ac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Area_Chairs')
         assert ['~AC_ICMLTwo1'] == ac_group.members
