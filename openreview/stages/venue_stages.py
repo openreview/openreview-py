@@ -980,7 +980,7 @@ class MetaReviewStage(object):
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.process = None
-        self.recommendation_field_name = 'recommendation',
+        self.recommendation_field_name = 'recommendation'
 
     def _get_reviewer_readers(self, conference, number):
         if self.release_to_reviewers is MetaReviewStage.Readers.REVIEWERS:
