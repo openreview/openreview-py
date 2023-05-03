@@ -563,7 +563,7 @@ class TestVenueSubmissionARR():
 
     def test_setup_matching(self, venue, openreview_client, helpers):
 
-        submissions = venue.get_submissions(sort='number:asc')
+        submissions = venue.get_submissions(sort='number:asc', submission_venue_id='ARR/2023_March/Submission')
 
         helpers.create_user('arr_reviewer_venue_two@mail.com', 'ARR Reviewer Venue', 'Two')
         helpers.create_user('arr_reviewer_venue_three@mail.com', 'ARR Reviewer Venue', 'Three')
@@ -578,13 +578,14 @@ class TestVenueSubmissionARR():
         venue.setup_committee_matching(
             committee_id='ARR/Reviewers',
             compute_affinity_scores=os.path.join(os.path.dirname(__file__), 'data/venue_affinity_scores.csv'),
-            compute_conflicts=True)
+            compute_conflicts=True,
+            submission_venue_id='ARR/2023_March/Submission')
 
         scores_invitation = openreview.tools.get_invitation(openreview_client, 'ARR/Reviewers/-/Affinity_Score')
         assert scores_invitation
 
         affinity_edges = openreview_client.get_edges_count(invitation='ARR/Reviewers/-/Affinity_Score')
-        assert affinity_edges == 9
+        assert affinity_edges == 6
 
         conflict_invitation = openreview.tools.get_invitation(openreview_client, 'ARR/Reviewers/-/Conflict')
         assert conflict_invitation
@@ -595,8 +596,8 @@ class TestVenueSubmissionARR():
             signatures = ['ARR'],
             head = submissions[0].id,
             tail = '~ARR_Reviewer_Venue_One1',
-            readers = ['ARR','ARR/Submission1/Area_Chairs','~ARR_Reviewer_Venue_One1'],
-            writers = ['ARR','ARR/Submission1/Area_Chairs'],
+            readers = ['ARR', 'ARR/Submission1/Senior_Action_Editors', 'ARR/Submission1/Action_Editors', '~ARR_Reviewer_Venue_One1'],
+            writers = ['ARR', 'ARR/Submission1/Senior_Action_Editors', 'ARR/Submission1/Action_Editors'],
             weight = 0.92,
             label = 'test-matching-1'
         ))

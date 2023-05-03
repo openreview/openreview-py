@@ -700,12 +700,12 @@ Total Errors: {len(errors)}
 
         tools.concurrent_requests(send_notification, paper_notes)
 
-    def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, alternate_matching_group=None):
+    def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, alternate_matching_group=None, submission_venue_id=None):
         if committee_id is None:
             committee_id=self.get_reviewers_id()
         if self.use_senior_area_chairs and committee_id == self.get_senior_area_chairs_id() and not alternate_matching_group:
             alternate_matching_group = self.get_area_chairs_id()
-        venue_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
+        venue_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group, submission_venue_id=submission_venue_id)
 
         return venue_matching.setup(compute_affinity_scores, self.conflict_policy if compute_conflicts else False)
 
