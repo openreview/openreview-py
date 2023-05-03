@@ -1,18 +1,12 @@
-from itertools import groupby
 from .. import openreview
-from .. import tools
 from . import group
 from .invitation import InvitationBuilder
 from .recruitment import Recruitment
 from .assignment import Assignment
-from openreview.api import Edge
-from openreview.api import Group
 
 import re
-import json
+import csv
 import datetime
-import random
-import secrets
 from tqdm import tqdm
 from pylatexenc.latexencode import utf8tolatex, UnicodeToLatexConversionRule, UnicodeToLatexEncoder, RULE_REGEX
 
@@ -960,7 +954,6 @@ Your {lower_formatted_invitation} on a submission has been {action}
         invitation.invitations = None
         self.invitation_builder.post_invitation_edit(invitation, replacement=True)
 
-
     def archive_assignments(self):
 
         submissions = self.client.get_all_notes(invitation=self.get_author_submission_id())
@@ -977,6 +970,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     ae_assignment_edge = openreview.api.Edge.from_json(ae_assignment)
                     archived_edge = openreview.api.Edge(
                         invitation=self.get_ae_assignment_id(archived=True),
+                        cdate=ae_assignment_edge.cdate,
                         head=ae_assignment_edge.head,
                         tail=ae_assignment_edge.tail,
                         weight=ae_assignment_edge.weight,
@@ -992,6 +986,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     reviewer_assignment_edge = openreview.api.Edge.from_json(reviewer_assignment)
                     archived_edge = openreview.api.Edge(
                         invitation=self.get_reviewer_assignment_id(archived=True),
+                        cdate=reviewer_assignment_edge.cdate,
                         head=reviewer_assignment_edge.head,
                         tail=reviewer_assignment_edge.tail,
                         weight=reviewer_assignment_edge.weight,
@@ -1001,4 +996,273 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     self.client.post_edge(archived_edge)
                     ## avoid process function execution
                     self.client.delete_edges(invitation=reviewer_assignment_edge.invitation, head=reviewer_assignment_edge.head, tail=reviewer_assignment_edge.tail, soft_delete=True, wait_to_finish=True)
+                    
+
+    def run_reviewer_stats(self, end_cdate, output_file):
+
+        invitations_by_id = { i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True)}
+        submission_by_id = { n.id: n for n in self.client.get_all_notes(invitation=self.get_author_submission_id(), details='replies')}
+        archived_assignments_by_reviewers = { e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(archived=True), groupby='tail')}
+        assignments_by_reviewers = { e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(), groupby='tail')}
+        availability_by_reviewer = { e['id']['tail']: e['values'][0] for e in self.client.get_grouped_edges(invitation=self.get_reviewer_availability_id(), groupby='tail')}
+
+        report_by_reviewer = {}
+        reports = self.client.get_all_notes(invitation=self.get_reviewer_report_id())
+        for report in reports:
+            reviewer_id = report.content['reviewer_id']['value']
+            if reviewer_id not in report_by_reviewer:
+                report_by_reviewer[reviewer_id] = []
+            
+            report_by_reviewer[reviewer_id].append(report.content['report_reason']['value'])
+
+        rating_map = {
+            "Exceeds expectations": 3,
+            "Meets expectations": 2,
+            "Falls below expectations": 1
+        }
+
+        def get_responsibility_invitation(profile):
+            for name in profile.content['names']:
+                if 'username' in name:
+                    ack_invitation = invitations_by_id.get(self.get_reviewer_responsibility_id(name["username"]))
+                    if ack_invitation:
+                        return ack_invitation
+                    
+            for email in profile.content['emailsConfirmed']:
+                ack_invitation = invitations_by_id.get(self.get_reviewer_responsibility_id(email))
+                if ack_invitation:
+                    return ack_invitation
+                
+            print('no responisibility invitation for', profile.id)
+
+        def get_ack_invitation(submission_number, profile):
+            for name in profile.content['names']:
+                if 'username' in name:
+                    ack_invitation = invitations_by_id.get(self.get_reviewer_assignment_acknowledgement_id(submission_number, name["username"]))
+                    if ack_invitation:
+                        return ack_invitation
+                    
+            for email in profile.content['emailsConfirmed']:
+                ack_invitation = invitations_by_id.get(self.get_reviewer_assignment_acknowledgement_id(submission_number, email))
+                if ack_invitation:
+                    return ack_invitation
+                
+            print('no ack invitation for', submission_number, profile.id)
+
+        def get_reviewer_stats(reviewer, assignment):
+            
+            submission = submission_by_id[assignment['head']]
+            if submission.cdate > end_cdate:
+                return None
+
+            ack_invitation = get_ack_invitation(submission.number, reviewer)
+            
+            anon_group = [g for g in self.client.get_groups(prefix=self.get_reviewers_id(number=submission.number, anon=True), member=reviewer.id)][0]
+            acks = [r for r in submission.details['replies'] if r['invitations'][0] == ack_invitation.id]
+            reviews = [r for r in submission.details['replies'] if '/-/Review' in r['invitations'][0] and anon_group.id in r['signatures']]
+            recommendations = [r for r in submission.details['replies'] if '/-/Official_Recommendation' in r['invitations'][0] and anon_group.id in r['signatures']]
+            comments = [r for r in submission.details['replies'] if '/-/Official_Comment' in r['invitations'][0] and anon_group.id in r['signatures']]
+            ratings = [r for r in submission.details['replies'] if r['invitations'][0] == f'{anon_group.id}/-/Rating']
+            
+            assignment_cdate = datetime.datetime.fromtimestamp(assignment['cdate']/1000)
+
+            ack_duedate = datetime.datetime.fromtimestamp(ack_invitation.duedate/1000)
+            
+            ack_days = None
+            ack_deadline = None
+            if acks:
+                ack = acks[0]
+                ack_tcdate = datetime.datetime.fromtimestamp(ack['tcdate']/1000)
+                
+                ack_days = (ack_tcdate - assignment_cdate).days
+                ack_deadline = (ack_tcdate - ack_duedate).days
+                
+            review_days = None
+            review_deadline = None
+            review_length = 0
+            review_complete = 0
+
+            review_invitation = invitations_by_id[self.get_review_id(number=submission.number)]
+            review_duedate = datetime.datetime.fromtimestamp(review_invitation.duedate/1000)
+
+            if reviews:
+                review = reviews[0]
+                review_tcdate = datetime.datetime.fromtimestamp(review['tcdate']/1000)
+
+                review_days = (review_tcdate - assignment_cdate).days
+                review_deadline = (review_tcdate - review_duedate).days
+                review_length = len(review['content'].get('summary_of_contributions', {}).get('value', '')) + len(review['content'].get('strengths_and_weaknesses', {}).get('value', '')) + len(review['content'].get('requested_changes', {}).get('value', '')) + len(review['content'].get('broader_impact_concerns', {}).get('value', ''))
+
+                review_complete += 1
+
+            recommendation_invitation = invitations_by_id.get(self.get_reviewer_recommendation_id(number=submission.number))
+            recommendation_days = None
+            recommendation_deadline = None
+            if recommendation_invitation:
+                recommendation_duedate = datetime.datetime.fromtimestamp(recommendation_invitation.duedate/1000)
+                recommendation_cdate = datetime.datetime.fromtimestamp(recommendation_invitation.cdate/1000)
+
+                if recommendations:
+                    recommendation = recommendations[0]
+                    recommendation_tcdate = datetime.datetime.fromtimestamp(recommendation['tcdate']/1000)
+
+                    recommendation_days = (recommendation_tcdate - recommendation_cdate).days
+                    recommendation_deadline = (recommendation_tcdate - recommendation_duedate).days
+
+            comment_count = 0
+            comment_length = 0
+            for comment in comments:
+                comment_count += 1
+                comment_length += len(comment['content']['comment']['value'])
+                
+            review_rating = None
+            if ratings:
+                review_rating = rating_map[ratings[0]['content']['rating']['value']]
+
+            return {
+                'assigment_ack_days': ack_days,
+                'assignment_ack_deadline': ack_deadline,
+                'review_days': review_days,
+                'review_deadline': review_deadline,
+                'review_length': review_length,
+                'review_complete': review_complete,
+                'comment_count': comment_count,
+                'comment_length': comment_length,
+                'recommendation_days': recommendation_days,
+                'recommendation_deadline': recommendation_deadline,
+                'review_rating': review_rating
+            }       
+
+
+        rows = []
+        reviewers = openreview.tools.get_profiles(self.client, self.client.get_group(self.get_reviewers_id()).members)
+        for reviewer in reviewers:
+            #print(reviewer.id)
+            availability = None
+            availability_cdate = None
+            assignment_responsability_days = None ## time of first assignment - time of responsability posted
+            assignment_responsability_deadline = None ## time of responsability posted - time of responsability deadline
+            assigment_ack_days = [] ## time of assignment - time of ack posted
+            assignment_ack_deadline = [] ## time of ack posted - ack deadline
+            review_days = [] ## time of review posted - time of assignment
+            review_deadline = [] ## time of review posted - time review deadline
+            review_count = 0 ## sum of assignments
+            review_complete = 0 ## sum of review posted
+            review_length = [] ## sum of all the field lengths
+            comment_length = [] ## sum of all the field lengths
+            comment_count = [] ## sum of comment count
+            recommendation_days = [] ## time of recommendation.cdate - time of recommendation posted
+            recommendation_deadline = [] ## time of recommendation posted - time recommendation deadline
+            review_rating = [] ## review rating number for each review
+            review_rating_average = 0 ## avg review_rating
+            reports = report_by_reviewer.get(reviewer.id, []) ## note id of review reports
+
+            availability_edge = availability_by_reviewer.get(reviewer.id, None)
+            if availability_edge:
+                availability = availability_edge['label']
+                availability_cdate = datetime.datetime.fromtimestamp(availability_edge['cdate']/1000)    
+            
+            responsibility_invitation = get_responsibility_invitation(reviewer)
+            if responsibility_invitation:
+                responsibility_duedate = datetime.datetime.fromtimestamp(responsibility_invitation.duedate/1000)
+                responsibility_cdate = datetime.datetime.fromtimestamp(responsibility_invitation.cdate/1000)
+                response = self.client.get_notes(invitation=responsibility_invitation.id)
+                if response:
+                    responsibility_note = response[0]
+                    responsibility_tcdate = datetime.datetime.fromtimestamp(responsibility_note.tcdate/1000)
+                
+                assignment_responsability_days = (responsibility_tcdate - responsibility_cdate).days
+                assignment_responsability_deadline = (responsibility_tcdate - responsibility_duedate).days
+
+            
+            archived_assignments = archived_assignments_by_reviewers.get(reviewer.id, [])
+            
+            for assignment in archived_assignments:
+                stats = get_reviewer_stats(reviewer, assignment)
+                if stats:
+                    assigment_ack_days.append(stats['assigment_ack_days'])
+                    assignment_ack_deadline.append(stats['assignment_ack_deadline'])
+                    review_days.append(stats['review_days'])
+                    review_deadline.append(stats['review_deadline'])
+                    review_length.append(stats['review_length'])
+                    review_complete += stats['review_complete']
+                    comment_count.append(stats['comment_count'])
+                    comment_length.append(stats['comment_length'])
+                    recommendation_days.append(stats['recommendation_days'])
+                    recommendation_deadline.append(stats['recommendation_deadline'])
+                    if stats['review_rating']:
+                        review_rating.append(stats['review_rating'])
+                    review_count += 1
+                                         
+            assignments = assignments_by_reviewers.get(reviewer.id, [])
+            
+            for assignment in assignments:
+                stats = get_reviewer_stats(reviewer, assignment)
+                if stats:
+                    assigment_ack_days.append(stats['assigment_ack_days'])
+                    assignment_ack_deadline.append(stats['assignment_ack_deadline'])
+                    review_days.append(stats['review_days'])
+                    review_deadline.append(stats['review_deadline'])
+                    review_length.append(stats['review_length'])
+                    review_complete += stats['review_complete']
+                    comment_count.append(stats['comment_count'])
+                    comment_length.append(stats['comment_length'])
+                    recommendation_days.append(stats['recommendation_days'])
+                    recommendation_deadline.append(stats['recommendation_deadline'])
+                    if stats['review_rating']:
+                        review_rating.append(stats['review_rating'])
+                    review_count += 1
+
+            review_rating_average = sum(review_rating) / len(review_rating) if review_rating else 0
+
+            rows.append([
+                reviewer.id,
+                availability,
+                availability_cdate,
+                assignment_responsability_days,
+                assignment_responsability_deadline,
+                assigment_ack_days,
+                assignment_ack_deadline,
+                review_count,
+                review_complete,
+                review_length,
+                review_days,
+                review_deadline,
+                recommendation_days,
+                recommendation_deadline,
+                comment_count,
+                comment_length,
+                review_rating,
+                review_rating_average,
+                reports
+
+            ])
+
+            with open(output_file, 'w') as file_handle:
+                writer = csv.writer(file_handle)
+                writer.writerow([
+                    'Reviewer ID',
+                    'Availability',
+                    'Availability date',
+                    'Responsibility days',
+                    'Responsibility deadline',
+                    'ACK days',
+                    'ACK deadline',
+                    'Review count',
+                    'Review complete',
+                    'Review length',
+                    'Review days',
+                    'Review deadline',
+                    'Recommendation days',
+                    'Recommendation deadline',
+                    'Comment count',
+                    'Comment length',
+                    'Review rating',
+                    'Review rating average',
+                    'Reviewer reports'
+                ])
+                for row in rows:
+                    writer.writerow(row)                                
+
+
                     
