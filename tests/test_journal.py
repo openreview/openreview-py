@@ -2931,6 +2931,19 @@ note={Rejected}
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
+        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Attention: you\'ve been assigned a submission authored by an EIC')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
+
+You have just been assigned a submission that is authored by one (or more) TMLR Editors-in-Chief. OpenReview is set up such that the EIC in question will not have access through OpenReview to the identity of the reviewers you'll be assigning. 
+
+However, be mindful not to discuss the submission by email through TMLR's EIC mailing lists (tmlr@jmlr.org or tmlr-editors@jmlr.org), since all EICs receive these emails. Instead, if you need to reach out to EICs by email, only contact the non-conflicted EICs, directly.
+
+We thank you for your cooperation.
+
+The TMLR Editors-in-Chief
+'''        
+
         ## Accept the submission 5
         under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper5/-/Review_Approval',
                                     signatures=[f'{venue_id}/Paper5/Action_Editors'],

@@ -76,6 +76,28 @@ The {journal.short_name} Editors-in-Chief
                                 signatures=[journal.venue_id],
                                 note=openreview.api.Note(id=note.id,
                                 content = content 
-            ))                        
+            ))
+
+        print('check if the EICs are authors of the submission')
+        eics = client.get_group(journal.get_editors_in_chief_id()).members
+        for eic in eics:
+            is_author = client.get_groups(id=journal.get_authors_id(number=note.number), member=eic)
+            if is_author:
+                recipients=[edge.tail]
+                subject=f'[{journal.short_name}] Attention: you\'ve been assigned a submission authored by an EIC'
+
+                message=f'''Hi {{{{fullname}}}},
+
+You have just been assigned a submission that is authored by one (or more) {journal.short_name} Editors-in-Chief. OpenReview is set up such that the EIC in question will not have access through OpenReview to the identity of the reviewers you'll be assigning. 
+
+However, be mindful not to discuss the submission by email through {journal.short_name}'s EIC mailing lists ({journal.contact_info} or {journal.get_editors_in_chief_email()}), since all EICs receive these emails. Instead, if you need to reach out to EICs by email, only contact the non-conflicted EICs, directly.
+
+We thank you for your cooperation.
+
+The {journal.short_name} Editors-in-Chief
+'''
+
+                client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info)
+                return                                     
 
         return
