@@ -2442,8 +2442,7 @@ class Edge(object):
         body = {
             'invitation': self.invitation,
             'head': self.head,
-            'tail': self.tail,
-            'cdate': self.cdate
+            'tail': self.tail
         }
         if self.id:
             body['id'] = self.id
@@ -2461,6 +2460,8 @@ class Edge(object):
             body['weight'] = self.weight
         if self.label is not None:
             body['label'] = self.label
+        if self.cdate:
+            body['cdate'] = self.cdate
 
         return body
 

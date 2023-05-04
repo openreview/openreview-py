@@ -1285,6 +1285,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'deletable': True
                     }
                 },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },                
                 'readers': [venue_id, editor_in_chief_id, '${2/tail}'],
                 'nonreaders': [],
                 'writers': [venue_id, editor_in_chief_id],
@@ -1785,6 +1792,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'deletable': True
                     }
                 },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },                
                 'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}'), '${2/tail}'],
                 'nonreaders': [self.journal.get_authors_id(number='${{2/head}/number}')],
                 'writers': [venue_id],
