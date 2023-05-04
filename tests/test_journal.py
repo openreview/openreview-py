@@ -2944,6 +2944,22 @@ We thank you for your cooperation.
 The TMLR Editors-in-Chief
 '''        
 
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper5/-/Review_Approval',
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 30)) + 2000,
+                signatures=['TMLR']
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper5/-/Review_Approval-0-2')
+
+        messages = journal.client.get_messages(to= 'raia@mail.com', subject = '[TMLR] AE is late in performing a task for assigned paper 5: Paper title 5')
+        assert len(messages) == 0
+
         ## Accept the submission 5
         under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper5/-/Review_Approval',
                                     signatures=[f'{venue_id}/Paper5/Action_Editors'],
