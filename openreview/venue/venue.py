@@ -730,7 +730,8 @@ Total Errors: {len(errors)}
             edge.label='Conflict Detected'
             edge.tail=user_profile.id
             edge.readers=None
-            edge.writers=None            
+            edge.writers=None
+            edge.cdate = None            
             client.post_edge(edge)
 
             ## Send email to reviewer
@@ -763,6 +764,7 @@ OpenReview Team'''
             edge.tail=user_profile.id
             edge.readers=None
             edge.writers=None
+            edge.cdate = None
             client.post_edge(edge)
 
             short_phrase = venue_group.content['subtitle']['value']
