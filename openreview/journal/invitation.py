@@ -2145,7 +2145,6 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = {
             'id': self.journal.get_review_approval_id(number='${2/content/noteNumber/value}'),
             'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
-            'noninvitees': [editors_in_chief_id],
             'readers': ['everyone'],
             'writers': [venue_id],
             'signatures': [venue_id],
@@ -4520,6 +4519,20 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'maxLength': 200000,
                                     'input': 'textarea',
                                     'markdown': True
+                                }
+                            }
+                        },
+                        'author_re_submission': {
+                            'order': 6,
+                            'description': 'If the decision is Reject, the authors may consider submitting a major revision at a later time (as a new submission), that will go through another full round of reviewing.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'The authors may consider submitting a major revision at a later time.'
+                                    ],
+                                    'input': 'checkbox',
+                                    'optional': True
                                 }
                             }
                         }

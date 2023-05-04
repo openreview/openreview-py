@@ -2351,9 +2351,9 @@ note={Retracted after acceptance}
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
-        ## Accept the submission 4
-        under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper4/-/Review_Approval',
-                                    signatures=[f'{venue_id}/Paper4/Action_Editors'],
+        ## Accept the submission 4 as an EIC
+        under_review_note = raia_client.post_note_edit(invitation= 'TMLR/Paper4/-/Review_Approval',
+                                    signatures=[f'{venue_id}/Editors_In_Chief'],
                                     note=Note(content={
                                         'under_review': { 'value': 'Appropriate for Review' }
                                     }))
@@ -2758,7 +2758,8 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'claims_and_evidence': { 'value': 'Accept as is' },
                     'audience': { 'value': 'Accept as is' },
                     'recommendation': { 'value': 'Reject' },
-                    'comment': { 'value': 'This is not a good paper' }
+                    'comment': { 'value': 'This is not a good paper' },
+                    'author_re_submission': { 'value': 'The authors may consider submitting a major revision at a later time.' }                    
                 }
             )
         )
