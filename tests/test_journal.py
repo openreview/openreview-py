@@ -3589,6 +3589,7 @@ note={Withdrawn}
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=Volunteer_to_Review_note['id'])
+        assert 'TMLR/Editors_In_Chief' in Volunteer_to_Review_note['note']['readers']
 
         ## Post a response
         Volunteer_to_Review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/~Tom_Rain1_Volunteer_to_Review_Approval',
@@ -3602,6 +3603,7 @@ note={Withdrawn}
                 }
             )
         )
+        assert 'TMLR/Editors_In_Chief' in Volunteer_to_Review_approval_note['note']['readers']
 
         helpers.await_queue_edit(openreview_client, edit_id=Volunteer_to_Review_approval_note['id'])
 

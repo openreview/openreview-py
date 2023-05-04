@@ -3708,7 +3708,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         }
                     },
                     'signatures': ['${3/signatures}'],
-                    'readers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
                     'nonreaders':[ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                     'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
                     'content': {
@@ -3826,7 +3826,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'forum': '${4/content/noteId/value}',
                     'replyto': '${4/content/replytoId/value}',
                     'signatures': [ self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') ],
-                    'readers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${5/content/soliciter/value}' ],
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${5/content/soliciter/value}' ],
                     'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                     'writers': [ venue_id ],
                     'content': {
