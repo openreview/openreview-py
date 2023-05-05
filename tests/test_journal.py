@@ -2505,7 +2505,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
         assert len(messages) == 2
         assert messages[-1]['content']['text'] == f'''Hi Joelle Pineau,
 
-This is to inform you that an OpenReview user has requested to review TMLR submission 4: Paper title 4, which you are the AE for.
+This is to inform you that an OpenReview user (Tom Rain<tom@mail.com>) has requested to review TMLR submission 4: Paper title 4, which you are the AE for.
 
 Please consult the request and either accept or reject it, by visiting this link:
 
