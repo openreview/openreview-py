@@ -191,6 +191,9 @@ class Journal(object):
 
     def get_ae_availability_id(self):
         return self.__get_invitation_id(name='Assignment_Availability', prefix=self.get_action_editors_id())
+    
+    def get_ae_expertise_selection_id(self):
+        return self.__get_invitation_id(name='Expertise_Selection', prefix=self.get_action_editors_id())
 
     def get_decision_approval_id(self, number=None):
         return self.__get_invitation_id(name='Decision_Approval', number=number)
@@ -246,6 +249,12 @@ class Journal(object):
 
     def get_reviewer_pending_review_id(self):
         return self.__get_invitation_id(name='Pending_Reviews', prefix=self.get_reviewers_id())
+    
+    def get_reviewer_expertise_selection_id(self):
+        return self.__get_invitation_id(name='Expertise_Selection', prefix=self.get_reviewers_id())
+
+    def get_expertise_selection_id(self, committee_id):
+        return self.__get_invitation_id(name='Expertise_Selection', prefix=committee_id)
 
     def get_camera_ready_revision_id(self, number=None):
         return self.__get_invitation_id(name='Camera_Ready_Revision', number=number)

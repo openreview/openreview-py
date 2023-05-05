@@ -1871,13 +1871,16 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    def request_single_paper_expertise(self, name, group_id, paper_id, model=None, baseurl=None):
+    def request_single_paper_expertise(self, name, group_id, paper_id, expertise_selection_id=None, model=None, baseurl=None):
 
         # Build entityA from group_id
         entityA = {
             'type': 'Group',
             'memberOf': group_id
         }
+        if expertise_selection_id and tools.get_invitation(self, expertise_selection_id):
+            expertise = { 'invitation': expertise_selection_id }
+            entityA['expertise'] = expertise        
 
         # Build entityB from paper_id
         entityB = {

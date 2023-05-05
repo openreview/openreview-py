@@ -11,12 +11,18 @@ from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.journal import Journal
 from openreview.journal import JournalRequest
+from openreview import ProfileManagement
 
 class TestJournal():
 
+    @pytest.fixture(scope="class")
+    def profile_management(self, client):
+        profile_management = ProfileManagement(client, 'openreview.net')
+        profile_management.setup()
+        return profile_management
 
     @pytest.fixture(scope="class")
-    def journal(self, openreview_client, helpers):
+    def journal(self, openreview_client, helpers, profile_management):
 
         venue_id = 'TMLR'
         fabian_client=OpenReviewClient(username='fabian@mail.com', password=helpers.strong_password)
@@ -2759,7 +2765,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'audience': { 'value': 'Accept as is' },
                     'recommendation': { 'value': 'Reject' },
                     'comment': { 'value': 'This is not a good paper' },
-                    'author_re_submission': { 'value': 'The authors may consider submitting a major revision at a later time.' }                    
+                    'resubmission_of_major_revision': { 'value': 'The authors may consider submitting a major revision at a later time.' }                    
                 }
             )
         )

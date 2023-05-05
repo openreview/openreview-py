@@ -89,6 +89,7 @@ class InvitationBuilder(object):
         self.set_comment_invitation()
         self.set_assignment_configuration_invitation()
         self.set_eic_revision_invitation()
+        self.set_expertise_selection_invitations()
 
     
     def get_super_process_content(self, field_name):
@@ -4522,9 +4523,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                 }
                             }
                         },
-                        'author_re_submission': {
+                        'resubmission_of_major_revision': {
                             'order': 6,
-                            'description': 'If the decision is Reject, the authors may consider submitting a major revision at a later time (as a new submission), that will go through another full round of reviewing.',
+                            'description': 'Optional and only if decision is Reject.',
                             'value': {
                                 'param': {
                                     'type': 'string',
@@ -5683,3 +5684,67 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         )
 
         self.save_invitation(invitation)               
+
+    def set_expertise_selection_invitations(self):
+
+        venue_id = self.journal.venue_id
+
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/expertiseSelectionWebfield.js')) as webfield_reader:
+            webfield_content = webfield_reader.read()
+            webfield_content = webfield_content.replace('VENUE_ID', venue_id)
+
+        def build_expertise_selection(committee_id, expertise_selection_id):
+            invitation = Invitation(
+                id= expertise_selection_id,
+                invitees = [committee_id],
+                signatures = [venue_id],
+                readers = [venue_id, committee_id],
+                writers = [venue_id],
+                minReplies=1,
+                web = webfield_content,
+                edge = {
+                    'id': {
+                        'param': {
+                            'withInvitation': expertise_selection_id,
+                            'optional': True
+                        }
+                    },
+                    'ddate': {
+                        'param': {
+                            # 'type': 'date',
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'readers': [ venue_id, '${2/signatures}' ],
+                    'writers': [ venue_id, '${2/signatures}' ],
+                    'signatures': {
+                        'param': {
+                            'regex': '~.*' 
+                        }
+                    },
+                    'head': {
+                        'param': {
+                            'type': 'note'
+                        }
+                    },
+                    'tail': {
+                        'param': {
+                            'type': 'profile',
+                            'inGroup': committee_id
+                        }
+                    },
+                    'label': {
+                        'param': {
+                            'enum': ['Include'],
+                        }
+                    }
+                }
+            )
+
+            self.save_invitation(invitation)
+
+        build_expertise_selection(self.journal.get_reviewers_id(), self.journal.get_reviewer_expertise_selection_id())
+        build_expertise_selection(self.journal.get_action_editors_id(), self.journal.get_ae_expertise_selection_id())
+

@@ -2950,6 +2950,7 @@ ICML 2023 Conference Program Chairs'''
 
         anon_group_id = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLTwo1')[0].id
         assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assignment.cdate = None
         assignment.signatures = [anon_group_id]
         
         with pytest.raises(openreview.OpenReviewException, match=r'Can not remove assignment, the user ~Reviewer_ICMLOne1 already posted a Official Review.'):
@@ -3622,6 +3623,7 @@ ICML 2023 Conference Program Chairs'''
 
         assignment = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Assignment', head=submissions[0].id, tail='~AC_ICMLTwo1')[0]
         assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assignment.cdate = None
 
         with pytest.raises(openreview.OpenReviewException, match=r'Can not remove assignment, the user ~AC_ICMLTwo1 already posted a Meta Review.'):
             pc_client_v2.post_edge(assignment)
