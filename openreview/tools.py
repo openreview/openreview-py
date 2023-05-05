@@ -1454,6 +1454,33 @@ def get_neurips_profile_info(profile, n_years=None):
         'publications': publications
     }
 
+def get_sac_profile_info(profile, submission_venue_id):
+    """
+    Gets only submissions submitted to the current venue
+
+    :param profile: Profile from which all publications will be obtained
+    :type profile: Profile
+    :param submission_venue_id: venue_id of submissions we want to obtain
+    :type submission_venue_id: str
+
+    :return: Dictionary with the current publications associated with the passed Profile
+    :rtype: dict
+    """
+    publications = set()
+
+    ## Get publications
+    for publication in profile.content.get('publications', []):
+        print(publication.content)
+        if isinstance(publication.content.get('venueid'), dict) and publication.content['venueid']['value'] == submission_venue_id:
+            publications.add(publication.id)
+
+    return {
+        'id': profile.id,
+        'domains': set(),
+        'emails': set(),
+        'relations': set(),
+        'publications': publications
+    }
 
 def post_bulk_edges (client, edges, batch_size = 50000):
     num_edges = len(edges)

@@ -22,6 +22,7 @@ class Matching(object):
         self.is_senior_area_chair = venue.get_senior_area_chairs_id() == match_group.id
         self.is_ethics_reviewer = venue.get_ethics_reviewers_id() == match_group.id
         self.should_read_by_area_chair = venue.get_reviewers_id() == match_group.id and venue.use_area_chairs
+        self.sac_profile_info = None #expects a policy, for example: openreview.tools.get_sac_profile_info
 
     def _get_edge_invitation_id(self, edge_name):
         return self.venue.get_invitation_id(edge_name, prefix=self.match_group.id)
@@ -250,12 +251,14 @@ class Matching(object):
 
         ## for AC conflicts, check SAC conflicts too
         sac_user_info_by_id = {}
-        sac_assignment_edges = {}
         if self.is_area_chair:
             sacs_by_ac =  { g['id']['head']: [v['tail'] for v in g['values']] for g in self.client.get_grouped_edges(invitation=self.venue.get_assignment_id(self.venue.get_senior_area_chairs_id()), groupby='head', select=None)}
             if sacs_by_ac:
                 sac_user_profiles = openreview.tools.get_profiles(self.client, self.client.get_group(self.venue.get_senior_area_chairs_id()).members, with_publications=True)
-                sac_user_info_by_id = { p.id: info_function(p, compute_conflicts_n_years) for p in sac_user_profiles }
+                if self.sac_profile_info:
+                    sac_user_info_by_id = { p.id: self.sac_profile_info(p, self.venue.get_submission_venue_id()) for p in sac_user_profiles }
+                else:
+                    sac_user_info_by_id = { p.id: info_function(p, compute_conflicts_n_years) for p in sac_user_profiles }
         edges = []
 
         for submission in tqdm(submissions, total=len(submissions), desc='_build_conflicts'):
@@ -296,7 +299,7 @@ class Matching(object):
                             conflicts.update(author_relations.intersection(sac_info['emails']))
                             conflicts.update(author_emails.intersection(sac_info['relations']))
                             conflicts.update(author_emails.intersection(sac_info['emails']))
-                            conflicts.update(author_publications.intersection(sac_info['publications']))                            
+                            conflicts.update(author_publications.intersection(sac_info['publications']))        
 
                 if conflicts:
                     edges.append(Edge(
