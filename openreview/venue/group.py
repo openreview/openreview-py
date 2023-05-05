@@ -111,11 +111,13 @@ class GroupBuilder(object):
             readers.append(self.venue.get_reviewers_id(number))
         return readers
 
-    def create_venue_group(self, partial_submission_venue_id=None):
+    def create_venue_group(self, sub_venue_id=None):
 
         venue_id = self.venue_id
         groups = self.build_groups(venue_id)
         venue_group = groups[-1]
+
+        submission_venue_id = None if sub_venue_id is None else f"{sub_venue_id}/Submission"
 
         if venue_group.web is None:
 
@@ -138,7 +140,7 @@ class GroupBuilder(object):
             'pc_submission_revision_id': { 'value': self.venue.get_pc_submission_revision_id() },
             'meta_invitation_id': { 'value': self.venue.get_meta_invitation_id() },
             'submission_name': { 'value': self.venue.submission_stage.name },
-            'submission_venue_id': { 'value': self.venue.get_submission_venue_id(partial_submission_venue_id) },
+            'submission_venue_id': { 'value': self.venue.get_submission_venue_id(submission_venue_id) },
             'withdrawn_venue_id': { 'value': self.venue.get_withdrawn_submission_venue_id() },
             'desk_rejected_venue_id': { 'value': self.venue.get_desk_rejected_submission_venue_id() },
             'rejected_venue_id': { 'value': self.venue.get_rejected_submission_venue_id() },
@@ -156,7 +158,7 @@ class GroupBuilder(object):
             'reviewers_name': { 'value': self.venue.reviewers_name },
             'reviewers_anon_name': { 'value': self.venue.get_anon_reviewers_name() },
             'reviewers_submitted_name': { 'value': 'Submitted' },
-            'reviewers_custom_max_papers_id': { 'value': self.venue.get_custom_max_papers_id(self.venue.get_reviewers_id()) },
+            'reviewers_custom_max_papers_id': { 'value': self.venue.get_custom_max_papers_id(self.venue.get_reviewers_id(), sub_venue_id=sub_venue_id) },
             'reviewers_affinity_score_id': { 'value': self.venue.get_affinity_score_id(self.venue.get_reviewers_id()) },
             'reviewers_conflict_id': { 'value': self.venue.get_conflict_score_id(self.venue.get_reviewers_id()) },
             'reviewers_assignment_id': { 'value': self.venue.get_assignment_id(self.venue.get_reviewers_id(), deployed=True) },
@@ -192,7 +194,7 @@ class GroupBuilder(object):
             content['area_chairs_id'] = { 'value': self.venue.get_area_chairs_id() }
             content['area_chairs_name'] = { 'value': self.venue.area_chairs_name }
             content['area_chairs_anon_name'] = { 'value': self.venue.get_anon_area_chairs_name() }
-            content['area_chairs_custom_max_papers_id'] = { 'value': self.venue.get_custom_max_papers_id(self.venue.get_area_chairs_id()) }
+            content['area_chairs_custom_max_papers_id'] = { 'value': self.venue.get_custom_max_papers_id(self.venue.get_area_chairs_id(), sub_venue_id=sub_venue_id) }
             content['area_chairs_affinity_score_id'] = { 'value': self.venue.get_affinity_score_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_conflict_id'] = { 'value': self.venue.get_conflict_score_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_recruitment_id'] = { 'value': self.venue.get_recruitment_id(self.venue.get_area_chairs_id()) }

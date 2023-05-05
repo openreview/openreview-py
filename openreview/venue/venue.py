@@ -137,8 +137,8 @@ class Venue(object):
     def get_conflict_score_id(self, committee_id):
         return self.get_invitation_id('Conflict', prefix=committee_id)
 
-    def get_custom_max_papers_id(self, committee_id):
-        return self.get_invitation_id('Custom_Max_Papers', prefix=committee_id)
+    def get_custom_max_papers_id(self, committee_id, sub_venue_id=None):
+        return self.get_invitation_id('Custom_Max_Papers' if not sub_venue_id else f"{sub_venue_id}/Custom_Max_Papers", prefix=committee_id)
 
     def get_recommendation_id(self, committee_id=None):
         if not committee_id:
@@ -351,11 +351,11 @@ class Venue(object):
             invitation = f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{invitation_name}'
             self.invitation_builder.expire_invitation(invitation)
 
-    def setup(self, program_chair_ids=[], partial_submission_venue_id=None):
+    def setup(self, program_chair_ids=[], sub_venue_id=None):
     
         self.invitation_builder.set_meta_invitation()
 
-        self.group_builder.create_venue_group(partial_submission_venue_id)
+        self.group_builder.create_venue_group(sub_venue_id=sub_venue_id)
 
         self.group_builder.create_program_chairs_group(program_chair_ids)
 

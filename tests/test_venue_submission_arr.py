@@ -111,11 +111,10 @@ class TestVenueSubmissionARR():
 
     def test_setup(self, venue, openreview_client, helpers):
         cycle = '2023_March'
-        cycleid = f"{cycle}/Submission"
 
         # Set up unavailability
 
-        venue.setup(program_chair_ids=['editors@aclrollingreview.org'], partial_submission_venue_id=cycleid)
+        venue.setup(program_chair_ids=['editors@aclrollingreview.org'], sub_venue_id=cycle)
         venue.create_submission_stage(sub_venue_id=cycle)
         venue.create_review_stage(sub_venue_id=cycle)
         venue.create_meta_review_stage(sub_venue_id=cycle)
@@ -361,66 +360,6 @@ class TestVenueSubmissionARR():
         assert openreview_client.get_invitation(f'ARR/-/{cycle}/Rebuttal')
         assert openreview_client.get_invitation(f'ARR/Submission1/-/{cycle}/Rebuttal')
 
-    def test_setup_new_cycle(self, venue, openreview_client, helpers):
-        cycle = '2023_May'
-        cycleid = f"{cycle}/Submission"
-
-        venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS, SubmissionStage.Readers.AREA_CHAIRS]
-        venue.submission_stage.exp_date = datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
-
-        venue.setup(program_chair_ids=['editors@aclrollingreview.org'], partial_submission_venue_id=cycleid)
-        venue.create_submission_stage(sub_venue_id=cycle)
-        venue.create_review_stage(sub_venue_id=cycle)
-        venue.create_meta_review_stage(sub_venue_id=cycle)
-        venue.create_review_rebuttal_stage(sub_venue_id=cycle)
-        assert openreview_client.get_group('ARR')
-        assert openreview_client.get_group('ARR/Authors')
-
-    def test_may_submission_stage(self, venue, openreview_client, helpers):
-
-        assert openreview_client.get_invitation('ARR/-/Submission')
-
-        author_client = OpenReviewClient(username='harold@maileleven.com', password=helpers.strong_password)
-
-        submission_note_1 = author_client.post_note_edit(
-            invitation='ARR/-/Submission',
-            signatures= ['~Harold_Eleven1'],
-            note=Note(
-                content={
-                    'title': { 'value': 'Paper 3 Title' },
-                    'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['Harold Eleven']},
-                    'authorids': { 'value': ['~Harold_Eleven1']},
-                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'keywords': {'value': ['aa'] }
-                }
-            ))
-
-        helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id']) 
-
-        submission = openreview_client.get_note(submission_note_1['note']['id'])
-        assert len(submission.readers) == 2
-        assert 'ARR' in submission.readers
-        assert ['ARR', '~Harold_Eleven1'] == submission.readers
-
-        #TODO: check emails, check author console
-
-        submission_note_2 = author_client.post_note_edit(
-            invitation='ARR/-/Submission',
-            signatures= ['~Harold_Eleven1'],
-            note=Note(
-                content={
-                    'title': { 'value': 'Paper 4 Title' },
-                    'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['Harold Eleven']},
-                    'authorids': { 'value': ['~Harold_Eleven1']},
-                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'keywords': {'value': ['aa'] }
-                }
-            ))
-
-        helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id']) 
-
     def test_withdraw_march_submission(self, venue, openreview_client, helpers):
         cycle = '2023_March'
 
@@ -605,5 +544,65 @@ class TestVenueSubmissionARR():
         assert proposed_assignment_edge
         assert proposed_assignment_edge.nonreaders == ['ARR/Submission1/Authors']
 
-        custom_load_edges = openreview_client.get_edges_count(invitation='ARR/Reviewers/-/Custom_Max_Papers')
+        custom_load_edges = openreview_client.get_edges_count(invitation='ARR/Reviewers/-/2023_March/Custom_Max_Papers')
         assert custom_load_edges == 1
+
+    def test_setup_new_cycle(self, venue, openreview_client, helpers):
+        cycle = '2023_May'
+        cycleid = f"{cycle}/Submission"
+
+        venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS, SubmissionStage.Readers.AREA_CHAIRS]
+        venue.submission_stage.exp_date = datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
+
+        venue.setup(program_chair_ids=['editors@aclrollingreview.org'], sub_venue_id=cycle)
+        venue.create_submission_stage(sub_venue_id=cycle)
+        venue.create_review_stage(sub_venue_id=cycle)
+        venue.create_meta_review_stage(sub_venue_id=cycle)
+        venue.create_review_rebuttal_stage(sub_venue_id=cycle)
+        assert openreview_client.get_group('ARR')
+        assert openreview_client.get_group('ARR/Authors')
+
+    def test_may_submission_stage(self, venue, openreview_client, helpers):
+
+        assert openreview_client.get_invitation('ARR/-/Submission')
+
+        author_client = OpenReviewClient(username='harold@maileleven.com', password=helpers.strong_password)
+
+        submission_note_1 = author_client.post_note_edit(
+            invitation='ARR/-/Submission',
+            signatures= ['~Harold_Eleven1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper 3 Title' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['Harold Eleven']},
+                    'authorids': { 'value': ['~Harold_Eleven1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'keywords': {'value': ['aa'] }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id']) 
+
+        submission = openreview_client.get_note(submission_note_1['note']['id'])
+        assert len(submission.readers) == 2
+        assert 'ARR' in submission.readers
+        assert ['ARR', '~Harold_Eleven1'] == submission.readers
+
+        #TODO: check emails, check author console
+
+        submission_note_2 = author_client.post_note_edit(
+            invitation='ARR/-/Submission',
+            signatures= ['~Harold_Eleven1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper 4 Title' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['Harold Eleven']},
+                    'authorids': { 'value': ['~Harold_Eleven1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'keywords': {'value': ['aa'] }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id'])
