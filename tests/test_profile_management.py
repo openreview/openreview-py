@@ -996,8 +996,8 @@ The OpenReview Team.
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Paul_Last1'})
         assert len(publications) == 3
-        assert ['~SomeFirstName_User1', '~Paul_Last1'] == publications[0].writers
-        assert ['~SomeFirstName_User1', '~Paul_Last1'] == publications[0].readers
+        assert ['ACMM.org/2023/Conference', '~SomeFirstName_User1', '~Paul_Last1'] == publications[0].writers
+        assert ['ACMM.org/2023/Conference', '~SomeFirstName_User1', '~Paul_Last1'] == publications[0].readers
         assert ['~SomeFirstName_User1'] == publications[0].signatures
 
         note = openreview_client.get_note(note_id_2)
