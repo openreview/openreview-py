@@ -1042,7 +1042,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 if ack_invitation:
                     return ack_invitation
                 
-            print('no responisibility invitation for', profile.id)
+            print('no responsibility invitation for', profile.id)
 
         def get_ack_invitation(submission_number, profile):
             for name in profile.content['names']:
