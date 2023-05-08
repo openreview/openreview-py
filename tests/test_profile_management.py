@@ -6,6 +6,7 @@ from openreview import ProfileManagement
 from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.journal import Journal
+from openreview.venue import Venue
 import pytest
 
 class TestProfileManagement():
@@ -764,8 +765,13 @@ The OpenReview Team.
     def test_rename_publications_from_api2(self, client, profile_management, test_client, helpers, openreview_client):
 
         journal=Journal(openreview_client, 'CABJ', '1234', contact_info='cabj@mail.org', full_name='Transactions on Machine Learning Research', short_name='CABJ', submission_name='Submission')
-        journal.setup(support_role='test@mail.com', editors=[])        
+        journal.setup(support_role='test@mail.com', editors=[])
 
+        venue = Venue(openreview_client, 'ACMM.org/2023/Conference', 'openreview.net/Support')        
+        venue.submission_stage = openreview.stages.SubmissionStage(double_blind=True, due_date=datetime.datetime.utcnow() + datetime.timedelta(minutes = 30))
+        venue.setup(program_chair_ids=['venue_pc@mail.com'])
+        venue.create_submission_stage()        
+        
         paul_client = helpers.create_user('paul@profile.org', 'Paul', 'Last', alternates=[], institution='google.com')
         profile = paul_client.get_profile()
 
@@ -826,7 +832,7 @@ The OpenReview Team.
                     'human_subjects_reporting': { 'value': 'Not applicable'}
                 }
             ))
-
+        
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])                   
 
         submission_note_2 = paul_client_v2.post_note_edit(invitation='CABJ/-/Submission',
@@ -894,7 +900,23 @@ journal={Transactions on Machine Learning Research},
 year={''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_2 + '''},
 note={}
-}'''       
+}'''
+
+        test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        submission_note_1 = test_client.post_note_edit(invitation='ACMM.org/2023/Conference/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['SomeFirstName User', 'Paul Alternate Last']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Paul_Alternate_Last1']},
+                    'keywords': { 'value': ['data', 'mining']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' }
+                }
+            ))
+        
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
 
         ## Create committee groups
         client.post_group(openreview.Group(
@@ -973,7 +995,10 @@ The OpenReview Team.
         assert '~Paul_Last1' in publications[1].signatures
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Paul_Last1'})
-        assert len(publications) == 2
+        assert len(publications) == 3
+        assert ['~SomeFirstName_User1', '~Paul_Last1'] == publications[0].writers
+        assert ['~SomeFirstName_User1', '~Paul_Last1'] == publications[0].readers
+        assert ['~SomeFirstName_User1'] == publications[0].signatures
 
         note = openreview_client.get_note(note_id_2)
         assert note.content['_bibtex']['value'] == '''@article{
