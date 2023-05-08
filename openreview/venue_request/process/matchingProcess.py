@@ -71,7 +71,7 @@ Affinity scores and/or conflicts could not be computed for the users listed unde
         else:
             profiles_status = f'''Affinity scores and/or conflicts were successfully computed. To run the matcher, click on the '{role_name} Paper Assignment' link in the PC console: https://openreview.net/group?id={conference.get_program_chairs_id()}
 
-Please refer to the FAQ for pointers on how to run the matcher: https://openreview.net/faq#question-edge-browswer'''
+Please refer to the documentation for instructions on how to run the matcher: https://docs.openreview.net/how-to-guides/paper-matching-and-assignment/how-to-do-automatic-assignments'''
 
             comment_note.content['comment'] += f'''{profiles_status}'''
 
