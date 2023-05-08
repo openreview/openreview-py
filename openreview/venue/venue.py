@@ -49,6 +49,7 @@ class Venue(object):
         self.comment_stage = None
         self.decision_stage = None
         self.custom_stage = None
+        self.custom_stages = []
         self.submission_revision_stage = None
         self.registration_stages = []
         self.use_area_chairs = False
@@ -488,6 +489,9 @@ class Venue(object):
 
     def create_custom_stage(self):
         return self.invitation_builder.set_custom_stage_invitation()
+
+    def create_custom_stages(self):
+        return self.invitation_builder.set_custom_stage_invitations() 
     
     def update_conflict_policies(self, committee_id, compute_conflicts, compute_conflicts_n_years):
         content = {}
