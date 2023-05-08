@@ -2757,7 +2757,7 @@ ICML 2023 Conference Program Chairs'''
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
-        venue.custom_stage = openreview.stages.CustomStage(name='Review_Rating',
+        venue.custom_stages = [openreview.stages.CustomStage(name='Review_Rating',
             reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
             due_date=due_date,
@@ -2782,9 +2782,9 @@ ICML 2023 Conference Program Chairs'''
                 }
             },
             notify_readers=True, 
-            email_sacs=True)
+            email_sacs=True)]
 
-        venue.create_custom_stage()
+        venue.create_custom_stages()
 
         submissions = venue.get_submissions(sort='number:asc', details='directReplies')
         first_submission = submissions[0]
@@ -2854,7 +2854,7 @@ ICML 2023 Conference Program Chairs'''
         assert notes[0].signatures == [ac_anon_group_id]
 
         #hide review ratings from Senior Area Chairs
-        venue.custom_stage = openreview.stages.CustomStage(name='Review_Rating',
+        venue.custom_stages = [openreview.stages.CustomStage(name='Review_Rating',
             reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
             due_date=due_date,
@@ -2877,9 +2877,9 @@ ICML 2023 Conference Program Chairs'''
                         }
                     }
                 }
-            })
+            })]
 
-        venue.create_custom_stage()
+        venue.create_custom_stages()
 
         notes = pc_client_v2.get_notes(invitation=invitation.id)
         assert len(notes) == 1
@@ -3625,7 +3625,7 @@ ICML 2023 Conference Program Chairs'''
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
-        venue.custom_stage = openreview.stages.CustomStage(name='Meta_Review_Agreement',
+        venue.custom_stages = [openreview.stages.CustomStage(name='Meta_Review_Agreement',
             reply_to=openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
             due_date=due_date,
@@ -3661,9 +3661,9 @@ ICML 2023 Conference Program Chairs'''
                 }
             },
             notify_readers=False, 
-            email_sacs=False)
+            email_sacs=False)]
 
-        venue.create_custom_stage()
+        venue.create_custom_stages()
 
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review_Agreement')) == 1
 

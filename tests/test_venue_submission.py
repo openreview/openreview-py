@@ -76,7 +76,7 @@ class TestVenueSubmission():
             only_accepted=True
         )
 
-        venue.custom_stage = openreview.stages.CustomStage(
+        venue.custom_stages = [openreview.stages.CustomStage(
             name='Camera_Ready_Verification',
             source=openreview.stages.CustomStage.Source.ACCEPTED_SUBMISSIONS,
             reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
@@ -101,7 +101,7 @@ class TestVenueSubmission():
             email_pcs=True,
             email_template='''The camera ready verification for submission number {submission_number} has been posted.
 Please follow this link: https://openreview.net/forum?id={submission_id}&noteId={note_id}'''
-        )
+        )]
 
         return venue
 
@@ -113,7 +113,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         venue.create_review_rebuttal_stage()
         venue.create_meta_review_stage()
         venue.create_submission_revision_stage()
-        venue.create_custom_stage()
+        venue.create_custom_stages()
         assert openreview_client.get_group('TestVenue.cc')
         assert openreview_client.get_group('TestVenue.cc/Authors')
 
