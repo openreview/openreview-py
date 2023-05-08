@@ -107,6 +107,38 @@ class TestVenueSubmissionARR():
             ),
         ]
 
+        venue.custom_stage = openreview.stages.CustomStage(
+            name='Action_Editor_Checklist',
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
+            start_date=now + datetime.timedelta(minutes = 10),
+            due_date=now + datetime.timedelta(minutes = 40),
+            invitees=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
+            readers=[
+                openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
+                openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED,
+            ],
+            content={
+                "verification": {
+                    "order": 1,
+                    "value": {
+                    "param": {
+                        "type": "string",
+                        "enum": [
+                        "I confirm that camera ready manuscript complies with the TV 22 stylefile and, if appropriate, includes the minor revisions that were requested."
+                        ],
+                        "input": "checkbox"
+                    }
+                    }
+                }
+            },
+            multi_reply=False,
+            email_pcs=False,
+            email_sacs=False,
+            notify_readers=False,
+        )
+
         return venue
 
     def test_setup(self, venue, openreview_client, helpers):
