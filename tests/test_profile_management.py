@@ -108,7 +108,7 @@ class TestProfileManagement():
                 'title': 'Paper title 2',
                 'abstract': 'Paper abstract 2',
                 'authors': ['John Last', 'Test Client'],
-                'authorids': ['~John_Last1', 'test@mail.com']
+                'authorids': ['~John_Last1', 'test@mail.com', 'another@mail.com']
             }
         ))
 
@@ -191,6 +191,8 @@ The OpenReview Team.
         assert len(publications) == 2
         assert '~John_Last1' in publications[0].writers
         assert '~John_Last1' in publications[0].signatures
+        assert ['John Last', 'Test Client'] == publications[0].content['authors']
+        assert ['~John_Last1', 'test@mail.com', 'another@mail.com'] == publications[0].content['authorids']
         assert '~John_Last1' in publications[1].writers
         assert '~John_Last1' in publications[1].signatures
 
