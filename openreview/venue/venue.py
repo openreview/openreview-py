@@ -507,8 +507,11 @@ class Venue(object):
 
             self.post_decisions(decisions, api1_client)
 
-    def create_custom_stage(self):
-        return self.invitation_builder.set_custom_stage_invitation()
+    def create_custom_stage(self, sub_venue_id=None):
+        sub_venue_invitation = None
+        if sub_venue_id is not None:
+            sub_venue_invitation = self.invitation_builder.set_sub_venue_custom_stage_invitation(sub_venue_id=sub_venue_id)
+        return self.invitation_builder.set_custom_stage_invitation(sub_venue_id=sub_venue_id, sub_venue_invitation=sub_venue_invitation)
 
     def post_decisions(self, decisions_file, api1_client):
 
