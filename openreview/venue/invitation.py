@@ -9,6 +9,8 @@ from openreview.api import Note
 from openreview.stages import *
 from .. import tools
 
+# TODO: Deeply nested dates need to get values from above values
+
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
 
@@ -2671,7 +2673,7 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_custom_stage_invitation(self):
+    def set_sub_venue_custom_stage_invitation(self):
 
         venue_id = self.venue_id
         custom_stage = self.venue.custom_stage
@@ -2681,6 +2683,210 @@ class InvitationBuilder(object):
         custom_stage_expdate = tools.datetime_millis(custom_stage.exp_date) if custom_stage.exp_date else None
         if not custom_stage_expdate:
             custom_stage_expdate = tools.datetime_millis(custom_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if custom_stage.due_date else None
+
+        content = custom_stage.get_content(api_version='2', conference=self.venue)
+
+        custom_stage_replyto = custom_stage.get_reply_to()
+        custom_stage_source = custom_stage.get_source_submissions()
+
+        paper_invitation_id = self.venue.get_invitation_id(name='${4/content/subvenueid/value}' + f"/{custom_stage.name}", number='${2/content/noteNumber/value}')
+        with_invitation = self.venue.get_invitation_id(name=custom_stage.name, number='${6/content/noteNumber/value}')
+        if custom_stage_replyto == 'forum':
+            reply_to = '${4/content/noteId/value}'
+        elif custom_stage_replyto == 'withForum':
+            reply_to = {
+                'param': {
+                    'withForum': '${6/content/noteId/value}'
+                }
+            }
+        else:
+            paper_invitation_id = self.venue.get_invitation_id(name='${4/content/subvenueid/value}' + f"/{custom_stage.name}", prefix='${2/content/replytoSignatures/value}')
+            with_invitation = self.venue.get_invitation_id(name='${4/content/subvenueid/value}' + f"/{custom_stage.name}", prefix='${6/content/replytoSignatures/value}')
+            reply_to = '${4/content/replyto/value}'
+
+        invitation_content = {
+            'source': { 'value': custom_stage_source },
+            'reply_to': { 'value': custom_stage_replyto },
+            'email_pcs': { 'value': custom_stage.email_pcs },
+            'email_sacs': { 'value': custom_stage.email_sacs },
+            'notify_readers': { 'value': custom_stage.notify_readers },
+            'email_template': { 'value': custom_stage.email_template if custom_stage.email_template else '' },
+            'custom_stage_process_script': { 'value': self.get_process_content('process/custom_stage_process.py')}
+        }
+
+        # New invitation
+        invitation = Invitation(
+            id=custom_stage_invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'subvenueid': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string' 
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': self.venue.get_invitation_id('${2/content/subvenueid/value}' + f"/{custom_stage.name}"),
+                    'readers': [venue_id],
+                    'writers': [venue_id],
+                    'invitees': [venue_id],
+                    'signatures': [venue_id],
+                    'cdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True, 
+                        }
+                    },
+                    'duedate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True, 
+                        }
+                    },
+                    'expdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True, 
+                        }
+                    },
+                    'dateprocesses': [{ 
+                        'dates': ["#{4/cdate}", self.update_date_string],
+                        'script': self.invitation_edit_process              
+                    }],
+                    'content': invitation_content,
+                    'edit': {
+                        'signatures': [venue_id],
+                        'readers': [venue_id],
+                        'writers': [venue_id],
+                        'content': {
+                            'noteNumber': { 
+                                'value': {
+                                    'param': {
+                                        'regex': '.*', 'type': 'integer' 
+                                    }
+                                }
+                            },
+                            'noteId': {
+                                'value': {
+                                    'param': {
+                                        'regex': '.*', 'type': 'string' 
+                                    }
+                                }
+                            }
+                        },
+                        'replacement': True,
+                        'invitation': {
+                            'id': paper_invitation_id,
+                            'signatures': [venue_id],
+                            'readers': ['everyone'],
+                            'writers': [venue_id],
+                            'minReplies': 1,
+                            'invitees': custom_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}'),
+                            'cdate': custom_stage_cdate,
+                            'process': '''def process(client, edit, invitation):
+            meta_invitation = client.get_invitation(invitation.invitations[0])
+            script = meta_invitation.content['custom_stage_process_script']['value']
+            funcs = {
+                'openreview': openreview
+            }
+            exec(script, funcs)
+            funcs['process'](client, edit, invitation)
+        ''',
+                            'edit': {
+                                'signatures': { 'param': { 'regex': custom_stage.get_signatures_regex(self.venue, '${5/content/noteNumber/value}') }},
+                                'readers': custom_stage.get_readers(self.venue, '${4/content/noteNumber/value}'),
+                                'writers': [venue_id],
+                                'note': {
+                                    'id': {
+                                        'param': {
+                                            'withInvitation': with_invitation,
+                                            'optional': True
+                                        }
+                                    },
+                                    'forum': '${4/content/noteId/value}',
+                                    'replyto': reply_to,
+                                    'ddate': {
+                                        'param': {
+                                            'range': [ 0, 9999999999999 ],
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    },
+                                    'signatures': ['${3/signatures}'],
+                                    'readers': ['${3/readers}'],
+                                    'writers': [venue_id, '${3/signatures}'],
+                                    'content': content
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        if custom_stage_replyto in ['reviews', 'metareviews']:
+            invitation.edit['invitation']['edit']['content']['replytoSignatures'] = {
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'string',
+                        'optional': True
+                    }
+                }
+            }
+            invitation.edit['invitation']['edit']['content']['replyto'] = {
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'string',
+                        'optional': True
+                    }
+                }
+            }
+
+        if custom_stage_duedate:
+            invitation.edit['invitation']['edit']['invitation']['duedate'] = custom_stage_duedate
+        if custom_stage_expdate:
+            invitation.edit['invitation']['edit']['invitation']['expdate'] = custom_stage_expdate
+        if not custom_stage.multi_reply:
+            invitation.edit['invitation']['edit']['invitation']['maxReplies'] = 1
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
+
+    def set_custom_stage_invitation(self, sub_venue_id=None, sub_venue_invitation=None):
+
+        venue_id = self.venue_id
+        custom_stage = self.venue.custom_stage
+        custom_stage_name = custom_stage.name if sub_venue_id is None else f"{sub_venue_id}/{custom_stage.name}"
+        custom_stage_invitation_id = self.venue.get_invitation_id(custom_stage_name)
+        custom_stage_cdate = tools.datetime_millis(custom_stage.start_date if custom_stage.start_date else datetime.datetime.utcnow())
+        custom_stage_duedate = tools.datetime_millis(custom_stage.due_date) if custom_stage.due_date else None
+        custom_stage_expdate = tools.datetime_millis(custom_stage.exp_date) if custom_stage.exp_date else None
+        if not custom_stage_expdate:
+            custom_stage_expdate = tools.datetime_millis(custom_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if custom_stage.due_date else None
+
+        if sub_venue_id is not None and sub_venue_invitation is not None:
+            invitation=Invitation(id=custom_stage_invitation_id,
+                    cdate=custom_stage_cdate,
+                    duedate=custom_stage_duedate,
+                    expdate=custom_stage_expdate,
+                    signatures=[venue_id]
+                )
+            content = {
+                'subvenueid': {
+                    'value': sub_venue_id
+                }
+            }
+            self.save_invitation(invitation, invitations=sub_venue_invitation.id, content=content)
+            return invitation
 
         content = custom_stage.get_content(api_version='2', conference=self.venue)
 
