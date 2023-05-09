@@ -434,8 +434,6 @@ class TestVenueRequest():
         assert title_tag
         assert title_tag.text == '{} Updated'.format(venue['request_form_note'].content['title'])
 
-        assert False
-
     def test_venue_recruitment_email_error(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Reviewer Recruitment
