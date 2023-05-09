@@ -23,6 +23,7 @@ class Matching(object):
         self.is_ethics_reviewer = venue.get_ethics_reviewers_id() == match_group.id
         self.should_read_by_area_chair = venue.get_reviewers_id() == match_group.id and venue.use_area_chairs
         self.sac_profile_info = None #expects a policy, for example: openreview.tools.get_sac_profile_info
+        self.sac_n_years = None
 
     def _get_edge_invitation_id(self, edge_name):
         return self.venue.get_invitation_id(edge_name, prefix=self.match_group.id)
@@ -256,7 +257,8 @@ class Matching(object):
             if sacs_by_ac:
                 sac_user_profiles = openreview.tools.get_profiles(self.client, self.client.get_group(self.venue.get_senior_area_chairs_id()).members, with_publications=True)
                 if self.sac_profile_info:
-                    sac_user_info_by_id = { p.id: self.sac_profile_info(p, self.venue.get_submission_venue_id()) for p in sac_user_profiles }
+                    info_funcion = tools.info_function_builder(self.sac_profile_info)
+                    sac_user_info_by_id = { p.id: info_funcion(p, self.sac_n_years, self.venue.get_submission_venue_id()) for p in sac_user_profiles }
                 else:
                     sac_user_info_by_id = { p.id: info_function(p, compute_conflicts_n_years) for p in sac_user_profiles }
         edges = []

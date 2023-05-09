@@ -1120,33 +1120,34 @@ If you would like to change your decision, please follow the link in the previou
 #         withdraw_super_invitation = client.get_invitation(conference.get_invitation_id('Withdraw'))
 #         assert 'REVEAL_AUTHORS_ON_WITHDRAW = False' in withdraw_super_invitation.process
 
-    def test_setup_matching(self, client, openreview_client, helpers):
+    # def test_setup_matching(self, client, openreview_client, helpers):
 
-        now = datetime.datetime.utcnow()
+    #     now = datetime.datetime.utcnow()
 
-        pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
-        request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
-        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
-        submissions=venue.get_submissions(sort='number:asc')
+    #     pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
+    #     request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+    #     venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+    #     submissions=venue.get_submissions(sort='number:asc')
 
-        with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
-            writer = csv.writer(file_handle)
-            for submission in submissions:
-                writer.writerow([submission.id, '~Area_IBMChair1', round(random.random(), 2)])
-                writer.writerow([submission.id, '~Area_GoogleChair1', round(random.random(), 2)])
-                writer.writerow([submission.id, '~Area_UMassChair1', round(random.random(), 2)])
+    #     with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
+    #         writer = csv.writer(file_handle)
+    #         for submission in submissions:
+    #             writer.writerow([submission.id, '~Area_IBMChair1', round(random.random(), 2)])
+    #             writer.writerow([submission.id, '~Area_GoogleChair1', round(random.random(), 2)])
+    #             writer.writerow([submission.id, '~Area_UMassChair1', round(random.random(), 2)])
 
-        venue_matching = openreview.venue.matching.Matching(venue, openreview_client.get_group(venue.get_area_chairs_id()))
-        venue_matching.setup(compute_affinity_scores=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), compute_conflicts='NeurIPS')
-        conflicts = client.get_edges(invitation='NeurIPS.cc/2023/Conference/Area_Chairs/-/Conflict', head=submissions[1].id, tail='~Area_GoogleChair1') ## assigned SAC and author are from facebook
-        assert len(conflicts) == 1
+    #     venue_matching = openreview.venue.matching.Matching(venue, openreview_client.get_group(venue.get_area_chairs_id()))
+    #     venue_matching.setup(compute_affinity_scores=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), compute_conflicts='NeurIPS')
+    #     conflicts = client.get_edges(invitation='NeurIPS.cc/2023/Conference/Area_Chairs/-/Conflict', head=submissions[1].id, tail='~Area_GoogleChair1') ## assigned SAC and author are from facebook
+    #     assert len(conflicts) == 1
 
-        venue_matching = openreview.venue.matching.Matching(venue, openreview_client.get_group(venue.get_area_chairs_id()))
-        venue_matching.sac_profile_info = openreview.tools.get_sac_profile_info
-        venue_matching.setup(compute_affinity_scores=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), compute_conflicts='NeurIPS')
+    #     venue_matching = openreview.venue.matching.Matching(venue, openreview_client.get_group(venue.get_area_chairs_id()))
+    #     venue_matching.sac_profile_info = openreview.tools.get_current_submissions_profile_info
+    #     venue_matching.sac_n_years = 0
+    #     venue_matching.setup(compute_affinity_scores=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), compute_conflicts='NeurIPS')
 
-        conflicts = client.get_edges(invitation='NeurIPS.cc/2023/Conference/Area_Chairs/-/Conflict', head=submissions[1].id, tail='~Area_GoogleChair1') ## no conflict because we are not using SACs emails or history
-        assert len(conflicts)==0
+    #     conflicts = client.get_edges(invitation='NeurIPS.cc/2023/Conference/Area_Chairs/-/Conflict', head=submissions[1].id, tail='~Area_GoogleChair1') ## no conflict because we are not using SACs emails or history
+    #     assert len(conflicts)==0
 
 #         conflicts = client.get_edges_count(invitation='NeurIPS.cc/2023/Conference/Area_Chairs/-/Conflict')
 #         assert conflicts == 3

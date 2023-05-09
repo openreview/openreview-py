@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
+import inspect
 
 import json
 import os
@@ -1244,10 +1245,14 @@ def get_all_venues(client):
     return client.get_group("host").members
 
 def info_function_builder(policy_function):
-    def inner(profile, n_years=None):
+    def inner(profile, n_years=None, submission_venueid=None):
         common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
                     'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
-        result = policy_function(profile, n_years)
+        argspec = inspect.getfullargspec(policy_function)
+        if 'submission_venueid' in argspec.args:
+            result = policy_function(profile, n_years, submission_venueid)
+        else:
+            result = policy_function(profile, n_years)
         domains = set()
         subdomains_dict = {}
         for domain in result['domains']:
@@ -1454,7 +1459,7 @@ def get_neurips_profile_info(profile, n_years=None):
         'publications': publications
     }
 
-def get_sac_profile_info(profile, submission_venue_id):
+def get_current_submissions_profile_info(profile, n_years=None, submission_venueid=None):
     """
     Gets only submissions submitted to the current venue
 
@@ -1466,19 +1471,47 @@ def get_sac_profile_info(profile, submission_venue_id):
     :return: Dictionary with the current publications associated with the passed Profile
     :rtype: dict
     """
+    domains = set()
+    relations = set()
     publications = set()
+
+    if n_years is not None:
+        cut_off_date = datetime.datetime.now()
+        cut_off_date = cut_off_date.replace(year=cut_off_date.year - n_years)
+        cut_off_year = cut_off_date.year
+    else:
+        cut_off_year = -1
+
+    ## Institution section, get history within the last n years, excluding internships
+    for h in profile.content.get('history', []):
+        position = h.get('position')
+        if not position or (isinstance(position, str) and 'intern' not in position.lower()):
+            try:
+                end = int(h.get('end', 0) or 0)
+            except:
+                end = 0
+            if not end or (int(end) > cut_off_year):
+                domain = h.get('institution', {}).get('domain', '')
+                domains.add(domain)
+
+    ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
+    for r in profile.content.get('relations', []):
+        if (r.get('relation', '') or '') in ['Coauthor','Coworker']:
+            if r.get('end') is None or int(r.get('end')) > cut_off_year:
+                relations.add(r['email'])
+        else:
+            relations.add(r['email'])
 
     ## Get publications
     for publication in profile.content.get('publications', []):
-        print(publication.content)
-        if isinstance(publication.content.get('venueid'), dict) and publication.content['venueid']['value'] == submission_venue_id:
+        if isinstance(publication.content.get('venueid'), dict) and publication.content['venueid']['value'] == submission_venueid:
             publications.add(publication.id)
 
     return {
         'id': profile.id,
-        'domains': set(),
+        'domains': domains,
         'emails': set(),
-        'relations': set(),
+        'relations': relations,
         'publications': publications
     }
 
