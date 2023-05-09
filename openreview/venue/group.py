@@ -277,7 +277,7 @@ class GroupBuilder(object):
         pc_group = openreview.tools.get_group(self.client, pc_group_id)
         if not pc_group:
             pc_group=Group(id=pc_group_id,
-                            readers=['everyone'],
+                            readers=[venue_id],
                             writers=[venue_id, pc_group_id],
                             signatures=[venue_id],
                             signatories=[pc_group_id, venue_id],

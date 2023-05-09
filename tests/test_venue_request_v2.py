@@ -70,8 +70,7 @@ class TestVenueRequest():
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
-                'api_version': '2',
-                'hide_fields': ['pdf']
+                'api_version': '2'
             })
 
         with pytest.raises(openreview.OpenReviewException, match=r'Assigned area chairs must see the reviewer identity'):
@@ -403,7 +402,8 @@ class TestVenueRequest():
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
-                'submission_email': 'Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}} \n\nIf you have any questions, please contact the PCs at test@mail.com'
+                'submission_email': 'Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}} \n\nIf you have any questions, please contact the PCs at test@mail.com',
+                'hide_fields': ['pdf']
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1212,7 +1212,7 @@ Affinity scores and/or conflicts could not be computed for the users listed unde
         assert matching_status
         assert matching_status.content['comment'] == '''Affinity scores and/or conflicts were successfully computed. To run the matcher, click on the 'Reviewers Paper Assignment' link in the PC console: https://openreview.net/group?id=V2.cc/2030/Conference/Program_Chairs
 
-Please refer to the FAQ for pointers on how to run the matcher: https://openreview.net/faq#question-edge-browswer'''
+Please refer to the documentation for instructions on how to run the matcher: https://docs.openreview.net/how-to-guides/paper-matching-and-assignment/how-to-do-automatic-assignments'''
 
         scores_invitation = openreview_client.get_invitation(conference.get_invitation_id('Affinity_Score', prefix=reviewer_group.id))
         assert scores_invitation
