@@ -1316,7 +1316,7 @@ class OpenReviewClient(object):
 
         return response.json()['count']
 
-    def get_grouped_edges(self, invitation=None, head=None, tail=None, label=None, groupby='head', select=None, limit=None, offset=None):
+    def get_grouped_edges(self, invitation=None, head=None, tail=None, label=None, groupby='head', select=None, limit=None, offset=None, trash=None):
         '''
         Returns a list of JSON objects where each one represents a group of edges.  For example calling this
         method with default arguments will give back a list of groups where each group is of the form:
@@ -1340,6 +1340,7 @@ class OpenReviewClient(object):
         params['select'] = select
         params['limit'] = limit
         params['offset'] = offset
+        params['trash'] = trash
         response = self.session.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         json = response.json()
@@ -1870,13 +1871,16 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    def request_single_paper_expertise(self, name, group_id, paper_id, model=None, baseurl=None):
+    def request_single_paper_expertise(self, name, group_id, paper_id, expertise_selection_id=None, model=None, baseurl=None):
 
         # Build entityA from group_id
         entityA = {
             'type': 'Group',
             'memberOf': group_id
         }
+        if expertise_selection_id and tools.get_invitation(self, expertise_selection_id):
+            expertise = { 'invitation': expertise_selection_id }
+            entityA['expertise'] = expertise        
 
         # Build entityB from paper_id
         entityB = {
@@ -2441,7 +2445,7 @@ class Edge(object):
         body = {
             'invitation': self.invitation,
             'head': self.head,
-            'tail': self.tail,
+            'tail': self.tail
         }
         if self.id:
             body['id'] = self.id
@@ -2459,6 +2463,8 @@ class Edge(object):
             body['weight'] = self.weight
         if self.label is not None:
             body['label'] = self.label
+        if self.cdate:
+            body['cdate'] = self.cdate
 
         return body
 
