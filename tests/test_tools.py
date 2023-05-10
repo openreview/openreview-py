@@ -422,6 +422,58 @@ class TestTools():
         assert replaced_group
         assert replaced_group.members == ['~Super_User1', 'alternate@mail.com', 'noprofile@mail.com']
 
+    def test_get_profile_info(self, client, helpers):
+
+        profile1 = openreview.Profile(
+            id = '~Test_Conflict1',
+            content = {
+                'emails': ['user@cmu.edu'],
+                'history': [{
+                    'institution': {
+                        'domain': '126.com'
+                    }
+                }]
+            }
+        )
+
+        info = openreview.tools.get_profile_info(profile1)
+        assert info['emails'] == set(['user@cmu.edu'])
+        assert info['domains'] == set(['cmu.edu', '126.com'])
+        assert info['id'] == '~Test_Conflict1'
+        assert info['relations'] == set([])
+        assert info['publications'] == set([])
+
+        profile1 = openreview.Profile(
+            id = '~Test_Conflict1',
+            content = {
+                'emails': ['user@cmu.edu'],
+                'history': [{
+                    'institution': {
+                        'domain': '126.com'
+                    }
+                }],
+                'publications': [openreview.Note(
+                    id='1234',
+                    invitation='',
+                    readers=[],
+                    writers=[],
+                    signatures=[],
+                    cdate=999999999999999,
+                    content={
+                        'year': '12023'
+                    }
+                )],
+            }
+        )
+
+        info = openreview.tools.get_profile_info(profile1)
+        assert info['emails'] == set(['user@cmu.edu'])
+        assert info['domains'] == set(['cmu.edu', '126.com'])
+        assert info['id'] == '~Test_Conflict1'
+        assert info['relations'] == set([])
+        assert info['publications'] == set([])        
+
+    
     def test_get_conflicts(self, client, helpers):
 
         helpers.create_user('user@gmail.com', 'First', 'Last')
