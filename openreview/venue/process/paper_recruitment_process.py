@@ -66,6 +66,7 @@ def process(client, edit, invitation):
 
         if not user_profile or user_profile.active == False:
             edge.label='Pending Sign Up'
+            edge.cdate=None
             client.post_edge(edge)
 
             ## Send email to reviewer
@@ -110,6 +111,7 @@ OpenReview Team'''
             edge.label='Conflict Detected'
             edge.readers=[r if r != edge.tail else user_profile.id for r in edge.readers]
             edge.tail=user_profile.id
+            edge.cdate=None
             client.post_edge(edge)
 
             ## Send email to reviewer
@@ -140,6 +142,7 @@ OpenReview Team'''
         edge.label=accepted_label
         edge.readers=[r if r != edge.tail else user_profile.id for r in edge.readers]
         edge.tail=user_profile.id
+        edge.cdate=None
         client.post_edge(edge)
 
         if not assignment_edges:
@@ -219,6 +222,7 @@ OpenReview Team'''
         edge.label=declined_label
         if 'comment' in note.content:
             edge.label=edge.label + ': ' + note.content['comment']['value']
+        edge.cdate=None
         client.post_edge(edge)
 
         ## Send email to reviewer

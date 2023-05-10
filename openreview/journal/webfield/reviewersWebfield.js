@@ -23,6 +23,11 @@ var SUBMISSION_GROUP_NAME = 'Paper';
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var REVIEWERS_CUSTOM_MAX_PAPERS_NAME = 'Custom_Max_Papers';
 var REVIEWERS_AVAILABILITY_NAME = 'Assignment_Availability';
+var REVIEWERS_EXPERTISE_SELECTION_ID = REVIEWERS_ID + '/-/Expertise_Selection';
+var referrerUrl = encodeURIComponent('[Reviewer Console](/group?id=' + VENUE_ID + '/' + REVIEWERS_NAME + '#assigned-papers)');
+
+
+HEADER.instructions += "<br><br><strong>Expertise Selection:</strong><br><a href=/invitation?id=" + REVIEWERS_EXPERTISE_SELECTION_ID + "&referrer=" + referrerUrl + "> Select your expertise</a>"
 
 
 function main() {
@@ -70,8 +75,6 @@ var loadData = function() {
 }
 
 var formatData = function(assignedGroups, actionEditorsByNumber, invitations, submissions, availabilityInvitation, customQuotaInvitation) {
-
-  var referrerUrl = encodeURIComponent('[Reviewer Console](/group?id=' + VENUE_ID + '/' + REVIEWERS_NAME + '#assigned-papers)');
 
   //build the rows
   var rows = [];

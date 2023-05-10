@@ -45,6 +45,7 @@ class GroupBuilder(object):
 
         self.client_v1.add_members_to_group('host', venue_id)
         self.client_v1.add_members_to_group('venues', venue_id)
+        self.client_v1.add_members_to_group('active_venues', venue_id)
 
         ## editor in chief
         editor_in_chief_group = openreview.tools.get_group(self.client, editor_in_chief_id)

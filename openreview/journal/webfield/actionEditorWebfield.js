@@ -23,6 +23,7 @@ var REVIEWERS_AFFINITY_SCORE_ID = REVIEWERS_ID + '/-/Affinity_Score';
 var REVIEWERS_CUSTOM_MAX_PAPERS_ID = REVIEWERS_ID + '/-/Custom_Max_Papers';
 var REVIEWERS_PENDING_REVIEWS_ID = REVIEWERS_ID + '/-/Pending_Reviews';
 var ACTION_EDITORS_ASSIGNMENT_ID = ACTION_EDITOR_ID + '/-/Assignment';
+var ACTION_EDITORS_EXPERTISE_SELECTION_ID = ACTION_EDITOR_ID + '/-/Expertise_Selection';
 var CUSTOM_MAX_PAPERS_NAME = 'Custom_Max_Papers';
 var AVAILABILITY_NAME = 'Assignment_Availability';
 var REVIEWERS_AVAILABILITY_ID = REVIEWERS_ID + '/-/' + AVAILABILITY_NAME;
@@ -67,6 +68,9 @@ if (JOURNAL_REQUEST_ID) {
 if (REVIEWER_REPORT_ID) {
   HEADER.instructions += "<br><br><strong>Reviewer Report:</strong><br><a href=/forum?id=" + REVIEWER_REPORT_ID + "&referrer=" + referrerUrl + "> Report Reviewer</a>"
 }
+
+HEADER.instructions += "<br><br><strong>Expertise Selection:</strong><br><a href=/invitation?id=" + ACTION_EDITORS_EXPERTISE_SELECTION_ID + "&referrer=" + referrerUrl + "> Select your expertise</a>"
+
 
 // Helpers
 var getInvitationId = function(number, name, prefix) {
