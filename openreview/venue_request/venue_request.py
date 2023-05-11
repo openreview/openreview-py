@@ -857,6 +857,11 @@ class VenueStages():
                     'No, I don\'t want to reveal any author identities.'],
                 'required': True
             },
+            'accept_options': {
+                'description': 'Please select which decision options represent an acceptance.',
+                'values-dropdown': [],
+                'required': True
+            },
             'send_decision_notifications': {
                 'description': 'Would you like to notify the authors regarding the decision? If yes, please carefully review the template below for each decision option before you click submit to send out the emails.',
                 'value-radio': [
