@@ -1011,7 +1011,6 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
         for journal_request in tqdm(journal_requests):
 
-            client.impersonate(journal_request.content['venue_id']['value'])
             journal = openreview.journal.JournalRequest.get_journal(client, journal_request.id, setup=False)
 
             ## Get all the submissions that don't have a decision affinity scores

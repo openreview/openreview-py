@@ -271,7 +271,7 @@ class TestJournal():
 
         openreview_client.get_invitation('TMLR/Paper1/Action_Editors/-/Recommendation')
 
-        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Suggest candidate Action Editor for your new TMLR submission')
+        messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLR] Suggest candidate Action Editor for your new TMLR submission')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi SomeFirstName User,
 
@@ -304,7 +304,7 @@ The TMLR Editors-in-Chief
 
         assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Official_Comment")
 
-        invitations = openreview_client.get_invitations(replyForum=note_id_1, cache=False)
+        invitations = openreview_client.get_invitations(replyForum=note_id_1)
         assert len(invitations) == 10, ", ".join([i.id for i in invitations])
         assert f"{venue_id}/-/Submission" not in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review_Approval" not in [i.id for i in invitations]
