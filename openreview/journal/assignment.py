@@ -148,6 +148,7 @@ class Assignment(object):
                     name=f'{self.journal.venue_id}_{note.id}',
                     group_id=committee_id,
                     paper_id=note.id,
+                    expertise_selection_id=self.journal.get_expertise_selection_id(committee_id),
                     model='specter+mfr')
                 job_id = job.get('jobId')
             response = self.client.get_expertise_results(job_id, wait_for_complete=True)

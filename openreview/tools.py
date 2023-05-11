@@ -1367,8 +1367,11 @@ def get_profile_info(profile, n_years=None):
     ## Publications section: get publications within last n years, default is all publications from previous years
     for publication in profile.content.get('publications', []):
         publication_date = publication.pdate or publication.cdate or publication.tcdate or 0
-        if datetime.datetime.fromtimestamp(publication_date/1000).year > cut_off_year:
-            publications.add(publication.id)
+        try:
+            if datetime.datetime.fromtimestamp(publication_date/1000).year > cut_off_year:
+                publications.add(publication.id)
+        except:
+            print('Error extracting the date for publication: ', publication.id)
 
     return {
         'id': profile.id,

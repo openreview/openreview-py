@@ -51,7 +51,7 @@ The OpenReview Team.
                     authorids.append(preferred_id)
                     needs_change = True
                 else:
-                    if publication.content.get('authors'):
+                    if publication.content.get('authors') and len(publication.content['authors']) > index:
                         authors.append(publication.content['authors'][index])
                     authorids.append(publication.content['authorids'][index])
             if needs_change:
@@ -92,7 +92,7 @@ The OpenReview Team.
                     authorids.append(preferred_id)
                     needs_change = True
                 else:
-                    if publication.content.get('authors'):
+                    if publication.content.get('authors') and len(publication.content['authors']['value']) > index:
                         authors.append(publication.content['authors']['value'][index])
                     authorids.append(publication.content['authorids']['value'][index])
 

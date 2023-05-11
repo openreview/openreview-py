@@ -97,4 +97,5 @@ Thanks,
         edge.label=invited_label
         edge.readers=[r if r != edge.tail else user_profile.id for r in edge.readers]
         edge.tail=user_profile.id
+        edge.cdate=None 
         client.post_edge(edge)
