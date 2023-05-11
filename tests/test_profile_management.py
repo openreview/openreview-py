@@ -29,11 +29,13 @@ class TestProfileManagement():
             'middle': 'Alternate',
             'last': 'Last'
             })
+        profile.readers = ['~']
         john_client.post_profile(profile)
         profile = john_client.get_profile(email_or_id='~John_Last1')
         assert len(profile.content['names']) == 2
         assert 'username' in profile.content['names'][1]
         assert profile.content['names'][1]['username'] == '~John_Alternate_Last1'
+        assert ['~'] == profile.readers
 
         assert client.get_group('~John_Last1').members == ['john@profile.org']
         assert client.get_group('john@profile.org').members == ['~John_Last1', '~John_Alternate_Last1']
