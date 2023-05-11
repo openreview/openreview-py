@@ -202,8 +202,9 @@ class Conference(object):
                     self.client.delete_group(group.id)
                     ## Expire the invitation
                     invitation = tools.get_invitation(self.client, self.get_invitation_id(self.ethics_review_stage.name, number))
-                    invitation.expdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
-                    self.client.post_invitation(invitation)
+                    if invitation:
+                        invitation.expdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+                        self.client.post_invitation(invitation)
 
         ## Create ethics paper groups
         for note in tqdm(notes):
@@ -235,8 +236,10 @@ class Conference(object):
                     self.client.post_note(s)
 
         ## Setup paper matching
-        self.setup_committee_matching(self.get_ethics_reviewers_id(), compute_affinity_scores=False, compute_conflicts=True)
-        self.invitation_builder.set_assignment_invitation(self, self.get_ethics_reviewers_id())
+        group = tools.get_group(self.client, id=self.get_ethics_reviewers_id())
+        if group and len(group.members) > 0:
+            self.setup_committee_matching(self.get_ethics_reviewers_id(), compute_affinity_scores=False, compute_conflicts=True)
+            self.invitation_builder.set_assignment_invitation(self, self.get_ethics_reviewers_id())
 
         ## Make reviews visible to the ethics committee
         self.invitation_builder.set_review_invitation(self, notes)
