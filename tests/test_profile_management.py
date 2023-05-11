@@ -108,7 +108,7 @@ class TestProfileManagement():
                 'title': 'Paper title 2',
                 'abstract': 'Paper abstract 2',
                 'authors': ['John Last', 'Test Client'],
-                'authorids': ['~John_Last1', 'test@mail.com']
+                'authorids': ['~John_Last1', 'test@mail.com', 'another@mail.com']
             }
         ))
 
@@ -191,6 +191,8 @@ The OpenReview Team.
         assert len(publications) == 2
         assert '~John_Last1' in publications[0].writers
         assert '~John_Last1' in publications[0].signatures
+        assert ['John Last', 'Test Client'] == publications[0].content['authors']
+        assert ['~John_Last1', 'test@mail.com', 'another@mail.com'] == publications[0].content['authorids']
         assert '~John_Last1' in publications[1].writers
         assert '~John_Last1' in publications[1].signatures
 
@@ -909,8 +911,8 @@ note={}
                 content={
                     'title': { 'value': 'Paper title' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Paul Alternate Last']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Paul_Alternate_Last1']},
+                    'authors': { 'value': ['SomeFirstName User', 'Paul Alternate Last', 'Ana Alternate Last']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Paul_Alternate_Last1', '~Ana_Alternate_Last1']},
                     'keywords': { 'value': ['data', 'mining']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' }
                 }
@@ -996,8 +998,10 @@ The OpenReview Team.
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Paul_Last1'})
         assert len(publications) == 3
-        assert ['ACMM.org/2023/Conference', '~SomeFirstName_User1', '~Paul_Last1'] == publications[0].writers
-        assert ['ACMM.org/2023/Conference', '~SomeFirstName_User1', '~Paul_Last1'] == publications[0].readers
+        assert ['ACMM.org/2023/Conference', '~SomeFirstName_User1', '~Paul_Last1', '~Ana_Alternate_Last1'] == publications[0].writers
+        assert ['ACMM.org/2023/Conference', '~SomeFirstName_User1', '~Paul_Last1', '~Ana_Alternate_Last1'] == publications[0].readers
+        assert ['~SomeFirstName_User1', '~Paul_Last1', '~Ana_Alternate_Last1'] == publications[0].content['authorids']['value']
+        assert ['SomeFirstName User', 'Paul Last', 'Ana Alternate Last'] == publications[0].content['authors']['value']
         assert ['~SomeFirstName_User1'] == publications[0].signatures
 
         note = openreview_client.get_note(note_id_2)
