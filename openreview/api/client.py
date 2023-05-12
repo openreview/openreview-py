@@ -1909,7 +1909,7 @@ class OpenReviewClient(object):
 
     def get_expertise_status(self, job_id=None, group_id=None, paper_id=None, baseurl=None):
 
-        print('get expertise status', baseurl, job_id)
+        print('get expertise status', baseurl, job_id, group_id, paper_id)
         base_url = baseurl if baseurl else self.baseurl
         if base_url.startswith('http://localhost'):
             print('get expertise status localhost, return Completed')

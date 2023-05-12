@@ -1012,17 +1012,21 @@ Your {lower_formatted_invitation} on a submission has been {action}
         for journal_request in tqdm(journal_requests):
 
             journal = openreview.journal.JournalRequest.get_journal(client, journal_request.id, setup=False)
+            print('Check venue', journal.venue_id)
 
             ## Get all the submissions that don't have a decision affinity scores
             submissions = journal.client.get_all_notes(invitation=journal.get_author_submission_id(), content = { 'venueid': journal.submitted_venue_id})
 
             ## For each submission check the status of the expertise task
             for submission in tqdm(submissions):
-                ac_score_count = journal.client.get_edges_count(invitation=journal.get_ae_affinity_score_id(), head=submission.id)
-                if ac_score_count == 0:
-                    status = journal.client.get_expertise_status(paper_id=submission.id, group_id=journal.get_action_editors_id())
-                    if status['status'] == 'Completed':
-                        journal.assignment.setup_ae_assignment(submission, status['job_id'])
+                ae_score_count = journal.client.get_edges_count(invitation=journal.get_ae_affinity_score_id(), head=submission.id)
+                if ae_score_count == 0:
+                    print('Submission with no AE scores', submission.id, submission.number)
+                    result = journal.client.get_expertise_status(paper_id=submission.id, group_id=journal.get_action_editors_id())
+                    job_status = result['results'][0] if (result and result['results']) else None
+                    if job_status and job_status['status'] == 'Completed':
+                        print('Job Completed')
+                        journal.assignment.setup_ae_assignment(submission, job_status['jobId'])
                         if not journal.should_skip_ac_recommendation():
                             print('Setup AE recommendation')
                             invitation = openreview.tools.get_invitation(client, journal.get_ae_recommendation_id(number=submission.number))
@@ -1051,9 +1055,12 @@ The {journal.short_name} Editors-in-Chief
 
                 reviewers_score_count = journal.client.get_edges_count(invitation=journal.get_reviewer_affinity_score_id(), head=submission.id)
                 if reviewers_score_count == 0:
-                    status = journal.client.get_expertise_status(paper_id=submission.id, group_id=journal.get_reviewers_id())
-                    if status['status'] == 'Completed':
-                        journal.assignment.setup_reviewer_assignment(submission, status['job_id'])
+                    print('Submission with no reviewers scores', submission.id, submission.number)
+                    result = journal.client.get_expertise_status(paper_id=submission.id, group_id=journal.get_reviewers_id())
+                    job_status = result['results'][0] if (result and result['results']) else None
+                    if job_status and job_status['status'] == 'Completed':
+                        print('Job Completed')
+                        journal.assignment.setup_reviewer_assignment(submission, job_status['jobId'])
 
     def run_reviewer_stats(self, end_cdate, output_file):
 
