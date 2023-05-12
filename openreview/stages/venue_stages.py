@@ -115,7 +115,7 @@ class SubmissionStage(object):
         submission_readers=[conference.id]
 
         if self.Readers.EVERYONE_BUT_REJECTED in self.readers:
-            hide = not decision or 'Accept' not in decision
+            hide = not decision or decision not in conference.accept_options
             if hide:
                 if conference.use_senior_area_chairs:
                     submission_readers.append(conference.get_senior_area_chairs_id(number=number))

@@ -29,6 +29,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
         venue.senior_area_chair_identity_readers = get_identity_readers(note, 'senior_area_chair_identity')
         venue.decision_heading_map = get_decision_heading_map(venue.short_name, note)
+        venue.accept_options = note.content.get('accept_options')
         
         venue.submission_stage = get_submission_stage(note)
         venue.review_stage = get_review_stage(note)
@@ -299,7 +300,7 @@ def get_decision_heading_map(short_name, request_forum):
     map = request_forum.content.get('home_page_tab_names', {})
     decision_heading_map = {}
     for decision, tabName in map.items():
-        decision_heading_map[openreview.tools.decision_to_venue(short_name, decision)] = tabName
+        decision_heading_map[openreview.tools.decision_to_venue(short_name, decision,  decision in request_forum.content['accept_options'])] = tabName
 
     return decision_heading_map
 

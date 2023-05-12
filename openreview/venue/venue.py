@@ -65,6 +65,7 @@ class Venue(object):
         self.senior_area_chair_identity_readers = []
         self.automatic_reviewer_assignment = False
         self.decision_heading_map = {}
+        self.accept_options = None
 
     def get_id(self):
         return self.venue_id
@@ -325,8 +326,13 @@ class Venue(object):
                 for note in notes:
                     for reply in note.details['directReplies']:
                         if f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{self.decision_stage.name}' in reply['invitations']:
-                            if 'Accept' in reply['content']['decision']['value']:
-                                accepted_notes.append(note)
+                            decision = reply['content']['decision']['value']
+                            if self.accept_options:
+                                if decision in self.accept_options:
+                                    accepted_notes.append(note)
+                            else:
+                                if 'Accept' in decision:
+                                    accepted_notes.append(note)
             return accepted_notes
         else:
             notes = self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.get_submission_venue_id()}'}, sort=sort, details=details)
@@ -619,6 +625,7 @@ Total Errors: {len(errors)}
 
     def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None, hide_fields=[]):
 
+        accept_options = self.accept_options
         venue_id = self.venue_id
         submissions = self.get_submissions(sort='number:asc', details='directReplies')
 
@@ -626,7 +633,7 @@ Total Errors: {len(errors)}
             return reveal_all_authors or (reveal_authors_accepted and is_note_accepted)
 
         def decision_to_venueid(decision):
-            if 'Accept' in decision:
+            if decision in accept_options:
                 return venue_id
             else:
                 return self.get_rejected_submission_venue_id()
@@ -641,12 +648,12 @@ Total Errors: {len(errors)}
                     if f'{self.venue_id}/{self.submission_stage.name}{submission.number}/-/{self.decision_stage.name}' in reply['invitations']:
                         decision_note = reply
                         break
-            note_accepted = decision_note and 'Accept' in decision_note['content']['decision']['value']
+            note_accepted = decision_note and decision_note['content']['decision']['value'] in accept_options
             submission_readers = self.submission_stage.get_readers(self, submission.number, decision_note['content']['decision']['value'] if decision_note else None)
 
             venue = self.short_name
             decision_option = decision_note['content']['decision']['value'] if decision_note else ''
-            venue = tools.decision_to_venue(venue, decision_option)
+            venue = tools.decision_to_venue(venue, decision_option, note_accepted)
             venueid = decision_to_venueid(decision_option)
 
             content = {

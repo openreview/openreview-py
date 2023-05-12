@@ -264,6 +264,12 @@ def process(client, note, invitation):
             else:
                 decision_options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
 
+            content['accept_options'] = {
+                'description': 'Please select which decision options represent an acceptance.',
+                'values-dropdown': decision_options,
+                'required': True
+            }
+
             content['send_decision_notifications'] = {
                 'description': 'Would you like to notify the authors regarding the decision? If yes, please carefully review the template below for each decision option before you click submit to send out the emails.',
                 'value-radio': [

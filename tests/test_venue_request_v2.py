@@ -2415,6 +2415,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                     'Revision Needed': 'Revision Needed',
                     'Reject': 'Submitted'
                 },
+                'accept_options': ['Accept', 'Revision Needed'],
                 'send_decision_notifications': 'Yes, send an email notification to the authors',
                 'accept_email_content': f'''Dear {{{{fullname}}}},
 
@@ -2463,13 +2464,9 @@ Best,
         assert submissions[0].readers == ['everyone']
         assert submissions[0].pdate
         assert submissions[0].odate
-        assert submissions[1].readers == ['V2.cc/2030/Conference',
-            'V2.cc/2030/Conference/Submission2/Senior_Area_Chairs',
-            'V2.cc/2030/Conference/Submission2/Area_Chairs',
-            'V2.cc/2030/Conference/Submission2/Reviewers',
-            'V2.cc/2030/Conference/Submission2/Authors']
-        assert not submissions[1].pdate
-        assert not submissions[1].odate
+        assert submissions[1].readers == ['everyone']
+        assert submissions[1].pdate
+        assert submissions[1].odate
         assert submissions[2].readers == ['V2.cc/2030/Conference',
             'V2.cc/2030/Conference/Submission3/Senior_Area_Chairs',
             'V2.cc/2030/Conference/Submission3/Area_Chairs',
@@ -2483,14 +2480,12 @@ Best,
         assert submissions[0].content['venueid']['value'] == 'V2.cc/2030/Conference'
         assert 'readers' not in submissions[0].content['authors']
         assert 'readers' not in submissions[0].content['authorids']
+        assert submissions[1].content['venue']['value'] == 'TestVenue@OR\'2030V2 RevisionNeeded'
+        assert submissions[1].content['venueid']['value'] == 'V2.cc/2030/Conference'
+        assert 'readers' not in submissions[1].content['authors']
+        assert 'readers' not in submissions[1].content['authorids']
 
         # assert author identities of rejected paper are still hidden
-        assert submissions[1].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
-        assert submissions[1].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected_Submission'
-        assert submissions[1].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
-        assert submissions[1].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
-
-        # assert author identities of paper with no decision are still hidden
         assert submissions[2].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
         assert submissions[2].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected_Submission'
         assert submissions[2].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
@@ -2549,11 +2544,7 @@ Best,
 
         # Assert that submission readers have not changed
         assert submissions[0].readers == ['everyone']
-        assert submissions[1].readers == ['V2.cc/2030/Conference',
-            'V2.cc/2030/Conference/Submission2/Senior_Area_Chairs',
-            'V2.cc/2030/Conference/Submission2/Area_Chairs',
-            'V2.cc/2030/Conference/Submission2/Reviewers',
-            'V2.cc/2030/Conference/Submission2/Authors']
+        assert submissions[1].readers == ['everyone']
         assert submissions[2].readers == ['V2.cc/2030/Conference',
             'V2.cc/2030/Conference/Submission3/Senior_Area_Chairs',
             'V2.cc/2030/Conference/Submission3/Area_Chairs',
@@ -2565,21 +2556,19 @@ Best,
         assert submissions[0].content['venueid']['value'] == 'V2.cc/2030/Conference'
         assert 'readers' not in submissions[0].content['authors']
         assert 'readers' not in submissions[0].content['authorids']
+        assert submissions[1].content['venue']['value'] == 'TestVenue@OR\'2030V2 RevisionNeeded'
+        assert submissions[1].content['venueid']['value'] == 'V2.cc/2030/Conference'
+        assert 'readers' not in submissions[1].content['authors']
+        assert 'readers' not in submissions[1].content['authorids']
 
         # assert author identities of rejected paper are still hidden
-        assert submissions[1].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
-        assert submissions[1].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected_Submission'
-        assert submissions[1].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
-        assert submissions[1].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
-
-        # assert author identities of paper with no decision are still hidden
         assert submissions[2].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
         assert submissions[2].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected_Submission'
         assert submissions[2].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
         assert submissions[2].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
 
         assert openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission1/-/Camera_Ready_Revision')
-        assert not openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission2/-/Camera_Ready_Revision')
+        assert openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission2/-/Camera_Ready_Revision')
         assert not openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission3/-/Camera_Ready_Revision')
 
         # post revision for a submission
@@ -2637,7 +2626,7 @@ Best,
         public_comment_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission1/-/Public_Comment')
         assert public_comment_invitation
         public_comment_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission2/-/Public_Comment')
-        assert not public_comment_invitation
+        assert public_comment_invitation
         public_comment_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission3/-/Public_Comment')
         assert not public_comment_invitation
 

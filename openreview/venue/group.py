@@ -232,7 +232,7 @@ class GroupBuilder(object):
             content['comment_email_pcs'] = { 'value': self.venue.comment_stage.email_pcs }
 
         if self.venue.review_rebuttal_stage:
-            content['rebuttal_email_pcs'] = { 'value': self.venue.review_rebuttal_stage.email_pcs}
+            content['rebuttal_email_pcs'] = { 'value': self.venue.review_rebuttal_stage.email_pcs }
 
         if venue_group.content.get('enable_reviewers_reassignment'):
             content['enable_reviewers_reassignment'] = venue_group.content.get('enable_reviewers_reassignment')
@@ -250,7 +250,10 @@ class GroupBuilder(object):
             content['area_chairs_conflict_policy'] = venue_group.content.get('area_chairs_conflict_policy')
 
         if venue_group.content.get('area_chairs_conflict_n_years'):
-            content['area_chairs_conflict_n_years'] = venue_group.content.get('area_chairs_conflict_n_years')            
+            content['area_chairs_conflict_n_years'] = venue_group.content.get('area_chairs_conflict_n_years')
+
+        if self.venue.accept_options:
+            content['accept_options'] = { 'value': self.venue.accept_options }
 
         update_content = self.get_update_content(venue_group.content, content)
         if update_content:
