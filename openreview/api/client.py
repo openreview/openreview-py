@@ -1921,7 +1921,7 @@ class OpenReviewClient(object):
         if group_id:
             params['entityA.memberOf'] = group_id
         if paper_id:
-            params['entityB.id'] = paper_id
+            params['entityB.paperId'] = paper_id
 
         response = self.session.get(base_url + '/expertise/status', params = params, headers = self.headers)
         response = self.__handle_response(response)
