@@ -444,7 +444,7 @@ class Client(object):
             return [Profile.from_json(p) for p in full_response]
 
         if first or middle or last:
-            response = self.session.get(self.profiles_url, params = {'first': first, 'middle': middle, 'last': last, 'es': 'true' if use_ES else 'false'}, headers = self.headers)
+            response = self.session.get(self.profiles_search_url, params = {'first': first, 'middle': middle, 'last': last, 'es': 'true' if use_ES else 'false'}, headers = self.headers)
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
 
