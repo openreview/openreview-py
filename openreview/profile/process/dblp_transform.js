@@ -132,7 +132,7 @@ function (note) {
     data.month = firstOrNull(entryElement.findall('month'));
     
     if (data.year) {
-      var cdateString = data.month ? data.month + data.year : data.year;
+      var cdateString = data.month ? data.month + ' ' + data.year : data.year;
       data.cdate = Date.parse(cdateString);
     }
     
