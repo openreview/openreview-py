@@ -1913,7 +1913,9 @@ class OpenReviewClient(object):
         base_url = baseurl if baseurl else self.baseurl
         if base_url.startswith('http://localhost'):
             print('get expertise status localhost, return Completed')
-            return { 'status': 'Completed', 'job_id': None }
+            if job_id:
+                return { 'status': 'Completed', 'jobId': job_id }
+            return { 'results': [{ 'status': 'Completed', 'jobId': None }]}
         
         params = {}
         if job_id:
