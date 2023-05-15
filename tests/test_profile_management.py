@@ -943,6 +943,18 @@ note={}
         
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
 
+        venue.submission_revision_stage = openreview.stages.SubmissionRevisionStage(name='Revision',
+            due_date=datetime.datetime.utcnow() + datetime.timedelta(minutes = 30),
+            only_accepted=False,
+            multiReply=True,
+            allow_author_reorder=True
+        )
+        venue.create_submission_revision_stage()
+
+        assert openreview_client.get_invitation('ACMM.org/2023/Conference/-/Revision')        
+        invitation =  openreview_client.get_invitation('ACMM.org/2023/Conference/Submission1/-/Revision')        
+        assert ['~SomeFirstName_User1', '~Paul_Alternate_Last1', '~Ana_Alternate_Last1'] == invitation.edit['note']['content']['authorids']['value']
+
         ## Create committee groups
         client.post_group(openreview.Group(
             id='ICLRR.cc',
@@ -1025,6 +1037,11 @@ The OpenReview Team.
         assert ['ACMM.org/2023/Conference', '~SomeFirstName_User1', '~Paul_Last1', '~Ana_Alternate_Last1'] == publications[0].readers
         assert ['~SomeFirstName_User1', '~Paul_Last1', '~Ana_Alternate_Last1'] == publications[0].content['authorids']['value']
         assert ['SomeFirstName User', 'Paul Last', 'Ana Alternate Last'] == publications[0].content['authors']['value']
+
+        invitation =  openreview_client.get_invitation('ACMM.org/2023/Conference/Submission1/-/Revision')        
+        assert ['~SomeFirstName_User1', '~Paul_Last1', '~Ana_Alternate_Last1'] == invitation.edit['note']['content']['authorids']['value']
+        assert ['SomeFirstName User', 'Paul Last', 'Ana Alternate Last'] == invitation.edit['note']['content']['authors']['value']
+
         assert ['~SomeFirstName_User1'] == publications[0].signatures
 
         note = openreview_client.get_note(note_id_2)

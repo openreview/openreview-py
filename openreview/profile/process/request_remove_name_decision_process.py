@@ -189,6 +189,45 @@ The OpenReview Team.
             except Exception as e:
                 print(f'note id {note.id} not updated: {e}')                
 
+        print('Change all the invitations where the username appears as authorids')
+        author_groups = [g for g in client_v2.get_groups(member=username) if g.id.endswith('/Authors')]
+
+        for author_group in author_groups:
+            invitations = client_v2.get_invitations(invitee=author_group.id)
+            for invitation in invitations:
+                authorids = invitation.edit.get('note', {}).get('content', {}).get('authorids', {}).get('value', [])
+                authors = invitation.edit.get('note', {}).get('content', {}).get('authors', {}).get('value', [])
+
+                invitation_authorids = []
+                invitation_authors = []
+
+                if username in authorids:
+                    for index, authorid in enumerate(authorids):
+                        if username == authorid:
+                            invitation_authors.append(preferred_name)
+                            invitation_authorids.append(preferred_id)
+                        else:
+                            invitation_authors.append(authors[index])
+                            invitation_authorids.append(authorid)
+
+                    client_v2.post_invitation_edit(
+                        invitations = invitation.domain + '/-/Edit',
+                        readers = [invitation.domain],
+                        signatures = [SUPPORT_USER_ID],
+                        invitation = openreview.api.Invitation(
+                            id = invitation.id,
+                            edit = {
+                                'note': {
+                                    'content': {
+                                        'authors': { 'value': invitation_authors },
+                                        'authorids': { 'value': invitation_authorids }
+                                    }
+                                }
+                            }
+                        )
+                    )
+
+        
         print('Rename all the edges')
         head_edges = client.get_edges(head=username, limit=1)
         tail_edges = client.get_edges(tail=username, limit=1)
