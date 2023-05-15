@@ -551,7 +551,7 @@ def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='un
         ]
         return '\n'.join(rejected_bibtex)
 
-@dispatch(openreview.Client)
+@dispatch(object)
 @run_once
 def load_duplicate_domains(client):
     return client.get_duplicate_domains()
@@ -1253,7 +1253,7 @@ def info_function_builder(policy_function):
     common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
                     'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
     duplicate_domains = load_duplicate_domains()
-    def inner(profile, n_years=None):
+    def inner(profile, n_years=None, submission_venueid=None):
         argspec = inspect.getfullargspec(policy_function)
         if 'submission_venueid' in argspec.args:
             result = policy_function(profile, n_years, submission_venueid)
@@ -1275,12 +1275,12 @@ def info_function_builder(policy_function):
         return result
     return inner
 
-@dispatch(openreview.Client, object)
+@dispatch(object, object)
 def info_function_builder(client, policy_function):
     common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
                     'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
     duplicate_domains = load_duplicate_domains(client)
-    def inner(profile, n_years=None):
+    def inner(profile, n_years=None, submission_venueid=None):
         argspec = inspect.getfullargspec(policy_function)
         if 'submission_venueid' in argspec.args:
             result = policy_function(profile, n_years, submission_venueid)
@@ -1302,7 +1302,7 @@ def info_function_builder(client, policy_function):
         return result
     return inner
 
-@dispatch(openreview.Client, list, openreview.Profile, policy=object, n_years=int)
+@dispatch(object, list, openreview.Profile, policy=object, n_years=int)
 def get_conflicts(client, author_profiles, user_profile, policy='default', n_years=None):
     """
     Finds conflicts between the passed user Profile and the author Profiles passed as arguments
