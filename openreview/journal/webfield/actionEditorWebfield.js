@@ -138,23 +138,33 @@ var loadData = function() {
         }),
         Webfield2.api.getAll('/invitations', {
           id: ACTION_EDITOR_ID + '/-/' + AVAILABILITY_NAME,
-          type: 'edges',
-          details: 'repliedEdges'
+          type: 'edges'
         }).then(function(invitations) {
           return invitations[0];
         }),
         Webfield2.api.getAll('/invitations', {
           id: ACTION_EDITOR_ID + '/-/' + CUSTOM_MAX_PAPERS_NAME,
-          type: 'edges',
-          details: 'repliedEdges'
+          type: 'edges'
         }).then(function(invitations) {
           return invitations[0];
+        }),
+        Webfield2.api.getAll('/edges', {
+          invitation: ACTION_EDITOR_ID + '/-/' + AVAILABILITY_NAME,
+          tail: user.profile.id,
+        }).then(function(edges) {
+          return edges && edges[0];
+        }),
+        Webfield2.api.getAll('/edges', {
+          invitation: ACTION_EDITOR_ID + '/-/' + CUSTOM_MAX_PAPERS_NAME,
+          tail: user.profile.id,
+        }).then(function(edges) {
+          return edges && edges[0];
         })
       );
     });
 };
 
-var formatData = function(reviewersByNumber, invitations, submissions, invitationsById, availabilityInvitation, customQuotaInvitation) {
+var formatData = function(reviewersByNumber, invitations, submissions, invitationsById, availabilityInvitation, customQuotaInvitation, availabilityEdge, customQuotaEdge) {
   var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + '#assigned-papers)');
 
   // build the rows
@@ -400,6 +410,14 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
     });
 
   });
+
+  availabilityInvitation.details = {
+    repliedEdges: availabilityEdge ? [availabilityEdge] : [],
+  }
+
+  customQuotaInvitation.details = {
+    repliedEdges: customQuotaEdge ? [customQuotaEdge] : [],
+  }
 
   return venueStatusData = {
     invitations: invitations,

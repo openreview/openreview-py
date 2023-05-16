@@ -58,17 +58,27 @@ var loadData = function() {
       Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups)}),
       Webfield2.api.getAll('/invitations', {
         id: REVIEWERS_ID + '/-/' + REVIEWERS_AVAILABILITY_NAME,
-        type: 'edges',
-        details: 'repliedEdges'
+        type: 'edges'
       }).then(function(invitations) {
         return invitations[0];
       }),
       Webfield2.api.getAll('/invitations', {
         id: REVIEWERS_ID + '/-/' + REVIEWERS_CUSTOM_MAX_PAPERS_NAME,
-        type: 'edges',
-        details: 'repliedEdges'
+        type: 'edges'
       }).then(function(invitations) {
         return invitations[0];
+      }),
+      Webfield2.api.getAll('/edges', {
+        invitation: REVIEWERS_ID + '/-/' + AVAILABILITY_NAME,
+        tail: user.profile.id,
+      }).then(function(edges) {
+        return edges && edges[0];
+      }),
+      Webfield2.api.getAll('/edges', {
+        invitation: REVIEWERS_ID + '/-/' + CUSTOM_MAX_PAPERS_NAME,
+        tail: user.profile.id,
+      }).then(function(edges) {
+        return edges && edges[0];
       })
     );
   })
@@ -127,6 +137,14 @@ var formatData = function(assignedGroups, actionEditorsByNumber, invitations, su
       }
     })
   })
+
+  availabilityInvitation.details = {
+    repliedEdges: availabilityEdge ? [availabilityEdge] : [],
+  }
+
+  customQuotaInvitation.details = {
+    repliedEdges: customQuotaEdge ? [customQuotaEdge] : [],
+  }  
 
 
   return venueStatusData = {
