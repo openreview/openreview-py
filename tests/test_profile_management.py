@@ -18,6 +18,29 @@ class TestProfileManagement():
         profile_management.setup()
         return profile_management
     
+    def test_import_dblp_notes(self, client, profile_management, test_client, helpers):
+
+        note = test_client.post_note(
+            openreview.Note(
+                invitation='dblp.org/-/record',
+                readers=['everyone'],
+                writers=['dblp.org'],
+                signatures=['~SomeFirstName_User1'],
+                content={
+                    'dblp': '<article key=\"journals/iotj/WangJWSGZ23\" mdate=\"2023-04-16\">\n<author orcid=\"0000-0003-4015-0348\" pid=\"188/7759-93\">Chao Wang 0093</author>\n<author orcid=\"0000-0002-3703-121X\" pid=\"00/8334\">Chunxiao Jiang</author>\n<author orcid=\"0000-0003-3170-8952\" pid=\"62/2631-1\">Jingjing Wang 0001</author>\n<author orcid=\"0000-0002-7558-5379\" pid=\"66/800\">Shigen Shen</author>\n<author orcid=\"0000-0001-9831-2202\" pid=\"01/267-1\">Song Guo 0001</author>\n<author orcid=\"0000-0002-0990-5581\" pid=\"24/9047\">Peiying Zhang</author>\n<title>Blockchain-Aided Network Resource Orchestration in Intelligent Internet of Things.</title>\n<pages>6151-6163</pages>\n<year>2023</year>\n<month>April 1</month>\n<volume>10</volume>\n<journal>IEEE Internet Things J.</journal>\n<number>7</number>\n<ee>https://doi.org/10.1109/JIOT.2022.3222911</ee>\n<url>db/journals/iotj/iotj10.html#WangJWSGZ23</url>\n</article>'
+                }
+            )
+        )
+
+        helpers.await_queue()
+
+        note = test_client.get_note(note.id)
+        assert note.content['title'] == 'Blockchain-Aided Network Resource Orchestration in Intelligent Internet of Things'
+        assert datetime.datetime.fromtimestamp(note.cdate/1000).year == 2023
+        assert datetime.datetime.fromtimestamp(note.cdate/1000).month == 4
+
+
+    
     def test_remove_alternate_name(self, client, profile_management, helpers):
 
         john_client = helpers.create_user('john@profile.org', 'John', 'Last', alternates=[], institution='google.com')
