@@ -1007,7 +1007,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     self.client.delete_edges(invitation=reviewer_assignment_edge.invitation, head=reviewer_assignment_edge.head, tail=reviewer_assignment_edge.tail, soft_delete=True, wait_to_finish=True)
                     
 
-    def run_reviewer_stats(self, end_cdate, output_file):
+    def run_reviewer_stats(self, end_cdate, output_file, start_cdate=None):
 
         invitations_by_id = { i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True)}
         submission_by_id = { n.id: n for n in self.client.get_all_notes(invitation=self.get_author_submission_id(), details='replies')}
@@ -1061,6 +1061,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
         def get_reviewer_stats(reviewer, assignment):
             
             submission = submission_by_id[assignment['head']]
+            if start_cdate and submission.cdate < start_cdate:
+                return None
             if submission.cdate > end_cdate:
                 return None
 
@@ -1273,7 +1275,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     writer.writerow(row)                                
 
 
-    def run_action_editors_stats(self, end_cdate, output_file):
+    def run_action_editors_stats(self, end_cdate, output_file, start_cdate=None):
 
         invitations_by_id = { i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True)}
         submission_by_id = { n.id: n for n in self.client.get_all_notes(invitation=self.get_author_submission_id(), details='replies')}
@@ -1302,6 +1304,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
         def get_action_editor_stats(action_editor, assignment):
 
             submission = submission_by_id[assignment['head']]
+            if start_cdate and submission.cdate < start_cdate:
+                return None            
             if submission.cdate > end_cdate:
                 return None
 
