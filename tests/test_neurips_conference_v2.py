@@ -16,7 +16,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 class TestNeurIPSConference():
 
-    def test_create_conference(self, client, openreview_client, helpers):
+    def test_create_conference(self, client, openreview_client, helpers, selenium, request_page):
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
@@ -101,10 +101,57 @@ class TestNeurIPSConference():
         assert 'NeurIPS.cc/2023/Conference/Area_Chairs' in reviewers.readers
 
         assert openreview_client.get_group('NeurIPS.cc/2023/Conference/Authors')
-
         post_submission =  openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Post_Submission')
         assert 'authors' in post_submission.edit['note']['content']
         assert 'authorids' in post_submission.edit['note']['content']
+
+    def test_revision(self, client, openreview_client, selenium, request_page, helpers):
+
+        pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        first_date = now + datetime.timedelta(days=1)
+
+        pc_client.post_note(openreview.Note(
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Revision',
+            forum=request_form.id,
+            readers=['NeurIPS.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.id,
+            replyto=request_form.id,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[],
+            content={
+                'title': 'Conference on Neural Information Processing Systems',
+                'Official Venue Name': 'Conference on Neural Information Processing Systems',
+                'Abbreviated Venue Name': 'NeurIPS 2023',
+                'Official Website URL': 'https://neurips.cc',
+                'program_chair_emails': ['pc@neurips.cc'],
+                'contact_email': 'pc@neurips.cc',
+                'Venue Start Date': '2023/12/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'use_recruitment_template': 'Yes',
+                'homepage_override': {
+                    'instructions': '''**Authors**  
+Please see our [call for papers](https://nips.cc/Conferences/2023/CallForPapers) and read the [ethics guidelines](https://nips.cc/public/EthicsGuidelines)'''
+                }
+            }
+        ))
+        helpers.await_queue()
+
+        request_page(selenium, 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference', pc_client.token, wait_for_element='header')
+        header_div = selenium.find_element_by_id('header')
+        assert header_div
+        location_tag = header_div.find_element_by_class_name('venue-location')
+        assert location_tag and location_tag.text == request_form.content['Location']
+        description = header_div.find_element_by_class_name('description')
+        assert description and 'Authors' in description.text
 
     def test_recruit_senior_area_chairs(self, client, openreview_client, selenium, request_page, helpers):
 
