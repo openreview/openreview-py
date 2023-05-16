@@ -411,12 +411,16 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
 
   });
 
-  availabilityInvitation.details = {
-    repliedEdges: availabilityEdge ? [availabilityEdge] : [],
+  if (availabilityInvitation) {
+    availabilityInvitation.details = {
+      repliedEdges: availabilityEdge ? [availabilityEdge] : [],
+    }
   }
 
-  customQuotaInvitation.details = {
-    repliedEdges: customQuotaEdge ? [customQuotaEdge] : [],
+  if (customQuotaInvitation) {
+    customQuotaInvitation.details = {
+      repliedEdges: customQuotaEdge ? [customQuotaEdge] : [],
+    }
   }
 
   return venueStatusData = {

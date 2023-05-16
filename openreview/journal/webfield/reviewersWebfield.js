@@ -69,13 +69,13 @@ var loadData = function() {
         return invitations[0];
       }),
       Webfield2.api.getAll('/edges', {
-        invitation: REVIEWERS_ID + '/-/' + AVAILABILITY_NAME,
+        invitation: REVIEWERS_ID + '/-/' + REVIEWERS_AVAILABILITY_NAME,
         tail: user.profile.id,
       }).then(function(edges) {
         return edges && edges[0];
       }),
       Webfield2.api.getAll('/edges', {
-        invitation: REVIEWERS_ID + '/-/' + CUSTOM_MAX_PAPERS_NAME,
+        invitation: REVIEWERS_ID + '/-/' + REVIEWERS_CUSTOM_MAX_PAPERS_NAME,
         tail: user.profile.id,
       }).then(function(edges) {
         return edges && edges[0];
@@ -84,7 +84,7 @@ var loadData = function() {
   })
 }
 
-var formatData = function(assignedGroups, actionEditorsByNumber, invitations, submissions, availabilityInvitation, customQuotaInvitation) {
+var formatData = function(assignedGroups, actionEditorsByNumber, invitations, submissions, availabilityInvitation, customQuotaInvitation, availabilityEdge, customQuotaEdge) {
 
   //build the rows
   var rows = [];
@@ -138,12 +138,16 @@ var formatData = function(assignedGroups, actionEditorsByNumber, invitations, su
     })
   })
 
-  availabilityInvitation.details = {
-    repliedEdges: availabilityEdge ? [availabilityEdge] : [],
+  if (availabilityInvitation) {
+    availabilityInvitation.details = {
+      repliedEdges: availabilityEdge ? [availabilityEdge] : [],
+    }
   }
 
-  customQuotaInvitation.details = {
-    repliedEdges: customQuotaEdge ? [customQuotaEdge] : [],
+  if (customQuotaInvitation) {
+    customQuotaInvitation.details = {
+      repliedEdges: customQuotaEdge ? [customQuotaEdge] : [],
+    }
   }  
 
 
