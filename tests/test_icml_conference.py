@@ -203,6 +203,10 @@ class TestICMLConference():
                             }
                         }                        
                     }
+                },
+                'homepage_override': {
+                    'location': 'Hawaii, USA',
+                    'instructions': 'For author guidelines, please click [here](https://icml.cc/Conferences/2023/StyleAuthorInstructions)'
                 }
             }
         ))
@@ -234,6 +238,7 @@ class TestICMLConference():
                 'program_chair_emails': ['pc@icml.cc', 'pc2@icml.cc'],
                 'contact_email': 'pc@icml.cc',
                 'Venue Start Date': '2023/07/01',
+                'Submission Start Date': now.strftime('%Y/%m/%d'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
