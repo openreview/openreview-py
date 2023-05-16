@@ -241,6 +241,11 @@ class InvitationBuilder(object):
 
     def set_ae_recruitment_invitation(self):
 
+        invitation = openreview.tools.get_invitation(self.client, self.journal.get_ae_recruitment_id())
+
+        if invitation:
+            return 
+        
         venue_id=self.journal.venue_id
         action_editors_id = self.journal.get_action_editors_id()
         action_editors_declined_id = action_editors_id + '/Declined'
@@ -318,6 +323,11 @@ class InvitationBuilder(object):
                 return invitation
 
     def set_reviewer_recruitment_invitation(self):
+
+        invitation = openreview.tools.get_invitation(self.client, self.journal.get_reviewer_recruitment_id())
+
+        if invitation:
+            return         
 
         venue_id=self.journal.venue_id
         reviewers_id = self.journal.get_reviewers_id()
