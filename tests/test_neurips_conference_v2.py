@@ -831,6 +831,41 @@ If you would like to change your decision, please follow the link in the previou
         assert 'authorids' in post_submission.edit['note']['content']
         assert 'keywords' in post_submission.edit['note']['content']
 
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@neurips.cc', password=helpers.strong_password)
+
+        ## try to edit a submission as a PC and check revision invitation is updated
+        submissions = pc_client_v2.get_notes(invitation='NeurIPS.cc/2023/Conference/-/Submission', sort='number:asc')
+        submission = submissions[3]
+
+        pc_revision = pc_client_v2.post_note_edit(invitation='NeurIPS.cc/2023/Conference/-/PC_Revision',
+            signatures=['NeurIPS.cc/2023/Conference/Program_Chairs'],
+            note=openreview.api.Note(
+                id = submission.id,
+                content = {
+                    'title': { 'value': submission.content['title']['value'] + ' Version 2' },
+                    'abstract': submission.content['abstract'],
+                    'authorids': { 'value': submission.content['authorids']['value'] + ['celeste@yahoo.com'] },
+                    'authors': { 'value': submission.content['authors']['value'] + ['Celeste NeurIPS'] },
+                    'keywords': { 'value': ['machine learning', 'nlp'] }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=pc_revision['id'])
+
+        revision_inv =  test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission4/-/Revision')
+        assert revision_inv.edit['note']['content']['authors']['value'] == [
+          'SomeFirstName User',
+          'Peter SomeLastName',
+          'Andrew Mc',
+          'Celeste NeurIPS'
+        ]
+        assert revision_inv.edit['note']['content']['authorids']['value'] == [
+          'test@mail.com',
+          'peter@mail.com',
+          'andrew@google.com',
+          'celeste@yahoo.com'
+        ]
+
         ## update submission
         revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission4/-/Revision',
             signatures=['NeurIPS.cc/2023/Conference/Submission4/Authors'],
@@ -838,8 +873,8 @@ If you would like to change your decision, please follow the link in the previou
                 content={
                     'title': { 'value': 'Paper title 4 Updated' },
                     'abstract': { 'value': 'This is an abstract 4 updated' },
-                    'authorids': { 'value': ['test@mail.com', 'andrew@google.com', 'peter@mail.com' ] },
-                    'authors': { 'value': ['SomeFirstName User',  'Andrew Mc', 'Peter SomeLastName'] },
+                    'authorids': { 'value': ['test@mail.com', 'andrew@google.com', 'peter@mail.com', 'celeste@yahoo.com' ] },
+                    'authors': { 'value': ['SomeFirstName User',  'Andrew Mc', 'Peter SomeLastName', 'Celeste NeurIPS' ] },
                     'keywords': { 'value': ['machine learning', 'nlp'] },
                 }
             ))
