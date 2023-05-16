@@ -107,7 +107,7 @@ class TestNeurIPSConference():
 
     def test_revision(self, client, openreview_client, selenium, request_page, helpers):
 
-        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         now = datetime.datetime.utcnow()
@@ -133,6 +133,7 @@ class TestNeurIPSConference():
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
@@ -149,6 +150,8 @@ Please see our [call for papers](https://nips.cc/Conferences/2023/CallForPapers)
         assert header_div
         location_tag = header_div.find_element_by_class_name('venue-location')
         assert location_tag and location_tag.text == request_form.content['Location']
+        description = header_div.find_element_by_class_name('description')
+        assert description and 'Authors' in description.text
 
     def test_recruit_senior_area_chairs(self, client, openreview_client, selenium, request_page, helpers):
 
