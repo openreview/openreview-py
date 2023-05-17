@@ -161,7 +161,11 @@ class TestJournal():
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
         note_id_1 = submission_note_1['note']['id']
 
-        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[MELBA] Suggest candidate Action Editor for your new MELBA submission')
+        Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
+
+        openreview_client.get_invitation('MELBA/Paper1/Action_Editors/-/Recommendation')        
+
+        messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[MELBA] Suggest candidate Action Editor for your new MELBA submission')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi SomeFirstName User,
 

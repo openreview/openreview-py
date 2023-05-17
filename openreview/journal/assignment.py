@@ -25,7 +25,7 @@ class Assignment(object):
                 raise openreview.OpenReviewException(f'Failed during bulk post of {edges[0].invitation} edges! Edges found: {len(edges)}, Edges posted: {edges_posted}')
                
 
-    def setup_ae_assignment(self, note):
+    def setup_ae_assignment(self, note, job_id=None):
         print('Start setup AE assignment...')
         venue_id=self.journal.venue_id
         action_editors_id=self.journal.get_action_editors_id()
@@ -39,7 +39,7 @@ class Assignment(object):
 
         ## Create affinity scores
         affinity_score_edges = []
-        entries = self.compute_affinity_scores(note, self.journal.get_action_editors_id())
+        entries = self.compute_affinity_scores(note, self.journal.get_action_editors_id(), job_id=job_id)
         for entry in entries:
             action_editor = entry.get('user')
             if note.id == entry.get('submission'):
@@ -140,17 +140,20 @@ class Assignment(object):
 
         return tools.get_conflicts(author_profiles, reviewer_profiles[0], policy='NeurIPS')
 
-    def compute_affinity_scores(self, note, committee_id, job_id=None):
+    def request_expertise(self, note, committee_id):
+        job = self.client.request_single_paper_expertise(
+            name=f'{self.journal.venue_id}_{note.id}',
+            group_id=committee_id,
+            paper_id=note.id,
+            expertise_selection_id=self.journal.get_expertise_selection_id(committee_id),
+            model='specter+mfr')
+        print('Request expertise for', note.id, committee_id, job.get('jobId'))
+        return job.get('jobId')
 
+    def compute_affinity_scores(self, note, committee_id, job_id=None):
         try:
             if job_id is None:
-                job = self.client.request_single_paper_expertise(
-                    name=f'{self.journal.venue_id}_{note.id}',
-                    group_id=committee_id,
-                    paper_id=note.id,
-                    expertise_selection_id=self.journal.get_expertise_selection_id(committee_id),
-                    model='specter+mfr')
-                job_id = job.get('jobId')
+                job_id = self.request_expertise(note, committee_id)
             response = self.client.get_expertise_results(job_id, wait_for_complete=True)
             return response.get('results', [])
         except Exception as e:

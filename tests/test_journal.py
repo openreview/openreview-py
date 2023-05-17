@@ -267,7 +267,11 @@ class TestJournal():
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
         note_id_1=submission_note_1['note']['id']
 
-        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Suggest candidate Action Editor for your new TMLR submission')
+        Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
+
+        openreview_client.get_invitation('TMLR/Paper1/Action_Editors/-/Recommendation')
+
+        messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLR] Suggest candidate Action Editor for your new TMLR submission')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi SomeFirstName User,
 
@@ -298,8 +302,10 @@ The TMLR Editors-in-Chief
         assert note.content['venue']['value'] == 'Submitted to TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Submitted'
 
+        assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Official_Comment")
+
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 10
+        assert len(invitations) == 10, ", ".join([i.id for i in invitations])
         assert f"{venue_id}/-/Submission" not in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review_Approval" not in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
@@ -400,6 +406,10 @@ The TMLR Editors-in-Chief
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id'])
         note_id_2=submission_note_2['note']['id']
 
+        Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
+
+        openreview_client.get_invitation('TMLR/Paper2/Action_Editors/-/Recommendation')
+
         author_group=openreview_client.get_group(f"{venue_id}/Paper2/Authors")
         assert author_group
         assert author_group.members == ['~SomeFirstName_User1', '~Celeste_Ana_Martinez1']
@@ -424,6 +434,10 @@ The TMLR Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_3['id'])
         note_id_3=submission_note_3['note']['id']
+
+        Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
+
+        openreview_client.get_invitation('TMLR/Paper3/Action_Editors/-/Recommendation')        
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper3/Authors")
         assert author_group
@@ -2345,6 +2359,10 @@ note={Retracted after acceptance}
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_4['id'])
         note_id_4=submission_note_4['note']['id']
 
+        Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
+
+        openreview_client.get_invitation('TMLR/Paper4/Action_Editors/-/Recommendation')        
+
         # Assign Action Editor
         paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
@@ -2926,6 +2944,10 @@ note={Rejected}
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_5['id'])
         note_id_5=submission_note_5['note']['id']
 
+        Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
+
+        openreview_client.get_invitation('TMLR/Paper5/Action_Editors/-/Recommendation')        
+
         # Assign Action Editor
         paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
@@ -3253,6 +3275,10 @@ The TMLR Editors-in-Chief
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_6['id'])
         note_id_6=submission_note_6['note']['id']
 
+        Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
+
+        openreview_client.get_invitation('TMLR/Paper6/Action_Editors/-/Recommendation')        
+
         # Assign Action Editor
         paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
@@ -3546,6 +3572,10 @@ note={Withdrawn}
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_7['id'])
         note_id_7 = submission_note_7['note']['id']
 
+        Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
+
+        openreview_client.get_invitation('TMLR/Paper7/Action_Editors/-/Recommendation')        
+
         # Assign Action Editor
         paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
@@ -3673,6 +3703,10 @@ The TMLR Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_8['id'])
         note_id_8 = submission_note_8['note']['id']
+
+        Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
+
+        openreview_client.get_invitation('TMLR/Paper8/Action_Editors/-/Recommendation')        
 
         # Assign Action Editor
         paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
@@ -3850,6 +3884,10 @@ The TMLR Editors-in-Chief
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_9['id'])
         note_id_9 = submission_note_9['note']['id']
 
+        Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
+
+        openreview_client.get_invitation('TMLR/Paper9/Action_Editors/-/Recommendation')        
+
         ## Desk Reject by EIC
         desk_reject_note = raia_client.post_note_edit(invitation= 'TMLR/Paper9/-/Desk_Rejection',
                                     signatures=[f'{venue_id}/Editors_In_Chief'],
@@ -3921,6 +3959,10 @@ The TMLR Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_10['id'])
         note_id_10 = submission_note_10['note']['id']
+
+        Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
+
+        openreview_client.get_invitation('TMLR/Paper10/Action_Editors/-/Recommendation')        
 
         paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
@@ -4017,6 +4059,10 @@ The TMLR Editors-in-Chief
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_11['id'])
         note_id_11 = submission_note_11['note']['id']
 
+        Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
+
+        openreview_client.get_invitation('TMLR/Paper11/Action_Editors/-/Recommendation')        
+
         paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
             writers=[venue_id, editor_in_chief_group_id],
@@ -4071,6 +4117,10 @@ The TMLR Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_12['id'])
         note_id_12=submission_note_12['note']['id']
+
+        Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
+
+        openreview_client.get_invitation('TMLR/Paper12/Action_Editors/-/Recommendation')        
 
         # Assign Action Editor
         paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',

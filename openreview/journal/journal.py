@@ -381,11 +381,9 @@ class Journal(object):
         self.invitation_builder.set_note_revision_invitation(note)
         self.invitation_builder.set_note_withdrawal_invitation(note)
         self.invitation_builder.set_note_desk_rejection_invitation(note)
-        self.invitation_builder.set_note_comment_invitation(note, public=False) 
-        self.setup_ae_assignment(note)
-        if not self.should_skip_ac_recommendation():
-            self.invitation_builder.set_ae_recommendation_invitation(note, self.get_due_date(weeks = self.get_ae_recommendation_period_length()))
-        self.setup_reviewer_assignment(note)
+        self.invitation_builder.set_note_comment_invitation(note, public=False)
+        self.assignment.request_expertise(note, self.get_action_editors_id())
+        self.assignment.request_expertise(note, self.get_reviewers_id())
         print('Finished setup author submission data.')
         
 
@@ -1005,9 +1003,66 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     self.client.post_edge(archived_edge)
                     ## avoid process function execution
                     self.client.delete_edges(invitation=reviewer_assignment_edge.invitation, head=reviewer_assignment_edge.head, tail=reviewer_assignment_edge.tail, soft_delete=True, wait_to_finish=True)
-                    
 
-    def run_reviewer_stats(self, end_cdate, output_file):
+    @classmethod
+    def update_affinity_scores(Journal, client, support_group_id='OpenReview.net/Support'):
+
+        journal_requests = client.get_all_notes(invitation=f'{support_group_id}/-/Journal_Request')
+
+        for journal_request in tqdm(journal_requests):
+
+            journal = openreview.journal.JournalRequest.get_journal(client, journal_request.id, setup=False)
+            print('Check venue', journal.venue_id)
+
+            ## Get all the submissions that don't have a decision affinity scores
+            submissions = journal.client.get_all_notes(invitation=journal.get_author_submission_id(), content = { 'venueid': journal.submitted_venue_id})
+
+            ## For each submission check the status of the expertise task
+            for submission in tqdm(submissions):
+                ae_score_count = journal.client.get_edges_count(invitation=journal.get_ae_affinity_score_id(), head=submission.id)
+                if ae_score_count == 0:
+                    print('Submission with no AE scores', submission.id, submission.number)
+                    result = journal.client.get_expertise_status(paper_id=submission.id, group_id=journal.get_action_editors_id())
+                    job_status = result['results'][0] if (result and result['results']) else None
+                    if job_status and job_status['status'] == 'Completed':
+                        print('Job Completed')
+                        journal.assignment.setup_ae_assignment(submission, job_status['jobId'])
+                        if not journal.should_skip_ac_recommendation():
+                            print('Setup AE recommendation')
+                            invitation = openreview.tools.get_invitation(client, journal.get_ae_recommendation_id(number=submission.number))
+                            if invitation is None:
+                                journal.invitation_builder.set_ae_recommendation_invitation(submission, journal.get_due_date(weeks = journal.get_ae_recommendation_period_length()))
+                                ## send email to authors
+                                print('Send email to authors')
+                                journal.client.post_message(
+                                    recipients=submission.signatures,
+                                    subject=f'[{journal.short_name}] Suggest candidate Action Editor for your new {journal.short_name} submission',
+                                    message=f'''Hi {{{{fullname}}}},
+
+Thank you for submitting your work titled "{submission.content['title']['value']}" to {journal.short_name}.
+
+Before the review process starts, you need to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
+
+To do so, please follow this link: https://openreview.net/invitation?id={journal.get_ae_recommendation_id(number=submission.number)} or check your tasks in the Author Console: https://openreview.net/group?id={journal.venue_id}/Authors
+
+For more details and guidelines on the {journal.short_name} review process, visit {journal.website}.
+
+The {journal.short_name} Editors-in-Chief
+''',
+                                    replyTo=journal.contact_info
+                                )
+
+
+                reviewers_score_count = journal.client.get_edges_count(invitation=journal.get_reviewer_affinity_score_id(), head=submission.id)
+                if reviewers_score_count == 0:
+                    print('Submission with no reviewers scores', submission.id, submission.number)
+                    result = journal.client.get_expertise_status(paper_id=submission.id, group_id=journal.get_reviewers_id())
+                    job_status = result['results'][0] if (result and result['results']) else None
+                    if job_status and job_status['status'] == 'Completed':
+                        print('Job Completed')
+                        journal.assignment.setup_reviewer_assignment(submission, job_status['jobId'])
+
+    def run_reviewer_stats(self, end_cdate, output_file, start_cdate=None):
 
         invitations_by_id = { i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True)}
         submission_by_id = { n.id: n for n in self.client.get_all_notes(invitation=self.get_author_submission_id(), details='replies')}
@@ -1061,6 +1116,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
         def get_reviewer_stats(reviewer, assignment):
             
             submission = submission_by_id[assignment['head']]
+            if start_cdate and submission.cdate < start_cdate:
+                return None
             if submission.cdate > end_cdate:
                 return None
 
@@ -1273,7 +1330,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     writer.writerow(row)                                
 
 
-    def run_action_editors_stats(self, end_cdate, output_file):
+    def run_action_editors_stats(self, end_cdate, output_file, start_cdate=None):
 
         invitations_by_id = { i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True)}
         submission_by_id = { n.id: n for n in self.client.get_all_notes(invitation=self.get_author_submission_id(), details='replies')}
@@ -1302,6 +1359,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
         def get_action_editor_stats(action_editor, assignment):
 
             submission = submission_by_id[assignment['head']]
+            if start_cdate and submission.cdate < start_cdate:
+                return None            
             if submission.cdate > end_cdate:
                 return None
 

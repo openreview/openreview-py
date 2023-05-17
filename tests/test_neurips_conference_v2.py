@@ -16,7 +16,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 class TestNeurIPSConference():
 
-    def test_create_conference(self, client, openreview_client, helpers):
+    def test_create_conference(self, client, openreview_client, helpers, selenium, request_page):
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
@@ -101,10 +101,57 @@ class TestNeurIPSConference():
         assert 'NeurIPS.cc/2023/Conference/Area_Chairs' in reviewers.readers
 
         assert openreview_client.get_group('NeurIPS.cc/2023/Conference/Authors')
-
         post_submission =  openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Post_Submission')
         assert 'authors' in post_submission.edit['note']['content']
         assert 'authorids' in post_submission.edit['note']['content']
+
+    def test_revision(self, client, openreview_client, selenium, request_page, helpers):
+
+        pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        first_date = now + datetime.timedelta(days=1)
+
+        pc_client.post_note(openreview.Note(
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Revision',
+            forum=request_form.id,
+            readers=['NeurIPS.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.id,
+            replyto=request_form.id,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[],
+            content={
+                'title': 'Conference on Neural Information Processing Systems',
+                'Official Venue Name': 'Conference on Neural Information Processing Systems',
+                'Abbreviated Venue Name': 'NeurIPS 2023',
+                'Official Website URL': 'https://neurips.cc',
+                'program_chair_emails': ['pc@neurips.cc'],
+                'contact_email': 'pc@neurips.cc',
+                'Venue Start Date': '2023/12/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'use_recruitment_template': 'Yes',
+                'homepage_override': {
+                    'instructions': '''**Authors**  
+Please see our [call for papers](https://nips.cc/Conferences/2023/CallForPapers) and read the [ethics guidelines](https://nips.cc/public/EthicsGuidelines)'''
+                }
+            }
+        ))
+        helpers.await_queue()
+
+        request_page(selenium, 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference', pc_client.token, wait_for_element='header')
+        header_div = selenium.find_element_by_id('header')
+        assert header_div
+        location_tag = header_div.find_element_by_class_name('venue-location')
+        assert location_tag and location_tag.text == request_form.content['Location']
+        description = header_div.find_element_by_class_name('description')
+        assert description and 'Authors' in description.text
 
     def test_recruit_senior_area_chairs(self, client, openreview_client, selenium, request_page, helpers):
 
@@ -831,6 +878,41 @@ If you would like to change your decision, please follow the link in the previou
         assert 'authorids' in post_submission.edit['note']['content']
         assert 'keywords' in post_submission.edit['note']['content']
 
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@neurips.cc', password=helpers.strong_password)
+
+        ## try to edit a submission as a PC and check revision invitation is updated
+        submissions = pc_client_v2.get_notes(invitation='NeurIPS.cc/2023/Conference/-/Submission', sort='number:asc')
+        submission = submissions[3]
+
+        pc_revision = pc_client_v2.post_note_edit(invitation='NeurIPS.cc/2023/Conference/-/PC_Revision',
+            signatures=['NeurIPS.cc/2023/Conference/Program_Chairs'],
+            note=openreview.api.Note(
+                id = submission.id,
+                content = {
+                    'title': { 'value': submission.content['title']['value'] + ' Version 2' },
+                    'abstract': submission.content['abstract'],
+                    'authorids': { 'value': submission.content['authorids']['value'] + ['celeste@yahoo.com'] },
+                    'authors': { 'value': submission.content['authors']['value'] + ['Celeste NeurIPS'] },
+                    'keywords': { 'value': ['machine learning', 'nlp'] }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=pc_revision['id'])
+
+        revision_inv =  test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission4/-/Revision')
+        assert revision_inv.edit['note']['content']['authors']['value'] == [
+          'SomeFirstName User',
+          'Peter SomeLastName',
+          'Andrew Mc',
+          'Celeste NeurIPS'
+        ]
+        assert revision_inv.edit['note']['content']['authorids']['value'] == [
+          'test@mail.com',
+          'peter@mail.com',
+          'andrew@google.com',
+          'celeste@yahoo.com'
+        ]
+
         ## update submission
         revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission4/-/Revision',
             signatures=['NeurIPS.cc/2023/Conference/Submission4/Authors'],
@@ -838,8 +920,8 @@ If you would like to change your decision, please follow the link in the previou
                 content={
                     'title': { 'value': 'Paper title 4 Updated' },
                     'abstract': { 'value': 'This is an abstract 4 updated' },
-                    'authorids': { 'value': ['test@mail.com', 'andrew@google.com', 'peter@mail.com' ] },
-                    'authors': { 'value': ['SomeFirstName User',  'Andrew Mc', 'Peter SomeLastName'] },
+                    'authorids': { 'value': ['test@mail.com', 'andrew@google.com', 'peter@mail.com', 'celeste@yahoo.com' ] },
+                    'authors': { 'value': ['SomeFirstName User',  'Andrew Mc', 'Peter SomeLastName', 'Celeste NeurIPS' ] },
                     'keywords': { 'value': ['machine learning', 'nlp'] },
                 }
             ))
