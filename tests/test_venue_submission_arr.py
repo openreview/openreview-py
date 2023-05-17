@@ -47,8 +47,8 @@ class TestVenueSubmissionARR():
             force_profiles=True
         )
     
-        venue.review_stage = openreview.stages.ReviewStage(start_date=now + datetime.timedelta(minutes = 4), due_date=now + datetime.timedelta(minutes = 40))
-        venue.meta_review_stage = openreview.stages.MetaReviewStage(start_date=now + datetime.timedelta(minutes = 10), due_date=now + datetime.timedelta(minutes = 40))
+        venue.review_stage = openreview.stages.ReviewStage(start_date=now + datetime.timedelta(minutes = 4), due_date=now + datetime.timedelta(minutes = 40), exp_date=now + datetime.timedelta(minutes = 70))
+        venue.meta_review_stage = openreview.stages.MetaReviewStage(start_date=now + datetime.timedelta(minutes = 10), due_date=now + datetime.timedelta(minutes = 40), exp_date=now + datetime.timedelta(minutes = 70))
 
         venue.review_rebuttal_stage = openreview.ReviewRebuttalStage(
             start_date=now + datetime.timedelta(minutes = 10),
@@ -314,6 +314,9 @@ class TestVenueSubmissionARR():
         with pytest.raises(openreview.OpenReviewException, match=rf'The Invitation ARR/Submission1/-/{cycle}/Official_Review was not found'):
             assert openreview_client.get_invitation(f'ARR/Submission1/-/{cycle}/Official_Review')
 
+        new_cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000
+        duedate = openreview.tools.datetime_millis(venue.review_stage.due_date)
+        expdate = openreview.tools.datetime_millis(venue.review_stage.exp_date)
         openreview_client.post_invitation_edit(
             invitations='ARR/-/Official_Review',
             readers=['ARR'],
@@ -322,10 +325,18 @@ class TestVenueSubmissionARR():
             content={
                 'subvenueid': {
                     'value': cycle
+                },
+                'cdate': {
+                    'value': new_cdate
+                },
+                'duedate': {
+                    'value': duedate
+                },
+                'expdate': {
+                    'value': expdate
                 }
             },
             invitation=openreview.api.Invitation(id=f'ARR/-/{cycle}/Official_Review',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
                 signatures=['ARR']
             )
         )
@@ -343,6 +354,9 @@ class TestVenueSubmissionARR():
         with pytest.raises(openreview.OpenReviewException, match=rf'The Invitation ARR/Submission1/-/{cycle}/Meta_Review was not found'):
             assert openreview_client.get_invitation(f'ARR/Submission1/-/{cycle}/Meta_Review')
 
+        new_cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000
+        duedate = openreview.tools.datetime_millis(venue.meta_review_stage.due_date)
+        expdate = openreview.tools.datetime_millis(venue.meta_review_stage.exp_date)
         openreview_client.post_invitation_edit(
             invitations='ARR/-/Meta_Review',
             readers=['ARR'],
@@ -351,10 +365,18 @@ class TestVenueSubmissionARR():
             content={
                 'subvenueid': {
                     'value': cycle
+                },
+                'cdate': {
+                    'value': new_cdate
+                },
+                'duedate': {
+                    'value': duedate
+                },
+                'expdate': {
+                    'value': expdate
                 }
             },
             invitation=openreview.api.Invitation(id=f'ARR/-/{cycle}/Meta_Review',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
                 signatures=['ARR']
             )
         )
@@ -371,6 +393,9 @@ class TestVenueSubmissionARR():
         with pytest.raises(openreview.OpenReviewException, match=rf'The Invitation ARR/Submission1/-/{cycle}/Rebuttal was not found'):
             assert openreview_client.get_invitation(f'ARR/Submission1/-/{cycle}/Rebuttal')
 
+        new_cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000
+        duedate = openreview.tools.datetime_millis(venue.meta_review_stage.due_date)
+        expdate = openreview.tools.datetime_millis(venue.meta_review_stage.exp_date)
         openreview_client.post_invitation_edit(
             invitations='ARR/-/Rebuttal',
             readers=['ARR'],
@@ -379,11 +404,19 @@ class TestVenueSubmissionARR():
             content={
                 'subvenueid': {
                     'value': cycle
+                },
+                'cdate': {
+                    'value': new_cdate
+                },
+                'duedate': {
+                    'value': duedate
+                },
+                'expdate': {
+                    'value': expdate
                 }
             },
             invitation=openreview.api.Invitation(id=f'ARR/-/{cycle}/Rebuttal',
                 signatures=['ARR'],
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
             )
         )
 

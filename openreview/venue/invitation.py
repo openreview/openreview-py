@@ -300,6 +300,36 @@ class InvitationBuilder(object):
                                 'regex': '.*', 'type': 'string' 
                             }
                         }
+                    },
+                    'cdate': {
+                        'value': {
+                            'param': {
+                                'minimum': 0,
+                                'maximum': 9999999999999,
+                                'type': "integer",
+                                'optional': True,
+                            }
+                        }
+                    },
+                    'duedate': {
+                        'value': {
+                            'param': {
+                                'minimum': 0,
+                                'maximum': 9999999999999,
+                                'type': "integer",
+                                'optional': True,
+                            }
+                        }
+                    },
+                    'expdate': {
+                        'value': {
+                            'param': {
+                                'minimum': 0,
+                                'maximum': 9999999999999,
+                                'type': "integer",
+                                'optional': True,
+                            }
+                        }
                     }
                 },
                 'invitation': {
@@ -308,24 +338,7 @@ class InvitationBuilder(object):
                     'signatures': [ venue_id ],
                     'readers': [venue_id],
                     'writers': [venue_id],
-                    'cdate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True,
-                        }
-                    },
-                    'duedate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True, 
-                        }
-                    },
-                    'expdate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True, 
-                        }
-                    },
+                    'cdate': '${2/content/cdate/value}',
                     'content': {
                         'review_process_script': {
                             'value': self.get_process_content('process/review_process.py')
@@ -363,7 +376,7 @@ class InvitationBuilder(object):
                             'writers': [venue_id],
                             'invitees': [venue_id, self.venue.get_reviewers_id(number='${3/content/noteNumber/value}')],
                             'maxReplies': 1,
-                            #'cdate': review_cdate,#'#{3/cdate}',
+                            'cdate': '${4/content/cdate/value}',
                             'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['review_process_script']['value']
@@ -408,8 +421,9 @@ class InvitationBuilder(object):
         )
 
         if review_duedate:
-            invitation.edit['invitation']['edit']['invitation']['duedate'] = review_duedate
-            invitation.edit['invitation']['edit']['invitation']['expdate'] = review_expdate
+            invitation.edit['invitation']['edit']['invitation']['duedate'] = '${4/content/duedate/value}'
+        if review_expdate:
+            invitation.edit['invitation']['edit']['invitation']['expdate'] = '${4/content/expdate/value}'
 
         self.save_invitation(invitation, replacement=True)
         return invitation
@@ -426,16 +440,21 @@ class InvitationBuilder(object):
 
         if sub_venue_id is not None and sub_venue_invitation is not None:
             invitation=Invitation(id=review_invitation_id,
-                    cdate=review_cdate,
-                    duedate=review_duedate,
-                    expdate=review_expdate,
                     signatures=[venue_id]
-                )
+            )
             content = {
                 'subvenueid': {
                     'value': sub_venue_id
+                },
+                'cdate': {
+                    'value': review_cdate
                 }
             }
+            if review_duedate:
+                content['duedate'] = {'value': review_duedate}
+            if review_expdate:
+                content['expdate'] = {'value': review_expdate}
+
             self.save_invitation(invitation, invitations=sub_venue_invitation.id, content=content)
             return invitation
 
@@ -584,6 +603,36 @@ class InvitationBuilder(object):
                                 'regex': '.*', 'type': 'string' 
                             }
                         }
+                    },
+                    'cdate': {
+                        'value': {
+                            'param': {
+                                'minimum': 0,
+                                'maximum': 9999999999999,
+                                'type': "integer",
+                                'optional': True,
+                            }
+                        }
+                    },
+                    'duedate': {
+                        'value': {
+                            'param': {
+                                'minimum': 0,
+                                'maximum': 9999999999999,
+                                'type': "integer",
+                                'optional': True,
+                            }
+                        }
+                    },
+                    'expdate': {
+                        'value': {
+                            'param': {
+                                'minimum': 0,
+                                'maximum': 9999999999999,
+                                'type': "integer",
+                                'optional': True,
+                            }
+                        }
                     }
                 },
                 'invitation': {
@@ -592,24 +641,7 @@ class InvitationBuilder(object):
                     'readers': [venue_id],
                     'writers': [venue_id],
                     'signatures': [venue_id],
-                    'cdate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True,
-                        }
-                    },
-                    'duedate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True, 
-                        }
-                    },
-                    'expdate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True, 
-                        }
-                    },
+                    'cdate': '${2/content/cdate/value}',
                     'dateprocesses': [{ 
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.invitation_edit_process              
@@ -665,6 +697,7 @@ class InvitationBuilder(object):
                             'readers': ['everyone'],
                             'writers': [venue_id],
                             'minReplies': 1,
+                            'cdate': '${4/content/cdate/value}',
                             'invitees': [venue_id, self.venue.get_authors_id(number='${3/content/noteNumber/value}')],
                             'process': '''def process(client, edit, invitation):
             meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -709,10 +742,9 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['edit']['invitation']['maxReplies'] = 1
 
         if review_rebuttal_duedate:
-            invitation.edit['invitation']['edit']['invitation']['duedate'] = review_rebuttal_duedate
-
+            invitation.edit['invitation']['edit']['invitation']['duedate'] = '${4/content/duedate/value}'
         if review_rebuttal_expdate:
-            invitation.edit['invitation']['edit']['invitation']['expdate'] = review_rebuttal_expdate            
+            invitation.edit['invitation']['edit']['invitation']['expdate'] = '${4/content/expdate/value}'
 
         self.save_invitation(invitation, replacement=False)
         return invitation
@@ -729,16 +761,21 @@ class InvitationBuilder(object):
 
         if sub_venue_id is not None and sub_venue_invitation is not None:
             invitation=Invitation(id=review_rebuttal_invitation_id,
-                    cdate=review_rebuttal_cdate,
-                    duedate=review_rebuttal_duedate,
-                    expdate=review_rebuttal_expdate,
                     signatures=[venue_id]
                 )
             content = {
                 'subvenueid': {
                     'value': sub_venue_id
+                },
+                'cdate': {
+                    'value': review_rebuttal_cdate
                 }
             }
+            if review_rebuttal_duedate:
+                content['duedate'] = {'value': review_rebuttal_duedate}
+            if review_rebuttal_expdate:
+                content['expdate'] = {'value': review_rebuttal_expdate}
+
             self.save_invitation(invitation, invitations=sub_venue_invitation.id, content=content)
             return invitation
 
@@ -902,6 +939,36 @@ class InvitationBuilder(object):
                                 'regex': '.*', 'type': 'string' 
                             }
                         }
+                    },
+                    'cdate': {
+                        'value': {
+                            'param': {
+                                'minimum': 0,
+                                'maximum': 9999999999999,
+                                'type': "integer",
+                                'optional': True,
+                            }
+                        }
+                    },
+                    'duedate': {
+                        'value': {
+                            'param': {
+                                'minimum': 0,
+                                'maximum': 9999999999999,
+                                'type': "integer",
+                                'optional': True,
+                            }
+                        }
+                    },
+                    'expdate': {
+                        'value': {
+                            'param': {
+                                'minimum': 0,
+                                'maximum': 9999999999999,
+                                'type': "integer",
+                                'optional': True,
+                            }
+                        }
                     }
                 },
                 'invitation': {
@@ -910,24 +977,7 @@ class InvitationBuilder(object):
                     'signatures': [ venue_id ],
                     'readers': [venue_id],
                     'writers': [venue_id],
-                    'cdate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True, 
-                        }
-                    },
-                    'duedate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True, 
-                        }
-                    },
-                    'expdate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True, 
-                        }
-                    },
+                    'cdate': '${2/content/cdate/value}',
                     'dateprocesses': [{ 
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.invitation_edit_process              
@@ -960,6 +1010,7 @@ class InvitationBuilder(object):
                             'writers': [venue_id],
                             'invitees': [venue_id, self.venue.get_area_chairs_id(number='${3/content/noteNumber/value}')],
                             'maxReplies': 1,
+                            'cdate': '${4/content/cdate/value}',
                             'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['meta_review_process_script']['value']
@@ -1004,8 +1055,9 @@ class InvitationBuilder(object):
         )
 
         if meta_review_duedate:
-            invitation.edit['invitation']['edit']['invitation']['duedate'] = meta_review_duedate
-            invitation.edit['invitation']['edit']['invitation']['expdate'] = meta_review_expdate
+            invitation.edit['invitation']['edit']['invitation']['duedate'] = '${4/content/duedate/value}'
+        if meta_review_expdate:
+            invitation.edit['invitation']['edit']['invitation']['expdate'] = '${4/content/expdate/value}'
 
         self.save_invitation(invitation, replacement=True)
         return invitation
@@ -1022,16 +1074,21 @@ class InvitationBuilder(object):
 
         if sub_venue_id is not None and sub_venue_invitation is not None:
             invitation=Invitation(id=meta_review_invitation_id,
-                    cdate=meta_review_cdate,
-                    duedate=meta_review_duedate,
-                    expdate=meta_review_expdate,
                     signatures=[venue_id]
                 )
             content = {
                 'subvenueid': {
                     'value': sub_venue_id
+                },
+                'cdate': {
+                    'value': meta_review_cdate
                 }
             }
+            if meta_review_duedate:
+                content['duedate'] = {'value': meta_review_duedate}
+            if meta_review_expdate:
+                content['expdate'] = {'value': meta_review_expdate}
+
             self.save_invitation(invitation, invitations=sub_venue_invitation.id, content=content)
             return invitation
         
@@ -1417,6 +1474,26 @@ class InvitationBuilder(object):
                                 'regex': '.*', 'type': 'string' 
                             }
                         }
+                    },
+                    'cdate': {
+                        'value': {
+                            'param': {
+                                'minimum': 0,
+                                'maximum': 9999999999999,
+                                'type': "integer",
+                                'optional': True,
+                            }
+                        }
+                    },
+                    'expdate': {
+                        'value': {
+                            'param': {
+                                'minimum': 0,
+                                'maximum': 9999999999999,
+                                'type': "integer",
+                                'optional': True,
+                            }
+                        }
                     }
                 },
                 'invitation': {
@@ -1425,18 +1502,7 @@ class InvitationBuilder(object):
                     'signatures': [ venue_id ],
                     'readers': [venue_id],
                     'writers': [venue_id],
-                    'cdate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True, 
-                        }
-                    },
-                    'expdate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True, 
-                        }
-                    },
+                    'cdate': '${2/content/cdate/value}',
                     'dateprocesses': [{ 
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.invitation_edit_process              
@@ -1475,7 +1541,7 @@ class InvitationBuilder(object):
                             'readers': ['everyone'],
                             'writers': [venue_id],
                             'invitees': invitees,
-                            'cdate': comment_cdate,
+                            'cdate': '${4/content/cdate/value}',
                             'preprocess': '''def process(client, edit, invitation):
             meta_invitation = client.get_invitation(invitation.invitations[0])
             script = meta_invitation.content['comment_preprocess_script']['value']
@@ -1533,7 +1599,7 @@ class InvitationBuilder(object):
         )
 
         if comment_expdate:
-            invitation.edit['invitation']['expdate'] = comment_expdate
+            invitation.edit['invitation']['edit']['invitation']['expdate'] = '${4/content/expdate/value}'
 
         self.save_invitation(invitation, replacement=True)
         return invitation
@@ -1559,15 +1625,18 @@ class InvitationBuilder(object):
 
         if sub_venue_id is not None and sub_venue_invitation is not None:
             invitation=Invitation(id=official_comment_invitation_id,
-                    cdate=comment_cdate,
-                    expdate=comment_expdate,
                     signatures=[venue_id]
                 )
             content = {
                 'subvenueid': {
                     'value': sub_venue_id
+                },
+                'cdate': {
+                    'value': comment_cdate
                 }
             }
+            if comment_expdate:
+                content['expdate'] = {'value': comment_expdate}
             self.save_invitation(invitation, invitations=sub_venue_invitation.id, content=content)
             return invitation
 
@@ -1702,6 +1771,26 @@ class InvitationBuilder(object):
                                 'regex': '.*', 'type': 'string' 
                             }
                         }
+                    },
+                    'cdate': {
+                        'value': {
+                            'param': {
+                                'minimum': 0,
+                                'maximum': 9999999999999,
+                                'type': "integer",
+                                'optional': True,
+                            }
+                        }
+                    },
+                    'expdate': {
+                        'value': {
+                            'param': {
+                                'minimum': 0,
+                                'maximum': 9999999999999,
+                                'type': "integer",
+                                'optional': True,
+                            }
+                        }
                     }
                 },
                 'invitation': {
@@ -1710,18 +1799,7 @@ class InvitationBuilder(object):
                     'signatures': [ venue_id ],
                     'readers': [venue_id],
                     'writers': [venue_id],
-                    'cdate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True, 
-                        }
-                    },
-                    'expdate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True, 
-                        }
-                    },
+                    'cdate': '${2/content/cdate/value}',
                     'dateprocesses': [{ 
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.invitation_edit_process              
@@ -1758,7 +1836,7 @@ class InvitationBuilder(object):
                             'writers': [venue_id],
                             'invitees': ['everyone'],
                             'noninvitees': self.venue.get_committee('${3/content/noteNumber/value}', with_authors = True),
-                            'cdate': comment_cdate,
+                            'cdate': '${4/content/cdate/value}',
                             'process': '''def process(client, edit, invitation):
             meta_invitation = client.get_invitation(invitation.invitations[0])
             script = meta_invitation.content['comment_process_script']['value']
@@ -1805,7 +1883,7 @@ class InvitationBuilder(object):
         )
 
         if comment_expdate:
-            invitation.edit['invitation']['expdate'] = comment_expdate
+            invitation.edit['invitation']['edit']['invitation']['expdate'] = '${4/content/expdate/value}'
 
         self.save_invitation(invitation, replacement=True)
         return invitation
@@ -1822,15 +1900,19 @@ class InvitationBuilder(object):
 
         if sub_venue_id is not None and sub_venue_invitation is not None:
             invitation=Invitation(id=public_comment_invitation,
-                    cdate=comment_cdate,
-                    expdate=comment_expdate,
                     signatures=[venue_id]
                 )
             content = {
                 'subvenueid': {
                     'value': sub_venue_id
+                },
+                'cdate': {
+                    'value': comment_cdate
                 }
             }
+            if comment_expdate:
+                content['expdate'] = {'value': comment_expdate}
+
             self.save_invitation(invitation, invitations=sub_venue_invitation.id, content=content)
             return invitation
 
@@ -2732,6 +2814,36 @@ class InvitationBuilder(object):
                                 'regex': '.*', 'type': 'string' 
                             }
                         }
+                    },
+                    'cdate': {
+                        'value': {
+                            'param': {
+                                'minimum': 0,
+                                'maximum': 9999999999999,
+                                'type': "integer",
+                                'optional': True,
+                            }
+                        }
+                    },
+                    'duedate': {
+                        'value': {
+                            'param': {
+                                'minimum': 0,
+                                'maximum': 9999999999999,
+                                'type': "integer",
+                                'optional': True,
+                            }
+                        }
+                    },
+                    'expdate': {
+                        'value': {
+                            'param': {
+                                'minimum': 0,
+                                'maximum': 9999999999999,
+                                'type': "integer",
+                                'optional': True,
+                            }
+                        }
                     }
                 },
                 'invitation': {
@@ -2740,24 +2852,7 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'invitees': [venue_id],
                     'signatures': [venue_id],
-                    'cdate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True, 
-                        }
-                    },
-                    'duedate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True, 
-                        }
-                    },
-                    'expdate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True, 
-                        }
-                    },
+                    'cdate': '${2/content/cdate/value}',
                     'dateprocesses': [{ 
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.invitation_edit_process              
@@ -2791,7 +2886,7 @@ class InvitationBuilder(object):
                             'writers': [venue_id],
                             'minReplies': 1,
                             'invitees': custom_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}'),
-                            'cdate': custom_stage_cdate,
+                            'cdate': '${4/content/cdate/value}',
                             'process': '''def process(client, edit, invitation):
             meta_invitation = client.get_invitation(invitation.invitations[0])
             script = meta_invitation.content['custom_stage_process_script']['value']
@@ -2852,9 +2947,9 @@ class InvitationBuilder(object):
             }
 
         if custom_stage_duedate:
-            invitation.edit['invitation']['edit']['invitation']['duedate'] = custom_stage_duedate
+            invitation.edit['invitation']['edit']['invitation']['duedate'] = '${4/content/duedate/value}'
         if custom_stage_expdate:
-            invitation.edit['invitation']['edit']['invitation']['expdate'] = custom_stage_expdate
+            invitation.edit['invitation']['edit']['invitation']['expdate'] = '${4/content/expdate/value}'
         if not custom_stage.multi_reply:
             invitation.edit['invitation']['edit']['invitation']['maxReplies'] = 1
 
@@ -2875,16 +2970,21 @@ class InvitationBuilder(object):
 
         if sub_venue_id is not None and sub_venue_invitation is not None:
             invitation=Invitation(id=custom_stage_invitation_id,
-                    cdate=custom_stage_cdate,
-                    duedate=custom_stage_duedate,
-                    expdate=custom_stage_expdate,
                     signatures=[venue_id]
                 )
             content = {
                 'subvenueid': {
                     'value': sub_venue_id
+                },
+                'cdate': {
+                    'value': custom_stage_cdate
                 }
             }
+            if custom_stage_duedate:
+                content['duedate'] = {'value': custom_stage_duedate}
+            if custom_stage_expdate:
+                content['expdate'] = {'value': custom_stage_expdate}
+
             self.save_invitation(invitation, invitations=sub_venue_invitation.id, content=content)
             return invitation
 
