@@ -1062,7 +1062,7 @@ The {journal.short_name} Editors-in-Chief
                         print('Job Completed')
                         journal.assignment.setup_reviewer_assignment(submission, job_status['jobId'])
 
-    def run_reviewer_stats(self, end_cdate, output_file):
+    def run_reviewer_stats(self, end_cdate, output_file, start_cdate=None):
 
         invitations_by_id = { i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True)}
         submission_by_id = { n.id: n for n in self.client.get_all_notes(invitation=self.get_author_submission_id(), details='replies')}
@@ -1116,6 +1116,8 @@ The {journal.short_name} Editors-in-Chief
         def get_reviewer_stats(reviewer, assignment):
             
             submission = submission_by_id[assignment['head']]
+            if start_cdate and submission.cdate < start_cdate:
+                return None
             if submission.cdate > end_cdate:
                 return None
 
@@ -1328,7 +1330,7 @@ The {journal.short_name} Editors-in-Chief
                     writer.writerow(row)                                
 
 
-    def run_action_editors_stats(self, end_cdate, output_file):
+    def run_action_editors_stats(self, end_cdate, output_file, start_cdate=None):
 
         invitations_by_id = { i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True)}
         submission_by_id = { n.id: n for n in self.client.get_all_notes(invitation=self.get_author_submission_id(), details='replies')}
@@ -1357,6 +1359,8 @@ The {journal.short_name} Editors-in-Chief
         def get_action_editor_stats(action_editor, assignment):
 
             submission = submission_by_id[assignment['head']]
+            if start_cdate and submission.cdate < start_cdate:
+                return None            
             if submission.cdate > end_cdate:
                 return None
 
