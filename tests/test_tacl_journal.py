@@ -99,7 +99,9 @@ class TestTACLJournal():
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
         note_id_1=submission_note_1['note']['id']
 
-        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TACL] Suggest candidate Action Editor for your new TACL submission')
+        Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
+
+        messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TACL] Suggest candidate Action Editor for your new TACL submission')
         assert len(messages) == 0
 
         author_group=openreview_client.get_group("TACL/Paper1/Authors")
