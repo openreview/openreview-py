@@ -41,6 +41,9 @@ class TestNeurIPSConference():
         helpers.create_user('external_reviewer2@mit.edu', 'External Reviewer', 'MIT', institution='mit.edu')
         helpers.create_user('external_reviewer3@adobe.com', 'External Reviewer', 'Adobe', institution='adobe.com')
 
+        helpers.create_user('melisatest@neuirps.cc', 'Melisa', 'Gilbert')
+        helpers.create_user('melisatest2@neurips.cc', 'Melisa', 'Gilbert')
+
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
             signatures=['~Program_NeurIPSChair1'],
@@ -814,6 +817,13 @@ If you would like to change your decision, please follow the link in the previou
                 note.content['authorids']['value'].append('~SeniorArea_GoogleChair1')
                 print(note)
 
+            if i == 2:
+                note.content['authors']['value'].append('Melisa Gilbert')
+                note.content['authors']['value'].append('Melisa Gilbert')
+                note.content['authorids']['value'].append('~Melisa_Gilbert1')
+                note.content['authorids']['value'].append('~Melisa_Gilbert2')
+                print(note)
+
             test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=note)            
@@ -912,6 +922,35 @@ If you would like to change your decision, please follow the link in the previou
           'andrew@google.com',
           'celeste@yahoo.com'
         ]
+
+        revision_inv = test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission2/-/Revision')
+        assert revision_inv.edit['note']['content']['authors']['value'] == [
+          'SomeFirstName User',
+          'Peter SomeLastName',
+          'Andrew Mc',
+          'Melisa Gilbert',
+          'Melisa Gilbert'
+        ]
+        assert revision_inv.edit['note']['content']['authorids']['value'] == [
+          'test@mail.com',
+          'peter@mail.com',
+          'andrew@fb.com',
+          '~Melisa_Gilbert1',
+          '~Melisa_Gilbert2'
+        ]
+
+        revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission2/-/Revision',
+            signatures=['NeurIPS.cc/2023/Conference/Submission2/Authors'],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': 'Paper title 2 Updated' },
+                    'abstract': { 'value': 'This is an abstract 2 updated' },
+                    'authorids': { 'value': ['test@mail.com', '~Melisa_Gilbert1', 'andrew@fb.com', 'peter@mail.com', '~Melisa_Gilbert1' ] },
+                    'authors': { 'value': ['SomeFirstName User',  'Melisa Gilbert', 'Andrew Mc', 'Peter SomeLastName', 'Melisa Gilbertt' ] },
+                    'keywords': { 'value': ['machine learning', 'nlp'] },
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])        
 
         ## update submission
         revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission4/-/Revision',
