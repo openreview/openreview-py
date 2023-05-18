@@ -1056,6 +1056,11 @@ If you would like to change your decision, please follow the link in the previou
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
+        post_submission_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Post_Submission')
+        assert post_submission_invitation
+        assert 'values-dropdown' in post_submission_invitation.reply['content']['hide_fields']
+        assert ['title', 'keywords', 'TLDR', 'abstract', 'pdf'] == post_submission_invitation.reply['content']['hide_fields']['values-dropdown']
+
         post_submission_note=pc_client.post_note(openreview.Note(
             content= {
                 'force': 'Yes',
