@@ -204,6 +204,7 @@ class TestICMLConference():
                         }                        
                     }
                 },
+                'remove_submission_options': ['TL;DR'],
                 'homepage_override': {
                     'location': 'Hawaii, USA',
                     'instructions': 'For author guidelines, please click [here](https://icml.cc/Conferences/2023/StyleAuthorInstructions)'
@@ -217,6 +218,7 @@ class TestICMLConference():
         assert 'supplementary_material' in submission_invitation.edit['note']['content']
         assert 'financial_aid' in submission_invitation.edit['note']['content']
         assert 'subject_areas' in submission_invitation.edit['note']['content']
+        assert 'TLDR' not in submission_invitation.edit['note']['content']
 
         domain = openreview_client.get_group('ICML.cc/2023/Conference')
         assert 'recommendation' == domain.content['meta_review_recommendation']['value'] 
