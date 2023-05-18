@@ -185,6 +185,51 @@ def process(client, note, invitation):
                         reveal_submission=conference.submission_stage.desk_rejected_submission_public,
                         hide_fields=forum_note.content.get('hide_fields', [])
                     )
+
+            if forum_note.content.get('api_version') == '2':
+                #update post submission hide_fields
+                submission_content = conference.submission_stage.get_content(api_version='2', conference=conference)
+                hide_fields = [key for key in submission_content.keys() if key not in ['title', 'authors', 'authorids', 'venue', 'venueid'] and 'delete' not in submission_content[key]]
+                content = {
+                    'submission_readers': {
+                        'description': 'Please select who should have access to the submissions after the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
+                        'value-radio': [
+                            'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                            'All area chairs only',
+                            'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
+                            'Program chairs and paper authors only',
+                            'Everyone (submissions are public)'
+                        ],
+                        'required': True
+                    },
+                    'force': {
+                        'value-radio': ['Yes', 'No'],
+                        'required': True,
+                        'description': 'Force creating blind submissions if conference is double blind'
+                    },
+                    'hide_fields': {
+                        'values-dropdown': hide_fields,
+                        'required': False,
+                        'description': 'Select which submission fields should be hidden if conference is double blind. Author names are already hidden. These fields will be hidden from all readers of the submissions, except for program chairs and paper authors.'
+                    }
+                }
+
+                client.post_invitation(openreview.Invitation(
+                    id = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Post_Submission',
+                    super = SUPPORT_GROUP + '/-/Post_Submission',
+                    invitees = [conference.get_program_chairs_id(), SUPPORT_GROUP],
+                    reply = {
+                        'forum': forum_note.id,
+                        'referent': forum_note.id,
+                        'readers': {
+                            'description': 'The users who will be allowed to read the above content.',
+                            'values' : [conference.get_program_chairs_id(), SUPPORT_GROUP]
+                        },
+                        'content': content
+                    },
+                    signatures = ['~Super_User1']
+                ))
+
         elif invitation_type == 'Bid_Stage':
             conference.create_bid_stages()
 

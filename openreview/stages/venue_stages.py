@@ -253,6 +253,8 @@ class SubmissionStage(object):
                 }
 
             for field in self.remove_fields:
+                if field == 'TL;DR':
+                    field = 'TLDR'
                 if field in content:
                     del content[field]
                 else:

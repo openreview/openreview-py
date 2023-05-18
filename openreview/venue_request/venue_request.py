@@ -1566,9 +1566,9 @@ class VenueRequest():
                 'description': 'Force creating blind submissions if conference is double blind'
             },
             'hide_fields': {
-                'values-regex': '.*',
+                'values-dropdown': ['keywords', 'TLDR', 'abstract', 'pdf'] ,#default submission field that can be hidden
                 'required': False,
-                'description': 'Comma separated values of submission fields to be hidden, author names are already hidden. These fields will be hidden from all readers of the submissions, except for program chairs and paper authors.'
+                'description': 'Select which submission fields should be hidden if conference is double blind. Author names are already hidden. These fields will be hidden from all readers of the submissions, except for program chairs and paper authors.'
             }
         }
 
