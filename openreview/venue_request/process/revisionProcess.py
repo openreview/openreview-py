@@ -470,7 +470,7 @@ Best,
                 'title': '{invitation} Process Failed'.format(invitation=invitation_type.replace("_", " ")),
                 'error': f'''
 ```python
-{error_status}
+{error_status[:199980]}
 ```
 ''',
                 'reference_url': f'''https://api.openreview.net/references?id={note.id}''',

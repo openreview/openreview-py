@@ -2004,7 +2004,7 @@ If you would like to change your decision, please follow the link in the previou
                 'order': 3
             },
             'error': {
-                'value-regex': '[\\S\\s]{0,20000}',
+                'value-regex': '[\\S\\s]{0,200000}',
                 'description': 'Error due to which matching setup failed',
                 'required': False,
                 'markdown': True,
