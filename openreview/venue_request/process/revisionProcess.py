@@ -189,7 +189,7 @@ def process(client, note, invitation):
             if forum_note.content.get('api_version') == '2':
                 #update post submission hide_fields
                 submission_content = conference.submission_stage.get_content(api_version='2', conference=conference)
-                hide_fields = [key for key in submission_content.keys() if key not in ['authors', 'authorids', 'venue', 'venueid'] and 'delete' not in submission_content[key]]
+                hide_fields = [key for key in submission_content.keys() if key not in ['title', 'authors', 'authorids', 'venue', 'venueid'] and 'delete' not in submission_content[key]]
                 content = {
                     'submission_readers': {
                         'description': 'Please select who should have access to the submissions after the submission deadline. Note that program chairs and paper authors are always readers of submissions.',

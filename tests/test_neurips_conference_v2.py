@@ -764,7 +764,20 @@ If you would like to change your decision, please follow the link in the previou
                 'abstract_registration_deadline': request_form.content['abstract_registration_deadline'],
                 'Location': 'Virtual',
                 'How did you hear about us?': 'ML conferences',
-                'Expected Submissions': '100'
+                'Expected Submissions': '100',
+                'Additional Submission Options': {
+                    'corresponding_author': {
+                        'value': {
+                        'param': {
+                            'type': 'string',
+                            'regex': '~.*|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})',
+                            'optional': True
+                        }
+                        },
+                        'description': 'Select which author should be the primary corresponding author for this submission. Please enter an email address or an OpenReview ID that exactly matches one of the authors.',
+                        'order': 11
+                    }
+                }
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
@@ -1059,7 +1072,7 @@ If you would like to change your decision, please follow the link in the previou
         post_submission_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Post_Submission')
         assert post_submission_invitation
         assert 'values-dropdown' in post_submission_invitation.reply['content']['hide_fields']
-        assert ['title', 'keywords', 'TLDR', 'abstract', 'pdf'] == post_submission_invitation.reply['content']['hide_fields']['values-dropdown']
+        assert ['keywords', 'TLDR', 'abstract', 'pdf', 'corresponding_author'] == post_submission_invitation.reply['content']['hide_fields']['values-dropdown']
 
         post_submission_note=pc_client.post_note(openreview.Note(
             content= {
