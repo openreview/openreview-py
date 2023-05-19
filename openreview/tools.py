@@ -1450,7 +1450,11 @@ def get_neurips_profile_info(profile, n_years=None):
                 year = None
         if not year:
             timtestamp = pub.cdate if pub.cdate else pub.tcdate
-            year = int(datetime.datetime.fromtimestamp(timtestamp/1000).year)
+            try:
+                year = int(datetime.datetime.fromtimestamp(timtestamp/1000).year)
+            except:
+                year = -1
+                print('Error extracting the date for publication: ', pub.id)            
         if year > cut_off_year:
             publications.add(pub.id)
 
