@@ -39,8 +39,8 @@ var instructionDetails = [
   OpenReview offers automated paper-reviewer assignment optimization and conflict of interest detection, \
   as well as a web interface for browsing, viewing statistics, and modifying the resulting assignments. \
   The OpenReview Matching System supports multiple optimization objectives and arbitrary numerical inputs as features for the match. \
-  If you would like to use the OpenReview Paper Matching System for your venue, please indicate which features you would like to use in the form below. \
-  If you want to make manual assignments, you can indicate that by deselecting all the options for the field "Paper Matching" in the request form. \
+  If you would like to use the OpenReview Paper Matching System for your venue, please select the Automatic option for the field "Submission Reviewer Assignment" in the form below. \
+  If you want to make manual assignments, you can indicate that by selecting the Manual option. \
   Our most commonly used features are described in the following list: \
   <ul>\
   <li><strong>Reviewer Bid Scores</strong>: Reviewers indicate their preference to review papers via bids, which are then converted to scores.</li>\
