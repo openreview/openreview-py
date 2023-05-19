@@ -1497,7 +1497,7 @@ class VenueRequest():
                             'order': 1,
                             'value-regex': '.{1,500}',
                             'description': 'Brief summary of your comment.',
-                            'required': True
+                            'required': False
                         },
                         'comment': {
                             'order': 2,
