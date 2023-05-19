@@ -615,7 +615,7 @@ Total Errors: {len(errors)}
                 content={
                     'title': 'Decision Upload Status',
                     'decision_posted': f'''{len(results)} Papers''',
-                    'error': error_status
+                    'error': error_status[:200000]
                 }
             )
 

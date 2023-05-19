@@ -234,6 +234,12 @@ The OpenReview Team.
         assert 'username' in profile.content['names'][0]
         assert profile.content['names'][0]['username'] == '~John_Last1'
 
+        found_profiles = client.search_profiles(fullname='John Last', use_ES=True)
+        assert len(found_profiles) == 1
+        assert len(found_profiles[0].content['names']) == 1
+        assert 'username' in found_profiles[0].content['names'][0]
+        assert found_profiles[0].content['names'][0]['username'] == '~John_Last1'        
+
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~John_Alternate_Last1'):
             client.get_group('~John_Alternate_Last1')
 
@@ -383,6 +389,12 @@ The OpenReview Team.
         assert len(profile.content['names']) == 1
         assert 'username' in profile.content['names'][0]
         assert profile.content['names'][0]['username'] == '~Ana_Alternate_Last1'
+
+        found_profiles = client.search_profiles(fullname='Ana Last', use_ES=True)
+        assert len(found_profiles) == 1
+        assert len(found_profiles[0].content['names']) == 1
+        assert 'username' in found_profiles[0].content['names'][0]
+        assert found_profiles[0].content['names'][0]['username'] == '~Ana_Alternate_Last1'        
 
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Ana_Last1'):
             client.get_group('~Ana_Last1')
@@ -556,6 +568,10 @@ The OpenReview Team.
         profile.content['names'][1]['username'] == '~Ella_Alternate_Last1'
         profile.content['names'][2]['username'] == '~Ella_Last2'
 
+        found_profiles = client.search_profiles(fullname='Ella Last', use_ES=True)
+        assert len(found_profiles) == 1
+        assert len(found_profiles[0].content['names']) == 3
+
         assert client.get_group('~Ella_Last1').members == ['ella@profile.org', 'ella_two@profile.org']
         assert client.get_group('~Ella_Last2').members == ['ella_two@profile.org']
         assert client.get_group('ella@profile.org').members == ['~Ella_Last1', '~Ella_Alternate_Last1']
@@ -622,6 +638,10 @@ The OpenReview Team.
         assert 'username' in profile.content['names'][0]
         assert profile.content['names'][0]['username'] == '~Ella_Last1'
         assert profile.content['names'][1]['username'] == '~Ella_Alternate_Last1'
+
+        found_profiles = client.search_profiles(fullname='Ella Alternate', use_ES=True)
+        assert len(found_profiles) == 1
+        assert len(found_profiles[0].content['names']) == 2        
 
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Ella_Last2'):
             client.get_group('~Ella_Last2')
@@ -770,6 +790,11 @@ The OpenReview Team.
         profile = javier_client.get_profile(email_or_id='~Javier_Alternate_Last1')
         assert len(profile.content['names']) == 1
         assert profile.content['names'][0]['username'] == '~Javier_Alternate_Last1'
+
+        found_profiles = client.search_profiles(fullname='Javier Alternate', use_ES=True)
+        assert len(found_profiles) == 1
+        assert len(found_profiles[0].content['names']) == 1
+        assert found_profiles[0].content['names'][0]['username'] == '~Javier_Alternate_Last1'       
 
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Javier_Last1'):
             client.get_group('~Javier_Last1')

@@ -53,7 +53,7 @@ def process(client, note, invitation):
         error_status = f'''
         {matching_status.get('error')}
         '''
-        comment_note.content['error'] = error_status
+        comment_note.content['error'] = error_status[:200000]
 
     else:
         no_profiles_members = matching_status.get('no_profiles', [])
