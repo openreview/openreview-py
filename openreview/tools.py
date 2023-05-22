@@ -1350,7 +1350,7 @@ def get_profile_info(profile, n_years=None):
             domains.add(domain)
             emails.add(email)
         else:
-            print(profile.id, email)
+            print('Profile with invalid email:', profile.id, email)
 
     ## Institution section
     for history in profile.content.get('history', []):
@@ -1432,7 +1432,10 @@ def get_neurips_profile_info(profile, n_years=None):
     for email in profile.content['emails']:
         if email.startswith("****@"):
             raise openreview.OpenReviewException("You do not have the required permissions as some emails are obfuscated. Please login with the correct account or contact support.")
-        emails.add(email)
+        if '@' in email:
+            emails.add(email)
+        else:
+            print('Profile with invalid email:', profile.id, email)
 
     ## if institution section is empty, add email domains
     if not domains:
@@ -1441,7 +1444,7 @@ def get_neurips_profile_info(profile, n_years=None):
                 domain = email.split('@')[1]
                 domains.add(domain)
             else:
-                print(profile.id, email)
+                print('Profile with invalid email:', profile.id, email)
 
     ## Publications section: get publications within last n years
     curr_year = datetime.datetime.now().year
