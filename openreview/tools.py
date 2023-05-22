@@ -1345,9 +1345,12 @@ def get_profile_info(profile, n_years=None):
         if email.startswith("****@"):
             raise openreview.OpenReviewException("You do not have the required permissions as some emails are obfuscated. Please login with the correct account or contact support.")
         # split email
-        domain = email.split('@')[1]
-        domains.add(domain)
-        emails.add(email)
+        if '@' in email:
+            domain = email.split('@')[1]
+            domains.add(domain)
+            emails.add(email)
+        else:
+            print(profile.id, email)
 
     ## Institution section
     for history in profile.content.get('history', []):
