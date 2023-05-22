@@ -1434,8 +1434,11 @@ def get_neurips_profile_info(profile, n_years=None):
     ## if institution section is empty, add email domains
     if not domains:
         for email in profile.content['emails']:
-            domain = email.split('@')[1]
-            domains.add(domain)
+            if '@' in email:
+                domain = email.split('@')[1]
+                domains.add(domain)
+            else:
+                print(profile.id, email)
 
     ## Publications section: get publications within last n years
     curr_year = datetime.datetime.now().year
