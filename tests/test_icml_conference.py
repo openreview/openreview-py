@@ -3569,6 +3569,17 @@ ICML 2023 Conference Program Chairs'''
                 'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
                 'additional_meta_review_form_options': {
+                    'recommendation': {
+                        'description': 'Please select a recommendation for the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': ['Accept', 'Reject'],
+                                'input': 'select'
+                            }
+                        },
+                        'order': 2
+                    },
                     'suggestions': {
                         'description': 'Please provide suggestions on how to improve the paper',
                         'value': {
@@ -3581,7 +3592,7 @@ ICML 2023 Conference Program Chairs'''
                         }
                     }
                 },
-                'remove_meta_review_form_options': 'confidence'
+                'remove_meta_review_form_options': ['confidence']
             },
             forum=request_form.forum,
             invitation=f'openreview.net/Support/-/Request{request_form.number}/Meta_Review_Stage',

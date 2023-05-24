@@ -1345,9 +1345,12 @@ def get_profile_info(profile, n_years=None):
         if email.startswith("****@"):
             raise openreview.OpenReviewException("You do not have the required permissions as some emails are obfuscated. Please login with the correct account or contact support.")
         # split email
-        domain = email.split('@')[1]
-        domains.add(domain)
-        emails.add(email)
+        if '@' in email:
+            domain = email.split('@')[1]
+            domains.add(domain)
+            emails.add(email)
+        else:
+            print('Profile with invalid email:', profile.id, email)
 
     ## Institution section
     for history in profile.content.get('history', []):
@@ -1429,13 +1432,19 @@ def get_neurips_profile_info(profile, n_years=None):
     for email in profile.content['emails']:
         if email.startswith("****@"):
             raise openreview.OpenReviewException("You do not have the required permissions as some emails are obfuscated. Please login with the correct account or contact support.")
-        emails.add(email)
+        if '@' in email:
+            emails.add(email)
+        else:
+            print('Profile with invalid email:', profile.id, email)
 
     ## if institution section is empty, add email domains
     if not domains:
         for email in profile.content['emails']:
-            domain = email.split('@')[1]
-            domains.add(domain)
+            if '@' in email:
+                domain = email.split('@')[1]
+                domains.add(domain)
+            else:
+                print('Profile with invalid email:', profile.id, email)
 
     ## Publications section: get publications within last n years
     curr_year = datetime.datetime.now().year
@@ -1450,7 +1459,11 @@ def get_neurips_profile_info(profile, n_years=None):
                 year = None
         if not year:
             timtestamp = pub.cdate if pub.cdate else pub.tcdate
-            year = int(datetime.datetime.fromtimestamp(timtestamp/1000).year)
+            try:
+                year = int(datetime.datetime.fromtimestamp(timtestamp/1000).year)
+            except:
+                year = -1
+                print('Error extracting the date for publication: ', pub.id)            
         if year > cut_off_year:
             publications.add(pub.id)
 

@@ -2629,6 +2629,9 @@ class Group(object):
         if self.ddate is not None:
             body['ddate'] = self.ddate
 
+        if self.host is not None:
+            body['host'] = self.host
+
         if self.impersonators is not None:
             body['impersonators'] = self.impersonators 
 

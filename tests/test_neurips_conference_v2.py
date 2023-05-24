@@ -93,7 +93,9 @@ class TestNeurIPSConference():
 
         helpers.await_queue()
 
-        assert openreview_client.get_group('NeurIPS.cc/2023/Conference')
+        venue_group = openreview_client.get_group('NeurIPS.cc/2023/Conference')
+        assert venue_group
+        assert venue_group.host == 'NeurIPS.cc'
         assert openreview_client.get_group('NeurIPS.cc/2023/Conference/Senior_Area_Chairs')
         acs=openreview_client.get_group('NeurIPS.cc/2023/Conference/Area_Chairs')
         assert acs
