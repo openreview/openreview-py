@@ -11,12 +11,6 @@ var CONFERENCE_ID = 'OpenReview.net/Archive';
 var DIRECT_UPLOAD_ID = CONFERENCE_ID + '/-/Direct_Upload';
 var IMPORTED_RECORD_ID = CONFERENCE_ID + '/-/Imported_Record'
 
-var paperDisplayOptions = {
-  pdfLink: true,
-  replyCount: true,
-  showContents: true
-};
-
 var HEADER = {
   title: 'OpenReview Archive',
   subtitle: 'Publication Upload Portal for Paper-Reviewer Matching',
@@ -53,7 +47,6 @@ var HEADER = {
 }
 
 var BUFFER = 1000 * 60 * 30;  // 30 minutes
-var PAGE_SIZE = 50;
 
 var paperDisplayOptions = {
   pdfLink: true,
@@ -86,10 +79,14 @@ function main() {
 function load() {
 
   var authorNotesP;
+  var authorNotes2P;
   var directUploadsP;
+  var tagInvitationsP;
   if (!user || _.startsWith(user.id, 'guest_')) {
     authorNotesP = $.Deferred().resolve([]);
+    authorNotes2P = $.Deferred().resolve([]);
     directUploadsP = $.Deferred().resolve([]);
+    tagInvitationsP = $.Deferred().resolve([]);
   } else {
     authorNotesP = Webfield.get('/notes', {
       'content.authorids': user.profile.id,
@@ -97,6 +94,13 @@ function load() {
     }).then(function(result) {
       return result.notes;
     });
+
+    authorNotes2P = Webfield2.get('/notes', {
+      'content.authorids': user.profile.id,
+      details: 'forumContent,writable,tags'
+    }).then(function(result) {
+      return result.notes;
+    });    
 
     directUploadsP = Webfield.get('/notes', {
       invitation: DIRECT_UPLOAD_ID,
@@ -106,14 +110,13 @@ function load() {
       return result.notes;
     });
 
-  var tagInvitationsP = Webfield.getAll('/invitations', {id: 'OpenReview.net/Archive/-/Authorship_Claim', tags: true}).then(function(invitations) {
-    return invitations.filter(function(invitation) {
-      return invitation.invitees.length;
+    tagInvitationsP = Webfield.getAll('/invitations', {id: 'OpenReview.net/Archive/-/Authorship_Claim', tags: true}).then(function(invitations) {
+      return invitations.filter(function(invitation) {
+        return invitation.invitees.length;
+      });
     });
-  });
-
   }
-  return $.when(authorNotesP, directUploadsP, tagInvitationsP);
+  return $.when(authorNotesP, authorNotes2P, directUploadsP, tagInvitationsP);
 }
 
 
@@ -143,13 +146,14 @@ function renderSubmissionButton(INVITATION_ID) {
 function renderConferenceTabs() {
   var sections = [
     {
-      heading: 'Imported Papers',
-      id: 'imported-papers'
-    },
-    {
       heading: 'Confirmed Papers',
       id: 'confirmed-papers',
+    },
+    {
+      heading: 'Imported Papers',
+      id: 'imported-papers'
     }
+
   ];
 
   Webfield.ui.tabPanel(sections, {
@@ -158,19 +162,21 @@ function renderConferenceTabs() {
   });
 }
 
-function renderContent(authorNotes, directUploadNotes, tagInvitations) {
+function renderContent(authorNotes, authorNotes2, directUploadNotes, tagInvitations) {
 
-  var allNotes = _.unionBy(authorNotes, directUploadNotes, function(note){return note.id;});
+  var allNotes = _.unionBy(authorNotes, authorNotes2, directUploadNotes, function(note){ return note.id; });
 
   var isConfirmedImport = function(note){
     return note.details.tags && note.details.tags.length > 0 && _.includes(note.details.tags[0].tag, 'Yes');
   }
 
-  var importedPapers = _.filter(allNotes, function(note){
-    return note.invitation === IMPORTED_RECORD_ID && !isConfirmedImport(note);});
+  var importedPapers = _.filter(allNotes, function(note) {
+    return note.invitation === IMPORTED_RECORD_ID && !isConfirmedImport(note);
+  });
 
-  var confirmedPapers = _.filter(allNotes, function(note){
-    return note.invitation != IMPORTED_RECORD_ID || isConfirmedImport(note);});
+  var confirmedPapers = _.filter(allNotes, function(note) {
+    return note.invitation != IMPORTED_RECORD_ID || isConfirmedImport(note);
+  });
 
   // importedPapers tab
   var importedPapersOptions = _.assign({}, paperDisplayOptions, {
@@ -207,9 +213,8 @@ function renderContent(authorNotes, directUploadNotes, tagInvitations) {
       displayOptions: confirmedPapersOptions,
       fadeIn: false
     });
-
   } else {
-    $('.tabs-container a[href="#confirmed-papers"]').parent().hide();
+    // $('.tabs-container a[href="#confirmed-papers"]').parent().hide();
   }
 
   $('#notes .spinner-container').remove();
