@@ -711,7 +711,6 @@ decision_v2 = {
         'value': {
             'param': {
                 'type': 'string',
-                'maxLength': 5000,
                 'markdown': True,
                 'input': 'textarea',
                 'optional': True
