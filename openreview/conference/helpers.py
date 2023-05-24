@@ -639,22 +639,29 @@ def get_meta_review_stage(request_forum):
 
     meta_review_form_additional_options = request_forum.content.get('additional_meta_review_form_options', {})
     options = request_forum.content.get('recommendation_options', '').strip()
-    if options:
+    if options: #to keep backward compatibility
         if request_forum.content.get('api_version') == '2':
-            meta_review_form_additional_options['recommendation'] = {
-                'value': {
-                    'param': {
-                        'type': 'string',
-                        'enum': [s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')]
+            if 'recommendation' in meta_review_form_additional_options and 'enum' in meta_review_form_additional_options['recommendation']['value']['param']:
+                meta_review_form_additional_options['recommendation']['value']['param']['enum'] = [s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')]
+            else:
+                meta_review_form_additional_options['recommendation'] = {
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'enum': [s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')]
+                        }
                     }
                 }
-            }
         else:
-            meta_review_form_additional_options['recommendation'] = {
-                'value-dropdown':[s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')],
-                'required': True}
+            if 'recommendation' in meta_review_form_additional_options and 'value-dropdown' in meta_review_form_additional_options['recommendation']:
+                meta_review_form_additional_options['recommendation']['value-dropdown'] = [s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')]
+            else:
+                meta_review_form_additional_options['recommendation'] = {
+                    'value-dropdown':[s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')],
+                    'required': True
+                }
 
-    meta_review_form_remove_options = request_forum.content.get('remove_meta_review_form_options', '').replace(',', ' ').split()
+    meta_review_form_remove_options = request_forum.content.get('remove_meta_review_form_options', [])
 
     readers_map = {
         'Meta reviews should be immediately revealed to all reviewers': openreview.stages.MetaReviewStage.Readers.REVIEWERS,
