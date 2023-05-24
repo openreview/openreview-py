@@ -1586,6 +1586,17 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
                 'additional_meta_review_form_options': {
+                    'recommendation': {
+                        'description': 'Please select a recommendation for the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': ['Accept', 'Reject'],
+                                'input': 'radio'
+                            }
+                        },
+                        'order': 2
+                    },
                     'suggestions': {
                         'description': 'Please provide suggestions on how to improve the paper',
                         'value': {
@@ -1598,7 +1609,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                         }
                     }
                 },
-                'remove_meta_review_form_options': 'confidence'
+                'remove_meta_review_form_options': ['confidence']
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Meta_Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1646,6 +1657,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert 'confidence' not in meta_review_invitation.edit['note']['content']
         assert 'suggestions' in meta_review_invitation.edit['note']['content']
         assert 'Accept' in meta_review_invitation.edit['note']['content']['recommendation']['value']['param']['enum']
+        assert meta_review_invitation.edit['note']['content']['recommendation']['value']['param']['input'] == 'radio'
         assert len(meta_review_invitation.edit['note']['readers']) == 4
 
         #post a meta review
@@ -1681,10 +1693,20 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
                 'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
                 'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
-                'recommendation_options': 'Accept, Reject',
                 'release_meta_reviews_to_authors': 'Yes, meta reviews should be revealed when they are posted to the paper\'s authors',
                 'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers',
                 'additional_meta_review_form_options': {
+                    'recommendation': {
+                        'description': 'Please select a recommendation for the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': ['Accept', 'Reject'],
+                                'input': 'radio'
+                            }
+                        },
+                        'order': 2
+                    },
                     'suggestions': {
                         'description': 'Please provide suggestions on how to improve the paper',
                         'value': {
@@ -1697,7 +1719,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                         }
                     }
                 },
-                'remove_meta_review_form_options': 'confidence'
+                'remove_meta_review_form_options': ['confidence']
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Meta_Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),

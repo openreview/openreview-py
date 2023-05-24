@@ -89,6 +89,7 @@ class InvitationBuilder(object):
         self.set_comment_invitation()
         self.set_assignment_configuration_invitation()
         self.set_eic_revision_invitation()
+        self.set_expertise_selection_invitations()
 
     
     def get_super_process_content(self, field_name):
@@ -240,6 +241,11 @@ class InvitationBuilder(object):
 
     def set_ae_recruitment_invitation(self):
 
+        invitation = openreview.tools.get_invitation(self.client, self.journal.get_ae_recruitment_id())
+
+        if invitation:
+            return 
+        
         venue_id=self.journal.venue_id
         action_editors_id = self.journal.get_action_editors_id()
         action_editors_declined_id = action_editors_id + '/Declined'
@@ -317,6 +323,11 @@ class InvitationBuilder(object):
                 return invitation
 
     def set_reviewer_recruitment_invitation(self):
+
+        invitation = openreview.tools.get_invitation(self.client, self.journal.get_reviewer_recruitment_id())
+
+        if invitation:
+            return         
 
         venue_id=self.journal.venue_id
         reviewers_id = self.journal.get_reviewers_id()
@@ -1008,6 +1019,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'deletable': True
                     }
                 },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
                 'readers': [venue_id, self.journal.get_authors_id(number='${{2/head}/number}')],
                 'nonreaders': [],
                 'writers': [venue_id],
@@ -1056,6 +1074,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 },
                 'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
                         'optional': True,
@@ -1115,6 +1140,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'deletable': True
                     }
                 },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                }, 
                 'readers': [venue_id, '${2/tail}'],
                 'nonreaders': [],
                 'writers': [venue_id],
@@ -1170,6 +1202,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'deletable': True
                     }
                 },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                }, 
                 'readers': [venue_id],
                 'nonreaders': [],
                 'writers': [venue_id],
@@ -1225,6 +1264,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'deletable': True
                     }
                 },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },                
                 'readers': [venue_id, editor_in_chief_id, '${2/tail}'],
                 'nonreaders': [],
                 'writers': [venue_id, editor_in_chief_id],
@@ -1285,6 +1331,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'deletable': True
                     }
                 },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },                
                 'readers': [venue_id, editor_in_chief_id, '${2/tail}'],
                 'nonreaders': [],
                 'writers': [venue_id, editor_in_chief_id],
@@ -1332,6 +1385,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 },                
                 'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
                         'optional': True,
@@ -1393,6 +1453,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'deletable': True
                     }
                 },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
                 'readers': [venue_id, self.journal.get_authors_id(number='${{2/head}/number}')],
                 'nonreaders': [],
                 'writers': [venue_id, self.journal.get_authors_id(number='${{2/head}/number}')],
@@ -1436,6 +1503,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 },                
                 'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
                         'optional': True,
@@ -1495,6 +1569,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'deletable': True
                     }
                 },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
                 'readers': [venue_id, '${2/tail}'],
                 'nonreaders': [],
                 'writers': [venue_id, '${2/tail}'],
@@ -1538,6 +1619,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 },                
                 'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
                         'optional': True,
@@ -1611,6 +1699,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'deletable': True
                     }
                 },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
                 'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}')],
                 'nonreaders': [self.journal.get_authors_id(number='${{2/head}/number}')],
                 'writers': [venue_id],
@@ -1659,6 +1754,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 },                 
                 'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
                         'optional': True,
@@ -1714,6 +1816,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 },                 
                 'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
                         'optional': True,
@@ -1785,6 +1894,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'deletable': True
                     }
                 },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },                
                 'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}'), '${2/tail}'],
                 'nonreaders': [self.journal.get_authors_id(number='${{2/head}/number}')],
                 'writers': [venue_id],
@@ -1845,6 +1961,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'deletable': True
                     }
                 },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
                 'readers': [venue_id, self.journal.get_action_editors_id(), '${2/tail}'],
                 'nonreaders': [],
                 'writers': [venue_id, '${2/tail}'],
@@ -1898,6 +2021,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'deletable': True
                     }
                 },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
                 'readers': [venue_id, self.journal.get_action_editors_id(), '${2/tail}'],
                 'nonreaders': [],
                 'writers': [venue_id],
@@ -1940,6 +2070,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 },                
                 'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
                         'optional': True,
@@ -2019,7 +2156,6 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = {
             'id': self.journal.get_review_approval_id(number='${2/content/noteNumber/value}'),
             'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
-            'noninvitees': [editors_in_chief_id],
             'readers': ['everyone'],
             'writers': [venue_id],
             'signatures': [venue_id],
@@ -2998,6 +3134,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'deletable': True
                     }
                 },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
                 'readers': [venue_id, authors_id],
                 'nonreaders': [],
                 'writers': [venue_id, authors_id],
@@ -3078,6 +3221,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 },                 
                 'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
                         'optional': True,
@@ -3569,7 +3719,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         }
                     },
                     'signatures': ['${3/signatures}'],
-                    'readers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
                     'nonreaders':[ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                     'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
                     'content': {
@@ -3687,7 +3837,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'forum': '${4/content/noteId/value}',
                     'replyto': '${4/content/replytoId/value}',
                     'signatures': [ self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') ],
-                    'readers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${5/content/soliciter/value}' ],
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${5/content/soliciter/value}' ],
                     'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                     'writers': [ venue_id ],
                     'content': {
@@ -4380,6 +4530,20 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'maxLength': 200000,
                                     'input': 'textarea',
                                     'markdown': True
+                                }
+                            }
+                        },
+                        'resubmission_of_major_revision': {
+                            'order': 6,
+                            'description': 'Optional and only if decision is Reject.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'The authors may consider submitting a major revision at a later time.'
+                                    ],
+                                    'input': 'checkbox',
+                                    'optional': True
                                 }
                             }
                         }
@@ -5530,3 +5694,67 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         )
 
         self.save_invitation(invitation)               
+
+    def set_expertise_selection_invitations(self):
+
+        venue_id = self.journal.venue_id
+
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/expertiseSelectionWebfield.js')) as webfield_reader:
+            webfield_content = webfield_reader.read()
+            webfield_content = webfield_content.replace('VENUE_ID', venue_id)
+
+        def build_expertise_selection(committee_id, expertise_selection_id):
+            invitation = Invitation(
+                id= expertise_selection_id,
+                invitees = [committee_id],
+                signatures = [venue_id],
+                readers = [venue_id, committee_id],
+                writers = [venue_id],
+                minReplies=1,
+                web = webfield_content,
+                edge = {
+                    'id': {
+                        'param': {
+                            'withInvitation': expertise_selection_id,
+                            'optional': True
+                        }
+                    },
+                    'ddate': {
+                        'param': {
+                            # 'type': 'date',
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'readers': [ venue_id, '${2/signatures}' ],
+                    'writers': [ venue_id, '${2/signatures}' ],
+                    'signatures': {
+                        'param': {
+                            'regex': '~.*' 
+                        }
+                    },
+                    'head': {
+                        'param': {
+                            'type': 'note'
+                        }
+                    },
+                    'tail': {
+                        'param': {
+                            'type': 'profile',
+                            'inGroup': committee_id
+                        }
+                    },
+                    'label': {
+                        'param': {
+                            'enum': ['Include'],
+                        }
+                    }
+                }
+            )
+
+            self.save_invitation(invitation)
+
+        build_expertise_selection(self.journal.get_reviewers_id(), self.journal.get_reviewer_expertise_selection_id())
+        build_expertise_selection(self.journal.get_action_editors_id(), self.journal.get_ae_expertise_selection_id())
+

@@ -121,18 +121,19 @@ class GroupBuilder(object):
 
         if venue_group.web is None:
 
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
-                content = f.read()
-                self.post_group(openreview.api.Group(
-                    id = venue_group.id,
-                    web = content
-                ))
-
             self.client_v1.add_members_to_group('venues', venue_id)
             root_id = groups[0].id
             if root_id == root_id.lower():
                 root_id = groups[1].id        
             self.client_v1.add_members_to_group('host', root_id)
+
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
+                content = f.read()
+                self.post_group(openreview.api.Group(
+                    id = venue_group.id,
+                    web = content,
+                    host = root_id
+                ))
 
         ## Update settings
         content = {
@@ -153,6 +154,10 @@ class GroupBuilder(object):
             'subtitle': { 'value': self.venue.short_name if self.venue.short_name else '' },
             'website': { 'value': self.venue.website if self.venue.website else '' },
             'contact': { 'value': self.venue.contact if self.venue.contact else '' },
+            'location': { 'value': self.venue.location if self.venue.location else '' },
+            'instructions': { 'value': self.venue.instructions if self.venue.instructions else '' },
+            'start_date': { 'value': self.venue.start_date if self.venue.start_date else '' },
+            'date': { 'value': self.venue.date if self.venue.date else '' },
             'program_chairs_id': { 'value': self.venue.get_program_chairs_id() },
             'reviewers_id': { 'value': self.venue.get_reviewers_id() },
             'reviewers_name': { 'value': self.venue.reviewers_name },

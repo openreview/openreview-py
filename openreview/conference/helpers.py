@@ -1,3 +1,4 @@
+from collections import defaultdict
 import openreview
 import datetime
 import json
@@ -20,17 +21,14 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.use_senior_area_chairs = note.content.get('senior_area_chairs') == 'Yes, our venue has Senior Area Chairs'
         venue.use_ethics_chairs = note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers'
         venue.use_ethics_reviewers = note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers'
-        venue.short_name = note.content.get('Abbreviated Venue Name')
-        venue.name = note.content.get('Official Venue Name')
-        venue.website = note.content.get('Official Website URL')
-        venue.contact = note.content.get('contact_email')
         venue.automatic_reviewer_assignment = note.content.get('submission_reviewer_assignment', '') == 'Automatic'
+        set_homepage_options(note, venue)
         venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')
         venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
         venue.senior_area_chair_identity_readers = get_identity_readers(note, 'senior_area_chair_identity')
         venue.decision_heading_map = get_decision_heading_map(venue.short_name, note)
-        
-        venue.submission_stage = get_submission_stage(note)
+
+        venue.submission_stage = get_submission_stage(note, venue)
         venue.review_stage = get_review_stage(note)
         venue.bid_stages = get_bid_stages(note)
         venue.meta_review_stage = get_meta_review_stage(note)
@@ -281,6 +279,27 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
 
     return builder
 
+def set_homepage_options(request_forum, venue):
+    homepage_override = request_forum.content.get('homepage_override', {})
+    venue.name = homepage_override.get('title', request_forum.content.get('Official Venue Name'))  
+    venue.short_name = homepage_override.get('subtitle', request_forum.content.get('Abbreviated Venue Name'))
+    venue.website = homepage_override.get('website', request_forum.content.get('Official Website URL'))
+    venue.contact = homepage_override.get('contact', request_forum.content.get('contact_email'))
+    venue.location = homepage_override.get('location', request_forum.content.get('Location'))
+    venue.instructions = homepage_override.get('instructions', '')
+
+    venue_start_date_str = 'TBD'
+    venue_start_date = None
+    start_date = request_forum.content.get('Venue Start Date', '').strip()
+    if start_date:
+        try:
+            venue_start_date = datetime.datetime.strptime(start_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            venue_start_date = datetime.datetime.strptime(start_date, '%Y/%m/%d')
+        venue_start_date_str = venue_start_date.strftime('%b %d %Y')
+
+    venue.start_date = venue_start_date_str
+
 def get_identity_readers(request_forum, field_name):
 
     readers_map = {
@@ -303,7 +322,7 @@ def get_decision_heading_map(short_name, request_forum):
 
     return decision_heading_map
 
-def get_submission_stage(request_forum):
+def get_submission_stage(request_forum, venue):
 
     name = request_forum.content.get('submission_name', 'Submission').strip()
     double_blind = (request_forum.content.get('Author and Reviewer Anonymity', '') == 'Double-blind')
@@ -322,14 +341,18 @@ def get_submission_stage(request_forum):
     public = 'Everyone (submissions are public)' in readers
 
     submission_start_date = request_forum.content.get('Submission Start Date', '').strip()
+    submission_start_date_str = ''
     if submission_start_date:
         try:
             submission_start_date = datetime.datetime.strptime(submission_start_date, '%Y/%m/%d %H:%M')
         except ValueError:
             submission_start_date = datetime.datetime.strptime(submission_start_date, '%Y/%m/%d')
+        submission_start_date_str = submission_start_date.strftime('%b %d %Y') + ' UTC-0'
     else:
         submission_start_date = None
-
+        
+    submission_deadline_str = 'TBD'
+    abstract_due_date_str = ''
     submission_second_due_date = request_forum.content.get('Submission Deadline', '').strip()
     if submission_second_due_date:
         try:
@@ -342,11 +365,19 @@ def get_submission_stage(request_forum):
                 submission_due_date = datetime.datetime.strptime(submission_due_date, '%Y/%m/%d %H:%M')
             except ValueError:
                 submission_due_date = datetime.datetime.strptime(submission_due_date, '%Y/%m/%d')
+            abstract_due_date_str = submission_due_date.strftime('%b %d %Y %I:%M%p') + ' UTC-0'
         else:
             submission_due_date = submission_second_due_date
             submission_second_due_date = None
+        submission_deadline_str = submission_due_date.strftime('%b %d %Y') + ' UTC-0'
     else:
         submission_second_due_date = submission_due_date = None
+
+    date = 'Submission Start: ' + submission_start_date_str + ', ' if submission_start_date_str else ''
+    if abstract_due_date_str:
+        date += 'Abstract Registration: ' + abstract_due_date_str + ', '
+    date += 'Submission Deadline: ' + submission_deadline_str
+    venue.date = date
 
     submission_additional_options = request_forum.content.get('Additional Submission Options', {})
     if isinstance(submission_additional_options, str):
@@ -608,22 +639,29 @@ def get_meta_review_stage(request_forum):
 
     meta_review_form_additional_options = request_forum.content.get('additional_meta_review_form_options', {})
     options = request_forum.content.get('recommendation_options', '').strip()
-    if options:
+    if options: #to keep backward compatibility
         if request_forum.content.get('api_version') == '2':
-            meta_review_form_additional_options['recommendation'] = {
-                'value': {
-                    'param': {
-                        'type': 'string',
-                        'enum': [s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')]
+            if 'recommendation' in meta_review_form_additional_options and 'enum' in meta_review_form_additional_options['recommendation']['value']['param']:
+                meta_review_form_additional_options['recommendation']['value']['param']['enum'] = [s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')]
+            else:
+                meta_review_form_additional_options['recommendation'] = {
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'enum': [s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')]
+                        }
                     }
                 }
-            }
         else:
-            meta_review_form_additional_options['recommendation'] = {
-                'value-dropdown':[s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')],
-                'required': True}
+            if 'recommendation' in meta_review_form_additional_options and 'value-dropdown' in meta_review_form_additional_options['recommendation']:
+                meta_review_form_additional_options['recommendation']['value-dropdown'] = [s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')]
+            else:
+                meta_review_form_additional_options['recommendation'] = {
+                    'value-dropdown':[s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')],
+                    'required': True
+                }
 
-    meta_review_form_remove_options = request_forum.content.get('remove_meta_review_form_options', '').replace(',', ' ').split()
+    meta_review_form_remove_options = request_forum.content.get('remove_meta_review_form_options', [])
 
     readers_map = {
         'Meta reviews should be immediately revealed to all reviewers': openreview.stages.MetaReviewStage.Readers.REVIEWERS,

@@ -26,6 +26,10 @@ class Venue(object):
         self.short_name = 'TBD'
         self.website = None
         self.contact = None
+        self.location = None
+        self.instructions = None
+        self.start_date = 'TBD'
+        self.date = 'TBD'
         self.id = venue_id # get compatibility with conference
         self.program_chairs_name = 'Program_Chairs'
         self.reviewers_name = 'Reviewers'
@@ -611,7 +615,7 @@ Total Errors: {len(errors)}
                 content={
                     'title': 'Decision Upload Status',
                     'decision_posted': f'''{len(results)} Papers''',
-                    'error': error_status
+                    'error': error_status[:200000]
                 }
             )
 
@@ -730,7 +734,8 @@ Total Errors: {len(errors)}
             edge.label='Conflict Detected'
             edge.tail=user_profile.id
             edge.readers=None
-            edge.writers=None            
+            edge.writers=None
+            edge.cdate = None            
             client.post_edge(edge)
 
             ## Send email to reviewer
@@ -763,6 +768,7 @@ OpenReview Team'''
             edge.tail=user_profile.id
             edge.readers=None
             edge.writers=None
+            edge.cdate = None
             client.post_edge(edge)
 
             short_phrase = venue_group.content['subtitle']['value']
