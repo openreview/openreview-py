@@ -958,8 +958,8 @@ If you would like to change your decision, please follow the link in the previou
                 content={
                     'title': { 'value': 'Paper title 2 Updated' },
                     'abstract': { 'value': 'This is an abstract 2 updated' },
-                    'authorids': { 'value': ['test@mail.com', '~Melisa_Gilbert1', 'andrew@fb.com', 'peter@mail.com', '~Melisa_Gilbert1' ] },
-                    'authors': { 'value': ['SomeFirstName User',  'Melisa Gilbert', 'Andrew Mc', 'Peter SomeLastName', 'Melisa Gilbertt' ] },
+                    'authorids': { 'value': ['test@mail.com', '~Melisa_Gilbert2', 'andrew@fb.com', 'peter@mail.com', '~Melisa_Gilbert1' ] },
+                    'authors': { 'value': ['SomeFirstName User',  'Melisa Gilbert', 'Andrew Mc', 'Peter SomeLastName', 'Melisa Gilbert' ] },
                     'keywords': { 'value': ['machine learning', 'nlp'] },
                 }
             ))
