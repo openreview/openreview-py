@@ -205,9 +205,8 @@ class TestVenueRequest():
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'].startswith(f'A request for service has been submitted by TestVenue@OR2021. Check it here: https://openreview.net/forum?id={request_form_note.forum}')
 
-        pc_client.post_note(openreview.Note(
+        pc_comment = pc_client.post_note(openreview.Note(
             content={
-                'title': 'Urgent',
                 'comment': 'Please deploy ASAP.'
             },
             forum=request_form_note.forum,
@@ -242,6 +241,45 @@ class TestVenueRequest():
 
         comment_invitation = pc_client.get_invitation(id='openreview.net/Support/-/Request{number}/Comment'.format(number=request_form_note.number))
         assert 'test@mail.com' in comment_invitation.reply['readers']['values']
+
+        messages = client.get_messages(
+            to='support@openreview.net',
+            subject='Comment posted to a service request: Test 2021 Venue'
+        )
+        assert messages and len(messages) == 1
+        assert 'A comment was posted to a service request. \n\nComment title: Comment by NewFirstName User' in messages[0]['content']['text']
+
+        client.post_note(openreview.Note(
+            content={
+                'comment': 'Your venue is deployed.'
+            },
+            forum=request_form_note.forum,
+            invitation='{}/-/Request{}/Comment'.format(venue.support_group_id, request_form_note.number),
+            readers=[
+                support_group_id,
+                'new_test_user@mail.com',
+                'tom@mail.com',
+                'test@mail.com'
+            ],
+            replyto=pc_comment.id,
+            signatures=['openreview.net/Support'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        messages = client.get_messages(
+            to='new_test_user@mail.com',
+            subject='Comment posted to your request for service: Test 2021 Venue')
+        assert messages and len(messages) == 2
+        assert 'A comment was posted to your service request. \n\nComment title: Comment by Support' in messages[1]['content']['text']
+
+        messages = client.get_messages(
+            to='support@openreview.net',
+            subject='Comment posted to a service request: Test 2021 Venue'
+        )
+        assert messages and len(messages) == 2
+        assert 'A comment was posted to a service request. \n\nComment title: Comment by Support' in messages[1]['content']['text']
 
         # Test Deploy
         deploy_note = client.post_note(openreview.Note(
