@@ -112,8 +112,8 @@ class TestICMLConference():
                 'authors': ['SAC ICML', 'Test2 Client'],
                 'authorids': ['~SAC_ICMLOne1', 'test2@mail.com']
             }
-        ))        
-        
+        ))
+
         sac_client.post_note(openreview.Note(
             invitation='openreview.net/Archive/-/Direct_Upload',
             readers = ['everyone'],
@@ -186,22 +186,22 @@ class TestICMLConference():
                             "param": {
                                 "type": "string[]",
                                 "enum": [
-                                    'Algorithms: Approximate Inference', 
-                                    'Algorithms: Belief Propagation', 
-                                    'Learning: Deep Learning', 
-                                    'Learning: General', 
-                                    'Learning: Nonparametric Bayes', 
-                                    'Methodology: Bayesian Methods', 
-                                    'Methodology: Calibration',  
-                                    'Principles: Causality', 
-                                    'Principles: Cognitive Models', 
-                                    'Representation: Constraints', 
-                                    'Representation: Dempster-Shafer', 
+                                    'Algorithms: Approximate Inference',
+                                    'Algorithms: Belief Propagation',
+                                    'Learning: Deep Learning',
+                                    'Learning: General',
+                                    'Learning: Nonparametric Bayes',
+                                    'Methodology: Bayesian Methods',
+                                    'Methodology: Calibration',
+                                    'Principles: Causality',
+                                    'Principles: Cognitive Models',
+                                    'Representation: Constraints',
+                                    'Representation: Dempster-Shafer',
                                     'Representation: Other'
                                 ],
                                 "input": "select"
                             }
-                        }                        
+                        }
                     }
                 },
                 'remove_submission_options': ['TL;DR'],
@@ -221,7 +221,7 @@ class TestICMLConference():
         assert 'TLDR' not in submission_invitation.edit['note']['content']
 
         domain = openreview_client.get_group('ICML.cc/2023/Conference')
-        assert 'recommendation' == domain.content['meta_review_recommendation']['value'] 
+        assert 'recommendation' == domain.content['meta_review_recommendation']['value']
 
     def test_add_pcs(self, client, openreview_client, helpers):
 
@@ -344,23 +344,23 @@ class TestICMLConference():
                             "param": {
                                 "type": "string[]",
                                 "enum": [
-                                    'Algorithms: Approximate Inference', 
-                                    'Algorithms: Belief Propagation', 
-                                    'Learning: Deep Learning', 
-                                    'Learning: General', 
-                                    'Learning: Nonparametric Bayes', 
-                                    'Methodology: Bayesian Methods', 
-                                    'Methodology: Calibration',  
-                                    'Principles: Causality', 
-                                    'Principles: Cognitive Models', 
-                                    'Representation: Constraints', 
-                                    'Representation: Dempster-Shafer', 
+                                    'Algorithms: Approximate Inference',
+                                    'Algorithms: Belief Propagation',
+                                    'Learning: Deep Learning',
+                                    'Learning: General',
+                                    'Learning: Nonparametric Bayes',
+                                    'Methodology: Bayesian Methods',
+                                    'Methodology: Calibration',
+                                    'Principles: Causality',
+                                    'Principles: Cognitive Models',
+                                    'Representation: Constraints',
+                                    'Representation: Dempster-Shafer',
                                     'Representation: Other'
                                 ],
                                 "input": "select"
                             }
-                        }                        
-                    }                    
+                        }
+                    }
                 }
 
             },
@@ -376,8 +376,8 @@ class TestICMLConference():
         helpers.await_queue()
 
         pc_group = pc_client.get_group('ICML.cc/2023/Conference/Program_Chairs')
-        assert ['pc@icml.cc', 'pc3@icml.cc'] == pc_group.members            
-    
+        assert ['pc@icml.cc', 'pc3@icml.cc'] == pc_group.members
+
     def test_sac_recruitment(self, client, openreview_client, helpers, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
@@ -410,7 +410,7 @@ class TestICMLConference():
 
         for message in messages:
             text = message['content']['text']
-            
+
             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
             helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
@@ -454,7 +454,7 @@ class TestICMLConference():
 
         for message in messages:
             text = message['content']['text']
-            
+
             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
             helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
@@ -506,7 +506,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
 
         for message in messages:
             text = message['content']['text']
-            
+
             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
             helpers.respond_invitation(selenium, request_page, invitation_url, accept=True, quota=3)
 
@@ -533,7 +533,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
 
         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2023/Conference/Reviewers", reviewer_client.token, wait_for_element='header')
         header = selenium.find_element_by_id('header')
-        assert 'You have agreed to review up to 1 papers' in header.text        
+        assert 'You have agreed to review up to 1 papers' in header.text
 
     def test_registrations(self, client, openreview_client, helpers, test_client):
 
@@ -543,17 +543,17 @@ reviewer6@gmail.com, Reviewer ICMLSix
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
-        venue.registration_stages.append(openreview.stages.RegistrationStage(committee_id = venue.get_senior_area_chairs_id(), 
-            name = 'Registration', 
-            start_date = None, 
-            due_date = due_date, 
+        venue.registration_stages.append(openreview.stages.RegistrationStage(committee_id = venue.get_senior_area_chairs_id(),
+            name = 'Registration',
+            start_date = None,
+            due_date = due_date,
             instructions = 'TODO: instructions',
             title = 'ICML 2023 Conference - Senior Area Chair registration'))
 
-        venue.registration_stages.append(openreview.stages.RegistrationStage(committee_id = venue.get_area_chairs_id(), 
-            name = 'Registration', 
-            start_date = None, 
-            due_date = due_date, 
+        venue.registration_stages.append(openreview.stages.RegistrationStage(committee_id = venue.get_area_chairs_id(),
+            name = 'Registration',
+            start_date = None,
+            due_date = due_date,
             instructions = 'TODO: instructions',
             title = 'ICML 2023 Conference - Area Chair registration',
             additional_fields = {
@@ -567,13 +567,13 @@ reviewer6@gmail.com, Reviewer ICMLSix
                         }
                     },
                     'order': 3
-                }                
+                }
             }))
 
-        venue.registration_stages.append(openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(), 
-            name = 'Registration', 
-            start_date = None, 
-            due_date = due_date, 
+        venue.registration_stages.append(openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
+            name = 'Registration',
+            start_date = None,
+            due_date = due_date,
             instructions = 'TODO: instructions',
             title = 'ICML 2023 Conference - Reviewer registration',
             additional_fields = {
@@ -587,9 +587,9 @@ reviewer6@gmail.com, Reviewer ICMLSix
                         }
                     },
                     'order': 3
-                }                
+                }
             },
-            remove_fields = ['profile_confirmed', 'expertise_confirmed']))                      
+            remove_fields = ['profile_confirmed', 'expertise_confirmed']))
 
         venue.create_registration_stages()
 
@@ -620,7 +620,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
         assert 'statement' in invitation.edit['note']['content']
         assert 'profile_confirmed' not in invitation.edit['note']['content']
         assert 'expertise_confirmed' not in invitation.edit['note']['content']
-    
+
     def test_submissions(self, client, openreview_client, helpers, test_client):
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
@@ -644,7 +644,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
             if i == 1 or i == 101:
                 note.content['authors']['value'].append('SAC ICMLOne')
                 note.content['authorids']['value'].append('~SAC_ICMLOne1')
-            
+
             test_client.post_note_edit(invitation='ICML.cc/2023/Conference/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=note)
@@ -724,7 +724,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
 
         ## close the submissions
         now = datetime.datetime.utcnow()
-        due_date = now - datetime.timedelta(days=1)        
+        due_date = now - datetime.timedelta(days=1)
         pc_client.post_note(openreview.Note(
             content={
                 'title': 'Thirty-ninth International Conference on Machine Learning',
@@ -776,22 +776,22 @@ reviewer6@gmail.com, Reviewer ICMLSix
                             "param": {
                                 "type": "string[]",
                                 "enum": [
-                                    'Algorithms: Approximate Inference', 
-                                    'Algorithms: Belief Propagation', 
-                                    'Learning: Deep Learning', 
-                                    'Learning: General', 
-                                    'Learning: Nonparametric Bayes', 
-                                    'Methodology: Bayesian Methods', 
-                                    'Methodology: Calibration',  
-                                    'Principles: Causality', 
-                                    'Principles: Cognitive Models', 
-                                    'Representation: Constraints', 
-                                    'Representation: Dempster-Shafer', 
+                                    'Algorithms: Approximate Inference',
+                                    'Algorithms: Belief Propagation',
+                                    'Learning: Deep Learning',
+                                    'Learning: General',
+                                    'Learning: Nonparametric Bayes',
+                                    'Methodology: Bayesian Methods',
+                                    'Methodology: Calibration',
+                                    'Principles: Causality',
+                                    'Principles: Cognitive Models',
+                                    'Representation: Constraints',
+                                    'Representation: Dempster-Shafer',
                                     'Representation: Other'
                                 ],
                                 "input": "select"
                             }
-                        }                        
+                        }
                     }
                 }
 
@@ -893,12 +893,12 @@ reviewer6@gmail.com, Reviewer ICMLSix
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 101
-        assert ['ICML.cc/2023/Conference', 
+        assert ['ICML.cc/2023/Conference',
         'ICML.cc/2023/Conference/Senior_Area_Chairs',
         'ICML.cc/2023/Conference/Area_Chairs',
         'ICML.cc/2023/Conference/Reviewers',
         'ICML.cc/2023/Conference/Submission1/Authors'] == submissions[0].readers
-        assert ['ICML.cc/2023/Conference', 
+        assert ['ICML.cc/2023/Conference',
         'ICML.cc/2023/Conference/Submission1/Authors'] == submissions[0].writers
         assert ['ICML.cc/2023/Conference/Submission1/Authors'] == submissions[0].signatures
         assert 'authorids' not in submissions[0].content
@@ -910,7 +910,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
         assert client.get_group('ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs')
 
         active_venues = pc_client.get_group('active_venues')
-        assert 'ICML.cc/2023/Conference' in active_venues.members        
+        assert 'ICML.cc/2023/Conference' in active_venues.members
 
         ## try to edit a submission as a PC
         submissions = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
@@ -928,21 +928,21 @@ reviewer6@gmail.com, Reviewer ICMLSix
                     'pdf': submission.content['pdf'],
                     'supplementary_material': { 'value': { 'delete': True } },
                     'financial_aid': { 'value': submission.content['financial_aid']['value'] },
-                    'subject_areas': { 'value': submission.content['subject_areas']['value'] },                    
+                    'subject_areas': { 'value': submission.content['subject_areas']['value'] },
                 }
             ))
 
         helpers.await_queue(openreview_client)
 
-        submission = ac_client.get_note(submission.id)      
-        assert ['ICML.cc/2023/Conference', 
+        submission = ac_client.get_note(submission.id)
+        assert ['ICML.cc/2023/Conference',
         'ICML.cc/2023/Conference/Senior_Area_Chairs',
         'ICML.cc/2023/Conference/Area_Chairs',
         'ICML.cc/2023/Conference/Reviewers',
         'ICML.cc/2023/Conference/Submission1/Authors'] == submission.readers
-        assert ['ICML.cc/2023/Conference', 
+        assert ['ICML.cc/2023/Conference',
         'ICML.cc/2023/Conference/Submission1/Authors'] == submission.writers
-        assert ['ICML.cc/2023/Conference/Submission1/Authors'] == submission.signatures        
+        assert ['ICML.cc/2023/Conference/Submission1/Authors'] == submission.signatures
         assert 'authorids' not in submission.content
         assert 'authors' not in submission.content
         assert 'financial_aid'not in submission.content
@@ -959,7 +959,7 @@ Title: Paper title 1 Version 2
 
 Abstract This is an abstract 1
 
-To view your submission, click here: https://openreview.net/forum?id={submission.id}'''        
+To view your submission, click here: https://openreview.net/forum?id={submission.id}'''
 
     def test_ac_bidding(self, client, openreview_client, helpers, test_client):
 
@@ -988,7 +988,6 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                 'compute_conflicts_N_years': '3',
                 'compute_affinity_scores': 'No',
                 'upload_affinity_scores': affinity_scores_url
-
             },
             forum=request_form.id,
             replyto=request_form.id,
@@ -1034,7 +1033,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
             writers=[]
         ))
         helpers.await_queue()
-        
+
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Conflict')
 
         assert openreview_client.get_edges_count(invitation='ICML.cc/2023/Conference/Reviewers/-/Conflict') == 0
@@ -1046,7 +1045,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
 
-        ## Hide the pdf and supplementary material 
+        ## Hide the pdf and supplementary material
         pc_client.post_note(openreview.Note(
             content= {
                 'force': 'Yes',
@@ -1062,7 +1061,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
             writers= [],
         ))
 
-        helpers.await_queue() 
+        helpers.await_queue()
 
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
@@ -1101,6 +1100,40 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Bid')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Bid')
 
+        ## Hide the pdf and supplementary material
+        pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                'hide_fields': ['financial_aid', 'pdf', 'supplementary_material']
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_ICMLChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
+
+        ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
+        submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 101
+        assert ['ICML.cc/2023/Conference',
+        'ICML.cc/2023/Conference/Senior_Area_Chairs',
+        'ICML.cc/2023/Conference/Area_Chairs',
+        'ICML.cc/2023/Conference/Reviewers',
+        'ICML.cc/2023/Conference/Submission1/Authors'] == submissions[0].readers
+        assert ['ICML.cc/2023/Conference',
+        'ICML.cc/2023/Conference/Submission1/Authors'] == submissions[0].writers
+        assert ['ICML.cc/2023/Conference/Submission1/Authors'] == submissions[0].signatures
+        assert 'authorids' not in submissions[0].content
+        assert 'authors' not in submissions[0].content
+        assert 'financial_aid'not in submissions[0].content
+        assert 'pdf' not in submissions[0].content
+        assert 'supplementary_material' not in submissions[0].content
 
     def test_assignment(self, client, openreview_client, helpers, request_page, selenium):
 
@@ -1155,12 +1188,12 @@ To view your submission, click here: https://openreview.net/forum?id={submission
             signatures = ['ICML.cc/2023/Conference/Program_Chairs'],
             weight = 1,
             label = 'sac-matching'
-        )) 
+        ))
 
         venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
 
         venue.set_assignments(assignment_title='sac-matching', committee_id='ICML.cc/2023/Conference/Senior_Area_Chairs')
-        
+
         sac_assignment_count = pc_client_v2.get_edges_count(invitation='ICML.cc/2023/Conference/Senior_Area_Chairs/-/Assignment')
         assert sac_assignment_count == 2
 
@@ -1181,13 +1214,13 @@ To view your submission, click here: https://openreview.net/forum?id={submission
             signatures=['~Program_ICMLChair1'],
             writers=[]
         ))
-        helpers.await_queue()        
+        helpers.await_queue()
 
         assert pc_client_v2.get_edges_count(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Affinity_Score') == 200
         assert pc_client_v2.get_edges_count(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Conflict') == 200 ## assigned SAC is an author of paper 1
-        
+
         submissions = pc_client_v2.get_notes(content= { 'venueid': 'ICML.cc/2023/Conference/Submission'}, sort='number:asc')
-        
+
         reviewers_proposed_edges = []
         for i in range(0,20):
             for r in ['~Reviewer_ICMLOne1', '~Reviewer_ICMLTwo1', '~Reviewer_ICMLThree1']:
@@ -1201,8 +1234,8 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     readers = ["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Area_Chairs", r],
                     nonreaders = [f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Authors"],
                     writers = ["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Area_Chairs"]
-                ))            
-    
+                ))
+
             openreview_client.post_edge(openreview.api.Edge(
                 invitation = 'ICML.cc/2023/Conference/Area_Chairs/-/Proposed_Assignment',
                 head = submissions[i].id,
@@ -1225,7 +1258,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     nonreaders = [f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Authors"],
                     writers = ["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Area_Chairs"]
                 ))
-    
+
             openreview_client.post_edge(openreview.api.Edge(
                 invitation = 'ICML.cc/2023/Conference/Area_Chairs/-/Proposed_Assignment',
                 head = submissions[i].id,
@@ -1233,7 +1266,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                 signatures = ['ICML.cc/2023/Conference/Program_Chairs'],
                 weight = 1,
                 label = 'ac-matching'
-            ))            
+            ))
 
         for i in range(40,60):
             for r in ['~Reviewer_ICMLThree1', '~Reviewer_ICMLFour1', '~Reviewer_ICMLFive1']:
@@ -1256,7 +1289,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                 signatures = ['ICML.cc/2023/Conference/Program_Chairs'],
                 weight = 1,
                 label = 'ac-matching'
-            )) 
+            ))
 
 
         for i in range(60,80):
@@ -1272,7 +1305,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     nonreaders = [f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Authors"],
                     writers = ["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Area_Chairs"]
                 ))
-    
+
             openreview_client.post_edge(openreview.api.Edge(
                 invitation = 'ICML.cc/2023/Conference/Area_Chairs/-/Proposed_Assignment',
                 head = submissions[i].id,
@@ -1280,7 +1313,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                 signatures = ['ICML.cc/2023/Conference/Program_Chairs'],
                 weight = 1,
                 label = 'ac-matching'
-            ))   
+            ))
 
         for i in range(80,100):
             for r in ['~Reviewer_ICMLFive1', '~Reviewer_ICMLOne1', '~Reviewer_ICMLTwo1']:
@@ -1294,8 +1327,8 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     readers = ["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Area_Chairs", r],
                     nonreaders = [f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Authors"],
                     writers = ["ICML.cc/2023/Conference", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Senior_Area_Chairs", f"ICML.cc/2023/Conference/Submission{submissions[i].number}/Area_Chairs"]
-                ))            
-    
+                ))
+
             openreview_client.post_edge(openreview.api.Edge(
                 invitation = 'ICML.cc/2023/Conference/Area_Chairs/-/Proposed_Assignment',
                 head = submissions[i].id,
@@ -1308,7 +1341,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         openreview.tools.post_bulk_edges(client=openreview_client, edges=reviewers_proposed_edges)
 
         venue.set_assignments(assignment_title='ac-matching', committee_id='ICML.cc/2023/Conference/Area_Chairs')
-        
+
         ac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Area_Chairs')
         assert ['~AC_ICMLOne1'] == ac_group.members
 
@@ -1329,7 +1362,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
         venue_group = pc_client_v2.get_group('ICML.cc/2023/Conference')
         'NeurIPS' == venue_group.content['reviewers_conflict_policy']['value']
-        
+
         pc_client_v2.post_group_edit(invitation='ICML.cc/2023/Conference/-/Edit',
             readers = ['ICML.cc/2023/Conference'],
             writers = ['ICML.cc/2023/Conference'],
@@ -1359,7 +1392,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         assert url.get_attribute('href') == 'http://localhost:3030/edges/browse?start=ICML.cc/2023/Conference/Area_Chairs/-/Assignment,tail:~AC_ICMLOne1&traverse=ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment,label:reviewer-matching&edit=ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment,label:reviewer-matching;ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment&browse=ICML.cc/2023/Conference/Reviewers/-/Aggregate_Score,label:reviewer-matching;ICML.cc/2023/Conference/Reviewers/-/Affinity_Score;ICML.cc/2023/Conference/Reviewers/-/Bid;ICML.cc/2023/Conference/Reviewers/-/Custom_Max_Papers,head:ignore&hide=ICML.cc/2023/Conference/Reviewers/-/Conflict&maxColumns=2&version=2&referrer=[AC%20Console](/group?id=ICML.cc/2023/Conference/Area_Chairs)'
 
         anon_group_id = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLOne1')[0].id
-        
+
         ## recruit external reviewer
         with pytest.raises(openreview.OpenReviewException, match=r'the user has a conflict'):
             ac_client.post_edge(
@@ -1421,7 +1454,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     tail='javier@icml.cc',
                     label='Invitation Sent',
                     weight=1
-            ))        
+            ))
 
         assert openreview_client.get_groups('ICML.cc/2023/Conference/Submission1/External_Reviewers/Invited', member='melisa@icml.cc')
         assert openreview_client.get_groups('ICML.cc/2023/Conference/External_Reviewers/Invited', member='melisa@icml.cc')
@@ -1467,13 +1500,13 @@ Confirmation of the assignment is pending until the invited reviewer creates a p
 OpenReview Team'''
 
         ## Run Job
-        openreview.venue.Venue.check_new_profiles(openreview_client) 
+        openreview.venue.Venue.check_new_profiles(openreview_client)
 
         ## External reviewer creates a profile and accepts the invitation again
         external_reviewer=helpers.create_user('melisa@icml.cc', 'Melisa', 'ICML')
 
         ## Run Job
-        openreview.venue.Venue.check_new_profiles(openreview_client) 
+        openreview.venue.Venue.check_new_profiles(openreview_client)
 
         invite_edges=pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='melisa@icml.cc')
         assert len(invite_edges) == 0
@@ -1483,7 +1516,7 @@ OpenReview Team'''
         assert invite_edges[0].label == 'Accepted'
 
         assignment_edges=pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submissions[0].id)
-        assert len(assignment_edges) == 4        
+        assert len(assignment_edges) == 4
 
         messages = client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] Reviewer Assignment confirmed for paper 1')
         assert messages and len(messages) == 1
@@ -1511,32 +1544,32 @@ OpenReview Team'''
 
         reviewers_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Reviewers')
         assert len(reviewers_group.members) == 4
-        assert '~Reviewer_ICMLOne1' in reviewers_group.members    
-        assert '~Reviewer_ICMLTwo1' in reviewers_group.members    
-        assert '~Reviewer_ICMLThree1' in reviewers_group.members    
-        assert '~Melisa_ICML1' in reviewers_group.members    
+        assert '~Reviewer_ICMLOne1' in reviewers_group.members
+        assert '~Reviewer_ICMLTwo1' in reviewers_group.members
+        assert '~Reviewer_ICMLThree1' in reviewers_group.members
+        assert '~Melisa_ICML1' in reviewers_group.members
 
         reviewers_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission100/Reviewers')
         assert len(reviewers_group.members) == 3
-        assert '~Reviewer_ICMLOne1' in reviewers_group.members    
-        assert '~Reviewer_ICMLTwo1' in reviewers_group.members    
-        assert '~Reviewer_ICMLFive1' in reviewers_group.members 
+        assert '~Reviewer_ICMLOne1' in reviewers_group.members
+        assert '~Reviewer_ICMLTwo1' in reviewers_group.members
+        assert '~Reviewer_ICMLFive1' in reviewers_group.members
 
         assert pc_client_v2.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment')
 
         ## Change assigned SAC
         assignment_edge = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Senior_Area_Chairs/-/Assignment', head='~AC_ICMLTwo1', tail='~SAC_ICMLOne1')[0]
         assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        assignment_edge.cdate = None 
+        assignment_edge.cdate = None
         pc_client_v2.post_edge(assignment_edge)
 
         helpers.await_queue(openreview_client)
 
         sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs')
-        assert ['~SAC_ICMLOne1'] == sac_group.members        
+        assert ['~SAC_ICMLOne1'] == sac_group.members
 
         sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission100/Senior_Area_Chairs')
-        assert [] == sac_group.members        
+        assert [] == sac_group.members
 
         openreview_client.post_edge(openreview.api.Edge(
             invitation = 'ICML.cc/2023/Conference/Senior_Area_Chairs/-/Assignment',
@@ -1549,16 +1582,16 @@ OpenReview Team'''
         helpers.await_queue(openreview_client)
 
         sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs')
-        assert ['~SAC_ICMLOne1'] == sac_group.members  
+        assert ['~SAC_ICMLOne1'] == sac_group.members
 
         sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission100/Senior_Area_Chairs')
-        assert ['~SAC_ICMLTwo1'] == sac_group.members  
+        assert ['~SAC_ICMLTwo1'] == sac_group.members
 
         ## Change assigned AC
         assignment_edge = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Assignment', head=submissions[0].id, tail='~AC_ICMLOne1')[0]
         assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
         assignment_edge.cdate = None
-        edge = pc_client_v2.post_edge(assignment_edge)               
+        edge = pc_client_v2.post_edge(assignment_edge)
 
         helpers.await_queue_edit(openreview_client, edit_id=edge.id)
 
@@ -1566,7 +1599,7 @@ OpenReview Team'''
         assert [] == ac_group.members
 
         sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs')
-        assert [] == sac_group.members        
+        assert [] == sac_group.members
 
         edge = pc_client_v2.post_edge(openreview.api.Edge(
             invitation = 'ICML.cc/2023/Conference/Area_Chairs/-/Assignment',
@@ -1601,7 +1634,7 @@ OpenReview Team'''
                 }
             )
         )
-        
+
         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2023/Conference/Area_Chairs", ac_client.token, wait_for_element='header')
         header = selenium.find_element_by_id('header')
         assert 'Reviewer Assignment Browser:' in header.text
@@ -1609,11 +1642,10 @@ OpenReview Team'''
         url = header.find_element_by_id('edge_browser_url')
         assert url
         assert url.get_attribute('href') == 'http://localhost:3030/edges/browse?start=ICML.cc/2023/Conference/Area_Chairs/-/Assignment,tail:~AC_ICMLTwo1&traverse=ICML.cc/2023/Conference/Reviewers/-/Assignment&edit=ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment&browse=ICML.cc/2023/Conference/Reviewers/-/Affinity_Score;ICML.cc/2023/Conference/Reviewers/-/Bid;ICML.cc/2023/Conference/Reviewers/-/Custom_Max_Papers,head:ignore&hide=ICML.cc/2023/Conference/Reviewers/-/Conflict&maxColumns=2&version=2&referrer=[AC%20Console](/group?id=ICML.cc/2023/Conference/Area_Chairs)'
-    
- 
+
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
         anon_group_id = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLTwo1')[0].id
- 
+
         ac_client.post_edge(
             openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
                 signatures=[anon_group_id],
@@ -1674,7 +1706,7 @@ OpenReview Team'''
         external_reviewer=helpers.create_user('carlos@icml.cc', 'Carlos', 'ICML', institution='amazon.com')
 
         ## Run Job
-        openreview.venue.Venue.check_new_profiles(openreview_client) 
+        openreview.venue.Venue.check_new_profiles(openreview_client)
 
         invite_edges=pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='carlos@icml.cc')
         assert len(invite_edges) == 0
@@ -1684,7 +1716,7 @@ OpenReview Team'''
         assert invite_edges[0].label == 'Conflict Detected'
 
         assignment_edges=pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment', head=submissions[0].id)
-        assert len(assignment_edges) == 4        
+        assert len(assignment_edges) == 4
 
         messages = openreview_client.get_messages(to='carlos@icml.cc', subject='[ICML 2023] Conflict detected for paper 1')
         assert messages and len(messages) == 1
@@ -1742,7 +1774,7 @@ OpenReview Team'''
         assert invite_edges[0].label == 'Accepted'
 
         assignment_edges=pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment', head=submissions[0].id)
-        assert len(assignment_edges) == 5        
+        assert len(assignment_edges) == 5
 
         messages = openreview_client.get_messages(to='celeste@icml.cc', subject='[ICML 2023] Reviewer Assignment confirmed for paper 1')
         assert messages and len(messages) == 1
@@ -1785,10 +1817,10 @@ ICML 2023 Conference Program Chairs'''
 
         reviewers_group = pc_client.get_group('ICML.cc/2023/Conference/Submission1/Reviewers')
         assert len(reviewers_group.members) == 5
-        assert '~Reviewer_ICMLOne1' in reviewers_group.members    
-        assert '~Reviewer_ICMLTwo1' in reviewers_group.members    
-        assert '~Reviewer_ICMLThree1' in reviewers_group.members    
-        assert '~Melisa_ICML1' in reviewers_group.members                 
+        assert '~Reviewer_ICMLOne1' in reviewers_group.members
+        assert '~Reviewer_ICMLTwo1' in reviewers_group.members
+        assert '~Reviewer_ICMLThree1' in reviewers_group.members
+        assert '~Melisa_ICML1' in reviewers_group.members
         assert '~Celeste_ICML1' in reviewers_group.members
 
         ac_group = pc_client.get_group('ICML.cc/2023/Conference/Submission1/Area_Chairs')
@@ -1823,11 +1855,11 @@ ICML 2023 Conference Program Chairs'''
 
         reviewers_group = pc_client.get_group('ICML.cc/2023/Conference/Submission1/Reviewers')
         assert len(reviewers_group.members) == 6
-        assert '~Reviewer_ICMLOne1' in reviewers_group.members    
-        assert '~Reviewer_ICMLTwo1' in reviewers_group.members    
-        assert '~Reviewer_ICMLThree1' in reviewers_group.members    
-        assert '~Melisa_ICML1' in reviewers_group.members                 
-        assert '~Celeste_ICML1' in reviewers_group.members        
+        assert '~Reviewer_ICMLOne1' in reviewers_group.members
+        assert '~Reviewer_ICMLTwo1' in reviewers_group.members
+        assert '~Reviewer_ICMLThree1' in reviewers_group.members
+        assert '~Melisa_ICML1' in reviewers_group.members
+        assert '~Celeste_ICML1' in reviewers_group.members
         assert '~Reviewer_ICMLFour1' in reviewers_group.members
 
         helpers.create_user('rachel@icml.cc', 'Rachel', 'ICML')
@@ -1846,7 +1878,7 @@ ICML 2023 Conference Program Chairs'''
         messages = openreview_client.get_messages(to='rachel@icml.cc', subject='[ICML 2023] Invitation to review paper titled "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-        
+
         ## create another profile and merge
         helpers.create_user('rachel_bis@icml.cc', 'Rachel', 'ICML')
 
@@ -1912,16 +1944,16 @@ ICML 2023 Conference Program Chairs'''
         helpers.await_queue_edit(openreview_client, edit_id=edge.id)
 
         ac_group = pc_client.get_group('ICML.cc/2023/Conference/Submission11/Area_Chairs')
-        assert [] == ac_group.members        
+        assert [] == ac_group.members
 
         sac_group = pc_client.get_group('ICML.cc/2023/Conference/Submission11/Senior_Area_Chairs')
-        assert [] == sac_group.members        
+        assert [] == sac_group.members
 
 
     def test_review_stage(self, client, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]        
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         ## Show the pdf and supplementary material to assigned reviewers
         pc_client.post_note(openreview.Note(
@@ -1994,7 +2026,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "textarea",
                                 "markdown": True
                             }
-                        }                        
+                        }
                     },
                     "questions": {
                         "order": 3,
@@ -2006,7 +2038,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "textarea",
                                 "markdown": True
                             }
-                        }                        
+                        }
                     },
                     "limitations": {
                         "order": 4,
@@ -2018,7 +2050,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "textarea",
                                 "markdown": True
                             }
-                        }                        
+                        }
                     },
                     "ethics_flag": {
                         "order": 5,
@@ -2102,7 +2134,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "radio"
                             }
                         }
-                    },                                                                                
+                    },
                     "rating": {
                         "order": 10,
                         "description": "Please provide an \"overall score\" for this submission.",
@@ -2141,7 +2173,7 @@ ICML 2023 Conference Program Chairs'''
                                 ],
                                 "input": "radio"
                             }
-                        }                        
+                        }
                     },
                     "code_of_conduct": {
                         "description": "While performing my duties as a reviewer (including writing reviews and participating in discussions), I have and will continue to abide by the ICML code of conduct (https://icml.cc/public/CodeOfConduct).",
@@ -2213,7 +2245,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "textarea",
                                 "markdown": True
                             }
-                        }                        
+                        }
                     },
                     "questions": {
                         "order": 3,
@@ -2225,7 +2257,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "textarea",
                                 "markdown": True
                             }
-                        }                        
+                        }
                     },
                     "limitations": {
                         "order": 4,
@@ -2237,7 +2269,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "textarea",
                                 "markdown": True
                             }
-                        }                        
+                        }
                     },
                     "ethics_flag": {
                         "order": 5,
@@ -2321,7 +2353,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "radio"
                             }
                         }
-                    },                                                                                
+                    },
                     "rating": {
                         "order": 10,
                         "description": "Please provide an \"overall score\" for this submission.",
@@ -2360,7 +2392,7 @@ ICML 2023 Conference Program Chairs'''
                                 ],
                                 "input": "radio"
                             }
-                        }                        
+                        }
                     },
                     "code_of_conduct": {
                         "description": "While performing my duties as a reviewer (including writing reviews and participating in discussions), I have and will continue to abide by the ICML code of conduct (https://icml.cc/public/CodeOfConduct).",
@@ -2459,11 +2491,13 @@ ICML 2023 Conference Program Chairs'''
         messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your official review has been received on your assigned Paper number: 1, Paper title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
 
-        reviewer_client_2 = openreview.api.OpenReviewClient(username='reviewer2@icml.cc', password=helpers.strong_password)
+        openreview_client.add_members_to_group(f'ICML.cc/2023/Conference/Submission1/Reviewers', '~Reviewer_ICMLOne1')
+        openreview_client.add_members_to_group(f'ICML.cc/2023/Conference/Submission1/Reviewers', '~Reviewer_ICMLTwo1')
+        openreview_client.add_members_to_group(f'ICML.cc/2023/Conference/Submission1/Reviewers', '~Reviewer_ICMLThree1')
 
+        reviewer_client_2 = openreview.api.OpenReviewClient(username='reviewer2@icml.cc', password=helpers.strong_password)
         anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLTwo1')
         anon_group_id = anon_groups[0].id
-
         review_edit = reviewer_client_2.post_note_edit(
             invitation='ICML.cc/2023/Conference/Submission1/-/Official_Review',
             signatures=[anon_group_id],
@@ -2546,7 +2580,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "textarea",
                                 "markdown": True
                             }
-                        }                        
+                        }
                     },
                     "questions": {
                         "order": 3,
@@ -2558,7 +2592,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "textarea",
                                 "markdown": True
                             }
-                        }                        
+                        }
                     },
                     "limitations": {
                         "order": 4,
@@ -2570,7 +2604,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "textarea",
                                 "markdown": True
                             }
-                        }                        
+                        }
                     },
                     "ethics_flag": {
                         "order": 5,
@@ -2654,7 +2688,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "radio"
                             }
                         }
-                    },                                                                                
+                    },
                     "rating": {
                         "order": 10,
                         "description": "Please provide an \"overall score\" for this submission.",
@@ -2693,7 +2727,7 @@ ICML 2023 Conference Program Chairs'''
                                 ],
                                 "input": "radio"
                             }
-                        }                        
+                        }
                     },
                     "code_of_conduct": {
                         "description": "While performing my duties as a reviewer (including writing reviews and participating in discussions), I have and will continue to abide by the ICML code of conduct (https://icml.cc/public/CodeOfConduct).",
@@ -2725,7 +2759,7 @@ ICML 2023 Conference Program Chairs'''
 
         anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLOne1')
         anon_group_id = anon_groups[0].id
-        
+
         reviews = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Official_Review', sort='number:asc')
         assert len(reviews) == 2
         assert anon_group_id in reviews[0].readers
@@ -2743,7 +2777,7 @@ ICML 2023 Conference Program Chairs'''
                 edit={
                     'invitation': {
                         'duedate': new_due_date,
-                        'expdate': new_exp_date            
+                        'expdate': new_exp_date
                     }
                 }
             )
@@ -2763,7 +2797,7 @@ ICML 2023 Conference Program Chairs'''
         assert rebuttal_stage_invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
     def test_review_rating(self, client, openreview_client, helpers):
-        
+
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
@@ -2794,7 +2828,7 @@ ICML 2023 Conference Program Chairs'''
                     }
                 }
             },
-            notify_readers=True, 
+            notify_readers=True,
             email_sacs=True)
 
         venue.create_custom_stage()
@@ -2959,7 +2993,7 @@ ICML 2023 Conference Program Chairs'''
         assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
         assignment.cdate = None
         assignment.signatures = [anon_group_id]
-        
+
         with pytest.raises(openreview.OpenReviewException, match=r'Can not remove assignment, the user ~Reviewer_ICMLOne1 already posted a Official Review.'):
             ac_client.post_edge(assignment)
 
@@ -2983,7 +3017,7 @@ ICML 2023 Conference Program Chairs'''
         assert [] == ac_group.members
 
         sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs')
-        assert [] == sac_group.members 
+        assert [] == sac_group.members
 
         #re-add AC to paper 1
         assignment = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Assignment', head=submissions[0].id, tail='~AC_ICMLTwo1', trash=True)[0]
@@ -2997,7 +3031,7 @@ ICML 2023 Conference Program Chairs'''
         assert ['~AC_ICMLTwo1'] == ac_group.members
 
         sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs')
-        assert ['~SAC_ICMLTwo1'] == sac_group.members 
+        assert ['~SAC_ICMLTwo1'] == sac_group.members
 
     def test_comment_stage(self, openreview_client, helpers):
 
@@ -3015,7 +3049,6 @@ ICML 2023 Conference Program Chairs'''
                 'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
                 'additional_readers': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Assigned Submitted Reviewers'],
                 'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
-
             },
             forum=request_form.forum,
             invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment_Stage',
@@ -3047,7 +3080,7 @@ ICML 2023 Conference Program Chairs'''
             note=openreview.api.Note(
                 replyto = submissions[0].id,
                 readers = [
-                    'ICML.cc/2023/Conference/Program_Chairs', 
+                    'ICML.cc/2023/Conference/Program_Chairs',
                     'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
                     'ICML.cc/2023/Conference/Submission1/Area_Chairs',
                     anon_group_id
@@ -3066,7 +3099,7 @@ ICML 2023 Conference Program Chairs'''
         assert messages and len(messages) == 1
 
         messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your comment was received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
-        assert messages and len(messages) == 1        
+        assert messages and len(messages) == 1
 
         comment_edit = reviewer_client.post_note_edit(
             invitation='ICML.cc/2023/Conference/Submission1/-/Official_Comment',
@@ -3075,7 +3108,7 @@ ICML 2023 Conference Program Chairs'''
                 id = comment_edit['note']['id'],
                 replyto = submissions[0].id,
                 readers = [
-                    'ICML.cc/2023/Conference/Program_Chairs', 
+                    'ICML.cc/2023/Conference/Program_Chairs',
                     'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
                     'ICML.cc/2023/Conference/Submission1/Area_Chairs',
                     anon_group_id
@@ -3100,7 +3133,7 @@ ICML 2023 Conference Program Chairs'''
             note=openreview.api.Note(
                 replyto = submissions[0].id,
                 readers = [
-                    'ICML.cc/2023/Conference/Program_Chairs', 
+                    'ICML.cc/2023/Conference/Program_Chairs',
                     'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
                     anon_group_id
                 ],
@@ -3119,7 +3152,7 @@ ICML 2023 Conference Program Chairs'''
         assert messages and len(messages) == 1
 
         messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your comment was received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
-        assert messages and len(messages) == 2 
+        assert messages and len(messages) == 2
 
     def test_rebuttal_stage(self, client, openreview_client, helpers):
 
@@ -3163,7 +3196,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "textarea",
                                 "markdown": True
                             }
-                        }                        
+                        }
                     },
                     "questions": {
                         "order": 3,
@@ -3175,7 +3208,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "textarea",
                                 "markdown": True
                             }
-                        }                        
+                        }
                     },
                     "limitations": {
                         "order": 4,
@@ -3187,7 +3220,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "textarea",
                                 "markdown": True
                             }
-                        }                        
+                        }
                     },
                     "ethics_flag": {
                         "order": 5,
@@ -3271,7 +3304,7 @@ ICML 2023 Conference Program Chairs'''
                                 "input": "radio"
                             }
                         }
-                    },                                                                                
+                    },
                     "rating": {
                         "order": 10,
                         "description": "Please provide an \"overall score\" for this submission.",
@@ -3310,7 +3343,7 @@ ICML 2023 Conference Program Chairs'''
                                 ],
                                 "input": "radio"
                             }
-                        }                        
+                        }
                     },
                     "code_of_conduct": {
                         "description": "While performing my duties as a reviewer (including writing reviews and participating in discussions), I have and will continue to abide by the ICML code of conduct (https://icml.cc/public/CodeOfConduct).",
@@ -3339,7 +3372,7 @@ ICML 2023 Conference Program Chairs'''
         helpers.await_queue()
 
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
-        
+
         reviews = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Official_Review')
         assert len(reviews) == 2
         assert reviews[0].readers == [
@@ -3382,7 +3415,7 @@ ICML 2023 Conference Program Chairs'''
             note=openreview.api.Note(
                 replyto = reviews[0].id,
                 readers = [
-                    'ICML.cc/2023/Conference/Program_Chairs', 
+                    'ICML.cc/2023/Conference/Program_Chairs',
                     'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
                     'ICML.cc/2023/Conference/Submission1/Area_Chairs',
                     'ICML.cc/2023/Conference/Submission1/Reviewers/Submitted',
@@ -3689,7 +3722,7 @@ ICML 2023 Conference Program Chairs'''
                     }
                 }
             },
-            notify_readers=False, 
+            notify_readers=False,
             email_sacs=False)
 
         venue.create_custom_stage()
@@ -4025,7 +4058,7 @@ Best,
 ''',
                 'reject_email_content': f'''Dear {{{{fullname}}}},
 
-Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted. 
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted.
 You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,
@@ -4093,3 +4126,136 @@ Best,
         ]
         assert not rejected_submissions[0].pdate
         assert not rejected_submissions[0].odate
+
+    def test_forum_chat(self, openreview_client, helpers):
+
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            readers = ['ICML.cc/2023/Conference'],
+            writers = ['ICML.cc/2023/Conference'],
+            signatures = ['ICML.cc/2023/Conference'],
+            invitation = openreview.api.Invitation(
+                id = 'ICML.cc/2023/Conference/-/Submission',
+                reply_forum_views = [
+                    {
+                        'id': 'all',
+                        'label': 'All'
+                    },
+                    {
+                        'id': 'discussion',
+                        'label': 'Discussion',
+                        'filter': '-invitations:ICML.cc/2023/Conference/Submission${note.number}/-/Chat',
+                        'nesting': 3,
+                        'sort': 'date-desc',
+                        'layout': 'default',
+                        'live': True
+                    },
+                    {
+                        'id': 'reviewers-chat',
+                        'label': 'Reviewers Chat',
+                        'filter': 'invitations:ICML.cc/2023/Conference/Submission${note.number}/-/Chat,ICML.cc/2023/Conference/Submission${note.number}/-/Official_Review',
+                        'nesting': 1,
+                        'sort': 'date-asc',
+                        'layout': 'chat',
+                        'live': True,
+                        'expandedInvitations': ['ICML.cc/2023/Conference/Submission${note.number}/-/Chat']
+                    }
+                ]
+            )
+        )
+
+        submission_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Submission')
+        assert len(submission_invitation.reply_forum_views)
+
+        submission = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', number=1)[0]
+
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            readers = ['ICML.cc/2023/Conference'],
+            writers = ['ICML.cc/2023/Conference'],
+            signatures = ['ICML.cc/2023/Conference'],
+            invitation = openreview.api.Invitation(
+                id = 'ICML.cc/2023/Conference/Submission1/-/Chat',
+                readers = ['everyone'],
+                writers = ['ICML.cc/2023/Conference'],
+                signatures = ['ICML.cc/2023/Conference'],
+                invitees = ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission1/Area_Chairs', 'ICML.cc/2023/Conference/Submission1/Reviewers'],
+                edit = {
+                    'readers': ['ICML.cc/2023/Conference', '${2/signatures}'],
+                    'writers': ['ICML.cc/2023/Conference'],
+                    'signatures': {
+                        'param': {
+                            'enum': [
+                                'ICML.cc/2023/Conference/Program_Chairs',
+                                'ICML.cc/2023/Conference/Submission1/Area_Chair_.*',
+                                'ICML.cc/2023/Conference/Submission1/Reviewer_.*',
+                            ]
+                        }
+                    },
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': 'ICML.cc/2023/Conference/Submission1/-/Chat',
+                                'optional': True
+                            }
+                        },
+                        'readers': ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission1/Area_Chairs', 'ICML.cc/2023/Conference/Submission1/Reviewers'],
+                        'writers': ['ICML.cc/2023/Conference'],
+                        'signatures': ['${3/signatures}'],
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'forum': submission.id,
+                        'replyto': {
+                            'param': {
+                                'withForum': submission.id
+                            }
+                        },
+                        'content': {
+                            'message': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 50000,
+                                        'markdown': True
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
+
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLOne1')
+        anon_group_id = anon_groups[0].id
+
+        note_edit = reviewer_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission1/-/Chat',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                replyto=submission.id,
+                content={
+                    'message': { 'value': 'Hi reviewers, I would like to discuss this paper with you.' }
+                }
+            )
+        )
+
+        pc_client=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
+
+        note_edit = pc_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission1/-/Chat',
+            signatures=['ICML.cc/2023/Conference/Program_Chairs'],
+            note=openreview.api.Note(
+                replyto=note_edit['note']['id'],
+                content={
+                    'message': { 'value': 'Please start the conversation.' }
+                }
+            )
+        )
