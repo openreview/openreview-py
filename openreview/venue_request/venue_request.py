@@ -554,19 +554,20 @@ class VenueStages():
             'recommendation_options': {
                 'description': 'What are the meta review recommendation options (provide comma separated values, e.g. Accept (Best Paper), Accept, Reject)? Leave empty for default options - Accept (Oral), Accept (Poster), Reject',
                 'value-regex': '.*',
+                'hidden': True,
                 'order': 29
             },
             'additional_meta_review_form_options': {
                 'order' : 30,
                 'value-dict': {},
                 'required': False,
-                'description': 'Configure additional options in the meta review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
+                'description': 'Configure additional options in the meta review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected. For more information on the default meta review form, please refer to our FAQ: https://openreview.net/faq#question-default-forms'
             },
             'remove_meta_review_form_options': {
                 'order': 31,
-                'value-regex': r'^[^,]+(,\s*[^,]*)*$',
+                'values-dropdown': ['recommendation', 'confidence'],
                 'required': False,
-                'description': 'Comma separated list of fields (metareview, recommendation, confidence) that you want removed from the meta review form. For more information on the default meta review form, please refer to our FAQ: https://openreview.net/faq#question-default-forms'
+                'description': 'Select which fields should be removed from the meta review form. For more information on the default meta review form, please refer to our FAQ: https://openreview.net/faq#question-default-forms'
             }
         }
 

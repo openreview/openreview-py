@@ -128,7 +128,7 @@ class TestVenueRequest():
         venue = VenueRequest(client, support_group_id, super_id)
 
         helpers.await_queue()
-        request_page(selenium, 'http://localhost:3030/group?id={}&mode=default'.format(support_group_id), client.token)
+        request_page(selenium, 'http://localhost:3030/group?id={}'.format(support_group_id), client.token)
         header_div = selenium.find_element_by_id('header')
         assert header_div
         title_tag = header_div.find_element_by_tag_name('h1')
@@ -306,7 +306,7 @@ class TestVenueRequest():
         assert '~.*' == submission_inv.reply['content']['authorids']['values-regex'] 
 
         assert pc_client.get_notes(invitation='openreview.net/Support/-/Request{number}/Comment'.format(number=request_form_note.number))
-        
+
         conference = openreview.get_conference(pc_client, request_form_id=request_form_note.forum)
         submission_due_date_str = due_date.strftime('%b %d %Y %I:%M%p')
         abstract_due_date_str = abstract_due_date.strftime('%b %d %Y %I:%M%p')
@@ -617,7 +617,7 @@ class TestVenueRequest():
 
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Recruitment Status' not in last_message['content']['text']
-    
+
     def test_venue_recruitment_tilde_IDs(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Reviewer Recruitment
@@ -734,9 +734,9 @@ class TestVenueRequest():
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Remind Recruitment Status' not in last_message['content']['text']
 
-    def test_venue_recruitment_change_short_name(self, client, test_client, selenium, request_page, venue, helpers): 
+    def test_venue_recruitment_change_short_name(self, client, test_client, selenium, request_page, venue, helpers):
         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
-        
+
         venue_revision_note = test_client.post_note(openreview.Note(
             content={
                 'title': '{} Updated'.format(venue['request_form_note'].content['title']),
@@ -820,9 +820,9 @@ class TestVenueRequest():
 
         assert messages[1]['content']['subject'] == "[TestVenue@OR'2030 Modified] Invitation to serve as Reviewer"
         assert "You have been nominated by the program chair committee of TestVenue@OR'2030 Modified to serve as Reviewer." in messages[1]['content']['text']
-        
+
         remind_recruitment_invitation = client.get_invitation('{}/-/Request{}/Remind_Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number))
-        
+
         remind_recruitment_note = test_client.post_note(openreview.Note(
             content={
                 'title': 'Remind Recruitment',
@@ -837,7 +837,7 @@ class TestVenueRequest():
             signatures=['~SomeFirstName_User1'],
             writers=[]
         ))
-    
+
         assert remind_recruitment_note
         helpers.await_queue()
 
@@ -846,7 +846,7 @@ class TestVenueRequest():
 
         assert messages[2]['content']['subject'] == "Reminder: [TestVenue@OR'2030 Modified] Invitation to serve as Reviewer"
         assert "You have been nominated by the program chair committee of TestVenue@OR'2030 Modified to serve as Reviewer." in messages[2]['content']['text']
-        
+
         venue_revision_note = test_client.post_note(openreview.Note(
             content={
                 'title': '{} Updated'.format(venue['request_form_note'].content['title']),
@@ -1489,7 +1489,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                         'required': False,
                     }
                 },
-                'remove_meta_review_form_options': 'confidence'
+                'remove_meta_review_form_options': ['confidence']
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Meta_Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -2343,7 +2343,7 @@ Best,
 ''',
                 'reject_email_content': f'''Dear {{{{fullname}}}},
 
-Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted. 
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted.
 You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,
@@ -2393,7 +2393,7 @@ Best,
         assert "[TestVenue@OR'2030] Decision notification for your submission 1: test submission" in last_message['content']['subject']
         assert last_message['content']['text'] == f'''Dear Venue Author,
 
-Thank you for submitting your paper, test submission, to TestVenue@OR'2030. We regret to inform you that your submission was not accepted. 
+Thank you for submitting your paper, test submission, to TestVenue@OR'2030. We regret to inform you that your submission was not accepted.
 You can find the final reviews for your paper on the submission page in OpenReview at: https://openreview.net/forum?id={blind_submissions[0].id}
 
 Best,
@@ -2670,7 +2670,7 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
             invitation = 'TEST.cc/2030/Conference/Paper1/-/Withdraw',
             forum = blind_submissions[0].forum,
             replyto = blind_submissions[0].forum,
-            readers = ['TEST.cc/2030/Conference', 
+            readers = ['TEST.cc/2030/Conference',
             'TEST.cc/2030/Conference/Program_Chairs',
             'TEST.cc/2030/Conference/Paper1/Senior_Area_Chairs',
             'TEST.cc/2030/Conference/Paper1/Area_Chairs',
@@ -2684,4 +2684,4 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
             }
         ))
 
-        helpers.await_queue()    
+        helpers.await_queue()
