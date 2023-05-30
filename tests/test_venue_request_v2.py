@@ -2300,24 +2300,6 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         helpers.create_user('venue_author3_v2@mail.com', 'VenueFour', 'Author')
         author_client = OpenReviewClient(username='venue_author3_v2@mail.com', password=helpers.strong_password)
 
-        submission = author_client.post_note_edit(
-            invitation='V2.cc/2030/Conference/-/Submission',
-            signatures= ['~VenueFour_Author1'],
-            note=Note(
-                content={
-                    'title': { 'value': 'test submission 3' },
-                    'abstract': { 'value': 'test abstract 3' },
-                    'authors': { 'value': ['VenueFour Author']},
-                    'authorids': { 'value': ['~VenueFour_Author1']},
-                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'keywords': {'value': ['keyword1', 'keyword2'] }
-                }
-        ))
-        helpers.await_queue_edit(openreview_client, edit_id=submission['id'])
-
-        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        conference.setup_post_submission_stage(force=True)
-
         # Post a revision stage note
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
