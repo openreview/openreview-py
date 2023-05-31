@@ -2465,11 +2465,13 @@ NeurIPS 2021 Conference Program Chairs'''
         messages = client.get_messages(to='reviewer1@umass.edu', subject='[NeurIPS 2021] Your comment was received on Paper Number: 5, Paper Title: \"Paper title 5\"')
         assert messages and len(messages) == 1
 
-        messages = client.get_messages(to='ac1@mit.edu', subject='\[NeurIPS 2021\] Reviewer .* commented on a paper in your area. Paper Number: 5, Paper Title: \"Paper title 5\"')
-        assert messages and len(messages) == 1
+        messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer .*')
+        filtered_messages = [m for m in messages if 'commented on a paper in your area. Paper Number: 5, Paper Title: "Paper title 5"' in m['content']['subject']]
+        assert filtered_messages and len(filtered_messages) == 1
 
-        messages = client.get_messages(to='sac1@google.com', subject='\[NeurIPS 2021\] Reviewer .* commented on a paper in your area. Paper Number: 5, Paper Title: \"Paper title 5\"')
-        assert not messages
+        messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2021] Reviewer .*')
+        filtered_messages = [m for m in messages if 'commented on a paper in your area. Paper Number: 5, Paper Title: "Paper title 5"' in m['content']['subject']]
+        assert not filtered_messages
 
         ac_client=openreview.Client(username='ac1@mit.edu', password=helpers.strong_password)
 
@@ -2499,8 +2501,9 @@ NeurIPS 2021 Conference Program Chairs'''
         messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Your comment was received on Paper Number: 5, Paper Title: \"Paper title 5\"')
         assert messages and len(messages) == 1
 
-        messages = client.get_messages(to='sac1@google.com', subject='\[NeurIPS 2021\] Area Chair .* commented on a paper in your area. Paper Number: 5, Paper Title: \"Paper title 5\"')
-        assert messages and len(messages) == 1
+        messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2021] Area Chair .*')
+        filtered_messages = [m for m in messages if 'commented on a paper in your area. Paper Number: 5, Paper Title: "Paper title 5"' in m['content']['subject']]
+        assert filtered_messages and len(filtered_messages) == 1
 
         sac_client=openreview.Client(username='sac1@google.com', password=helpers.strong_password)
 
