@@ -840,7 +840,13 @@ class InvitationBuilder(object):
                     },
                     'ddate': {
                         'param': {
-                            # 'type': 'date',
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'cdate': {
+                        'param': {
                             'range': [ 0, 9999999999999 ],
                             'optional': True,
                             'deletable': True
@@ -2103,6 +2109,13 @@ class InvitationBuilder(object):
                         'deletable': True
                     }
                 },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
                 'readers':  edge_readers,
                 'nonreaders': edge_nonreaders,
                 'writers': edge_writers,
@@ -2161,6 +2174,13 @@ class InvitationBuilder(object):
                     'ddate': {
                         'param': {
                             # 'type': 'date',
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'cdate': {
+                        'param': {
                             'range': [ 0, 9999999999999 ],
                             'optional': True,
                             'deletable': True

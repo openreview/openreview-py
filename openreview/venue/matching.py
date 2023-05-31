@@ -205,7 +205,13 @@ class Matching(object):
                 },
                 'ddate': {
                     'param': {
-                        # 'type': 'date',
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
                         'range': [ 0, 9999999999999 ],
                         'optional': True,
                         'deletable': True
