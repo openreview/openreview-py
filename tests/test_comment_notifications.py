@@ -417,20 +417,20 @@ class TestCommentNotification():
         assert logs
         assert logs[0]['status'] == 'ok'
 
-        messages = client.get_messages(subject='.*UAI.*A review has been received on Paper number: 1.*')
+        messages = client.get_messages(subject='[UAI 2020] A review has been received on Paper number: 1.*')
         assert len(messages) == 0
 
-        messages = client.get_messages(subject='.*UAI.*Review posted to your assigned Paper number: 1.*')
+        messages = client.get_messages(subject='[UAI 2020] Review posted to your assigned Paper number: 1.*')
         assert messages
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'areachair@auai.org'
 
-        messages = client.get_messages(subject='.*UAI.*Your review has been received on your assigned Paper number: 1, Paper title: .*')
+        messages = client.get_messages(subject='[UAI 2020] Your review has been received on your assigned Paper number: 1, Paper title: .*')
         assert messages
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'reviewer@auai.org'
 
-        messages = client.get_messages(subject='.*UAI.*Review posted to your submission - Paper number: 1, Paper title: .*')
+        messages = client.get_messages(subject='[UAI 2020] Review posted to your submission - Paper number: 1, Paper title: .*')
         assert messages
         assert len(messages) == 3
         recipients = [m['content']['to'] for m in messages]
@@ -470,20 +470,20 @@ class TestCommentNotification():
         assert logs
         assert logs[0]['status'] == 'ok'
 
-        messages = client.get_messages(subject=f'.*UAI.*{pretty_anon_reviewer_id} commented on a paper. Paper Number: 1.*')
+        messages = client.get_messages(subject=f'[UAI 2020] {pretty_anon_reviewer_id} commented on a paper. Paper Number: 1.*')
         assert messages
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'programchair@auai.org'
 
-        messages = client.get_messages(subject=f'.*UAI.*{pretty_anon_reviewer_id} commented on a paper in your area. Paper Number: 1.*')
+        messages = client.get_messages(subject=f'[UAI 2020] {pretty_anon_reviewer_id} commented on a paper in your area. Paper Number: 1.*')
         assert messages
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'areachair@auai.org'
 
-        messages = client.get_messages(subject=f'.*UAI.*{pretty_anon_reviewer_id} commented on a paper you are reviewing. Paper Number: 1.*')
+        messages = client.get_messages(subject=f'[UAI 2020] {pretty_anon_reviewer_id} commented on a paper you are reviewing. Paper Number: 1.*')
         assert not messages
 
-        messages = client.get_messages(subject=f'.*UAI.*{pretty_anon_reviewer_id} commented on your submission. Paper Number: 1, Paper Title: .*')
+        messages = client.get_messages(subject=f'[UAI 2020] {pretty_anon_reviewer_id} commented on your submission. Paper Number: 1, Paper Title: .*')
         assert messages
         assert len(messages) == 3
         recipients = [m['content']['to'] for m in messages]
@@ -519,22 +519,22 @@ class TestCommentNotification():
         assert logs
         assert logs[0]['status'] == 'ok'
 
-        messages = client.get_messages(subject='.*UAI.*A review has been received on Paper number: 1.*', to='programchair@auai.org')
+        messages = client.get_messages(subject='[UAI 2020] A review has been received on Paper number: 1.*', to='programchair@auai.org')
         assert len(messages) == 0
 
-        messages = client.get_messages(subject='.*UAI.*Review posted to your assigned Paper number: 1.*', to='reviewer@auai.org')
+        messages = client.get_messages(subject='[UAI 2020] Review posted to your assigned Paper number: 1.*', to='reviewer@auai.org')
         assert messages
         assert len(messages) == 1
 
-        messages = client.get_messages(subject='.*UAI.*Review posted to your assigned Paper number: 1.*', to='areachair@auai.org')
+        messages = client.get_messages(subject='[UAI 2020] Review posted to your assigned Paper number: 1.*', to='areachair@auai.org')
         assert messages
         assert len(messages) == 2
 
-        messages = client.get_messages(subject='.*UAI.*Your review has been received on your assigned Paper number: 1, Paper title: .*', to='reviewer2@auai.org')
+        messages = client.get_messages(subject='[UAI 2020] Your review has been received on your assigned Paper number: 1, Paper title: .*', to='reviewer2@auai.org')
         assert messages
         assert len(messages) == 1
 
-        messages = client.get_messages(subject='.*UAI.*Review posted to your submission - Paper number: 1, Paper title: .*')
+        messages = client.get_messages(subject='[UAI 2020] Review posted to your submission - Paper number: 1, Paper title: .*')
         assert messages
         assert len(messages) == 6
         recipients = [m['content']['to'] for m in messages]
@@ -561,19 +561,19 @@ class TestCommentNotification():
         assert logs
         assert logs[0]['status'] == 'ok'
 
-        messages = client.get_messages(subject=f'.*UAI.*{pretty_anon_reviewer_id} commented on a paper. Paper Number: 1.*', to='programchair@auai.org')
+        messages = client.get_messages(subject=f'[UAI 2020] {pretty_anon_reviewer_id} commented on a paper. Paper Number: 1.*', to='programchair@auai.org')
         assert messages
         assert len(messages) == 2
 
-        messages = client.get_messages(subject=f'.*UAI.*{pretty_anon_reviewer_id} commented on a paper in your area. Paper Number: 1.*', to='areachair@auai.org')
+        messages = client.get_messages(subject=f'[UAI 2020] {pretty_anon_reviewer_id} commented on a paper in your area. Paper Number: 1.*', to='areachair@auai.org')
         assert messages
         assert len(messages) == 2
 
-        messages = client.get_messages(subject=f'.*UAI.*{pretty_anon_reviewer_id} commented on a paper you are reviewing. Paper Number: 1.*', to='reviewer2@auai.org')
+        messages = client.get_messages(subject=f'[UAI 2020] {pretty_anon_reviewer_id} commented on a paper you are reviewing. Paper Number: 1.*', to='reviewer2@auai.org')
         assert messages
         assert len(messages) == 1
 
-        messages = client.get_messages(subject=f'.*UAI.*{pretty_anon_reviewer_id} commented on your submission. Paper Number: 1, Paper Title: .*')
+        messages = client.get_messages(subject=f'[UAI 2020] {pretty_anon_reviewer_id} commented on your submission. Paper Number: 1, Paper Title: .*')
         assert messages
         assert len(messages) == 6
         recipients = [m['content']['to'] for m in messages]
@@ -600,7 +600,7 @@ class TestCommentNotification():
         response = ac_client.post_message(subject, recipients, 'This is a second reminder')
         assert response
 
-        messages_2 = client.get_messages(subject='.*Remind to reviewers.*')
+        messages_2 = client.get_messages(subject='Remind to reviewers')
         assert messages_2
         assert len(messages_2) == 2
         assert messages_2[0]['content']['to'] == 'reviewer@auai.org'
