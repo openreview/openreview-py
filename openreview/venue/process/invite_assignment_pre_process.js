@@ -8,7 +8,8 @@ async function process(client, edge, invitation) {
   const conflictInvitationId = invitation.content.conflict_invitation_id?.value
   const assignmentLabel = invitation.content.assignment_label?.value
   const inviteLabel = invitation.content.invite_label?.value
-  const conflictPolicy = invitation.content.conflict_policy?.value
+  const conflictPolicy = invitation.content.reviewers_conflict_policy?.value
+  const conflictNYears = invitation.content.reviewers_conflict_n_years?.value
 
   if (edge.ddate) {
     return
@@ -52,7 +53,7 @@ async function process(client, edge, invitation) {
   }
  
   const authorProfiles = await client.tools.getProfiles(submission.content.authorids?.value, true)
-  const conflicts = await client.tools.getConflicts(authorProfiles, userProfile, conflictPolicy)
+  const conflicts = await client.tools.getConflicts(authorProfiles, userProfile, conflictPolicy, conflictNYears)
   if (conflicts.length) { 
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite ${userProfile.id}, the user has a conflict` }))
   }
