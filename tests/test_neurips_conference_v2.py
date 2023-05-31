@@ -41,6 +41,9 @@ class TestNeurIPSConference():
         helpers.create_user('external_reviewer2@mit.edu', 'External Reviewer', 'MIT', institution='mit.edu')
         helpers.create_user('external_reviewer3@adobe.com', 'External Reviewer', 'Adobe', institution='adobe.com')
 
+        helpers.create_user('melisatest@neuirps.cc', 'Melisa', 'Gilbert')
+        helpers.create_user('melisatest2@neurips.cc', 'Melisa', 'Gilbert')
+
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
             signatures=['~Program_NeurIPSChair1'],
@@ -90,7 +93,9 @@ class TestNeurIPSConference():
 
         helpers.await_queue()
 
-        assert openreview_client.get_group('NeurIPS.cc/2023/Conference')
+        venue_group = openreview_client.get_group('NeurIPS.cc/2023/Conference')
+        assert venue_group
+        assert venue_group.host == 'NeurIPS.cc'
         assert openreview_client.get_group('NeurIPS.cc/2023/Conference/Senior_Area_Chairs')
         acs=openreview_client.get_group('NeurIPS.cc/2023/Conference/Area_Chairs')
         assert acs
@@ -764,7 +769,20 @@ If you would like to change your decision, please follow the link in the previou
                 'abstract_registration_deadline': request_form.content['abstract_registration_deadline'],
                 'Location': 'Virtual',
                 'How did you hear about us?': 'ML conferences',
-                'Expected Submissions': '100'
+                'Expected Submissions': '100',
+                'Additional Submission Options': {
+                    'corresponding_author': {
+                        'value': {
+                        'param': {
+                            'type': 'string',
+                            'regex': '~.*|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})',
+                            'optional': True
+                        }
+                        },
+                        'description': 'Select which author should be the primary corresponding author for this submission. Please enter an email address or an OpenReview ID that exactly matches one of the authors.',
+                        'order': 11
+                    }
+                }
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
@@ -812,6 +830,13 @@ If you would like to change your decision, please follow the link in the previou
             if i == 1:
                 note.content['authors']['value'].append('SeniorArea GoogleChair')
                 note.content['authorids']['value'].append('~SeniorArea_GoogleChair1')
+                print(note)
+
+            if i == 2:
+                note.content['authors']['value'].append('Melisa Gilbert')
+                note.content['authors']['value'].append('Melisa Gilbert')
+                note.content['authorids']['value'].append('~Melisa_Gilbert1')
+                note.content['authorids']['value'].append('~Melisa_Gilbert2')
                 print(note)
 
             test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/-/Submission',
@@ -912,6 +937,35 @@ If you would like to change your decision, please follow the link in the previou
           'andrew@google.com',
           'celeste@yahoo.com'
         ]
+
+        revision_inv = test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission2/-/Revision')
+        assert revision_inv.edit['note']['content']['authors']['value'] == [
+          'SomeFirstName User',
+          'Peter SomeLastName',
+          'Andrew Mc',
+          'Melisa Gilbert',
+          'Melisa Gilbert'
+        ]
+        assert revision_inv.edit['note']['content']['authorids']['value'] == [
+          'test@mail.com',
+          'peter@mail.com',
+          'andrew@fb.com',
+          '~Melisa_Gilbert1',
+          '~Melisa_Gilbert2'
+        ]
+
+        revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission2/-/Revision',
+            signatures=['NeurIPS.cc/2023/Conference/Submission2/Authors'],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': 'Paper title 2 Updated' },
+                    'abstract': { 'value': 'This is an abstract 2 updated' },
+                    'authorids': { 'value': ['test@mail.com', '~Melisa_Gilbert2', 'andrew@fb.com', 'peter@mail.com', '~Melisa_Gilbert1' ] },
+                    'authors': { 'value': ['SomeFirstName User',  'Melisa Gilbert', 'Andrew Mc', 'Peter SomeLastName', 'Melisa Gilbert' ] },
+                    'keywords': { 'value': ['machine learning', 'nlp'] },
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])        
 
         ## update submission
         revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission4/-/Revision',
@@ -1055,6 +1109,11 @@ If you would like to change your decision, please follow the link in the previou
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        post_submission_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Post_Submission')
+        assert post_submission_invitation
+        assert 'values-dropdown' in post_submission_invitation.reply['content']['hide_fields']
+        assert ['keywords', 'TLDR', 'abstract', 'pdf', 'corresponding_author'] == post_submission_invitation.reply['content']['hide_fields']['values-dropdown']
 
         post_submission_note=pc_client.post_note(openreview.Note(
             content= {

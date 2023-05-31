@@ -139,7 +139,7 @@ class TestVenueRequest():
         venue = VenueRequest(client, support_group_id, super_id)
 
         helpers.await_queue()
-        request_page(selenium, 'http://localhost:3030/group?id={}&mode=default'.format(support_group_id), client.token)
+        request_page(selenium, 'http://localhost:3030/group?id={}'.format(support_group_id), client.token)
 
         helpers.create_user('pc_venue_v2@mail.com', 'ProgramChair', 'User')
 
@@ -561,7 +561,7 @@ class TestVenueRequest():
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
         helpers.await_queue_edit(openreview_client, invitation='V2.cc/2030/Conference/Reviewers/-/Recruitment')
-        
+
         messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="[TestVenue@OR'2030V2] Reviewer Invitation accepted")
         assert messages and len(messages) == 1
 
@@ -595,7 +595,7 @@ class TestVenueRequest():
         last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
         assert '0 users' in last_comment.content['invited']
         assert 'No recruitment invitation was sent to the users listed under \'Already Invited\' because they have already been invited.' in last_comment.content['comment']
-        
+
     def test_venue_recruitment_tilde_IDs(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Reviewer Recruitment
@@ -1001,7 +1001,7 @@ class TestVenueRequest():
                 }
             ))
 
-        helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id']) 
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
 
         messages = client.get_messages(subject="TestVenue@OR'2030V2 has received your submission titled test submission")
         assert messages and len(messages) == 1
@@ -1030,7 +1030,7 @@ class TestVenueRequest():
                     'keywords': {'value': ['aa'] }
                 }
         ))
-        
+
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id'])
 
         #check co-author email
@@ -1059,10 +1059,10 @@ class TestVenueRequest():
                     'authors': { 'value': ['VenueFour Author']},
                     'authorids': { 'value': ['~VenueFour_Author1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'keywords': {'value': ['keyword1, keyword2'] }
+                    'keywords': {'value': ['keyword1', 'keyword2'] }
                 }
         ))
-        
+
         helpers.await_queue_edit(openreview_client, edit_id=submission['id'])
 
         submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='tmdate')
@@ -1300,7 +1300,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         ))
         assert venue_revision_note
 
-        helpers.await_queue()        
+        helpers.await_queue()
 
         # Close submission stage
         test_client.post_note(openreview.Note(
@@ -1318,8 +1318,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             writers= [],
         ))
 
-        helpers.await_queue()        
-        
+        helpers.await_queue()
+
         # Post a review stage note
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
@@ -1586,6 +1586,17 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
                 'additional_meta_review_form_options': {
+                    'recommendation': {
+                        'description': 'Please select a recommendation for the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': ['Accept', 'Reject'],
+                                'input': 'radio'
+                            }
+                        },
+                        'order': 2
+                    },
                     'suggestions': {
                         'description': 'Please provide suggestions on how to improve the paper',
                         'value': {
@@ -1598,7 +1609,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                         }
                     }
                 },
-                'remove_meta_review_form_options': 'confidence'
+                'remove_meta_review_form_options': ['confidence']
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Meta_Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1646,6 +1657,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert 'confidence' not in meta_review_invitation.edit['note']['content']
         assert 'suggestions' in meta_review_invitation.edit['note']['content']
         assert 'Accept' in meta_review_invitation.edit['note']['content']['recommendation']['value']['param']['enum']
+        assert meta_review_invitation.edit['note']['content']['recommendation']['value']['param']['input'] == 'radio'
         assert len(meta_review_invitation.edit['note']['readers']) == 4
 
         #post a meta review
@@ -1681,10 +1693,20 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
                 'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
                 'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
-                'recommendation_options': 'Accept, Reject',
                 'release_meta_reviews_to_authors': 'Yes, meta reviews should be revealed when they are posted to the paper\'s authors',
                 'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers',
                 'additional_meta_review_form_options': {
+                    'recommendation': {
+                        'description': 'Please select a recommendation for the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': ['Accept', 'Reject'],
+                                'input': 'radio'
+                            }
+                        },
+                        'order': 2
+                    },
                     'suggestions': {
                         'description': 'Please provide suggestions on how to improve the paper',
                         'value': {
@@ -1697,7 +1719,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                         }
                     }
                 },
-                'remove_meta_review_form_options': 'confidence'
+                'remove_meta_review_form_options': ['confidence']
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Meta_Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -2271,9 +2293,12 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
     def test_venue_submission_revision_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
-
         submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number:asc')
         assert submissions and len(submissions) == 3
+        submission = submissions[0]
+
+        helpers.create_user('venue_author3_v2@mail.com', 'VenueFour', 'Author')
+        author_client = OpenReviewClient(username='venue_author3_v2@mail.com', password=helpers.strong_password)
 
         # Post a revision stage note
         now = datetime.datetime.utcnow()
@@ -2426,7 +2451,7 @@ Best,
 ''',
                 'reject_email_content': f'''Dear {{{{fullname}}}},
 
-Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted. 
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted.
 You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,

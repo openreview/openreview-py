@@ -39,6 +39,26 @@ class TestProfileManagement():
         assert datetime.datetime.fromtimestamp(note.cdate/1000).year == 2023
         assert datetime.datetime.fromtimestamp(note.cdate/1000).month == 4
 
+        note = test_client.post_note(
+            openreview.Note(
+                invitation='dblp.org/-/record',
+                readers=['everyone'],
+                writers=['dblp.org'],
+                signatures=['~SomeFirstName_User1'],
+                content={
+                    'dblp': '<article key=\"journals/iotj/WittHTSL23\" mdate=\"2023-02-25\">\n<author orcid=\"0000-0002-9984-3213\" pid=\"295/9513\">Leon Witt</author>\n<author pid=\"320/8197\">Mathis Heyer</author>\n<author orcid=\"0000-0002-6233-3121\" pid=\"45/10835\">Kentaroh Toyoda</author>\n<author orcid=\"0000-0002-6283-3265\" pid=\"79/9736\">Wojciech Samek</author>\n<author orcid=\"0000-0002-7581-8865\" pid=\"48/4185-1\">Dan Li 0001</author>\n<title>Decentral and Incentivized Federated Learning Frameworks: A Systematic Literature Review.</title>\n<pages>3642-3663</pages>\n<year>2023</year>\n<month>February 15</month>\n<volume>10</volume>\n<journal>IEEE Internet Things J.</journal>\n<number>4</number>\n<ee>https://doi.org/10.1109/JIOT.2022.3231363</ee>\n<url>db/journals/iotj/iotj10.html#WittHTSL23</url>\n</article>'
+                }
+            )
+        )
+
+
+        helpers.await_queue()
+
+        note = test_client.get_note(note.id)
+        assert note.content['title'] == 'Decentral and Incentivized Federated Learning Frameworks: A Systematic Literature Review'
+        assert datetime.datetime.fromtimestamp(note.cdate/1000).year == 2023
+        assert datetime.datetime.fromtimestamp(note.cdate/1000).month == 2                
+
 
     
     def test_remove_alternate_name(self, client, profile_management, helpers):
