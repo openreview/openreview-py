@@ -1074,7 +1074,7 @@ class TestDoubleBlindConference():
         conference.set_reviewers(emails = ['reviewer2@mail.com'])
         conference.create_review_stage()
 
-        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission', sort='numbers:asc')
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission', sort='number:asc')
         submission = notes[0]
 
         conference.set_assignment('ac@mail.com', submission.number, is_area_chair = True)
