@@ -9,6 +9,8 @@ import time
 import random
 import string
 from .. import tools
+from operator import concat
+from functools import reduce
 
 class Matching(object):
 
@@ -1057,11 +1059,10 @@ class Matching(object):
         reviews = client.get_notes(invitation=venue.get_invitation_id(review_name, number='.*'), limit=1)
         proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id),
             label=assignment_title, groupby='head', select=None)}
-        assignment_edges = []
         assignment_invitation_id = venue.get_assignment_id(self.match_group.id, deployed=True)
         current_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None)}
 
-        sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(venue.get_senior_area_chairs_id()), groupby='head', select=None)}
+        sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(venue.get_senior_area_chairs_id(), deployed=True), groupby='head', select=None)}
 
         if overwrite:
             if reviews:
@@ -1078,7 +1079,8 @@ class Matching(object):
             ## Delete current assignment edges with a ddate in case we need to do rollback
             client.delete_edges(invitation=assignment_invitation_id, wait_to_finish=True, soft_delete=True)
 
-        for paper in tqdm(papers, total=len(papers)):
+        def process_paper_assignments(paper):
+            paper_assignment_edges = []
             if paper.id in proposed_assignment_edges:
                 paper_committee_id = venue.get_committee_id(name=reviewer_name, number=paper.number)
                 proposed_edges=proposed_assignment_edges[paper.id]
@@ -1100,7 +1102,7 @@ class Matching(object):
                                     members = [assigned_sac]
                                 )
                             )
-                    assignment_edges.append(Edge(
+                    paper_assignment_edges.append(Edge(
                         invitation=assignment_invitation_id,
                         head=paper.id,
                         tail=assigned_user,
@@ -1112,10 +1114,14 @@ class Matching(object):
                     ))
                     assigned_users.append(assigned_user)
                 client.add_members_to_group(paper_committee_id, assigned_users)
+                return paper_assignment_edges
             else:
                 print('assignment not found', paper.id)
+                return []
 
-        print('Posting assignments edges', len(assignment_edges))
+        assignment_edges = reduce(concat,tools.concurrent_requests(process_paper_assignments, papers))
+
+        print('Posting assignment edges', len(assignment_edges))
         openreview.tools.post_bulk_edges(client=client, edges=assignment_edges)
 
     def deploy_sac_assignments(self, assignment_title, overwrite):
