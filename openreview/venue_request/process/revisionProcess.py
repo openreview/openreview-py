@@ -359,6 +359,15 @@ Best,
 '''
                     }
 
+            #update post decision hide_fields
+            submission_content = conference.submission_stage.get_content(api_version='2', conference=conference)
+            hide_fields = [key for key in submission_content.keys() if key not in ['title', 'authors', 'authorids', 'venue', 'venueid'] and 'delete' not in submission_content[key]]
+            content['hide_fields'] = {
+                        'values-dropdown': hide_fields,
+                'required': False,
+                'description': 'Select which submission fields should be hidden if conference is double blind. Author names are already hidden. These fields will be hidden from all readers of the submissions, except for program chairs and paper authors.'
+            }
+
             content['home_page_tab_names'] = {
                 'description': 'Change the name of the tab that you would like to use to list the papers by decision, please note the key must match with the decision options',
                 'value-dict': {},

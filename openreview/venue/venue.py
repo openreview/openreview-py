@@ -662,13 +662,18 @@ Total Errors: {len(errors)}
                 }
             }
 
-            if is_release_authors(note_accepted):
-                content['authorids'] = {
-                    'readers': { 'delete': True }
-                }
-                content['authors'] = {
-                    'readers': { 'delete': True }
-                }
+            if not is_release_authors(note_accepted):
+                hide_fields.extend(['authors', 'authorids'])
+
+            for field, value in submission.content.items():
+                if field in hide_fields:
+                    content[field] = {
+                        'readers': [venue_id, self.get_authors_id(submission.number)]
+                    }
+                if field not in hide_fields and 'readers' in value:
+                    content[field] = {
+                        'readers': { 'delete': True }
+                    }
 
             self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
                 readers=[venue_id, self.get_authors_id(submission.number)],

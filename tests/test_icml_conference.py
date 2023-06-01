@@ -4033,7 +4033,7 @@ ICML 2023 Conference Program Chairs'''
         assert 'Reject' in invitation.reply['content']['home_page_tab_names']['default']
         assert invitation.reply['content']['home_page_tab_names']['default']['Reject'] == 'Reject'
 
-        #Post a post decision note
+        #Post a post decision note, unhide financial_aid and hide pdf
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
@@ -4042,6 +4042,7 @@ ICML 2023 Conference Program Chairs'''
             content={
                 'reveal_authors': 'Reveal author identities of only accepted submissions to the public',
                 'submission_readers': 'Make accepted submissions public and hide rejected submissions',
+                'hide_fields': ['supplementary_material', 'pdf'],
                 'home_page_tab_names': {
                     'Accept': 'Accept',
                     'Revision Needed': 'Revision Needed',
@@ -4108,10 +4109,15 @@ Best,
         assert accepted_submissions[0].content['venueid']['value'] == 'ICML.cc/2023/Conference'
         assert 'readers' not in accepted_submissions[0].content['authors']
         assert 'readers' not in accepted_submissions[0].content['authorids']
+        assert 'readers' in accepted_submissions[0].content['pdf']
+        assert 'readers' not in accepted_submissions[0].content['financial_aid']
         assert rejected_submissions[0].content['venue']['value'] == 'Submitted to ICML 2023'
         assert rejected_submissions[0].content['venueid']['value'] == 'ICML.cc/2023/Conference/Rejected_Submission'
         assert rejected_submissions[0].content['authors']['readers'] == ["ICML.cc/2023/Conference",f"ICML.cc/2023/Conference/Submission2/Authors"]
         assert rejected_submissions[0].content['authorids']['readers'] == ["ICML.cc/2023/Conference",f"ICML.cc/2023/Conference/Submission2/Authors"]
+        assert 'readers' in rejected_submissions[0].content['pdf']
+        assert rejected_submissions[0].content['pdf']['readers'] == ["ICML.cc/2023/Conference",f"ICML.cc/2023/Conference/Submission2/Authors"]
+        assert 'readers' not in rejected_submissions[0].content['financial_aid']
 
         # Assert that accepted submissions are public
         assert accepted_submissions[0].readers == ['everyone']
