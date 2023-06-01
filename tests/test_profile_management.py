@@ -1416,25 +1416,25 @@ The OpenReview Team.
 
         ## Create committee groups
         client.post_group(openreview.Group(
-            id='ICLRR.cc',
+            id='ICMLR.cc',
             readers=['everyone'],
-            writers=['ICLRR.cc'],
+            writers=['ICMLR.cc'],
             signatures=['~Super_User1'],
             signatories=[],
             members=[]
         ))
 
         client.post_group(openreview.Group(
-            id='ICLRR.cc/Reviewers',
+            id='ICMLR.cc/Reviewers',
             readers=['everyone'],
-            writers=['ICLRR.cc'],
+            writers=['ICMLR.cc'],
             signatures=['~Super_User1'],
             signatories=[],
             members=['alternate_harold@profile.org'],
             anonids=True
         ))
 
-        anon_groups = client.get_groups(regex='ICLRR.cc/Reviewer_')
+        anon_groups = client.get_groups(regex='ICMLR.cc/Reviewer_')
         assert len(anon_groups) == 1
         assert 'alternate_harold@profile.org' in anon_groups[0].members
         first_anon_group_id = anon_groups[0].id                
@@ -1465,11 +1465,11 @@ The OpenReview Team.
         assert '~Harold_Last1' in publications[1].writers
         assert '~Harold_Last1' in publications[1].signatures
 
-        group = client.get_group('ICLRR.cc/Reviewers')
+        group = client.get_group('ICMLR.cc/Reviewers')
         assert 'alternate_harold@profile.org' not in group.members
         assert '~Harold_Last1' in group.members
 
-        anon_groups = client.get_groups(regex='ICLRR.cc/Reviewer_')
+        anon_groups = client.get_groups(regex='ICMLR.cc/Reviewer_')
         assert len(anon_groups) == 1
         assert 'alternate_harold@profile.org' not in anon_groups[0].members
         assert '~Harold_Last1' in anon_groups[0].members
