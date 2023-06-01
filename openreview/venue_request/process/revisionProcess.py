@@ -303,6 +303,15 @@ def process(client, note, invitation):
                     'required': True
                 }
 
+            #update post decision hide_fields
+            submission_content = conference.submission_stage.get_content(api_version='2', conference=conference)
+            hide_fields = [key for key in submission_content.keys() if key not in ['title', 'authors', 'authorids', 'venue', 'venueid'] and 'delete' not in submission_content[key]]
+            content['hide_fields'] = {
+                'values-dropdown': hide_fields,
+                'required': False,
+                'description': 'Select which submission fields should be hidden. Author names will be hidden for double-blind conferences unless otherwise specified in the "reveal_authors" field above. These fields will be hidden from all readers of the submissions, except for program chairs and paper authors.'
+            }
+
             decision_options = forum_note.content.get('decision_options')
             if decision_options:
                 decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
@@ -358,15 +367,6 @@ Best,
 {short_name} Program Chairs
 '''
                     }
-
-            #update post decision hide_fields
-            submission_content = conference.submission_stage.get_content(api_version='2', conference=conference)
-            hide_fields = [key for key in submission_content.keys() if key not in ['title', 'authors', 'authorids', 'venue', 'venueid'] and 'delete' not in submission_content[key]]
-            content['hide_fields'] = {
-                        'values-dropdown': hide_fields,
-                'required': False,
-                'description': 'Select which submission fields should be hidden if conference is double blind. Author names are already hidden. These fields will be hidden from all readers of the submissions, except for program chairs and paper authors.'
-            }
 
             content['home_page_tab_names'] = {
                 'description': 'Change the name of the tab that you would like to use to list the papers by decision, please note the key must match with the decision options',
