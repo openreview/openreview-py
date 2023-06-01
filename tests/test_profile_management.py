@@ -59,8 +59,7 @@ class TestProfileManagement():
         assert datetime.datetime.fromtimestamp(note.cdate/1000).year == 2023
         assert datetime.datetime.fromtimestamp(note.cdate/1000).month == 2                
 
-
-    
+   
     def test_remove_alternate_name(self, client, profile_management, helpers):
 
         john_client = helpers.create_user('john@profile.org', 'John', 'Last', alternates=[], institution='google.com')
@@ -1324,3 +1323,169 @@ The OpenReview Team.
 
         messages = client.get_messages(to='melisa@profile.org', subject='Profile merge request has been accepted')
         assert len(messages) == 0
+
+    def test_remove_email_address(self, client, profile_management, helpers):
+
+        harold_client = helpers.create_user('harold@profile.org', 'Harold', 'Last', alternates=[], institution='google.com')
+        profile = harold_client.get_profile()
+
+        profile.content['homepage'] = 'https://google.com'
+        profile.content['emails'].append('alternate_harold@profile.org')
+        harold_client.post_profile(profile)
+        profile = harold_client.get_profile(email_or_id='~Harold_Last1')
+        assert len(profile.content['emails']) == 2
+        assert profile.content['emails'][0] == 'harold@profile.org'
+        assert profile.content['emails'][1] == 'alternate_harold@profile.org'
+
+        assert client.get_group('~Harold_Last1').members == ['harold@profile.org']
+        assert client.get_group('harold@profile.org').members == ['~Harold_Last1']
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: alternate_harold@profile.org'):
+            assert client.get_group('alternate_harold@profile.org').members == []
+        client.add_members_to_group('~Harold_Last1', 'alternate_harold@profile.org')
+        client.add_members_to_group('alternate_harold@profile.org', '~Harold_Last1')
+
+        ## Try to remove the unexisting name and get an error
+        with pytest.raises(openreview.OpenReviewException, match=r'Profile not found for ~Harold_Lastt1'):
+            request_note = client.post_note(openreview.Note(
+                invitation='openreview.net/Support/-/Profile_Email_Removal',
+                readers=['openreview.net/Support'],
+                writers=['openreview.net/Support'],
+                signatures=['openreview.net/Support'],
+                content={
+                    'email': 'harold@profile.org',
+                    'profile_id': '~Harold_Lastt1',
+                    'comment': 'email is wrong'
+                }
+            ))
+
+        ## Try to remove the name that is marked as preferred and get an error
+        with pytest.raises(openreview.OpenReviewException, match=r'Email haroldd@profile.org not found in profile ~Harold_Last1'):
+            request_note = client.post_note(openreview.Note(
+                invitation='openreview.net/Support/-/Profile_Email_Removal',
+                readers=['openreview.net/Support'],
+                writers=['openreview.net/Support'],
+                signatures=['openreview.net/Support'],
+                content={
+                    'email': 'haroldd@profile.org',
+                    'profile_id': '~Harold_Last1',
+                    'comment': 'email is wrong'
+                }
+            )) 
+
+        ## Try to remove the name that doesn't match with the username and get an error
+        with pytest.raises(openreview.OpenReviewException, match=r'Email harold@profile.org is already the preferred email in profile ~Harold_Last1'):
+            request_note = client.post_note(openreview.Note(
+                invitation='openreview.net/Support/-/Profile_Email_Removal',
+                readers=['openreview.net/Support'],
+                writers=['openreview.net/Support'],
+                signatures=['openreview.net/Support'],
+                content={
+                    'email': 'harold@profile.org',
+                    'profile_id': '~Harold_Last1',
+                    'comment': 'email is wrong'
+                }
+            ))                   
+
+
+        ## Add publications
+        client.post_note(openreview.Note(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            readers = ['everyone'],
+            signatures = ['~Harold_Last1'],
+            writers = ['~Harold_Last1'],
+            content = {
+                'title': 'Paper title 1',
+                'abstract': 'Paper abstract 1',
+                'authors': ['Harold Last', 'Test Client'],
+                'authorids': ['alternate_harold@profile.org', 'test@mail.com']
+            }
+        ))
+
+        client.post_note(openreview.Note(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            readers = ['everyone'],
+            signatures = ['~Harold_Last1'],
+            writers = ['~Harold_Last1'],
+            content = {
+                'title': 'Paper title 2',
+                'abstract': 'Paper abstract 2',
+                'authors': ['Harold Last', 'Test Client'],
+                'authorids': ['alternate_harold@profile.org', 'test@mail.com', 'another@mail.com']
+            }
+        ))
+
+        ## Create committee groups
+        client.post_group(openreview.Group(
+            id='ICLRR.cc',
+            readers=['everyone'],
+            writers=['ICLRR.cc'],
+            signatures=['~Super_User1'],
+            signatories=[],
+            members=[]
+        ))
+
+        client.post_group(openreview.Group(
+            id='ICLRR.cc/Reviewers',
+            readers=['everyone'],
+            writers=['ICLRR.cc'],
+            signatures=['~Super_User1'],
+            signatories=[],
+            members=['alternate_harold@profile.org'],
+            anonids=True
+        ))
+
+        anon_groups = client.get_groups(regex='ICLRR.cc/Reviewer_')
+        assert len(anon_groups) == 1
+        assert 'alternate_harold@profile.org' in anon_groups[0].members
+        first_anon_group_id = anon_groups[0].id                
+
+        publications = client.get_notes(content={ 'authorids': '~Harold_Last1'})
+        assert len(publications) == 2
+
+        request_note = client.post_note(openreview.Note(
+            invitation='openreview.net/Support/-/Profile_Email_Removal',
+            readers=['openreview.net/Support'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            content={
+                'email': 'alternate_harold@profile.org',
+                'profile_id': '~Harold_Last1',
+                'comment': 'email is wrong'
+            }
+        ))
+
+        helpers.await_queue()
+
+        publications = client.get_notes(content={ 'authorids': '~Harold_Last1'})
+        assert len(publications) == 2
+        assert '~Harold_Last1' in publications[0].writers
+        assert '~Harold_Last1' in publications[0].signatures
+        assert ['Harold Last', 'Test Client'] == publications[0].content['authors']
+        assert ['~Harold_Last1', 'test@mail.com', 'another@mail.com'] == publications[0].content['authorids']
+        assert '~Harold_Last1' in publications[1].writers
+        assert '~Harold_Last1' in publications[1].signatures
+
+        group = client.get_group('ICLRR.cc/Reviewers')
+        assert 'alternate_harold@profile.org' not in group.members
+        assert '~Harold_Last1' in group.members
+
+        anon_groups = client.get_groups(regex='ICLRR.cc/Reviewer_')
+        assert len(anon_groups) == 1
+        assert 'alternate_harold@profile.org' not in anon_groups[0].members
+        assert '~Harold_Last1' in anon_groups[0].members
+        assert anon_groups[0].id == first_anon_group_id
+
+        profile = client.get_profile(email_or_id='~Harold_Last1')
+        assert len(profile.content['emails']) == 1
+        assert profile.content['emails'] == ['harold@profile.org']
+
+        found_profiles = client.search_profiles(fullname='Harold Last', use_ES=True)
+        assert len(found_profiles) == 1
+        assert len(found_profiles[0].content['emails']) == 1
+        assert found_profiles[0].content['emails'] == ['harold@profile.org']        
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: alternate_harold@profile.org'):
+            client.get_group('alternate_harold@profile.org')
+
+        assert client.get_group('~Harold_Last1').members == ['harold@profile.org']
+        assert client.get_group('harold@profile.org').members == ['~Harold_Last1']       
