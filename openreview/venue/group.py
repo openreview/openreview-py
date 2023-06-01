@@ -512,4 +512,4 @@ class GroupBuilder(object):
                             ))
 
         if create_paper_groups:
-            tools.concurrent_requests(create_paper_group, venue.get_submissions(sort='number"asc'), desc='Creating paper groups')
+            tools.concurrent_requests(create_paper_group, venue.get_submissions(sort='number:asc'), desc='Creating paper groups')
