@@ -303,14 +303,15 @@ def process(client, note, invitation):
                     'required': True
                 }
 
-            #update post decision hide_fields
-            submission_content = conference.submission_stage.get_content(api_version='2', conference=conference)
-            hide_fields = [key for key in submission_content.keys() if key not in ['title', 'authors', 'authorids', 'venue', 'venueid'] and 'delete' not in submission_content[key]]
-            content['hide_fields'] = {
-                'values-dropdown': hide_fields,
-                'required': False,
-                'description': 'Select which submission fields should be hidden. Author names will be hidden for double-blind conferences unless otherwise specified in the "reveal_authors" field above. These fields will be hidden from all readers of the submissions, except for program chairs and paper authors.'
-            }
+            if forum_note.content.get('api_version') == '2':
+                #update post decision hide_fields
+                submission_content = conference.submission_stage.get_content(api_version='2', conference=conference)
+                hide_fields = [key for key in submission_content.keys() if key not in ['title', 'authors', 'authorids', 'venue', 'venueid'] and 'delete' not in submission_content[key]]
+                content['hide_fields'] = {
+                    'values-dropdown': hide_fields,
+                    'required': False,
+                    'description': 'Select which submission fields should be hidden. Author names will be hidden for double-blind conferences unless otherwise specified in the "reveal_authors" field above. These fields will be hidden from all readers of the submissions, except for program chairs and paper authors.'
+                }
 
             decision_options = forum_note.content.get('decision_options')
             if decision_options:
