@@ -47,8 +47,6 @@ def process(client, note, invitation):
                 'authors': authors,
                 'authorids': authorids
             }
-            if '_bibtex' in publication.content:
-                content['_bibtex'] = publication.content['_bibtex'].replace(openreview.tools.pretty_id(username), preferred_name)                
             client.post_note(openreview.Note(
                 invitation=AUTHOR_RENAME_INVITATION_ID,
                 referent=publication.id, 
@@ -75,7 +73,7 @@ def process(client, note, invitation):
         writers = None
         needs_change = False
         for index, author in enumerate(publication.content.get('authorids', {}).get('value')):
-            if username == author:
+            if email == author:
                 authors.append(preferred_name)
                 authorids.append(preferred_id)
                 needs_change = True
@@ -96,8 +94,6 @@ def process(client, note, invitation):
                 'authors': { 'value': authors },
                 'authorids': { 'value': authorids }
             }
-            if '_bibtex' in publication.content:
-                content['_bibtex'] = { 'value': publication.content['_bibtex']['value'].replace(openreview.tools.pretty_id(username), preferred_name) }
             client_v2.post_note_edit(
                 invitation = publication.domain + '/-/Edit',
                 readers = [publication.domain],

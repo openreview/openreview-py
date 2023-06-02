@@ -1324,7 +1324,7 @@ The OpenReview Team.
         messages = client.get_messages(to='melisa@profile.org', subject='Profile merge request has been accepted')
         assert len(messages) == 0
 
-    def test_remove_email_address(self, client, profile_management, helpers):
+    def test_remove_email_address(self, client, profile_management, openreview_client, helpers):
 
         harold_client = helpers.create_user('harold@profile.org', 'Harold', 'Last', alternates=[], institution='google.com')
         profile = harold_client.get_profile()
@@ -1414,6 +1414,23 @@ The OpenReview Team.
             }
         ))
 
+        ## Add v2 submission
+        harold_client_v2 = openreview.api.OpenReviewClient(username='alternate_harold@profile.org', password=helpers.strong_password)
+        submission_note_1 = harold_client_v2.post_note_edit(invitation='ACMM.org/2023/Conference/-/Submission',
+            signatures=['~Harold_Last1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['SomeFirstName User', 'Paul Last', 'Harold Last']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Paul_Last1', 'alternate_harold@profile.org']},
+                    'keywords': { 'value': ['data', 'mining']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' }                    
+                }
+            ))
+        
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])         
+
         ## Create committee groups
         client.post_group(openreview.Group(
             id='ICMLR.cc',
@@ -1464,6 +1481,10 @@ The OpenReview Team.
         assert ['~Harold_Last1', 'test@mail.com', 'another@mail.com'] == publications[0].content['authorids']
         assert '~Harold_Last1' in publications[1].writers
         assert '~Harold_Last1' in publications[1].signatures
+
+        submissions = openreview_client.get_notes(content={ 'authorids': '~Harold_Last1'})
+        assert len(submissions) == 1
+        assert ['~SomeFirstName_User1', '~Paul_Last1', '~Harold_Last1'] == submissions[0].content['authorids']['value']
 
         group = client.get_group('ICMLR.cc/Reviewers')
         assert 'alternate_harold@profile.org' not in group.members
