@@ -47,7 +47,11 @@ class TestVenueSubmissionARR():
             force_profiles=True
         )
     
-        venue.review_stage = openreview.stages.ReviewStage(start_date=now + datetime.timedelta(minutes = 4), due_date=now + datetime.timedelta(minutes = 40), exp_date=now + datetime.timedelta(minutes = 70))
+        venue.review_stage = openreview.stages.ReviewStage(
+            start_date=now + datetime.timedelta(minutes = 4),
+            due_date=now + datetime.timedelta(minutes = 40),
+            exp_date=now + datetime.timedelta(minutes = 70),
+            sub_venue=True)
         venue.meta_review_stage = openreview.stages.MetaReviewStage(start_date=now + datetime.timedelta(minutes = 10), due_date=now + datetime.timedelta(minutes = 40), exp_date=now + datetime.timedelta(minutes = 70))
 
         venue.review_rebuttal_stage = openreview.ReviewRebuttalStage(

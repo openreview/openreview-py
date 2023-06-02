@@ -270,18 +270,17 @@ class InvitationBuilder(object):
     
     
     
-    def set_sub_venue_review_invitation(self, sub_venue_id=None):
+    def set_sub_venue_review_invitation(self):
 
         venue_id = self.venue_id
         review_stage = self.venue.review_stage
         review_invitation_id = self.venue.get_invitation_id(review_stage.name)
-        review_cdate = tools.datetime_millis(review_stage.start_date if review_stage.start_date else datetime.datetime.utcnow())
         review_duedate = tools.datetime_millis(review_stage.due_date) if review_stage.due_date else None
         review_expdate = tools.datetime_millis(review_stage.exp_date) if review_stage.exp_date else None
         if not review_expdate:
             review_expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None
         
-        content = review_stage.get_content(api_version='2', conference=self.venue, sub_venue_id=sub_venue_id)
+        content = review_stage.get_content(api_version='2', conference=self.venue)
 
         invitation = Invitation(
             id=self.venue.get_invitation_id(review_stage.name),

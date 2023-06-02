@@ -511,7 +511,8 @@ class ReviewStage(object):
         remove_fields = [],
         rating_field_name = 'rating',
         confidence_field_name = 'confidence',
-        process_path = None
+        process_path = None,
+        sub_venue = False
     ):
 
         self.start_date = start_date
@@ -530,6 +531,7 @@ class ReviewStage(object):
         self.rating_field_name = rating_field_name
         self.confidence_field_name = confidence_field_name
         self.process_path = process_path
+        self.sub_venue = sub_venue
 
     def _get_reviewer_readers(self, conference, number, review_signature=None):
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
@@ -590,7 +592,7 @@ class ReviewStage(object):
 
         return conference.get_anon_reviewer_id(number=number, anon_id='.*') + '|' +  conference.get_program_chairs_id()
     
-    def get_content(self, api_version='2', conference=None, sub_venue_id=None):
+    def get_content(self, api_version='2', conference=None):
 
         content = default_content.review_v2.copy()
 
@@ -609,7 +611,7 @@ class ReviewStage(object):
             invitation_id = conference.get_invitation_id(self.name)
             invitation = openreview.tools.get_invitation(conference.client, invitation_id)
             if invitation:
-                if sub_venue_id:
+                if self.sub_venue:
                     items = invitation.edit['invitation']['edit']['invitation']['edit']['note']['content'].items()
                 else:
                     items = invitation.edit['invitation']['edit']['note']['content'].items()
