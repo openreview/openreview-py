@@ -978,7 +978,7 @@ class MetaReviewStage(object):
         REVIEWERS_SUBMITTED = 2
         NO_REVIEWERS = 3
 
-    def __init__(self, name='Meta_Review', start_date = None, due_date = None, exp_date = None, public = False, release_to_authors = False, release_to_reviewers = Readers.NO_REVIEWERS, additional_fields = {}, remove_fields=[], process = None):
+    def __init__(self, name='Meta_Review', start_date = None, due_date = None, exp_date = None, public = False, release_to_authors = False, release_to_reviewers = Readers.NO_REVIEWERS, additional_fields = {}, remove_fields=[], process = None, sub_venue = False):
 
         self.start_date = start_date
         self.due_date = due_date
@@ -991,6 +991,7 @@ class MetaReviewStage(object):
         self.remove_fields = remove_fields
         self.process = None
         self.recommendation_field_name = 'recommendation',
+        self.sub_venue = sub_venue
 
     def _get_reviewer_readers(self, conference, number):
         if self.release_to_reviewers is MetaReviewStage.Readers.REVIEWERS:
@@ -1053,7 +1054,7 @@ class MetaReviewStage(object):
 
         return '|'.join(committee)
 
-    def get_content(self, api_version='2', conference=None, sub_venue_id=None):
+    def get_content(self, api_version='2', conference=None):
         
         content = default_content.meta_review_v2.copy()
 
@@ -1072,7 +1073,7 @@ class MetaReviewStage(object):
             invitation_id = conference.get_invitation_id(self.name)
             invitation = openreview.tools.get_invitation(conference.client, invitation_id)
             if invitation:
-                if sub_venue_id:
+                if self.sub_venue:
                     items = invitation.edit['invitation']['edit']['invitation']['edit']['note']['content'].items()
                 else:
                     items = invitation.edit['invitation']['edit']['note']['content'].items()

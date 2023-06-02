@@ -908,7 +908,7 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_sub_venue_meta_review_invitation(self, sub_venue_id=None):
+    def set_sub_venue_meta_review_invitation(self):
 
         venue_id = self.venue_id
         meta_review_stage = self.venue.meta_review_stage
@@ -919,7 +919,7 @@ class InvitationBuilder(object):
         if not meta_review_expdate:
             meta_review_expdate = tools.datetime_millis(meta_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if meta_review_stage.due_date else None
 
-        content = meta_review_stage.get_content(api_version='2', conference=self.venue, sub_venue_id=sub_venue_id)
+        content = meta_review_stage.get_content(api_version='2', conference=self.venue)
 
         invitation = Invitation(
             id=self.venue.get_invitation_id(meta_review_stage.name),

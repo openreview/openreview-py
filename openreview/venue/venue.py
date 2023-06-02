@@ -451,7 +451,7 @@ class Venue(object):
     def create_meta_review_stage(self, sub_venue_id=None):
         sub_venue_invitation = None
         if sub_venue_id is not None:
-            sub_venue_invitation = self.invitation_builder.set_sub_venue_meta_review_invitation(sub_venue_id=sub_venue_id)
+            sub_venue_invitation = self.invitation_builder.set_sub_venue_meta_review_invitation()
         return self.invitation_builder.set_meta_review_invitation(sub_venue_id=sub_venue_id, sub_venue_invitation=sub_venue_invitation)
 
     def create_registration_stages(self, sub_venue_id=None):
