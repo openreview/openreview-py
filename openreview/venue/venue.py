@@ -662,7 +662,7 @@ Total Errors: {len(errors)}
                 }
             }
 
-            if not is_release_authors(note_accepted):
+            if not is_release_authors(note_accepted) and self.submission_stage.double_blind:
                 hide_fields.extend(['authors', 'authorids'])
 
             for field, value in submission.content.items():
