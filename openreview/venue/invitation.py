@@ -171,7 +171,7 @@ class InvitationBuilder(object):
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=False)
 
-    def set_post_submission_invitation(self, sub_venue_id=None):
+    def set_post_submission_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
         submission_name = submission_stage.name
@@ -2117,7 +2117,7 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_withdrawal_invitation(self, sub_venue_id=None):
+    def set_withdrawal_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
         cdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None
@@ -2414,7 +2414,7 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=True)
 
-    def set_desk_rejection_invitation(self, sub_venue_id=None):
+    def set_desk_rejection_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
         cdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None

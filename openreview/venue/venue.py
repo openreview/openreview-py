@@ -402,9 +402,9 @@ class Venue(object):
             allow_overlap_official_committee)
 
     def create_submission_stage(self, sub_venue_id=None):
-        self.invitation_builder.set_submission_invitation(f"{sub_venue_id}/Submission" if sub_venue_id is not None else None)
-        self.invitation_builder.set_withdrawal_invitation(f"{sub_venue_id}_Submission" if sub_venue_id is not None else None)
-        self.invitation_builder.set_desk_rejection_invitation(f"{sub_venue_id}_Submission" if sub_venue_id is not None else None)
+        self.invitation_builder.set_submission_invitation(sub_venue_id=f"{sub_venue_id}/Submission" if sub_venue_id is not None else None)
+        self.invitation_builder.set_withdrawal_invitation()
+        self.invitation_builder.set_desk_rejection_invitation()
         self.invitation_builder.set_post_submission_invitation()
         self.invitation_builder.set_pc_submission_revision_invitation()
         self.invitation_builder.set_submission_reviewer_group_invitation()
