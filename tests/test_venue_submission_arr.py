@@ -115,39 +115,6 @@ class TestVenueSubmissionARR():
             ),
         ]
 
-        venue.custom_stage = openreview.stages.CustomStage(
-            name='Action_Editor_Checklist',
-            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
-            reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
-            start_date=now + datetime.timedelta(minutes = 10),
-            due_date=now + datetime.timedelta(minutes = 40),
-            invitees=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
-            readers=[
-                openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
-                openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
-                openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED,
-            ],
-            content={
-                "verification": {
-                    "order": 1,
-                    "value": {
-                    "param": {
-                        "type": "string",
-                        "enum": [
-                        "I confirm that camera ready manuscript complies with the TV 22 stylefile and, if appropriate, includes the minor revisions that were requested."
-                        ],
-                        "input": "checkbox"
-                    }
-                    }
-                }
-            },
-            multi_reply=False,
-            email_pcs=False,
-            email_sacs=False,
-            notify_readers=False,
-            sub_venue=True
-        )
-
         return venue
 
     def test_setup(self, venue, openreview_client, helpers):
@@ -680,3 +647,90 @@ class TestVenueSubmissionARR():
             ))
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id'])
+
+    def test_ae_checklist(self, venue, openreview_client, helpers):
+        cycle = '2023_March'
+        now = datetime.datetime.utcnow()
+        venue.custom_stage = openreview.stages.CustomStage(
+            name='Action_Editor_Checklist',
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
+            start_date=now + datetime.timedelta(minutes = 10),
+            due_date=now + datetime.timedelta(minutes = 40),
+            exp_date=now + datetime.timedelta(minutes = 70),
+            invitees=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
+            readers=[
+                openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
+                openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED,
+            ],
+            content={
+                "verification": {
+                    "order": 1,
+                    "value": {
+                    "param": {
+                        "type": "string",
+                        "enum": [
+                        "I confirm that camera ready manuscript complies with the ARR stylefile and, if appropriate, includes the minor revisions that were requested."
+                        ],
+                        "input": "checkbox"
+                    }
+                    }
+                }
+            },
+            multi_reply=False,
+            email_pcs=False,
+            email_sacs=False,
+            notify_readers=False,
+            sub_venue=True
+        )
+        venue.create_custom_stage(sub_venue_id=cycle)
+
+        submissions = venue.get_submissions(sort='number:asc', submission_venue_id=venue.get_submission_venue_id(f'{cycle}/Submission'))
+        assert submissions and len(submissions) == 2
+
+        assert openreview_client.get_invitation('ARR/-/Action_Editor_Checklist')
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation ARR/Submission1/-/2023_March/Action_Editor_Checklist was not found'):
+            assert openreview_client.get_invitation('ARR/Submission1/-/2023_March/Action_Editor_Checklist')
+
+        new_cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000
+        duedate = openreview.tools.datetime_millis(venue.custom_stage.due_date)
+        expdate = openreview.tools.datetime_millis(venue.custom_stage.exp_date)
+        openreview_client.post_invitation_edit(
+            invitations='ARR/-/Action_Editor_Checklist',
+            readers=['ARR'],
+            writers=['ARR'],
+            signatures=['ARR'],
+            content={
+                'subvenueid': {
+                    'value': cycle
+                },
+                'cdate': {
+                    'value': new_cdate
+                },
+                'duedate': {
+                    'value': duedate
+                },
+                'expdate': {
+                    'value': expdate
+                }
+            },
+            invitation=openreview.api.Invitation(id=f'ARR/-/{cycle}/Action_Editor_Checklist',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
+                signatures=['ARR'],
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, f'ARR/-/{cycle}/Action_Editor_Checklist-0-0')
+
+        assert openreview_client.get_invitation('ARR/-/Action_Editor_Checklist')
+        invitation = openreview.tools.get_invitation(openreview_client, f'ARR/Submission3/-/{cycle}/Action_Editor_Checklist')
+        assert invitation
+        assert invitation.invitees == ['ARR/Editors_In_Chief', 'ARR/Submission3/Action_Editors']
+        assert invitation.edit['readers'] == [
+            "ARR/Editors_In_Chief",
+            "ARR/Submission3/Senior_Action_Editors",
+            "ARR/Submission3/Action_Editors",
+            "ARR/Submission3/Reviewers"
+        ]
+        assert 'verification' in invitation.edit['note']['content']
