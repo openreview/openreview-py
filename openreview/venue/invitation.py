@@ -559,7 +559,7 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_sub_venue_review_rebuttal_invitation(self, sub_venue_id=None):
+    def set_sub_venue_review_rebuttal_invitation(self):
 
         venue_id = self.venue_id
         review_rebuttal_stage = self.venue.review_rebuttal_stage
@@ -568,7 +568,7 @@ class InvitationBuilder(object):
         review_rebuttal_duedate = tools.datetime_millis(review_rebuttal_stage.due_date) if review_rebuttal_stage.due_date else None
         review_rebuttal_expdate = tools.datetime_millis(review_rebuttal_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_rebuttal_stage.due_date else None
 
-        content = review_rebuttal_stage.get_content(api_version='2', conference=self.venue, sub_venue_id=sub_venue_id)
+        content = review_rebuttal_stage.get_content(api_version='2', conference=self.venue)
 
         paper_invitation_id = self.venue.get_invitation_id(name='${4/content/subvenueid/value}' + f"/{review_rebuttal_stage.name}", number='${2/content/noteNumber/value}')
         with_invitation = self.venue.get_invitation_id(name='${4/content/subvenueid/value}' + f"/{review_rebuttal_stage.name}", number='${6/content/noteNumber/value}')

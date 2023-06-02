@@ -46,7 +46,6 @@ class TestVenueSubmissionARR():
             withdrawn_submission_reveal_authors=True,
             force_profiles=True
         )
-    
         venue.review_stage = openreview.stages.ReviewStage(
             start_date=now + datetime.timedelta(minutes = 4),
             due_date=now + datetime.timedelta(minutes = 40),
@@ -76,7 +75,8 @@ class TestVenueSubmissionARR():
                     "description": "Upload a PDF file that ends with .pdf",
                     "order": 9
                 }
-            }
+            },
+            sub_venue=True
         )
 
         venue.registration_stages = [

@@ -730,7 +730,7 @@ class ReviewRebuttalStage(object):
         REVIEWERS_ASSIGNED = 6
         REVIEWERS_SUBMITTED = 7
 
-    def __init__(self, start_date = None, due_date = None, name = 'Rebuttal', email_pcs = False, additional_fields = {}, single_rebuttal = False, unlimited_rebuttals = False, readers = []):
+    def __init__(self, start_date = None, due_date = None, name = 'Rebuttal', email_pcs = False, additional_fields = {}, single_rebuttal = False, unlimited_rebuttals = False, readers = [], sub_venue = False):
         self.start_date = start_date
         self.due_date = due_date
         self.name = name
@@ -740,6 +740,7 @@ class ReviewRebuttalStage(object):
         self.single_rebuttal = single_rebuttal
         self.unlimited_rebuttals = unlimited_rebuttals
         self.readers = readers
+        self.sub_venue = sub_venue
 
     def get_invitation_readers(self, conference, number):
 
@@ -778,7 +779,7 @@ class ReviewRebuttalStage(object):
         invitation_readers.append(conference.get_authors_id(number=number))
         return invitation_readers        
 
-    def get_content(self, api_version='2', conference=None, sub_venue_id=None):
+    def get_content(self, api_version='2', conference=None):
         
         content = default_content.rebuttal_v2.copy()
 
@@ -797,7 +798,7 @@ class ReviewRebuttalStage(object):
             invitation_id = conference.get_invitation_id(self.name)
             invitation = openreview.tools.get_invitation(conference.client, invitation_id)
             if invitation:
-                if sub_venue_id:
+                if self.sub_venue:
                     items = invitation.edit['invitation']['edit']['invitation']['edit']['note']['content'].items()
                 else:
                     items = invitation.edit['invitation']['edit']['note']['content'].items()
