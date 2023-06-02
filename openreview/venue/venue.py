@@ -423,7 +423,7 @@ class Venue(object):
                 remove_fields=self.submission_stage.remove_fields,
                 only_accepted=False,
                 multiReply=True,
-                allow_author_reorder=True
+                allow_author_reorder=self.submission_stage.author_reorder_after_first_deadline
             )
             self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)                        
 
