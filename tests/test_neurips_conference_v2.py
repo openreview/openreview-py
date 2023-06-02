@@ -74,7 +74,8 @@ class TestNeurIPSConference():
                 'submission_readers': 'Program chairs and paper authors only',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
-                'api_version': '2'
+                'api_version': '2',
+                'submission_deadline_author_reorder': 'Yes'
             }))
 
         helpers.await_queue()
