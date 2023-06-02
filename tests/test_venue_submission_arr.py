@@ -145,6 +145,7 @@ class TestVenueSubmissionARR():
             email_pcs=False,
             email_sacs=False,
             notify_readers=False,
+            sub_venue=True
         )
 
         return venue

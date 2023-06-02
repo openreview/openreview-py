@@ -1263,7 +1263,7 @@ class CustomStage(object):
         REVIEWS = 2
         METAREVIEWS = 3
 
-    def __init__(self, name, reply_to, source, start_date=None, due_date=None, exp_date=None, invitees=[], readers=[], content={}, multi_reply = False, email_pcs = False, email_sacs = False, notify_readers=False, email_template=None):
+    def __init__(self, name, reply_to, source, start_date=None, due_date=None, exp_date=None, invitees=[], readers=[], content={}, multi_reply = False, email_pcs = False, email_sacs = False, notify_readers=False, email_template=None, sub_venue=False):
         self.name = name
         self.reply_to = reply_to
         self.source = source
@@ -1278,6 +1278,7 @@ class CustomStage(object):
         self.email_sacs = email_sacs
         self.notify_readers = notify_readers
         self.email_template = email_template
+        self.sub_venue = False
 
     def get_invitees(self, conference, number):
         invitees = [conference.get_program_chairs_id()]
@@ -1371,7 +1372,11 @@ class CustomStage(object):
             invitation_id = conference.get_invitation_id(self.name)
             invitation = openreview.tools.get_invitation(conference.client, invitation_id)
             if invitation:
-                for field, value in invitation.edit['invitation']['edit']['note']['content'].items():
+                if self.sub_venue:
+                    items = invitation.edit['invitation']['edit']['invitation']['edit']['note']['content'].items()
+                else:
+                    items = invitation.edit['invitation']['edit']['note']['content'].items()
+                for field, value in items:
                     if field not in content:
                         content[field] = { 'delete': True }
 
