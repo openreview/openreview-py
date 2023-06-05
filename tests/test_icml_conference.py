@@ -510,7 +510,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
             helpers.respond_invitation(selenium, request_page, invitation_url, accept=True, quota=3)
 
-        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Reviewers/-/Recruitment', count=6)
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Reviewers/-/Recruitment', count=12)
 
         messages = client.get_messages(subject='[ICML 2023] Reviewer Invitation accepted with reduced load')
         assert len(messages) == 6
@@ -1884,6 +1884,8 @@ ICML 2023 Conference Program Chairs'''
 
         client.rename_edges(new_id='~Rachel_ICML2', current_id='~Rachel_ICML1')
         client.merge_profiles(profileTo='~Rachel_ICML2', profileFrom='~Rachel_ICML1')
+
+        assert False
 
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False, comment='I am too busy.')
 
