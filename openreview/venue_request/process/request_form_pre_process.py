@@ -16,6 +16,3 @@ def process(client, note, invitation):
 
     if 'Yes, our venue has Senior Area Chairs' in note.content.get('senior_area_chairs', '') and 'All Senior Area Chairs' not in note.content['reviewer_identity'] and 'Assigned Senior Area Chair' not in note.content['reviewer_identity']:
         raise openreview.OpenReviewException('Assigned senior area chairs must see the reviewer identity')
-
-    if 'Reviewer Bid Scores' in note.content.get('Paper Matching', '') and 'Assigned program committee' in note.content.get('submission_readers', ''):
-        raise openreview.OpenReviewException('Papers should be visible to all program committee if bidding is enabled')

@@ -1074,7 +1074,7 @@ class TestDoubleBlindConference():
         conference.set_reviewers(emails = ['reviewer2@mail.com'])
         conference.create_review_stage()
 
-        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission', sort='numbers:asc')
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission', sort='number:asc')
         submission = notes[0]
 
         conference.set_assignment('ac@mail.com', submission.number, is_area_chair = True)
@@ -1667,9 +1667,10 @@ class TestDoubleBlindConference():
         assert withdrawn_notes[0].content.get('_bibtex')
         assert withdrawn_notes[0].content.get('_bibtex') == '@misc{\nuser2019paper,\ntitle={Paper title Revision 2},\nauthor={SomeFirstName User and Peter User and Andrew Mc},\nyear={2019},\nurl={https://openreview.net/forum?id=' + withdrawn_notes[0].id + '}\n}'
 
-        messages = client.get_messages(subject = '^AKBC 2019: Paper .* withdrawn by paper authors$')
-        assert len(messages) == 7
-        recipients = [m['content']['to'] for m in messages]
+        messages = client.get_messages(subject = '^AKBC 2019: Paper .*')
+        filtered_messages = [m for m in messages if 'withdrawn by paper authors' in m['content']['subject']]
+        assert len(filtered_messages) == 7
+        recipients = [m['content']['to'] for m in filtered_messages]
         assert 'test@mail.com' in recipients
         assert 'peter@mail.com' in recipients
         assert 'andrew@mail.com' in recipients
@@ -1767,9 +1768,10 @@ class TestDoubleBlindConference():
         assert desk_rejected_notes[0].content.get('_bibtex')
         assert desk_rejected_notes[0].content.get('_bibtex') == '@misc{\nuser2019test,\ntitle={Test Paper title},\nauthor={SomeFirstName User and Peter User and Andrew Mc},\nyear={2019},\nurl={https://openreview.net/forum?id=' + desk_rejected_notes[0].id + '}\n}'
 
-        messages = client.get_messages(subject = '^AKBC 2019: Paper .* marked desk rejected by program chairs$')
-        assert len(messages) == 3
-        recipients = [m['content']['to'] for m in messages]
+        messages = client.get_messages(subject = '^AKBC 2019: Paper .*')
+        filtered_messages = [m for m in messages if 'marked desk rejected by program chairs' in m['content']['subject']]
+        assert len(filtered_messages) == 3
+        recipients = [m['content']['to'] for m in filtered_messages]
         assert 'test@mail.com' in recipients
         assert 'peter@mail.com' in recipients
         assert 'andrew@mail.com' in recipients

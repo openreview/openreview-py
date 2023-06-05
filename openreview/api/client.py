@@ -354,7 +354,7 @@ class OpenReviewClient(object):
         else:
             raise OpenReviewException(['Profile Not Found'])
 
-    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None):
+    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None, fullname=None, use_ES = False):
         """
         Gets a list of profiles using either their ids or corresponding emails
 
@@ -390,7 +390,12 @@ class OpenReviewClient(object):
                 yield batch
 
         if term:
-            response = self.session.get(self.profiles_search_url, params = { 'term': term }, headers = self.headers)
+            response = self.session.get(self.profiles_search_url, params = { 'term': term, 'es': 'true' if use_ES else 'false' }, headers = self.headers)
+            response = self.__handle_response(response)
+            return [Profile.from_json(p) for p in response.json()['profiles']]
+        
+        if fullname:
+            response = self.session.get(self.profiles_search_url, params = { 'fullname': fullname, 'es': 'true' if use_ES else 'false' }, headers = self.headers)
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
 
@@ -434,7 +439,7 @@ class OpenReviewClient(object):
             return [Profile.from_json(p) for p in full_response]
 
         if first or middle or last:
-            response = self.session.get(self.profiles_url, params = {'first': first, 'middle': middle, 'last': last}, headers = self.headers)
+            response = self.session.get(self.profiles_url, params = {'first': first, 'middle': middle, 'last': last, 'es': 'true' if use_ES else 'false'}, headers = self.headers)
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
 
@@ -1316,7 +1321,7 @@ class OpenReviewClient(object):
 
         return response.json()['count']
 
-    def get_grouped_edges(self, invitation=None, head=None, tail=None, label=None, groupby='head', select=None, limit=None, offset=None):
+    def get_grouped_edges(self, invitation=None, head=None, tail=None, label=None, groupby='head', select=None, limit=None, offset=None, trash=None):
         '''
         Returns a list of JSON objects where each one represents a group of edges.  For example calling this
         method with default arguments will give back a list of groups where each group is of the form:
@@ -1340,6 +1345,7 @@ class OpenReviewClient(object):
         params['select'] = select
         params['limit'] = limit
         params['offset'] = offset
+        params['trash'] = trash
         response = self.session.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         json = response.json()
@@ -1836,7 +1842,7 @@ class OpenReviewClient(object):
             'type': 'Group',
             'memberOf': group_id
         }
-        if expertise_selection_id:
+        if expertise_selection_id and tools.get_invitation(self, expertise_selection_id):
             expertise = { 'invitation': expertise_selection_id }
             entityA['expertise'] = expertise
 
@@ -1870,13 +1876,16 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    def request_single_paper_expertise(self, name, group_id, paper_id, model=None, baseurl=None):
+    def request_single_paper_expertise(self, name, group_id, paper_id, expertise_selection_id=None, model=None, baseurl=None):
 
         # Build entityA from group_id
         entityA = {
             'type': 'Group',
             'memberOf': group_id
         }
+        if expertise_selection_id and tools.get_invitation(self, expertise_selection_id):
+            expertise = { 'invitation': expertise_selection_id }
+            entityA['expertise'] = expertise        
 
         # Build entityB from paper_id
         entityB = {
@@ -1903,14 +1912,25 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    def get_expertise_status(self, job_id, baseurl=None):
+    def get_expertise_status(self, job_id=None, group_id=None, paper_id=None, baseurl=None):
 
-        print('get expertise status', baseurl, job_id)
+        print('get expertise status', baseurl, job_id, group_id, paper_id)
         base_url = baseurl if baseurl else self.baseurl
         if base_url.startswith('http://localhost'):
             print('get expertise status localhost, return Completed')
-            return { 'status': 'Completed' }
-        response = self.session.get(base_url + '/expertise/status', params = {'jobId': job_id}, headers = self.headers)
+            if job_id:
+                return { 'status': 'Completed', 'jobId': job_id }
+            return { 'results': [{ 'status': 'Completed', 'jobId': None }]}
+        
+        params = {}
+        if job_id:
+            params['jobId'] = job_id
+        if group_id:
+            params['entityA.memberOf'] = group_id
+        if paper_id:
+            params['entityB.id'] = paper_id
+
+        response = self.session.get(base_url + '/expertise/status', params = params, headers = self.headers)
         response = self.__handle_response(response)
 
         response_json = response.json()
@@ -2336,7 +2356,7 @@ class Invitation(object):
             body['signatures'] = self.signatures
 
         if self.reply_forum_views:
-            body['reply_forum_views'] = self.reply_forum_views
+            body['replyForumViews'] = self.reply_forum_views
 
         if self.content:
             body['content'] = self.content
@@ -2441,7 +2461,7 @@ class Edge(object):
         body = {
             'invitation': self.invitation,
             'head': self.head,
-            'tail': self.tail,
+            'tail': self.tail
         }
         if self.id:
             body['id'] = self.id
@@ -2459,6 +2479,8 @@ class Edge(object):
             body['weight'] = self.weight
         if self.label is not None:
             body['label'] = self.label
+        if self.cdate is not None:
+            body['cdate'] = self.cdate
 
         return body
 
@@ -2606,6 +2628,9 @@ class Group(object):
 
         if self.ddate is not None:
             body['ddate'] = self.ddate
+
+        if self.host is not None:
+            body['host'] = self.host
 
         if self.impersonators is not None:
             body['impersonators'] = self.impersonators 

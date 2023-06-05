@@ -359,7 +359,7 @@ class Client(object):
         else:
             raise OpenReviewException(['Profile Not Found'])
 
-    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None):
+    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None, fullname=None, use_ES = False):
         """
         Gets a list of profiles using either their ids or corresponding emails
 
@@ -395,9 +395,14 @@ class Client(object):
                 yield batch
 
         if term:
-            response = self.session.get(self.profiles_search_url, params = { 'term': term }, headers = self.headers)
+            response = self.session.get(self.profiles_search_url, params = { 'term': term, 'es': 'true' if use_ES else 'false' }, headers = self.headers)
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
+        
+        if fullname:
+            response = self.session.get(self.profiles_search_url, params = { 'fullname': fullname, 'es': 'true' if use_ES else 'false' }, headers = self.headers)
+            response = self.__handle_response(response)
+            return [Profile.from_json(p) for p in response.json()['profiles']]        
 
         if emails:
             full_response = []
@@ -439,7 +444,7 @@ class Client(object):
             return [Profile.from_json(p) for p in full_response]
 
         if first or middle or last:
-            response = self.session.get(self.profiles_url, params = {'first': first, 'middle': middle, 'last': last}, headers = self.headers)
+            response = self.session.get(self.profiles_search_url, params = {'first': first, 'middle': middle, 'last': last, 'es': 'true' if use_ES else 'false'}, headers = self.headers)
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
 
@@ -1875,7 +1880,7 @@ class Client(object):
             'type': 'Group',
             'memberOf': group_id
         }
-        if exclusion_inv:
+        if exclusion_inv and tools.get_invitation(self, exclusion_inv):
             expertise = { 'invitation': exclusion_inv }
             entityA['expertise'] = expertise
         

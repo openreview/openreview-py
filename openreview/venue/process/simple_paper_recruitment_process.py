@@ -48,7 +48,7 @@ def process(client, edit, invitation):
 
     edge=invitation_edges[0]
 
-    if edge.label not in [invited_label, accepted_label, declined_label, 'Pending Sign Up']:
+    if edge.label not in [invited_label, accepted_label, 'Pending Sign Up'] and not edge.label.startswith(declined_label):
         raise openreview.OpenReviewException(f'user {user} can not reply to this invitation, invalid status {edge.label}')
 
     preferred_name=user_profile.get_preferred_name(pretty=True) if user_profile else edge.tail
@@ -69,6 +69,7 @@ def process(client, edit, invitation):
         edge.label=accepted_label
         edge.readers=[r if r != edge.tail else user_profile.id for r in edge.readers]
         edge.tail=user_profile.id
+        edge.cdate=None
         client.post_edge(edge)
 
         if not assignment_edges:
@@ -125,6 +126,7 @@ OpenReview Team'''
 
 
         edge.label=declined_label
+        edge.cdate=None
         client.post_edge(edge)
 
         ## Send email to reviewer
