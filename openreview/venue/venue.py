@@ -440,24 +440,24 @@ class Venue(object):
 
     def create_review_stage(self):
         sub_venue_id = self.review_stage.sub_venue
-        sub_venue_invitation = None
+        venue_template_invitation = None
         if sub_venue_id is not None:
-            sub_venue_invitation = self.invitation_builder.set_sub_venue_review_invitation()
-        return self.invitation_builder.set_review_invitation(sub_venue_id=sub_venue_id, sub_venue_invitation=sub_venue_invitation)
+            venue_template_invitation = self.invitation_builder.set_venue_template_review_invitation()
+        return self.invitation_builder.set_review_invitation(sub_venue_id=sub_venue_id, venue_template_invitation=venue_template_invitation)
         
     def create_review_rebuttal_stage(self):
         sub_venue_id = self.review_rebuttal_stage.sub_venue
-        sub_venue_invitation = None
+        venue_template_invitation = None
         if sub_venue_id is not None:
-            sub_venue_invitation = self.invitation_builder.set_sub_venue_review_rebuttal_invitation()
-        return self.invitation_builder.set_review_rebuttal_invitation(sub_venue_id=sub_venue_id, sub_venue_invitation=sub_venue_invitation)
+            venue_template_invitation = self.invitation_builder.set_venue_template_review_rebuttal_invitation()
+        return self.invitation_builder.set_review_rebuttal_invitation(sub_venue_id=sub_venue_id, venue_template_invitation=venue_template_invitation)
 
     def create_meta_review_stage(self):
         sub_venue_id = self.meta_review_stage.sub_venue
-        sub_venue_invitation = None
+        venue_template_invitation = None
         if sub_venue_id is not None:
-            sub_venue_invitation = self.invitation_builder.set_sub_venue_meta_review_invitation()
-        return self.invitation_builder.set_meta_review_invitation(sub_venue_id=sub_venue_id, sub_venue_invitation=sub_venue_invitation)
+            venue_template_invitation = self.invitation_builder.set_venue_template_meta_review_invitation()
+        return self.invitation_builder.set_meta_review_invitation(sub_venue_id=sub_venue_id, venue_template_invitation=venue_template_invitation)
 
     def create_registration_stages(self):
         return self.invitation_builder.set_registration_invitations()
@@ -479,17 +479,17 @@ class Venue(object):
 
     def create_comment_stage(self):
         sub_venue_id = self.comment_stage.sub_venue
-        sub_venue_official_invitation = None
+        venue_template_official_invitation = None
         if sub_venue_id is not None:
-            sub_venue_official_invitation = self.invitation_builder.set_sub_venue_official_comment_invitation(sub_venue_id=sub_venue_id)
+            venue_template_official_invitation = self.invitation_builder.set_venue_template_official_comment_invitation()
 
-        self.invitation_builder.set_official_comment_invitation(sub_venue_id=sub_venue_id, sub_venue_invitation=sub_venue_official_invitation)
+        self.invitation_builder.set_official_comment_invitation(sub_venue_id=sub_venue_id, venue_template_invitation=venue_template_official_invitation)
         if self.comment_stage.allow_public_comments:
-            sub_venue_public_invitation = None
+            venue_template_public_invitation = None
             if sub_venue_id is not None:
-                sub_venue_public_invitation = self.invitation_builder.set_sub_venue_public_comment_invitation(sub_venue_id=sub_venue_id)
+                venue_template_public_invitation = self.invitation_builder.set_venue_template_public_comment_invitation()
 
-            self.invitation_builder.set_public_comment_invitation(sub_venue_id=sub_venue_id, sub_venue_invitation=sub_venue_public_invitation)
+            self.invitation_builder.set_public_comment_invitation(sub_venue_id=sub_venue_id, venue_template_invitation=venue_template_public_invitation)
 
     def create_decision_stage(self):
         invitation = self.invitation_builder.set_decision_invitation()
@@ -515,10 +515,10 @@ class Venue(object):
 
     def create_custom_stage(self):
         sub_venue_id = self.custom_stage.sub_venue
-        sub_venue_invitation = None
+        venue_template_invitation = None
         if sub_venue_id is not None:
-            sub_venue_invitation = self.invitation_builder.set_sub_venue_custom_stage_invitation()
-        return self.invitation_builder.set_custom_stage_invitation(sub_venue_id=sub_venue_id, sub_venue_invitation=sub_venue_invitation)
+            venue_template_invitation = self.invitation_builder.set_venue_template_custom_stage_invitation()
+        return self.invitation_builder.set_custom_stage_invitation(sub_venue_id=sub_venue_id, venue_template_invitation=venue_template_invitation)
 
     def post_decisions(self, decisions_file, api1_client):
 

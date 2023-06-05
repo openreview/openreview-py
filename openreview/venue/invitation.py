@@ -270,7 +270,7 @@ class InvitationBuilder(object):
     
     
     
-    def set_sub_venue_review_invitation(self):
+    def set_venue_template_review_invitation(self):
 
         venue_id = self.venue_id
         review_stage = self.venue.review_stage
@@ -427,7 +427,7 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_review_invitation(self, sub_venue_id=None, sub_venue_invitation=None):
+    def set_review_invitation(self, sub_venue_id=None, venue_template_invitation=None):
 
         venue_id = self.venue_id
         review_stage = self.venue.review_stage
@@ -437,7 +437,7 @@ class InvitationBuilder(object):
         review_duedate = tools.datetime_millis(review_stage.due_date) if review_stage.due_date else None
         review_expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None
 
-        if sub_venue_id is not None and sub_venue_invitation is not None:
+        if sub_venue_id is not None and venue_template_invitation is not None:
             invitation=Invitation(id=review_invitation_id,
                     signatures=[venue_id]
             )
@@ -454,7 +454,7 @@ class InvitationBuilder(object):
             if review_expdate:
                 content['expdate'] = {'value': review_expdate}
 
-            self.save_invitation(invitation, invitations=sub_venue_invitation.id, content=content)
+            self.save_invitation(invitation, invitations=venue_template_invitation.id, content=content)
             return invitation
 
         content = review_stage.get_content(api_version='2', conference=self.venue)
@@ -559,7 +559,7 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_sub_venue_review_rebuttal_invitation(self):
+    def set_venue_template_review_rebuttal_invitation(self):
 
         venue_id = self.venue_id
         review_rebuttal_stage = self.venue.review_rebuttal_stage
@@ -748,7 +748,7 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_review_rebuttal_invitation(self, sub_venue_id=None, sub_venue_invitation=None):
+    def set_review_rebuttal_invitation(self, sub_venue_id=None, venue_template_invitation=None):
 
         venue_id = self.venue_id
         review_rebuttal_stage = self.venue.review_rebuttal_stage
@@ -758,7 +758,7 @@ class InvitationBuilder(object):
         review_rebuttal_duedate = tools.datetime_millis(review_rebuttal_stage.due_date) if review_rebuttal_stage.due_date else None
         review_rebuttal_expdate = tools.datetime_millis(review_rebuttal_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_rebuttal_stage.due_date else None
 
-        if sub_venue_id is not None and sub_venue_invitation is not None:
+        if sub_venue_id is not None and venue_template_invitation is not None:
             invitation=Invitation(id=review_rebuttal_invitation_id,
                     signatures=[venue_id]
                 )
@@ -775,7 +775,7 @@ class InvitationBuilder(object):
             if review_rebuttal_expdate:
                 content['expdate'] = {'value': review_rebuttal_expdate}
 
-            self.save_invitation(invitation, invitations=sub_venue_invitation.id, content=content)
+            self.save_invitation(invitation, invitations=venue_template_invitation.id, content=content)
             return invitation
 
         content = review_rebuttal_stage.get_content(api_version='2', conference=self.venue)
@@ -908,7 +908,7 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_sub_venue_meta_review_invitation(self):
+    def set_venue_template_meta_review_invitation(self):
 
         venue_id = self.venue_id
         meta_review_stage = self.venue.meta_review_stage
@@ -1061,7 +1061,7 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_meta_review_invitation(self, sub_venue_id=None, sub_venue_invitation=None):
+    def set_meta_review_invitation(self, sub_venue_id=None, venue_template_invitation=None):
 
         venue_id = self.venue_id
         meta_review_stage = self.venue.meta_review_stage
@@ -1071,7 +1071,7 @@ class InvitationBuilder(object):
         meta_review_duedate = tools.datetime_millis(meta_review_stage.due_date) if meta_review_stage.due_date else None
         meta_review_expdate = tools.datetime_millis(meta_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if meta_review_stage.due_date else None
 
-        if sub_venue_id is not None and sub_venue_invitation is not None:
+        if sub_venue_id is not None and venue_template_invitation is not None:
             invitation=Invitation(id=meta_review_invitation_id,
                     signatures=[venue_id]
                 )
@@ -1088,7 +1088,7 @@ class InvitationBuilder(object):
             if meta_review_expdate:
                 content['expdate'] = {'value': meta_review_expdate}
 
-            self.save_invitation(invitation, invitations=sub_venue_invitation.id, content=content)
+            self.save_invitation(invitation, invitations=venue_template_invitation.id, content=content)
             return invitation
         
         content = meta_review_stage.get_content(api_version='2', conference=self.venue)
@@ -1438,7 +1438,7 @@ class InvitationBuilder(object):
 
             bid_invitation = self.save_invitation(bid_invitation, replacement=True)
 
-    def set_sub_venue_official_comment_invitation(self, sub_venue_id=None):
+    def set_venue_template_official_comment_invitation(self):
         venue_id = self.venue_id
         comment_stage = self.venue.comment_stage
         official_comment_invitation_id = self.venue.get_invitation_id(comment_stage.official_comment_name)
@@ -1603,7 +1603,7 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_official_comment_invitation(self, sub_venue_id=None, sub_venue_invitation=None):
+    def set_official_comment_invitation(self, sub_venue_id=None, venue_template_invitation=None):
         venue_id = self.venue_id
         comment_stage = self.venue.comment_stage
         comment_stage_name = comment_stage.official_comment_name if sub_venue_id is None else f"{sub_venue_id}/{comment_stage.official_comment_name}"
@@ -1622,7 +1622,7 @@ class InvitationBuilder(object):
                 }
             }
 
-        if sub_venue_id is not None and sub_venue_invitation is not None:
+        if sub_venue_id is not None and venue_template_invitation is not None:
             invitation=Invitation(id=official_comment_invitation_id,
                     signatures=[venue_id]
                 )
@@ -1636,7 +1636,7 @@ class InvitationBuilder(object):
             }
             if comment_expdate:
                 content['expdate'] = {'value': comment_expdate}
-            self.save_invitation(invitation, invitations=sub_venue_invitation.id, content=content)
+            self.save_invitation(invitation, invitations=venue_template_invitation.id, content=content)
             return invitation
 
         invitation = Invitation(id=official_comment_invitation_id,
@@ -1745,7 +1745,7 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_sub_venue_public_comment_invitation(self, sub_venue_id=None):
+    def set_venue_template_public_comment_invitation(self):
         venue_id = self.venue_id
         comment_stage = self.venue.comment_stage
         public_comment_invitation = self.venue.get_invitation_id(comment_stage.public_name)
@@ -1887,7 +1887,7 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_public_comment_invitation(self, sub_venue_id=None, sub_venue_invitation=None):
+    def set_public_comment_invitation(self, sub_venue_id=None, venue_template_invitation=None):
         venue_id = self.venue_id
         comment_stage = self.venue.comment_stage
         comment_stage_name = comment_stage.public_name if sub_venue_id is None else f"{sub_venue_id}/{comment_stage.public_name}"
@@ -1897,7 +1897,7 @@ class InvitationBuilder(object):
 
         content = default_content.comment_v2.copy()
 
-        if sub_venue_id is not None and sub_venue_invitation is not None:
+        if sub_venue_id is not None and venue_template_invitation is not None:
             invitation=Invitation(id=public_comment_invitation,
                     signatures=[venue_id]
                 )
@@ -1912,7 +1912,7 @@ class InvitationBuilder(object):
             if comment_expdate:
                 content['expdate'] = {'value': comment_expdate}
 
-            self.save_invitation(invitation, invitations=sub_venue_invitation.id, content=content)
+            self.save_invitation(invitation, invitations=venue_template_invitation.id, content=content)
             return invitation
 
         invitation = Invitation(id=public_comment_invitation,
@@ -2754,7 +2754,7 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_sub_venue_custom_stage_invitation(self):
+    def set_venue_template_custom_stage_invitation(self):
 
         venue_id = self.venue_id
         custom_stage = self.venue.custom_stage
@@ -2955,7 +2955,7 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_custom_stage_invitation(self, sub_venue_id=None, sub_venue_invitation=None):
+    def set_custom_stage_invitation(self, sub_venue_id=None, venue_template_invitation=None):
 
         venue_id = self.venue_id
         custom_stage = self.venue.custom_stage
@@ -2967,7 +2967,7 @@ class InvitationBuilder(object):
         if not custom_stage_expdate:
             custom_stage_expdate = tools.datetime_millis(custom_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if custom_stage.due_date else None
 
-        if sub_venue_id is not None and sub_venue_invitation is not None:
+        if sub_venue_id is not None and venue_template_invitation is not None:
             invitation=Invitation(id=custom_stage_invitation_id,
                     signatures=[venue_id]
                 )
@@ -2984,7 +2984,7 @@ class InvitationBuilder(object):
             if custom_stage_expdate:
                 content['expdate'] = {'value': custom_stage_expdate}
 
-            self.save_invitation(invitation, invitations=sub_venue_invitation.id, content=content)
+            self.save_invitation(invitation, invitations=venue_template_invitation.id, content=content)
             return invitation
 
         content = custom_stage.get_content(api_version='2', conference=self.venue)
@@ -3395,8 +3395,8 @@ class InvitationBuilder(object):
             # TODO: if sub venue do not post forum
             if sub_venue_id and registration_stage.sub_venue:
                 # Create the sub venue invitation and post note edit to that invitation
-                sub_venue_invitation_id = venue.get_invitation_id(name=sub_venue_id + f'/{registration_stage.name}_Form', prefix=committee_id)
-                sub_venue_invitation=Invitation(id=sub_venue_invitation_id,
+                venue_template_invitation_id = venue.get_invitation_id(name=sub_venue_id + f'/{registration_stage.name}_Form', prefix=committee_id)
+                venue_template_invitation=Invitation(id=venue_template_invitation_id,
                     signatures=[venue_id]
                 )
                 content = {
@@ -3404,9 +3404,9 @@ class InvitationBuilder(object):
                         'value': sub_venue_id
                     }
                 }
-                self.save_invitation(sub_venue_invitation, invitations=invitation.id, content=content)
+                self.save_invitation(venue_template_invitation, invitations=invitation.id, content=content)
 
-                forum_edit = self.client.post_note_edit(invitation=sub_venue_invitation_id,
+                forum_edit = self.client.post_note_edit(invitation=venue_template_invitation_id,
                     signatures=[venue_id],
                     note = Note(
                         signatures = [venue_id],
