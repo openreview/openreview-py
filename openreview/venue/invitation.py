@@ -3250,7 +3250,7 @@ class InvitationBuilder(object):
         if self.venue.use_senior_area_chairs:
             build_expertise_selection(self.venue.get_senior_area_chairs_id())
 
-    def set_registration_invitations(self, sub_venue_id=None):
+    def set_registration_invitations(self):
 
         venue = self.venue
         venue_id = self.venue_id
@@ -3261,6 +3261,7 @@ class InvitationBuilder(object):
             readers = [venue_id, committee_id]
 
             registration_parent_invitation_id = venue.get_invitation_id(name=f'{registration_stage.name}_Form', prefix=committee_id)
+            sub_venue_id = registration_stage.sub_venue
 
             if registration_stage.sub_venue:
                 invitation = Invitation(

@@ -73,7 +73,8 @@ class SubmissionStage(object):
             papers_released=False,
             author_reorder_after_first_deadline=False,
             submission_email=None,
-            force_profiles=False
+            force_profiles=False,
+            sub_venue=None
         ):
 
         self.start_date = start_date
@@ -106,6 +107,7 @@ class SubmissionStage(object):
         self.withdrawal_name = 'Withdrawal'
         self.desk_rejection_name = 'Desk_Rejection'
         self.force_profiles = force_profiles
+        self.sub_venue = sub_venue
 
     def get_readers(self, conference, number, decision=None):
 
@@ -270,6 +272,7 @@ class SubmissionStage(object):
                 content['authorids']['description'] = 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.'
                 content['authorids']['value']['param']['regex'] = '~.*'
 
+            # TODO: Update below
             if conference:
                 submission_id = self.get_submission_id(conference)
                 submission_invitation = openreview.tools.get_invitation(conference.client, submission_id)
@@ -512,7 +515,7 @@ class ReviewStage(object):
         rating_field_name = 'rating',
         confidence_field_name = 'confidence',
         process_path = None,
-        sub_venue = False
+        sub_venue = None
     ):
 
         self.start_date = start_date
@@ -730,7 +733,7 @@ class ReviewRebuttalStage(object):
         REVIEWERS_ASSIGNED = 6
         REVIEWERS_SUBMITTED = 7
 
-    def __init__(self, start_date = None, due_date = None, name = 'Rebuttal', email_pcs = False, additional_fields = {}, single_rebuttal = False, unlimited_rebuttals = False, readers = [], sub_venue = False):
+    def __init__(self, start_date = None, due_date = None, name = 'Rebuttal', email_pcs = False, additional_fields = {}, single_rebuttal = False, unlimited_rebuttals = False, readers = [], sub_venue = None):
         self.start_date = start_date
         self.due_date = due_date
         self.name = name
@@ -881,6 +884,7 @@ class CommentStage(object):
         email_pcs=False,
         only_accepted=False,
         check_mandatory_readers=False,
+        sub_venue=None,
         readers=[],
         invitees=[]):
 
@@ -894,6 +898,7 @@ class CommentStage(object):
         self.email_pcs = email_pcs
         self.only_accepted=only_accepted
         self.check_mandatory_readers=check_mandatory_readers
+        self.sub_venue = sub_venue
         self.readers = readers
         self.invitees = invitees
 
@@ -979,7 +984,7 @@ class MetaReviewStage(object):
         REVIEWERS_SUBMITTED = 2
         NO_REVIEWERS = 3
 
-    def __init__(self, name='Meta_Review', start_date = None, due_date = None, exp_date = None, public = False, release_to_authors = False, release_to_reviewers = Readers.NO_REVIEWERS, additional_fields = {}, remove_fields=[], process = None, sub_venue = False):
+    def __init__(self, name='Meta_Review', start_date = None, due_date = None, exp_date = None, public = False, release_to_authors = False, release_to_reviewers = Readers.NO_REVIEWERS, additional_fields = {}, remove_fields=[], process = None, sub_venue = None):
 
         self.start_date = start_date
         self.due_date = due_date
@@ -1263,7 +1268,7 @@ class CustomStage(object):
         REVIEWS = 2
         METAREVIEWS = 3
 
-    def __init__(self, name, reply_to, source, start_date=None, due_date=None, exp_date=None, invitees=[], readers=[], content={}, multi_reply = False, email_pcs = False, email_sacs = False, notify_readers=False, email_template=None, sub_venue=False):
+    def __init__(self, name, reply_to, source, start_date=None, due_date=None, exp_date=None, invitees=[], readers=[], content={}, multi_reply = False, email_pcs = False, email_sacs = False, notify_readers=False, email_template=None, sub_venue=None):
         self.name = name
         self.reply_to = reply_to
         self.source = source
@@ -1278,7 +1283,7 @@ class CustomStage(object):
         self.email_sacs = email_sacs
         self.notify_readers = notify_readers
         self.email_template = email_template
-        self.sub_venue = False
+        self.sub_venue = sub_venue
 
     def get_invitees(self, conference, number):
         invitees = [conference.get_program_chairs_id()]

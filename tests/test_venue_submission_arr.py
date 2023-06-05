@@ -21,6 +21,7 @@ class TestVenueSubmissionARR():
     @pytest.fixture(scope="class")
     def venue(self, openreview_client):
         conference_id = 'ARR'
+        first_cycle = '2023_March'
 
         venue = Venue(openreview_client, conference_id, 'openreview.net/Support')
 
@@ -44,18 +45,19 @@ class TestVenueSubmissionARR():
             double_blind=True,
             due_date=now + datetime.timedelta(minutes = 30),
             withdrawn_submission_reveal_authors=True,
-            force_profiles=True
+            force_profiles=True,
+            sub_venue=first_cycle
         )
         venue.review_stage = openreview.stages.ReviewStage(
             start_date=now + datetime.timedelta(minutes = 4),
             due_date=now + datetime.timedelta(minutes = 40),
             exp_date=now + datetime.timedelta(minutes = 70),
-            sub_venue=True)
+            sub_venue=first_cycle)
         venue.meta_review_stage = openreview.stages.MetaReviewStage(
             start_date=now + datetime.timedelta(minutes = 10),
             due_date=now + datetime.timedelta(minutes = 40),
             exp_date=now + datetime.timedelta(minutes = 70),
-            sub_venue=True)
+            sub_venue=first_cycle)
 
         venue.review_rebuttal_stage = openreview.ReviewRebuttalStage(
             start_date=now + datetime.timedelta(minutes = 10),
@@ -76,7 +78,7 @@ class TestVenueSubmissionARR():
                     "order": 9
                 }
             },
-            sub_venue=True
+            sub_venue=first_cycle
         )
 
         venue.registration_stages = [
@@ -95,7 +97,7 @@ class TestVenueSubmissionARR():
                 due_date=now + datetime.timedelta(minutes = 30),
                 title=f'{venue.get_reviewers_name()} Maximum Load and Unavailability',
                 instructions='Register Here',
-                sub_venue=True
+                sub_venue=first_cycle
             ),
             openreview.stages.RegistrationStage(
                 committee_id=venue.get_area_chairs_id(),
@@ -118,16 +120,15 @@ class TestVenueSubmissionARR():
         return venue
 
     def test_setup(self, venue, openreview_client, helpers):
+        # Set up unavailability
         cycle = '2023_March'
 
-        # Set up unavailability
-
         venue.setup(program_chair_ids=['editors@aclrollingreview.org'], sub_venue_id=cycle)
-        venue.create_submission_stage(sub_venue_id=cycle)
-        venue.create_review_stage(sub_venue_id=cycle)
-        venue.create_meta_review_stage(sub_venue_id=cycle)
-        venue.create_review_rebuttal_stage(sub_venue_id=cycle)
-        venue.create_registration_stages(sub_venue_id=cycle)
+        venue.create_submission_stage()
+        venue.create_review_stage()
+        venue.create_meta_review_stage()
+        venue.create_review_rebuttal_stage()
+        venue.create_registration_stages()
         assert openreview_client.get_group('ARR')
         assert openreview_client.get_group('ARR/Authors')
 
@@ -236,7 +237,8 @@ class TestVenueSubmissionARR():
     
         venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS, SubmissionStage.Readers.AREA_CHAIRS]
         venue.submission_stage.exp_date = datetime.datetime.utcnow() + datetime.timedelta(seconds = 60)
-        venue.create_submission_stage(sub_venue_id=cycle)
+        venue.submission_stage.sub_venue = cycle
+        venue.create_submission_stage()
 
         helpers.await_queue_edit(openreview_client, 'ARR/-/Post_Submission-0-0')
         helpers.await_queue_edit(openreview_client, 'ARR/Reviewers/-/Submission_Group-0-0')
@@ -276,9 +278,10 @@ class TestVenueSubmissionARR():
             reader_selection=True,
             email_pcs=True,
             check_mandatory_readers=True,
+            sub_venue=cycle,
             readers=[openreview.CommentStage.Readers.REVIEWERS_ASSIGNED,openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.AUTHORS,openreview.CommentStage.Readers.EVERYONE],
             invitees=[openreview.CommentStage.Readers.REVIEWERS_ASSIGNED,openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.AUTHORS])
-        venue.create_comment_stage(sub_venue_id=cycle)
+        venue.create_comment_stage()
 
         invitation = openreview_client.get_invitation(venue.id + '/Submission1/-/2023_March/Official_Comment')
         assert not invitation.expdate
@@ -596,10 +599,19 @@ class TestVenueSubmissionARR():
         venue.submission_stage.exp_date = datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
 
         venue.setup(program_chair_ids=['editors@aclrollingreview.org'], sub_venue_id=cycle)
-        venue.create_submission_stage(sub_venue_id=cycle)
-        venue.create_review_stage(sub_venue_id=cycle)
-        venue.create_meta_review_stage(sub_venue_id=cycle)
-        venue.create_review_rebuttal_stage(sub_venue_id=cycle)
+
+        venue.submission_stage.sub_venue = cycle
+        venue.create_submission_stage()
+
+        venue.review_stage.sub_venue = cycle
+        venue.create_review_stage()
+
+        venue.meta_review_stage.sub_venue = cycle
+        venue.create_meta_review_stage()
+
+        venue.review_rebuttal_stage.sub_venue = cycle
+        venue.create_review_rebuttal_stage()
+
         assert openreview_client.get_group('ARR')
         assert openreview_client.get_group('ARR/Authors')
 
@@ -682,9 +694,9 @@ class TestVenueSubmissionARR():
             email_pcs=False,
             email_sacs=False,
             notify_readers=False,
-            sub_venue=True
+            sub_venue=cycle
         )
-        venue.create_custom_stage(sub_venue_id=cycle)
+        venue.create_custom_stage()
 
         submissions = venue.get_submissions(sort='number:asc', submission_venue_id=venue.get_submission_venue_id(f'{cycle}/Submission'))
         assert submissions and len(submissions) == 2
@@ -716,7 +728,6 @@ class TestVenueSubmissionARR():
                 }
             },
             invitation=openreview.api.Invitation(id=f'ARR/-/{cycle}/Action_Editor_Checklist',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
                 signatures=['ARR'],
             )
         )

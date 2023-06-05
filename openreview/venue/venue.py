@@ -401,7 +401,9 @@ class Venue(object):
             # default_load, ##can this be removed? We never get it from the request form
             allow_overlap_official_committee)
 
-    def create_submission_stage(self, sub_venue_id=None):
+    def create_submission_stage(self):
+        sub_venue_id = self.submission_stage.sub_venue
+
         self.invitation_builder.set_submission_invitation(sub_venue_id=f"{sub_venue_id}/Submission" if sub_venue_id is not None else None)
         self.invitation_builder.set_withdrawal_invitation()
         self.invitation_builder.set_desk_rejection_invitation()
@@ -436,26 +438,29 @@ class Venue(object):
     def create_submission_revision_stage(self):
         return self.invitation_builder.set_submission_revision_invitation()
 
-    def create_review_stage(self, sub_venue_id=None):
+    def create_review_stage(self):
+        sub_venue_id = self.review_stage.sub_venue
         sub_venue_invitation = None
         if sub_venue_id is not None:
             sub_venue_invitation = self.invitation_builder.set_sub_venue_review_invitation()
         return self.invitation_builder.set_review_invitation(sub_venue_id=sub_venue_id, sub_venue_invitation=sub_venue_invitation)
         
-    def create_review_rebuttal_stage(self, sub_venue_id=None):
+    def create_review_rebuttal_stage(self):
+        sub_venue_id = self.review_rebuttal_stage.sub_venue
         sub_venue_invitation = None
         if sub_venue_id is not None:
             sub_venue_invitation = self.invitation_builder.set_sub_venue_review_rebuttal_invitation()
         return self.invitation_builder.set_review_rebuttal_invitation(sub_venue_id=sub_venue_id, sub_venue_invitation=sub_venue_invitation)
 
-    def create_meta_review_stage(self, sub_venue_id=None):
+    def create_meta_review_stage(self):
+        sub_venue_id = self.meta_review_stage.sub_venue
         sub_venue_invitation = None
         if sub_venue_id is not None:
             sub_venue_invitation = self.invitation_builder.set_sub_venue_meta_review_invitation()
         return self.invitation_builder.set_meta_review_invitation(sub_venue_id=sub_venue_id, sub_venue_invitation=sub_venue_invitation)
 
-    def create_registration_stages(self, sub_venue_id=None):
-        return self.invitation_builder.set_registration_invitations(sub_venue_id=sub_venue_id)
+    def create_registration_stages(self):
+        return self.invitation_builder.set_registration_invitations()
     
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
         ## do nothing
@@ -472,7 +477,8 @@ class Venue(object):
     def create_bid_stages(self):
         self.invitation_builder.set_bid_invitations()
 
-    def create_comment_stage(self, sub_venue_id=None):
+    def create_comment_stage(self):
+        sub_venue_id = self.comment_stage.sub_venue
         sub_venue_official_invitation = None
         if sub_venue_id is not None:
             sub_venue_official_invitation = self.invitation_builder.set_sub_venue_official_comment_invitation(sub_venue_id=sub_venue_id)
@@ -507,7 +513,8 @@ class Venue(object):
 
             self.post_decisions(decisions, api1_client)
 
-    def create_custom_stage(self, sub_venue_id=None):
+    def create_custom_stage(self):
+        sub_venue_id = self.custom_stage.sub_venue
         sub_venue_invitation = None
         if sub_venue_id is not None:
             sub_venue_invitation = self.invitation_builder.set_sub_venue_custom_stage_invitation()
