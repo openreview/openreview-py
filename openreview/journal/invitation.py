@@ -1482,7 +1482,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'minimum': -1
                     }
                 }
-            }
+            },
+            preprocess = self.get_process_content('process/ae_recommendation_pre_process.py')
         )
         self.save_invitation(invitation)
 
