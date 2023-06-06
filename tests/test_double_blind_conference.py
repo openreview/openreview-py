@@ -706,13 +706,12 @@ class TestDoubleBlindConference():
         #Sign up as Program Chair
         pc_client = openreview.Client(baseurl = 'http://localhost:3000')
         assert pc_client is not None, "Client is none"
-        res = pc_client.register_user(email = 'pc@mail.com', first = 'Pc', last = 'Chair', password = helpers.strong_password)
+        res = pc_client.register_user(email = 'pc@mail.com', fullname = 'Pc Chair', password = helpers.strong_password)
         assert res, "Res i none"
         res = pc_client.activate_user('pc@mail.com', {
             'names': [
                     {
-                        'first': 'Pc',
-                        'last': 'Chair',
+                        'fullname': 'Pc Chair',
                         'username': '~Pc_Chair1'
                     }
                 ],
