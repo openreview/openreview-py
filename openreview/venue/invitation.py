@@ -435,7 +435,9 @@ class InvitationBuilder(object):
         review_invitation_id = self.venue.get_invitation_id(review_stage_name)
         review_cdate = tools.datetime_millis(review_stage.start_date if review_stage.start_date else datetime.datetime.utcnow())
         review_duedate = tools.datetime_millis(review_stage.due_date) if review_stage.due_date else None
-        review_expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None
+        review_expdate = tools.datetime_millis(review_stage.exp_date) if review_stage.exp_date else None
+        if not review_expdate:
+            review_expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None
 
         if sub_venue_id is not None and venue_template_invitation is not None:
             invitation=Invitation(id=review_invitation_id,
@@ -752,7 +754,7 @@ class InvitationBuilder(object):
 
         venue_id = self.venue_id
         review_rebuttal_stage = self.venue.review_rebuttal_stage
-        review_rebuttal_stage_name = review_rebuttal_stage if sub_venue_id is None else f"{sub_venue_id}/{review_rebuttal_stage.name}"
+        review_rebuttal_stage_name = review_rebuttal_stage.name if sub_venue_id is None else f"{sub_venue_id}/{review_rebuttal_stage.name}"
         review_rebuttal_invitation_id = self.venue.get_invitation_id(review_rebuttal_stage_name)
         review_rebuttal_cdate = tools.datetime_millis(review_rebuttal_stage.start_date if review_rebuttal_stage.start_date else datetime.datetime.utcnow())
         review_rebuttal_duedate = tools.datetime_millis(review_rebuttal_stage.due_date) if review_rebuttal_stage.due_date else None
@@ -1069,7 +1071,9 @@ class InvitationBuilder(object):
         meta_review_invitation_id = self.venue.get_invitation_id(meta_review_stage_name)
         meta_review_cdate = tools.datetime_millis(meta_review_stage.start_date if meta_review_stage.start_date else datetime.datetime.utcnow())
         meta_review_duedate = tools.datetime_millis(meta_review_stage.due_date) if meta_review_stage.due_date else None
-        meta_review_expdate = tools.datetime_millis(meta_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if meta_review_stage.due_date else None
+        meta_review_expdate = tools.datetime_millis(meta_review_stage.exp_date) if meta_review_stage.exp_date else None
+        if not meta_review_expdate:
+            meta_review_expdate = tools.datetime_millis(meta_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if meta_review_stage.due_date else None
 
         if sub_venue_id is not None and venue_template_invitation is not None:
             invitation=Invitation(id=meta_review_invitation_id,

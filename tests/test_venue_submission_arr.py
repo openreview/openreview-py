@@ -249,7 +249,7 @@ class TestVenueSubmissionARR():
         assert openreview_client.get_group('ARR/Submission1/Reviewers')
         assert openreview_client.get_group('ARR/Submission1/Action_Editors')
 
-        submissions = venue.get_submissions(sort='number:asc', submission_venue_id=venue.get_submission_venue_id(f'{cycle}/Submission'))
+        submissions = venue.get_submissions(sort='number:asc', venueid=venue.get_submission_venue_id(f'{cycle}/Submission'))
         assert len(submissions) == 2
         submission = submissions[0]
         assert len(submission.readers) == 4
@@ -267,7 +267,7 @@ class TestVenueSubmissionARR():
     def test_comment_stage(self, venue, openreview_client, helpers):
         cycle = '2023_March'
 
-        submissions = venue.get_submissions(submission_venue_id=venue.get_submission_venue_id(f'{cycle}/Submission'))
+        submissions = venue.get_submissions(venueid=venue.get_submission_venue_id(f'{cycle}/Submission'))
         assert submissions and len(submissions) == 2
         assert submissions[0].readers == ['ARR', 'ARR/Action_Editors', 'ARR/Reviewers', 'ARR/Submission2/Authors']
         assert submissions[1].readers == ['ARR', 'ARR/Action_Editors', 'ARR/Reviewers', 'ARR/Submission1/Authors']
@@ -546,7 +546,7 @@ class TestVenueSubmissionARR():
 
     def test_setup_matching(self, venue, openreview_client, helpers):
 
-        submissions = venue.get_submissions(sort='number:asc', submission_venue_id='ARR/2023_March/Submission')
+        submissions = venue.get_submissions(sort='number:asc', venueid='ARR/2023_March/Submission')
 
         helpers.create_user('arr_reviewer_venue_two@mail.com', 'ARR Reviewer Venue', 'Two')
         helpers.create_user('arr_reviewer_venue_three@mail.com', 'ARR Reviewer Venue', 'Three')
@@ -698,7 +698,7 @@ class TestVenueSubmissionARR():
         )
         venue.create_custom_stage()
 
-        submissions = venue.get_submissions(sort='number:asc', submission_venue_id=venue.get_submission_venue_id(f'{cycle}/Submission'))
+        submissions = venue.get_submissions(sort='number:asc', venueid=venue.get_submission_venue_id(f'{cycle}/Submission'))
         assert submissions and len(submissions) == 2
 
         assert openreview_client.get_invitation('ARR/-/Action_Editor_Checklist')

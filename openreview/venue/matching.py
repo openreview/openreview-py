@@ -883,7 +883,7 @@ class Matching(object):
 
         user_profiles = openreview.tools.get_profiles(client, self.match_group.members, with_publications=compute_conflicts)
 
-        submissions = venue.get_submissions(sort='number:asc', submission_venue_id=self.submission_venue_id)
+        submissions = venue.get_submissions(sort='number:asc', venueid=self.submission_venue_id)
 
         if not self.match_group.members:
             raise openreview.OpenReviewException(f'The match group is empty: {self.match_group.id}')

@@ -326,7 +326,7 @@ class Venue(object):
             return f'{self.venue_id}/Rejected_{self.submission_stage.name}'
         return f'{self.venue_id}/Rejected_Submission' 
 
-    def get_submissions(self, submission_venue_id=None, accepted=False, sort=None, details=None):
+    def get_submissions(self, venueid=None, accepted=False, sort=None, details=None):
         if accepted:
             accepted_notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort)
             if len(accepted_notes) == 0:
@@ -339,7 +339,7 @@ class Venue(object):
                                 accepted_notes.append(note)
             return accepted_notes
         else:
-            notes = self.client.get_all_notes(content={ 'venueid': submission_venue_id if submission_venue_id else f'{self.get_submission_venue_id()}'}, sort=sort, details=details)
+            notes = self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.get_submission_venue_id()}'}, sort=sort, details=details)
             if len(notes) == 0:
                 notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort, details=details)
                 rejected = self.client.get_all_notes(content={ 'venueid': self.get_rejected_submission_venue_id()}, sort=sort, details=details)
