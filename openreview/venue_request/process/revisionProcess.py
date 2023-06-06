@@ -418,13 +418,7 @@ Best,
                 expire_revision_stage_name = 'Revision'
             if expire_revision_stage_name != forum_note.content.get('submission_revision_name', '').strip().replace(" ", "_"):
                 conference.expire_invitation(conference.get_invitation_id(expire_revision_stage_name))
-            if conference.submission_stage.second_due_date:
-                if forum_note.content['submission_revision_name'] == 'Revision' and datetime.datetime.utcnow() < conference.submission_stage.second_due_date:
-                    conference.create_submission_stage()
-                else:
-                    conference.create_submission_revision_stage()  
-            else:
-                conference.create_submission_revision_stage()
+            conference.create_submission_revision_stage()
 
         elif invitation_type == 'Comment_Stage':
             conference.create_comment_stage()

@@ -417,18 +417,15 @@ class Venue(object):
 
         if self.submission_stage.second_due_date:
             stage = self.submission_stage
-            author_reorder = self.submission_stage.author_reorder_after_first_deadline
-            if self.submission_revision_stage and datetime.datetime.utcnow() < stage.second_due_date:
-                stage = self.submission_revision_stage
-                author_reorder = self.submission_revision_stage.allow_author_reorder
             submission_revision_stage = openreview.stages.SubmissionRevisionStage(name='Revision',
-                start_date=self.submission_stage.exp_date,
-                due_date=self.submission_stage.second_due_date,
-                additional_fields=stage.additional_fields,
-                remove_fields=stage.remove_fields,
+                start_date=stage.exp_date,
+                due_date=stage.second_due_date,
+                additional_fields=stage.second_deadline_additional_fields if stage.second_deadline_additional_fields else stage.additional_fields,
+                remove_fields=stage.second_deadline_remove_fields if stage.second_deadline_remove_fields else stage.remove_fields,
                 only_accepted=False,
                 multiReply=True,
-                allow_author_reorder=author_reorder
+                allow_author_reorder=stage.author_reorder_after_first_deadline
+            
             )
             self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)                        
 
