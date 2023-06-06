@@ -1489,7 +1489,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = Invitation(
             id=self.journal.get_ae_custom_max_papers_id(),
             invitees=[venue_id, action_editors_id],
-            readers=[venue_id, action_editors_id],
+            readers=[venue_id, action_editors_id, authors_id],
             writers=[venue_id],
             signatures=[venue_id],
             minReplies=1,
@@ -1516,7 +1516,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'deletable': True
                     }
                 },
-                'readers': [venue_id, '${2/tail}'],
+                'readers': [venue_id, authors_id, '${2/tail}'],
                 'nonreaders': [],
                 'writers': [venue_id, '${2/tail}'],
                 'signatures': {
@@ -1605,7 +1605,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = Invitation(
             id=self.journal.get_ae_availability_id(),
             invitees=[venue_id, action_editors_id],
-            readers=[venue_id, action_editors_id],
+            readers=[venue_id, action_editors_id, authors_id],
             writers=[venue_id],
             signatures=['~Super_User1'], ## user super user so it can update the edges
             minReplies=1,
@@ -1632,7 +1632,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'deletable': True
                     }
                 },
-                'readers': [venue_id, '${2/tail}'],
+                'readers': [venue_id, authors_id, '${2/tail}'],
                 'nonreaders': [],
                 'writers': [venue_id, '${2/tail}'],
                 'signatures': {
@@ -3181,10 +3181,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         }
 
         conflict_id = f'{action_editors_id}/-/Conflict'
-        score_ids = [f'{action_editors_id}/-/Affinity_Score']
+        score_ids = [f'{action_editors_id}/-/Affinity_Score', f'{action_editors_id}/-/Custom_Max_Papers,head:ignore', f'{action_editors_id}/-/Assignment_Availability,head:ignore']
         edit_param = f'{action_editors_id}/-/Recommendation'
         browse_param = ';'.join(score_ids)
-        params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&version=2&referrer=[Instructions](/invitation?id={invitation.id})&maxColumns=2&showCounter=false&version=2'
+        params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&version=2&maxColumns=2&showCounter=false&version=2&filter={action_editors_id}/-/Assignment_Availability == Available&referrer=[Instructions](/invitation?id={invitation.id})'
         with open(os.path.join(os.path.dirname(__file__), 'webfield/suggestAEWebfield.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")

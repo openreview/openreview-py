@@ -269,6 +269,19 @@ class TestJournal():
 
         Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
 
+        edges = []
+        for ae in openreview_client.get_group('TMLR/Action_Editors').members:
+            edges.append(openreview.api.Edge(invitation='TMLR/Action_Editors/-/Affinity_Score',
+                readers=['TMLR', 'TMLR/Paper1/Authors', ae],
+                writers=['TMLR'],
+                signatures=['TMLR'],
+                head=note_id_1,
+                tail=ae,
+                weight=0.5
+            ))
+
+        openreview_client.post_edges(edges)
+
         openreview_client.get_invitation('TMLR/Paper1/Action_Editors/-/Recommendation')
 
         messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLR] Suggest candidate Action Editor for your new TMLR submission')
