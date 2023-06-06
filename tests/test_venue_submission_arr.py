@@ -31,6 +31,7 @@ class TestVenueSubmissionARR():
         venue.senior_area_chair_roles = ['Senior_Action_Editors']
         venue.area_chairs_name = 'Action_Editors'
         venue.senior_area_chairs_name = 'Senior_Action_Editors'
+        venue.automatic_reviewer_assignment = True
 
         venue.use_area_chairs = True
         venue.use_senior_area_chairs = True
