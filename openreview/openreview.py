@@ -158,18 +158,14 @@ class Client(object):
         self.__handle_token(json_response)
         return json_response
 
-    def register_user(self, email = None, first = None, last = None, middle = '', password = None):
+    def register_user(self, email = None, fullname = None, password = None):
         """
         Registers a new user
 
         :param email: email that will be used as id to log in after the user is registered
         :type email: str, optional
-        :param first: First name of the user
-        :type first: str, optional
-        :param last: Last name of the user
-        :type last: str, optional
-        :param middle: Middle name of the user
-        :type middle: str, optional
+        :param fullname: Full name of the user
+        :type fullname: str, optional
         :param password: Password used to log into OpenReview
         :type password: str, optional
 
@@ -178,7 +174,7 @@ class Client(object):
         """
         register_payload = {
             'email': email,
-            'name': {   'first': first, 'last': last, 'middle': middle},
+            'fullname': fullname,
             'password': password
         }
         response = self.session.post(self.register_url, json = register_payload, headers = self.headers)
@@ -202,8 +198,7 @@ class Client(object):
         >>> res = client.activate_user('new@user.com', {
             'names': [
                     {
-                        'first': 'New',
-                        'last': 'User',
+                        'fullname': 'New User',
                         'username': '~New_User1'
                     }
                 ],
@@ -1787,22 +1782,18 @@ class Client(object):
         response = self.__handle_response(response)
         return [Note.from_json(n) for n in response.json()['notes']]
 
-    def get_tildeusername(self, first, last, middle = None):
+    def get_tildeusername(self, fullname):
         """
-        Gets next possible tilde user name corresponding to the specified first, middle and last name
+        Gets next possible tilde user name corresponding to the specified full name
 
-        :param first: First name of the user
-        :type first: str
-        :param last: Last name of the user
-        :type last: str
-        :param middle: Middle name of the user
-        :type middle: str, optional
+        :param fullname: Full name of the user
+        :type fullname: str
 
-        :return: next possible tilde user name corresponding to the specified first, middle and last name
+        :return: next possible tilde user name corresponding to the specified full name
         :rtype: dict
         """
 
-        response = self.session.get(self.tilde_url, params = { 'first': first, 'last': last, 'middle': middle }, headers = self.headers)
+        response = self.session.get(self.tilde_url, params = { 'fullname': fullname }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
