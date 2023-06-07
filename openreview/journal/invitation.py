@@ -3182,10 +3182,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         }
 
         conflict_id = f'{action_editors_id}/-/Conflict'
-        score_ids = [f'{action_editors_id}/-/Affinity_Score', f'{action_editors_id}/-/Custom_Max_Papers,head:ignore', f'{action_editors_id}/-/Assignment_Availability,head:ignore']
+        score_ids = [f'{action_editors_id}/-/Affinity_Score', f'{action_editors_id}/-/Custom_Max_Papers,head:ignore', f'{action_editors_id}/-/Assignment_Availability,head:ignore', f'{action_editors_id}/-/Assignment,head:count']
         edit_param = f'{action_editors_id}/-/Recommendation'
         browse_param = ';'.join(score_ids)
-        params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&version=2&maxColumns=2&showCounter=false&version=2&filter={action_editors_id}/-/Assignment_Availability == Available&referrer=[Instructions](/invitation?id={invitation.id})'
+        params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&version=2&maxColumns=2&showCounter=false&version=2&filter={action_editors_id}/-/Assignment_Availability == Available AND {action_editors_id}/-/Custom_Max_Papers > {action_editors_id}/-/Assignment&referrer=[Instructions](/invitation?id={invitation.id})'
         with open(os.path.join(os.path.dirname(__file__), 'webfield/suggestAEWebfield.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
