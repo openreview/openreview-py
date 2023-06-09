@@ -13,6 +13,7 @@ class ProfileManagement():
 
     def setup(self):
         self.set_remove_name_invitations()
+        self.set_remove_email_invitations()
         self.set_archive_invitations()
         self.set_merge_profiles_invitations()
         self.set_dblp_invitations()
@@ -212,6 +213,57 @@ class ProfileManagement():
                 }
             }
         ))            
+
+    def set_remove_email_invitations(self):
+
+        content = {
+            'email': {
+                'order': 1,
+                'description': 'email that want to be removed.',
+                'value-regex': '.*',
+                'required': True                
+            },
+            'profile_id': {
+                'order': 2,
+                'description': 'profile id where the email associated with.',
+                'value-regex': '~.*',
+                'required': True
+            },
+            'comment': {
+                'order': 3,
+                'value-regex': '[\\S\\s]{1,5000}',
+                'description': 'Reason why you want to delete your name.',
+                'required': False
+            }
+        }
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/request_remove_email_process.py'), 'r') as f:
+            file_content = f.read()
+            file_content = file_content.replace("SUPPORT_USER_ID = ''", "SUPPORT_USER_ID = '" + self.support_group_id + "'")
+            file_content = file_content.replace("AUTHOR_RENAME_INVITATION_ID = ''", "AUTHOR_RENAME_INVITATION_ID = '" + self.author_rename_invitation_id + "'")
+            with open(os.path.join(os.path.dirname(__file__), 'process/request_remove_email_pre_process.py'), 'r') as pre:
+                pre_file_content = pre.read()
+                self.client.post_invitation(openreview.Invitation(
+                    id=f'{self.support_group_id}/-/Profile_Email_Removal',
+                    readers=['everyone'],
+                    writers=[self.support_group_id],
+                    signatures=[self.super_user],
+                    invitees=['~'],
+                    process_string=file_content,
+                    preprocess=pre_file_content,
+                    reply={
+                        'readers': {
+                            'values-copied': [self.support_group_id]
+                        },
+                        'writers': {
+                            'values':[self.support_group_id],
+                        },
+                        'signatures': {
+                            'values': [self.support_group_id]
+                        },
+                        'content': content
+                    }
+                ))
 
     def set_archive_invitations(self):
 
