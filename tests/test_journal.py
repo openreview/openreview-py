@@ -2003,6 +2003,8 @@ The TMLR Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
 
+        assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Review").expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Official_Recommendation").expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
         decision_note = raia_client.get_note(decision_note.id)
         assert decision_note.readers == ['everyone']
