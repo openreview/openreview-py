@@ -114,7 +114,7 @@ def process(client, note, invitation):
     if head_edges or tail_edges:
         client.rename_edges(email, profile.id)
         
-    print('Replace all the group members that contain the name to remove')
+    print('Replace all the group members that contain the email to remove')
     memberships = [ g for g in client.get_all_groups(member=email) if email in g.members ]
 
     anon_groups = [g for g in memberships if g.anonids == True ]
@@ -133,7 +133,7 @@ def process(client, note, invitation):
         if group.id not in processed_group_ids:
             replace_group_members(group, email, profile.id)
 
-    print('Post a profile reference to remove the name')
+    print('Post a profile reference to remove the email')
     
     group = client.get_group(email)
     group.members = []
