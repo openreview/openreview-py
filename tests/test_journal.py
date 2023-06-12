@@ -1565,6 +1565,7 @@ To view the acknowledgement, click here: https://openreview.net/forum?id={note_i
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Review_Rating_Enabling" not in [i.id for i in invitations]
 
         ## All the reviewes should be public now
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort= 'number:asc')
@@ -1785,6 +1786,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Review_Rating_Enabling" in [i.id for i in invitations]
 
         official_recommendation_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
             signatures=[david_anon_groups[0].id],
@@ -1810,6 +1812,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Review_Rating_Enabling" in [i.id for i in invitations]
 
         official_recommendation_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
             signatures=[javier_anon_groups[0].id],
@@ -1853,6 +1856,8 @@ note: replies to this email will go to the AE, Joelle Pineau.
         assert f"{javier_anon_groups[0].id}/-/Rating" in [i.id for i in invitations]
         assert f"{carlos_anon_groups[0].id}/-/Rating" in [i.id for i in invitations]
         assert f"{hugo_anon_groups[0].id}/-/Rating" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Review_Rating_Enabling" not in [i.id for i in invitations]
+
 
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Evaluate reviewers and submit decision for TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
@@ -2748,19 +2753,17 @@ note: replies to this email will go to the AE, Joelle Pineau.
 
         helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
 
-        ## Post a review recommendation
-        official_recommendation_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Official_Recommendation',
-            signatures=[david_anon_groups[0].id],
+        ## Enable review rating before all the recommendations are in
+        review_rating_enabling_note = raia_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Review_Rating_Enabling',
+            signatures=['TMLR/Editors_In_Chief'],
             note=Note(
                 content={
-                    'decision_recommendation': { 'value': 'Reject' },
-                    'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'approval': { 'value': 'I approve enabling review rating even if there are official recommendations missing.' },
                 }
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=review_rating_enabling_note['id'])       
 
         reviews=openreview_client.get_notes(forum=note_id_4, invitation=f'{venue_id}/Paper4/-/Review', sort= 'number:asc')
 

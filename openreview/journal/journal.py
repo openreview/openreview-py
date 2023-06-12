@@ -203,6 +203,9 @@ class Journal(object):
 
     def get_review_rating_id(self, signature=None):
         return self.__get_invitation_id(name='Rating', prefix=signature)
+    
+    def get_review_rating_enabling_id(self, number=None):
+        return self.__get_invitation_id(name='Review_Rating_Enabling', number=number)
 
     def get_accepted_id(self):
         return self.__get_invitation_id(name='Accepted')

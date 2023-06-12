@@ -90,6 +90,7 @@ class InvitationBuilder(object):
         self.set_assignment_configuration_invitation()
         self.set_eic_revision_invitation()
         self.set_expertise_selection_invitations()
+        self.set_review_rating_enabling_invitation()
 
     
     def get_super_process_content(self, field_name):
@@ -593,7 +594,6 @@ If you have questions after reviewing the points below that are not answered on 
         )
         self.save_invitation(invitation)
 
-    
     def set_single_reviewer_responsibility_invitation(self, reviewer_id, duedate):
 
         return self.client.post_invitation_edit(invitations=self.journal.get_reviewer_responsibility_id(),
@@ -3182,7 +3182,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         }
 
         conflict_id = f'{action_editors_id}/-/Conflict'
-        score_ids = [f'{action_editors_id}/-/Affinity_Score', f'{action_editors_id}/-/Custom_Max_Papers,head:ignore', f'{action_editors_id}/-/Assignment_Availability,head:ignore', f'{action_editors_id}/-/Assignment,count:tail']
+        score_ids = [f'{action_editors_id}/-/Affinity_Score', f'{action_editors_id}/-/Custom_Max_Papers,head:ignore', f'{action_editors_id}/-/Assignment_Availability,head:ignore', f'{action_editors_id}/-/Assignment,head:count']
         edit_param = f'{action_editors_id}/-/Recommendation'
         browse_param = ';'.join(score_ids)
         params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&version=2&maxColumns=2&showCounter=false&version=2&filter={action_editors_id}/-/Assignment_Availability == Available AND {action_editors_id}/-/Custom_Max_Papers > {action_editors_id}/-/Assignment&referrer=[Instructions](/invitation?id={invitation.id})'
@@ -4863,6 +4863,82 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 signatures=[self.journal.venue_id]
         )
 
+    def set_review_rating_enabling_invitation(self):
+
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/review_rating_enabling_process.py')
+            }               
+        }
+
+        edit_content = {
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            },
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            }
+        }
+
+        invitation = {
+            'id': self.journal.get_review_rating_enabling_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id],
+            'readers': [venue_id],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'minReplies': 1,
+            'maxReplies': 1,
+            'edit': {
+                'signatures': [editors_in_chief_id],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                'writers': [ venue_id],
+                'note': {
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/noteId/value}',
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
+                    'writers': [ venue_id],
+                    'signatures': [editors_in_chief_id],
+                    'content': {
+                        'approval': {
+                            'order': 1,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['I approve enabling review rating even if there are official recommendations missing.'],
+                                    'input': 'checkbox'
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            'process': self.process_script
+        }
+
+        self.save_super_invitation(self.journal.get_review_rating_enabling_id(), invitation_content, edit_content, invitation)
+    
+    def set_note_review_rating_enabling_invitation(self, note):
+        return self.client.post_invitation_edit(invitations=self.journal.get_review_rating_enabling_id(),
+            content={
+                'noteId': { 'value': note.id },
+                'noteNumber': { 'value': note.number }
+             },
+            readers=[self.venue_id],
+            writers=[self.venue_id],
+            signatures=[self.venue_id]
+        )
+    
     def set_camera_ready_revision_invitation(self):
         venue_id = self.journal.venue_id
         short_name = self.journal.short_name
