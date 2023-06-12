@@ -14,7 +14,7 @@ from functools import reduce
 
 class Matching(object):
 
-    def __init__(self, venue, match_group, alternate_matching_group=None):
+    def __init__(self, venue, match_group, alternate_matching_group=None, submission_venue_id=None):
         self.venue = venue
         self.client = venue.client
         self.match_group = match_group
@@ -24,6 +24,11 @@ class Matching(object):
         self.is_senior_area_chair = venue.get_senior_area_chairs_id() == match_group.id
         self.is_ethics_reviewer = venue.get_ethics_reviewers_id() == match_group.id
         self.should_read_by_area_chair = venue.get_reviewers_id() == match_group.id and venue.use_area_chairs
+        self.submission_venue_id = submission_venue_id
+        self.sub_venue_id = None
+
+        if submission_venue_id:
+            self.sub_venue_id = submission_venue_id.split('/')[-2]
         self.sac_profile_info = None #expects a policy, for example: openreview.tools.get_sac_profile_info
         self.sac_n_years = None
 
@@ -130,7 +135,7 @@ class Matching(object):
             edge_head = {
                 'param': {
                     'type': 'note',
-                    'withVenueid': venue.get_submission_venue_id()
+                    'withVenueid': self.submission_venue_id if self.submission_venue_id else venue.get_submission_venue_id()
                 }
             }
         edge_weight = {
@@ -145,7 +150,7 @@ class Matching(object):
             }
         }
 
-        if venue.get_custom_max_papers_id(self.match_group.id) == edge_id:
+        if venue.get_custom_max_papers_id(self.match_group.id, sub_venue_id=self.sub_venue_id) == edge_id:
             edge_head = {
                 'param': {
                     'type': 'group',
@@ -378,7 +383,7 @@ class Matching(object):
         return invitation
 
     def _build_custom_max_papers(self, user_profiles):
-        invitation=self._create_edge_invitation(self.venue.get_custom_max_papers_id(self.match_group.id))
+        invitation=self._create_edge_invitation(self.venue.get_custom_max_papers_id(self.match_group.id, sub_venue_id=self.sub_venue_id))
         invitation_id = invitation.id
         current_custom_max_edges={ e['id']['tail']: Edge.from_json(e['values'][0]) for e in self.client.get_grouped_edges(invitation=invitation_id, groupby='tail', select=None)}
 
@@ -754,8 +759,8 @@ class Matching(object):
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex':  '{}/.*/-/Custom_Max_Papers$'.format(venue.id),
-                                    'default': venue.get_custom_max_papers_id(self.match_group.id),
+                                    'regex':  '{}/.*/-/.*Custom_Max_Papers$'.format(venue.id),
+                                    'default': venue.get_custom_max_papers_id(self.match_group.id, sub_venue_id=self.sub_venue_id),
                                     'optional': True
                                 }
                             }
@@ -878,7 +883,7 @@ class Matching(object):
 
         user_profiles = openreview.tools.get_profiles(client, self.match_group.members, with_publications=compute_conflicts)
 
-        submissions = venue.get_submissions(sort='number:asc')
+        submissions = venue.get_submissions(sort='number:asc', venueid=self.submission_venue_id)
 
         if not self.match_group.members:
             raise openreview.OpenReviewException(f'The match group is empty: {self.match_group.id}')

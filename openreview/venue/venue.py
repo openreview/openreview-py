@@ -139,8 +139,8 @@ class Venue(object):
     def get_conflict_score_id(self, committee_id):
         return self.get_invitation_id('Conflict', prefix=committee_id)
 
-    def get_custom_max_papers_id(self, committee_id):
-        return self.get_invitation_id('Custom_Max_Papers', prefix=committee_id)
+    def get_custom_max_papers_id(self, committee_id, sub_venue_id=None):
+        return self.get_invitation_id('Custom_Max_Papers' if not sub_venue_id else f"{sub_venue_id}/Custom_Max_Papers", prefix=committee_id)
 
     def get_recommendation_id(self, committee_id=None):
         if not committee_id:
@@ -230,6 +230,12 @@ class Venue(object):
             return name[:-1] if name.endswith('s') else name
         return self.area_chairs_name
 
+    def get_senior_area_chairs_name(self, pretty=True):
+        if pretty:
+            name=self.senior_area_chairs_name.replace('_', ' ')
+            return name[:-1] if name.endswith('s') else name
+        return self.area_chairs_name
+    
     def get_anon_area_chairs_name(self, pretty=True):
         rev_name = self.area_chairs_name[:-1] if self.area_chairs_name.endswith('s') else self.area_chairs_name
         return rev_name + '_' 
@@ -351,11 +357,11 @@ class Venue(object):
             invitation = f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{invitation_name}'
             self.invitation_builder.expire_invitation(invitation)
 
-    def setup(self, program_chair_ids=[]):
+    def setup(self, program_chair_ids=[], sub_venue_id=None):
     
         self.invitation_builder.set_meta_invitation()
 
-        self.group_builder.create_venue_group()
+        self.group_builder.create_venue_group(sub_venue_id=sub_venue_id)
 
         self.group_builder.create_program_chairs_group(program_chair_ids)
 
@@ -402,7 +408,9 @@ class Venue(object):
             allow_overlap_official_committee)
 
     def create_submission_stage(self):
-        self.invitation_builder.set_submission_invitation()
+        sub_venue_id = self.submission_stage.sub_venue
+
+        self.invitation_builder.set_submission_invitation(sub_venue_id=f"{sub_venue_id}/Submission" if sub_venue_id is not None else None)
         self.invitation_builder.set_withdrawal_invitation()
         self.invitation_builder.set_desk_rejection_invitation()
         self.invitation_builder.set_post_submission_invitation()
@@ -437,13 +445,25 @@ class Venue(object):
         return self.invitation_builder.set_submission_revision_invitation()
 
     def create_review_stage(self):
-        return self.invitation_builder.set_review_invitation()
+        sub_venue_id = self.review_stage.sub_venue
+        venue_template_invitation = None
+        if sub_venue_id is not None:
+            venue_template_invitation = self.invitation_builder.set_venue_template_review_invitation()
+        return self.invitation_builder.set_review_invitation(sub_venue_id=sub_venue_id, venue_template_invitation=venue_template_invitation)
         
     def create_review_rebuttal_stage(self):
-        return self.invitation_builder.set_review_rebuttal_invitation()
+        sub_venue_id = self.review_rebuttal_stage.sub_venue
+        venue_template_invitation = None
+        if sub_venue_id is not None:
+            venue_template_invitation = self.invitation_builder.set_venue_template_review_rebuttal_invitation()
+        return self.invitation_builder.set_review_rebuttal_invitation(sub_venue_id=sub_venue_id, venue_template_invitation=venue_template_invitation)
 
     def create_meta_review_stage(self):
-        return self.invitation_builder.set_meta_review_invitation()
+        sub_venue_id = self.meta_review_stage.sub_venue
+        venue_template_invitation = None
+        if sub_venue_id is not None:
+            venue_template_invitation = self.invitation_builder.set_venue_template_meta_review_invitation()
+        return self.invitation_builder.set_meta_review_invitation(sub_venue_id=sub_venue_id, venue_template_invitation=venue_template_invitation)
 
     def create_registration_stages(self):
         return self.invitation_builder.set_registration_invitations()
@@ -464,9 +484,18 @@ class Venue(object):
         self.invitation_builder.set_bid_invitations()
 
     def create_comment_stage(self):
-        self.invitation_builder.set_official_comment_invitation()
+        sub_venue_id = self.comment_stage.sub_venue
+        venue_template_official_invitation = None
+        if sub_venue_id is not None:
+            venue_template_official_invitation = self.invitation_builder.set_venue_template_official_comment_invitation()
+
+        self.invitation_builder.set_official_comment_invitation(sub_venue_id=sub_venue_id, venue_template_invitation=venue_template_official_invitation)
         if self.comment_stage.allow_public_comments:
-            self.invitation_builder.set_public_comment_invitation()
+            venue_template_public_invitation = None
+            if sub_venue_id is not None:
+                venue_template_public_invitation = self.invitation_builder.set_venue_template_public_comment_invitation()
+
+            self.invitation_builder.set_public_comment_invitation(sub_venue_id=sub_venue_id, venue_template_invitation=venue_template_public_invitation)
 
     def create_decision_stage(self):
         invitation = self.invitation_builder.set_decision_invitation()
@@ -491,7 +520,11 @@ class Venue(object):
             self.post_decisions(decisions, api1_client)
 
     def create_custom_stage(self):
-        return self.invitation_builder.set_custom_stage_invitation()
+        sub_venue_id = self.custom_stage.sub_venue
+        venue_template_invitation = None
+        if sub_venue_id is not None:
+            venue_template_invitation = self.invitation_builder.set_venue_template_custom_stage_invitation()
+        return self.invitation_builder.set_custom_stage_invitation(sub_venue_id=sub_venue_id, venue_template_invitation=venue_template_invitation)
     
     def update_conflict_policies(self, committee_id, compute_conflicts, compute_conflicts_n_years):
         content = {}
@@ -710,12 +743,12 @@ Total Errors: {len(errors)}
 
         tools.concurrent_requests(send_notification, paper_notes)
 
-    def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None):
+    def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None, submission_venue_id=None):
         if committee_id is None:
             committee_id=self.get_reviewers_id()
         if self.use_senior_area_chairs and committee_id == self.get_senior_area_chairs_id() and not alternate_matching_group:
             alternate_matching_group = self.get_area_chairs_id()
-        venue_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
+        venue_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group, submission_venue_id=submission_venue_id)
 
         return venue_matching.setup(compute_affinity_scores, compute_conflicts, compute_conflicts_n_years)
 
