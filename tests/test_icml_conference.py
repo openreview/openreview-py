@@ -7,6 +7,7 @@ import random
 import os
 import csv
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
 from openreview import ProfileManagement
 
 class TestICMLConference():
@@ -1544,6 +1545,15 @@ OpenReview Team'''
 
         proposed_recruitment_inv = openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment_Recruitment')
         assert proposed_recruitment_inv.expdate and proposed_recruitment_inv.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
+        invite_edges=pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Javier_ICML1')
+        assert len(invite_edges) == 1
+
+        messages = client.get_messages(to='javier@icml.cc', subject='[ICML 2023] Invitation to review paper titled "Paper title 1 Version 2"')
+        assert messages and len(messages) == 1
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        with pytest.raises(NoSuchElementException):
+            helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
         reviewers_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Reviewers')
         assert len(reviewers_group.members) == 4
