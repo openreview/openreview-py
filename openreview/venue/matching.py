@@ -1157,6 +1157,7 @@ class Matching(object):
         self.venue.invitation_builder.set_assignment_invitation(self.match_group.id)
         recruitment_invitation_id=self.venue.get_invitation_id('Proposed_Assignment_Recruitment', prefix=self.match_group.id)
         self.venue.invitation_builder.expire_invitation(recruitment_invitation_id)
+        self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id))
         
         ## Deploy assignments creating groups and assignment edges
         if self.match_group.id == self.venue.get_senior_area_chairs_id():
@@ -1167,5 +1168,3 @@ class Matching(object):
         if self.match_group.id == self.venue.get_reviewers_id() and enable_reviewer_reassignment:
             hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
             self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=f'''Emergency_{self.venue.reviewers_name}''')
-
-        self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id))
