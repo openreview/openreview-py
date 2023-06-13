@@ -114,21 +114,6 @@ class TestEMNLPConference():
                 'Expected Submissions': '1000',
                 'use_recruitment_template': 'Yes',
                 'Additional Submission Options': {
-                    # "submission_type": {
-                    #     "value": {
-                    #         "param": {
-                    #             "type": "string",
-                    #             "optional": True,
-                    #             "enum": [
-                    #                 "Regular Long Paper",
-                    #                 "Regular Short Paper"
-                    #             ],
-                    #             "input": "select"
-                    #         }
-                    #     },
-                    #     "description": "Please enter the category under which the submission should be reviewed. This cannot be changed after the abstract submission deadline.",
-                    #     "order": 1
-                    # },
                     "supplementary_materials": {
                         "value": {
                             "param": {
@@ -197,7 +182,6 @@ class TestEMNLPConference():
         assert 'supplementary_materials' in submission_invitation.edit['note']['content']
         assert submission_invitation.edit['note']['content']['supplementary_materials']['value']['param']['optional']
         assert 'submission_type' not in submission_invitation.edit['note']['content']
-        # assert submission_invitation.edit['note']['content']['submission_type']['value']['param']['optional']
         assert 'TLDR' not in submission_invitation.edit['note']['content']
         assert 'pdf' not in submission_invitation.edit['note']['content']
 
@@ -256,20 +240,6 @@ class TestEMNLPConference():
                 'Expected Submissions': '1000',
                 'use_recruitment_template': 'Yes',
                 'Additional Submission Options': {
-                    # "submission_type": {
-                    #     "value": {
-                    #         "param": {
-                    #             "type": "string",
-                    #             "enum": [
-                    #                 "Regular Long Paper",
-                    #                 "Regular Short Paper"
-                    #             ],
-                    #             "input": "select"
-                    #         }
-                    #     },
-                    #     "description": "Please enter the category under which the submission should be reviewed. This cannot be changed after the abstract submission deadline.",
-                    #     "order": 1
-                    # },
                     "supplementary_materials": {
                         "value": {
                             "param": {
@@ -374,8 +344,7 @@ class TestEMNLPConference():
                         "order": 1
                     },            
                 },
-                # 'submission_revision_remove_options': ['title', 'authors', 'authorids', 'abstract', 'pdf', 'submission_type']
-                'submission_revision_remove_options': ['title', 'authors', 'authorids', 'abstract', 'pdf']
+                'submission_revision_remove_options': ['title', 'authors', 'authorids', 'abstract', 'pdf', 'keywords']
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Submission_Revision_Stage'.format(request_form.number),
@@ -390,7 +359,16 @@ class TestEMNLPConference():
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Supplementary_Material-0-1', count=1)
 
+        # assert revision invitation did not change
         revision_invitation = openreview_client.get_invitation('EMNLP/2023/Conference/-/Revision')
+        assert 'pdf' in revision_invitation.edit['invitation']['edit']['note']['content']
+        assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['pdf']['value']['param']
+        assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['submission_type']['value']['param']
+        assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['supplementary_materials']['value']['param']
+        assert 'TLDR' not in revision_invitation.edit['invitation']['edit']['note']['content']
+
+        # assert supplementary material content does not have any extra fields
         supplementary_material_invitation = openreview_client.get_invitation('EMNLP/2023/Conference/-/Supplementary_Material')
         assert revision_invitation.edit['invitation']['duedate'] == supplementary_material_invitation.edit['invitation']['cdate']
-        assert 'supplementary_materials' in supplementary_material_invitation.edit['invitation']['edit']['note']['content']
+        content_keys = supplementary_material_invitation.edit['invitation']['edit']['note']['content'].keys()
+        assert ['supplementary_materials'] == list(content_keys)
