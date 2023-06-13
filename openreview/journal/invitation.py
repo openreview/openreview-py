@@ -1674,13 +1674,14 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         author_submission_id = self.journal.get_author_submission_id()
         editor_in_chief_id = self.journal.get_editors_in_chief_id()
         action_editors_id = self.journal.get_action_editors_id()
+        action_editors_archived_id = self.journal.get_action_editors_archived_id()
         reviewers_id = self.journal.get_reviewers_id()
         authors_id = self.journal.get_authors_id()
 
         invitation = Invitation(
             id=self.journal.get_reviewer_conflict_id(),
             invitees=[venue_id],
-            readers=[venue_id, action_editors_id],
+            readers=[venue_id, action_editors_id, action_editors_archived_id],
             writers=[venue_id],
             signatures=[editor_in_chief_id], ## to compute conflicts
             minReplies=1,
@@ -1741,7 +1742,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = Invitation(
             id=self.journal.get_reviewer_affinity_score_id(),
             invitees=[venue_id],
-            readers=[venue_id, action_editors_id],
+            readers=[venue_id, action_editors_id, action_editors_archived_id],
             writers=[venue_id],
             signatures=[venue_id],
             minReplies=1,
@@ -1802,8 +1803,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         invitation = Invitation(
             id=self.journal.get_reviewer_assignment_id(),
-            invitees=[venue_id, action_editors_id],
-            readers=[venue_id, action_editors_id],
+            invitees=[venue_id, action_editors_id, action_editors_archived_id],
+            readers=[venue_id, action_editors_id, action_editors_archived_id],
             writers=[venue_id],
             signatures=[self.journal.get_editors_in_chief_id()],
             minReplies=1,
@@ -1875,7 +1876,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = Invitation(
             id=self.journal.get_reviewer_assignment_id(archived=True),
             invitees=[venue_id],
-            readers=[venue_id, action_editors_id],
+            readers=[venue_id, action_editors_id, action_editors_archived_id],
             writers=[venue_id],
             signatures=[self.journal.get_editors_in_chief_id()],
             minReplies=1,
@@ -1942,7 +1943,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = Invitation(
             id=self.journal.get_reviewer_custom_max_papers_id(),
             invitees=[venue_id, reviewers_id],
-            readers=[venue_id, action_editors_id, reviewers_id],
+            readers=[venue_id, action_editors_id, reviewers_id, action_editors_archived_id],
             writers=[venue_id],
             signatures=[venue_id],
             minReplies=1,
@@ -2002,7 +2003,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = Invitation(
             id=self.journal.get_reviewer_pending_review_id(),
             invitees=[venue_id],
-            readers=[venue_id, action_editors_id],
+            readers=[venue_id, action_editors_id, action_editors_archived_id],
             writers=[venue_id],
             signatures=[venue_id],
             minReplies=1,
@@ -2057,7 +2058,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = Invitation(
             id=self.journal.get_reviewer_availability_id(),
             invitees=[venue_id, reviewers_id],
-            readers=[venue_id, action_editors_id, reviewers_id],
+            readers=[venue_id, action_editors_id, reviewers_id, action_editors_archived_id],
             writers=[venue_id],
             signatures=['~Super_User1'], ## user super user so it can update the edges
             minReplies=1,

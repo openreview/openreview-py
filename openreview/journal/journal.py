@@ -75,6 +75,9 @@ class Journal(object):
 
     def get_publication_chairs_id(self):
         return f'{self.venue_id}/Publication_Chairs'
+    
+    def get_action_editors_archived_id(self):
+        return f'{self.get_action_editors_id()}/Archived'    
 
     def get_action_editors_id(self, number=None):
         return self.__get_group_id(self.action_editors_name, number)
@@ -426,6 +429,9 @@ class Journal(object):
 
     def has_publication_chairs(self):
         return self.settings.get('has_publication_chairs', False)
+    
+    def has_archived_action_editors(self):
+        return self.settings.get('archived_action_editors', False)    
 
     def get_number_of_reviewers(self):
         return self.settings.get('number_of_reviewers', 3)

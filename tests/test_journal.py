@@ -115,7 +115,7 @@ class TestJournal():
                             'decision_period': 1,
                             'camera_ready_period': 4,
                             'camera_ready_verification_period': 1,
-
+                            'archived_action_editors': True,
                         }
                     }
                 }
@@ -4217,3 +4217,134 @@ note={Under review}
         journal.invitation_builder.expire_paper_invitations(note)
         journal.invitation_builder.expire_reviewer_responsibility_invitations()
         journal.invitation_builder.expire_assignment_availability_invitations()
+
+
+    def test_archived_action_editor(self, journal, openreview_client, test_client, helpers):
+
+        venue_id = journal.venue_id
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        raia_client = OpenReviewClient(username='raia@mail.com', password=helpers.strong_password)
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password=helpers.strong_password)
+
+
+        ## Reviewers
+        david_client=OpenReviewClient(username='david@mailone.com', password=helpers.strong_password)
+        javier_client=OpenReviewClient(username='javier@mailtwo.com', password=helpers.strong_password)
+        carlos_client=OpenReviewClient(username='carlos@mailthree.com', password=helpers.strong_password)
+        andrew_client=OpenReviewClient(username='andrewmc@mailfour.com', password=helpers.strong_password)
+        hugo_client=OpenReviewClient(username='hugo@mailsix.com', password=helpers.strong_password)
+
+        ## Post the submission 13
+        submission_note_13 = test_client.post_note_edit(invitation='TMLR/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title 13' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Eight1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    #'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_13['id'])
+        note_id_13=submission_note_13['note']['id']
+
+        Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
+
+        assert openreview_client.get_invitation('TMLR/Paper13/Action_Editors/-/Recommendation')
+        assert openreview_client.get_invitation(f"{venue_id}/Paper13/-/Official_Comment")
+
+        editor_in_chief_group_id = f"{venue_id}/Editors_In_Chief"
+
+        # Assign Action Editor and immediately remove  assignment
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_13,
+            tail='~Joelle_Pineau1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        ae_group = raia_client.get_group(f'{venue_id}/Paper13/Action_Editors')
+        assert ae_group.members == ['~Joelle_Pineau1']
+
+        ## Archive Joelle
+        raia_client.remove_members_from_group(raia_client.get_group('TMLR/Action_Editors'), '~Joelle_Pineau1')
+        raia_client.add_members_to_group(raia_client.get_group('TMLR/Action_Editors/Archived'), '~Joelle_Pineau1')
+
+
+        ## Make a comment before approving the submission to be under review
+        comment_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper13/-/Official_Comment',
+            signatures=[f"{venue_id}/Paper13/Action_Editors"],
+            note=Note(
+                signatures=[f"{venue_id}/Paper13/Action_Editors"],
+                readers=['TMLR/Editors_In_Chief', 'TMLR/Paper13/Action_Editors'],
+                forum=note_id_13,
+                replyto=note_id_13,
+                content={
+                    'comment': { 'value': 'I\'m not sure if I should accept this paper to be under review' }
+                }
+            )
+        )
+        
+        ## Accept the submission 1
+        under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper13/-/Review_Approval',
+                                    signatures=[f'{venue_id}/Paper13/Action_Editors'],
+                                    note=Note(content={
+                                        'under_review': { 'value': 'Appropriate for Review' }
+                                    }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
+
+        edits = openreview_client.get_note_edits(note_id_13, invitation='TMLR/-/Under_Review')
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+
+        helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Under_Review')
+
+        ## David Belanger
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper13/Action_Editors", '~David_Belanger1'],
+            nonreaders=[f"{venue_id}/Paper13/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper13/Action_Editors"],
+            signatures=[f"{venue_id}/Paper13/Action_Editors"],
+            head=note_id_13,
+            tail='~David_Belanger1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        ## Carlos Mondragon
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper13/Action_Editors", '~Carlos_Mondragon1'],
+            nonreaders=[f"{venue_id}/Paper13/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper13/Action_Editors"],
+            signatures=[f"{venue_id}/Paper13/Action_Editors"],
+            head=note_id_13,
+            tail='~Carlos_Mondragon1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        ## Javier Burroni
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper13/Action_Editors", '~Javier_Burroni1'],
+            nonreaders=[f"{venue_id}/Paper13/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper13/Action_Editors"],
+            signatures=[f"{venue_id}/Paper13/Action_Editors"],
+            head=note_id_13,
+            tail='~Javier_Burroni1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+

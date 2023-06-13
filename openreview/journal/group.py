@@ -186,6 +186,28 @@ class GroupBuilder(object):
                             signatures=[venue_id],
                             signatories=[],
                             members=[]))
+            
+        ## archived action editors group
+        action_editors_archived_id = f'{action_editors_id}/Archived'
+        action_editor_archived_group = openreview.tools.get_group(self.client, action_editors_archived_id)
+        if not action_editor_archived_group:
+            action_editor_archived_group=self.post_group(Group(id=action_editors_archived_id,
+                            readers=['everyone'],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=[]))
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/actionEditorWebfield.js')) as f:
+            content = f.read()
+            content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
+            content = content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{self.journal.short_name}";')
+            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + self.journal.get_author_submission_id() + "';")
+            content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + self.journal.action_editors_name + "';")
+            content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + self.journal.reviewers_name + "';")
+            content = content.replace("var SUBMISSION_GROUP_NAME = '';", "var SUBMISSION_GROUP_NAME = '" + self.journal.submission_group_name + "';")
+
+            action_editor_archived_group.web = content
+            self.post_group(action_editor_archived_group)            
 
         ## reviewers group
         reviewers_id = self.journal.get_reviewers_id()
