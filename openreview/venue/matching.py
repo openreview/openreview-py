@@ -1155,6 +1155,8 @@ class Matching(object):
     def deploy(self, assignment_title, overwrite=False, enable_reviewer_reassignment=False):
 
         self.venue.invitation_builder.set_assignment_invitation(self.match_group.id)
+        recruitment_invitation_id=self.venue.get_invitation_id('Proposed_Assignment_Recruitment', prefix=self.match_group.id)
+        self.venue.invitation_builder.expire_invitation(recruitment_invitation_id)
         
         ## Deploy assignments creating groups and assignment edges
         if self.match_group.id == self.venue.get_senior_area_chairs_id():
