@@ -73,7 +73,9 @@ class SubmissionStage(object):
             papers_released=False,
             author_reorder_after_first_deadline=False,
             submission_email=None,
-            force_profiles=False
+            force_profiles=False,
+            second_deadline_additional_fields=False,
+            second_deadline_remove_fields=False
         ):
 
         self.start_date = start_date
@@ -106,6 +108,8 @@ class SubmissionStage(object):
         self.withdrawal_name = 'Withdrawal'
         self.desk_rejection_name = 'Desk_Rejection'
         self.force_profiles = force_profiles
+        self.second_deadline_additional_fields = second_deadline_additional_fields
+        self.second_deadline_remove_fields = second_deadline_remove_fields
 
     def get_readers(self, conference, number, decision=None):
 
