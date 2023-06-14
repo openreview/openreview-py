@@ -741,7 +741,7 @@ class InvitationBuilder(object):
         invitation_id=venue.get_recruitment_id(venue.get_committee_id(name=committee_name))
         current_invitation=tools.get_invitation(self.client, id = invitation_id)
 
-        #if reduced_load hasn't change, no need to repost invitation
+        #if invitation does not exist, post it
         if not current_invitation:
             recruitment_invitation = Invitation(
                 id = invitation_id,
@@ -769,20 +769,26 @@ class InvitationBuilder(object):
         else:
             print('current invitation', current_invitation.edit['note']['content'].get('reduced_load', {}))
             print('new invitation', reduced_load_dict)
+            updated_invitation = Invitation(
+                id = invitation_id
+            )
             if current_invitation.edit['note']['content'].get('reduced_load', {}) != reduced_load_dict:
-                print('update reduce load')
-                return self.save_invitation(Invitation(
-                    id = invitation_id,
-                    edit = {
-                        'note' : {
-                            'content': {
-                                'reduced_load': reduced_load_dict if reduced_load_dict else { 'delete': True }
-                            }
+                updated_invitation.edit = {
+                    'note': {
+                        'content' : {
+                            'reduced_load': reduced_load_dict if reduced_load_dict else { 'delete': True }
                         }
                     }
-                ))
+                }
+            if 'overlap_committee_name' in invitation_content and current_invitation.edit['note']['content'].get('overlap_committee_name', {}) != invitation_content['overlap_committee_name']:
+                updated_invitation.content = {
+                    'overlap_committee_name': invitation_content['overlap_committee_name'],
+                    'overlap_committee_id': invitation_content['overlap_committee_id']
+                }
+            if updated_invitation.content or updated_invitation.edit.get('note', {}):
+                return self.save_invitation(updated_invitation)
             else:
-                print('do not update reduce load')
+                print('do not update recruitment invitation')
                 return current_invitation
 
     def set_bid_invitations(self):
