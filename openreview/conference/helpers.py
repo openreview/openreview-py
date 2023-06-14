@@ -400,6 +400,12 @@ def get_submission_stage(request_forum, venue):
     force_profiles = 'Yes' in request_forum.content.get('force_profiles_only', '')
     author_reorder_after_first_deadline = request_forum.content.get('submission_deadline_author_reorder', 'No') == 'Yes'
 
+    second_deadline_additional_fields = request_forum.content.get('second_deadline_additional_options', {})
+    if isinstance(second_deadline_additional_fields, str):
+        second_deadline_additional_fields = json.loads(second_deadline_additional_fields.strip())
+
+    second_deadline_remove_fields = request_forum.content.get('second_deadline_remove_options', [])
+
     return openreview.stages.SubmissionStage(name = name,
         double_blind=double_blind,
         start_date=submission_start_date,
@@ -416,7 +422,9 @@ def get_submission_stage(request_forum, venue):
         email_pcs=email_pcs,
         author_reorder_after_first_deadline = author_reorder_after_first_deadline,
         submission_email=submission_email,
-        force_profiles=force_profiles)
+        force_profiles=force_profiles,
+        second_deadline_additional_fields=second_deadline_additional_fields,
+        second_deadline_remove_fields=second_deadline_remove_fields)
 
 def get_bid_stages(request_forum):
     bid_start_date = request_forum.content.get('bid_start_date', '').strip()
