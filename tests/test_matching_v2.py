@@ -793,6 +793,14 @@ class TestMatching():
 
         assert pc_client.get_group(f'{venue.id}/Submission3/Senior_Program_Committee').members == []
 
+        # delete AC Assignment edge
+        edge = pc_client.get_edges(invitation=f'{venue.id}/Senior_Program_Committee/-/Assignment', head=notes[0].id, tail='ac2_venue@umass.edu')[0]
+        assert edge
+        edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        pc_client.post_edge(edge)
+
+        helpers.await_queue(openreview_client)
+
     def test_setup_matching_with_mentors(self, venue, pc_client, helpers):
 
         mentors=venue.group_builder.post_group(Group(id=venue.id + '/Reviewers_Mentors',
