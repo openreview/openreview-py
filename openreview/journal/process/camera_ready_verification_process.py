@@ -16,13 +16,25 @@ def process(client, edit, invitation):
     decision = decisions[0]
     certifications = decision.content.get('certifications', {}).get('value', [])
 
+    if journal.get_certifications():
+        if journal.has_expert_reviewers():
+            expert_reviewer_ceritification = False
+            authorids = submission.content['authorids']['value']
+            print('check if an author is an expert reviewer')
+            for authorid in authorids:
+                print('checking', authorid)
+                if client.get_groups(member=authorid, id=journal.get_expert_reviewers_id()) and not expert_reviewer_ceritification:
+                    print('append expert reviewer certification')
+                    certifications.append('Expert Reviewer Certification')
+                    expert_reviewer_ceritification = True
+
     content= {
         '_bibtex': {
             'value': journal.get_bibtex(submission, journal.accepted_venue_id, certifications=certifications)
         }
     }
 
-    if journal.get_certifications():
+    if certifications:
         content['certifications'] = { 'value': certifications }
 
     acceptance_note = client.post_note_edit(invitation=journal.get_accepted_id(),

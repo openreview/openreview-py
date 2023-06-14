@@ -263,6 +263,18 @@ class GroupBuilder(object):
                             signatures=[venue_id],
                             signatories=[],
                             members=[]))
+            
+        ## expert reviewer group
+        if self.journal.has_expert_reviewers():
+            expert_reviewers_id = self.journal.get_expert_reviewers_id()
+            expert_reviewers_group = openreview.tools.get_group(self.client, expert_reviewers_id)
+            if not expert_reviewers_group:
+                self.post_group(Group(id=expert_reviewers_id,
+                                readers=['everyone'],
+                                writers=[venue_id],
+                                signatures=[venue_id],
+                                signatories=[],
+                                members=[]))        
 
         ## authors group
         authors_id = self.journal.get_authors_id()

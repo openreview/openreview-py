@@ -87,6 +87,9 @@ class Journal(object):
 
     def get_reviewers_reported_id(self):
         return self.get_reviewers_id() + '/Reported'
+    
+    def get_expert_reviewers_id(self):
+        return self.__get_group_id('Expert_Reviewers')
 
     def get_solicit_reviewers_id(self, number=None, declined=False):
         group_id = self.__get_group_id(self.solicit_reviewers_name, number)
@@ -431,7 +434,10 @@ class Journal(object):
         return self.settings.get('has_publication_chairs', False)
     
     def has_archived_action_editors(self):
-        return self.settings.get('archived_action_editors', False)    
+        return self.settings.get('archived_action_editors', False)
+
+    def has_expert_reviewers(self):
+        return self.settings.get('expert_reviewers', False)        
 
     def get_number_of_reviewers(self):
         return self.settings.get('number_of_reviewers', 3)
