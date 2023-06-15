@@ -4245,8 +4245,8 @@ note={Under review}
                 content={
                     'title': { 'value': 'Paper title 13' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Eight1']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight', 'Hugo Larochelle']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Eight1', '~Hugo_Larochelle1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     #'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -4352,3 +4352,227 @@ note={Under review}
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
+        david_anon_groups=david_client.get_groups(prefix=f'{venue_id}/Paper13/Reviewer_.*', signatory='~David_Belanger1')
+        assert len(david_anon_groups) == 1
+
+        ## Post a review edit
+        david_review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper13/-/Review',
+            signatures=[david_anon_groups[0].id],
+            note=Note(
+                content={
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'])
+
+        carlos_anon_groups=carlos_client.get_groups(prefix=f'{venue_id}/Paper13/Reviewer_.*', signatory='~Carlos_Mondragon1')
+        assert len(carlos_anon_groups) == 1
+
+        ## Post a review edit
+        review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper13/-/Review',
+            signatures=[carlos_anon_groups[0].id],
+            note=Note(
+                content={
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }               }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+
+        javier_anon_groups=javier_client.get_groups(prefix=f'{venue_id}/Paper13/Reviewer_.*', signatory='~Javier_Burroni1')
+        assert len(javier_anon_groups) == 1
+
+        ## Post a review edit
+        review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper13/-/Review',
+            signatures=[javier_anon_groups[0].id],
+            note=Note(
+                content={
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])                
+
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper13/-/Official_Recommendation',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 1000,
+                signatures=['TMLR/Editors_In_Chief']
+            )
+        )
+
+        time.sleep(5) ## wait until the process function runs        
+
+        ## Post a review recommendation
+        official_recommendation_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper13/-/Official_Recommendation',
+            signatures=[carlos_anon_groups[0].id],
+            note=Note(
+                content={
+                    'decision_recommendation': { 'value': 'Accept' },
+                    'certification_recommendations': { 'value': ['Featured Certification'] },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])        
+        
+        official_recommendation_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper13/-/Official_Recommendation',
+            signatures=[david_anon_groups[0].id],
+            note=Note(
+                content={
+                    'decision_recommendation': { 'value': 'Accept' },
+                    'certification_recommendations': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
+
+        official_recommendation_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper13/-/Official_Recommendation',
+            signatures=[javier_anon_groups[0].id],
+            note=Note(
+                content={
+                    'decision_recommendation': { 'value': 'Accept' },
+                    'certification_recommendations': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
+
+        reviews = joelle_client.get_notes(forum=note_id_13, invitation=f'{venue_id}/Paper13/-/Review', sort= 'number:asc')
+
+        for review in reviews:
+            signature=review.signatures[0]
+            rating_note=joelle_client.post_note_edit(invitation=f'{signature}/-/Rating',
+                signatures=[f"{venue_id}/Paper13/Action_Editors"],
+                note=Note(
+                    content={
+                        'rating': { 'value': 'Exceeds expectations' }
+                    }
+                )
+            )
+            helpers.await_queue_edit(openreview_client, edit_id=rating_note['id'])
+            process_logs = openreview_client.get_process_logs(id = rating_note['id'])
+            assert len(process_logs) == 1
+            assert process_logs[0]['status'] == 'ok'
+
+        decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper13/-/Decision',
+            signatures=[f"{venue_id}/Paper13/Action_Editors"],
+            note=Note(
+                content={
+                    'claims_and_evidence': { 'value': 'Accept as is' },
+                    'audience': { 'value': 'Accept as is' },
+                    'recommendation': { 'value': 'Accept with minor revision' },
+                    'comment': { 'value': 'This is a good paper' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
+
+        approval_note = raia_client.post_note_edit(invitation='TMLR/Paper13/-/Decision_Approval',
+            signatures=['TMLR/Editors_In_Chief'],
+            note=Note(
+            content= {
+                'approval': { 'value': 'I approve the AE\'s decision.' },
+                'comment_to_the_AE': { 'value': 'I agree with the AE' }
+            }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
+
+        revision_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper13/-/Camera_Ready_Revision',
+            signatures=[f"{venue_id}/Paper13/Authors"],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title 13 VERSION 2' },
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight', 'Hugo Larochelle']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Eight1', '~Hugo_Larochelle1']},
+                    'abstract': { 'value': 'Paper abstract' },
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'video': { 'value': 'https://youtube.com/dfenxkw'}
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
+
+        verification_note = joelle_client.post_note_edit(invitation='TMLR/Paper13/-/Camera_Ready_Verification',
+                            signatures=[f"{venue_id}/Paper13/Action_Editors"],
+                            note=Note(
+                                signatures=[f"{venue_id}/Paper13/Action_Editors"],
+                                content= {
+                                    'verification': { 'value': 'I confirm that camera ready manuscript complies with the TMLR stylefile and, if appropriate, includes the minor revisions that were requested.' }
+                                 }
+                            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=verification_note['id'])
+
+        note = openreview_client.get_note(note_id_13)
+        assert 'certifications' not in note.content
+        assert note.content['_bibtex']['value'] == '''@article{
+user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+title={Paper title 13 {VERSION} 2},
+author={SomeFirstName User and Melissa Eight and Hugo Larochelle},
+journal={Transactions on Machine Learning Research},
+issn={2835-8856},
+year={''' + str(datetime.datetime.today().year) + '''},
+url={https://openreview.net/forum?id=''' + note_id_13 + '''},
+note={}
+}'''        
+
+        edit_group = raia_client.post_group_edit(
+            invitation='TMLR/Expert_Reviewers/-/Member',
+            signatures=['TMLR'],
+            group=openreview.api.Group(
+                members={
+                    'append': ['~Hugo_Larochelle1']
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit_group['id'])
+
+        assert openreview_client.get_group('TMLR/Expert_Reviewers').members == ['~Andrew_McCallum1', '~Hugo_Larochelle1']
+
+        note = openreview_client.get_note(note_id_13)
+        assert note.content['certifications']['value'] == ['Expert Reviewer Certification']
+        assert note.content['_bibtex']['value'] == '''@article{
+user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+title={Paper title 13 {VERSION} 2},
+author={SomeFirstName User and Melissa Eight and Hugo Larochelle},
+journal={Transactions on Machine Learning Research},
+issn={2835-8856},
+year={''' + str(datetime.datetime.today().year) + '''},
+url={https://openreview.net/forum?id=''' + note_id_13 + '''},
+note={Expert Reviewer Certification}
+}'''                                                               

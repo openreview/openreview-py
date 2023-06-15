@@ -91,6 +91,7 @@ class InvitationBuilder(object):
         self.set_eic_revision_invitation()
         self.set_expertise_selection_invitations()
         self.set_review_rating_enabling_invitation()
+        self.set_expertise_reviewer_invitation()
 
     
     def get_super_process_content(self, field_name):
@@ -5839,3 +5840,31 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         build_expertise_selection(self.journal.get_reviewers_id(), self.journal.get_reviewer_expertise_selection_id())
         build_expertise_selection(self.journal.get_action_editors_id(), self.journal.get_ae_expertise_selection_id())
 
+    def set_expertise_reviewer_invitation(self):
+
+        venue_id = self.journal.venue_id
+
+        invitation = Invitation(id=self.journal.get_expert_reviewers_member_id(),
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            process=self.get_process_content('process/expert_reviewers_member_process.py'),
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'group': {
+                    'id': self.journal.get_expert_reviewers_id(),
+                    'members': {
+                        'param': {
+                            'regex': '~.*',
+                            'change': 'append'
+                        }
+                    }
+                }
+
+            }
+        )
+
+        self.save_invitation(invitation)

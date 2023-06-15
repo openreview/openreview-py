@@ -90,6 +90,9 @@ class Journal(object):
     
     def get_expert_reviewers_id(self):
         return self.__get_group_id('Expert_Reviewers')
+    
+    def get_expert_reviewers_member_id(self):
+        return self.__get_invitation_id(name='Member', prefix=self.get_expert_reviewers_id())    
 
     def get_solicit_reviewers_id(self, number=None, declined=False):
         group_id = self.__get_group_id(self.solicit_reviewers_name, number)
