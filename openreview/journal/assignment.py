@@ -138,7 +138,7 @@ class Assignment(object):
         authors = self.journal.get_authors(number=note.number)
         author_profiles = tools.get_profiles(self.client, authors, with_publications=True)
 
-        return tools.get_conflicts(author_profiles, reviewer_profiles[0], policy='NeurIPS')
+        return tools.get_conflicts(author_profiles, reviewer_profiles[0], policy='NeurIPS', n_years=3)
 
     def request_expertise(self, note, committee_id):
         job = self.client.request_single_paper_expertise(

@@ -63,7 +63,7 @@ The OpenReview Team
     )
     client.post_note(comment_note)
 
-    client.post_invitation(openreview.Invitation(
+    revision_invitation = client.post_invitation(openreview.Invitation(
         id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Revision',
         super = SUPPORT_GROUP + '/-/Revision',
         invitees = readers,
@@ -77,7 +77,22 @@ The OpenReview Team
         },
         signatures = ['~Super_User1']
     ))
-
+    if forum.content.get('abstract_registration_deadline') and forum.content.get('api_version') =='2' :
+        content = revision_invitation.reply['content']
+        content['Additional Submission Options']['description'] = 'Configure additional options in the abstract registration form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
+        content['remove_submission_options']['description'] = 'Fields to remove from the abstract registration form: abstract, keywords, pdf, TL;DR'
+        content['second_deadline_additional_options'] = {
+            'order': 23,
+            'value-dict': {},
+            'description': 'Configure additional options in the full submission form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
+        }
+        content['second_deadline_remove_options'] = {
+            'order': 23,
+            'values-dropdown':  ['abstract','keywords', 'pdf', 'TL;DR'],
+            'description': 'Fields to remove from the full submission form: abstract, keywords, pdf, TL;DR'
+        }
+        revision_invitation.reply['content'] = content
+        client.post_invitation(revision_invitation)
 
     recruitment_email_subject = '[{Abbreviated_Venue_Name}] Invitation to serve as {{invitee_role}}'.replace('{Abbreviated_Venue_Name}', conference.get_short_name())
     recruitment_links = '''To ACCEPT the invitation, please click on the following link:
