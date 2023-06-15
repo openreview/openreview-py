@@ -2013,7 +2013,9 @@ class ConferenceBuilder(object):
             papers_released,
             author_reorder_after_first_deadline,
             submission_email,
-            force_profiles
+            force_profiles,
+            {},
+            []
         )
 
     def set_expertise_selection_stage(self, start_date = None, due_date = None, include_option=False):

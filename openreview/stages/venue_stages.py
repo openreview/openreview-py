@@ -74,8 +74,8 @@ class SubmissionStage(object):
             author_reorder_after_first_deadline=False,
             submission_email=None,
             force_profiles=False,
-            second_deadline_additional_fields=False,
-            second_deadline_remove_fields=False
+            second_deadline_additional_fields={},
+            second_deadline_remove_fields=[]
         ):
 
         self.start_date = start_date
@@ -237,9 +237,13 @@ class SubmissionStage(object):
                 content['pdf']['required'] = False
 
             if self.force_profiles:
-                content['authorids']['description'] = 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.'
-                content['authorids']['values-regex'] = '~.*'
-
+                content['authorids'] = {
+                    'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.',
+                    'order': 3,
+                    'values-regex': r'~.*',
+                    'required':True
+                }
+                
         elif api_version == '2':
             content = default_content.submission_v2.copy()
 
@@ -273,8 +277,16 @@ class SubmissionStage(object):
                 content['pdf']['value']['param']['optional'] = True
 
             if self.force_profiles:
-                content['authorids']['description'] = 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.'
-                content['authorids']['value']['param']['regex'] = '~.*'
+                content['authorids'] = {
+                    'order': 3,
+                    'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.',
+                    'value': {
+                        'param': {
+                            'type': 'group[]',
+                            'regex': r'~.*',
+                        }
+                    }
+                }
 
             if conference:
                 submission_id = self.get_submission_id(conference)
