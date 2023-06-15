@@ -32,6 +32,7 @@ class GroupBuilder(object):
         venue_id = self.journal.venue_id
         editor_in_chief_id = self.journal.get_editors_in_chief_id()
         reviewer_report_form = self.journal.get_reviewer_report_form()
+        additional_committee = [self.journal.get_action_editors_archived_id()] if self.journal.has_archived_action_editors() else []
 
         ## venue group
         venue_group=self.post_group(Group(id=venue_id,
@@ -214,7 +215,7 @@ class GroupBuilder(object):
         reviewer_group = openreview.tools.get_group(self.client, reviewers_id)
         if not reviewer_group:
             reviewer_group = Group(id=reviewers_id,
-                            readers=[venue_id, action_editors_id, reviewers_id],
+                            readers=[venue_id, action_editors_id, reviewers_id] + additional_committee,
                             writers=[venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id],

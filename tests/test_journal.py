@@ -233,7 +233,7 @@ class TestJournal():
 
         ## Set a max quota
         david_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Custom_Max_Papers',
-            readers=[venue_id, 'TMLR/Action_Editors', '~David_Belanger1'],
+            readers=[venue_id, 'TMLR/Action_Editors', '~David_Belanger1', 'TMLR/Action_Editors/Archived'],
             writers=[venue_id, '~David_Belanger1'],
             signatures=['~David_Belanger1'],
             head='TMLR/Reviewers',
