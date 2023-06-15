@@ -120,7 +120,7 @@ class GroupBuilder(object):
             content = content.replace("var DESK_REJECTED_ID = '';", "var DESK_REJECTED_ID = '" + venue_id + "/Desk_Rejection';")
             content = content.replace("var WITHDRAWN_ID = '';", "var WITHDRAWN_ID = '" + venue_id + "/Withdrawn_Submission';")
             content = content.replace("var REJECTED_ID = '';", "var REJECTED_ID = '" + venue_id + "/Rejection';")
-            content = content.replace("var CERTIFICATIONS = [];", "var CERTIFICATIONS = " + json.dumps(self.journal.get_certifications()) + ";")
+            content = content.replace("var CERTIFICATIONS = [];", "var CERTIFICATIONS = " + json.dumps(self.journal.get_certifications() + ['Expert Reviewer Certification'] if self.journal.has_expert_reviewers() else []) + ";")
             venue_group.web = content
             self.post_group(venue_group)
 
@@ -269,12 +269,15 @@ class GroupBuilder(object):
             expert_reviewers_id = self.journal.get_expert_reviewers_id()
             expert_reviewers_group = openreview.tools.get_group(self.client, expert_reviewers_id)
             if not expert_reviewers_group:
-                self.post_group(Group(id=expert_reviewers_id,
-                                readers=['everyone'],
-                                writers=[venue_id],
-                                signatures=[venue_id],
-                                signatories=[],
-                                members=[]))        
+                with open(os.path.join(os.path.dirname(__file__), 'webfield/expertReviewerWebfield.js')) as f:
+                    content = f.read()                
+                    self.post_group(Group(id=expert_reviewers_id,
+                                    readers=['everyone'],
+                                    writers=[venue_id],
+                                    signatures=[venue_id],
+                                    signatories=[],
+                                    members=[],
+                                    web=content))        
 
         ## authors group
         authors_id = self.journal.get_authors_id()
