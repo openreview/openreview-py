@@ -132,6 +132,13 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
             contact_info='testvenue@contact.com',
             reduced_load_on_decline = ['1','2','3'])
 
+        #make sure there's no error if recruitment invitation does not have to be updated
+        venue.recruit_reviewers(title='[TV 22] Invitation to serve as Reviewer',
+            message=message,
+            invitees = ['ana@mail.com'],
+            contact_info='testvenue@contact.com',
+            reduced_load_on_decline = ['1','2','3'])
+
         venue.recruit_reviewers(title='[TV 22] Invitation to serve as Area Chair',
             message=message,
             invitees = ['~Reviewer_Venue_One1'],

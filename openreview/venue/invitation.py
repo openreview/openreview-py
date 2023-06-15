@@ -780,12 +780,12 @@ class InvitationBuilder(object):
                         }
                     }
                 }
-            if 'overlap_committee_name' in invitation_content and current_invitation.edit['note']['content'].get('overlap_committee_name', {}) != invitation_content['overlap_committee_name']:
+            if 'overlap_committee_name' in invitation_content and current_invitation.content.get('overlap_committee_name', {}) != invitation_content['overlap_committee_name']:
                 updated_invitation.content = {
                     'overlap_committee_name': invitation_content['overlap_committee_name'],
                     'overlap_committee_id': invitation_content['overlap_committee_id']
                 }
-            if updated_invitation.content or updated_invitation.get('edit', {}).get('note', {}):
+            if updated_invitation.content or updated_invitation.edit:
                 return self.save_invitation(updated_invitation)
             else:
                 print('do not update recruitment invitation')
