@@ -74,8 +74,8 @@ class SubmissionStage(object):
             author_reorder_after_first_deadline=False,
             submission_email=None,
             force_profiles=False,
-            second_deadline_additional_fields=False,
-            second_deadline_remove_fields=False
+            second_deadline_additional_fields={},
+            second_deadline_remove_fields=[]
         ):
 
         self.start_date = start_date
