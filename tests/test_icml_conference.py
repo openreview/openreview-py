@@ -1898,8 +1898,6 @@ ICML 2023 Conference Program Chairs'''
         client.rename_edges(new_id='~Rachel_ICML2', current_id='~Rachel_ICML1')
         client.merge_profiles(profileTo='~Rachel_ICML2', profileFrom='~Rachel_ICML1')
 
-        assert False
-
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False, comment='I am too busy.')
 
         helpers.await_queue(openreview_client)
