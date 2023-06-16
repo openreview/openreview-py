@@ -346,6 +346,9 @@ class Journal(object):
             if 'Long submission' in note.content['submission_length']['value']:
                 return 2 * review_period ## weeks
         return review_period ## weeks
+    
+    def get_expert_reviewer_certification(self):
+        return "Expert Certification"
 
     def is_active_submission(self, submission):
         venue_id = submission.content.get('venueid', {}).get('value')

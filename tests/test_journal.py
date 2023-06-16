@@ -2189,7 +2189,7 @@ The TMLR Editors-in-Chief
         assert note.content['venueid']['value'] == 'TMLR'
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
-        assert note.content['certifications']['value'] == ['Featured Certification', 'Reproducibility Certification', 'Expert Reviewer Certification']
+        assert note.content['certifications']['value'] == ['Featured Certification', 'Reproducibility Certification', 'Expert Certification']
         assert note.content['_bibtex']['value'] == '''@article{
 eight''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
@@ -2198,7 +2198,7 @@ journal={Transactions on Machine Learning Research},
 issn={2835-8856},
 year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
-note={Featured Certification, Reproducibility Certification, Expert Reviewer Certification}
+note={Featured Certification, Reproducibility Certification, Expert Certification}
 }'''
 
         helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Accepted')
@@ -2258,7 +2258,7 @@ journal={Transactions on Machine Learning Research},
 issn={2835-8856},
 year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
-note={Featured Certification, Reproducibility Certification, Expert Reviewer Certification}
+note={Featured Certification, Reproducibility Certification, Expert Certification}
 }'''
 
 
@@ -2724,10 +2724,13 @@ note: replies to this email will go to the AE, Joelle Pineau.
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper4/-/Official_Recommendation',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 1000,
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
+
+        time.sleep(5) ## wait until the process function runs
+        assert raia_client.get_invitation(f'{venue_id}/Paper4/-/Review_Rating_Enabling')
 
         ## Post a review recommendation
         official_recommendation_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Official_Recommendation',
@@ -4565,7 +4568,7 @@ note={}
         assert openreview_client.get_group('TMLR/Expert_Reviewers').members == ['~Andrew_McCallum1', '~Hugo_Larochelle1']
 
         note = openreview_client.get_note(note_id_13)
-        assert note.content['certifications']['value'] == ['Expert Reviewer Certification']
+        assert note.content['certifications']['value'] == ['Expert Certification']
         assert note.content['_bibtex']['value'] == '''@article{
 user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title 13 {VERSION} 2},
@@ -4574,5 +4577,5 @@ journal={Transactions on Machine Learning Research},
 issn={2835-8856},
 year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_13 + '''},
-note={Expert Reviewer Certification}
+note={Expert Certification}
 }'''                                                               

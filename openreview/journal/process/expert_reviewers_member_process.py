@@ -18,11 +18,11 @@ def process(client, edit, invitation):
                     content={
                         'certifications': {
                             'value': {
-                                'append': ['Expert Reviewer Certification']
+                                'append': [journal.get_expert_reviewer_certification()]
                             }
                         },
                         '_bibtex': {
-                            'value': journal.get_bibtex(note, journal.accepted_venue_id, certifications=note.content.get('certifications', {}).get('value', []) + ['Expert Reviewer Certification'])
+                            'value': journal.get_bibtex(note, journal.accepted_venue_id, certifications=note.content.get('certifications', {}).get('value', []) + [journal.get_expert_reviewer_certification()])
                         }
                     }
                 )

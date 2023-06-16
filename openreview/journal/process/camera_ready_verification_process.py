@@ -25,7 +25,7 @@ def process(client, edit, invitation):
                 print('checking', authorid)
                 if client.get_groups(member=authorid, id=journal.get_expert_reviewers_id()) and not expert_reviewer_ceritification:
                     print('append expert reviewer certification')
-                    certifications.append('Expert Reviewer Certification')
+                    certifications.append(journal.get_expert_reviewer_certification())
                     expert_reviewer_ceritification = True
 
     content= {
