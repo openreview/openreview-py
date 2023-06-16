@@ -90,20 +90,24 @@ def process(client, invitation):
 
         if type(invitation_readers) is list:
             for note in notes:
-                final_invitation_readers = [note.signatures[0] if 'signatures' in r else r for r in invitation_readers]
+                final_invitation_readers = list(set([note.signatures[0] if 'signatures' in r else r for r in invitation_readers]))
                 updated_content = updated_content_readers(note, paper_invitation)
-                if note.readers != final_invitation_readers or updated_content:
+                updated_note = openreview.api.Note(
+                    id = note.id
+                )
+                if note.readers != final_invitation_readers:
+                    updated_note.readers = final_invitation_readers
+                    updated_note.nonreaders = paper_invitation.edit['note'].get('nonreaders')
+                if updated_content:
+                    updated_note.content = updated_content
+                if updated_note.content or updated_note.readers:
                     client.post_note_edit(
                         invitation = meta_invitation_id,
-                        readers = invitation_readers,
+                        readers = final_invitation_readers,
+                        nonreaders = paper_invitation.edit['note'].get('nonreaders'),
                         writers = [venue_id],
                         signatures = [venue_id],
-                        note = openreview.api.Note(
-                            id = note.id,
-                            readers = final_invitation_readers,
-                            nonreaders = paper_invitation.edit['note'].get('nonreaders'),
-                            content = updated_content
-                        )
+                        note = updated_note
                     ) 
 
     def post_invitation(note):
