@@ -78,10 +78,21 @@ def process(client, invitation):
         if 'everyone' in invitation_readers and 'everyone' not in submission.readers:
             return
 
+        def updated_content_readers(note, paper_inv):
+            updated_content = {}
+            for key in note.content.keys():
+                invitation_readers = paper_inv.edit['note']['content'].get(key, {}).get('readers', [])
+                if note.content[key].get('readers', []) != invitation_readers:
+                    updated_content[key] = {
+                        'readers': invitation_readers if invitation_readers else { 'delete': True }
+                    }
+            return updated_content
+
         if type(invitation_readers) is list:
             for note in notes:
                 final_invitation_readers = [note.signatures[0] if 'signatures' in r else r for r in invitation_readers]
-                if note.readers != final_invitation_readers:
+                updated_content = updated_content_readers(note, paper_invitation)
+                if note.readers != final_invitation_readers or updated_content:
                     client.post_note_edit(
                         invitation = meta_invitation_id,
                         readers = invitation_readers,
@@ -90,7 +101,8 @@ def process(client, invitation):
                         note = openreview.api.Note(
                             id = note.id,
                             readers = final_invitation_readers,
-                            nonreaders = paper_invitation.edit['note'].get('nonreaders')
+                            nonreaders = paper_invitation.edit['note'].get('nonreaders'),
+                            content = updated_content
                         )
                     ) 
 

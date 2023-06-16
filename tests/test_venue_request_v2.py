@@ -1464,6 +1464,74 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert 'V2.cc/2030/Conference/Submission1/Reviewers' in reviews[0].readers
         assert 'V2.cc/2030/Conference/Submission1/Authors' in reviews[0].readers
         assert len(reviews[0].nonreaders) == 0
+        assert 'readers' not in reviews[0].content['rating']
+
+        #hide ratings from authors without changing readers of reviews
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now - datetime.timedelta(hours=1)
+        review_exp_date = now + datetime.timedelta(days=1)
+        review_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'review_start_date': start_date.strftime('%Y/%m/%d %H:%M'),
+                'review_deadline': due_date.strftime('%Y/%m/%d %H:%M'),
+                'review_expiration_date': review_exp_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
+                'release_reviews_to_authors': 'Yes, reviews should be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers',
+                'additional_review_form_options': {
+                    'rating': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': [
+                                    '10: Top 5% of accepted papers, seminal paper',
+                                    '9: Top 15% of accepted papers, strong accept',
+                                    '8: Top 50% of accepted papers, clear accept',
+                                    '7: Good paper, accept',
+                                    '6: Marginally above acceptance threshold',
+                                    '5: Marginally below acceptance threshold',
+                                    '4: Ok but not good enough - rejection',
+                                    '3: Clear rejection',
+                                    '2: Strong rejection',
+                                    '1: Trivial or wrong'
+                                ]
+                            }
+                        },
+                        'readers': [
+                            "V2.cc/2030/Conference",
+                            "V2.cc/2030/Conference/Submission${7/content/noteNumber/value}/Reviewers"
+                        ]
+                    }
+                },
+                'remove_review_form_options': 'title',
+                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received'
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert review_stage_note
+        helpers.await_queue()
+
+        reviews = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review')
+        assert len(reviews) == 1
+        assert 'V2.cc/2030/Conference/Program_Chairs' in reviews[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs' in reviews[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Area_Chairs' in reviews[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Reviewers' in reviews[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Authors' in reviews[0].readers
+        assert len(reviews[0].nonreaders) == 0
+        assert 'readers' in reviews[0].content['rating']
+        assert reviews[0].content['rating']['readers'] == [
+            "V2.cc/2030/Conference",
+            "V2.cc/2030/Conference/Submission1/Reviewers"
+        ]
 
     def test_rebuttal_stage(self, client, test_client, venue, openreview_client, helpers):
 
