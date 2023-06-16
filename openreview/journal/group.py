@@ -35,18 +35,20 @@ class GroupBuilder(object):
         additional_committee = [self.journal.get_action_editors_archived_id()] if self.journal.has_archived_action_editors() else []
 
         ## venue group
-        venue_group=self.post_group(Group(id=venue_id,
-                        readers=['everyone'],
-                        writers=[venue_id],
-                        signatures=['~Super_User1'],
-                        signatories=[venue_id],
-                        members=[support_role],
-                        host=venue_id
-                        ))
+        venue_group = openreview.tools.get_group(self.client, venue_id)
+        if not venue_group:
+            venue_group=self.post_group(Group(id=venue_id,
+                            readers=['everyone'],
+                            writers=[venue_id],
+                            signatures=['~Super_User1'],
+                            signatories=[venue_id],
+                            members=[support_role],
+                            host=venue_id
+                            ))
 
-        self.client_v1.add_members_to_group('host', venue_id)
-        self.client_v1.add_members_to_group('venues', venue_id)
-        self.client_v1.add_members_to_group('active_venues', venue_id)
+            self.client_v1.add_members_to_group('host', venue_id)
+            self.client_v1.add_members_to_group('venues', venue_id)
+            self.client_v1.add_members_to_group('active_venues', venue_id)
 
         ## editor in chief
         editor_in_chief_group = openreview.tools.get_group(self.client, editor_in_chief_id)
@@ -88,27 +90,33 @@ class GroupBuilder(object):
             <a href=\"https://openreview.net/profile?id={support_role}\">{openreview.tools.pretty_id(support_role)}</a>
         </p>
         <p>
-            Transactions on Machine Learning Research (TMLR) is a venue for dissemination of machine learning research that is intended to complement JMLR while supporting the unmet needs of a growing ML community.
+            {self.journal.full_name} ({venue_id}) is a venue for dissemination of machine learning research that is intended to complement JMLR while supporting the unmet needs of a growing ML community.
         </p>
         <ul>
             <li>
-                <p>TMLR emphasizes technical correctness over subjective significance, in order to ensure we facilitate scientific discourses on topics that are deemed less significant by contemporaries but may be so in the future.</p>
+                <p>{venue_id} emphasizes technical correctness over subjective significance, in order to ensure we facilitate scientific discourses on topics that are deemed less significant by contemporaries but may be so in the future.</p>
             </li>
             <li>
-                <p>TMLR caters to the shorter format manuscripts that are usually submitted to conferences, providing fast turnarounds and double blind reviewing. </p>
+                <p>{venue_id} caters to the shorter format manuscripts that are usually submitted to conferences, providing fast turnarounds and double blind reviewing. </p>
             </li>
             <li>
-                <p>TMLR employs a rolling submission process, shortened review period, flexible timelines, and variable manuscript length, to enable deep and sustained interactions among authors, reviewers, editors and readers.</p>
+                <p>{venue_id} employs a rolling submission process, shortened review period, flexible timelines, and variable manuscript length, to enable deep and sustained interactions among authors, reviewers, editors and readers.</p>
             </li>
             <li>
-                <p>TMLR does not accept submissions that have any overlap with previously published work.</p>
+                <p>{venue_id} does not accept submissions that have any overlap with previously published work.</p>
             </li>
         </ul>
         <p>
-            For more information on TMLR, visit
-            <a href="http://jmlr.org/tmlr" target="_blank" rel="nofollow">jmlr.org/tmlr</a>.
+            For more information on {venue_id}, visit
+            <a href="http://{self.journal.contact_info}" target="_blank" rel="nofollow">{self.journal.contact_info}</a>.
         </p>
         '''
+        if self.journal.has_expert_reviewers():
+            header['instructions'] += f'''
+            <p>
+                Visit <a href="https://openreview.net/group?id={self.journal.get_expert_reviewers_id()}" target="_blank" rel="nofollow">this page</a> for the list of our Expert Reviewers.
+            </p>
+            '''
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/homepage.js')) as f:
             content = f.read()
@@ -122,8 +130,9 @@ class GroupBuilder(object):
             content = content.replace("var WITHDRAWN_ID = '';", "var WITHDRAWN_ID = '" + venue_id + "/Withdrawn_Submission';")
             content = content.replace("var REJECTED_ID = '';", "var REJECTED_ID = '" + venue_id + "/Rejection';")
             content = content.replace("var CERTIFICATIONS = [];", "var CERTIFICATIONS = " + json.dumps(self.journal.get_certifications() + ['Expert Reviewer Certification'] if self.journal.has_expert_reviewers() else []) + ";")
-            venue_group.web = content
-            self.post_group(venue_group)
+            if not venue_group.web:
+                venue_group.web = content
+                self.post_group(venue_group)
 
         ## Add editors in chief to have all the permissions
         self.client.add_members_to_group(venue_group, editor_in_chief_id)
