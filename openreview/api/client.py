@@ -1027,11 +1027,9 @@ class OpenReviewClient(object):
 
     def get_all_notes(self, id = None,
             paperhash = None,
-            forum = None,
-            original = None,
+            forum = None,\
             invitation = None,
             replyto = None,
-            tauthor = None,
             signature = None,
             transitive_members = None,
             signatures = None,
@@ -1039,10 +1037,10 @@ class OpenReviewClient(object):
             trash = None,
             number = None,
             content = None,
-            limit = None,
-            offset = None,
             mintcdate = None,
             details = None,
+            after = None,
+            select = None,
             sort = None,
             with_count=False
             ):
@@ -1057,14 +1055,10 @@ class OpenReviewClient(object):
         :type paperhash: str, optional
         :param forum: A Note ID. If provided, returns Notes whose forum matches the given ID.
         :type forum: str, optional
-        :param original: A Note ID. If provided, returns Notes whose original matches the given ID.
-        :type original: str, optional
         :param invitation: An Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
         :type invitation: str, optional
         :param replyto: A Note ID. If provided, returns Notes whose replyto field matches the given ID.
         :type replyto: str, optional
-        :param tauthor: A Group ID. If provided, returns Notes whose tauthor field ("true author") matches the given ID, or is a transitive member of the Group represented by the given ID.
-        :type tauthor: str, optional
         :param signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
         :type signature: str, optional
         :param transitive_members: If true, returns Notes whose tauthor field is a transitive member of the Group represented by the given Group ID.
@@ -1080,10 +1074,8 @@ class OpenReviewClient(object):
         :type number: int, optional
         :param content: If present, includes Notes whose each key is present in the content field and it is equals the given value.
         :type content: dict, optional
-        :param limit: Maximum amount of Notes that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Notes will be returned
-        :type limit: int, optional
-        :param offset: Indicates the position to start retrieving Notes. For example, if there are 10 Notes and you want to obtain the last 3, then the offset would need to be 7.
-        :type offset: int, optional
+        :param after: Note id to start getting the list of notes from.
+        :type after: str, optional
         :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns Notes
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
         :type mintcdate: int, optional
@@ -1096,30 +1088,46 @@ class OpenReviewClient(object):
         :rtype: list[Note]
         """
 
-        params = {
-            'id': id,
-            'paperhash': paperhash,
-            'forum': forum,
-            'original': original,
-            'invitation': invitation,
-            'replyto': replyto,
-            'tauthor': tauthor,
-            'signature': signature,
-            'transitive_members': transitive_members,
-            'signatures': signatures,
-            'writer': writer,
-            'trash': trash,
-            'number': number,
-            'content': content,
-            'limit': limit,
-            'offset': offset,
-            'mintcdate': mintcdate,
-            'details': details,
-            'sort': sort,
-            'with_count': with_count
-        }
+        params = {}
+        if id is not None:
+            params['id'] = id
+        if paperhash is not None:
+            params['paperhash'] = paperhash
+        if forum is not None:
+            params['forum'] = forum
+        if invitation is not None:
+            params['invitation'] = invitation
+        if replyto is not None:
+            params['replyto'] = replyto
+        if signature is not None:
+            params['signature'] = signature
+        if signatures is not None:
+            params['signatures'] = signatures
+        if transitive_members is not None:
+            params['transitive_members'] = transitive_members
+        if writer is not None:
+            params['writer'] = writer
+        if trash == True:
+            params['trash']=True
+        if number is not None:
+            params['number'] = number
+        if content is not None:
+            for k in content:
+                params['content.' + k] = content[k]
+        if after is not None:
+            params['after'] = after
+        if mintcdate is not None:
+            params['mintcdate'] = mintcdate
+        if details is not None:
+            params['details'] = details
+        if select:
+            params['select'] = select
+        if sort is not None:
+            params['sort'] = sort
+        if with_count:
+            params['with_count'] = with_count
 
-        return tools.concurrent_get(self, self.get_notes, **params)
+        return list(tools.efficient_iterget(self.get_notes, desc='Getting V2 Notes', **params))
 
     def get_note_edit(self, id):
         """

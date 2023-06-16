@@ -900,6 +900,7 @@ class Client(object):
             content = None,
             limit = None,
             offset = None,
+            after = None,
             mintcdate = None,
             details = None,
             sort = None,
@@ -942,6 +943,8 @@ class Client(object):
         :type limit: int, optional
         :param offset: Indicates the position to start retrieving Notes. For example, if there are 10 Notes and you want to obtain the last 3, then the offset would need to be 7.
         :type offset: int, optional
+        :param after: Note id to start getting the list of notes from.
+        :type after: str, optional
         :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns Notes
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
         :type mintcdate: int, optional
@@ -996,6 +999,8 @@ class Client(object):
             params['limit'] = limit
         if offset is not None:
             params['offset'] = offset
+        if after is not None:
+            params['after'] = after
         if mintcdate is not None:
             params['mintcdate'] = mintcdate
         if details is not None:
@@ -1029,11 +1034,11 @@ class Client(object):
             trash = None,
             number = None,
             content = None,
-            limit = None,
-            offset = None,
+            after = None,
             mintcdate = None,
             details = None,
             sort = None,
+            select = None,
             with_count=False):
         """
         Gets list of Note objects based on the filters provided. The Notes that will be returned match all the criteria passed in the parameters.
@@ -1046,14 +1051,10 @@ class Client(object):
         :type paperhash: str, optional
         :param forum: A Note ID. If provided, returns Notes whose forum matches the given ID.
         :type forum: str, optional
-        :param original: A Note ID. If provided, returns Notes whose original matches the given ID.
-        :type original: str, optional
         :param invitation: An Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
         :type invitation: str, optional
         :param replyto: A Note ID. If provided, returns Notes whose replyto field matches the given ID.
         :type replyto: str, optional
-        :param tauthor: If provided, returns Notes whose true author is the user requesting the Notes.
-        :type tauthor: bool, optional
         :param signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
         :type signature: str, optional
         :param signatures: Group IDs. If provided, returns Notes whose signatures field contains the given Group IDs.
@@ -1067,10 +1068,8 @@ class Client(object):
         :type number: int, optional
         :param content: If present, includes Notes whose each key is present in the content field and it is equals the given value.
         :type content: dict, optional
-        :param limit: Maximum amount of Notes that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Notes will be returned
-        :type limit: int, optional
-        :param offset: Indicates the position to start retrieving Notes. For example, if there are 10 Notes and you want to obtain the last 3, then the offset would need to be 7.
-        :type offset: int, optional
+        :param after: Note id to start getting the list of notes from.
+        :type after: str, optional
         :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns Notes
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
         :type mintcdate: int, optional
@@ -1093,29 +1092,49 @@ class Client(object):
         :return: List of Notes
         :rtype: list[Note]
         """
+
+        params = {}
+        if id is not None:
+            params['id'] = id
+        if paperhash is not None:
+            params['paperhash'] = paperhash
+        if forum is not None:
+            params['forum'] = forum
+        if original is not None:
+            params['original'] = original
+        if invitation is not None:
+            params['invitation'] = invitation
+        if replyto is not None:
+            params['replyto'] = replyto
+        if tauthor is not None:
+            params['tauthor'] = tauthor
+        if signature is not None:
+            params['signature'] = signature
+        if signatures is not None:
+            params['signatures'] = signatures
+        if writer is not None:
+            params['writer'] = writer
+        if trash == True:
+            params['trash']=True
+        if number is not None:
+            params['number'] = number
+        if content is not None:
+            for k in content:
+                params['content.' + k] = content[k]
+        if after is not None:
+            params['after'] = after
+        if mintcdate is not None:
+            params['mintcdate'] = mintcdate
+        if details is not None:
+            params['details'] = details
+        if select:
+            params['select'] = select
+        if sort is not None:
+            params['sort'] = sort
+        if with_count:
+            params['with_count'] = with_count
         
-        params = {
-            'id': id,
-            'paperhash': paperhash,
-            'forum': forum,
-            'original': original,
-            'invitation': invitation,
-            'replyto': replyto,
-            'tauthor': tauthor,
-            'signature': signature,
-            'signatures': signatures,
-            'writer': writer,
-            'trash': trash,
-            'number': number,
-            'content': content,
-            'limit': limit,
-            'offset': offset,
-            'mintcdate': mintcdate,
-            'details': details,
-            'sort': sort,
-            'with_count': with_count
-        }
-        return tools.concurrent_get(self, self.get_notes, **params)
+        return list(tools.efficient_iterget(self.get_notes, desc='Getting V1 Notes', **params))
 
     def get_reference(self, id):
         """

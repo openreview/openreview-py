@@ -789,6 +789,69 @@ class iterget:
 
     next = __next__
 
+class efficient_iterget:
+    """
+    This class can create an iterator from a getter method that returns a list. Below all the iterators that can be created from a getter method:
+
+    :meth:`openreview.Client.get_tags` --> :func:`tools.iterget_tags`
+
+    :meth:`openreview.Client.get_notes` --> :func:`tools.iterget_notes`
+
+    :meth:`openreview.Client.get_references` --> :func:`tools.iterget_references`
+
+    :meth:`openreview.Client.get_invitations` --> :func:`tools.iterget_invitations`
+
+    :meth:`openreview.Client.get_groups` --> :func:`tools.iterget_groups`
+
+    :param get_function: Any of the aforementioned methods
+    :type get_function: function
+    :param params: Dictionary containing parameters for the corresponding method. Refer to the passed method documentation for details
+    :type params: dict
+    """
+    def __init__(self, get_function, desc='Gathering Responses', **params):
+        self.obj_index = 0
+
+        self.params = params
+        self.params.update({
+            'with_count': True,
+            'sort': params.get('sort') or 'id',
+            'limit': params.get('limit') or 1000
+        })
+
+        self.get_function = get_function
+        self.current_batch, total = self.get_function(**self.params)
+
+        self.gathering_responses = tqdm(total=total, desc=desc)
+
+    def update_batch(self):
+        after = self.current_batch[-1].id
+        self.params['after'] = after
+        self.params['with_count'] = False
+        next_batch = self.get_function(**self.params)
+        if next_batch:
+            self.current_batch = next_batch
+        else:
+            self.current_batch = []
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if len(self.current_batch) == 0:
+            self.gathering_responses.close()
+            raise StopIteration
+        else:
+            next_obj = self.current_batch[self.obj_index]
+            if (self.obj_index + 1) == len(self.current_batch):
+                self.update_batch()
+                self.obj_index = 0
+            else:
+                self.gathering_responses.update(1)
+                self.obj_index += 1
+            return next_obj
+
+    next = __next__
+
 
 def iterget_messages(client, to = None, subject = None, status = None):
     """
@@ -894,7 +957,6 @@ def iterget_grouped_edges(
 
         yield group_edges
 
-
 def iterget_notes(client,
     id = None,
     paperhash = None,
@@ -974,7 +1036,7 @@ def iterget_notes(client,
         params['details'] = details
     params['sort'] = sort
 
-    return iterget(client.get_notes, **params)
+    return efficient_iterget(client.get_notes, desc='Getting Notes', **params)
 
 def iterget_references(client, referent = None, invitation = None, mintcdate = None):
     """
