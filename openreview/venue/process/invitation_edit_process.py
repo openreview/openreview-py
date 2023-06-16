@@ -90,7 +90,7 @@ def process(client, invitation):
 
         if type(invitation_readers) is list:
             for note in notes:
-                final_invitation_readers = list(set([note.signatures[0] if 'signatures' in r else r for r in invitation_readers]))
+                final_invitation_readers = list(dict.fromkeys([note.signatures[0] if 'signatures' in r else r for r in invitation_readers]))
                 updated_content = updated_content_readers(note, paper_invitation)
                 updated_note = openreview.api.Note(
                     id = note.id
