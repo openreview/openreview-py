@@ -1040,7 +1040,7 @@ class OpenReviewClient(object):
 
     def get_all_notes(self, id = None,
             paperhash = None,
-            forum = None,\
+            forum = None,
             invitation = None,
             replyto = None,
             signature = None,
