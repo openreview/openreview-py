@@ -1119,8 +1119,7 @@ class Client(object):
         if number is not None:
             params['number'] = number
         if content is not None:
-            for k in content:
-                params['content.' + k] = content[k]
+            params['content'] = content
         if after is not None:
             params['after'] = after
         if mintcdate is not None:
