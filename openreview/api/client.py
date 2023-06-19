@@ -922,7 +922,6 @@ class OpenReviewClient(object):
     def get_notes(self, id = None,
             paperhash = None,
             forum = None,
-            original = None,
             invitation = None,
             replyto = None,
             tauthor = None,
@@ -935,6 +934,7 @@ class OpenReviewClient(object):
             content = None,
             limit = None,
             offset = None,
+            after = None,
             mintcdate = None,
             details = None,
             sort = None,
@@ -951,8 +951,6 @@ class OpenReviewClient(object):
         :type paperhash: str, optional
         :param forum: A Note ID. If provided, returns Notes whose forum matches the given ID.
         :type forum: str, optional
-        :param original: A Note ID. If provided, returns Notes whose original matches the given ID.
-        :type original: str, optional
         :param invitation: An Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
         :type invitation: str, optional
         :param replyto: A Note ID. If provided, returns Notes whose replyto field matches the given ID.
@@ -978,6 +976,8 @@ class OpenReviewClient(object):
         :type limit: int, optional
         :param offset: Indicates the position to start retrieving Notes. For example, if there are 10 Notes and you want to obtain the last 3, then the offset would need to be 7.
         :type offset: int, optional
+        :param after: Note id to start getting the list of notes from.
+        :type after: str, optional
         :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns Notes
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
         :type mintcdate: int, optional
@@ -1025,8 +1025,10 @@ class OpenReviewClient(object):
             params['mintcdate'] = mintcdate
         if details is not None:
             params['details'] = details
-        params['sort'] = sort
-        params['original'] = original
+        if after is not None:
+            params['after'] = after
+        if sort is not None:
+            params['sort'] = sort
 
         response = self.session.get(self.notes_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
