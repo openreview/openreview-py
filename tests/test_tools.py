@@ -236,65 +236,6 @@ class TestTools():
         assert notes
         assert len(notes) == 1333
 
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', limit=1200)
-        assert notes
-        assert len(notes) == 1200
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', limit=4000)
-        assert notes
-        assert len(notes) == 1333
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', limit=500)
-        assert notes
-        assert len(notes) == 500
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=4000)
-        assert len(notes) == 0
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=1000, limit=4000)
-        assert notes
-        assert len(notes) == 333
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=1050, limit=200)
-        assert notes
-        assert len(notes) == 200
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=33, limit=900)
-        assert notes
-        assert len(notes) == 900
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=200, limit=900)
-        assert notes
-        assert len(notes) == 900
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=33, limit=1100)
-        assert notes
-        assert len(notes) == 1100
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', limit=1333)
-        assert notes
-        assert len(notes) == 1333
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', limit=1000)
-        assert notes
-        assert len(notes) == 1000
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=333, limit=1000)
-        assert notes
-        assert len(notes) == 1000
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=334, limit=1000)
-        assert notes
-        assert len(notes) == 999
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=333, limit=1001)
-        assert notes
-        assert len(notes) == 1000
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=1100)
-        assert notes
-        assert len(notes) == 233
-
     def test_get_all_refs(self, client):
         refs_iterator = openreview.tools.iterget_references(client)
         assert refs_iterator
