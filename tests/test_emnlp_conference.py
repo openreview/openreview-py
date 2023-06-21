@@ -338,8 +338,10 @@ class TestEMNLPConference():
         helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
         helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Withdrawn_Submission')
 
+        pc_openreview_client = openreview.api.OpenReviewClient(username='pc@emnlp.org', password=helpers.strong_password)
+
         # reverse withdrawal
-        withdrawal_reversion_note = openreview_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Withdrawal_Reversion',
+        withdrawal_reversion_note = pc_openreview_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Withdrawal_Reversion',
                                     signatures=['EMNLP/2023/Conference/Program_Chairs'],
                                     note=openreview.api.Note(
                                         content={
@@ -349,6 +351,29 @@ class TestEMNLPConference():
 
         helpers.await_queue_edit(openreview_client, edit_id=withdrawal_reversion_note['id'])
         helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/Submission5/-/Withdrawal_Reversion')
+
+        #desk-reject paper
+        desk_reject_note = pc_openreview_client.post_note_edit(invitation=f'EMNLP/2023/Conference/Submission5/-/Desk_Rejection',
+                                    signatures=['EMNLP/2023/Conference/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'desk_reject_comments': { 'value': 'No pdf.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Desk_Rejected_Submission')
+
+        desk_rejection_reversion_note = pc_openreview_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Desk_Rejection_Reversion',
+                                    signatures=['EMNLP/2023/Conference/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'revert_desk_rejection_confirmation': { 'value': 'We approve the reversion of desk-rejected submission.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_reversion_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/Submission5/-/Desk_Rejection_Reversion')
 
         revision_due_date = now + datetime.timedelta(days=10)
 
