@@ -1756,7 +1756,7 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    def post_note_edit(self, invitation, signatures, note=None, readers=None, writers=None):
+    def post_note_edit(self, invitation, signatures, note=None, readers=None, writers=None, nonreaders=None):
         """
         """
         edit_json = {
@@ -1770,6 +1770,9 @@ class OpenReviewClient(object):
 
         if writers is not None:
             edit_json['writers'] = writers
+
+        if nonreaders is not None:
+            edit_json['nonreaders'] = nonreaders
 
         response = self.session.post(self.note_edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
