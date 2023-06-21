@@ -604,9 +604,11 @@ class ReviewStage(object):
 
     def get_signatures(self, conference, number):
         if self.allow_de_anonymization:
-            return '~.*|' + conference.get_program_chairs_id()
+            # return '~.*|' + conference.get_program_chairs_id()
+            return '~.*|'
 
-        return conference.get_anon_reviewer_id(number=number, anon_id='.*') + '|' +  conference.get_program_chairs_id()
+        # return conference.get_anon_reviewer_id(number=number, anon_id='.*') + '|' +  conference.get_program_chairs_id()
+        return conference.get_anon_reviewer_id(number=number, anon_id='.*')
     
     def get_content(self, api_version='2', conference=None):
 
