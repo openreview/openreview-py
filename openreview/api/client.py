@@ -599,7 +599,7 @@ class OpenReviewClient(object):
         return Profile.from_json(response.json())
 
 
-    def get_groups(self, id = None, prefix = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
+    def get_groups(self, id=None, prefix=None, member=None, signatory=None, web=None, limit=None, offset=None, after=None, sort=None, with_count=False):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -622,13 +622,24 @@ class OpenReviewClient(object):
         :rtype: list[Group]
         """
         params = {}
-        if id is not None: params['id'] = id
-        if prefix is not None: params['prefix'] = prefix
-        if member is not None: params['member'] = member
-        if signatory is not None: params['signatory'] = signatory
-        if web: params['web'] = web
-        params['limit'] = limit
-        params['offset'] = offset
+        if id is not None:
+            params['id'] = id
+        if prefix is not None:
+            params['prefix'] = prefix
+        if member is not None:
+            params['member'] = member
+        if signatory is not None:
+            params['signatory'] = signatory
+        if sort is not None:
+            params['sort'] = sort
+        if web is not None:
+            params['web'] = web
+        if limit is not None:
+            params['limit'] = limit
+        if offset is not None:
+            params['offset'] = offset
+        if after is not None:
+            params['after'] = after
 
         response = self.session.get(self.groups_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -639,7 +650,7 @@ class OpenReviewClient(object):
 
         return groups
 
-    def get_all_groups(self, id=None, parent=None, prefix=None, member=None, domain=None, signatory=None, web=None, after=None, with_count=False):
+    def get_all_groups(self, id=None, parent=None, prefix=None, member=None, domain=None, signatory=None, web=None, sort=None with_count=False):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -680,8 +691,8 @@ class OpenReviewClient(object):
             params['domain'] = domain
         if web is not None:
             params['web'] = web
-        if after is not None:
-            params['after'] = after
+        if sort is not None:
+            params['sort'] = sort
         if with_count is not None:
             params['with_count'] = with_count
 
@@ -1054,7 +1065,6 @@ class OpenReviewClient(object):
             content = None,
             mintcdate = None,
             details = None,
-            after = None,
             select = None,
             sort = None,
             with_count=False
@@ -1128,8 +1138,6 @@ class OpenReviewClient(object):
             params['number'] = number
         if content is not None:
             params['content'] = content
-        if after is not None:
-            params['after'] = after
         if mintcdate is not None:
             params['mintcdate'] = mintcdate
         if details is not None:

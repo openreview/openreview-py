@@ -645,7 +645,7 @@ class Client(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())        
 
-    def get_groups(self, id=None, ids=None, parent=None, regex=None, member=None, members=None, signatory=None, web=None, limit=None, offset=None, with_count=False, select=None):
+    def get_groups(self, id=None, ids=None, parent=None, regex=None, member=None, members=None, signatory=None, web=None, limit=None, offset=None, after=None, sort=None, with_count=False, select=None):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -672,19 +672,32 @@ class Client(object):
         :rtype: list[Group]
         """
         params = {}
-        if id is not None: params['id'] = id
-        if ids is not None: params['ids'] = ids
-        if parent is not None: params['parent'] = parent
-        if regex is not None: params['regex'] = regex
-        if member is not None: params['member'] = member
-        if members is not None: params['members'] = members
-        if signatory is not None: params['signatory'] = signatory
-        if web: params['web'] = web
+        if id is not None:
+            params['id'] = id
+        if ids is not None:
+            params['ids'] = ids
+        if parent is not None:
+            params['parent'] = parent
+        if regex is not None:
+            params['regex'] = regex
+        if member is not None:
+            params['member'] = member
+        if members is not None:
+            params['members'] = members
+        if signatory is not None:
+            params['signatory'] = signatory
+        if web:
+            params['web'] = web
         if select:
             params['select'] = select
-
-        params['limit'] = limit
-        params['offset'] = offset
+        if after is not None:
+            params['after'] = after
+        if sort is not None:
+            params['sort'] = sort
+        if limit is not None:
+            params['limit'] = limit
+        if offset is not None:
+            params['offset'] = offset
 
         response = self.session.get(self.groups_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -695,7 +708,7 @@ class Client(object):
 
         return groups
 
-    def get_all_groups(self, id=None, parent=None, regex=None, member=None, signatory=None, web=None, after=None, with_count=False):
+    def get_all_groups(self, id=None, parent=None, regex=None, member=None, signatory=None, web=None, sort=None, with_count=False):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -731,8 +744,8 @@ class Client(object):
             params['signatory'] = signatory
         if web is not None:
             params['web'] = web
-        if after is not None:
-            params['after'] = after
+        if sort is not None:
+            params['sort'] = sort
         if with_count is not None:
             params['with_count'] = with_count
 
@@ -1041,7 +1054,6 @@ class Client(object):
             trash = None,
             number = None,
             content = None,
-            after = None,
             mintcdate = None,
             details = None,
             sort = None,
@@ -1127,8 +1139,6 @@ class Client(object):
             params['number'] = number
         if content is not None:
             params['content'] = content
-        if after is not None:
-            params['after'] = after
         if mintcdate is not None:
             params['mintcdate'] = mintcdate
         if details is not None:
