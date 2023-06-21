@@ -695,12 +695,14 @@ class Client(object):
 
         return groups
 
-    def get_all_groups(self, id = None, parent = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
+    def get_all_groups(self, id=None, parent=None, regex=None, member=None, signatory=None, web=None, after=None, with_count=False):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
         :param id: id of the Group
         :type id: str, optional
+        :param parent: id of the parent Group
+        :type parent: str, optional
         :param regex: Regex that matches several Group ids
         :type regex: str, optional
         :param member: Groups that contain this member
@@ -709,27 +711,32 @@ class Client(object):
         :type signatory: str, optional
         :param web: Groups that contain a web field value
         :type web: bool, optional
-        :param limit: Maximum amount of Groups that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Groups will be returned
-        :type limit: int, optional
-        :param offset: Indicates the position to start retrieving Groups. For example, if there are 10 Groups and you want to obtain the last 3, then the offset would need to be 7.
-        :type offset: int, optional
+        :param after: Group id to start getting the list of groups from.
+        :type after: str, optional
 
         :return: List of Groups
         :rtype: list[Group]
         """
 
-        params = {
-            'id': id,
-            'parent': parent,
-            'regex': regex,
-            'member': member,
-            'signatory': signatory,
-            'web': web,
-            'limit': limit,
-            'offset': offset,
-            'with_count': with_count
-        }
-        return tools.concurrent_get(self, self.get_groups, **params)
+        params = {}
+        if id is not None:
+            params['id'] = id
+        if parent is not None:
+            params['parent'] = parent
+        if regex is not None:
+            params['regex'] = regex
+        if member is not None:
+            params['member'] = member
+        if signatory is not None:
+            params['signatory'] = signatory
+        if web is not None:
+            params['web'] = web
+        if after is not None:
+            params['after'] = after
+        if with_count is not None:
+            params['with_count'] = with_count
+
+        return list(tools.efficient_iterget(self.get_groups, desc='Getting Groups', **params))
 
     def get_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False, select=None):
         """

@@ -1178,7 +1178,7 @@ def iterget_groups(client, id = None, regex = None, member = None, host = None, 
     if web is not None:
         params['web'] = web
 
-    return iterget(client.get_groups, **params)
+    return efficient_iterget(client.get_groups, desc='Getting Groups', **params)
 
 def timestamp_GMT(year, month, day, hour=0, minute=0, second=0):
     """

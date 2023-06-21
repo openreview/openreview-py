@@ -639,12 +639,14 @@ class OpenReviewClient(object):
 
         return groups
 
-    def get_all_groups(self, id = None, prefix = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
+    def get_all_groups(self, id=None, parent=None, prefix=None, member=None, domain=None, signatory=None, web=None, after=None, with_count=False):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
         :param id: id of the Group
         :type id: str, optional
+        :param parent: id of the parent Group
+        :type parent: str, optional
         :param prefix: Prefix that matches several Group ids
         :type prefix: str, optional
         :param member: Groups that contain this member
@@ -657,22 +659,33 @@ class OpenReviewClient(object):
         :type limit: int, optional
         :param offset: Indicates the position to start retrieving Groups. For example, if there are 10 Groups and you want to obtain the last 3, then the offset would need to be 7.
         :type offset: int, optional
+        :param after: Group id to start getting the list of groups from.
+        :type after: str, optional
 
         :return: List of Groups
         :rtype: list[Group]
         """
-        params = {
-            'id': id,
-            'prefix': prefix,
-            'member': member,
-            'signatory': signatory,
-            'web': web,
-            'limit': limit,
-            'offset': offset,
-            'with_count': with_count
-        }
+        params = {}
+        if id is not None:
+            params['id'] = id
+        if parent is not None:
+            params['parent'] = parent
+        if prefix is not None:
+            params['prefix'] = prefix
+        if member is not None:
+            params['member'] = member
+        if signatory is not None:
+            params['signatory'] = signatory
+        if domain is not None:
+            params['domain'] = domain
+        if web is not None:
+            params['web'] = web
+        if after is not None:
+            params['after'] = after
+        if with_count is not None:
+            params['with_count'] = with_count
 
-        return tools.concurrent_get(self, self.get_groups, **params)
+        return list(tools.efficient_iterget(self.get_groups, desc='Getting Groups', **params))
 
     def get_invitations(self,
         id = None,
