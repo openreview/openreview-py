@@ -12,16 +12,16 @@ class TestEMNLPConference():
         # Post the request form note
         pc_client=helpers.create_user('pc@emnlp.org', 'Program', 'EMNLPChair')
 
-        sac_client = helpers.create_user('sac1@gmail.com', 'SAC', 'EMNLPOne')
+        sac_client = helpers.create_user('sac@emnlp.com', 'SAC', 'EMNLPOne')
         helpers.create_user('sac2@emnlp.org', 'SAC', 'EMNLPTwo')
         helpers.create_user('ac1@emnlp.org', 'AC', 'EMNLPOne')
         helpers.create_user('ac2@emnlp.org', 'AC', 'EMNLPTwo')
         helpers.create_user('reviewer1@emnlp.org', 'Reviewer', 'EMNLPOne')
         helpers.create_user('reviewer2@emnlp.org', 'Reviewer', 'EMNLPTwo')
         helpers.create_user('reviewer3@emnlp.org', 'Reviewer', 'EMNLPThree')
-        helpers.create_user('reviewer4@gmail.com', 'Reviewer', 'EMNLPFour')
-        helpers.create_user('reviewer5@gmail.com', 'Reviewer', 'EMNLPFive')
-        helpers.create_user('reviewer6@gmail.com', 'Reviewer', 'EMNLPSix')
+        helpers.create_user('reviewer4@emnlp.com', 'Reviewer', 'EMNLPFour')
+        helpers.create_user('reviewer5@emnlp.com', 'Reviewer', 'EMNLPFive')
+        helpers.create_user('reviewer6@emnlp.com', 'Reviewer', 'EMNLPSix')
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
@@ -405,3 +405,131 @@ class TestEMNLPConference():
         assert revision_invitation.edit['invitation']['duedate'] == supplementary_material_invitation.edit['invitation']['cdate']
         content_keys = supplementary_material_invitation.edit['invitation']['edit']['note']['content'].keys()
         assert ['supplementary_materials'] == list(content_keys)
+
+        #close submissions
+        due_date = now - datetime.timedelta(days=1)
+        venue_revision_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'The 2023 Conference on Empirical Methods in Natural Language Processing',
+                'Official Venue Name': 'The 2023 Conference on Empirical Methods in Natural Language Processing',
+                'Abbreviated Venue Name': 'EMNLP 2023',
+                'Official Website URL': 'https://2023.emnlp.org/',
+                'program_chair_emails': ['pc@emnlp.org'],
+                'contact_email': 'pc@emnlp.org',
+                'Venue Start Date': '2023/07/01',
+                'abstract_registration_deadline': first_date.strftime('%Y/%m/%d %H:%M'),
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Location': 'Singapore',
+                'submission_reviewer_assignment': 'Automatic',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '1000',
+                'use_recruitment_template': 'Yes',
+                'Additional Submission Options': {
+                    "supplementary_materials": {
+                        "value": {
+                            "param": {
+                                "type": "file",
+                                "extensions": [
+                                    "tgz",
+                                    "zip"
+                                ],
+                                "maxSize": 100
+                            }
+                        },
+                        "description": "Each submission can optionally be accompanied by a single .tgz or .zip archive containing software, and/or a single .tgz or .zip archive containing data. EMNLP 2023 encourages the submission of these supplementary materials to improve the reproducibility of results and to enable authors to provide additional information that does not fit in the paper. All supplementary materials must be properly anonymized.",
+                        "order": 9
+                    }
+                },
+                'remove_submission_options': ['TL;DR'],
+                'second_deadline_additional_options': {
+                    'pdf': {
+                        'order': 7,
+                        'description': 'Upload a PDF file that ends with .pdf.',
+                        'value': {
+                            'param': {
+                                'type': 'file',
+                                'maxSize': 50,
+                                'extensions': ['pdf']
+                            }
+                        }
+                    },
+                    "submission_type": {
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "Regular Long Paper",
+                                    "Regular Short Paper"
+                                ],
+                                "input": "select"
+                            }
+                        },
+                        "description": "Please enter the category under which the submission should be reviewed. This cannot be changed after the abstract submission deadline.",
+                        "order": 1
+                    },
+                    "supplementary_materials": {
+                        "value": {
+                            "param": {
+                                "type": "file",
+                                "extensions": [
+                                    "tgz",
+                                    "zip"
+                                ],
+                                "maxSize": 100
+                            }
+                        },
+                        "description": "Each submission can optionally be accompanied by a single .tgz or .zip archive containing software, and/or a single .tgz or .zip archive containing data. EMNLP 2023 encourages the submission of these supplementary materials to improve the reproducibility of results and to enable authors to provide additional information that does not fit in the paper. All supplementary materials must be properly anonymized.",
+                        "order": 9
+                    }            
+                }   
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['{}/Program_Chairs'.format('EMNLP/2023/Conference'), 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_EMNLPChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        # open revisions
+        revision_due_date = now + datetime.timedelta(days=10)
+
+        revision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'submission_revision_name': 'Supplementary_Material',
+                'submission_revision_start_date': due_date.strftime('%Y/%m/%d'),
+                'submission_revision_deadline': revision_due_date.strftime('%Y/%m/%d'),
+                'accepted_submissions_only': 'Enable revision for all submissions',
+                'submission_author_edition': 'Allow addition and removal of authors',
+                'submission_revision_additional_options': {
+                    "supplementary_materials": {
+                        "value": {
+                            "param": {
+                                "type": "file",
+                                "extensions": [
+                                    "zip",
+                                    "pdf",
+                                    "tgz",
+                                    "gz"
+                                ],
+                                "maxSize": 100
+                            }
+                        },
+                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
+                        "order": 1
+                    },            
+                },
+                'submission_revision_remove_options': ['title', 'authors', 'authorids', 'abstract', 'pdf', 'keywords']
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Submission_Revision_Stage'.format(request_form.number),
+            readers=['{}/Program_Chairs'.format('EMNLP/2023/Conference'), 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_EMNLPChair1'],
+            writers=[]
+        ))
+        assert revision_stage_note
