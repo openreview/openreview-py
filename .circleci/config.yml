@@ -18,7 +18,7 @@ jobs:
       - image: cimg/python:3.7.14-node
       - image: cimg/redis:6.2.6
       - image: circleci/mongo:5.0.2
-        command: [--replSet,rs0]
+        command: [ --replSet, rs0 ]
       - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
         environment:
           xpack.security.enabled: false
@@ -35,11 +35,19 @@ jobs:
             sudo apt-get install -y mongodb-org=5.0.13 mongodb-org-database=5.0.13 mongodb-org-server=5.0.13 mongodb-org-shell=5.0.13 mongodb-org-mongos=5.0.13 mongodb-org-tools=5.0.13
             mongosh mongodb://localhost:27017 --eval "rs.initiate()"
       - run: pip install ~/openreview-py-repo
-      - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api-v1.git ~/openreview
-      - run: cd ~/openreview && git checkout << pipeline.parameters.openreview-api-v1-branch >>
-      - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
-      - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api.git ~/openreview-v2
-      - run: cd ~/openreview-v2 && git checkout << pipeline.parameters.openreview-api-v2-branch >>
+      - run: git clone
+          https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api-v1.git
+          ~/openreview
+      - run: cd ~/openreview && git checkout <<
+          pipeline.parameters.openreview-api-v1-branch >>
+      - run: git clone
+          https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git
+          ~/openreview-web
+      - run: git clone
+          https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api.git
+          ~/openreview-v2
+      - run: cd ~/openreview-v2 && git checkout <<
+          pipeline.parameters.openreview-api-v2-branch >>
       - run: mkdir ~/openreview/logs
       - run: mkdir ~/openreview/files
       - run: mkdir ~/openreview/files/attachments
@@ -126,6 +134,8 @@ jobs:
           path: test-reports
       - store_artifacts:
           path: test-reports
+    # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
+    resource_class: large
   deploy:
     working_directory: ~/openreview-py-repo
     docker:
