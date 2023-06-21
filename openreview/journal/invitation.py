@@ -3060,7 +3060,19 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'input': 'select'
                     }
                 }
-            }            
+            }
+
+        if self.journal.has_expert_reviewers():
+            invitation.edit['note']['content']['expert_reviewers'] = {
+                'order': 5,
+                'description': 'List of expert reviewers',
+                'value': {
+                    'param': {
+                        'type': 'string[]',
+                        'optional': True
+                    }
+                }
+            }                        
 
 
         self.save_invitation(invitation)

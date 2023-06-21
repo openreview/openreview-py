@@ -2190,6 +2190,7 @@ The TMLR Editors-in-Chief
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['certifications']['value'] == ['Featured Certification', 'Reproducibility Certification', 'Expert Certification']
+        assert note.content['expert_reviewers']['value'] == ['~Andrew_McCallum1']
         assert note.content['_bibtex']['value'] == '''@article{
 eight''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
@@ -4578,4 +4579,5 @@ issn={2835-8856},
 year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_13 + '''},
 note={Expert Certification}
-}'''                                                               
+}'''
+        assert note.content['expert_reviewers']['value'] == ['~Hugo_Larochelle1']                                                              
