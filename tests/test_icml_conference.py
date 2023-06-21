@@ -2569,6 +2569,31 @@ ICML 2023 Conference Program Chairs'''
 
         helpers.await_queue(openreview_client)
 
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
+
+        # try post review note signing as PC
+        with pytest.raises(openreview.OpenReviewException) as openReviewError:
+            review_edit = pc_client_v2.post_note_edit(
+                invitation='ICML.cc/2023/Conference/Submission2/-/Official_Review',
+                signatures=['ICML.cc/2023/Conference/Program_Chairs'],
+                note=openreview.api.Note(
+                    content={
+                        'summary': { 'value': 'review by PC' },
+                        'strengths_and_weaknesses': { 'value': '7: Good paper, accept'},
+                        'questions': { 'value': '7: Good paper, accept'},
+                        'limitations': { 'value': '7: Good paper, accept'},
+                        'ethics_flag': { 'value': 'No'},
+                        'soundness': { 'value': '1 poor'},
+                        'presentation': { 'value': '1 poor'},
+                        'contribution': { 'value': '1 poor'},
+                        'rating': { 'value': '10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.'},
+                        'confidence': { 'value': '1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked.'},
+                        'code_of_conduct': { 'value': 'Yes'},
+                    }
+                )
+            )
+        assert openReviewError.value.args[0].get('name') == 'ValidationError'
+
         ## Extend deadline
         start_date = now - datetime.timedelta(days=20)
         review_stage_note = openreview.Note(
@@ -3405,8 +3430,19 @@ ICML 2023 Conference Program Chairs'''
             'ICML.cc/2023/Conference/Submission1/Area_Chairs',
             'ICML.cc/2023/Conference/Submission1/Reviewers/Submitted',
             reviews[0].signatures[0],
-            'ICML.cc/2023/Conference/Submission1/Authors',
+            'ICML.cc/2023/Conference/Submission1/Authors'
         ]
+
+        note_edits = openreview_client.get_note_edits(reviews[0].id, invitation='ICML.cc/2023/Conference/-/Edit')
+        for edit in note_edits:
+            assert edit.readers == [
+                'ICML.cc/2023/Conference/Program_Chairs',
+                'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+                'ICML.cc/2023/Conference/Submission1/Area_Chairs',
+                'ICML.cc/2023/Conference/Submission1/Reviewers/Submitted',
+                reviews[0].signatures[0],
+                'ICML.cc/2023/Conference/Submission1/Authors'
+            ]
 
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
