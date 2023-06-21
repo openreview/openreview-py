@@ -111,7 +111,7 @@ def process(client, invitation):
                     ) 
 
     def post_invitation(note):
-        
+
         content = {
             'noteId': {
                 'value': note.id
@@ -126,8 +126,7 @@ def process(client, invitation):
             content['noteId'] = { 'value': note.forum }
             content['noteNumber'] = { 'value': int(paper_number) }
             content['replyto'] = { 'value': note.id }
-            content['replytoSignatures'] ={ 'value': note.signatures[0] }
-
+            content['replytoSignatures'] = { 'value': note.signatures[0] }
 
         paper_invitation_edit = client.post_invitation_edit(invitations=invitation.id,
             readers=[venue_id],
