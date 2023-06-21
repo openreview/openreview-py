@@ -53,14 +53,20 @@ def process(client, edit, invitation):
 
     recipients = [f'{paper_group_id}/{authors_name}']
 
-    if reviewers_name and (f'{paper_group_id}/{reviewers_name}' in submission.readers or reviewers_id in submission.readers or 'everyone' in submission.readers):
-        recipients.append(f'{paper_group_id}/{reviewers_name}')
+    reviewers_paper_id = f'{paper_group_id}/{reviewers_name}'
+    if reviewers_name and (reviewers_paper_id in submission.readers or reviewers_id in submission.readers or 'everyone' in submission.readers):
+        if openreview.tools.get_group(client, reviewers_paper_id):
+            recipients.append(reviewers_paper_id)
 
-    if area_chairs_name and (f'{paper_group_id}/{area_chairs_name}' in submission.readers or area_chairs_id in submission.readers or 'everyone' in submission.readers):
-        recipients.append(f'{paper_group_id}/{area_chairs_name}')
+    area_chairs_paper_id = f'{paper_group_id}/{area_chairs_name}'
+    if area_chairs_name and (area_chairs_paper_id in submission.readers or area_chairs_id in submission.readers or 'everyone' in submission.readers):
+        if openreview.tools.get_group(client, area_chairs_paper_id):
+            recipients.append(area_chairs_paper_id)
 
-    if senior_area_chairs_name and (f'{paper_group_id}/{senior_area_chairs_name}' in submission.readers or senior_area_chairs_id in submission.readers or 'everyone' in submission.readers):
-        recipients.append(f'{paper_group_id}/{senior_area_chairs_name}')
+    senior_area_chairs_paper_id = f'{paper_group_id}/{senior_area_chairs_name}'
+    if senior_area_chairs_name and (senior_area_chairs_paper_id in submission.readers or senior_area_chairs_id in submission.readers or 'everyone' in submission.readers):
+        if openreview.tools.get_group(client, senior_area_chairs_paper_id):
+            recipients.append(senior_area_chairs_paper_id)
 
     if program_chairs_id and withdrawal_email_pcs:
         recipients.append(program_chairs_id)

@@ -199,8 +199,8 @@ class TestEMNLPConference():
 
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
-        domains = ['smith.edu', 'amazon.com', 'google.com', 'harvard.edu']
-        for i in range(1,5):
+        domains = ['smith.edu', 'amazon.com', 'google.com', 'harvard.edu', 'meta.com']
+        for i in range(1,6):
             note = openreview.api.Note(
                 content = {
                     'title': { 'value': 'Test Paper Title ' + str(i) },
@@ -314,8 +314,41 @@ class TestEMNLPConference():
         helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Revision-0-0')
 
         invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Revision')
-        assert len(invitations) == 4
+        assert len(invitations) == 5
         assert invitations[0].duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))
+
+        submissions = openreview_client.get_notes(invitation='EMNLP/2023/Conference/-/Submission', sort='number:asc')
+        assert submissions[4].readers == [
+            'EMNLP/2023/Conference',
+            'EMNLP/2023/Conference/Senior_Area_Chairs',
+            'EMNLP/2023/Conference/Area_Chairs',
+            'EMNLP/2023/Conference/Reviewers',
+            'EMNLP/2023/Conference/Submission5/Authors'
+        ]
+
+        ## withdraw submission
+        withdraw_note = test_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Withdrawal',
+            signatures=['EMNLP/2023/Conference/Submission5/Authors'],
+            note=openreview.api.Note(
+                content={
+                    'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Withdrawn_Submission')
+
+        # reverse withdrawal
+        withdrawal_reversion_note = openreview_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Withdrawal_Reversion',
+                                    signatures=['EMNLP/2023/Conference/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'revert_withdrawal_confirmation': { 'value': 'We approve the reversion of withdrawn submission.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=withdrawal_reversion_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/Submission5/-/Withdrawal_Reversion')
 
         revision_due_date = now + datetime.timedelta(days=10)
 
