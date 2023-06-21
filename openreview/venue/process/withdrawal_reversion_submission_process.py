@@ -37,7 +37,6 @@ def process(client, edit, invitation):
         if openreview.tools.get_group(client, group):
             final_committee.append(group)
 
-
     email_subject = f'''[{short_name}]: Paper #{submission.number} restored by venue organizers'''
     email_body = f'''The {short_name} paper "{submission.content.get('title', {}).get('value', '#'+str(submission.number))}" has been restored by the venue organizers.
 
