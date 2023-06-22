@@ -132,12 +132,23 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
             contact_info='testvenue@contact.com',
             reduced_load_on_decline = ['1','2','3'])
 
+        #make sure there's no error if recruitment invitation does not have to be updated
+        venue.recruit_reviewers(title='[TV 22] Invitation to serve as Reviewer',
+            message=message,
+            invitees = ['ana@mail.com'],
+            contact_info='testvenue@contact.com',
+            reduced_load_on_decline = ['1','2','3'])
+
         venue.recruit_reviewers(title='[TV 22] Invitation to serve as Area Chair',
             message=message,
             invitees = ['~Reviewer_Venue_One1'],
             reviewers_name = 'Area_Chairs',
             contact_info='testvenue@contact.com',
             allow_overlap_official_committee = True)
+
+        recruitment_inv = openreview_client.get_invitation('TestVenue.cc/Area_Chairs/-/Recruitment')
+        assert 'overlap_committee_name' not in recruitment_inv.content
+        assert 'reduced_load' not in recruitment_inv.edit['note']['content']
 
         messages = openreview_client.get_messages(to='reviewer_venue_one@mail.com')
         assert messages
@@ -146,7 +157,19 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         reviewer_group = openreview_client.get_group('TestVenue.cc/Reviewers')
         assert reviewer_group
-        assert '~Reviewer_Venue_One1' in reviewer_group.members    
+        assert '~Reviewer_Venue_One1' in reviewer_group.members
+
+        venue.recruit_reviewers(title='[TV 22] Invitation to serve as Area Chair',
+            message=message,
+            invitees = ['celeste@email.com'],
+            reviewers_name = 'Area_Chairs',
+            contact_info='testvenue@contact.com',
+            allow_overlap_official_committee = False,
+            reduced_load_on_decline = ['1', '2'])
+
+        recruitment_inv = openreview_client.get_invitation('TestVenue.cc/Area_Chairs/-/Recruitment')
+        assert 'overlap_committee_name' in recruitment_inv.content and recruitment_inv.content['overlap_committee_name']['value'] == 'Reviewers'
+        assert 'reduced_load' in recruitment_inv.edit['note']['content'] and recruitment_inv.edit['note']['content']['reduced_load']['value']['param']['enum'] == ['1', '2']
     
     def test_submission_stage(self, venue, openreview_client, helpers):
 

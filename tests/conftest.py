@@ -139,7 +139,7 @@ class Helpers:
         else:
             buttons[1].click()
 
-        time.sleep(1)
+        time.sleep(2)
 
         Helpers.await_queue()        
 
