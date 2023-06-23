@@ -677,6 +677,17 @@ Total Errors: {len(errors)}
                         'readers': { 'delete': True }
                     }
 
+            content['_bibtex'] = {
+                'value': tools.generate_bibtex(
+                    note=submission,
+                    venue_fullname=self.name,
+                    year=str(datetime.datetime.utcnow().year),
+                    url_forum=submission.forum,
+                    paper_status = 'accepted' if note_accepted else 'rejected',
+                    anonymous='readers' in content['authors']
+                )
+            }
+
             self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
                 readers=[venue_id, self.get_authors_id(submission.number)],
                 writers=[venue_id],
