@@ -188,7 +188,7 @@ function renderContent(acceptedResponse, acceptedNotesWithVideo, certificationsR
 
   CERTIFICATIONS.forEach(function(certification, index) {
     var response = certificationsResponse[index];
-    var key = certification.toLowerCase().replace(' ', '-');
+    var key = certification.toLowerCase().replaceAll(' ', '-');
     Webfield2.ui.renderSubmissionList('#' + key, SUBMISSION_ID, response.notes, response.count,
     Object.assign({}, options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': certification, sort: 'pdate:desc' }}));
   })

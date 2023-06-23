@@ -511,7 +511,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
             helpers.respond_invitation(selenium, request_page, invitation_url, accept=True, quota=3)
 
-        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Reviewers/-/Recruitment', count=6)
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Reviewers/-/Recruitment', count=12)
 
         messages = client.get_messages(subject='[ICML 2023] Reviewer Invitation accepted with reduced load')
         assert len(messages) == 6
@@ -916,7 +916,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
         ## try to edit a submission as a PC
         submissions = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
         submission = submissions[0]
-        pc_client_v2.post_note_edit(invitation='ICML.cc/2023/Conference/-/PC_Revision',
+        edit_note = pc_client_v2.post_note_edit(invitation='ICML.cc/2023/Conference/-/PC_Revision',
             signatures=['ICML.cc/2023/Conference/Program_Chairs'],
             note=openreview.api.Note(
                 id = submission.id,
@@ -933,7 +933,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
                 }
             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=edit_note['id'])
 
         submission = ac_client.get_note(submission.id)
         assert ['ICML.cc/2023/Conference',
@@ -1425,7 +1425,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     weight=1
             ))
 
-        ac_client.post_edge(
+        edge = ac_client.post_edge(
             openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
                 signatures=[anon_group_id],
                 head=submissions[0].id,
@@ -1433,11 +1433,11 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                 label='Invitation Sent',
                 weight=1
         ))
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edge.id)
 
         helpers.create_user('javier@icml.cc', 'Javier', 'ICML')
 
-        ac_client.post_edge(
+        edge = ac_client.post_edge(
             openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
                 signatures=[anon_group_id],
                 head=submissions[0].id,
@@ -1445,7 +1445,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                 label='Invitation Sent',
                 weight=1
         ))
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edge.id)
 
         with pytest.raises(openreview.OpenReviewException, match=r'the user is already invited'):
             ac_client.post_edge(
@@ -4164,34 +4164,33 @@ Best,
         assert 'andrew@amazon.com' in recipients
         assert 'We are delighted to inform you that your submission has been accepted.' in messages[0]['content']['text']
 
-        # Assert accepted submissions are not blind
-        assert accepted_submissions[0].content['venue']['value'] == 'ICML 2023'
-        assert accepted_submissions[0].content['venueid']['value'] == 'ICML.cc/2023/Conference'
-        assert 'readers' not in accepted_submissions[0].content['authors']
-        assert 'readers' not in accepted_submissions[0].content['authorids']
-        assert 'readers' in accepted_submissions[0].content['pdf']
-        assert 'readers' not in accepted_submissions[0].content['financial_aid']
-        assert rejected_submissions[0].content['venue']['value'] == 'Submitted to ICML 2023'
-        assert rejected_submissions[0].content['venueid']['value'] == 'ICML.cc/2023/Conference/Rejected_Submission'
-        assert rejected_submissions[0].content['authors']['readers'] == ["ICML.cc/2023/Conference",f"ICML.cc/2023/Conference/Submission2/Authors"]
-        assert rejected_submissions[0].content['authorids']['readers'] == ["ICML.cc/2023/Conference",f"ICML.cc/2023/Conference/Submission2/Authors"]
-        assert 'readers' in rejected_submissions[0].content['pdf']
-        assert rejected_submissions[0].content['pdf']['readers'] == ["ICML.cc/2023/Conference",f"ICML.cc/2023/Conference/Submission2/Authors"]
-        assert 'readers' not in rejected_submissions[0].content['financial_aid']
+        for submission in accepted_submissions:
+            assert submission.readers == ['everyone']
+            assert 'readers' not in submission.content['authors']
+            assert 'readers' not in submission.content['authorids']
+            assert 'readers' in submission.content['pdf']
+            assert 'readers' not in submission.content['financial_aid']
+            assert submission.pdate
+            assert submission.odate
+            assert submission.content['venue']['value'] == 'ICML 2023'
+            assert submission.content['venueid']['value'] == 'ICML.cc/2023/Conference'
 
-        # Assert that accepted submissions are public
-        assert accepted_submissions[0].readers == ['everyone']
-        assert accepted_submissions[0].pdate
-        assert accepted_submissions[0].odate
-        assert rejected_submissions[0].readers == [
-            "ICML.cc/2023/Conference",
-            "ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs",
-            "ICML.cc/2023/Conference/Submission2/Area_Chairs",
-            "ICML.cc/2023/Conference/Submission2/Reviewers",
-            "ICML.cc/2023/Conference/Submission2/Authors"
-        ]
-        assert not rejected_submissions[0].pdate
-        assert not rejected_submissions[0].odate
+        for submission in rejected_submissions:
+            assert submission.readers == [
+                "ICML.cc/2023/Conference",
+                f"ICML.cc/2023/Conference/Submission{submission.number}/Senior_Area_Chairs",
+                f"ICML.cc/2023/Conference/Submission{submission.number}/Area_Chairs",
+                f"ICML.cc/2023/Conference/Submission{submission.number}/Reviewers",
+                f"ICML.cc/2023/Conference/Submission{submission.number}/Authors"
+            ]
+            assert submission.content['authors']['readers'] == ["ICML.cc/2023/Conference",f"ICML.cc/2023/Conference/Submission{submission.number}/Authors"]
+            assert submission.content['authorids']['readers'] == ["ICML.cc/2023/Conference",f"ICML.cc/2023/Conference/Submission{submission.number}/Authors"]
+            assert not submission.pdate
+            assert not submission.odate
+            assert submission.content['venue']['value'] == 'Submitted to ICML 2023'
+            assert submission.content['venueid']['value'] == 'ICML.cc/2023/Conference/Rejected_Submission'
+            assert 'readers' in submission.content['pdf']
+            assert 'readers' not in submission.content['financial_aid']
 
     def test_forum_chat(self, openreview_client, helpers):
 

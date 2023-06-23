@@ -2,32 +2,18 @@ def process(client, edit, invitation):
 
     journal = openreview.journal.Journal()
 
-    ## Notify readers
-    journal.notify_readers(edit)
+    submission = client.get_note(edit.note.forum)
+    duedate = journal.get_due_date(weeks = journal.get_decision_period_length())
 
-    note = client.get_note(edit.note.id)
+    print('Enable review rating')
+    journal.invitation_builder.set_note_review_rating_invitation(submission, duedate)
 
-    ## On update or delete return
-    if note.tcdate != note.tmdate:
-        return
-
-    print(f'find recommendations by forum={note.forum} and invitation={edit.invitation}')
-    recommendations = client.get_notes(forum=note.forum, invitation=edit.invitation)
-    print('# recommendations', len(recommendations))
-    if len(recommendations) == journal.get_number_of_reviewers():
-
-        submission = client.get_note(note.forum)
-        duedate = journal.get_due_date(weeks = journal.get_decision_period_length())
-
-        print('Enable review rating')
-        journal.invitation_builder.set_note_review_rating_invitation(submission, duedate)
-
-        ## send email to action editors
-        print('Send email to AEs')
-        client.post_message(
-            recipients=[journal.get_action_editors_id(number=submission.number)],
-            subject=f'''[{journal.short_name}] Evaluate reviewers and submit decision for {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
-            message=f'''Hi {{{{fullname}}}},
+    ## send email to action editors
+    print('Send email to AEs')
+    client.post_message(
+        recipients=[journal.get_action_editors_id(number=submission.number)],
+        subject=f'''[{journal.short_name}] Evaluate reviewers and submit decision for {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
+        message=f'''Hi {{{{fullname}}}},
 
 Thank you for overseeing the review process for {journal.short_name} submission "{submission.number}: {submission.content['title']['value']}".
 
@@ -51,7 +37,7 @@ We thank you for your essential contribution to {journal.short_name}!
 
 The {journal.short_name} Editors-in-Chief
 ''',
-            replyTo=journal.contact_info
-        )
+        replyTo=journal.contact_info
+    )
 
-        journal.invitation_builder.expire_invitation(journal.get_review_rating_enabling_id(submission.number))
+    journal.invitation_builder.expire_invitation(journal.get_review_rating_enabling_id(submission.number))    

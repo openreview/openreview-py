@@ -75,9 +75,7 @@ class TestJournalMatching():
         ken_client = OpenReviewClient(username='ken@beck.com', password=helpers.strong_password)
 
         ## Set a max quota
-        ana_client.post_edge(openreview.Edge(invitation='CARP/Action_Editors/-/Custom_Max_Papers',
-            readers=[venue_id, '~Ana_Prada1'],
-            writers=[venue_id, '~Ana_Prada1'],
+        ana_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Custom_Max_Papers',
             signatures=['~Ana_Prada1'],
             head='CARP/Action_Editors',
             tail='~Ana_Prada1',
@@ -85,9 +83,7 @@ class TestJournalMatching():
         ))
 
         ## Set unavailable
-        ken_client.post_edge(openreview.Edge(invitation='CARP/Action_Editors/-/Assignment_Availability',
-            readers=[venue_id, '~Ken_Beck1'],
-            writers=[venue_id, '~Ken_Beck1'],
+        ken_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Assignment_Availability',
             signatures=['~Ken_Beck1'],
             head='CARP/Action_Editors',
             tail='~Ken_Beck1',
