@@ -101,4 +101,8 @@ class TestJMLRJournal():
         assert note.content['venue']['value'] == 'Submitted to JMLR'
         assert note.content['venueid']['value'] == 'JMLR/Submitted'
 
+        note = openreview_client.get_note(note_id_1)
+        journal.invitation_builder.expire_paper_invitations(note)
+        journal.invitation_builder.expire_reviewer_responsibility_invitations()
+        journal.invitation_builder.expire_assignment_availability_invitations()
 
