@@ -4112,8 +4112,17 @@ The TMLR Editors-in-Chief
                                     }))
 
         helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
+
+        edits = openreview_client.get_note_edits(note_id_11)
+        assert len(edits) == 2
+        assert edits[0].invitation == 'TMLR/-/Under_Review'
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
               
         journal.invitation_builder.expire_paper_invitations(note)
+
+        invitation = openreview_client.get_invitation('TMLR/Paper11/Reviewers/-/Assignment')
+        assert invitation.expdate is not None
+
 
     def test_decline_desk_rejection(self, journal, openreview_client, helpers):
 
@@ -4223,8 +4232,6 @@ note={Under review}
 
         note = openreview_client.get_note(note_id_12)
         journal.invitation_builder.expire_paper_invitations(note)
-        journal.invitation_builder.expire_reviewer_responsibility_invitations()
-        journal.invitation_builder.expire_assignment_availability_invitations()
 
 
     def test_archived_action_editor(self, journal, openreview_client, test_client, helpers):
@@ -4581,3 +4588,9 @@ url={https://openreview.net/forum?id=''' + note_id_13 + '''},
 note={Expert Certification}
 }'''
         assert note.content['expert_reviewers']['value'] == ['~Hugo_Larochelle1']                                                              
+
+  
+        note = openreview_client.get_note(note_id_13)
+        journal.invitation_builder.expire_paper_invitations(note)
+        journal.invitation_builder.expire_reviewer_responsibility_invitations()
+        journal.invitation_builder.expire_assignment_availability_invitations()
