@@ -511,7 +511,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
             helpers.respond_invitation(selenium, request_page, invitation_url, accept=True, quota=3)
 
-        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Reviewers/-/Recruitment', count=6)
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Reviewers/-/Recruitment', count=12)
 
         messages = client.get_messages(subject='[ICML 2023] Reviewer Invitation accepted with reduced load')
         assert len(messages) == 6
@@ -916,7 +916,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
         ## try to edit a submission as a PC
         submissions = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
         submission = submissions[0]
-        pc_client_v2.post_note_edit(invitation='ICML.cc/2023/Conference/-/PC_Revision',
+        edit_note = pc_client_v2.post_note_edit(invitation='ICML.cc/2023/Conference/-/PC_Revision',
             signatures=['ICML.cc/2023/Conference/Program_Chairs'],
             note=openreview.api.Note(
                 id = submission.id,
@@ -933,7 +933,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
                 }
             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=edit_note['id'])
 
         submission = ac_client.get_note(submission.id)
         assert ['ICML.cc/2023/Conference',
@@ -1425,7 +1425,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     weight=1
             ))
 
-        ac_client.post_edge(
+        edge = ac_client.post_edge(
             openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
                 signatures=[anon_group_id],
                 head=submissions[0].id,
@@ -1433,11 +1433,11 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                 label='Invitation Sent',
                 weight=1
         ))
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edge.id)
 
         helpers.create_user('javier@icml.cc', 'Javier', 'ICML')
 
-        ac_client.post_edge(
+        edge = ac_client.post_edge(
             openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
                 signatures=[anon_group_id],
                 head=submissions[0].id,
@@ -1445,7 +1445,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                 label='Invitation Sent',
                 weight=1
         ))
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edge.id)
 
         with pytest.raises(openreview.OpenReviewException, match=r'the user is already invited'):
             ac_client.post_edge(

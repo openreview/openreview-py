@@ -75,6 +75,9 @@ class Journal(object):
 
     def get_publication_chairs_id(self):
         return f'{self.venue_id}/Publication_Chairs'
+    
+    def get_action_editors_archived_id(self):
+        return f'{self.get_action_editors_id()}/Archived'    
 
     def get_action_editors_id(self, number=None):
         return self.__get_group_id(self.action_editors_name, number)
@@ -84,6 +87,12 @@ class Journal(object):
 
     def get_reviewers_reported_id(self):
         return self.get_reviewers_id() + '/Reported'
+    
+    def get_expert_reviewers_id(self):
+        return self.__get_group_id('Expert_Reviewers')
+    
+    def get_expert_reviewers_member_id(self):
+        return self.__get_invitation_id(name='Member', prefix=self.get_expert_reviewers_id())    
 
     def get_solicit_reviewers_id(self, number=None, declined=False):
         group_id = self.__get_group_id(self.solicit_reviewers_name, number)
@@ -203,6 +212,9 @@ class Journal(object):
 
     def get_review_rating_id(self, signature=None):
         return self.__get_invitation_id(name='Rating', prefix=signature)
+    
+    def get_review_rating_enabling_id(self, number=None):
+        return self.__get_invitation_id(name='Review_Rating_Enabling', number=number)
 
     def get_accepted_id(self):
         return self.__get_invitation_id(name='Accepted')
@@ -334,6 +346,9 @@ class Journal(object):
             if 'Long submission' in note.content['submission_length']['value']:
                 return 2 * review_period ## weeks
         return review_period ## weeks
+    
+    def get_expert_reviewer_certification(self):
+        return "Expert Certification"
 
     def is_active_submission(self, submission):
         venue_id = submission.content.get('venueid', {}).get('value')
@@ -423,6 +438,12 @@ class Journal(object):
 
     def has_publication_chairs(self):
         return self.settings.get('has_publication_chairs', False)
+    
+    def has_archived_action_editors(self):
+        return self.settings.get('archived_action_editors', False)
+
+    def has_expert_reviewers(self):
+        return self.settings.get('expert_reviewers', False)        
 
     def get_number_of_reviewers(self):
         return self.settings.get('number_of_reviewers', 3)

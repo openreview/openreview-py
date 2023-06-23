@@ -23,9 +23,6 @@ def process_update(client, edge, invitation, existing_edge):
         if not submission_edges:
             print('Mark task a complete')
             client.post_edge(openreview.api.Edge(invitation=journal.get_reviewer_assignment_id(number=note.number),
-                readers = [venue_id, journal.get_action_editors_id(number=note.number)],
-                nonreaders = [journal.get_authors_id(number=note.number)],
-                writers = [venue_id],
                 signatures = [journal.get_action_editors_id(number=note.number)],
                 head = note.id,
                 tail = journal.get_reviewers_id(),
@@ -92,8 +89,6 @@ note: replies to this email will go to the AE, {assigned_action_editor.get_prefe
             client.post_edge(pending_review_edge)
         else:
             client.post_edge(openreview.api.Edge(invitation = journal.get_reviewer_pending_review_id(),
-                readers = [venue_id, journal.get_action_editors_id(), edge.tail],
-                writers = [venue_id],
                 signatures = [venue_id],
                 head = journal.get_reviewers_id(),
                 tail = edge.tail,
