@@ -32,13 +32,18 @@ def process(client, edit, invitation):
             client.post_edit(invitation_edit)
 
     formatted_committee = [committee.format(number=submission.number) for committee in withdraw_committee]
+    final_committee = []
+    for group in formatted_committee:
+        if openreview.tools.get_group(client, group):
+            final_committee.append(group)
+
     email_subject = f'''[{short_name}]: Paper #{submission.number} restored by venue organizers'''
     email_body = f'''The {short_name} paper "{submission.content.get('title', {}).get('value', '#'+str(submission.number))}" has been restored by the venue organizers.
 
 For more information, click here https://openreview.net/forum?id={submission.id}
 '''
 
-    client.post_message(email_subject, formatted_committee, email_body)
+    client.post_message(email_subject, final_committee, email_body)
 
     print(f'Add {paper_group_id}/{authors_name} to {venue_id}/{authors_name}')
     client.add_members_to_group(f'{venue_id}/{authors_name}', f'{paper_group_id}/{authors_name}')

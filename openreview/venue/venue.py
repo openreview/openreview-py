@@ -664,15 +664,18 @@ Total Errors: {len(errors)}
                 }
             }
 
+            final_hide_fields = []
+            final_hide_fields.extend(hide_fields)
+
             if not is_release_authors(note_accepted) and self.submission_stage.double_blind:
-                hide_fields.extend(['authors', 'authorids'])
+                final_hide_fields.extend(['authors', 'authorids'])
 
             for field, value in submission.content.items():
-                if field in hide_fields:
+                if field in final_hide_fields:
                     content[field] = {
                         'readers': [venue_id, self.get_authors_id(submission.number)]
                     }
-                if field not in hide_fields and 'readers' in value:
+                if field not in final_hide_fields and 'readers' in value:
                     content[field] = {
                         'readers': { 'delete': True }
                     }
