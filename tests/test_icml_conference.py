@@ -4175,6 +4175,19 @@ Best,
             assert submission.content['venue']['value'] == 'ICML 2023'
             assert submission.content['venueid']['value'] == 'ICML.cc/2023/Conference'
 
+        valid_bibtex = '''@inproceedings{
+user2023paper,
+title={Paper title 1 Version 2},
+author={SomeFirstName User and Peter SomeLastName and Andrew Mc and SAC ICMLOne and Melisa ICML},
+booktitle={Thirty-ninth International Conference on Machine Learning},
+year={2023},
+url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + accepted_submissions[0].forum + '''}
+}'''
+
+        assert '_bibtex' in accepted_submissions[0].content and accepted_submissions[0].content['_bibtex']['value'] == valid_bibtex
+
         for submission in rejected_submissions:
             assert submission.readers == [
                 "ICML.cc/2023/Conference",
@@ -4191,6 +4204,18 @@ Best,
             assert submission.content['venueid']['value'] == 'ICML.cc/2023/Conference/Rejected_Submission'
             assert 'readers' in submission.content['pdf']
             assert 'readers' not in submission.content['financial_aid']
+
+        valid_bibtex = '''@misc{
+anonymous2023paper,
+title={Paper title 2},
+author={Anonymous},
+year={2023},
+url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + rejected_submissions[0].forum + '''}
+}'''
+
+        assert '_bibtex' in rejected_submissions[0].content and rejected_submissions[0].content['_bibtex']['value'] == valid_bibtex
 
     def test_forum_chat(self, openreview_client, helpers):
 
