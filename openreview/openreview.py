@@ -751,7 +751,7 @@ class Client(object):
 
         return list(tools.efficient_iterget(self.get_groups, desc='Getting Groups', **params))
 
-    def get_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, after=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False, select=None):
+    def get_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, after=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, sort=None, super=None, with_count=False, select=None):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
 
@@ -836,6 +836,8 @@ class Client(object):
             params['offset'] = offset
         if after is not None:
             params['after'] = after
+        if sort is not None:
+            params['sort'] = sort
         if expired is not None:
             params['expired'] = expired
 
@@ -849,7 +851,7 @@ class Client(object):
 
         return invitations
     
-    def get_all_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False):
+    def get_all_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, sort=None, with_count=False):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
 
@@ -921,6 +923,8 @@ class Client(object):
             params['expired'] = expired
         if super is not None:
             params['super'] = super
+        if sort is not None:
+            params['sort'] = sort
         if with_count is not None:
             params['with_count'] = with_count
 

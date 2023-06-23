@@ -1065,7 +1065,7 @@ def iterget_references(client, referent = None, invitation = None, mintcdate = N
 
     return iterget(client.get_references, **params)
 
-def iterget_invitations(client, id=None, ids=None, invitee=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replytoNote=None, replyForum=None, signature=None, note=None, replyto=None, details=None, expired=None, super=None):
+def iterget_invitations(client, id=None, ids=None, invitee=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replytoNote=None, replyForum=None, signature=None, note=None, replyto=None, details=None, expired=None, super=None, sort=None):
     """
     Returns an iterator over invitations, filtered by the provided parameters, ignoring API limit.
 
@@ -1139,6 +1139,9 @@ def iterget_invitations(client, id=None, ids=None, invitee=None, regex=None, tag
         params['super'] = super
     if expired is not None:
         params['expired'] = expired
+    if sort is not None:
+        params['sort'] = sort
+
 
     return efficient_iterget(client.get_invitations, desc='Getting Invitations', **params)
 

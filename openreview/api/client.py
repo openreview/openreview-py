@@ -717,6 +717,7 @@ class OpenReviewClient(object):
         replyto = None,
         details = None,
         expired = None,
+        sort = None,
         type = None,
         with_count=False,
         invitation = None
@@ -799,6 +800,8 @@ class OpenReviewClient(object):
             params['offset'] = offset
         if after is not None:
             params['after'] = after
+        if sort is not None:
+            params['sort'] = sort
         if expired is not None:
             params['expired'] = expired
         if type is not None:
@@ -832,6 +835,7 @@ class OpenReviewClient(object):
         replyto = None,
         details = None,
         expired = None,
+        sort = None,
         type = None,
         with_count=False,
         invitation = None
@@ -905,6 +909,8 @@ class OpenReviewClient(object):
             params['details'] = details
         if expired is not None:
             params['expired'] = expired
+        if sort is not None:
+            params['sort'] = sort
         if type is not None:
             params['type'] = type
         if with_count is not None:
