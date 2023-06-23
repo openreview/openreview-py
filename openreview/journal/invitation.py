@@ -3046,7 +3046,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             }            
 
         if self.journal.get_certifications():
-            certificaaion_options = self.journal.get_certifications()
+            certification_options = self.journal.get_certifications()
             if self.journal.has_expert_reviewers():
                 certificaaion_options.append(self.journal.get_expert_reviewer_certification())
             invitation.edit['note']['content']['certifications'] = {
