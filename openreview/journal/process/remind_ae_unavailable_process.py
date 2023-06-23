@@ -42,6 +42,9 @@ The {journal.short_name} Editors-in-Chief
 
     print('reminder_period', reminder_period)
     for edge in edges:
+        is_ae = client.get_groups(member=edge.tail, id=journal.get_action_editors_id())
+        if not is_ae:
+            continue
         recipients=[edge.tail]
         if edge.tmdate < back_to_available_period:
             print(f"back to available: {edge.tail}")

@@ -46,3 +46,6 @@ The {journal.short_name} Editors-in-Chief
 ''',
         replyTo=journal.contact_info
     )
+
+    print('Let EICs enable the review rating')
+    journal.invitation_builder.set_note_review_rating_enabling_invitation(submission)
