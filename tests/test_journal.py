@@ -3855,6 +3855,8 @@ The TMLR Editors-in-Chief
         submission = raia_client.get_note(note_id_8)
         assert '~Samy_Bengio1' == submission.content['assigned_action_editor']['value']
 
+        journal.invitation_builder.expire_paper_invitations(submission)
+
 
     def test_desk_rejected_submission_by_eic(self, journal, openreview_client, helpers):
 
@@ -4084,11 +4086,18 @@ The TMLR Editors-in-Chief
                                     }))
 
         helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
+
+        edits = openreview_client.get_note_edits(note_id_11)
+        assert len(edits) == 2
+        assert edits[0].invitation == 'TMLR/-/Under_Review'
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
               
         note = openreview_client.get_note(note_id_11)
         journal.invitation_builder.expire_paper_invitations(note)
-        journal.invitation_builder.expire_reviewer_responsibility_invitations()
-        journal.invitation_builder.expire_assignment_availability_invitations()
+
+        invitation = openreview_client.get_invitation('TMLR/Paper11/Reviewers/-/Assignment')
+        assert invitation.expdate is not None
+
 
     def test_decline_desk_rejection(self, journal, openreview_client, helpers):
 
@@ -4195,3 +4204,8 @@ note={Under review}
         messages = openreview_client.get_messages(to = 'melissa@maileight.com', subject = '[TMLR] Review Approval edited on submission 12: Paper title 12')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'Hi Melissa Eight,\n\nA review approval has been edited on your submission.\n\nSubmission: Paper title 12\nUnder review: Appropriate for Review\nComment: \n\nTo view the review approval, click here: https://openreview.net/forum?id={note_id_12}&noteId={notes[0].id}\n\n'
+
+        note = openreview_client.get_note(note_id_12)
+        journal.invitation_builder.expire_paper_invitations(note)
+        journal.invitation_builder.expire_reviewer_responsibility_invitations()
+        journal.invitation_builder.expire_assignment_availability_invitations()        
