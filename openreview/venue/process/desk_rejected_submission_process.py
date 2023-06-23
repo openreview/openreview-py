@@ -51,6 +51,7 @@ def process(client, edit, invitation):
             final_committee.append(group)
     email_subject = f'''[{short_name}]: Paper #{submission.number} desk-rejected by program chairs'''
     email_body = f'''The {short_name} paper "{submission.content.get('title', {}).get('value', '#'+str(submission.number))}" has been desk-rejected by the program chairs.
+
 For more information, click here https://openreview.net/forum?id={submission.id}
 '''
 
