@@ -4164,34 +4164,33 @@ Best,
         assert 'andrew@amazon.com' in recipients
         assert 'We are delighted to inform you that your submission has been accepted.' in messages[0]['content']['text']
 
-        # Assert accepted submissions are not blind
-        assert accepted_submissions[0].content['venue']['value'] == 'ICML 2023'
-        assert accepted_submissions[0].content['venueid']['value'] == 'ICML.cc/2023/Conference'
-        assert 'readers' not in accepted_submissions[0].content['authors']
-        assert 'readers' not in accepted_submissions[0].content['authorids']
-        assert 'readers' in accepted_submissions[0].content['pdf']
-        assert 'readers' not in accepted_submissions[0].content['financial_aid']
-        assert rejected_submissions[0].content['venue']['value'] == 'Submitted to ICML 2023'
-        assert rejected_submissions[0].content['venueid']['value'] == 'ICML.cc/2023/Conference/Rejected_Submission'
-        assert rejected_submissions[0].content['authors']['readers'] == ["ICML.cc/2023/Conference",f"ICML.cc/2023/Conference/Submission2/Authors"]
-        assert rejected_submissions[0].content['authorids']['readers'] == ["ICML.cc/2023/Conference",f"ICML.cc/2023/Conference/Submission2/Authors"]
-        assert 'readers' in rejected_submissions[0].content['pdf']
-        assert rejected_submissions[0].content['pdf']['readers'] == ["ICML.cc/2023/Conference",f"ICML.cc/2023/Conference/Submission2/Authors"]
-        assert 'readers' not in rejected_submissions[0].content['financial_aid']
+        for submission in accepted_submissions:
+            assert submission.readers == ['everyone']
+            assert 'readers' not in submission.content['authors']
+            assert 'readers' not in submission.content['authorids']
+            assert 'readers' in submission.content['pdf']
+            assert 'readers' not in submission.content['financial_aid']
+            assert submission.pdate
+            assert submission.odate
+            assert submission.content['venue']['value'] == 'ICML 2023'
+            assert submission.content['venueid']['value'] == 'ICML.cc/2023/Conference'
 
-        # Assert that accepted submissions are public
-        assert accepted_submissions[0].readers == ['everyone']
-        assert accepted_submissions[0].pdate
-        assert accepted_submissions[0].odate
-        assert rejected_submissions[0].readers == [
-            "ICML.cc/2023/Conference",
-            "ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs",
-            "ICML.cc/2023/Conference/Submission2/Area_Chairs",
-            "ICML.cc/2023/Conference/Submission2/Reviewers",
-            "ICML.cc/2023/Conference/Submission2/Authors"
-        ]
-        assert not rejected_submissions[0].pdate
-        assert not rejected_submissions[0].odate
+        for submission in rejected_submissions:
+            assert submission.readers == [
+                "ICML.cc/2023/Conference",
+                f"ICML.cc/2023/Conference/Submission{submission.number}/Senior_Area_Chairs",
+                f"ICML.cc/2023/Conference/Submission{submission.number}/Area_Chairs",
+                f"ICML.cc/2023/Conference/Submission{submission.number}/Reviewers",
+                f"ICML.cc/2023/Conference/Submission{submission.number}/Authors"
+            ]
+            assert submission.content['authors']['readers'] == ["ICML.cc/2023/Conference",f"ICML.cc/2023/Conference/Submission{submission.number}/Authors"]
+            assert submission.content['authorids']['readers'] == ["ICML.cc/2023/Conference",f"ICML.cc/2023/Conference/Submission{submission.number}/Authors"]
+            assert not submission.pdate
+            assert not submission.odate
+            assert submission.content['venue']['value'] == 'Submitted to ICML 2023'
+            assert submission.content['venueid']['value'] == 'ICML.cc/2023/Conference/Rejected_Submission'
+            assert 'readers' in submission.content['pdf']
+            assert 'readers' not in submission.content['financial_aid']
 
     def test_forum_chat(self, openreview_client, helpers):
 
