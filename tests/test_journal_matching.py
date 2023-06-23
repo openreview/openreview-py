@@ -343,4 +343,10 @@ class TestJournalMatching():
         assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~John_Lennon1')[0].weight == 11
         assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Janis_Joplin1')[0].weight == 12
         assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Diego_Armando1')[0].weight == 12
-        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers', tail='~Ken_Beck1')[0].weight == 0                                                                       
+        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers', tail='~Ken_Beck1')[0].weight == 0
+
+        submissions = test_client.get_notes(invitation='CARP/-/Submission', sort='number:asc')
+        for submission in submissions:
+            journal.invitation_builder.expire_paper_invitations(submission)
+        journal.invitation_builder.expire_reviewer_responsibility_invitations()
+        journal.invitation_builder.expire_assignment_availability_invitations()                                                                               
