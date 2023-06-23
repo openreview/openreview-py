@@ -664,10 +664,12 @@ Total Errors: {len(errors)}
                 }
             }
 
+            anonymous = False
             final_hide_fields = []
             final_hide_fields.extend(hide_fields)
 
             if not is_release_authors(note_accepted) and self.submission_stage.double_blind:
+                anonymous = True
                 final_hide_fields.extend(['authors', 'authorids'])
 
             for field, value in submission.content.items():
@@ -687,7 +689,7 @@ Total Errors: {len(errors)}
                     year=str(datetime.datetime.utcnow().year),
                     url_forum=submission.forum,
                     paper_status = 'accepted' if note_accepted else 'rejected',
-                    anonymous='readers' in content['authors']
+                    anonymous=anonymous
                 )
             }
 
