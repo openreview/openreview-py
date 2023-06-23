@@ -710,6 +710,7 @@ class OpenReviewClient(object):
         tags = None,
         limit = None,
         offset = None,
+        after = None,
         minduedate = None,
         duedate = None,
         pastdue = None,
@@ -745,6 +746,8 @@ class OpenReviewClient(object):
         :type limit: int, optional
         :param int offset: Indicates the position to start retrieving Invitations. For example, if there are 10 Invitations and you want to obtain the last 3, then the offset would need to be 7.
         :type offset: int, optional
+        :param after: Invitation id to start getting the list of invitations from.
+        :type after: str, optional
         :param minduedate: Invitations that have at least this value as due date
         :type minduedate: int, optional
         :param duedate: Invitations that contain this due date
@@ -776,21 +779,32 @@ class OpenReviewClient(object):
             params['signature'] = signature
         if note is not None:
             params['note']=note
-        if prefix:
+        if prefix is not None:
             params['prefix'] = prefix
-        if tags:
+        if tags is not None:
             params['tags'] = tags
-        if minduedate:
+        if minduedate is not None:
             params['minduedate'] = minduedate
-        params['replyto'] = replyto
-        params['duedate'] = duedate
-        params['pastdue'] = pastdue
-        params['details'] = details
-        params['limit'] = limit
-        params['offset'] = offset
-        params['expired'] = expired
-        params['type'] = type
-        params['invitation'] = invitation
+        if replyto is not None:
+            params['replyto'] = replyto
+        if duedate is not None:
+            params['duedate'] = duedate
+        if pastdue is not None:
+            params['pastdue'] = pastdue
+        if details is not None:
+            params['details'] = details
+        if limit is not None:
+            params['limit'] = limit
+        if offset is not None:
+            params['offset'] = offset
+        if after is not None:
+            params['after'] = after
+        if expired is not None:
+            params['expired'] = expired
+        if type is not None:
+            params['type'] = type
+        if invitation is not None:
+            params['invitation'] = invitation
 
         response = self.session.get(self.invitations_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
@@ -812,8 +826,6 @@ class OpenReviewClient(object):
         note = None,
         prefix = None,
         tags = None,
-        limit = None,
-        offset = None,
         minduedate = None,
         duedate = None,
         pastdue = None,
@@ -845,10 +857,6 @@ class OpenReviewClient(object):
         :type prefix: str, optional
         :param tags: Invitations that contain these tags
         :type tags: Tag, optional
-        :param int limit: Maximum amount of Invitations that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Invitations will be returned
-        :type limit: int, optional
-        :param int offset: Indicates the position to start retrieving Invitations. For example, if there are 10 Invitations and you want to obtain the last 3, then the offset would need to be 7.
-        :type offset: int, optional
         :param minduedate: Invitations that have at least this value as due date
         :type minduedate: int, optional
         :param duedate: Invitations that contain this due date
@@ -865,30 +873,46 @@ class OpenReviewClient(object):
         :return: List of Invitations
         :rtype: list[Invitation]
         """
-        params = {
-            'id': id,
-            'ids': ids,
-            'invitee': invitee,
-            'replytoNote': replytoNote,
-            'replyForum': replyForum,
-            'signature': signature,
-            'note': note,
-            'prefix': prefix,
-            'tags': tags,
-            'limit': limit,
-            'offset': offset,
-            'minduedate': minduedate,
-            'duedate': duedate,
-            'pastdue': pastdue,
-            'replyto': replyto,
-            'details': details,
-            'expired': expired,
-            'type': type,
-            'with_count': with_count,
-            'invitation': invitation
-        }
+        params = {}
 
-        return tools.concurrent_get(self, self.get_invitations, **params)
+        if id is not None:
+            params['id'] = id
+        if ids is not None:
+            params['ids'] = ids
+        if invitee is not None:
+            params['invitee'] = invitee
+        if replytoNote is not None:
+            params['replytoNote'] = replytoNote
+        if replyForum is not None:
+            params['replyForum'] = replyForum
+        if signature is not None:
+            params['signature'] = signature
+        if note is not None:
+            params['note'] = note
+        if prefix is not None:
+            params['prefix'] = prefix
+        if tags is not None:
+            params['tags'] = tags
+        if minduedate is not None:
+            params['minduedate'] = minduedate
+        if duedate is not None:
+            params['duedate'] = duedate
+        if pastdue is not None:
+            params['pastdue'] = pastdue
+        if replyto is not None:
+            params['replyto'] = replyto
+        if details is not None:
+            params['details'] = details
+        if expired is not None:
+            params['expired'] = expired
+        if type is not None:
+            params['type'] = type
+        if with_count is not None:
+            params['with_count'] = with_count
+        if invitation is not None:
+            params['invitation'] = invitation
+
+        return list(tools.efficient_iterget(self.get_invitations, desc='Getting V2 Invitations', **params))
 
     def get_invitation_edit(self, id):
         """

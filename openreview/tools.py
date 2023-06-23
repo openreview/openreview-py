@@ -1137,9 +1137,10 @@ def iterget_invitations(client, id=None, ids=None, invitee=None, regex=None, tag
         params['replyto'] = replyto
     if super is not None:
         params['super'] = super
-    params['expired'] = expired
+    if expired is not None:
+        params['expired'] = expired
 
-    return iterget(client.get_invitations, **params)
+    return efficient_iterget(client.get_invitations, desc='Getting Invitations', **params)
 
 def iterget_groups(client, id = None, regex = None, member = None, host = None, signatory = None, web = None):
     """

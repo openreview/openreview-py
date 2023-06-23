@@ -751,7 +751,7 @@ class Client(object):
 
         return list(tools.efficient_iterget(self.get_groups, desc='Getting Groups', **params))
 
-    def get_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False, select=None):
+    def get_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, after=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False, select=None):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
 
@@ -777,6 +777,8 @@ class Client(object):
         :type limit: int, optional
         :param int offset: Indicates the position to start retrieving Invitations. For example, if there are 10 Invitations and you want to obtain the last 3, then the offset would need to be 7.
         :type offset: int, optional
+        :param after: Invitation id to start getting the list of invitations from.
+        :type after: str, optional
         :param minduedate: Invitations that have at least this value as due date
         :type minduedate: int, optional
         :param duedate: Invitations that contain this due date
@@ -810,23 +812,32 @@ class Client(object):
             params['signature'] = signature
         if note is not None:
             params['note']=note
-        if regex:
+        if regex is not None:
             params['regex'] = regex
-        if tags:
+        if tags is not None:
             params['tags'] = tags
-        if minduedate:
+        if minduedate is not None:
             params['minduedate'] = minduedate
-        if super:
+        if super is not None:
             params['super'] = super
-        if select:
+        if select is not None:
             params['select'] = select
-        params['replyto'] = replyto
-        params['duedate'] = duedate
-        params['pastdue'] = pastdue
-        params['details'] = details
-        params['limit'] = limit
-        params['offset'] = offset
-        params['expired'] = expired
+        if replyto is not None:
+            params['replyto'] = replyto
+        if duedate is not None:
+            params['duedate'] = duedate
+        if pastdue is not None:
+            params['pastdue'] = pastdue
+        if details is not None:
+            params['details'] = details
+        if limit is not None:
+            params['limit'] = limit
+        if offset is not None:
+            params['offset'] = offset
+        if after is not None:
+            params['after'] = after
+        if expired is not None:
+            params['expired'] = expired
 
         response = self.session.get(self.invitations_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
@@ -838,7 +849,7 @@ class Client(object):
 
         return invitations
     
-    def get_all_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False):
+    def get_all_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
 
@@ -860,10 +871,6 @@ class Client(object):
         :type regex: str, optional
         :param tags: Invitations that contain these tags
         :type tags: Tag, optional
-        :param int limit: Maximum amount of Invitations that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Invitations will be returned
-        :type limit: int, optional
-        :param int offset: Indicates the position to start retrieving Invitations. For example, if there are 10 Invitations and you want to obtain the last 3, then the offset would need to be 7.
-        :type offset: int, optional
         :param minduedate: Invitations that have at least this value as due date
         :type minduedate: int, optional
         :param duedate: Invitations that contain this due date
@@ -881,29 +888,43 @@ class Client(object):
         :rtype: list[Invitation]
         """
         
-        params = {
-            'id': id,
-            'ids': ids,
-            'invitee': invitee,
-            'replytoNote': replytoNote,
-            'replyForum': replyForum,
-            'signature': signature,
-            'note': note,
-            'regex': regex,
-            'tags': tags,
-            'limit': limit,
-            'offset': offset,
-            'minduedate': minduedate,
-            'duedate': duedate,
-            'pastdue': pastdue,
-            'replyto': replyto,
-            'details': details,
-            'expired': expired,
-            'super': super,
-            'with_count': with_count
-       }
+        params = {}
+        if id is not None:
+            params['id'] = id
+        if ids is not None:
+            params['ids'] = ids
+        if invitee is not None:
+            params['invitee'] = invitee
+        if replytoNote is not None:
+            params['replytoNote'] = replytoNote
+        if replyForum is not None:
+            params['replyForum'] = replyForum
+        if signature is not None:
+            params['signature'] = signature
+        if note is not None:
+            params['note']=note
+        if regex is not None:
+            params['regex'] = regex
+        if tags is not None:
+            params['tags'] = tags
+        if minduedate is not None:
+            params['minduedate'] = minduedate
+        if duedate is not None:
+            params['duedate'] = duedate
+        if pastdue is not None:
+            params['pastdue'] = pastdue
+        if replyto is not None:
+            params['replyto'] = replyto
+        if details is not None:
+            params['details'] = details
+        if expired is not None:
+            params['expired'] = expired
+        if super is not None:
+            params['super'] = super
+        if with_count is not None:
+            params['with_count'] = with_count
 
-        return tools.concurrent_get(self, self.get_invitations, **params)
+        return list(tools.efficient_iterget(self.get_invitations, desc='Getting V1 Invitations', **params))
 
     def get_notes(self, id = None,
             paperhash = None,
