@@ -847,6 +847,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
         assert 'authorids' not in submissions[0].content
         assert 'authors' not in submissions[0].content
         assert 'financial_aid'not in submissions[0].content
+        assert not submissions[0].odate
 
         ## make submissions visible to the committee
         pc_client.post_note(openreview.Note(
@@ -4079,6 +4080,8 @@ ICML 2023 Conference Program Chairs'''
             "ICML.cc/2023/Conference/Submission2/Reviewers",
             "ICML.cc/2023/Conference/Submission2/Authors"
         ]
+        assert not submissions[0].odate
+        assert not submissions[1].odate
 
         invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Post_Decision_Stage')
         invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
