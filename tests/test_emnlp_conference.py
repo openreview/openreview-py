@@ -558,3 +558,32 @@ class TestEMNLPConference():
             writers=[]
         ))
         assert revision_stage_note
+
+    def test_release_submissions(self, test_client, client, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@emnlp.org', password=helpers.strong_password)
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
+
+        ## make submissions visible to everyone
+        pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'submission_readers': 'Everyone (submissions are public)'
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['EMNLP/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_EMNLPChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
+
+        submissions = openreview_client.get_notes(invitation='EMNLP/2023/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 5
+
+        for submission in submissions:
+            assert submission.odate
+            assert '_bibtex' in submission.content
