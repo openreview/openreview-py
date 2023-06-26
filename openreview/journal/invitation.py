@@ -3068,7 +3068,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'description': 'List of expert reviewers',
                 'value': {
                     'param': {
-                        'fieldName': 'Authors that are also TMLR Expert Reviewers',
+                        'fieldName': f'Authors that are also {self.journal.short_name} Expert Reviewers',
                         'type': 'string[]',
                         'optional': True
                     }
