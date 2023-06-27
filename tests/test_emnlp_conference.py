@@ -338,6 +338,21 @@ class TestEMNLPConference():
         helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
         helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Withdrawn_Submission')
 
+        withdrawn_submission = openreview_client.get_notes(invitation='EMNLP/2023/Conference/-/Withdrawn_Submission')
+        assert len(withdrawn_submission) == 1
+
+        valid_bibtex = '''@misc{
+anonymous2023test,
+title={Test Paper Title 5},
+author={Anonymous},
+year={2023},
+url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + withdrawn_submission[0].forum + '''}
+}'''
+
+        assert '_bibtex' in withdrawn_submission[0].content and withdrawn_submission[0].content['_bibtex']['value'] == valid_bibtex
+
         pc_openreview_client = openreview.api.OpenReviewClient(username='pc@emnlp.org', password=helpers.strong_password)
 
         # reverse withdrawal
@@ -363,6 +378,21 @@ class TestEMNLPConference():
 
         helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
         helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Desk_Rejected_Submission')
+
+        desk_rejected_submission = openreview_client.get_notes(invitation='EMNLP/2023/Conference/-/Desk_Rejected_Submission')
+        assert len(desk_rejected_submission) == 1
+
+        valid_bibtex = '''@misc{
+anonymous2023test,
+title={Test Paper Title 5},
+author={Anonymous},
+year={2023},
+url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + desk_rejected_submission[0].forum + '''}
+}'''
+
+        assert '_bibtex' in desk_rejected_submission[0].content and desk_rejected_submission[0].content['_bibtex']['value'] == valid_bibtex
 
         desk_rejection_reversion_note = pc_openreview_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Desk_Rejection_Reversion',
                                     signatures=['EMNLP/2023/Conference/Program_Chairs'],
