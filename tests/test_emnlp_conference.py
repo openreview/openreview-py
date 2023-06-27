@@ -1,3 +1,6 @@
+import csv
+import os
+import random
 import openreview
 import datetime
 
@@ -558,3 +561,194 @@ class TestEMNLPConference():
             writers=[]
         ))
         assert revision_stage_note
+
+    def test_desk_rejection_by_SAC(self, test_client, client, openreview_client, helpers):
+
+        #update desk-rejection invitation
+        openreview_client.post_invitation_edit(
+            invitations='EMNLP/2023/Conference/-/Edit',
+            readers=['EMNLP/2023/Conference'],
+            writers=['EMNLP/2023/Conferencee'],
+            signatures=['EMNLP/2023/Conference'],
+            invitation=openreview.api.Invitation(
+                id='EMNLP/2023/Conference/-/Desk_Rejection',
+                edit={
+                    'invitation': {
+                        'invitees': [
+                            'EMNLP/2023/Conference/Program_Chairs',
+                            'EMNLP/2023/Conference/Submission${3/content/noteNumber/value}/Senior_Area_Chairs',
+                            'EMNLP/2023/Conference/Submission${3/content/noteNumber/value}/Area_Chairs'
+                            ],
+                        'edit': {
+                            'signatures': {
+                                'param': {
+                                    'regex': 'EMNLP/2023/Conference/Submission${5/content/noteNumber/value}/Senior_Area_Chairs|EMNLP/2023/Conference/Submission${5/content/noteNumber/value}/Area_Chair_.*|EMNLP/2023/Conference/Program_Chairs'
+                                }
+                            },
+                            'note': {
+                                'content': {
+                                    'title': { 'delete': True }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Desk_Rejection-0-1', count=3)
+        invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission1/-/Desk_Rejection')
+        assert invitation.invitees == [
+            'EMNLP/2023/Conference/Program_Chairs',
+            'EMNLP/2023/Conference/Submission1/Senior_Area_Chairs',
+            'EMNLP/2023/Conference/Submission1/Area_Chairs'
+        ]
+        assert invitation.edit['signatures']['param']['regex'] == 'EMNLP/2023/Conference/Submission1/Senior_Area_Chairs|EMNLP/2023/Conference/Submission1/Area_Chair_.*|EMNLP/2023/Conference/Program_Chairs'
+
+        pc_client=openreview.Client(username='pc@emnlp.org', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@emnlp.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        openreview_client.add_members_to_group('EMNLP/2023/Conference/Senior_Area_Chairs', ['sac@emnlp.com', 'sac2@emnlp.org'])
+        openreview_client.add_members_to_group('EMNLP/2023/Conference/Area_Chairs', ['ac1@emnlp.org', 'ac2@emnlp.org'])
+        openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group('EMNLP/2023/Conference/Senior_Area_Chairs'))
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for sac in openreview_client.get_group('EMNLP/2023/Conference/Senior_Area_Chairs').members:
+                for ac in openreview_client.get_group('EMNLP/2023/Conference/Area_Chairs').members:
+                    writer.writerow([ac, sac, round(random.random(), 2)])
+
+        affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
+
+        ## setup matching to assign SAC to each AC
+        client.post_note(openreview.Note(
+            content={
+                'title': 'Paper Matching Setup',
+                'matching_group': 'EMNLP/2023/Conference/Senior_Area_Chairs',
+                'compute_conflicts': 'No',
+                'compute_affinity_scores': 'No',
+                'upload_affinity_scores': affinity_scores_url
+
+            },
+            forum=request_form.id,
+            replyto=request_form.id,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+            readers=['EMNLP/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_EMNLPChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
+
+        assert pc_client_v2.get_edges_count(invitation='EMNLP/2023/Conference/Senior_Area_Chairs/-/Affinity_Score') == 4
+
+        openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'EMNLP/2023/Conference/Senior_Area_Chairs/-/Proposed_Assignment',
+            head = '~AC_EMNLPOne1',
+            tail = '~SAC_EMNLPOne1',
+            signatures = ['EMNLP/2023/Conference/Program_Chairs'],
+            weight = 1,
+            label = 'sac-matching'
+        ))
+
+        openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'EMNLP/2023/Conference/Senior_Area_Chairs/-/Proposed_Assignment',
+            head = '~AC_EMNLPTwo1',
+            tail = '~SAC_EMNLPOne1',
+            signatures = ['EMNLP/2023/Conference/Program_Chairs'],
+            weight = 1,
+            label = 'sac-matching'
+        ))
+
+        venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
+
+        venue.set_assignments(assignment_title='sac-matching', committee_id='EMNLP/2023/Conference/Senior_Area_Chairs')
+
+        sac_assignment_count = pc_client_v2.get_edges_count(invitation='EMNLP/2023/Conference/Senior_Area_Chairs/-/Assignment')
+        assert sac_assignment_count == 2
+
+        sac_client = openreview.api.OpenReviewClient(username = 'sac@emnlp.com', password=helpers.strong_password)
+
+        ## setup matching ACs to take into account the SAC conflicts
+        client.post_note(openreview.Note(
+            content={
+                'title': 'Paper Matching Setup',
+                'matching_group': 'EMNLP/2023/Conference/Area_Chairs',
+                'compute_conflicts': 'NeurIPS',
+                'compute_conflicts_N_years': '3',
+                'compute_affinity_scores': 'No'
+
+            },
+            forum=request_form.id,
+            replyto=request_form.id,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+            readers=['EMNLP/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_EMNLPChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
+
+        submissions = pc_client_v2.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission'}, sort='number:asc')
+        assert len(submissions) == 5
+
+        for i in range(0,5):
+            acs = ['~AC_EMNLPOne1', '~AC_EMNLPTwo1']
+
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'EMNLP/2023/Conference/Area_Chairs/-/Proposed_Assignment',
+                head = submissions[i].id,
+                tail = acs[i%2],
+                signatures = ['EMNLP/2023/Conference/Program_Chairs'],
+                weight = 1,
+                label = 'ac-matching'
+            ))
+
+        venue.set_assignments(assignment_title='ac-matching', committee_id='EMNLP/2023/Conference/Area_Chairs')
+
+        #desk-reject paper
+        desk_reject_note = sac_client.post_note_edit(invitation=f'EMNLP/2023/Conference/Submission1/-/Desk_Rejection',
+                                    signatures=['EMNLP/2023/Conference/Submission1/Senior_Area_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'desk_reject_comments': { 'value': 'Missing pdf.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Desk_Rejected_Submission', count=2)
+
+        submissions = pc_client_v2.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission'}, sort='number:asc')
+        assert len(submissions) == 4
+
+        desk_rejected_note = sac_client.get_notes(invitation='EMNLP/2023/Conference/Submission1/-/Desk_Rejection')[0]
+        assert desk_rejected_note
+        assert 'EMNLP/2023/Conference/Submission1/Senior_Area_Chairs' == desk_rejected_note.signatures[0]
+
+        messages = client.get_messages(subject='[EMNLP 2023]: Paper #1 desk-rejected by Senior Area Chairs')
+        assert messages and len(messages) == 5
+
+        ac_client = openreview.api.OpenReviewClient(username = 'ac2@emnlp.org', password=helpers.strong_password)
+        submissions = ac_client.get_notes(invitation='EMNLP/2023/Conference/-/Submission', sort='number:asc')
+        anon_group_id = ac_client.get_groups(prefix='EMNLP/2023/Conference/Submission2/Area_Chair_', signatory='~AC_EMNLPTwo1')[0].id
+
+        #desk-reject paper
+        desk_reject_note = ac_client.post_note_edit(invitation=f'EMNLP/2023/Conference/Submission2/-/Desk_Rejection',
+                                    signatures=[anon_group_id],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'desk_reject_comments': { 'value': 'Too long.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Desk_Rejected_Submission', count=3)
+
+        submissions = pc_client_v2.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission'}, sort='number:asc')
+        assert len(submissions) == 3
+
+        desk_rejected_note = ac_client.get_notes(invitation='EMNLP/2023/Conference/Submission2/-/Desk_Rejection')[0]
+        assert desk_rejected_note
+
+        pretty_id = openreview.tools.pretty_id(anon_group_id.split('/')[-1])
+        messages = client.get_messages(to='pc@emnlp.org', subject=f'[EMNLP 2023]: Paper #2 desk-rejected by {pretty_id}')
+        assert messages and len(messages) == 1
