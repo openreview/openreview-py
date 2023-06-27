@@ -3064,7 +3064,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.has_expert_reviewers():
             invitation.edit['note']['content']['expert_reviewers'] = {
-                'order': 5,
+                'order': 1,
                 'description': 'List of expert reviewers',
                 'value': {
                     'param': {
