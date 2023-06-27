@@ -1357,6 +1357,16 @@ class InvitationBuilder(object):
             },
             'venueid': {
                 'value': self.venue.get_withdrawn_submission_venue_id()
+            },
+            '_bibtex': {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 200000,
+                        'input': 'textarea',
+                        'optional': True
+                    }
+                }
             }
         }
         if submission_stage.withdrawn_submission_reveal_authors:
@@ -1628,6 +1638,16 @@ class InvitationBuilder(object):
             },
             'venueid': {
                 'value': self.venue.get_desk_rejected_submission_venue_id()
+            },
+            '_bibtex': {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 200000,
+                        'input': 'textarea',
+                        'optional': True
+                    }
+                }
             }
         }
         if submission_stage.desk_rejected_submission_reveal_authors:
