@@ -3,7 +3,6 @@ def process(client, invitation):
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     submission_venue_id = domain.content['submission_venue_id']['value']
-    public = domain.content['public_submissions']['value']
     venue_name = domain.content['title']['value']
 
     now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
@@ -20,7 +19,7 @@ def process(client, invitation):
             id=submission.id
         )
 
-        if public and submission.odate is None:
+        if invitation.edit['note']['readers'] == ['everyone'] and submission.odate is None:
             updated_note.odate = now
             updated_note.content = {
                 '_bibtex': {
