@@ -41,6 +41,9 @@ def process(client, edit, invitation):
             }
         )
 
+    signature = desk_rejection_notes[0].signatures[0].split('/')[-1]
+    pretty_signature = openreview.tools.pretty_id(signature)
+
     print(f'Remove {paper_group_id}/{authors_name} from {venue_id}/{authors_name}')
     client.remove_members_from_group(f'{venue_id}/{authors_name}', f'{paper_group_id}/{authors_name}')
 
@@ -49,8 +52,8 @@ def process(client, edit, invitation):
     for group in formatted_committee:
         if openreview.tools.get_group(client, group):
             final_committee.append(group)
-    email_subject = f'''[{short_name}]: Paper #{submission.number} desk-rejected by program chairs'''
-    email_body = f'''The {short_name} paper "{submission.content.get('title', {}).get('value', '#'+str(submission.number))}" has been desk-rejected by the program chairs.
+    email_subject = f'''[{short_name}]: Paper #{submission.number} desk-rejected by {pretty_signature}'''
+    email_body = f'''The {short_name} paper "{submission.content.get('title', {}).get('value', '#'+str(submission.number))}" has been desk-rejected by {pretty_signature}.
 
 For more information, click here https://openreview.net/forum?id={submission.id}
 '''
