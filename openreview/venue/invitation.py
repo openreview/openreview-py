@@ -2148,7 +2148,6 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=True)            
 
-
     def set_expertise_selection_invitations(self):
 
         venue_id = self.venue_id
@@ -2587,4 +2586,58 @@ class InvitationBuilder(object):
         )
 
         self.save_invitation(invitation, replacement=False)
-        return invitation        
+        return invitation
+
+    def set_ethics_paper_groups_invitation(self):
+
+        venue = self.venue
+        venue_id = self.venue_id
+        ethics_stage = venue.ethics_review_stage
+        invitation_id = venue.get_invitation_id(f'{venue.submission_stage.name}_Group', prefix=self.venue.get_ethics_reviewers_id())
+
+        invitation = Invitation(id=invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            date_processes=[{
+                'dates': ["#{4/cdate}", self.update_date_string],
+                'script': self.group_edit_process
+            }],
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'group': {
+                    'id': venue.get_ethics_reviewers_id(number='${2/content/noteNumber/value}'),
+                    'readers': [venue_id,
+                                venue.get_ethics_reviewers_id(number='${3/content/noteNumber/value}'),
+                                venue.get_ethics_chairs_id()],
+                    'nonreaders': [venue.get_authors_id('${3/content/noteNumber/value}')],
+                    'deanonymizers': [venue_id, venue.get_ethics_chairs_id()],
+                    'writers': [venue_id],
+                    'signatures': [venue_id],
+                    'signatories': [venue_id],
+                    'anonids': True
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation

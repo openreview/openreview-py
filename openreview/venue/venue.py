@@ -495,6 +495,12 @@ class Venue(object):
     def create_custom_stage(self):
         return self.invitation_builder.set_custom_stage_invitation()
     
+    def create_ethics_review_stage(self):
+        # to do: unflag existing papers with no assigned reviewers
+
+        # create ethics paper groups
+        self.invitation_builder.set_ethics_paper_groups_invitation()
+
     def update_conflict_policies(self, committee_id, compute_conflicts, compute_conflicts_n_years):
         content = {}
         if committee_id == self.get_reviewers_id():
