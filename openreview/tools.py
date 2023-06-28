@@ -471,7 +471,9 @@ def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='un
     :rtype: str
     """
 
-    first_word = re.sub('[^a-zA-Z]', '', note.content['title'].split(' ')[0].lower())
+    note_title = note.content['title'] if isinstance(note.content['title'], str) else note.content['title']['value']
+
+    first_word = re.sub('[^a-zA-Z]', '', note_title.split(' ')[0].lower())
 
     forum = note.forum if not url_forum else url_forum
 
@@ -479,17 +481,18 @@ def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='un
         first_author_last_name = 'anonymous'
         authors = 'Anonymous'
     else:
-        first_author_last_name = note.content['authors'][0].split(' ')[-1].lower()
+        note_author_list = note.content['authors'] if isinstance(note.content['authors'], list) else note.content['authors']['value']
+        first_author_last_name = note_author_list[0].split(' ')[-1].lower()
         if names_reversed:
             # last, first
             author_list = []
-            for name in note.content['authors']:
+            for name in note_author_list:
                 last = name.split(' ')[-1]
                 rest = (' ').join(name.split(' ')[:-1])
                 author_list.append(last+', '+rest)
             authors = ' and '.join(author_list)
         else:
-            authors = ' and '.join(note.content['authors'])
+            authors = ' and '.join(note_author_list)
 
     u = UnicodeToLatexEncoder(
         conversion_rules=[
@@ -501,7 +504,7 @@ def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='un
             'defaults'
         ]
     )
-    bibtex_title = u.unicode_to_latex(note.content['title'])
+    bibtex_title = u.unicode_to_latex(note_title)
 
     if paper_status == 'under review':
 

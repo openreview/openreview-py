@@ -847,6 +847,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
         assert 'authorids' not in submissions[0].content
         assert 'authors' not in submissions[0].content
         assert 'financial_aid'not in submissions[0].content
+        assert not submissions[0].odate
 
         ## make submissions visible to the committee
         pc_client.post_note(openreview.Note(
@@ -4079,6 +4080,8 @@ ICML 2023 Conference Program Chairs'''
             "ICML.cc/2023/Conference/Submission2/Reviewers",
             "ICML.cc/2023/Conference/Submission2/Authors"
         ]
+        assert not submissions[0].odate
+        assert not submissions[1].odate
 
         invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Post_Decision_Stage')
         invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
@@ -4175,6 +4178,19 @@ Best,
             assert submission.content['venue']['value'] == 'ICML 2023'
             assert submission.content['venueid']['value'] == 'ICML.cc/2023/Conference'
 
+        valid_bibtex = '''@inproceedings{
+user2023paper,
+title={Paper title 1 Version 2},
+author={SomeFirstName User and Peter SomeLastName and Andrew Mc and SAC ICMLOne and Melisa ICML},
+booktitle={Thirty-ninth International Conference on Machine Learning},
+year={2023},
+url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + accepted_submissions[0].forum + '''}
+}'''
+
+        assert '_bibtex' in accepted_submissions[0].content and accepted_submissions[0].content['_bibtex']['value'] == valid_bibtex
+
         for submission in rejected_submissions:
             assert submission.readers == [
                 "ICML.cc/2023/Conference",
@@ -4191,6 +4207,18 @@ Best,
             assert submission.content['venueid']['value'] == 'ICML.cc/2023/Conference/Rejected_Submission'
             assert 'readers' in submission.content['pdf']
             assert 'readers' not in submission.content['financial_aid']
+
+        valid_bibtex = '''@misc{
+anonymous2023paper,
+title={Paper title 2},
+author={Anonymous},
+year={2023},
+url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + rejected_submissions[0].forum + '''}
+}'''
+
+        assert '_bibtex' in rejected_submissions[0].content and rejected_submissions[0].content['_bibtex']['value'] == valid_bibtex
 
     def test_forum_chat(self, openreview_client, helpers):
 
