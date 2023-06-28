@@ -341,6 +341,21 @@ class TestEMNLPConference():
         helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
         helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Withdrawn_Submission')
 
+        withdrawn_submission = openreview_client.get_notes(invitation='EMNLP/2023/Conference/-/Withdrawn_Submission')
+        assert len(withdrawn_submission) == 1
+
+        valid_bibtex = '''@misc{
+anonymous2023test,
+title={Test Paper Title 5},
+author={Anonymous},
+year={2023},
+url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + withdrawn_submission[0].forum + '''}
+}'''
+
+        assert '_bibtex' in withdrawn_submission[0].content and withdrawn_submission[0].content['_bibtex']['value'] == valid_bibtex
+
         pc_openreview_client = openreview.api.OpenReviewClient(username='pc@emnlp.org', password=helpers.strong_password)
 
         # reverse withdrawal
@@ -366,6 +381,21 @@ class TestEMNLPConference():
 
         helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
         helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Desk_Rejected_Submission')
+
+        desk_rejected_submission = openreview_client.get_notes(invitation='EMNLP/2023/Conference/-/Desk_Rejected_Submission')
+        assert len(desk_rejected_submission) == 1
+
+        valid_bibtex = '''@misc{
+anonymous2023test,
+title={Test Paper Title 5},
+author={Anonymous},
+year={2023},
+url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + desk_rejected_submission[0].forum + '''}
+}'''
+
+        assert '_bibtex' in desk_rejected_submission[0].content and desk_rejected_submission[0].content['_bibtex']['value'] == valid_bibtex
 
         desk_rejection_reversion_note = pc_openreview_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Desk_Rejection_Reversion',
                                     signatures=['EMNLP/2023/Conference/Program_Chairs'],
@@ -752,3 +782,33 @@ class TestEMNLPConference():
         pretty_id = openreview.tools.pretty_id(anon_group_id.split('/')[-1])
         messages = client.get_messages(to='pc@emnlp.org', subject=f'[EMNLP 2023]: Paper #2 desk-rejected by {pretty_id}')
         assert messages and len(messages) == 1
+
+    def test_release_submissions(self, test_client, client, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@emnlp.org', password=helpers.strong_password)
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
+
+        ## make submissions visible to everyone
+        pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'submission_readers': 'Everyone (submissions are public)'
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['EMNLP/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_EMNLPChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
+
+        submissions = openreview_client.get_notes(invitation='EMNLP/2023/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 3
+
+        for submission in submissions:
+            assert submission.odate
+            assert '_bibtex' in submission.content
+

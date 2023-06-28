@@ -156,7 +156,7 @@ class InvitationBuilder(object):
                             'optional': True,
                             'deletable': True
                         }
-                    },                    
+                    },
                     'signatures': [ '${3/signatures}' ],
                     'readers': note_readers,
                     'writers': [venue_id, '${2/content/authorids/value}'],
@@ -210,12 +210,30 @@ class InvitationBuilder(object):
                             'optional': True
                         }
                     },
+                    'odate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
                     'signatures': [ self.venue.get_authors_id('${{2/id}/number}') ],
                     'readers': submission_stage.get_readers(self.venue, '${{2/id}/number}'),
                     'writers': [venue_id, self.venue.get_authors_id('${{2/id}/number}')],
                 }
             }
         )
+
+        note_content['_bibtex'] = {
+            'value': {
+                'param': {
+                    'type': 'string',
+                    'maxLength': 200000,
+                    'input': 'textarea',
+                    'optional': True
+                }
+            }
+        }
 
         if note_content:
             submission_invitation.edit['note']['content'] = note_content
@@ -1339,6 +1357,16 @@ class InvitationBuilder(object):
             },
             'venueid': {
                 'value': self.venue.get_withdrawn_submission_venue_id()
+            },
+            '_bibtex': {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 200000,
+                        'input': 'textarea',
+                        'optional': True
+                    }
+                }
             }
         }
         if submission_stage.withdrawn_submission_reveal_authors:
@@ -1610,6 +1638,16 @@ class InvitationBuilder(object):
             },
             'venueid': {
                 'value': self.venue.get_desk_rejected_submission_venue_id()
+            },
+            '_bibtex': {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 200000,
+                        'input': 'textarea',
+                        'optional': True
+                    }
+                }
             }
         }
         if submission_stage.desk_rejected_submission_reveal_authors:
@@ -2148,7 +2186,6 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=True)            
 
-
     def set_expertise_selection_invitations(self):
 
         venue_id = self.venue_id
@@ -2587,4 +2624,4 @@ class InvitationBuilder(object):
         )
 
         self.save_invitation(invitation, replacement=False)
-        return invitation        
+        return invitation
