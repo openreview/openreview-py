@@ -90,6 +90,9 @@ class TestJournal():
                                 'Reproducibility Certification',
                                 'Survey Certification'
                             ],
+                            'eic_certifications': [
+                                'Outstanding Certification'
+                            ],                            
                             'submission_length': [
                                 'Regular submission (no more than 12 pages of main content)', 
                                 'Long submission (more than 12 pages of main content)'
@@ -2226,7 +2229,8 @@ note={Featured Certification, Reproducibility Certification, Expert Certificatio
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                     'human_subjects_reporting': { 'value': 'Not applicable'},
-                    'video': { 'value': 'https://youtube.com/dfenxkw'}
+                    'video': { 'value': 'https://youtube.com/dfenxkw'},
+                    'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification', 'Expert Certification', 'Outstanding Certification'] },
                 }
             )
         )
@@ -2259,9 +2263,8 @@ journal={Transactions on Machine Learning Research},
 issn={2835-8856},
 year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
-note={Featured Certification, Reproducibility Certification, Expert Certification}
+note={Featured Certification, Reproducibility Certification, Expert Certification, Outstanding Certification}
 }'''
-
 
         ## Retract the paper
         retraction_note = test_client.post_note_edit(invitation='TMLR/Paper1/-/Retraction',

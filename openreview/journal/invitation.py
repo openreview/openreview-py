@@ -5437,7 +5437,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 "value": {
                     "param": {
                         "type": "string[]",
-                        "enum": self.journal.get_certifications(),
+                        "enum": self.journal.get_certifications() + self.journal.get_eic_certifications(),
                         "optional": True,
                         "input": "select"
                     }
