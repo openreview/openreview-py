@@ -805,7 +805,7 @@ url={https://openreview.net/forum?id='''
 
         helpers.await_queue()
 
-        submissions = openreview_client.get_notes(invitation='EMNLP/2023/Conference/-/Submission', sort='number:asc')
+        submissions = openreview_client.get_notes(content={'venueid':'EMNLP/2023/Conference/Submission'}, sort='number:asc')
         assert len(submissions) == 3
 
         for submission in submissions:
