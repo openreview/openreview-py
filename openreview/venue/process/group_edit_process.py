@@ -12,6 +12,19 @@ def process(client, invitation):
         print('invitation is not yet active', cdate)
         return    
 
+    def get_children_notes():
+        source = invitation.content.get('source', {}).get('value', 'all_submissions') if invitation.content else 'all_submissions'
+        source_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc')
+        
+        if source == 'all_submissions':
+            return source_submissions
+        if source == 'needs_ethics_review':
+            children_notes = []
+            for note in source_submissions:
+                if 'needs_ethics_review' in note.content:
+                    children_notes.append(note)
+            return children_notes
+
     def post_group_edit(submission):
 
         client.post_group_edit(
@@ -24,6 +37,6 @@ def process(client, invitation):
         )
     
     ## Release the submissions to specified readers if venueid is still submission
-    submissions = client.get_all_notes(content= { 'venueid': submission_venue_id })
+    submissions = get_children_notes()
     print(f'update {len(submissions)} submissions')
     openreview.tools.concurrent_requests(post_group_edit, submissions, desc='post_group_edit')    

@@ -2604,6 +2604,11 @@ class InvitationBuilder(object):
                 'dates': ["#{4/cdate}", self.update_date_string],
                 'script': self.group_edit_process
             }],
+            content = {
+                'source': {
+                    'value': 'needs_ethics_review'
+                }
+            },
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],

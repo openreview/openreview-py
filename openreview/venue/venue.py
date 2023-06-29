@@ -498,8 +498,32 @@ class Venue(object):
     def create_ethics_review_stage(self):
         # to do: unflag existing papers with no assigned reviewers
 
+        # flag submissions that need ethics review
+        flagged_submission_numbers = self.ethics_review_stage.submission_numbers
+        print(flagged_submission_numbers)
+        notes = self.get_submissions()
+        for note in notes:
+            if note.number in flagged_submission_numbers:
+                self.client.post_note_edit(
+                    invitation=self.get_meta_invitation_id(),
+                    readers=[self.venue_id],
+                    writers=[self.venue_id],
+                    signatures=[self.venue_id],
+                    note = openreview.api.Note(
+                        id = note.id,
+                        content = {
+                            'needs_ethics_review': { 
+                                'value': True,
+                                'readers': [self.venue_id]
+                            }
+                        }
+                    )
+                )
+
         # create ethics paper groups
         self.invitation_builder.set_ethics_paper_groups_invitation()
+
+        # make submissions visible to ethics committee
 
     def update_conflict_policies(self, committee_id, compute_conflicts, compute_conflicts_n_years):
         content = {}
