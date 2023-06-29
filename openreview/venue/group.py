@@ -179,11 +179,13 @@ class GroupBuilder(object):
             'withdraw_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
             'withdrawal_name': { 'value': 'Withdrawal'},
             'withdrawal_email_pcs': { 'value': self.venue.submission_stage.email_pcs_on_withdraw },
+            'withdrawn_submission_reveal_authors': { 'value': self.venue.submission_stage.withdrawn_submission_reveal_authors },
             'desk_rejected_submission_id': { 'value': self.venue.get_desk_rejected_id() },
             'desk_reject_expiration_id': { 'value': self.venue.get_invitation_id('Desk_Reject_Expiration') },
             'desk_rejection_reversion_id': { 'value': self.venue.get_invitation_id('Desk_Rejection_Reversion') },
             'desk_reject_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
             'desk_rejection_name': { 'value': 'Desk_Rejection'},
+            'desk_rejected_submission_reveal_authors': { 'value': self.venue.submission_stage.desk_rejected_submission_reveal_authors },
             'automatic_reviewer_assignment': { 'value': self.venue.automatic_reviewer_assignment },
             'decision_heading_map': { 'value': self.venue.decision_heading_map }
         }

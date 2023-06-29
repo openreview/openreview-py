@@ -799,7 +799,7 @@ class TestMatching():
         edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
         pc_client.post_edge(edge)
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edge.id)
 
     def test_setup_matching_with_mentors(self, venue, pc_client, helpers):
 

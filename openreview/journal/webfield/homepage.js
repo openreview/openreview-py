@@ -75,14 +75,14 @@ function load() {
   var acceptedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
     'content.venueid': VENUE_ID,
     pageSize: PAGE_SIZE,
-    details: 'replyCount',
+    details: 'replyCount,presentation',
     includeCount: true,
     sort: 'pdate:desc'
   });
 
   var acceptedNotesWithVideoP = Webfield2.api.getAllSubmissions(SUBMISSION_ID, {
     'content.venueid': VENUE_ID,
-    details: 'replyCount',
+    details: 'replyCount,presentation',
     sort: 'pdate:desc'
   })
   .then(function(submissions) {
@@ -96,7 +96,7 @@ function load() {
       'content.venueid': VENUE_ID,
       'content.certifications': certification,
       pageSize: PAGE_SIZE,
-      details: 'replyCount',
+      details: 'replyCount,presentation',
       includeCount: true,
       sort: 'pdate:desc'
     });
@@ -107,14 +107,14 @@ function load() {
   var underReviewNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
     'content.venueid': [UNDER_REVIEW_ID, DECISION_PENDING_ID].join(','),
     pageSize: PAGE_SIZE,
-    details: 'replyCount',
+    details: 'replyCount,presentation',
     includeCount: true,
     sort: 'mdate:desc'
   });
 
   var allNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
     pageSize: PAGE_SIZE,
-    details: 'replyCount',
+    details: 'replyCount,presentation',
     includeCount: true,
     sort: 'mdate:desc'
   });
@@ -188,7 +188,7 @@ function renderContent(acceptedResponse, acceptedNotesWithVideo, certificationsR
 
   CERTIFICATIONS.forEach(function(certification, index) {
     var response = certificationsResponse[index];
-    var key = certification.toLowerCase().replace(' ', '-');
+    var key = certification.toLowerCase().replaceAll(' ', '-');
     Webfield2.ui.renderSubmissionList('#' + key, SUBMISSION_ID, response.notes, response.count,
     Object.assign({}, options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': certification, sort: 'pdate:desc' }}));
   })
