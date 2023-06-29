@@ -496,34 +496,61 @@ class Venue(object):
         return self.invitation_builder.set_custom_stage_invitation()
     
     def create_ethics_review_stage(self):
-        # to do: unflag existing papers with no assigned reviewers
-
-        # flag submissions that need ethics review
+        
+        # to-do: create invitation to flag papers and run everything in its process function
+        # flag submissions that need ethics review and make those submissions visible to ethics committee
         flagged_submission_numbers = self.ethics_review_stage.submission_numbers
         print(flagged_submission_numbers)
-        notes = self.get_submissions()
+        notes = self.get_submissions(details='directReplies')
         for note in notes:
             if note.number in flagged_submission_numbers:
+                reviews = [Note.from_json(reply) for reply in note.details['directReplies'] if f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{self.review_stage.name}' in reply['invitations']]
                 self.client.post_note_edit(
                     invitation=self.get_meta_invitation_id(),
                     readers=[self.venue_id],
                     writers=[self.venue_id],
                     signatures=[self.venue_id],
-                    note = openreview.api.Note(
+                    note = Note(
                         id = note.id,
                         content = {
                             'needs_ethics_review': { 
                                 'value': True,
                                 'readers': [self.venue_id]
                             }
+                        },
+                        readers = {
+                            'append': [self.get_ethics_chairs_id(),
+                                       self.get_ethics_reviewers_id(number=note.number)]
                         }
                     )
                 )
+                for review in reviews:
+                    self.client.post_note_edit(
+                        invitation=self.get_meta_invitation_id(),
+                        readers=[self.venue_id],
+                        writers=[self.venue_id],
+                        signatures=[self.venue_id],
+                        note = Note(
+                            id = review.id,
+                            readers = {
+                                'append': [self.get_ethics_chairs_id(),
+                                        self.get_ethics_reviewers_id(number=note.number)]
+                            }
+                        )
+                    )
 
         # create ethics paper groups
         self.invitation_builder.set_ethics_paper_groups_invitation()
 
-        # make submissions visible to ethics committee
+        # setup paper matching
+        group = tools.get_group(self.client, id=self.get_ethics_reviewers_id())
+        if group and len(group.members) > 0:
+            self.setup_committee_matching(group.id, compute_affinity_scores=False, compute_conflicts=True)
+            ## **to-do**:
+            # self.invitation_builder.set_assignment_invitation(self, group.id)
+
+        # make reviews visible to ethics committee
+
 
     def update_conflict_policies(self, committee_id, compute_conflicts, compute_conflicts_n_years):
         content = {}
