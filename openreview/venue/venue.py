@@ -201,7 +201,9 @@ class Venue(object):
         return self.get_committee_id(committee_name) + '/Declined'
 
     ## Compatibility with Conference, refactor conference references to use get_reviewers_id
-    def get_anon_reviewer_id(self, number, anon_id):
+    def get_anon_reviewer_id(self, number, anon_id, name=None):
+        if name == self.ethics_reviewers_name:
+            return self.get_committee_id(f'{self.get_ethics_reviewers_name()}_.*')
         return self.get_reviewers_id(number, True)
 
     def get_reviewers_name(self, pretty=True):
@@ -498,7 +500,7 @@ class Venue(object):
     def create_ethics_review_stage(self):
         
         # to-do: create invitation to flag papers and run everything in its process function
-        # flag submissions that need ethics review and make those submissions visible to ethics committee
+        # flag submissions that need ethics review and make those submissions and their reviews visible to ethics committee
         flagged_submission_numbers = self.ethics_review_stage.submission_numbers
         print(flagged_submission_numbers)
         notes = self.get_submissions(details='directReplies')
@@ -549,8 +551,8 @@ class Venue(object):
             ## **to-do**:
             # self.invitation_builder.set_assignment_invitation(self, group.id)
 
-        # make reviews visible to ethics committee
-
+        # create ethics review invitations
+        return self.invitation_builder.set_ethics_review_invitation()
 
     def update_conflict_policies(self, committee_id, compute_conflicts, compute_conflicts_n_years):
         content = {}

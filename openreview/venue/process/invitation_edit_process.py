@@ -60,6 +60,9 @@ def process(client, invitation):
             if source == 'public_submissions':
                 source_submissions = [s for s in source_submissions if s.readers == ['everyone']]
 
+            if source == 'needs_ethics_review':
+                source_submissions = [s for s in source_submissions if 'needs_ethics_review' in s.content]
+
         if reply_to == 'reviews':
             children_notes = [openreview.api.Note.from_json(reply) for s in source_submissions for reply in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{review_name}' in reply['invitations']]
         elif reply_to == 'metareviews':

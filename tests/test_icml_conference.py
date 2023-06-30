@@ -3101,10 +3101,16 @@ ICML 2023 Conference Program Chairs'''
                 'remove_ethics_review_form_options': 'ethics_review',
                 'additional_ethics_review_form_options': {
                     "ethics_concerns": {
-                        "order": 1,
-                        "value-regex": "[\\S\\s]{1,200000}",
-                        "description": "Briefly summarize the ethics concerns.",
-                        "required": True
+                        'order': 1,
+                        'description': 'Briefly summarize the ethics concerns.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 200000,
+                                'markdown': True,
+                                'input': 'textarea'
+                            }
+                        }
                     }
                 },
                 'ethics_review_submissions': '1,5',
