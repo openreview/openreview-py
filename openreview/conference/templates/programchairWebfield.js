@@ -160,7 +160,7 @@ var main = function() {
       officialReviews = officialReviews.concat(paperOfficialReviews);
       metaReviews = metaReviews.concat(paperMetaReviews);
       decisions = decisions.concat(decisions);
-      getOfficialReviews(paperOfficialReviews, groups.anonReviewerGroups, submission.number);
+      getOfficialReviews(paperOfficialReviews, groups.anonReviewerGroups[submission.number]);
       submission.details.metaReview = paperMetaReviews;
       submission.details.decision = paperDecisions;
       submission.details.reviewers = reviewerGroupMaps.byNotes[submission.number];
@@ -718,7 +718,7 @@ var buildSeniorAreaChairGroupMaps = function(noteNumbers, seniorAreaChairGroups)
   };
 };
 
-var getOfficialReviews = function (notes, anonReviewerGroups, submissionNumber) {
+var getOfficialReviews = function (notes, anonReviewerGroup) {
   var ratingExp = /^(\d+): .*/;
 
   var reviewByAnonId = {};
@@ -728,7 +728,7 @@ var getOfficialReviews = function (notes, anonReviewerGroups, submissionNumber) 
     if (IS_NON_ANONYMOUS_VENUE) {
       var reviewerProfileId = n.signatures[0];
       anonId = getNumberfromGroup(
-        (anonReviewerGroups && anonReviewerGroups[submissionNumber] && anonReviewerGroups[submissionNumber][reviewerProfileId]) || '',
+        (anonReviewerGroup && anonReviewerGroup[reviewerProfileId]) || '',
         ANON_REVIEWER_NAME
       );
     } else {
