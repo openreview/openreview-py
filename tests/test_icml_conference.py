@@ -38,6 +38,7 @@ class TestICMLConference():
         helpers.create_user('reviewer4@gmail.com', 'Reviewer', 'ICMLFour')
         helpers.create_user('reviewer5@gmail.com', 'Reviewer', 'ICMLFive')
         helpers.create_user('reviewer6@gmail.com', 'Reviewer', 'ICMLSix')
+        helpers.create_user('reviewerethics@gmail.com', 'Reviewer', 'ICMLSeven')
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
@@ -3084,9 +3085,48 @@ ICML 2023 Conference Program Chairs'''
         sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs')
         assert ['~SAC_ICMLTwo1'] == sac_group.members
 
-    def test_ethics_review_stage(self, openreview_client, helpers):
+    def test_ethics_review_stage(self, openreview_client, helpers, selenium, request_page):
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        reviewer_details = '''reviewerethics@gmail.com, Reviewer ICMLSeven'''
+        recruitment_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'Ethics_Reviewers',
+                'invitee_reduced_load': ['2', '3', '4'],
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of ICML 2023 to serve as {{invitee_role}}.\n\n{{invitation_url}}\n\nIf you have any questions, please contact {{contact_info}}.\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+        assert recruitment_note
+        helpers.await_queue()        
+              
+        assert openreview_client.get_group('ICML.cc/2023/Conference/Ethics_Reviewers')
+        assert openreview_client.get_group('ICML.cc/2023/Conference/Ethics_Reviewers/Declined')
+        group = openreview_client.get_group('ICML.cc/2023/Conference/Ethics_Reviewers/Invited')
+        assert group
+        assert len(group.members) == 1
+        assert 'reviewerethics@gmail.com' in group.members
+
+        messages = openreview_client.get_messages(to='reviewerethics@gmail.com', subject='[ICML 2023] Invitation to serve as Ethics Reviewer')
+        assert messages and len(messages) == 1
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+        helpers.await_queue()
+
+        group = openreview_client.get_group('ICML.cc/2023/Conference/Ethics_Reviewers')
+        assert group
+        assert len(group.members) == 1
+        assert 'reviewerethics@gmail.com' in group.members
 
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
@@ -3166,6 +3206,10 @@ ICML 2023 Conference Program Chairs'''
         for review in reviews:
             assert 'ICML.cc/2023/Conference/Ethics_Chairs' in review.readers
             assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers' in review.readers
+
+        invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Ethics_Review')
+        assert len(invitations) == 2
+        assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers' in invitations[0].invitees
 
         assert False
 
