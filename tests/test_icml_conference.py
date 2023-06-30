@@ -3209,9 +3209,9 @@ ICML 2023 Conference Program Chairs'''
 
         invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Ethics_Review')
         assert len(invitations) == 2
-        assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers' in invitations[0].invitees
-
-        assert False
+        invitation = openreview_client.get_invitations(id='ICML.cc/2023/Conference/Submission1/-/Ethics_Review')[0]
+        assert invitation
+        assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers' in invitation.invitees
 
     def test_comment_stage(self, openreview_client, helpers):
 

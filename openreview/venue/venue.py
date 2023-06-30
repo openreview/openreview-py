@@ -203,7 +203,7 @@ class Venue(object):
     ## Compatibility with Conference, refactor conference references to use get_reviewers_id
     def get_anon_reviewer_id(self, number, anon_id, name=None):
         if name == self.ethics_reviewers_name:
-            return self.get_committee_id(f'{self.get_ethics_reviewers_name()}_.*')
+            return self.get_committee_id(f'{self.get_ethics_reviewers_name()}_.*', number)
         return self.get_reviewers_id(number, True)
 
     def get_reviewers_name(self, pretty=True):
@@ -225,6 +225,10 @@ class Venue(object):
             name=self.ethics_reviewers_name.replace('_', ' ')
             return name[:-1] if name.endswith('s') else name
         return self.ethics_reviewers_name
+
+    def anon_ethics_reviewers_name(self, pretty=True):
+        rev_name = self.ethics_reviewers_name[:-1] if self.ethics_reviewers_name.endswith('s') else self.ethics_reviewers_name
+        return rev_name + '_'
 
     def get_area_chairs_name(self, pretty=True):
         if pretty:
@@ -548,8 +552,7 @@ class Venue(object):
         group = tools.get_group(self.client, id=self.get_ethics_reviewers_id())
         if group and len(group.members) > 0:
             self.setup_committee_matching(group.id, compute_affinity_scores=False, compute_conflicts=True)
-            ## **to-do**:
-            # self.invitation_builder.set_assignment_invitation(self, group.id)
+            self.invitation_builder.set_assignment_invitation(group.id)
 
         # create ethics review invitations
         return self.invitation_builder.set_ethics_review_invitation()

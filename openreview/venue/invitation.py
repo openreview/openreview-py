@@ -2045,11 +2045,12 @@ class InvitationBuilder(object):
         
         venue = self.venue
         venue_id = venue.get_id()
-        assingment_invitation_id = venue.get_assignment_id(committee_id, deployed=True)
+        assignment_invitation_id = venue.get_assignment_id(committee_id, deployed=True)
         is_reviewer = committee_id == venue.get_reviewers_id()
         is_area_chair = committee_id == venue.get_area_chairs_id()
         is_senior_area_chair = committee_id == venue.get_senior_area_chairs_id()
         review_stage = venue.review_stage if is_reviewer else venue.meta_review_stage
+        is_ethics_reviewer = committee_id == venue.get_ethics_reviewers_id()
 
         content = {
             'review_name': {
@@ -2070,8 +2071,29 @@ class InvitationBuilder(object):
             'sac_assignment_id': {
                 'value': venue.get_assignment_id(venue.get_senior_area_chairs_id(), deployed=True) if is_area_chair and venue.use_senior_area_chairs else ''
             }
-        }        
+        }
 
+        if is_ethics_reviewer:
+            content = {
+                'review_name': {
+                    'value': venue.ethics_review_stage.name
+                },
+                'reviewers_id': {
+                    'value': venue.get_ethics_reviewers_id()
+                },
+                'reviewers_name': {
+                    'value': venue.ethics_reviewers_name
+                },
+                'reviewers_anon_name': {
+                    'value': venue.anon_ethics_reviewers_name()
+                },
+                'sync_sac_id': {
+                    'value': ''
+                },
+                'sac_assignment_id': {
+                    'value': ''
+                }
+            }
 
         preprocess = self.get_process_content('process/assignment_pre_process.js')
         process = self.get_process_content('process/assignment_post_process.py')
@@ -2104,6 +2126,13 @@ class InvitationBuilder(object):
                 edge_writers.append(venue.get_area_chairs_id(number='${{2/head}/number}'))
                 edge_signatures.append(venue.get_area_chairs_id(number='.*', anon=True))
 
+        if is_ethics_reviewer:
+            invitation_readers.append(venue.get_ethics_chairs_id())
+            edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')]
+            edge_invitees.append(venue.get_ethics_chairs_id())
+            edge_readers.append(venue.get_ethics_chairs_id())
+            edge_writers.append(venue.get_ethics_chairs_id())
+            edge_signatures.append(venue.get_ethics_chairs_id())
 
         if is_area_chair:
             invitation_readers.append(venue.get_area_chairs_id())
@@ -2131,7 +2160,7 @@ class InvitationBuilder(object):
         edge_readers.append('${2/tail}')
 
         invitation = Invitation(
-            id = assingment_invitation_id,
+            id = assignment_invitation_id,
             invitees = edge_invitees,
             readers = invitation_readers,
             writers = [venue_id],
@@ -2142,7 +2171,7 @@ class InvitationBuilder(object):
             edge = {
                 'id': {
                     'param': {
-                        'withInvitation': assingment_invitation_id,
+                        'withInvitation': assignment_invitation_id,
                         'optional': True
                     }
                 },
