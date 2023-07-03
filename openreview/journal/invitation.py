@@ -3064,10 +3064,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.has_expert_reviewers():
             invitation.edit['note']['content']['expert_reviewers'] = {
-                'order': 5,
+                'order': 1,
                 'description': 'List of expert reviewers',
                 'value': {
                     'param': {
+                        'fieldName': f'Authors that are also {self.journal.short_name} Expert Reviewers',
                         'type': 'string[]',
                         'optional': True
                     }
@@ -5436,7 +5437,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 "value": {
                     "param": {
                         "type": "string[]",
-                        "enum": self.journal.get_certifications(),
+                        "enum": self.journal.get_certifications() + self.journal.get_eic_certifications(),
                         "optional": True,
                         "input": "select"
                     }
