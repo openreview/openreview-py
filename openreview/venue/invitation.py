@@ -915,7 +915,7 @@ class InvitationBuilder(object):
         if comment_stage.reader_selection:
             comment_readers = {
                 'param': {
-                    'enum': comment_stage.get_readers(self.venue, '${7/content/noteNumber/value}')
+                    'items': comment_stage.get_readers(self.venue, '${8/content/noteNumber/value}', api_version='2'),
                 }
             }
 
