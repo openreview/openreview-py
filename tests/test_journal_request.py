@@ -439,3 +439,6 @@ TJ22 Editors-in-Chief
         assert len(ae_messages) == 3
         assert ae_messages[2]['content']['to'] == 'ae_journal2@mail.com'
         assert 'The user new_reviewer@mail.com has declined an invitation to be a reviewer for TJ22.' in ae_messages[2]['content']['text']
+
+        journal.invitation_builder.expire_reviewer_responsibility_invitations()
+        journal.invitation_builder.expire_assignment_availability_invitations()       

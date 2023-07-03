@@ -75,9 +75,7 @@ class TestJournalMatching():
         ken_client = OpenReviewClient(username='ken@beck.com', password=helpers.strong_password)
 
         ## Set a max quota
-        ana_client.post_edge(openreview.Edge(invitation='CARP/Action_Editors/-/Custom_Max_Papers',
-            readers=[venue_id, '~Ana_Prada1'],
-            writers=[venue_id, '~Ana_Prada1'],
+        ana_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Custom_Max_Papers',
             signatures=['~Ana_Prada1'],
             head='CARP/Action_Editors',
             tail='~Ana_Prada1',
@@ -85,9 +83,7 @@ class TestJournalMatching():
         ))
 
         ## Set unavailable
-        ken_client.post_edge(openreview.Edge(invitation='CARP/Action_Editors/-/Assignment_Availability',
-            readers=[venue_id, '~Ken_Beck1'],
-            writers=[venue_id, '~Ken_Beck1'],
+        ken_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Assignment_Availability',
             signatures=['~Ken_Beck1'],
             head='CARP/Action_Editors',
             tail='~Ken_Beck1',
@@ -347,4 +343,10 @@ class TestJournalMatching():
         assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~John_Lennon1')[0].weight == 11
         assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Janis_Joplin1')[0].weight == 12
         assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Diego_Armando1')[0].weight == 12
-        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers', tail='~Ken_Beck1')[0].weight == 0                                                                       
+        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers', tail='~Ken_Beck1')[0].weight == 0
+
+        submissions = test_client.get_notes(invitation='CARP/-/Submission', sort='number:asc')
+        for submission in submissions:
+            journal.invitation_builder.expire_paper_invitations(submission)
+        journal.invitation_builder.expire_reviewer_responsibility_invitations()
+        journal.invitation_builder.expire_assignment_availability_invitations()                                                                               

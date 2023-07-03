@@ -664,18 +664,34 @@ Total Errors: {len(errors)}
                 }
             }
 
+            anonymous = False
+            final_hide_fields = []
+            final_hide_fields.extend(hide_fields)
+
             if not is_release_authors(note_accepted) and self.submission_stage.double_blind:
-                hide_fields.extend(['authors', 'authorids'])
+                anonymous = True
+                final_hide_fields.extend(['authors', 'authorids'])
 
             for field, value in submission.content.items():
-                if field in hide_fields:
+                if field in final_hide_fields:
                     content[field] = {
                         'readers': [venue_id, self.get_authors_id(submission.number)]
                     }
-                if field not in hide_fields and 'readers' in value:
+                if field not in final_hide_fields and 'readers' in value:
                     content[field] = {
                         'readers': { 'delete': True }
                     }
+
+            content['_bibtex'] = {
+                'value': tools.generate_bibtex(
+                    note=submission,
+                    venue_fullname=self.name,
+                    year=str(datetime.datetime.utcnow().year),
+                    url_forum=submission.forum,
+                    paper_status = 'accepted' if note_accepted else 'rejected',
+                    anonymous=anonymous
+                )
+            }
 
             self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
                 readers=[venue_id, self.get_authors_id(submission.number)],
