@@ -63,7 +63,8 @@ class TestReactNoteEditor():
                             'enum': ['Yes'],
                             'type': 'string',
                             'input': 'checkbox',
-                            'optional': True
+                            'optional': True,
+                            'deletable': True
                         }
                     }
                 },
@@ -177,7 +178,8 @@ class TestReactNoteEditor():
                     'value': {
                         'param': {
                             'type': 'json',
-                            'optional': True
+                            'optional': True,
+                            'deletable': True
                         }
                     }
                 }

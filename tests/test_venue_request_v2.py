@@ -1672,7 +1672,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -1782,7 +1783,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -1925,7 +1927,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -2038,7 +2041,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -2092,7 +2096,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -2146,7 +2151,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -2201,7 +2207,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -2255,7 +2262,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -2320,7 +2328,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }

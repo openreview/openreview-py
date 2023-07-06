@@ -38,7 +38,8 @@ comment_v2 = {
             'param': {
                 'type': 'string',
                 'maxLength': 500,
-                'optional': True
+                'optional': True,
+                'deletable': True
             }
         }
     },
@@ -131,6 +132,7 @@ desk_reject_reversion_v2 = {
                 'maxLength': 200000,
                 'input': 'textarea',
                 'optional': True,
+                'deletable': True,
                 'markdown': True
             }
         }
@@ -446,7 +448,8 @@ submission_v2 = {
                 'fieldName': 'TL;DR',
                 'type': 'string',
                 'maxLength': 250,
-                'optional': True
+                'optional': True,
+                'deletable': True
             }
         }        
     },
@@ -559,6 +562,7 @@ recruitment_v2 = {
                 'type': 'string',
                 'maxLength': 5000,
                 'optional': True,
+                'deletable': True,
                 'input': 'textarea'
             }
         }
@@ -661,6 +665,7 @@ paper_recruitment_v2 = {
                 'type': 'string',
                 'maxLength': 5000,
                 'optional': True,
+                'deletable': True,
                 'input': 'textarea'
             }
         }
@@ -713,7 +718,8 @@ decision_v2 = {
                 'type': 'string',
                 'markdown': True,
                 'input': 'textarea',
-                'optional': True
+                'optional': True,
+                'deletable': True
             }
         }
     }

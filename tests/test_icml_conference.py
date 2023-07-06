@@ -3681,7 +3681,8 @@ ICML 2023 Conference Program Chairs'''
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -3909,7 +3910,8 @@ ICML 2023 Conference Program Chairs'''
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -3974,7 +3976,8 @@ ICML 2023 Conference Program Chairs'''
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -4024,7 +4027,8 @@ ICML 2023 Conference Program Chairs'''
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
