@@ -1367,7 +1367,11 @@ def get_profile_info(profile, n_years=None):
 
     ## Relations section
     for relation in profile.content.get('relations', []):
-        if relation.get('end') is None or int(relation.get('end')) > cut_off_year:
+        try:
+            end = int(relation.get('end'))
+        except:
+            end = None
+        if end is None or end > cut_off_year:
             relations.add(relation['email'])
 
     ## Publications section: get publications within last n years, default is all publications from previous years
