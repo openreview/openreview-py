@@ -1430,7 +1430,11 @@ def get_neurips_profile_info(profile, n_years=None):
     ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
     for r in profile.content.get('relations', []):
         if (r.get('relation', '') or '') in ['Coauthor','Coworker']:
-            if r.get('end') is None or int(r.get('end')) > cut_off_year:
+            try:
+                end = int(r.get('end'))
+            except:
+                end = None
+            if end is None or end > cut_off_year:
                 relations.add(r['email'])
         else:
             relations.add(r['email'])
