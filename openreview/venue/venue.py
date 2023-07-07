@@ -510,7 +510,6 @@ class Venue(object):
         notes = self.get_submissions(details='directReplies')
         for note in notes:
             if note.number in flagged_submission_numbers:
-                reviews = [Note.from_json(reply) for reply in note.details['directReplies'] if f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{self.review_stage.name}' in reply['invitations']]
                 self.client.post_note_edit(
                     invitation=self.get_meta_invitation_id(),
                     readers=[self.venue_id],
@@ -530,20 +529,6 @@ class Venue(object):
                         }
                     )
                 )
-                for review in reviews:
-                    self.client.post_note_edit(
-                        invitation=self.get_meta_invitation_id(),
-                        readers=[self.venue_id],
-                        writers=[self.venue_id],
-                        signatures=[self.venue_id],
-                        note = Note(
-                            id = review.id,
-                            readers = {
-                                'append': [self.get_ethics_chairs_id(),
-                                        self.get_ethics_reviewers_id(number=note.number)]
-                            }
-                        )
-                    )
 
         # create ethics paper groups
         self.invitation_builder.set_ethics_paper_groups_invitation()
@@ -554,7 +539,8 @@ class Venue(object):
             self.setup_committee_matching(group.id, compute_affinity_scores=False, compute_conflicts=True)
             self.invitation_builder.set_assignment_invitation(group.id)
 
-        # create ethics review invitations
+        # make reviews viisble to ethics committe and create ethics review invitations
+        self.invitation_builder.set_review_invitation()
         return self.invitation_builder.set_ethics_review_invitation()
 
     def update_conflict_policies(self, committee_id, compute_conflicts, compute_conflicts_n_years):

@@ -392,7 +392,7 @@ class InvitationBuilder(object):
             invitation.edit['content']['noteReaders'] = {
                 'value': {
                     'param': {
-                        'type': 'string[]', 'regex': f'{venue_id}/.*'
+                        'type': 'string[]', 'regex': f'{venue_id}/.*|everyone'
                     }
                 }
             }
