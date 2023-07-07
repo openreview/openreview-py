@@ -3560,20 +3560,22 @@ ICML 2023 Conference Program Chairs'''
             'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
             'ICML.cc/2023/Conference/Submission1/Area_Chairs',
             'ICML.cc/2023/Conference/Submission1/Reviewers/Submitted',
-            reviews[0].signatures[0],
-            'ICML.cc/2023/Conference/Submission1/Authors'
+            'ICML.cc/2023/Conference/Submission1/Authors',
+            'ICML.cc/2023/Conference/Ethics_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers',
+            reviews[0].signatures[0]
         ]
 
-        note_edits = openreview_client.get_note_edits(reviews[0].id, invitation='ICML.cc/2023/Conference/-/Edit')
-        for edit in note_edits:
-            assert edit.readers == [
-                'ICML.cc/2023/Conference/Program_Chairs',
-                'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
-                'ICML.cc/2023/Conference/Submission1/Area_Chairs',
-                'ICML.cc/2023/Conference/Submission1/Reviewers/Submitted',
-                reviews[0].signatures[0],
-                'ICML.cc/2023/Conference/Submission1/Authors'
-            ]
+        reviews = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/Submission2/-/Official_Review')
+        assert len(reviews) == 1
+        assert reviews[0].readers == [
+            'ICML.cc/2023/Conference/Program_Chairs',
+            'ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs',
+            'ICML.cc/2023/Conference/Submission2/Area_Chairs',
+            'ICML.cc/2023/Conference/Submission2/Reviewers/Submitted',
+            'ICML.cc/2023/Conference/Submission2/Authors',
+            reviews[0].signatures[0]
+        ]
 
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
@@ -3600,6 +3602,7 @@ ICML 2023 Conference Program Chairs'''
 
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
+        reviews = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Official_Review')
         comment_edit = test_client.post_note_edit(
             invitation='ICML.cc/2023/Conference/Submission1/-/Official_Comment',
             signatures=['ICML.cc/2023/Conference/Submission1/Authors'],
@@ -4201,7 +4204,9 @@ ICML 2023 Conference Program Chairs'''
             "ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs",
             "ICML.cc/2023/Conference/Submission1/Area_Chairs",
             "ICML.cc/2023/Conference/Submission1/Reviewers",
-            "ICML.cc/2023/Conference/Submission1/Authors"
+            "ICML.cc/2023/Conference/Submission1/Authors",
+            'ICML.cc/2023/Conference/Ethics_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers'
         ]
         assert submissions[1].readers == [
             "ICML.cc/2023/Conference",

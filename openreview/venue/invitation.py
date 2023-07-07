@@ -388,6 +388,18 @@ class InvitationBuilder(object):
         if review_expdate:
             invitation.edit['invitation']['expdate'] = review_expdate
 
+        if self.venue.ethics_review_stage:
+            invitation.edit['content']['noteReaders'] = {
+                'value': {
+                    'param': {
+                        'type': 'string[]', 'regex': f'{venue_id}/.*'
+                    }
+                }
+            }
+            invitation.content['review_readers'] = {
+                'value': review_stage.get_readers(self.venue, '{number}')
+            }
+            invitation.edit['invitation']['edit']['note']['readers'] = ['${5/content/noteReaders/value}', '${3/signatures}']
 
         self.save_invitation(invitation, replacement=False)
         return invitation

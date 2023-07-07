@@ -10,6 +10,8 @@ def process(client, invitation):
     decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'Decision')
     review_name = domain.content.get('review_name', {}).get('value')
     meta_review_name = domain.content.get('meta_review_name', {}).get('value')
+    ethics_chairs_id = domain.content.get('ethics_chairs_id', {}).get('value')
+    ethics_reviewers_name = domain.content.get('ethics_reviewers_name', {}).get('value')
 
     now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
     cdate = invitation.edit['invitation']['cdate'] if 'cdate' in invitation.edit['invitation'] else invitation.cdate
@@ -130,6 +132,15 @@ def process(client, invitation):
             content['noteNumber'] = { 'value': int(paper_number) }
             content['replyto'] = { 'value': note.id }
             content['replytoSignatures'] = { 'value': note.signatures[0] }
+
+        if 'noteReaders' in invitation.edit['content']:
+            paper_readers = invitation.content['review_readers']['value']
+            final_readers = []
+            final_readers.extend(paper_readers)
+            final_readers = [reader.replace('{number}', str(note.number)) for reader in final_readers]
+            if 'needs_ethics_review' in note.content:
+                final_readers.extend([f'{ethics_chairs_id}', f'{venue_id}/{submission_name}{note.number}/{ethics_reviewers_name}'])
+            content['noteReaders'] = { 'value': final_readers }
 
         paper_invitation_edit = client.post_invitation_edit(invitations=invitation.id,
             readers=[venue_id],

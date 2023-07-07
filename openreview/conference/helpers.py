@@ -37,7 +37,8 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.submission_revision_stage = get_submission_revision_stage(note)
         venue.review_rebuttal_stage = get_rebuttal_stage(note)
         venue.registration_stages = get_registration_stages(note, venue)
-        venue.ethics_review_stage = get_ethics_review_stage(note)
+        if 'ethics_review_deadline' in note.content:
+            venue.ethics_review_stage = get_ethics_review_stage(note)
 
         include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
         venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date, include_option=include_expertise_selection)

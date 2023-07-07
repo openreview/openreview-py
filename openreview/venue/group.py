@@ -241,6 +241,10 @@ class GroupBuilder(object):
         if self.venue.review_rebuttal_stage:
             content['rebuttal_email_pcs'] = { 'value': self.venue.review_rebuttal_stage.email_pcs}
 
+        if self.venue.ethics_review_stage:
+            content['ethics_chairs_id'] = { 'value': self.venue.get_ethics_chairs_id()}
+            content['ethics_reviewers_name'] = { 'value': self.venue.ethics_reviewers_name }
+
         if venue_group.content.get('enable_reviewers_reassignment'):
             content['enable_reviewers_reassignment'] = venue_group.content.get('enable_reviewers_reassignment')
 
