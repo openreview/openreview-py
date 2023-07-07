@@ -172,17 +172,17 @@ class TestReactNoteEditor():
                         }
                     }
                 },
-                'json_field': {
-                    'description': 'Settings for the venue',
-                    'order': 1,
-                    'value': {
-                        'param': {
-                            'type': 'json',
-                            'optional': True,
-                            'deletable': True
+                    'json_field': {
+                        'description': 'Settings for the venue',
+                        'order': 1,
+                        'value': {
+                            'param': {
+                                'type': 'json',
+                                'optional': True,
+                                'deletable': True
+                            }
                         }
                     }
-                }
             },
             remove_fields=[],
         )
