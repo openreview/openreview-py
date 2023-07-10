@@ -302,6 +302,26 @@ class TestTools():
         assert openreview.tools.subdomains('   ') == []
 
     def test_replace_members_with_ids(self, client, test_client):
+        test_client.post_profile(openreview.Profile(
+            referent='~SomeFirstName_User1',
+            signatures = ['~SomeFirstName_User1'],
+            content={
+                'names': [
+                    {
+                    'first': 'Another',
+                    'last': 'Name'
+                    }
+                ],
+                'emails': ['alternate@mail.com']
+            }
+        ))
+
+        profile = client.get_profile('~SomeFirstName_User1')
+        assert len(profile.content['names']) == 2
+        assert profile.content['names'][1]['first'] == 'Another'
+        assert profile.content['names'][1]['last'] == 'Name'
+        assert profile.content['names'][1]['username'] == '~Another_Name1'
+
         posted_group = client.post_group(openreview.Group(id='test.org',
             readers=['everyone'],
             writers=['~Super_User1'],
@@ -310,21 +330,6 @@ class TestTools():
             members=['test@mail.com', '~SomeFirstName_User1', '~Another_Name1', 'NewGroup']
         ))
         assert posted_group
-
-        client.post_profile(openreview.Profile(
-            referent='~SomeFirstName_User1',
-            signatures = ['~SomeFirstName_User1'],
-            content={
-                'names': [
-                    {
-                    'first': 'Another',
-                    'last': 'Name',
-                    'username': '~Another_Name1'
-                    }
-                ],
-                'emails': ['alternate@mail.com']
-            }
-        ))
 
         replaced_group = openreview.tools.replace_members_with_ids(client, posted_group)
         assert replaced_group
