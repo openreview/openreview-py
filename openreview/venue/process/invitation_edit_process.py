@@ -140,7 +140,7 @@ def process(client, invitation):
             final_readers = [reader.replace('{number}', str(note.number)) for reader in final_readers]
             if '{signatures}' in final_readers:
                 final_readers.remove('{signatures}')
-            if 'needs_ethics_review' in note.content:
+            if 'needs_ethics_review' in note.content and 'everyone' not in final_readers:
                 final_readers.extend([f'{ethics_chairs_id}', f'{venue_id}/{submission_name}{note.number}/{ethics_reviewers_name}'])
             content['noteReaders'] = { 'value': final_readers }
 

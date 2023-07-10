@@ -3213,6 +3213,99 @@ ICML 2023 Conference Program Chairs'''
         assert invitation
         assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers' in invitation.invitees
 
+        # re-run ethics review stage
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=1)
+        stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'ethics_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'ethics_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_ethics_reviews_public': 'No, ethics reviews should NOT be revealed publicly when they are posted',
+                'release_ethics_reviews_to_authors': "No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors",
+                'release_ethics_reviews_to_reviewers': 'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review',
+                'remove_ethics_review_form_options': 'ethics_review',
+                'additional_ethics_review_form_options': {
+                    "ethics_concerns": {
+                        'order': 1,
+                        'description': 'Briefly summarize the ethics concerns.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 200000,
+                                'markdown': True,
+                                'input': 'textarea'
+                            }
+                        }
+                    }
+                },
+                'ethics_review_submissions': '1,5,6,7,8,100',
+                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
+            },
+            forum=request_form.forum,
+            referent=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number),
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        submissions = openreview_client.get_notes(content= { 'venueid': 'ICML.cc/2023/Conference/Submission'}, sort='number:asc')
+        assert submissions and len(submissions) == 100
+        assert 'needs_ethics_review' in submissions[-1].content
+        ethics_group = openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Submission7/Ethics_Reviewers')
+        assert ethics_group
+        ethics_group = openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Submission8/Ethics_Reviewers')
+        assert ethics_group
+        ethics_group = openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Submission100/Ethics_Reviewers')
+        assert ethics_group
+        assert submissions[0].readers == [
+            "ICML.cc/2023/Conference",
+            "ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs",
+            "ICML.cc/2023/Conference/Submission1/Area_Chairs",
+            "ICML.cc/2023/Conference/Submission1/Reviewers",
+            "ICML.cc/2023/Conference/Submission1/Authors",
+            "ICML.cc/2023/Conference/Ethics_Chairs",
+            "ICML.cc/2023/Conference/Submission1/Ethics_Reviewers"
+        ]
+        assert submissions[1].readers == [
+            "ICML.cc/2023/Conference",
+            "ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs",
+            "ICML.cc/2023/Conference/Submission2/Area_Chairs",
+            "ICML.cc/2023/Conference/Submission2/Reviewers",
+            "ICML.cc/2023/Conference/Submission2/Authors"        ]
+        assert submissions[4].readers == [
+            "ICML.cc/2023/Conference",
+            "ICML.cc/2023/Conference/Submission5/Senior_Area_Chairs",
+            "ICML.cc/2023/Conference/Submission5/Area_Chairs",
+            "ICML.cc/2023/Conference/Submission5/Reviewers",
+            "ICML.cc/2023/Conference/Submission5/Authors",
+            "ICML.cc/2023/Conference/Ethics_Chairs",
+            "ICML.cc/2023/Conference/Submission5/Ethics_Reviewers"
+        ]
+        assert submissions[-1].readers == [
+            "ICML.cc/2023/Conference",
+            "ICML.cc/2023/Conference/Submission100/Senior_Area_Chairs",
+            "ICML.cc/2023/Conference/Submission100/Area_Chairs",
+            "ICML.cc/2023/Conference/Submission100/Reviewers",
+            "ICML.cc/2023/Conference/Submission100/Authors",
+            "ICML.cc/2023/Conference/Ethics_Chairs",
+            "ICML.cc/2023/Conference/Submission100/Ethics_Reviewers"
+        ]
+
+        reviews = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Official_Review')
+        assert reviews and len(reviews) == 2
+        for review in reviews:
+            assert 'ICML.cc/2023/Conference/Ethics_Chairs' in review.readers
+            assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers' in review.readers
+
+        invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Ethics_Review')
+        assert len(invitations) == 6
+        invitation = openreview_client.get_invitations(id='ICML.cc/2023/Conference/Submission100/-/Ethics_Review')[0]
+        assert invitation
+        assert 'ICML.cc/2023/Conference/Submission100/Ethics_Reviewers' in invitation.invitees
+
     def test_comment_stage(self, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)

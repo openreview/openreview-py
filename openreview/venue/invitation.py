@@ -351,7 +351,7 @@ class InvitationBuilder(object):
 ''',
                     'edit': {
                         'signatures': { 'param': { 'regex': review_stage.get_signatures(self.venue, '${5/content/noteNumber/value}') }},
-                        'readers': review_stage.get_readers(self.venue, '${4/content/noteNumber/value}', '${2/signatures}'),
+                        'readers': ['${2/note/readers}'],
                         'nonreaders': review_stage.get_nonreaders(self.venue, '${4/content/noteNumber/value}'),
                         'writers': [venue_id],
                         'note': {
@@ -399,7 +399,10 @@ class InvitationBuilder(object):
             invitation.content['review_readers'] = {
                 'value': review_stage.get_readers(self.venue, '{number}')
             }
-            invitation.edit['invitation']['edit']['note']['readers'] = ['${5/content/noteReaders/value}', '${3/signatures}']
+            note_readers = ['${5/content/noteReaders/value}']
+            if review_stage.release_to_reviewers in [openreview.stages.ReviewStage.Readers.REVIEWER_SIGNATURE, openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED]:
+                note_readers.append('${3/signatures}')
+            invitation.edit['invitation']['edit']['note']['readers'] = note_readers
 
         self.save_invitation(invitation, replacement=False)
         return invitation
@@ -2679,6 +2682,7 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
+            cdate=tools.datetime_millis(datetime.datetime.utcnow()),
             date_processes=[{
                 'dates': ["#{4/cdate}", self.update_date_string],
                 'script': self.group_edit_process

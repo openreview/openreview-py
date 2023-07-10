@@ -510,24 +510,26 @@ class Venue(object):
         notes = self.get_submissions(details='directReplies')
         for note in notes:
             if note.number in flagged_submission_numbers:
+                note_to_post = Note(
+                    id = note.id,
+                    content = {
+                        'needs_ethics_review': {
+                            'value': True,
+                            'readers': [self.venue_id]
+                        }
+                    }
+                )
+                if note.readers != ['everyone']:
+                    note_to_post.readers = {
+                        'append': [self.get_ethics_chairs_id(),
+                                    self.get_ethics_reviewers_id(number=note.number)]
+                    }
                 self.client.post_note_edit(
                     invitation=self.get_meta_invitation_id(),
                     readers=[self.venue_id],
                     writers=[self.venue_id],
                     signatures=[self.venue_id],
-                    note = Note(
-                        id = note.id,
-                        content = {
-                            'needs_ethics_review': { 
-                                'value': True,
-                                'readers': [self.venue_id]
-                            }
-                        },
-                        readers = {
-                            'append': [self.get_ethics_chairs_id(),
-                                       self.get_ethics_reviewers_id(number=note.number)]
-                        }
-                    )
+                    note = note_to_post
                 )
 
         # create ethics paper groups
