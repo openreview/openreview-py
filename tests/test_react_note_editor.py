@@ -134,6 +134,26 @@ class TestReactNoteEditor():
                         }
                     }
                 },
+                'default_dropdown_field': {
+                    'description': 'This is a description',
+                    'order': 1,
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'enum': ['A', 'B', 'C']
+                        }
+                    }
+                },
+                'default_dropdown_field_two': {
+                    'description': 'This is a description',
+                    'order': 1,
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'enum': [{ 'value': 'A', 'description': 'Letter A' }, { 'value': 'B', 'description': 'Letter B' }, { 'value': 'C', 'description': 'Letter C' }]
+                        }
+                    }
+                },                             
                 'dropdown_number_with_description': {
                     'description': 'This is a description',
                     'order': 1,
@@ -172,17 +192,17 @@ class TestReactNoteEditor():
                         }
                     }
                 },
-                    'json_field': {
-                        'description': 'Settings for the venue',
-                        'order': 1,
-                        'value': {
-                            'param': {
-                                'type': 'json',
-                                'optional': True,
-                                'deletable': True
-                            }
+                'json_field': {
+                    'description': 'Settings for the venue',
+                    'order': 1,
+                    'value': {
+                        'param': {
+                            'type': 'json',
+                            'optional': True,
+                            'deletable': True
                         }
                     }
+                }
             },
             remove_fields=[],
         )
@@ -195,5 +215,20 @@ class TestReactNoteEditor():
         venue.create_submission_stage()
         assert openreview_client.get_group('ReactVenue.cc')
         assert openreview_client.get_group('ReactVenue.cc/Authors')
+
+
+        invitations = openreview_client.get_invitations(prefix = 'ReactVenue.cc', type = 'all')
+        for invitation in invitations:
+            if 'ReactVenue.cc/-/Edit' not in invitation.id:
+                openreview_client.post_invitation_edit(
+                    invitations='ReactVenue.cc/-/Edit',
+                    signatures=['ReactVenue.cc'],
+                    invitation=openreview.api.Invitation(
+                        id=invitation.id,
+                        expdate=openreview.tools.datetime_millis(datetime.datetime.utcnow())
+                    )
+                )
+
+        helpers.await_queue(openreview_client)
 
 
