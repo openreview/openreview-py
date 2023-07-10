@@ -645,7 +645,7 @@ class Client(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())        
 
-    def get_groups(self, id=None, ids=None, parent=None, regex=None, member=None, members=None, signatory=None, web=None, limit=None, offset=None, after=None, sort=None, with_count=False, select=None):
+    def get_groups(self, id=None, ids=None, parent=None, regex=None, member=None, members=None, signatory=None, web=None, limit=None, offset=None, after=None, stream=None, sort=None, with_count=False, select=None):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -692,6 +692,8 @@ class Client(object):
             params['select'] = select
         if after is not None:
             params['after'] = after
+        if stream is not None:
+            params['stream'] = stream
         if sort is not None:
             params['sort'] = sort
         if limit is not None:
@@ -731,7 +733,9 @@ class Client(object):
         :rtype: list[Group]
         """
 
-        params = {}
+        params = {
+            'stream': True
+        }
         if id is not None:
             params['id'] = id
         if parent is not None:
@@ -749,7 +753,7 @@ class Client(object):
         if with_count is not None:
             params['with_count'] = with_count
 
-        return list(tools.efficient_iterget(self.get_groups, desc='Getting Groups', **params))
+        return self.get_groups(**params)
 
     def get_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, after=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, sort=None, super=None, with_count=False, select=None):
         """

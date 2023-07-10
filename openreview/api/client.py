@@ -599,7 +599,7 @@ class OpenReviewClient(object):
         return Profile.from_json(response.json())
 
 
-    def get_groups(self, id=None, prefix=None, member=None, signatory=None, web=None, limit=None, offset=None, after=None, sort=None, with_count=False):
+    def get_groups(self, id=None, prefix=None, member=None, signatory=None, web=None, limit=None, offset=None, after=None, stream=None, sort=None, with_count=False):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -640,6 +640,8 @@ class OpenReviewClient(object):
             params['offset'] = offset
         if after is not None:
             params['after'] = after
+        if stream is not None:
+            params['stream'] = stream
 
         response = self.session.get(self.groups_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -676,7 +678,9 @@ class OpenReviewClient(object):
         :return: List of Groups
         :rtype: list[Group]
         """
-        params = {}
+        params = {
+            'stream': True
+        }
         if id is not None:
             params['id'] = id
         if parent is not None:
@@ -696,7 +700,7 @@ class OpenReviewClient(object):
         if with_count is not None:
             params['with_count'] = with_count
 
-        return list(tools.efficient_iterget(self.get_groups, desc='Getting Groups', **params))
+        return self.get_groups(**params)
 
     def get_invitations(self,
         id = None,
