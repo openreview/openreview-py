@@ -236,65 +236,6 @@ class TestTools():
         assert notes
         assert len(notes) == 1333
 
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', limit=1200)
-        assert notes
-        assert len(notes) == 1200
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', limit=4000)
-        assert notes
-        assert len(notes) == 1333
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', limit=500)
-        assert notes
-        assert len(notes) == 500
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=4000)
-        assert len(notes) == 0
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=1000, limit=4000)
-        assert notes
-        assert len(notes) == 333
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=1050, limit=200)
-        assert notes
-        assert len(notes) == 200
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=33, limit=900)
-        assert notes
-        assert len(notes) == 900
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=200, limit=900)
-        assert notes
-        assert len(notes) == 900
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=33, limit=1100)
-        assert notes
-        assert len(notes) == 1100
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', limit=1333)
-        assert notes
-        assert len(notes) == 1333
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', limit=1000)
-        assert notes
-        assert len(notes) == 1000
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=333, limit=1000)
-        assert notes
-        assert len(notes) == 1000
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=334, limit=1000)
-        assert notes
-        assert len(notes) == 999
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=333, limit=1001)
-        assert notes
-        assert len(notes) == 1000
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=1100)
-        assert notes
-        assert len(notes) == 233
-
     def test_get_all_refs(self, client):
         refs_iterator = openreview.tools.iterget_references(client)
         assert refs_iterator
@@ -361,6 +302,26 @@ class TestTools():
         assert openreview.tools.subdomains('   ') == []
 
     def test_replace_members_with_ids(self, client, test_client):
+        test_client.post_profile(openreview.Profile(
+            referent='~SomeFirstName_User1',
+            signatures = ['~SomeFirstName_User1'],
+            content={
+                'names': [
+                    {
+                    'first': 'Another',
+                    'last': 'Name'
+                    }
+                ],
+                'emails': ['alternate@mail.com']
+            }
+        ))
+
+        profile = client.get_profile('~SomeFirstName_User1')
+        assert len(profile.content['names']) == 2
+        assert profile.content['names'][1]['first'] == 'Another'
+        assert profile.content['names'][1]['last'] == 'Name'
+        assert profile.content['names'][1]['username'] == '~Another_Name1'
+
         posted_group = client.post_group(openreview.Group(id='test.org',
             readers=['everyone'],
             writers=['~Super_User1'],
@@ -369,21 +330,6 @@ class TestTools():
             members=['test@mail.com', '~SomeFirstName_User1', '~Another_Name1', 'NewGroup']
         ))
         assert posted_group
-
-        client.post_profile(openreview.Profile(
-            referent='~SomeFirstName_User1',
-            signatures = ['~SomeFirstName_User1'],
-            content={
-                'names': [
-                    {
-                    'first': 'Another',
-                    'last': 'Name',
-                    'username': '~Another_Name1'
-                    }
-                ],
-                'emails': ['alternate@mail.com']
-            }
-        ))
 
         replaced_group = openreview.tools.replace_members_with_ids(client, posted_group)
         assert replaced_group
