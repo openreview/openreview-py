@@ -2755,9 +2755,6 @@ class InvitationBuilder(object):
                 'source': {
                     'value': 'needs_ethics_review'
                 }
-                # 'review_process_script': {
-                #     'value': self.get_process_content('process/review_process.py')
-                # }
             },
             edit={
                 'signatures': [venue_id],
@@ -2788,15 +2785,6 @@ class InvitationBuilder(object):
                     'invitees': [venue_id, self.venue.get_ethics_reviewers_id(number='${3/content/noteNumber/value}')],
                     'maxReplies': 1,
                     'cdate': ethics_review_cdate,
-#                     'process': '''def process(client, edit, invitation):
-#     meta_invitation = client.get_invitation(invitation.invitations[0])
-#     script = meta_invitation.content['review_process_script']['value']
-#     funcs = {
-#         'openreview': openreview
-#     }
-#     exec(script, funcs)
-#     funcs['process'](client, edit, invitation)
-# ''',
                     'edit': {
                         'signatures': { 'param': { 'regex': ethics_review_stage.get_signatures(self.venue, '${5/content/noteNumber/value}') }},
                         'readers': ethics_review_stage.get_readers(self.venue, '${4/content/noteNumber/value}', '${2/signatures}'),

@@ -3128,6 +3128,8 @@ ICML 2023 Conference Program Chairs'''
         assert len(group.members) == 1
         assert 'reviewerethics@gmail.com' in group.members
 
+        openreview_client.add_members_to_group(f'ICML.cc/2023/Conference/Ethics_Chairs', '~Celeste_ICML1')
+
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
