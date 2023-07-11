@@ -792,6 +792,69 @@ class iterget:
 
     next = __next__
 
+class efficient_iterget:
+    """
+    This class can create an iterator from a getter method that returns a list. Below all the iterators that can be created from a getter method:
+
+    :meth:`openreview.Client.get_tags` --> :func:`tools.iterget_tags`
+
+    :meth:`openreview.Client.get_notes` --> :func:`tools.iterget_notes`
+
+    :meth:`openreview.Client.get_references` --> :func:`tools.iterget_references`
+
+    :meth:`openreview.Client.get_invitations` --> :func:`tools.iterget_invitations`
+
+    :meth:`openreview.Client.get_groups` --> :func:`tools.iterget_groups`
+
+    :param get_function: Any of the aforementioned methods
+    :type get_function: function
+    :param params: Dictionary containing parameters for the corresponding method. Refer to the passed method documentation for details
+    :type params: dict
+    """
+    def __init__(self, get_function, desc='Gathering Responses', **params):
+        self.obj_index = 0
+
+        self.params = params
+        self.params.update({
+            'with_count': True,
+            'sort': params.get('sort') or 'id',
+            'limit': params.get('limit') or 1000
+        })
+
+        self.get_function = get_function
+        self.current_batch, total = self.get_function(**self.params)
+
+        self.gathering_responses = tqdm(total=total, desc=desc)
+
+    def update_batch(self):
+        after = self.current_batch[-1].id
+        self.params['after'] = after
+        self.params['with_count'] = False
+        next_batch = self.get_function(**self.params)
+        if next_batch:
+            self.current_batch = next_batch
+        else:
+            self.current_batch = []
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if len(self.current_batch) == 0:
+            self.gathering_responses.close()
+            raise StopIteration
+        else:
+            next_obj = self.current_batch[self.obj_index]
+            if (self.obj_index + 1) == len(self.current_batch):
+                self.update_batch()
+                self.obj_index = 0
+            else:
+                self.gathering_responses.update(1)
+                self.obj_index += 1
+            return next_obj
+
+    next = __next__
+
 
 def iterget_messages(client, to = None, subject = None, status = None):
     """
@@ -897,7 +960,6 @@ def iterget_grouped_edges(
 
         yield group_edges
 
-
 def iterget_notes(client,
     id = None,
     paperhash = None,
@@ -977,7 +1039,7 @@ def iterget_notes(client,
         params['details'] = details
     params['sort'] = sort
 
-    return iterget(client.get_notes, **params)
+    return efficient_iterget(client.get_notes, desc='Getting Notes', **params)
 
 def iterget_references(client, referent = None, invitation = None, mintcdate = None):
     """
@@ -1006,7 +1068,7 @@ def iterget_references(client, referent = None, invitation = None, mintcdate = N
 
     return iterget(client.get_references, **params)
 
-def iterget_invitations(client, id=None, ids=None, invitee=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replytoNote=None, replyForum=None, signature=None, note=None, replyto=None, details=None, expired=None, super=None):
+def iterget_invitations(client, id=None, ids=None, invitee=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replytoNote=None, replyForum=None, signature=None, note=None, replyto=None, details=None, expired=None, super=None, sort=None):
     """
     Returns an iterator over invitations, filtered by the provided parameters, ignoring API limit.
 
@@ -1078,9 +1140,13 @@ def iterget_invitations(client, id=None, ids=None, invitee=None, regex=None, tag
         params['replyto'] = replyto
     if super is not None:
         params['super'] = super
-    params['expired'] = expired
+    if expired is not None:
+        params['expired'] = expired
+    if sort is not None:
+        params['sort'] = sort
 
-    return iterget(client.get_invitations, **params)
+
+    return efficient_iterget(client.get_invitations, desc='Getting Invitations', **params)
 
 def iterget_groups(client, id = None, regex = None, member = None, host = None, signatory = None, web = None):
     """
@@ -1119,7 +1185,7 @@ def iterget_groups(client, id = None, regex = None, member = None, host = None, 
     if web is not None:
         params['web'] = web
 
-    return iterget(client.get_groups, **params)
+    return efficient_iterget(client.get_groups, desc='Getting Groups', **params)
 
 def timestamp_GMT(year, month, day, hour=0, minute=0, second=0):
     """
