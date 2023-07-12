@@ -501,7 +501,11 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 ''',
                     'edit': {
-                        'signatures': { 'param': { 'regex': self.venue.get_authors_id(number='${5/content/noteNumber/value}') }},
+                        'signatures': { 
+                            'param': { 
+                                'items': [{ 'value': self.venue.get_authors_id(number='${7/content/noteNumber/value}') }]
+                            }
+                        },
                         'readers': review_rebuttal_stage.get_invitation_readers(self.venue, '${4/content/noteNumber/value}'),
                         'writers': [venue_id],
                         'note': {
@@ -609,7 +613,11 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 ''',
                     'edit': {
-                        'signatures': { 'param': { 'regex': meta_review_stage.get_signatures_regex(self.venue, '${5/content/noteNumber/value}') }},
+                        'signatures': { 
+                            'param': { 
+                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in meta_review_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')] 
+                            }
+                        },
                         'readers': meta_review_stage.get_readers(self.venue, '${4/content/noteNumber/value}'),
                         'nonreaders': meta_review_stage.get_nonreaders(self.venue, '${4/content/noteNumber/value}'),
                         'writers': [venue_id],
@@ -693,7 +701,13 @@ class InvitationBuilder(object):
                         'maxReplies': 1,
                         'cdate': meta_review_cdate,
                         'edit': {
-                            'signatures': { 'param': { 'regex': self.venue.get_senior_area_chairs_id(number='${5/content/noteNumber/value}') }},
+                            'signatures': { 
+                                'param': { 
+                                    'items': [
+                                        { 'value': self.venue.get_senior_area_chairs_id(number='${5/content/noteNumber/value}') } 
+                                    ]
+                                }
+                            },
                             'readers': meta_review_stage.get_readers(self.venue, '${4/content/noteNumber/value}'),
                             'nonreaders': meta_review_stage.get_nonreaders(self.venue, '${4/content/noteNumber/value}'),
                             'writers': [venue_id],
@@ -994,7 +1008,11 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 ''',
                     'edit': {
-                        'signatures': { 'param': { 'regex': comment_stage.get_signatures_regex(self.venue, '${5/content/noteNumber/value}') }},
+                        'signatures': { 
+                            'param': { 
+                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in comment_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')] 
+                            }
+                        },
                         'readers': ['${2/note/readers}'],
                         # 'nonreaders': [],
                         'writers': [venue_id],
@@ -1102,7 +1120,11 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 ''',
                     'edit': {
-                        'signatures': { 'param': { 'regex': '~.*' }},
+                        'signatures': { 
+                            'param': { 
+                                'items': [{ 'prefix': '~.*' }] 
+                            }
+                        },
                         'readers': ['${2/note/readers}'],
                         'writers': [venue_id],
                         'note': {
@@ -1306,7 +1328,11 @@ class InvitationBuilder(object):
     exec(script, funcs)
     funcs['process'](client, edit, invitation)''',
                     'edit': {
-                        'signatures': { 'param': { 'regex': self.venue.get_authors_id(number='${5/content/noteNumber/value}')  }},
+                        'signatures': { 
+                            'param': { 
+                                'items': [{ 'value': self.venue.get_authors_id(number='${5/content/noteNumber/value}') }] 
+                            }
+                        },
                         'readers': ['${{2/note/forum}/readers}'],
                         'writers': [ venue_id, self.venue.get_authors_id(number='${4/content/noteNumber/value}')],
                         'note': {
@@ -1883,7 +1909,14 @@ class InvitationBuilder(object):
                             }
                         }
                         ,
-                        'signatures': { 'param': { 'regex': f"{self.venue.get_authors_id(number='${5/content/noteNumber/value}')}|{self.venue.get_program_chairs_id()}" }},
+                        'signatures': { 
+                            'param': { 
+                                'items': [
+                                    { 'value': self.venue.get_authors_id(number='${7/content/noteNumber/value}'), 'optional': True }, 
+                                    { 'value': self.venue.get_program_chairs_id(), 'optional': True }
+                                ] 
+                            }
+                        },
                         'readers': [ venue_id, self.venue.get_authors_id(number='${4/content/noteNumber/value}')],
                         'writers': [ venue_id, self.venue.get_authors_id(number='${4/content/noteNumber/value}')],
                         'note': {
@@ -1995,7 +2028,11 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 ''',
                     'edit': {
-                        'signatures': { 'param': { 'regex': custom_stage.get_signatures_regex(self.venue, '${5/content/noteNumber/value}') }},
+                        'signatures': { 
+                            'param': { 
+                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in custom_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')] 
+                            }
+                        },
                         'readers': custom_stage.get_readers(self.venue, '${4/content/noteNumber/value}'),
                         'writers': [venue_id],
                         'note': {

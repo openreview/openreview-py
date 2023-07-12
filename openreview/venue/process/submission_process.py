@@ -40,7 +40,7 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
     client.post_message(
         subject=author_subject,
         message=author_message,
-        recipients=[edit.tauthor] if edit.tauthor != 'OpenReview.net' else []
+        recipients=[edit.tauthor] if edit.tauthor.lower() != 'openreview.net' else []
     )
 
     # send co-author emails

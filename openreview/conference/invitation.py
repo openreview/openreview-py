@@ -870,7 +870,7 @@ class OfficialCommentInvitation(openreview.Invitation):
                     ]
                 },
                 'signatures': {
-                    'values-regex': comment_stage.get_signatures_regex(conference, note.number),
+                    'values-regex': '|'.join(comment_stage.get_signatures(conference, note.number)),
                     'description': 'How your identity will be displayed.'
                 }
             }
@@ -1370,7 +1370,7 @@ class PaperMetaReviewInvitation(openreview.Invitation):
                     'description': 'Who can edit this meta-review.'
                 },
                 'signatures': {
-                    'values-regex': meta_review_stage.get_signatures_regex(conference, note.number),
+                    'values-regex': '|'.join(meta_review_stage.get_signatures(conference, note.number)),
                     'description': 'How your identity will be displayed.'
                 }
             }

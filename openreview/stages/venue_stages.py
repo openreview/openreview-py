@@ -956,7 +956,7 @@ class CommentStage(object):
 
         return readers
 
-    def get_signatures_regex(self, conference, number):
+    def get_signatures(self, conference, number):
 
         committee = [conference.get_program_chairs_id()]
 
@@ -975,7 +975,7 @@ class CommentStage(object):
         if self.Readers.AUTHORS in self.invitees:
             committee.append(conference.get_authors_id(number))
 
-        return '|'.join(committee)
+        return committee
 
     def get_invitees(self, conference, number):
         invitees = [conference.get_id(), conference.support_user]
@@ -1078,14 +1078,14 @@ class MetaReviewStage(object):
 
         return [conference.get_authors_id(number = number)]
 
-    def get_signatures_regex(self, conference, number):
+    def get_signatures(self, conference, number):
 
         committee = [conference.get_program_chairs_id()]
 
         if conference.use_area_chairs:
             committee.append(conference.get_anon_area_chair_id(number=number, anon_id='.*'))
 
-        return '|'.join(committee)
+        return committee
 
     def get_content(self, api_version='2', conference=None):
         
@@ -1345,7 +1345,7 @@ class CustomStage(object):
 
         return readers
 
-    def get_signatures_regex(self, conference, number):
+    def get_signatures(self, conference, number):
         committee = [conference.get_program_chairs_id()]
 
         if conference.use_senior_area_chairs and self.Participants.SENIOR_AREA_CHAIRS_ASSIGNED in self.invitees:
@@ -1360,7 +1360,7 @@ class CustomStage(object):
         if self.Participants.AUTHORS in self.invitees:
             committee.append(conference.get_authors_id(number))
 
-        return '|'.join(committee)
+        return committee
 
     def get_source_submissions(self):
 
