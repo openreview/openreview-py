@@ -2593,7 +2593,7 @@ ICML 2023 Conference Program Chairs'''
                     }
                 )
             )
-        assert openReviewError.value.args[0].get('name') == 'ValidationError'
+        assert openReviewError.value.args[0].get('name') == 'ItemsError'
 
         ## Extend deadline
         start_date = now - datetime.timedelta(days=20)

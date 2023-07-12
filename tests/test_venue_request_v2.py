@@ -1405,8 +1405,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             note=Note(
                 content={
                     'review': { 'value': 'great paper!' },
-                    'rating': { 'value': '10: Top 5% of accepted papers, seminal paper' },
-                    'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' }
+                    'rating': { 'value': 10 },
+                    'confidence': { 'value': 3 }
                 }
             )
         )
@@ -1484,18 +1484,18 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                         'order': 3,
                         'value': {
                             'param': {
-                                'type': 'string',
+                                'type': 'integer',
                                 'enum': [
-                                    '10: Top 5% of accepted papers, seminal paper',
-                                    '9: Top 15% of accepted papers, strong accept',
-                                    '8: Top 50% of accepted papers, clear accept',
-                                    '7: Good paper, accept',
-                                    '6: Marginally above acceptance threshold',
-                                    '5: Marginally below acceptance threshold',
-                                    '4: Ok but not good enough - rejection',
-                                    '3: Clear rejection',
-                                    '2: Strong rejection',
-                                    '1: Trivial or wrong'
+                                    { 'value': 10, 'description': '10: Top 5% of accepted papers, seminal paper' },
+                                    { 'value': 9, 'description': '9: Top 15% of accepted papers, strong accept' },
+                                    { 'value': 8, 'description': '8: Top 50% of accepted papers, clear accept' },
+                                    { 'value': 7, 'description': '7: Good paper, accept' },
+                                    { 'value': 6, 'description': '6: Marginally above acceptance threshold' },
+                                    { 'value': 5, 'description': '5: Marginally below acceptance threshold' },
+                                    { 'value': 4, 'description': '4: Ok but not good enough - rejection' },
+                                    { 'value': 3, 'description': '3: Clear rejection' },
+                                    { 'value': 2, 'description': '2: Strong rejection' },
+                                    { 'value': 1, 'description': '1: Trivial or wrong' }
                                 ]
                             }
                         },
@@ -1597,8 +1597,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             note=Note(
                 content={
                     'review': { 'value': 'very good paper' },
-                    'rating': { 'value': '7: Good paper, accept' },
-                    'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' }
+                    'rating': { 'value': 7 },
+                    'confidence': { 'value': 3 }
                 }
             )
         )

@@ -931,7 +931,7 @@ class PaperReviewInvitation(openreview.Invitation):
     def __init__(self, conference, note):
 
         review_stage = conference.review_stage
-        signature_regex = review_stage.get_signatures(conference, note.number)
+        signature_regex = '|'.join(review_stage.get_signatures(conference, note.number))
         readers = review_stage.get_readers(conference, note.number)
         nonreaders = review_stage.get_nonreaders(conference, note.number)
 
