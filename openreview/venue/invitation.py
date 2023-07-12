@@ -2689,7 +2689,7 @@ class InvitationBuilder(object):
             }],
             content = {
                 'source': {
-                    'value': 'needs_ethics_review'
+                    'value': 'flagged_for_ethics_review'
                 }
             },
             edit={
@@ -2753,7 +2753,7 @@ class InvitationBuilder(object):
             }],
             content={
                 'source': {
-                    'value': 'needs_ethics_review'
+                    'value': 'flagged_for_ethics_review'
                 }
             },
             edit={
@@ -2827,3 +2827,61 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=False)
         return invitation
+
+    def set_ethics_stage_invitation(self):
+        venue_id = self.venue_id
+        ethics_review_stage = self.venue.ethics_review_stage
+        ethics_stage_name = ethics_review_stage.name
+        ethics_stage_id = f'{venue_id}/-/{ethics_stage_name}_Flag'
+        submission_id = self.venue.submission_stage.get_submission_id(self.venue)
+
+        ethics_stage_invitation = Invitation(
+            id=ethics_stage_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = ['everyone'],
+            writers = [venue_id],
+            content = {
+                'review_readers': {
+                    'value': self.venue.review_stage.get_readers(self.venue, '{number}')
+                }
+            },
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': submission_id,
+                            'optional': True
+                        }
+                    },
+                    'signatures': [ self.venue.get_authors_id('${{2/id}/number}') ],
+                    'writers': [venue_id, self.venue.get_authors_id('${{2/id}/number}')],
+                    'content': {
+                        'flagged_for_ethics_review': {
+                            'value': {
+                                'param': {
+                                    'type': 'boolean',
+                                    'const': True
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            process=self.get_process_content('process/ethics_flag_process.py')
+        )
+
+        if 'everyone' not in self.venue.submission_stage.get_readers(self.venue, '${{2/id}/number}'):
+            ethics_stage_invitation.edit['note']['readers'] = {
+                'param': {
+                    'const': {
+                        'append': [self.venue.get_ethics_reviewers_id('${{3/id}/number}')]
+                    }
+                }
+            }
+
+        self.save_invitation(ethics_stage_invitation, replacement=False)
+        return ethics_stage_invitation
