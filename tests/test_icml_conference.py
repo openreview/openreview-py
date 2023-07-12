@@ -3303,6 +3303,30 @@ ICML 2023 Conference Program Chairs'''
         assert invitation
         assert 'ICML.cc/2023/Conference/Submission100/Ethics_Reviewers' in invitation.invitees
 
+        # use invitation to flag paper
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
+        note = submissions[51]
+        pc_client_v2.post_note_edit(
+            invitation='ICML.cc/2023/Conference/-/Ethics_Review_Flag',
+            note=openreview.api.Note(
+                id=note.id
+            ),
+            signatures=['ICML.cc/2023/Conference']
+        )
+
+        helpers.await_queue()
+        time.sleep(5) ## wait until the process functions runs
+
+        submissions = openreview_client.get_notes(content= { 'venueid': 'ICML.cc/2023/Conference/Submission'}, sort='number:asc')
+        assert submissions and len(submissions) == 100
+        assert 'flagged_for_ethics_review' in submissions[51].content
+        assert 'ICML.cc/2023/Conference/Submission52/Ethics_Reviewers' in submissions[51].readers
+        ethics_group = openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Submission52/Ethics_Reviewers')
+        assert ethics_group
+        invitation = openreview_client.get_invitations(id='ICML.cc/2023/Conference/Submission52/-/Ethics_Review')[0]
+        assert invitation
+        assert 'ICML.cc/2023/Conference/Submission52/Ethics_Reviewers' in invitation.invitees
+
     def test_comment_stage(self, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
