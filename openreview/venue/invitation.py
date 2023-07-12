@@ -704,7 +704,7 @@ class InvitationBuilder(object):
                             'signatures': { 
                                 'param': { 
                                     'items': [
-                                        { 'value': self.venue.get_senior_area_chairs_id(number='${5/content/noteNumber/value}') } 
+                                        { 'value': self.venue.get_senior_area_chairs_id(number='${7/content/noteNumber/value}') } 
                                     ]
                                 }
                             },
@@ -1330,7 +1330,7 @@ class InvitationBuilder(object):
                     'edit': {
                         'signatures': { 
                             'param': { 
-                                'items': [{ 'value': self.venue.get_authors_id(number='${5/content/noteNumber/value}') }] 
+                                'items': [{ 'value': self.venue.get_authors_id(number='${7/content/noteNumber/value}') }] 
                             }
                         },
                         'readers': ['${{2/note/forum}/readers}'],
