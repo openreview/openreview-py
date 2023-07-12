@@ -719,7 +719,7 @@ class Conference(object):
             options['contact'] = self.homepage_header.get('contact')
         return options
 
-    def get_submissions(self, accepted = False, number=None, details = None, sort = None):
+    def get_submissions(self, accepted = False, number=None, details = None, sort = 'tmdate'):
         invitation = self.get_blind_submission_id()
 
         if accepted and (not details or 'directReplies' not in details):
