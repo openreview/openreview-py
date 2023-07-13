@@ -37,7 +37,7 @@ class TestVenueWithTracks():
         helpers.create_user('sac8@webconf.com', 'SAC', 'WebChairEight')
         helpers.create_user('sac9@webconf.com', 'SAC', 'WebChairNine')
         helpers.create_user('sac10@webconf.com', 'SAC', 'WebChairTen')
-        helpers.create_user('sac11@webconf.com', 'SAC', 'WebChairEleven')
+        helpers.create_user('sac11@gmail.com', 'SAC', 'WebChairEleven')
         helpers.create_user('sac12@webconf.com', 'SAC', 'WebChairTwelve')
 
         request_form_note = pc_client.post_note(openreview.Note(
@@ -164,7 +164,7 @@ class TestVenueWithTracks():
             'sac8@webconf.com',
             'sac9@webconf.com',
             'sac10@webconf.com',
-            'sac11@webconf.com',
+            'sac11@gmail.com',
             'sac12@webconf.com'
         ])
 
@@ -324,7 +324,7 @@ class TestVenueWithTracks():
             writer.writerow(["COI", '~SAC_WebChairEleven1'])
 
 
-        venue.set_track_sac_assignments(file_path=os.path.join(os.path.dirname(__file__), 'data/track_sacs.csv'))
+        venue.set_track_sac_assignments(file_path=os.path.join(os.path.dirname(__file__), 'data/track_sacs.csv'), conflict_policy='NeurIPS', conflict_n_years=3)
 
 
 #     def test_add_pcs(self, client, openreview_client, helpers):

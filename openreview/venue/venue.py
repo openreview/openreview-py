@@ -749,7 +749,7 @@ Total Errors: {len(errors)}
         conference_matching = matching.Matching(self, match_group)
         return conference_matching.setup_invite_assignment(hash_seed, assignment_title, due_date, invitation_labels=invitation_labels, email_template=email_template)
     
-    def set_track_sac_assignments(self, file_path):
+    def set_track_sac_assignments(self, file_path, conflict_policy=None, conflict_n_years=None):
 
         if not self.use_senior_area_chairs:
             raise openreview.OpenReviewException('The venue does not have senior area chairs enabled. Please enable senior area chairs in the venue.')
@@ -769,11 +769,52 @@ Total Errors: {len(errors)}
 
         submissions = self.get_submissions()
 
+        all_authorids = []
         for submission in submissions:
+            authorids = submission.content['authorids']['value']
+            all_authorids = all_authorids + authorids
+
+        author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, as_dict=True)
+        sac_group = tools.replace_members_with_ids(self.client, self.client.get_group(self.get_senior_area_chairs_id()))
+        sac_profile_by_id = tools.get_profiles(self.client, sac_group.members, with_publications=True, as_dict=True)   
+
+        info_function = tools.info_function_builder(openreview.tools.get_neurips_profile_info if conflict_policy == 'NeurIPS' else openreview.tools.get_profile_info)
+
+        for submission in submissions:
+            authorids = submission.content['authorids']['value']
+
+            # Extract domains from each authorprofile
+            author_domains = set()
+            author_emails = set()
+            author_relations = set()
+            author_publications = set()            
+            for authorid in authorids:
+                if author_profile_by_id.get(authorid):
+                    author_info = info_function(author_profile_by_id[authorid], conflict_n_years)
+                    author_domains.update(author_info['domains'])
+                    author_emails.update(author_info['emails'])
+                    author_relations.update(author_info['relations'])
+                    author_publications.update(author_info['publications'])
+                else:
+                    print(f'Profile not found: {authorid}')
+
             if submission.content['track']['value'] in sac_tracks:
-                sac_group_id = self.get_senior_area_chairs_id(submission.number)
-                print(f'adding {sac_tracks[submission.content["track"]["value"]]} to {sac_group_id}')
-                self.client.add_members_to_group(sac_group_id, sac_tracks[submission.content['track']['value']])
+                sacs = sac_tracks[submission.content['track']['value']]
+                for sac in sacs:
+                    sac_info = info_function(sac_profile_by_id.get(sac), conflict_n_years)
+                    conflicts = set()
+                    conflicts.update(author_domains.intersection(sac_info['domains']))
+                    conflicts.update(author_relations.intersection(sac_info['emails']))
+                    conflicts.update(author_emails.intersection(sac_info['relations']))
+                    conflicts.update(author_emails.intersection(sac_info['emails']))
+                    conflicts.update(author_publications.intersection(sac_info['publications']))
+
+                    if not conflict_policy or not conflicts:                
+                        sac_group_id = self.get_senior_area_chairs_id(submission.number)
+                        print(f'adding {sac_tracks[submission.content["track"]["value"]]} to {sac_group_id}')
+                        self.client.add_members_to_group(sac_group_id, sac_tracks[submission.content['track']['value']])
+                    else:
+                        print(f'conflict detected between {sac} and {submission.number}')
 
 
     @classmethod
