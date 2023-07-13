@@ -3167,7 +3167,7 @@ ICML 2023 Conference Program Chairs'''
         ))
 
         helpers.await_queue()
-        time.sleep(5) ## wait until the process functions runs
+        helpers.await_queue(openreview_client)
 
         submissions = openreview_client.get_notes(content= { 'venueid': 'ICML.cc/2023/Conference/Submission'}, sort='number:asc')
         assert submissions and len(submissions) == 100
@@ -3250,7 +3250,7 @@ ICML 2023 Conference Program Chairs'''
         ))
 
         helpers.await_queue()
-        time.sleep(5) ## wait until the process functions runs
+        helpers.await_queue(openreview_client)
 
         submissions = openreview_client.get_notes(content= { 'venueid': 'ICML.cc/2023/Conference/Submission'}, sort='number:asc')
         assert submissions and len(submissions) == 100
@@ -3306,7 +3306,7 @@ ICML 2023 Conference Program Chairs'''
         # use invitation to flag paper
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
         note = submissions[51]
-        pc_client_v2.post_note_edit(
+        note_edit = pc_client_v2.post_note_edit(
             invitation='ICML.cc/2023/Conference/-/Ethics_Review_Flag',
             note=openreview.api.Note(
                 id=note.id
@@ -3315,7 +3315,7 @@ ICML 2023 Conference Program Chairs'''
         )
 
         helpers.await_queue()
-        time.sleep(5) ## wait until the process functions runs
+        helpers.await_queue_edit(openreview_client, edit_id=note_edit['id'])
 
         submissions = openreview_client.get_notes(content= { 'venueid': 'ICML.cc/2023/Conference/Submission'}, sort='number:asc')
         assert submissions and len(submissions) == 100
