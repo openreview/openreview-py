@@ -638,7 +638,8 @@ class EthicsReviewStage(object):
         ALL_COMMITTEE = 0
         ALL_ASSIGNED_COMMITTEE = 1
         ASSIGNED_ETHICS_REVIEWERS = 2
-        ETHICS_REVIEWER_SIGNATURE = 3
+        ETHICS_REVIEWERS_SUBMITTED = 3
+        ETHICS_REVIEWER_SIGNATURE = 4
 
     def __init__(self,
         start_date = None,
@@ -703,6 +704,15 @@ class EthicsReviewStage(object):
                 readers.append(conference.get_ethics_chairs_id())
 
             readers.append(conference.get_ethics_reviewers_id(number=number))
+
+        if self.release_to_reviewers == self.Readers.ETHICS_REVIEWERS_SUBMITTED:
+
+            if conference.use_ethics_chairs:
+                readers.append(conference.get_ethics_chairs_id())
+
+            readers.append(conference.get_ethics_reviewers_id(number=number) + '/Submitted')
+            if ethics_review_signature:
+                readers.append(ethics_review_signature)
 
         if self.release_to_reviewers == self.Readers.ETHICS_REVIEWER_SIGNATURE:
 

@@ -203,7 +203,7 @@ class Venue(object):
     ## Compatibility with Conference, refactor conference references to use get_reviewers_id
     def get_anon_reviewer_id(self, number, anon_id, name=None):
         if name == self.ethics_reviewers_name:
-            return self.get_committee_id(f'{self.get_ethics_reviewers_name()}_.*', number)
+            return self.get_ethics_reviewers_id(number, True)
         return self.get_reviewers_id(number, True)
 
     def get_reviewers_name(self, pretty=True):
@@ -271,7 +271,8 @@ class Venue(object):
         return self.get_committee_id(self.ethics_chairs_name, number)
 
     def get_ethics_reviewers_id(self, number = None, anon=False):
-        return self.get_committee_id('Ethics_Reviewer_.*' if anon else self.ethics_reviewers_name, number)
+        rev_name = self.anon_ethics_reviewers_name()
+        return self.get_committee_id(f'{rev_name}.*' if anon else self.ethics_reviewers_name, number)
 
     def get_withdrawal_id(self, number = None):
         return self.get_invitation_id(self.submission_stage.withdrawal_name, number)

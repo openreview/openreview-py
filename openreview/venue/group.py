@@ -409,7 +409,11 @@ class GroupBuilder(object):
                             signatories=[venue_id],
                             members=[]
                         )
-            self.post_group(ethics_reviewers_group)
+            
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/ethicsReviewersWebfield.js')) as f:
+                content = f.read()
+                ethics_reviewers_group.web = content
+                self.post_group(ethics_reviewers_group)
                 
     def create_ethics_chairs_group(self):
         venue_id = self.venue.id
