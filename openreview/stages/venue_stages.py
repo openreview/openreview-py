@@ -638,7 +638,8 @@ class EthicsReviewStage(object):
         ALL_COMMITTEE = 0
         ALL_ASSIGNED_COMMITTEE = 1
         ASSIGNED_ETHICS_REVIEWERS = 2
-        ETHICS_REVIEWER_SIGNATURE = 3
+        ETHICS_REVIEWERS_SUBMITTED = 3
+        ETHICS_REVIEWER_SIGNATURE = 4
 
     def __init__(self,
         start_date = None,
@@ -662,7 +663,7 @@ class EthicsReviewStage(object):
         self.remove_fields = remove_fields
         self.submission_numbers = submission_numbers
 
-    def get_readers(self, conference, number):
+    def get_readers(self, conference, number, ethics_review_signature=None):
 
         if self.release_to_public:
             return ['everyone']
@@ -704,13 +705,24 @@ class EthicsReviewStage(object):
 
             readers.append(conference.get_ethics_reviewers_id(number=number))
 
+        if self.release_to_reviewers == self.Readers.ETHICS_REVIEWERS_SUBMITTED:
+
+            if conference.use_ethics_chairs:
+                readers.append(conference.get_ethics_chairs_id())
+
+            readers.append(conference.get_ethics_reviewers_id(number=number) + '/Submitted')
+            if ethics_review_signature:
+                readers.append(ethics_review_signature)
+
         if self.release_to_reviewers == self.Readers.ETHICS_REVIEWER_SIGNATURE:
 
             if conference.use_ethics_chairs:
                 readers.append(conference.get_ethics_chairs_id())
 
-            readers.append('{signatures}')
-
+            if ethics_review_signature:
+                readers.append(ethics_review_signature)
+            else:
+                readers.append('{signatures}')
 
         if self.release_to_authors:
             readers.append(conference.get_authors_id(number = number))
@@ -729,6 +741,31 @@ class EthicsReviewStage(object):
 
     def get_signatures(self, conference, number):
         return conference.get_anon_reviewer_id(number=number, anon_id='.*', name=conference.ethics_reviewers_name) + '|' +  conference.get_program_chairs_id()
+
+    def get_content(self, api_version='2', conference=None):
+
+        content = default_content.ethics_review_v2.copy()
+
+        for field in self.remove_fields:
+            if field in content:
+                del content[field]
+            else:
+                print('Field {} not found in content: {}'.format(field, content))
+        
+        for order, key in enumerate(self.additional_fields, start=10):
+            value = self.additional_fields[key]
+            value['order'] = order
+            content[key] = value
+
+        if conference:
+            invitation_id = conference.get_invitation_id(self.name)
+            invitation = openreview.tools.get_invitation(conference.client, invitation_id)
+            if invitation:
+                for field, value in invitation.edit['invitation']['edit']['note']['content'].items():
+                    if field not in content:
+                        content[field] = { 'delete': True }
+
+        return content
 
 class ReviewRebuttalStage(object):
 
