@@ -3155,7 +3155,6 @@ ICML 2023 Conference Program Chairs'''
                         }
                     }
                 },
-                'ethics_review_submissions': '1,5',
                 'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
             },
             forum=request_form.forum,
@@ -3168,6 +3167,20 @@ ICML 2023 Conference Program Chairs'''
 
         helpers.await_queue()
         helpers.await_queue(openreview_client)
+
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
+        notes = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', number=[1,5])
+        for note in notes:
+            note_edit = pc_client_v2.post_note_edit(
+                invitation='ICML.cc/2023/Conference/-/Ethics_Review_Flag',
+                note=openreview.api.Note(
+                    id=note.id
+                ),
+                signatures=['ICML.cc/2023/Conference']
+            )
+
+            helpers.await_queue()
+            helpers.await_queue_edit(openreview_client, edit_id=note_edit['id'])
 
         submissions = openreview_client.get_notes(content= { 'venueid': 'ICML.cc/2023/Conference/Submission'}, sort='number:asc')
         assert submissions and len(submissions) == 100
@@ -3238,7 +3251,6 @@ ICML 2023 Conference Program Chairs'''
                         }
                     }
                 },
-                'ethics_review_submissions': '1,5,6,7,8,100',
                 'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
             },
             forum=request_form.forum,
@@ -3251,6 +3263,19 @@ ICML 2023 Conference Program Chairs'''
 
         helpers.await_queue()
         helpers.await_queue(openreview_client)
+
+        notes = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', number=[6,7,8,100])
+        for note in notes:
+            note_edit = pc_client_v2.post_note_edit(
+                invitation='ICML.cc/2023/Conference/-/Ethics_Review_Flag',
+                note=openreview.api.Note(
+                    id=note.id
+                ),
+                signatures=['ICML.cc/2023/Conference']
+            )
+
+            helpers.await_queue()
+            helpers.await_queue_edit(openreview_client, edit_id=note_edit['id'])
 
         submissions = openreview_client.get_notes(content= { 'venueid': 'ICML.cc/2023/Conference/Submission'}, sort='number:asc')
         assert submissions and len(submissions) == 100
@@ -3305,7 +3330,7 @@ ICML 2023 Conference Program Chairs'''
 
         # use invitation to flag paper
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
-        note = submissions[51]
+        note = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', number=[52])[0]
         note_edit = pc_client_v2.post_note_edit(
             invitation='ICML.cc/2023/Conference/-/Ethics_Review_Flag',
             note=openreview.api.Note(

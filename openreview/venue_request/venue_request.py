@@ -372,7 +372,8 @@ class VenueStages():
             'ethics_review_submissions': {
                 'order' : 6,
                 'value-regex': '.*',
-                'required': True,
+                'required': False,
+                'hidden': True,
                 'description': 'Comma separated values of submission numbers that need ethics reviews.'
             },
             'additional_ethics_review_form_options': {
