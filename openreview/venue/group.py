@@ -241,6 +241,13 @@ class GroupBuilder(object):
         if self.venue.review_rebuttal_stage:
             content['rebuttal_email_pcs'] = { 'value': self.venue.review_rebuttal_stage.email_pcs}
 
+        if self.venue.ethics_review_stage:
+            content['ethics_chairs_id'] = { 'value': self.venue.get_ethics_chairs_id() }
+            content['ethics_chairs_name'] = { 'value': self.venue.ethics_chairs_name }
+            content['ethics_reviewers_name'] = { 'value': self.venue.ethics_reviewers_name }
+            content['ethics_review_name'] = { 'value': self.venue.ethics_review_stage.name }
+            content['anon_ethics_reviewer_name'] = { 'value': self.venue.anon_ethics_reviewers_name()}
+
         if venue_group.content.get('enable_reviewers_reassignment'):
             content['enable_reviewers_reassignment'] = venue_group.content.get('enable_reviewers_reassignment')
 
@@ -402,7 +409,11 @@ class GroupBuilder(object):
                             signatories=[venue_id],
                             members=[]
                         )
-            self.post_group(ethics_reviewers_group)
+            
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/ethicsReviewersWebfield.js')) as f:
+                content = f.read()
+                ethics_reviewers_group.web = content
+                self.post_group(ethics_reviewers_group)
                 
     def create_ethics_chairs_group(self):
         venue_id = self.venue.id
@@ -415,8 +426,12 @@ class GroupBuilder(object):
                             signatures=[venue_id],
                             signatories=[venue_id],
                             members=[]
-                        )                
-            self.post_group(ethics_chairs_group)
+                        )
+
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/ethicsChairsWebfield.js')) as f:
+                content = f.read()
+                ethics_chairs_group.web = content
+                self.post_group(ethics_chairs_group)
 
     def add_to_active_venues(self):
         active_venues = self.client_v1.get_group('active_venues')

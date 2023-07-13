@@ -645,7 +645,7 @@ class Client(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())        
 
-    def get_groups(self, id=None, ids=None, parent=None, regex=None, member=None, members=None, signatory=None, web=None, limit=None, offset=None, with_count=False, select=None):
+    def get_groups(self, id=None, ids=None, parent=None, regex=None, member=None, members=None, signatory=None, web=None, limit=None, offset=None, after=None, stream=None, sort=None, with_count=False, select=None):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -672,19 +672,34 @@ class Client(object):
         :rtype: list[Group]
         """
         params = {}
-        if id is not None: params['id'] = id
-        if ids is not None: params['ids'] = ids
-        if parent is not None: params['parent'] = parent
-        if regex is not None: params['regex'] = regex
-        if member is not None: params['member'] = member
-        if members is not None: params['members'] = members
-        if signatory is not None: params['signatory'] = signatory
-        if web: params['web'] = web
+        if id is not None:
+            params['id'] = id
+        if ids is not None:
+            params['ids'] = ids
+        if parent is not None:
+            params['parent'] = parent
+        if regex is not None:
+            params['regex'] = regex
+        if member is not None:
+            params['member'] = member
+        if members is not None:
+            params['members'] = members
+        if signatory is not None:
+            params['signatory'] = signatory
+        if web:
+            params['web'] = web
         if select:
             params['select'] = select
-
-        params['limit'] = limit
-        params['offset'] = offset
+        if after is not None:
+            params['after'] = after
+        if stream is not None:
+            params['stream'] = stream
+        if sort is not None:
+            params['sort'] = sort
+        if limit is not None:
+            params['limit'] = limit
+        if offset is not None:
+            params['offset'] = offset
 
         response = self.session.get(self.groups_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -695,12 +710,14 @@ class Client(object):
 
         return groups
 
-    def get_all_groups(self, id = None, parent = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
+    def get_all_groups(self, id=None, parent=None, regex=None, member=None, signatory=None, web=None, sort=None, with_count=False):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
         :param id: id of the Group
         :type id: str, optional
+        :param parent: id of the parent Group
+        :type parent: str, optional
         :param regex: Regex that matches several Group ids
         :type regex: str, optional
         :param member: Groups that contain this member
@@ -709,29 +726,36 @@ class Client(object):
         :type signatory: str, optional
         :param web: Groups that contain a web field value
         :type web: bool, optional
-        :param limit: Maximum amount of Groups that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Groups will be returned
-        :type limit: int, optional
-        :param offset: Indicates the position to start retrieving Groups. For example, if there are 10 Groups and you want to obtain the last 3, then the offset would need to be 7.
-        :type offset: int, optional
+        :param after: Group id to start getting the list of groups from.
+        :type after: str, optional
 
         :return: List of Groups
         :rtype: list[Group]
         """
 
         params = {
-            'id': id,
-            'parent': parent,
-            'regex': regex,
-            'member': member,
-            'signatory': signatory,
-            'web': web,
-            'limit': limit,
-            'offset': offset,
-            'with_count': with_count
+            'stream': True
         }
-        return tools.concurrent_get(self, self.get_groups, **params)
+        if id is not None:
+            params['id'] = id
+        if parent is not None:
+            params['parent'] = parent
+        if regex is not None:
+            params['regex'] = regex
+        if member is not None:
+            params['member'] = member
+        if signatory is not None:
+            params['signatory'] = signatory
+        if web is not None:
+            params['web'] = web
+        if sort is not None:
+            params['sort'] = sort
+        if with_count is not None:
+            params['with_count'] = with_count
 
-    def get_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False, select=None):
+        return self.get_groups(**params)
+
+    def get_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, after=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, sort=None, super=None, with_count=False, select=None):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
 
@@ -757,6 +781,8 @@ class Client(object):
         :type limit: int, optional
         :param int offset: Indicates the position to start retrieving Invitations. For example, if there are 10 Invitations and you want to obtain the last 3, then the offset would need to be 7.
         :type offset: int, optional
+        :param after: Invitation id to start getting the list of invitations from.
+        :type after: str, optional
         :param minduedate: Invitations that have at least this value as due date
         :type minduedate: int, optional
         :param duedate: Invitations that contain this due date
@@ -790,23 +816,34 @@ class Client(object):
             params['signature'] = signature
         if note is not None:
             params['note']=note
-        if regex:
+        if regex is not None:
             params['regex'] = regex
-        if tags:
+        if tags is not None:
             params['tags'] = tags
-        if minduedate:
+        if minduedate is not None:
             params['minduedate'] = minduedate
-        if super:
+        if super is not None:
             params['super'] = super
-        if select:
+        if select is not None:
             params['select'] = select
-        params['replyto'] = replyto
-        params['duedate'] = duedate
-        params['pastdue'] = pastdue
-        params['details'] = details
-        params['limit'] = limit
-        params['offset'] = offset
-        params['expired'] = expired
+        if replyto is not None:
+            params['replyto'] = replyto
+        if duedate is not None:
+            params['duedate'] = duedate
+        if pastdue is not None:
+            params['pastdue'] = pastdue
+        if details is not None:
+            params['details'] = details
+        if limit is not None:
+            params['limit'] = limit
+        if offset is not None:
+            params['offset'] = offset
+        if after is not None:
+            params['after'] = after
+        if sort is not None:
+            params['sort'] = sort
+        if expired is not None:
+            params['expired'] = expired
 
         response = self.session.get(self.invitations_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
@@ -818,7 +855,7 @@ class Client(object):
 
         return invitations
     
-    def get_all_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False):
+    def get_all_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, sort=None, with_count=False):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
 
@@ -840,10 +877,6 @@ class Client(object):
         :type regex: str, optional
         :param tags: Invitations that contain these tags
         :type tags: Tag, optional
-        :param int limit: Maximum amount of Invitations that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Invitations will be returned
-        :type limit: int, optional
-        :param int offset: Indicates the position to start retrieving Invitations. For example, if there are 10 Invitations and you want to obtain the last 3, then the offset would need to be 7.
-        :type offset: int, optional
         :param minduedate: Invitations that have at least this value as due date
         :type minduedate: int, optional
         :param duedate: Invitations that contain this due date
@@ -861,29 +894,45 @@ class Client(object):
         :rtype: list[Invitation]
         """
         
-        params = {
-            'id': id,
-            'ids': ids,
-            'invitee': invitee,
-            'replytoNote': replytoNote,
-            'replyForum': replyForum,
-            'signature': signature,
-            'note': note,
-            'regex': regex,
-            'tags': tags,
-            'limit': limit,
-            'offset': offset,
-            'minduedate': minduedate,
-            'duedate': duedate,
-            'pastdue': pastdue,
-            'replyto': replyto,
-            'details': details,
-            'expired': expired,
-            'super': super,
-            'with_count': with_count
-       }
+        params = {}
+        if id is not None:
+            params['id'] = id
+        if ids is not None:
+            params['ids'] = ids
+        if invitee is not None:
+            params['invitee'] = invitee
+        if replytoNote is not None:
+            params['replytoNote'] = replytoNote
+        if replyForum is not None:
+            params['replyForum'] = replyForum
+        if signature is not None:
+            params['signature'] = signature
+        if note is not None:
+            params['note']=note
+        if regex is not None:
+            params['regex'] = regex
+        if tags is not None:
+            params['tags'] = tags
+        if minduedate is not None:
+            params['minduedate'] = minduedate
+        if duedate is not None:
+            params['duedate'] = duedate
+        if pastdue is not None:
+            params['pastdue'] = pastdue
+        if replyto is not None:
+            params['replyto'] = replyto
+        if details is not None:
+            params['details'] = details
+        if expired is not None:
+            params['expired'] = expired
+        if super is not None:
+            params['super'] = super
+        if sort is not None:
+            params['sort'] = sort
+        if with_count is not None:
+            params['with_count'] = with_count
 
-        return tools.concurrent_get(self, self.get_invitations, **params)
+        return list(tools.efficient_iterget(self.get_invitations, desc='Getting V1 Invitations', **params))
 
     def get_notes(self, id = None,
             paperhash = None,
@@ -900,6 +949,7 @@ class Client(object):
             content = None,
             limit = None,
             offset = None,
+            after = None,
             mintcdate = None,
             details = None,
             sort = None,
@@ -942,6 +992,8 @@ class Client(object):
         :type limit: int, optional
         :param offset: Indicates the position to start retrieving Notes. For example, if there are 10 Notes and you want to obtain the last 3, then the offset would need to be 7.
         :type offset: int, optional
+        :param after: Note id to start getting the list of notes from.
+        :type after: str, optional
         :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns Notes
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
         :type mintcdate: int, optional
@@ -996,6 +1048,8 @@ class Client(object):
             params['limit'] = limit
         if offset is not None:
             params['offset'] = offset
+        if after is not None:
+            params['after'] = after
         if mintcdate is not None:
             params['mintcdate'] = mintcdate
         if details is not None:
@@ -1029,11 +1083,10 @@ class Client(object):
             trash = None,
             number = None,
             content = None,
-            limit = None,
-            offset = None,
             mintcdate = None,
             details = None,
             sort = None,
+            select = None,
             with_count=False):
         """
         Gets list of Note objects based on the filters provided. The Notes that will be returned match all the criteria passed in the parameters.
@@ -1046,14 +1099,10 @@ class Client(object):
         :type paperhash: str, optional
         :param forum: A Note ID. If provided, returns Notes whose forum matches the given ID.
         :type forum: str, optional
-        :param original: A Note ID. If provided, returns Notes whose original matches the given ID.
-        :type original: str, optional
         :param invitation: An Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
         :type invitation: str, optional
         :param replyto: A Note ID. If provided, returns Notes whose replyto field matches the given ID.
         :type replyto: str, optional
-        :param tauthor: If provided, returns Notes whose true author is the user requesting the Notes.
-        :type tauthor: bool, optional
         :param signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
         :type signature: str, optional
         :param signatures: Group IDs. If provided, returns Notes whose signatures field contains the given Group IDs.
@@ -1067,10 +1116,8 @@ class Client(object):
         :type number: int, optional
         :param content: If present, includes Notes whose each key is present in the content field and it is equals the given value.
         :type content: dict, optional
-        :param limit: Maximum amount of Notes that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Notes will be returned
-        :type limit: int, optional
-        :param offset: Indicates the position to start retrieving Notes. For example, if there are 10 Notes and you want to obtain the last 3, then the offset would need to be 7.
-        :type offset: int, optional
+        :param after: Note id to start getting the list of notes from.
+        :type after: str, optional
         :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns Notes
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
         :type mintcdate: int, optional
@@ -1093,29 +1140,46 @@ class Client(object):
         :return: List of Notes
         :rtype: list[Note]
         """
+
+        params = {}
+        if id is not None:
+            params['id'] = id
+        if paperhash is not None:
+            params['paperhash'] = paperhash
+        if forum is not None:
+            params['forum'] = forum
+        if original is not None:
+            params['original'] = original
+        if invitation is not None:
+            params['invitation'] = invitation
+        if replyto is not None:
+            params['replyto'] = replyto
+        if tauthor is not None:
+            params['tauthor'] = tauthor
+        if signature is not None:
+            params['signature'] = signature
+        if signatures is not None:
+            params['signatures'] = signatures
+        if writer is not None:
+            params['writer'] = writer
+        if trash == True:
+            params['trash']=True
+        if number is not None:
+            params['number'] = number
+        if content is not None:
+            params['content'] = content
+        if mintcdate is not None:
+            params['mintcdate'] = mintcdate
+        if details is not None:
+            params['details'] = details
+        if select:
+            params['select'] = select
+        if sort is not None:
+            params['sort'] = sort
+        if with_count:
+            params['with_count'] = with_count
         
-        params = {
-            'id': id,
-            'paperhash': paperhash,
-            'forum': forum,
-            'original': original,
-            'invitation': invitation,
-            'replyto': replyto,
-            'tauthor': tauthor,
-            'signature': signature,
-            'signatures': signatures,
-            'writer': writer,
-            'trash': trash,
-            'number': number,
-            'content': content,
-            'limit': limit,
-            'offset': offset,
-            'mintcdate': mintcdate,
-            'details': details,
-            'sort': sort,
-            'with_count': with_count
-        }
-        return tools.concurrent_get(self, self.get_notes, **params)
+        return list(tools.efficient_iterget(self.get_notes, desc='Getting V1 Notes', **params))
 
     def get_reference(self, id):
         """
