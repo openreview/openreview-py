@@ -1,12 +1,11 @@
 // Webfield component
-
 return {
     component: 'EthicsChairConsole',
     version: 1,
     properties: {
         header: {
-            "title": "Ethics Chairs Console",
-            "instructions": `<p class=\"dark\">This page provides information and status updates for ${domain.content.subtitle?.value}. It will be regularly updated as the conference progresses, so please check back frequently.</p>`
+            title: 'Ethics Chair Console',
+            instructions: `<p class="dark">This page provides information and status updates for ${domain.content.subtitle?.value}. It will be regularly updated as the conference progresses, so please check back frequently.</p>`
         },
         venueId: domain.id,
         ethicsChairsName: domain.content.ethics_chairs_name?.value,
