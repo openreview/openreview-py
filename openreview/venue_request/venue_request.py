@@ -362,6 +362,7 @@ class VenueStages():
                     'Ethics reviews should be immediately revealed to all reviewers and ethics reviewers',
                     'Ethics reviews should be immediately revealed to the paper\'s reviewers and ethics reviewers',
                     'Ethics reviews should be immediately revealed to the paper\'s ethics reviewers',
+                    'Ethics reviews should be immediately revealed to the paper\'s ethics reviewers who have already submitted their ethics review',
                     'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review'
                 ],
                 'required': True,
@@ -371,7 +372,8 @@ class VenueStages():
             'ethics_review_submissions': {
                 'order' : 6,
                 'value-regex': '.*',
-                'required': True,
+                'required': False,
+                'hidden': True,
                 'description': 'Comma separated values of submission numbers that need ethics reviews.'
             },
             'additional_ethics_review_form_options': {
