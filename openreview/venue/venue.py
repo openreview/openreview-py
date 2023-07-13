@@ -748,6 +748,32 @@ Total Errors: {len(errors)}
         match_group = self.client.get_group(committee_id)
         conference_matching = matching.Matching(self, match_group)
         return conference_matching.setup_invite_assignment(hash_seed, assignment_title, due_date, invitation_labels=invitation_labels, email_template=email_template)
+    
+    def set_track_sac_assignments(self, file_path):
+
+        if not self.use_senior_area_chairs:
+            raise openreview.OpenReviewException('The venue does not have senior area chairs enabled. Please enable senior area chairs in the venue.')
+
+        has_tracks = self.submission_stage.additional_fields and 'track' in self.submission_stage.additional_fields
+        if not has_tracks:
+            raise openreview.OpenReviewException('The submission stage does not have tracks enabled. Please enable tracks in the submission stage.')
+
+        sac_tracks = {}
+        with open(file_path) as file_handle:
+            for row in csv.reader(file_handle):
+                if row[0] not in sac_tracks:
+                    sac_tracks[row[0]] = []
+                sac_tracks[row[0]].append(row[1])
+    
+        print(sac_tracks)
+
+        submissions = self.get_submissions()
+
+        for submission in submissions:
+            if submission.content['track']['value'] in sac_tracks:
+                sac_group_id = self.get_senior_area_chairs_id(submission.number)
+                print(f'adding {sac_tracks[submission.content["track"]["value"]]} to {sac_group_id}')
+                self.client.add_members_to_group(sac_group_id, sac_tracks[submission.content['track']['value']])
 
 
     @classmethod
