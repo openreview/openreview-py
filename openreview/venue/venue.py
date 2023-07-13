@@ -930,8 +930,8 @@ OpenReview Team'''
                                             ## Check if the user was invited again with a profile id
                                             invitation_edges = client.get_edges(invitation=invite_assignment_invitation.id, label='Invitation Sent', head=submission.id, tail=user_profile.id)
                                             if invitation_edges:
-                                                print(f'User invited twice, remove double invitation edge {invitation_edge.id}')
                                                 invitation_edge = invitation_edges[0]
+                                                print(f'User invited twice, remove double invitation edge {invitation_edge.id}')
                                                 invitation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
                                                 client.post_edge(invitation_edge)
 
