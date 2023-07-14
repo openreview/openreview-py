@@ -99,9 +99,9 @@ class Venue(object):
     def get_roles(self):
         roles = self.reviewer_roles
         if self.use_area_chairs:
-            roles = self.reviewer_roles + [self.area_chairs_name]
+            roles = self.reviewer_roles + self.area_chair_roles
         if self.use_senior_area_chairs:
-            roles = roles + [self.senior_area_chairs_name]
+            roles = roles + self.senior_area_chair_roles
         if self.use_ethics_chairs:
             roles = roles + [self.ethics_chairs_name]
         if self.use_ethics_reviewers:

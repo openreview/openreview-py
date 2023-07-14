@@ -56,6 +56,20 @@ class TestVenueWithTracks():
                 'program_chair_emails': ['pc@webconf.org'],
                 'contact_email': 'pc@webconf.org',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
+                'area_chair_roles': [
+                    "Area_Chairs",
+                    "Econ_Area_Chairs",
+                    "Graph_Area_Chairs",
+                    "RespWeb_Area_Chairs",
+                    "Search_Area_Chairs",
+                    "Security_Area_Chairs",
+                    "Semantics_Area_Chairs",
+                    "Social_Area_Chairs",
+                    "Systems_Area_Chairs",
+                    "RecSys_Area_Chairs",
+                    "Mining_Area_Chairs",
+                    "COI_Area_Chairs"                    
+                ],
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
@@ -91,8 +105,23 @@ class TestVenueWithTracks():
         assert openreview_client.get_group('ACM.org/TheWebConf/2024/Conference')
         assert openreview_client.get_group('ACM.org/TheWebConf/2024/Conference/Senior_Area_Chairs')
         assert openreview_client.get_group('ACM.org/TheWebConf/2024/Conference/Area_Chairs')
+        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Econ_Area_Chairs')
+        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Graph_Area_Chairs')
+        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/RespWeb_Area_Chairs')
+        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Search_Area_Chairs')
+        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Security_Area_Chairs')
+        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Semantics_Area_Chairs')
+        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Social_Area_Chairs')
+        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Systems_Area_Chairs')
+        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/RecSys_Area_Chairs')
+        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Mining_Area_Chairs')
+        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/COI_Area_Chairs')
+        
         assert openreview_client.get_group('ACM.org/TheWebConf/2024/Conference/Reviewers')
         assert openreview_client.get_group('ACM.org/TheWebConf/2024/Conference/Authors')
+
+        invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/Recruitment')
+        assert 'Econ_Area_Chairs' in invitation.reply['content']['invitee_role']['value-dropdown']
 
         submission_invitation = openreview_client.get_invitation('ACM.org/TheWebConf/2024/Conference/-/Submission')
         assert submission_invitation
@@ -325,6 +354,9 @@ class TestVenueWithTracks():
 
 
         venue.set_track_sac_assignments(file_path=os.path.join(os.path.dirname(__file__), 'data/track_sacs.csv'), conflict_policy='NeurIPS', conflict_n_years=3)
+
+        assert openreview_client.get_group('ACM.org/TheWebConf/2024/Conference/Submission1/Senior_Area_Chairs').members == ['~SAC_WebChairEleven1']
+        assert openreview_client.get_group('ACM.org/TheWebConf/2024/Conference/Submission10/Senior_Area_Chairs').members == ['~SAC_WebChairOne1', '~SAC_WebChairTwelve1']
 
 
 #     def test_add_pcs(self, client, openreview_client, helpers):
