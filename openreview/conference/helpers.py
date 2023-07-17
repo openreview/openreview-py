@@ -38,6 +38,8 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.submission_revision_stage = get_submission_revision_stage(note)
         venue.review_rebuttal_stage = get_rebuttal_stage(note)
         venue.registration_stages = get_registration_stages(note, venue)
+        if 'ethics_review_deadline' in note.content:
+            venue.ethics_review_stage = get_ethics_review_stage(note)
 
         include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
         venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date, include_option=include_expertise_selection)
@@ -601,6 +603,7 @@ def get_ethics_review_stage(request_forum):
         'Ethics reviews should be immediately revealed to all reviewers and ethics reviewers': openreview.stages.EthicsReviewStage.Readers.ALL_COMMITTEE,
         'Ethics reviews should be immediately revealed to the paper\'s reviewers and ethics reviewers': openreview.stages.EthicsReviewStage.Readers.ALL_ASSIGNED_COMMITTEE,
         'Ethics reviews should be immediately revealed to the paper\'s ethics reviewers': openreview.stages.EthicsReviewStage.Readers.ASSIGNED_ETHICS_REVIEWERS,
+        'Ethics reviews should be immediately revealed to the paper\'s ethics reviewers who have already submitted their ethics review': openreview.stages.EthicsReviewStage.Readers.ETHICS_REVIEWERS_SUBMITTED,
         'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review': openreview.stages.EthicsReviewStage.Readers.ETHICS_REVIEWER_SIGNATURE
     }
     release_to_reviewers = readers_map.get(request_forum.content.get('release_ethics_reviews_to_reviewers', ''), openreview.stages.EthicsReviewStage.Readers.ETHICS_REVIEWER_SIGNATURE)

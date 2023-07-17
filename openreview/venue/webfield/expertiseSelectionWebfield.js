@@ -1,8 +1,8 @@
 // Webfield component
 return {
-    component: 'ExpertiseConsole',
-    properties: {
-      venueId: domain.id,
-      apiVersion: 2
-    }
+  component: 'ExpertiseConsole',
+  properties: {
+    venueId: domain.id,
+    apiVersion: 2
   }
+}

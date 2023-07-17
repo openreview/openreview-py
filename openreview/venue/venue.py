@@ -201,7 +201,9 @@ class Venue(object):
         return self.get_committee_id(committee_name) + '/Declined'
 
     ## Compatibility with Conference, refactor conference references to use get_reviewers_id
-    def get_anon_reviewer_id(self, number, anon_id):
+    def get_anon_reviewer_id(self, number, anon_id, name=None):
+        if name == self.ethics_reviewers_name:
+            return self.get_ethics_reviewers_id(number, True)
         return self.get_reviewers_id(number, True)
 
     def get_reviewers_name(self, pretty=True):
@@ -223,6 +225,10 @@ class Venue(object):
             name=self.ethics_reviewers_name.replace('_', ' ')
             return name[:-1] if name.endswith('s') else name
         return self.ethics_reviewers_name
+
+    def anon_ethics_reviewers_name(self, pretty=True):
+        rev_name = self.ethics_reviewers_name[:-1] if self.ethics_reviewers_name.endswith('s') else self.ethics_reviewers_name
+        return rev_name + '_'
 
     def get_area_chairs_name(self, pretty=True):
         if pretty:
@@ -265,7 +271,8 @@ class Venue(object):
         return self.get_committee_id(self.ethics_chairs_name, number)
 
     def get_ethics_reviewers_id(self, number = None, anon=False):
-        return self.get_committee_id('Ethics_Reviewer_.*' if anon else self.ethics_reviewers_name, number)
+        rev_name = self.anon_ethics_reviewers_name()
+        return self.get_committee_id(f'{rev_name}.*' if anon else self.ethics_reviewers_name, number)
 
     def get_withdrawal_id(self, number = None):
         return self.get_invitation_id(self.submission_stage.withdrawal_name, number)
@@ -495,6 +502,32 @@ class Venue(object):
     def create_custom_stage(self):
         return self.invitation_builder.set_custom_stage_invitation()
     
+    def create_ethics_review_stage(self):
+
+        flag_invitation = self.invitation_builder.set_ethics_stage_invitation()
+        self.invitation_builder.set_ethics_paper_groups_invitation()
+        self.invitation_builder.set_review_invitation()
+        self.invitation_builder.set_ethics_review_invitation()
+
+        # setup paper matching
+        group = tools.get_group(self.client, id=self.get_ethics_reviewers_id())
+        if group and len(group.members) > 0:
+            self.setup_committee_matching(group.id, compute_affinity_scores=False, compute_conflicts=True)
+            self.invitation_builder.set_assignment_invitation(group.id)
+
+        flagged_submission_numbers = self.ethics_review_stage.submission_numbers
+        print(flagged_submission_numbers)
+        notes = self.get_submissions()
+        for note in notes:
+            if note.number in flagged_submission_numbers:
+                self.client.post_note_edit(
+                    invitation=flag_invitation.id,
+                    note=openreview.api.Note(
+                        id=note.id
+                    ),
+                    signatures=[self.venue_id]
+                )
+
     def update_conflict_policies(self, committee_id, compute_conflicts, compute_conflicts_n_years):
         content = {}
         if committee_id == self.get_reviewers_id():
@@ -964,8 +997,8 @@ OpenReview Team'''
                                             ## Check if the user was invited again with a profile id
                                             invitation_edges = client.get_edges(invitation=invite_assignment_invitation.id, label='Invitation Sent', head=submission.id, tail=user_profile.id)
                                             if invitation_edges:
-                                                print(f'User invited twice, remove double invitation edge {invitation_edge.id}')
                                                 invitation_edge = invitation_edges[0]
+                                                print(f'User invited twice, remove double invitation edge {invitation_edge.id}')
                                                 invitation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
                                                 client.post_edge(invitation_edge)
 
