@@ -15,7 +15,7 @@ jobs:
     parallelism: 10
     working_directory: ~/openreview-py-repo
     docker:
-      - image: cimg/python:3.7.14-node
+      - image: cimg/python:3.10.12-node
       - image: cimg/redis:6.2.6
       - image: circleci/mongo:5.0.2
         command: [ --replSet, rs0 ]
