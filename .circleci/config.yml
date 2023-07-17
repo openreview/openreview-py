@@ -27,13 +27,13 @@ jobs:
       - checkout
       - run:
           name: Initialize Replica Set
-          command: |
-            wget -qO - https://www.mongodb.org/static/pgp/server-5.0.asc | sudo apt-key add -
-            sudo touch /etc/apt/sources.list.d/mongodb-org-5.0.list
-            echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/5.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-5.0.list
-            sudo apt-get update
-            sudo apt-get install -y mongodb-org=5.0.13 mongodb-org-database=5.0.13 mongodb-org-server=5.0.13 mongodb-org-shell=5.0.13 mongodb-org-mongos=5.0.13 mongodb-org-tools=5.0.13
-            mongosh mongodb://localhost:27017 --eval "rs.initiate()"
+          command: mongosh mongodb://localhost:27017 --eval "rs.initiate()"
+            #wget -qO - https://www.mongodb.org/static/pgp/server-5.0.asc | sudo apt-key add -
+            #sudo touch /etc/apt/sources.list.d/mongodb-org-5.0.list
+            #echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/5.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-5.0.list
+            #sudo apt-get update
+            #sudo apt-get install -y mongodb-org=5.0.13 mongodb-org-database=5.0.13 mongodb-org-server=5.0.13 mongodb-org-shell=5.0.13 mongodb-org-mongos=5.0.13 mongodb-org-tools=5.0.13
+            #mongosh mongodb://localhost:27017 --eval "rs.initiate()"
       - run: pip install ~/openreview-py-repo
       - run: git clone
           https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api-v1.git
