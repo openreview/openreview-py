@@ -3174,7 +3174,10 @@ ICML 2023 Conference Program Chairs'''
             note_edit = pc_client_v2.post_note_edit(
                 invitation='ICML.cc/2023/Conference/-/Ethics_Review_Flag',
                 note=openreview.api.Note(
-                    id=note.id
+                    id=note.id,
+                    content = {
+                        'ethics_comments': { 'value': 'These are ethics comments visible to ethics chairs and ethics reviewers' }
+                    }
                 ),
                 signatures=['ICML.cc/2023/Conference']
             )
@@ -3185,13 +3188,25 @@ ICML 2023 Conference Program Chairs'''
         submissions = openreview_client.get_notes(content= { 'venueid': 'ICML.cc/2023/Conference/Submission'}, sort='number:asc')
         assert submissions and len(submissions) == 100
         assert 'flagged_for_ethics_review' in submissions[0].content
+        assert 'ethics_comments' in submissions[0].content
+        assert submissions[0].content['flagged_for_ethics_review']['readers'] == [
+            'ICML.cc/2023/Conference',
+            'ICML.cc/2023/Conference/Ethics_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers'
+        ]
+        assert 'flagged_for_ethics_review' in submissions[4].content
+        assert 'ethics_comments' in submissions[4].content
+        assert submissions[4].content['flagged_for_ethics_review']['readers'] == [
+            'ICML.cc/2023/Conference',
+            'ICML.cc/2023/Conference/Ethics_Chairs',
+            'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers'
+        ]
         ethics_group = openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers')
         assert ethics_group
         ethics_group = openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Submission2/Ethics_Reviewers')
         assert not ethics_group
         ethics_group = openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers')
         assert ethics_group
-        assert 'flagged_for_ethics_review' in submissions[4].content
         assert submissions[0].readers == [
             "ICML.cc/2023/Conference",
             "ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs",

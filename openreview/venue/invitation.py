@@ -2878,7 +2878,20 @@ class InvitationBuilder(object):
                                     'type': 'boolean',
                                     'const': True
                                 }
-                            }
+                            },
+                            'readers': [venue_id, self.venue.get_ethics_chairs_id() ,self.venue.get_ethics_reviewers_id('${{4/id}/number}')]
+                        },
+                        'ethics_comments': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'markdown': True,
+                                    'input': 'textarea',
+                                    'optional': True
+                                }
+                            },
+                            'readers': [venue_id, self.venue.get_ethics_chairs_id(), self.venue.get_ethics_reviewers_id('${{4/id}/number}')]
                         }
                     }
                 }
