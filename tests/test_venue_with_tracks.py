@@ -40,6 +40,29 @@ class TestVenueWithTracks():
         helpers.create_user('sac11@gmail.com', 'SAC', 'WebChairEleven')
         helpers.create_user('sac12@webconf.com', 'SAC', 'WebChairTwelve')
 
+        helpers.create_user('ac1@webconf.com', 'AC', 'WebChairOne')
+        helpers.create_user('ac2@webconf.com', 'AC', 'WebChairTwo')
+        helpers.create_user('ac3@webconf.com', 'AC', 'WebChairThree')
+        helpers.create_user('ac4@webconf.com', 'AC', 'WebChairFour')
+        helpers.create_user('ac5@webconf.com', 'AC', 'WebChairFive')
+        helpers.create_user('ac6@webconf.com', 'AC', 'WebChairSix')
+        helpers.create_user('ac7@webconf.com', 'AC', 'WebChairSeven')
+        helpers.create_user('ac8@webconf.com', 'AC', 'WebChairEight')
+        helpers.create_user('ac9@webconf.com', 'AC', 'WebChairNine')
+        helpers.create_user('ac10@webconf.com', 'AC', 'WebChairTen')
+        helpers.create_user('ac11@gmail.com', 'AC', 'WebChairEleven')
+        helpers.create_user('ac12@webconf.com', 'AC', 'WebChairTwelve')        
+        helpers.create_user('ac13@webconf.com', 'AC', 'WebChairThirdTeen')        
+        helpers.create_user('ac14@webconf.com', 'AC', 'WebChairFourTeen')        
+        helpers.create_user('ac15@webconf.com', 'AC', 'WebChairFifthTeen')        
+        helpers.create_user('ac16@webconf.com', 'AC', 'WebChairSixTeen')        
+        helpers.create_user('ac17@webconf.com', 'AC', 'WebChairSevenTeen')        
+        helpers.create_user('ac18@webconf.com', 'AC', 'WebChairEightTeen')        
+        helpers.create_user('ac19@webconf.com', 'AC', 'WebChairNineTeen')        
+        helpers.create_user('ac20@webconf.com', 'AC', 'WebChairTwenty')        
+        helpers.create_user('ac21@webconf.com', 'AC', 'WebChairTwentyOne')        
+        helpers.create_user('ac22@webconf.com', 'AC', 'WebChairTwentyTwo')        
+
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
             signatures=['~Program_WebChair1'],
@@ -356,7 +379,103 @@ class TestVenueWithTracks():
         venue.set_track_sac_assignments(file_path=os.path.join(os.path.dirname(__file__), 'data/track_sacs.csv'), conflict_policy='NeurIPS', conflict_n_years=3)
 
         assert openreview_client.get_group('ACM.org/TheWebConf/2024/Conference/Submission1/Senior_Area_Chairs').members == ['~SAC_WebChairEleven1']
-        assert openreview_client.get_group('ACM.org/TheWebConf/2024/Conference/Submission10/Senior_Area_Chairs').members == ['~SAC_WebChairOne1', '~SAC_WebChairTwelve1']
+        group = openreview_client.get_group('ACM.org/TheWebConf/2024/Conference/Submission10/Senior_Area_Chairs')
+        assert len(group.members) == 2
+        assert '~SAC_WebChairOne1' in group.members
+        assert '~SAC_WebChairTwelve1' in group.members
+
+
+    def test_recruit_acs(self, client, openreview_client, helpers, selenium, request_page):
+
+        pc_client=openreview.Client(username='pc@webconf.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        ac_roles = ["Econ_Area_Chairs", "Graph_Area_Chairs", "RespWeb_Area_Chairs", "Search_Area_Chairs", "Security_Area_Chairs", "Semantics_Area_Chairs", "Social_Area_Chairs", "Systems_Area_Chairs", "RecSys_Area_Chairs", "Mining_Area_Chairs", "COI_Area_Chairs"]
+
+        ac_counter = 1
+
+        for ac_role in ac_roles:
+
+            reviewer_details = f'''ac{ac_counter}@webconf.com, Area ChairOne
+ac{ac_counter + 1}@webconf.com, Area ChairTwo
+'''
+            ac_counter += 2
+            pc_client.post_note(openreview.Note(
+                content={
+                    'title': 'Recruitment',
+                    'invitee_role': ac_role,
+                    'invitee_details': reviewer_details,
+                    'invitee_reduced_load': ["1", "2", "3"],
+                    'invitation_email_subject': '[TheWebConf 2023] Invitation to serve as {{invitee_role}}',
+                    'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
+                },
+                forum=request_form.forum,
+                replyto=request_form.forum,
+                invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
+                readers=['ACM.org/TheWebConf/2024/Conference/Program_Chairs', 'openreview.net/Support'],
+                signatures=['~Program_WebChair1'],
+                writers=[]
+            ))
+
+            helpers.await_queue()
+
+            role = ac_role.replace('_', ' ')
+            role = role[:-1] if role.endswith('s') else role        
+            messages = openreview_client.get_messages(subject = f'[TheWebConf 2023] Invitation to serve as {role}')
+            assert len(messages) == 2
+
+            for message in messages:
+                text = message['content']['text']
+
+                invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+                helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+            assert len(openreview_client.get_group(f'ACM.org/TheWebConf/2024/Conference/{ac_role}').members) == 2
+
+    def test_ac_assignment(self, client, openreview_client, helpers, selenium, request_page):
+
+        pc_client=openreview.Client(username='pc@webconf.org', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@webconf.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        submissions = pc_client_v2.get_notes(invitation='ACM.org/TheWebConf/2024/Conference/-/Submission', sort='number:asc')
+
+        
+        ac_roles = ["Econ_Area_Chairs", "Graph_Area_Chairs", "RespWeb_Area_Chairs", "Search_Area_Chairs", "Security_Area_Chairs", "Semantics_Area_Chairs", "Social_Area_Chairs", "Systems_Area_Chairs", "RecSys_Area_Chairs", "Mining_Area_Chairs", "COI_Area_Chairs"]
+
+        for ac_role in ac_roles:
+            ac_id = f'ACM.org/TheWebConf/2024/Conference/{ac_role}'
+            openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group(ac_id))
+
+            with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
+                writer = csv.writer(file_handle)
+                for submission in submissions:
+                    for ac in openreview_client.get_group(ac_id).members:
+                        writer.writerow([submission.id, ac, round(random.random(), 2)])
+
+            affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
+
+            ## setup matching data before starting bidding
+            client.post_note(openreview.Note(
+                content={
+                    'title': 'Paper Matching Setup',
+                    'matching_group': ac_id,
+                    'compute_conflicts': 'NeurIPS',
+                    'compute_conflicts_N_years': '3',
+                    'compute_affinity_scores': 'No',
+                    'upload_affinity_scores': affinity_scores_url
+                },
+                forum=request_form.id,
+                replyto=request_form.id,
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+                readers=['ACM.org/TheWebConf/2024/Conference/Program_Chairs', 'openreview.net/Support'],
+                signatures=['~Program_WebChair1'],
+                writers=[]
+            ))
+            helpers.await_queue()
+
+            assert openreview_client.get_invitation(f'{ac_id}/-/Conflict')
+            assert openreview_client.get_invitation(f'{ac_id}/-/Affinity_Score')                        
 
 
 #     def test_add_pcs(self, client, openreview_client, helpers):
