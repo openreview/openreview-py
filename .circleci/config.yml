@@ -26,8 +26,21 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Start MongoDB with replica set config
+          command: |
+            mongod --bind_ip 127.0.0.1 --port 27017 --replSet myReplicaSet
+
+      - run:
+          name: Wait for MongoDB to start
+          command: sleep 10
+
+      - run:
           name: Initialize Replica Set
-          command: mongosh mongodb://localhost:27017 --eval "rs.initiate()"
+          command: |
+            mongo --eval "rs.initiate()"     
+      #- run:
+          #name: Initialize Replica Set
+          #command: mongosh mongodb://localhost:27017 --eval "rs.initiate()"
             #wget -qO - https://www.mongodb.org/static/pgp/server-5.0.asc | sudo apt-key add -
             #sudo touch /etc/apt/sources.list.d/mongodb-org-5.0.list
             #echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/5.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-5.0.list
