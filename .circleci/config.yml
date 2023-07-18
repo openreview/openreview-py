@@ -87,11 +87,6 @@ jobs:
             NODE_ENV=circleci node scripts/clean_start_app.js
           background: true
       - run:
-          shell: /bin/sh
-          command: |
-            wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 10 http://localhost:3000
-            :
-      - run:
           name: install web-app
           command: |
             cd ~/openreview-web
@@ -106,11 +101,6 @@ jobs:
             NODE_ENV=production SUPER_USER=openreview.net npm run start
           background: true
       - run:
-          shell: /bin/sh
-          command: |
-            wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 10 http://localhost:3030
-            :
-      - run:
           name: install api-v2
           command: |
             cd ~/openreview-v2
@@ -121,11 +111,6 @@ jobs:
             cd ~/openreview-v2
             NODE_ENV=circleci node scripts/setup_app.js
           background: true
-      - run:
-          shell: /bin/sh
-          command: |
-            wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 10 http://localhost:3001
-            :
       - run:
           name: install firefox driver
           command: |
