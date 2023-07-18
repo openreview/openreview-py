@@ -62,6 +62,18 @@ jobs:
       - run: mkdir ~/openreview-v2/files/temp
       - run: mkdir ~/openreview-py-repo/coverage
       - run:
+          name: install firefox
+          command: |
+            wget "https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US" -O firefox-latest.tar.bz2
+            tar xjf firefox-*.tar.bz2
+            sudo mv firefox /opt
+            sudo ln -s /opt/firefox/firefox /usr/local/bin/firefox
+            sudo apt-get install libgtk-3-0
+            sudo apt-get install libasound2
+            sudo apt-get install libdbus-glib-1-2
+            echo export PATH="$PATH:/usr/local/bin/firefox" >> ~/.bashrc
+            source ~/.bashrc
+      - run:
           name: install api
           command: |
             cd ~/openreview
