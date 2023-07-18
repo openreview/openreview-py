@@ -76,15 +76,10 @@ jobs:
             echo export PATH="$PATH:/usr/local/bin/firefox" >> ~/.bashrc
             source ~/.bashrc
       - run:
-          name: install api
-          command: |
-            cd ~/openreview
-            npm install
-      - run:
           name: run api
           command: |
             cd ~/openreview
-            NODE_ENV=circleci node scripts/clean_start_app.js
+            npm run cleanStart
           background: true
       - run:
           name: install web-app
@@ -101,15 +96,10 @@ jobs:
             NODE_ENV=production SUPER_USER=openreview.net npm run start
           background: true
       - run:
-          name: install api-v2
-          command: |
-            cd ~/openreview-v2
-            npm install
-      - run:
           name: run api-v2
           command: |
             cd ~/openreview-v2
-            NODE_ENV=circleci node scripts/setup_app.js
+            npm run cleanStart
           background: true
       - run:
           name: install firefox driver
