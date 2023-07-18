@@ -15,9 +15,9 @@ jobs:
     parallelism: 10
     working_directory: ~/openreview-py-repo
     docker:
-      - image: cimg/python:3.7.14-node
+      - image: cimg/python:3.10.12-node
       - image: cimg/redis:6.2.6
-      - image: circleci/mongo:5.0.2
+      - image: mongo:6.0
         command: [ --replSet, rs0 ]
       - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
         environment:
@@ -25,14 +25,16 @@ jobs:
           transport.host: localhost
     steps:
       - checkout
+   
       - run:
           name: Initialize Replica Set
           command: |
-            wget -qO - https://www.mongodb.org/static/pgp/server-5.0.asc | sudo apt-key add -
-            sudo touch /etc/apt/sources.list.d/mongodb-org-5.0.list
-            echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/5.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-5.0.list
+            sudo apt-get install gnupg curl
+            curl -fsSL https://pgp.mongodb.com/server-6.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-6.0.gpg --dearmor
+            echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
             sudo apt-get update
-            sudo apt-get install -y mongodb-org=5.0.13 mongodb-org-database=5.0.13 mongodb-org-server=5.0.13 mongodb-org-shell=5.0.13 mongodb-org-mongos=5.0.13 mongodb-org-tools=5.0.13
+            sudo apt-get upgrade -y
+            sudo apt-get install -y mongodb-org=6.0.7 mongodb-org-database=6.0.7 mongodb-org-server=6.0.7 mongodb-org-mongos=6.0.7 mongodb-org-tools=6.0.7
             mongosh mongodb://localhost:27017 --eval "rs.initiate()"
       - run: pip install ~/openreview-py-repo
       - run: git clone
@@ -60,21 +62,25 @@ jobs:
       - run: mkdir ~/openreview-v2/files/temp
       - run: mkdir ~/openreview-py-repo/coverage
       - run:
-          name: install api
+          # source: https://support.mozilla.org/en-US/kb/install-firefox-linux#w_system-firefox-installation-for-advanced-users
+          # source: https://ubuntu-mate.community/t/firefox-installation-guide-non-snap/25299
+          name: install firefox
           command: |
-            cd ~/openreview
-            npm install
+            wget "https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US" -O firefox-latest.tar.bz2
+            tar xjf firefox-*.tar.bz2
+            sudo mv firefox /opt
+            sudo ln -s /opt/firefox/firefox /usr/local/bin/firefox
+            sudo apt-get install libgtk-3-0
+            sudo apt-get install libasound2
+            sudo apt-get install libdbus-glib-1-2
+            echo export PATH="$PATH:/usr/local/bin/firefox" >> ~/.bashrc
+            source ~/.bashrc
       - run:
           name: run api
           command: |
             cd ~/openreview
-            NODE_ENV=circleci node scripts/clean_start_app.js
+            npm run cleanStart
           background: true
-      - run:
-          shell: /bin/sh
-          command: |
-            wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 10 http://localhost:3000
-            :
       - run:
           name: install web-app
           command: |
@@ -90,33 +96,18 @@ jobs:
             NODE_ENV=production SUPER_USER=openreview.net npm run start
           background: true
       - run:
-          shell: /bin/sh
-          command: |
-            wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 10 http://localhost:3030
-            :
-      - run:
-          name: install api-v2
-          command: |
-            cd ~/openreview-v2
-            npm install
-      - run:
           name: run api-v2
           command: |
             cd ~/openreview-v2
-            NODE_ENV=circleci node scripts/setup_app.js
+            npm run cleanStart
           background: true
-      - run:
-          shell: /bin/sh
-          command: |
-            wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 10 http://localhost:3001
-            :
       - run:
           name: install firefox driver
           command: |
             sudo apt-get update
             sudo apt-get install firefox
             cd ~/openreview-py-repo/tests/drivers
-            wget https://github.com/mozilla/geckodriver/releases/download/v0.30.0/geckodriver-v0.30.0-linux64.tar.gz
+            wget https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-linux64.tar.gz
             tar -xvzf geckodriver*
             chmod +x geckodriver
       - run:
