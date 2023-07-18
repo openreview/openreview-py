@@ -62,6 +62,8 @@ jobs:
       - run: mkdir ~/openreview-v2/files/temp
       - run: mkdir ~/openreview-py-repo/coverage
       - run:
+          # source: https://support.mozilla.org/en-US/kb/install-firefox-linux#w_system-firefox-installation-for-advanced-users
+          # source: https://ubuntu-mate.community/t/firefox-installation-guide-non-snap/25299
           name: install firefox
           command: |
             wget "https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US" -O firefox-latest.tar.bz2
