@@ -17,8 +17,8 @@ jobs:
     docker:
       - image: cimg/python:3.10.12-node
       - image: cimg/redis:6.2.6
-      # - image: mongo:6.0
-      #   command: [ --replSet, rs0 ]
+      - image: mongo:6.0
+        command: [ --replSet, rs0 ]
       - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
         environment:
           xpack.security.enabled: false
