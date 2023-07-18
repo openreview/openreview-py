@@ -134,14 +134,15 @@ def process(client, invitation):
             content['replytoSignatures'] = { 'value': note.signatures[0] }
 
         if 'noteReaders' in invitation.edit['content']:
-            paper_readers = invitation.content['review_readers']['value']
+            paper_readers = invitation.content.get('review_readers',{}).get('value') or invitation.content.get('comment_readers',{}).get('value')
             final_readers = []
             final_readers.extend(paper_readers)
             final_readers = [reader.replace('{number}', str(note.number)) for reader in final_readers]
             if '{signatures}' in final_readers:
                 final_readers.remove('{signatures}')
-            if 'flagged_for_ethics_review' in note.content and 'everyone' not in final_readers:
-                final_readers.append(f'{venue_id}/{submission_name}{note.number}/{ethics_reviewers_name}')
+            if 'flagged_for_ethics_review' in note.content:
+                if 'everyone' not in final_readers or invitation.content.get('reader_selection',{}).get('value'):
+                    final_readers.append(f'{venue_id}/{submission_name}{note.number}/{ethics_reviewers_name}')
             content['noteReaders'] = { 'value': final_readers }
 
         paper_invitation_edit = client.post_invitation_edit(invitations=invitation.id,

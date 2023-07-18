@@ -29,7 +29,6 @@ def process(client, edit, invitation):
         final_readers.remove('{signatures}')
     if 'everyone' not in final_readers:
         final_readers.append(f'{venue_id}/{submission_name}{submission.number}/{ethics_reviewers_name}')
-    print()
 
     paper_invitation_edit = client.post_invitation_edit(
             invitations=f'{venue_id}/-/{review_name}',
@@ -89,3 +88,32 @@ def process(client, edit, invitation):
             },
             invitation=openreview.api.Invitation()
         )
+
+    # edit comment invitation
+    invitation = openreview.tools.get_invitation(client, f'{venue_id}/{submission_name}{submission.number}/-/Official_Comment')
+    if invitation:
+        comment_readers = invitation.content['comment_readers']['value']
+        final_readers = []
+        final_readers.extend(comment_readers)
+        final_readers = [reader.replace('{number}', str(submission.number)) for reader in final_readers]
+        if 'everyone' not in final_readers or invitation.content.get('reader_selection',{}).get('value'):
+            final_readers.append(f'{venue_id}/{submission_name}{submission.number}/{ethics_reviewers_name}')
+
+        paper_invitation_edit = client.post_invitation_edit(
+                invitations=f'{venue_id}/-/Official_Comment',
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                content={
+                    'noteId': {
+                        'value': submission.id
+                    },
+                    'noteNumber': {
+                        'value': submission.number
+                    },
+                    'noteReaders': {
+                        'value': final_readers
+                    }
+                },
+                invitation=openreview.api.Invitation()
+            )

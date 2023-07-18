@@ -1037,6 +1037,32 @@ class InvitationBuilder(object):
         if comment_expdate:
             invitation.edit['invitation']['expdate'] = comment_expdate
 
+        if self.venue.ethics_review_stage:
+            invitation.edit['content']['noteReaders'] = {
+                'value': {
+                    'param': {
+                        'type': 'string[]', 'regex': f'{venue_id}/.*|everyone'
+                    }
+                }
+            }
+            invitation.content['comment_readers'] = {
+                'value': comment_stage.get_readers(self.venue, '{number}')
+            }
+            invitation.content['readers_delection'] = {
+                'value': comment_stage.reader_selection
+            }
+            comment_readers = ['${5/content/noteReaders/value}']
+            if comment_stage.reader_selection:
+                comment_readers = {
+                    'param': {
+                        'enum': ['${7/content/noteReaders/value}']
+                    }
+                }
+            invitation.edit['invitation']['edit']['note']['readers'] = comment_readers
+
+            invitation.edit['invitation']['invitees'].append(self.venue.get_ethics_reviewers_id('${3/content/noteNumber/value}'))
+            invitation.edit['invitation']['edit']['signatures']['param']['regex'] += '|' + self.venue.get_ethics_reviewers_id('${5/content/noteNumber/value}')
+
         self.save_invitation(invitation, replacement=False)
         return invitation
 
@@ -2863,6 +2889,12 @@ class InvitationBuilder(object):
             content = {
                 'review_readers': {
                     'value': self.venue.review_stage.get_readers(self.venue, '{number}')
+                },
+                'comment_readers': {
+                    'value': self.venue.comment_stage.get_readers(self.venue, '{number}')
+                },
+                'readers_selection': {
+                    'value': self.venue.comment_stage.reader_selection
                 }
             },
             edit = {

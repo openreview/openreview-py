@@ -3401,8 +3401,12 @@ ICML 2023 Conference Program Chairs'''
 
         helpers.await_queue()
 
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Comment')
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Official_Comment')
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Comment')
+        assert invitation
+        assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers' in invitation.edit['note']['readers']['param']['enum']
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Official_Comment')
+        assert invitation
+        assert 'ICML.cc/2023/Conference/Submission2/Ethics_Reviewers' not in invitation.edit['note']['readers']['param']['enum']
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission3/-/Official_Comment')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Official_Comment')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Official_Comment')
@@ -3423,7 +3427,8 @@ ICML 2023 Conference Program Chairs'''
                     'ICML.cc/2023/Conference/Program_Chairs',
                     'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
                     'ICML.cc/2023/Conference/Submission1/Area_Chairs',
-                    anon_group_id
+                    anon_group_id,
+                    'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers'
                 ],
                 content={
                     'comment': { 'value': 'I can not review this paper' },
@@ -3451,7 +3456,8 @@ ICML 2023 Conference Program Chairs'''
                     'ICML.cc/2023/Conference/Program_Chairs',
                     'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
                     'ICML.cc/2023/Conference/Submission1/Area_Chairs',
-                    anon_group_id
+                    anon_group_id,
+                    'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers'
                 ],
                 content={
                     'comment': { 'value': 'I can not review this paper, EDITED' },
@@ -3493,6 +3499,8 @@ ICML 2023 Conference Program Chairs'''
 
         messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your comment was received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 2
+
+        assert False
 
     def test_rebuttal_stage(self, client, openreview_client, helpers):
 
