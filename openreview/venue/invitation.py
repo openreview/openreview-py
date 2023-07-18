@@ -2847,6 +2847,13 @@ class InvitationBuilder(object):
         ethics_stage_id = f'{venue_id}/-/{ethics_stage_name}_Flag'
         submission_id = self.venue.submission_stage.get_submission_id(self.venue)
 
+        flag_readers = [venue_id, self.venue.get_ethics_chairs_id(), self.venue.get_ethics_reviewers_id('${{4/id}/number}')]
+        if self.venue.use_senior_area_chairs:
+            flag_readers.append(self.venue.get_senior_area_chairs_id('${{4/id}/number}'))
+        if self.venue.use_area_chairs:
+            flag_readers.append(self.venue.get_area_chairs_id('${{4/id}/number}'))
+        flag_readers.append(self.venue.get_reviewers_id('${{4/id}/number}'))
+
         ethics_stage_invitation = Invitation(
             id=ethics_stage_id,
             invitees = [venue_id],
@@ -2879,7 +2886,7 @@ class InvitationBuilder(object):
                                     'const': True
                                 }
                             },
-                            'readers': [venue_id, self.venue.get_ethics_chairs_id() ,self.venue.get_ethics_reviewers_id('${{4/id}/number}')]
+                            'readers': flag_readers
                         },
                         'ethics_comments': {
                             'value': {

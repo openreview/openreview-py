@@ -3192,14 +3192,20 @@ ICML 2023 Conference Program Chairs'''
         assert submissions[0].content['flagged_for_ethics_review']['readers'] == [
             'ICML.cc/2023/Conference',
             'ICML.cc/2023/Conference/Ethics_Chairs',
-            'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers'
+            'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers',
+            'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Area_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Reviewers'
         ]
         assert 'flagged_for_ethics_review' in submissions[4].content
         assert 'ethics_comments' in submissions[4].content
         assert submissions[4].content['flagged_for_ethics_review']['readers'] == [
             'ICML.cc/2023/Conference',
             'ICML.cc/2023/Conference/Ethics_Chairs',
-            'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers'
+            'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers',
+            'ICML.cc/2023/Conference/Submission5/Senior_Area_Chairs',
+            'ICML.cc/2023/Conference/Submission5/Area_Chairs',
+            'ICML.cc/2023/Conference/Submission5/Reviewers'
         ]
         ethics_group = openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers')
         assert ethics_group
