@@ -123,6 +123,20 @@ def process(client, note, invitation):
                     paper_matching_invitation.reply['content']['matching_group']['value-dropdown'] = paper_matching_invitation.reply['content']['matching_group']['value-dropdown'] + [conference.get_committee_id(r) for r in conference.area_chair_roles]
                     client.post_invitation(paper_matching_invitation)
 
+            
+            submission_tracks = conference.submission_tracks()
+            if submission_tracks:
+                paper_matching_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Paper_Matching_Setup')
+                if paper_matching_invitation:
+                    paper_matching_invitation.reply['content']['submission_track'] = {
+                        'value-dropdown': submission_tracks,
+                        'required': False,
+                        'description': 'Select the submission track that you would like to assign to this paper matching group. If you do not select a track, this group will be assigned to all submissions.',
+                        'order': 15
+                    }
+                    client.post_invitation(paper_matching_invitation)
+
+
             if conference.use_ethics_chairs or conference.use_ethics_reviewers:
                 client.post_invitation(openreview.Invitation(
                     id = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Ethics_Review_Stage',

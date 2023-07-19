@@ -519,7 +519,7 @@ class Matching(object):
             raise openreview.OpenReviewException('Failed during bulk post of {0} edges! Input file:{1}, Scores found: {2}, Edges posted: {3}'.format(score_invitation_id, score_file, len(edges), edges_posted))
         return invitation
 
-    def _compute_scores(self, score_invitation_id, submissions):
+    def _compute_scores(self, score_invitation_id, submissions, submission_track=None):
 
         venue = self.venue
         client = self.client
@@ -533,6 +533,7 @@ class Matching(object):
                 name=venue.get_short_name(),
                 group_id=self.match_group.id,
                 venue_id=venue.get_submission_venue_id(),
+                submission_content={ 'track': submission_track } if submission_track else None,
                 alternate_match_group=self.alternate_matching_group,
                 expertise_selection_id=venue.get_expertise_selection_id(self.match_group.id),
                 model='specter+mfr'
@@ -565,7 +566,7 @@ class Matching(object):
         except openreview.OpenReviewException as e:
             raise openreview.OpenReviewException('There was an error connecting with the expertise API: ' + str(e))
 
-    def _build_config_invitation(self, scores_specification):
+    def _build_config_invitation(self, scores_specification, submission_track=None):
         venue = self.venue
 
         config_inv = Invitation(
@@ -654,7 +655,7 @@ class Matching(object):
                                 'param': {
                                     'type': 'string',
                                     'regex': self.alternate_matching_group if self.alternate_matching_group else venue.get_submission_id() + '.*',
-                                    'default': self.alternate_matching_group if self.alternate_matching_group else f'{venue.get_submission_id()}&content.venueid={venue.get_submission_venue_id()}',
+                                    'default': self.alternate_matching_group if self.alternate_matching_group else (f'{venue.get_submission_id()}&content.venueid={venue.get_submission_venue_id()}' + f'&content.track={submission_track}' if submission_track else ''),
                                 }
                             }
                         },
@@ -858,7 +859,7 @@ class Matching(object):
 
         invitation = venue.invitation_builder.save_invitation(config_inv)
 
-    def setup(self, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None):
+    def setup(self, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, submission_track=None):
 
         venue = self.venue
         client = self.client
@@ -908,7 +909,8 @@ class Matching(object):
         if compute_affinity_scores == True:
             invitation, matching_status = self._compute_scores(
                 venue.get_affinity_score_id(self.match_group.id),
-                submissions
+                submissions,
+                submission_track
             )
 
         if compute_conflicts:
@@ -956,7 +958,7 @@ class Matching(object):
                     'default': 0
                 }
 
-            self._build_config_invitation(score_spec)            
+            self._build_config_invitation(score_spec, submission_track)            
         else:
             venue.invitation_builder.set_assignment_invitation(self.match_group.id)
 

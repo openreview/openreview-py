@@ -107,6 +107,9 @@ class Venue(object):
         if self.use_ethics_reviewers:
             roles = roles + [self.ethics_reviewers_name]            
         return roles
+    
+    def submission_tracks(self):
+        return self.submission_stage.get_submission_tracks()
 
     def get_meta_invitation_id(self):
         return f'{self.venue_id}/-/Edit'
@@ -761,14 +764,14 @@ Total Errors: {len(errors)}
 
         tools.concurrent_requests(send_notification, paper_notes)
 
-    def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None):
+    def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None, submission_track=None):
         if committee_id is None:
             committee_id=self.get_reviewers_id()
         if self.use_senior_area_chairs and committee_id == self.get_senior_area_chairs_id() and not alternate_matching_group:
             alternate_matching_group = self.get_area_chairs_id()
         venue_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
 
-        return venue_matching.setup(compute_affinity_scores, compute_conflicts, compute_conflicts_n_years)
+        return venue_matching.setup(compute_affinity_scores, compute_conflicts, compute_conflicts_n_years, submission_track)
 
     def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
 
@@ -787,8 +790,7 @@ Total Errors: {len(errors)}
         if not self.use_senior_area_chairs:
             raise openreview.OpenReviewException('The venue does not have senior area chairs enabled. Please enable senior area chairs in the venue.')
 
-        has_tracks = self.submission_stage.additional_fields and 'track' in self.submission_stage.additional_fields
-        if not has_tracks:
+        if not self.submission_tracks():
             raise openreview.OpenReviewException('The submission stage does not have tracks enabled. Please enable tracks in the submission stage.')
 
         sac_tracks = {}

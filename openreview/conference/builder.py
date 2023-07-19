@@ -581,6 +581,9 @@ class Conference(object):
             roles = roles + [self.ethics_reviewers_name]
 
         return roles
+    
+    def submission_tracks(self):
+        return []
 
     def get_submission_id(self):
         return self.submission_stage.get_submission_id(self)

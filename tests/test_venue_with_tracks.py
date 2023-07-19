@@ -442,8 +442,20 @@ ac{ac_counter + 1}@webconf.com, Area ChairTwo
 
         
         ac_roles = ["Econ_Area_Chairs", "Graph_Area_Chairs", "RespWeb_Area_Chairs", "Search_Area_Chairs", "Security_Area_Chairs", "Semantics_Area_Chairs", "Social_Area_Chairs", "Systems_Area_Chairs", "RecSys_Area_Chairs", "Mining_Area_Chairs", "COI_Area_Chairs"]
-
-        for ac_role in ac_roles:
+        tracks = [ "Economics, Online Markets, and Human Computation",
+            "Graph Algorithms and Learning for the Web",
+            "Responsible Web",
+            "Search",
+            "Security",
+            "Semantics and Knowledge",
+            "Social Networks, Social Media, and Society",
+            "Systems and Infrastructure for Web, Mobile, and WoT",
+            "User Modeling and Recommendation",
+            "Web Mining and Content Analysis",
+            "COI"
+        ]
+        
+        for index, ac_role  in enumerate(ac_roles):
             ac_id = f'ACM.org/TheWebConf/2024/Conference/{ac_role}'
             openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group(ac_id))
 
@@ -463,7 +475,8 @@ ac{ac_counter + 1}@webconf.com, Area ChairTwo
                     'compute_conflicts': 'NeurIPS',
                     'compute_conflicts_N_years': '3',
                     'compute_affinity_scores': 'No',
-                    'upload_affinity_scores': affinity_scores_url
+                    'upload_affinity_scores': affinity_scores_url,
+                    'submission_track': tracks[index]
                 },
                 forum=request_form.id,
                 replyto=request_form.id,
@@ -475,7 +488,9 @@ ac{ac_counter + 1}@webconf.com, Area ChairTwo
             helpers.await_queue()
 
             assert openreview_client.get_invitation(f'{ac_id}/-/Conflict')
-            assert openreview_client.get_invitation(f'{ac_id}/-/Affinity_Score')                        
+            assert openreview_client.get_invitation(f'{ac_id}/-/Affinity_Score')
+            assignment_configuration_invitation = openreview_client.get_invitation(f'{ac_id}/-/Assignment_Configuration')
+            assert assignment_configuration_invitation.edit['note']['content']['paper_invitation']['value']['param']['default'] == 'ACM.org/TheWebConf/2024/Conference/-/Submission&content.venueid=ACM.org/TheWebConf/2024/Conference/Submission&content.track=' + tracks[index]                  
 
 
 #     def test_add_pcs(self, client, openreview_client, helpers):
