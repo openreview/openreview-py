@@ -63,7 +63,7 @@ def process(client, invitation):
                 source_submissions = [s for s in source_submissions if s.readers == ['everyone']]
 
             if source == 'flagged_for_ethics_review':
-                source_submissions = [s for s in source_submissions if 'flagged_for_ethics_review' in s.content]
+                source_submissions = [s for s in source_submissions if s.content.get('flagged_for_ethics_review', {}).get('value', False)]
 
         if reply_to == 'reviews':
             children_notes = [openreview.api.Note.from_json(reply) for s in source_submissions for reply in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{review_name}' in reply['invitations']]
@@ -140,7 +140,7 @@ def process(client, invitation):
             final_readers = [reader.replace('{number}', str(note.number)) for reader in final_readers]
             if '{signatures}' in final_readers:
                 final_readers.remove('{signatures}')
-            if 'flagged_for_ethics_review' in note.content:
+            if note.content.get('flagged_for_ethics_review', {}).get('value', False):
                 if 'everyone' not in final_readers or invitation.content.get('reader_selection',{}).get('value'):
                     final_readers.append(f'{venue_id}/{submission_name}{note.number}/{ethics_reviewers_name}')
             content['noteReaders'] = { 'value': final_readers }

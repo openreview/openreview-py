@@ -2915,7 +2915,7 @@ class InvitationBuilder(object):
                             'value': {
                                 'param': {
                                     'type': 'boolean',
-                                    'const': True
+                                    'enum': [True, False]
                                 }
                             },
                             'readers': flag_readers
