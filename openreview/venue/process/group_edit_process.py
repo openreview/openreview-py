@@ -19,7 +19,7 @@ def process(client, invitation):
         if source == 'all_submissions':
             return source_submissions
         if source == 'flagged_for_ethics_review':
-            children_notes = [s for s in source_submissions if 'flagged_for_ethics_review' in s.content]
+            children_notes = [s for s in source_submissions if s.content.get('flagged_for_ethics_review', {}).get('value', False)]
             return children_notes
 
     def post_group_edit(submission):
