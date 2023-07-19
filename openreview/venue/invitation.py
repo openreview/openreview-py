@@ -1061,7 +1061,8 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['edit']['note']['readers'] = comment_readers
 
             invitation.edit['invitation']['invitees'].append(self.venue.get_ethics_reviewers_id('${3/content/noteNumber/value}'))
-            invitation.edit['invitation']['edit']['signatures']['param']['regex'] += '|' + self.venue.get_ethics_reviewers_id('${5/content/noteNumber/value}')
+            invitation.edit['invitation']['edit']['signatures']['param']['regex'] += '|' + self.venue.get_ethics_reviewers_id('${5/content/noteNumber/value}', anon=True)
+            invitation.edit['invitation']['edit']['signatures']['param']['regex'] += '|' + self.venue.get_ethics_chairs_id()
 
         self.save_invitation(invitation, replacement=False)
         return invitation

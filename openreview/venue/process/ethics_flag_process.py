@@ -138,10 +138,24 @@ def process(client, edit, invitation):
                     )
             )
 
-        #empty ethics reviewers group
-        group_id=f'{venue_id}/{submission_name}{submission.number}/{ethics_reviewers_name}'
-        print('group id:', group_id)
-        ethics_group = openreview.tools.get_group(client, group_id)
-        if ethics_group:
-            print('Removing members')
-            client.remove_members_from_group(ethics_group.id, ethics_group.members)
+        # remove ethics reviewers from comment invitees
+        invitation = openreview.tools.get_invitation(client, f'{venue_id}/{submission_name}{submission.number}/-/Official_Comment')
+        if invitation:
+            invitees = invitation.invitees
+            print('invitees:', invitees)
+            group_id=f'{venue_id}/{submission_name}{submission.number}/{ethics_reviewers_name}'
+            if group_id in invitees:
+                invitees.remove(group_id)
+                print('invitees:', invitees)
+                print('group_id:', group_id)
+                client.post_invitation_edit(invitations=meta_invitation_id,
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                replacement=False,
+                invitation=openreview.api.Invitation(
+                        id=invitation.id,
+                        invitees=invitees,
+                        signatures=[venue_id]
+                    )
+            )

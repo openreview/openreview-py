@@ -3380,30 +3380,6 @@ ICML 2023 Conference Program Chairs'''
         assert invitation
         assert 'ICML.cc/2023/Conference/Submission52/Ethics_Reviewers' in invitation.invitees
 
-        # unflag a paper
-        note = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', number=[5])[0]
-        note_edit = pc_client_v2.post_note_edit(
-            invitation='ICML.cc/2023/Conference/-/Ethics_Review_Flag',
-            note=openreview.api.Note(
-                id=note.id,
-                content = {
-                    'flagged_for_ethics_review': { 'value': False },
-                }
-            ),
-            signatures=['ICML.cc/2023/Conference']
-        )
-
-        helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, edit_id=note_edit['id'])
-
-        submissions = openreview_client.get_notes(content= { 'venueid': 'ICML.cc/2023/Conference/Submission'}, sort='number:asc')
-        assert submissions and len(submissions) == 100
-        assert 'flagged_for_ethics_review' in submissions[4].content and not submissions[4].content['flagged_for_ethics_review']['value']
-        invitation = openreview_client.get_invitations(id='ICML.cc/2023/Conference/Submission5/-/Ethics_Review')[0]
-        assert invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        ethics_group = openreview_client.get_group('ICML.cc/2023/Conference/Submission5/Ethics_Reviewers')
-        assert not ethics_group.members
-
     def test_comment_stage(self, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
@@ -3437,12 +3413,49 @@ ICML 2023 Conference Program Chairs'''
         assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers' in invitation.invitees
         assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers' in invitation.edit['note']['readers']['param']['enum']
         assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewer_.*' in invitation.edit['signatures']['param']['regex']
+        assert 'ICML.cc/2023/Conference/Ethics_Chairs' in invitation.edit['signatures']['param']['regex']
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Official_Comment')
         assert invitation
         assert 'ICML.cc/2023/Conference/Submission2/Ethics_Reviewers' not in invitation.edit['note']['readers']['param']['enum']
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission3/-/Official_Comment')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Official_Comment')
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Official_Comment')
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Official_Comment')
+        assert invitation        
+        assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers' in invitation.invitees
+        assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers' in invitation.edit['note']['readers']['param']['enum']
+        assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewer_.*' in invitation.edit['signatures']['param']['regex']
+        assert 'ICML.cc/2023/Conference/Ethics_Chairs' in invitation.edit['signatures']['param']['regex']
+
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
+        # unflag a paper
+        note = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', number=[5])[0]
+        note_edit = pc_client_v2.post_note_edit(
+            invitation='ICML.cc/2023/Conference/-/Ethics_Review_Flag',
+            note=openreview.api.Note(
+                id=note.id,
+                content = {
+                    'flagged_for_ethics_review': { 'value': False },
+                }
+            ),
+            signatures=['ICML.cc/2023/Conference']
+        )
+
+        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, edit_id=note_edit['id'])
+
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Official_Comment')
+        assert invitation        
+        assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers' not in invitation.invitees
+        assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers' in invitation.edit['note']['readers']['param']['enum']
+        assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewer_.*' in invitation.edit['signatures']['param']['regex']
+
+        submissions = openreview_client.get_notes(content= { 'venueid': 'ICML.cc/2023/Conference/Submission'}, sort='number:asc')
+        assert submissions and len(submissions) == 100
+        assert 'flagged_for_ethics_review' in submissions[4].content and not submissions[4].content['flagged_for_ethics_review']['value']
+        invitation = openreview_client.get_invitations(id='ICML.cc/2023/Conference/Submission5/-/Ethics_Review')[0]
+        assert invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        ethics_group = openreview_client.get_group('ICML.cc/2023/Conference/Submission5/Ethics_Reviewers')
+        assert ethics_group and '~Celeste_ICML1' in ethics_group.members
 
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
 
