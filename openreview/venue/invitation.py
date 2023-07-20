@@ -1338,7 +1338,7 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)''',
                     'edit': {
                         'signatures': { 'param': { 'regex': self.venue.get_authors_id(number='${5/content/noteNumber/value}')  }},
-                        'readers': ['${{2/note/forum}/readers}'],
+                        'readers': submission_stage.get_withdrawal_readers(self.venue, '${4/content/noteNumber/value}'),
                         'writers': [ venue_id, self.venue.get_authors_id(number='${4/content/noteNumber/value}')],
                         'note': {
                             'forum': '${4/content/noteId/value}',
@@ -1539,7 +1539,7 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)''',
                     'edit': {
                         'signatures': [self.venue.get_program_chairs_id()],
-                        'readers': ['${{2/note/forum}/readers}'],
+                        'readers': submission_stage.get_withdrawal_readers(self.venue, '${{4/content/noteId/value}/number}'),
                         'writers': [ venue_id],
                         'note': {
                             'forum': '${4/content/noteId/value}',
