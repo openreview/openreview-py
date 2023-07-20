@@ -73,7 +73,9 @@ class SubmissionStage(object):
             papers_released=False,
             author_reorder_after_first_deadline=False,
             submission_email=None,
-            force_profiles=False
+            force_profiles=False,
+            second_deadline_additional_fields={},
+            second_deadline_remove_fields=[]
         ):
 
         self.start_date = start_date
@@ -106,6 +108,8 @@ class SubmissionStage(object):
         self.withdrawal_name = 'Withdrawal'
         self.desk_rejection_name = 'Desk_Rejection'
         self.force_profiles = force_profiles
+        self.second_deadline_additional_fields = second_deadline_additional_fields
+        self.second_deadline_remove_fields = second_deadline_remove_fields
 
     def get_readers(self, conference, number, decision=None):
 
@@ -233,9 +237,13 @@ class SubmissionStage(object):
                 content['pdf']['required'] = False
 
             if self.force_profiles:
-                content['authorids']['description'] = 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.'
-                content['authorids']['values-regex'] = '~.*'
-
+                content['authorids'] = {
+                    'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.',
+                    'order': 3,
+                    'values-regex': r'~.*',
+                    'required':True
+                }
+                
         elif api_version == '2':
             content = default_content.submission_v2.copy()
 
@@ -253,6 +261,8 @@ class SubmissionStage(object):
                 }
 
             for field in self.remove_fields:
+                if field == 'TL;DR':
+                    field = 'TLDR'
                 if field in content:
                     del content[field]
                 else:
@@ -267,8 +277,16 @@ class SubmissionStage(object):
                 content['pdf']['value']['param']['optional'] = True
 
             if self.force_profiles:
-                content['authorids']['description'] = 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.'
-                content['authorids']['value']['param']['regex'] = '~.*'
+                content['authorids'] = {
+                    'order': 3,
+                    'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.',
+                    'value': {
+                        'param': {
+                            'type': 'group[]',
+                            'regex': r'~.*',
+                        }
+                    }
+                }
 
             if conference:
                 submission_id = self.get_submission_id(conference)
@@ -586,9 +604,9 @@ class ReviewStage(object):
 
     def get_signatures(self, conference, number):
         if self.allow_de_anonymization:
-            return '~.*|' + conference.get_program_chairs_id()
+            return '~.*|'
 
-        return conference.get_anon_reviewer_id(number=number, anon_id='.*') + '|' +  conference.get_program_chairs_id()
+        return conference.get_anon_reviewer_id(number=number, anon_id='.*')
     
     def get_content(self, api_version='2', conference=None):
 
@@ -620,7 +638,8 @@ class EthicsReviewStage(object):
         ALL_COMMITTEE = 0
         ALL_ASSIGNED_COMMITTEE = 1
         ASSIGNED_ETHICS_REVIEWERS = 2
-        ETHICS_REVIEWER_SIGNATURE = 3
+        ETHICS_REVIEWERS_SUBMITTED = 3
+        ETHICS_REVIEWER_SIGNATURE = 4
 
     def __init__(self,
         start_date = None,
@@ -644,7 +663,7 @@ class EthicsReviewStage(object):
         self.remove_fields = remove_fields
         self.submission_numbers = submission_numbers
 
-    def get_readers(self, conference, number):
+    def get_readers(self, conference, number, ethics_review_signature=None):
 
         if self.release_to_public:
             return ['everyone']
@@ -686,13 +705,24 @@ class EthicsReviewStage(object):
 
             readers.append(conference.get_ethics_reviewers_id(number=number))
 
+        if self.release_to_reviewers == self.Readers.ETHICS_REVIEWERS_SUBMITTED:
+
+            if conference.use_ethics_chairs:
+                readers.append(conference.get_ethics_chairs_id())
+
+            readers.append(conference.get_ethics_reviewers_id(number=number) + '/Submitted')
+            if ethics_review_signature:
+                readers.append(ethics_review_signature)
+
         if self.release_to_reviewers == self.Readers.ETHICS_REVIEWER_SIGNATURE:
 
             if conference.use_ethics_chairs:
                 readers.append(conference.get_ethics_chairs_id())
 
-            readers.append('{signatures}')
-
+            if ethics_review_signature:
+                readers.append(ethics_review_signature)
+            else:
+                readers.append('{signatures}')
 
         if self.release_to_authors:
             readers.append(conference.get_authors_id(number = number))
@@ -711,6 +741,31 @@ class EthicsReviewStage(object):
 
     def get_signatures(self, conference, number):
         return conference.get_anon_reviewer_id(number=number, anon_id='.*', name=conference.ethics_reviewers_name) + '|' +  conference.get_program_chairs_id()
+
+    def get_content(self, api_version='2', conference=None):
+
+        content = default_content.ethics_review_v2.copy()
+
+        for field in self.remove_fields:
+            if field in content:
+                del content[field]
+            else:
+                print('Field {} not found in content: {}'.format(field, content))
+        
+        for order, key in enumerate(self.additional_fields, start=10):
+            value = self.additional_fields[key]
+            value['order'] = order
+            content[key] = value
+
+        if conference:
+            invitation_id = conference.get_invitation_id(self.name)
+            invitation = openreview.tools.get_invitation(conference.client, invitation_id)
+            if invitation:
+                for field, value in invitation.edit['invitation']['edit']['note']['content'].items():
+                    if field not in content:
+                        content[field] = { 'delete': True }
+
+        return content
 
 class ReviewRebuttalStage(object):
 
@@ -980,7 +1035,7 @@ class MetaReviewStage(object):
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.process = None
-        self.recommendation_field_name = 'recommendation',
+        self.recommendation_field_name = 'recommendation'
 
     def _get_reviewer_readers(self, conference, number):
         if self.release_to_reviewers is MetaReviewStage.Readers.REVIEWERS:

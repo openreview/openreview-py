@@ -39,3 +39,18 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     members = submission_authors
                 )
             )
+
+    invitation_invitations = [i for i in client.get_all_invitations(prefix=f'{venue_id}/-/', type='invitation') if i.is_active()]
+
+    for venue_invitation in invitation_invitations:
+        print('processing invitation: ', venue_invitation.id)
+        authorids = venue_invitation.edit['invitation'].get('edit', {}).get('note', {}).get('content', {}).get('authorids', {}).get('value', [])
+        if '${{4/id}/content/authorids/value}' in authorids:
+            print('post invitation edit: ', venue_invitation.id)
+            client.post_invitation_edit(invitations=venue_invitation.id,
+                content={
+                    'noteId': { 'value': submission.id },
+                    'noteNumber': { 'value': submission.number }
+                },
+                invitation=openreview.api.Invitation()
+            )

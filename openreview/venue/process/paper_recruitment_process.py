@@ -19,7 +19,8 @@ def process(client, edit, invitation):
     assignment_title = invitation.content.get('assignment_title', {}).get('value')
     external_committee_id = invitation.content['external_committee_id']['value']
     external_paper_committee_id = invitation.content['external_paper_committee_id']['value']
-    conflict_policy = domain.content.get('conflict_policy', {}).get('value', 'default')
+    conflict_policy = domain.content.get('reviewers_conflict_policy', {}).get('value', 'Default')
+    conflict_n_years = domain.content.get('reviewers_conflict_n_years', {}).get('value')
 
     note = edit.note
 
@@ -49,7 +50,7 @@ def process(client, edit, invitation):
 
     edge=invitation_edges[0]
 
-    if edge.label not in [invited_label, accepted_label, declined_label, 'Pending Sign Up']:
+    if edge.label not in [invited_label, accepted_label, 'Pending Sign Up'] and not edge.label.startswith(declined_label):
         raise openreview.OpenReviewException(f'user {user} can not reply to this invitation, invalid status {edge.label}')
 
     preferred_name=user_profile.get_preferred_name(pretty=True) if user_profile else edge.tail
@@ -65,6 +66,7 @@ def process(client, edit, invitation):
 
         if not user_profile or user_profile.active == False:
             edge.label='Pending Sign Up'
+            edge.cdate=None
             client.post_edge(edge)
 
             ## Send email to reviewer
@@ -103,12 +105,13 @@ OpenReview Team'''
         authorids = submission.content['authorids']['value']
         author_profiles = openreview.tools.get_profiles(client, authorids, with_publications=True)
         profiles=openreview.tools.get_profiles(client, [edge.tail], with_publications=True)
-        conflicts=openreview.tools.get_conflicts(author_profiles, profiles[0], policy=conflict_policy)
+        conflicts=openreview.tools.get_conflicts(author_profiles, profiles[0], policy=conflict_policy, n_years=conflict_n_years)
         if conflicts:
             print('Conflicts detected', conflicts)
             edge.label='Conflict Detected'
             edge.readers=[r if r != edge.tail else user_profile.id for r in edge.readers]
             edge.tail=user_profile.id
+            edge.cdate=None
             client.post_edge(edge)
 
             ## Send email to reviewer
@@ -139,6 +142,7 @@ OpenReview Team'''
         edge.label=accepted_label
         edge.readers=[r if r != edge.tail else user_profile.id for r in edge.readers]
         edge.tail=user_profile.id
+        edge.cdate=None
         client.post_edge(edge)
 
         if not assignment_edges:
@@ -218,6 +222,7 @@ OpenReview Team'''
         edge.label=declined_label
         if 'comment' in note.content:
             edge.label=edge.label + ': ' + note.content['comment']['value']
+        edge.cdate=None
         client.post_edge(edge)
 
         ## Send email to reviewer

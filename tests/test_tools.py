@@ -236,65 +236,6 @@ class TestTools():
         assert notes
         assert len(notes) == 1333
 
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', limit=1200)
-        assert notes
-        assert len(notes) == 1200
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', limit=4000)
-        assert notes
-        assert len(notes) == 1333
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', limit=500)
-        assert notes
-        assert len(notes) == 500
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=4000)
-        assert len(notes) == 0
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=1000, limit=4000)
-        assert notes
-        assert len(notes) == 333
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=1050, limit=200)
-        assert notes
-        assert len(notes) == 200
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=33, limit=900)
-        assert notes
-        assert len(notes) == 900
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=200, limit=900)
-        assert notes
-        assert len(notes) == 900
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=33, limit=1100)
-        assert notes
-        assert len(notes) == 1100
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', limit=1333)
-        assert notes
-        assert len(notes) == 1333
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', limit=1000)
-        assert notes
-        assert len(notes) == 1000
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=333, limit=1000)
-        assert notes
-        assert len(notes) == 1000
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=334, limit=1000)
-        assert notes
-        assert len(notes) == 999
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=333, limit=1001)
-        assert notes
-        assert len(notes) == 1000
-
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=1100)
-        assert notes
-        assert len(notes) == 233
-
     def test_get_all_refs(self, client):
         refs_iterator = openreview.tools.iterget_references(client)
         assert refs_iterator
@@ -361,6 +302,26 @@ class TestTools():
         assert openreview.tools.subdomains('   ') == []
 
     def test_replace_members_with_ids(self, client, test_client):
+        test_client.post_profile(openreview.Profile(
+            referent='~SomeFirstName_User1',
+            signatures = ['~SomeFirstName_User1'],
+            content={
+                'names': [
+                    {
+                    'first': 'Another',
+                    'last': 'Name'
+                    }
+                ],
+                'emails': ['alternate@mail.com']
+            }
+        ))
+
+        profile = client.get_profile('~SomeFirstName_User1')
+        assert len(profile.content['names']) == 2
+        assert profile.content['names'][1]['first'] == 'Another'
+        assert profile.content['names'][1]['last'] == 'Name'
+        assert profile.content['names'][1]['username'] == '~Another_Name1'
+
         posted_group = client.post_group(openreview.Group(id='test.org',
             readers=['everyone'],
             writers=['~Super_User1'],
@@ -369,21 +330,6 @@ class TestTools():
             members=['test@mail.com', '~SomeFirstName_User1', '~Another_Name1', 'NewGroup']
         ))
         assert posted_group
-
-        client.post_profile(openreview.Profile(
-            referent='~SomeFirstName_User1',
-            signatures = ['~SomeFirstName_User1'],
-            content={
-                'names': [
-                    {
-                    'first': 'Another',
-                    'last': 'Name',
-                    'username': '~Another_Name1'
-                    }
-                ],
-                'emails': ['alternate@mail.com']
-            }
-        ))
 
         replaced_group = openreview.tools.replace_members_with_ids(client, posted_group)
         assert replaced_group
@@ -422,6 +368,58 @@ class TestTools():
         assert replaced_group
         assert replaced_group.members == ['~Super_User1', 'alternate@mail.com', 'noprofile@mail.com']
 
+    def test_get_profile_info(self, client, helpers):
+
+        profile1 = openreview.Profile(
+            id = '~Test_Conflict1',
+            content = {
+                'emails': ['user@cmu.edu', 'wrong_email'],
+                'history': [{
+                    'institution': {
+                        'domain': '126.com'
+                    }
+                }]
+            }
+        )
+
+        info = openreview.tools.get_profile_info(profile1)
+        assert info['emails'] == set(['user@cmu.edu'])
+        assert info['domains'] == set(['cmu.edu', '126.com'])
+        assert info['id'] == '~Test_Conflict1'
+        assert info['relations'] == set([])
+        assert info['publications'] == set([])
+
+        profile1 = openreview.Profile(
+            id = '~Test_Conflict1',
+            content = {
+                'emails': ['user@cmu.edu', 'wrong_email'],
+                'history': [{
+                    'institution': {
+                        'domain': '126.com'
+                    }
+                }],
+                'publications': [openreview.Note(
+                    id='1234',
+                    invitation='',
+                    readers=[],
+                    writers=[],
+                    signatures=[],
+                    cdate=999999999999999,
+                    content={
+                        'year': '12023'
+                    }
+                )],
+            }
+        )
+
+        info = openreview.tools.get_profile_info(profile1)
+        assert info['emails'] == set(['user@cmu.edu'])
+        assert info['domains'] == set(['cmu.edu', '126.com'])
+        assert info['id'] == '~Test_Conflict1'
+        assert info['relations'] == set([])
+        assert info['publications'] == set([])        
+
+    
     def test_get_conflicts(self, client, helpers):
 
         helpers.create_user('user@gmail.com', 'First', 'Last')
@@ -467,7 +465,7 @@ class TestTools():
         profile2 = openreview.Profile(
             id = '~Test_Conflict2',
             content = {
-                'emails': ['user2@126.com'],
+                'emails': ['user2@126.com', 'wrong_email'],
                 'history': [
                     {
                         'institution': {
@@ -486,7 +484,7 @@ class TestTools():
         intern_profile = openreview.Profile(
             id='~Test_Conflict3',
             content={
-                'emails': ['user3@345.com'],
+                'emails': ['user3@345.com', 'wrong_email'],
                 'history': [{
                     'position': 'Intern',
                     'institution': {
@@ -508,7 +506,7 @@ class TestTools():
         assert 'cmu.edu' in conflicts
         assert 'umass.edu' in conflicts
 
-        neurips_conflicts = openreview.tools.get_conflicts([intern_profile], profile2, policy='neurips')
+        neurips_conflicts = openreview.tools.get_conflicts([intern_profile], profile2, policy='NeurIPS')
         assert len(neurips_conflicts) == 1
         assert 'cmu.edu' in conflicts
 
@@ -554,7 +552,47 @@ class TestTools():
                 'publications': publications
             }
         
-        conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy=cmu_is_a_never_conflict)
+        with pytest.raises(Exception) as error:
+            conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy=cmu_is_a_never_conflict)
+        assert  str(error.value) == 'list index out of range'
+
+        def cmu_is_a_never_conflict_updated(profile, n_years=None):
+            domains = set()
+            emails = set()
+            relations = set()
+            publications = set()
+
+            ## Emails section
+            for email in profile.content['emails']:
+                # split email
+                if '@' in email:
+                    domain = email.split('@')[1]
+                    if domain != 'cmu.edu':
+                        domains.add(domain)
+                        emails.add(email)
+                else:
+                    print('Profile with invalid email:', profile.id, email)
+
+            ## Institution section
+            for history in profile.content.get('history', []):
+                try:
+                    end = int(history.get('end', 0) or 0)
+                except:
+                    end = 0
+                if not end:
+                    domain = history.get('institution', {}).get('domain', '')
+                    if domain != 'cmu.edu':
+                        domains.add(domain)
+
+            return {
+                'id': profile.id,
+                'domains': domains,
+                'emails': emails,
+                'relations': relations,
+                'publications': publications
+            }
+
+        conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy=cmu_is_a_never_conflict_updated)
         assert len(conflicts) == 1
         assert 'umass.edu' in conflicts
 

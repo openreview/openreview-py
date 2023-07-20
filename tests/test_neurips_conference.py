@@ -71,9 +71,7 @@ class TestNeurIPSConference():
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
-                'Paper Matching': [
-                    'Reviewer Bid Scores',
-                    'OpenReview Affinity'],
+                'submission_reviewer_assignment': 'Automatic',
                 'Author and Reviewer Anonymity': 'Double-blind',
                 'reviewer_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
@@ -618,6 +616,7 @@ If you would like to change your decision, please follow the link in the previou
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
             },
@@ -753,6 +752,7 @@ If you would like to change your decision, please follow the link in the previou
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
             },
@@ -984,6 +984,7 @@ If you would like to change your decision, please follow the link in the previou
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'withdrawn_submissions_author_anonymity': 'Yes, author identities of withdrawn submissions should be revealed.',
@@ -1024,6 +1025,7 @@ If you would like to change your decision, please follow the link in the previou
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'withdrawn_submissions_author_anonymity': 'No, author identities of withdrawn submissions should not be revealed.',
@@ -1061,7 +1063,7 @@ If you would like to change your decision, please follow the link in the previou
                 writer.writerow([submission.id, '~Area_GoogleChair1', round(random.random(), 2)])
                 writer.writerow([submission.id, '~Area_UMassChair1', round(random.random(), 2)])
 
-        conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts='neurips', affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
+        conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts='NeurIPS', affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
         
         conflicts = client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict')
         assert conflicts == 3
@@ -1094,7 +1096,7 @@ If you would like to change your decision, please follow the link in the previou
                 writer.writerow([submission.id, '~Reviewer_Google1', round(random.random(), 2)])
 
 
-        conference.setup_matching(committee_id=conference.get_reviewers_id(), build_conflicts='neurips', affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
+        conference.setup_matching(committee_id=conference.get_reviewers_id(), build_conflicts='NeurIPS', affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
 
         conference.bid_stages['NeurIPS.cc/2021/Conference/Area_Chairs'] = openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Area_Chairs/-/Affinity_Score'], allow_conflicts_bids=True)
         conference.bid_stages['NeurIPS.cc/2021/Conference/Reviewers'] = openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Reviewers', score_ids=['NeurIPS.cc/2021/Conference/Reviewers/-/Affinity_Score'], allow_conflicts_bids=True)
@@ -2463,11 +2465,13 @@ NeurIPS 2021 Conference Program Chairs'''
         messages = client.get_messages(to='reviewer1@umass.edu', subject='[NeurIPS 2021] Your comment was received on Paper Number: 5, Paper Title: \"Paper title 5\"')
         assert messages and len(messages) == 1
 
-        messages = client.get_messages(to='ac1@mit.edu', subject='\[NeurIPS 2021\] Reviewer .* commented on a paper in your area. Paper Number: 5, Paper Title: \"Paper title 5\"')
-        assert messages and len(messages) == 1
+        messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer .*')
+        filtered_messages = [m for m in messages if 'commented on a paper in your area. Paper Number: 5, Paper Title: "Paper title 5"' in m['content']['subject']]
+        assert filtered_messages and len(filtered_messages) == 1
 
-        messages = client.get_messages(to='sac1@google.com', subject='\[NeurIPS 2021\] Reviewer .* commented on a paper in your area. Paper Number: 5, Paper Title: \"Paper title 5\"')
-        assert not messages
+        messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2021] Reviewer .*')
+        filtered_messages = [m for m in messages if 'commented on a paper in your area. Paper Number: 5, Paper Title: "Paper title 5"' in m['content']['subject']]
+        assert not filtered_messages
 
         ac_client=openreview.Client(username='ac1@mit.edu', password=helpers.strong_password)
 
@@ -2497,8 +2501,9 @@ NeurIPS 2021 Conference Program Chairs'''
         messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Your comment was received on Paper Number: 5, Paper Title: \"Paper title 5\"')
         assert messages and len(messages) == 1
 
-        messages = client.get_messages(to='sac1@google.com', subject='\[NeurIPS 2021\] Area Chair .* commented on a paper in your area. Paper Number: 5, Paper Title: \"Paper title 5\"')
-        assert messages and len(messages) == 1
+        messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2021] Area Chair .*')
+        filtered_messages = [m for m in messages if 'commented on a paper in your area. Paper Number: 5, Paper Title: "Paper title 5"' in m['content']['subject']]
+        assert filtered_messages and len(filtered_messages) == 1
 
         sac_client=openreview.Client(username='sac1@google.com', password=helpers.strong_password)
 
@@ -2899,6 +2904,7 @@ NeurIPS 2021 Conference Program Chairs'''
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
             },

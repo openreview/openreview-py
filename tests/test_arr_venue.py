@@ -61,9 +61,7 @@ class TestARRVenue():
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
-                'Paper Matching': [
-                    'Reviewer Bid Scores',
-                    'OpenReview Affinity'],
+                'submission_reviewer_assignment': 'Automatic',
                 'Author and Reviewer Anonymity': 'Double-blind',
                 'reviewer_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair'],
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
@@ -755,6 +753,9 @@ OpenReview Team'''
         ## Invite assignments for reviewers
         invite_assignment_edges=venue.set_invite_assignments(assignment_title='reviewer-matching', committee_id='aclweb.org/ACL/ARR/2021/September/Reviewers', enable_reviewer_reassignment=True)
         assert len(invite_assignment_edges) == 10
+
+        ## Wait until all the invite assignment invitations were sent
+        helpers.await_queue()
 
         ## Reviewer reviewer_arr4@fb.com accepts the invitation
         invite_edges=pc_client.get_edges(invitation='aclweb.org/ACL/ARR/2021/September/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Reviewer_ARR_Facebook1')

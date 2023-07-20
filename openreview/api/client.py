@@ -354,7 +354,7 @@ class OpenReviewClient(object):
         else:
             raise OpenReviewException(['Profile Not Found'])
 
-    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None):
+    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None, fullname=None, use_ES = False):
         """
         Gets a list of profiles using either their ids or corresponding emails
 
@@ -390,7 +390,12 @@ class OpenReviewClient(object):
                 yield batch
 
         if term:
-            response = self.session.get(self.profiles_search_url, params = { 'term': term }, headers = self.headers)
+            response = self.session.get(self.profiles_search_url, params = { 'term': term, 'es': 'true' if use_ES else 'false' }, headers = self.headers)
+            response = self.__handle_response(response)
+            return [Profile.from_json(p) for p in response.json()['profiles']]
+        
+        if fullname:
+            response = self.session.get(self.profiles_search_url, params = { 'fullname': fullname, 'es': 'true' if use_ES else 'false' }, headers = self.headers)
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
 
@@ -434,7 +439,7 @@ class OpenReviewClient(object):
             return [Profile.from_json(p) for p in full_response]
 
         if first or middle or last:
-            response = self.session.get(self.profiles_url, params = {'first': first, 'middle': middle, 'last': last}, headers = self.headers)
+            response = self.session.get(self.profiles_url, params = {'first': first, 'middle': middle, 'last': last, 'es': 'true' if use_ES else 'false'}, headers = self.headers)
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
 
@@ -594,7 +599,7 @@ class OpenReviewClient(object):
         return Profile.from_json(response.json())
 
 
-    def get_groups(self, id = None, prefix = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
+    def get_groups(self, id=None, prefix=None, member=None, signatory=None, web=None, limit=None, offset=None, after=None, stream=None, sort=None, with_count=False):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -617,13 +622,26 @@ class OpenReviewClient(object):
         :rtype: list[Group]
         """
         params = {}
-        if id is not None: params['id'] = id
-        if prefix is not None: params['prefix'] = prefix
-        if member is not None: params['member'] = member
-        if signatory is not None: params['signatory'] = signatory
-        if web: params['web'] = web
-        params['limit'] = limit
-        params['offset'] = offset
+        if id is not None:
+            params['id'] = id
+        if prefix is not None:
+            params['prefix'] = prefix
+        if member is not None:
+            params['member'] = member
+        if signatory is not None:
+            params['signatory'] = signatory
+        if sort is not None:
+            params['sort'] = sort
+        if web is not None:
+            params['web'] = web
+        if limit is not None:
+            params['limit'] = limit
+        if offset is not None:
+            params['offset'] = offset
+        if after is not None:
+            params['after'] = after
+        if stream is not None:
+            params['stream'] = stream
 
         response = self.session.get(self.groups_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -634,12 +652,14 @@ class OpenReviewClient(object):
 
         return groups
 
-    def get_all_groups(self, id = None, prefix = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
+    def get_all_groups(self, id=None, parent=None, prefix=None, member=None, domain=None, signatory=None, web=None, sort=None, with_count=False):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
         :param id: id of the Group
         :type id: str, optional
+        :param parent: id of the parent Group
+        :type parent: str, optional
         :param prefix: Prefix that matches several Group ids
         :type prefix: str, optional
         :param member: Groups that contain this member
@@ -652,22 +672,35 @@ class OpenReviewClient(object):
         :type limit: int, optional
         :param offset: Indicates the position to start retrieving Groups. For example, if there are 10 Groups and you want to obtain the last 3, then the offset would need to be 7.
         :type offset: int, optional
+        :param after: Group id to start getting the list of groups from.
+        :type after: str, optional
 
         :return: List of Groups
         :rtype: list[Group]
         """
         params = {
-            'id': id,
-            'prefix': prefix,
-            'member': member,
-            'signatory': signatory,
-            'web': web,
-            'limit': limit,
-            'offset': offset,
-            'with_count': with_count
+            'stream': True
         }
+        if id is not None:
+            params['id'] = id
+        if parent is not None:
+            params['parent'] = parent
+        if prefix is not None:
+            params['prefix'] = prefix
+        if member is not None:
+            params['member'] = member
+        if signatory is not None:
+            params['signatory'] = signatory
+        if domain is not None:
+            params['domain'] = domain
+        if web is not None:
+            params['web'] = web
+        if sort is not None:
+            params['sort'] = sort
+        if with_count is not None:
+            params['with_count'] = with_count
 
-        return tools.concurrent_get(self, self.get_groups, **params)
+        return self.get_groups(**params)
 
     def get_invitations(self,
         id = None,
@@ -681,12 +714,14 @@ class OpenReviewClient(object):
         tags = None,
         limit = None,
         offset = None,
+        after = None,
         minduedate = None,
         duedate = None,
         pastdue = None,
         replyto = None,
         details = None,
         expired = None,
+        sort = None,
         type = None,
         with_count=False,
         invitation = None
@@ -716,6 +751,8 @@ class OpenReviewClient(object):
         :type limit: int, optional
         :param int offset: Indicates the position to start retrieving Invitations. For example, if there are 10 Invitations and you want to obtain the last 3, then the offset would need to be 7.
         :type offset: int, optional
+        :param after: Invitation id to start getting the list of invitations from.
+        :type after: str, optional
         :param minduedate: Invitations that have at least this value as due date
         :type minduedate: int, optional
         :param duedate: Invitations that contain this due date
@@ -747,21 +784,34 @@ class OpenReviewClient(object):
             params['signature'] = signature
         if note is not None:
             params['note']=note
-        if prefix:
+        if prefix is not None:
             params['prefix'] = prefix
-        if tags:
+        if tags is not None:
             params['tags'] = tags
-        if minduedate:
+        if minduedate is not None:
             params['minduedate'] = minduedate
-        params['replyto'] = replyto
-        params['duedate'] = duedate
-        params['pastdue'] = pastdue
-        params['details'] = details
-        params['limit'] = limit
-        params['offset'] = offset
-        params['expired'] = expired
-        params['type'] = type
-        params['invitation'] = invitation
+        if replyto is not None:
+            params['replyto'] = replyto
+        if duedate is not None:
+            params['duedate'] = duedate
+        if pastdue is not None:
+            params['pastdue'] = pastdue
+        if details is not None:
+            params['details'] = details
+        if limit is not None:
+            params['limit'] = limit
+        if offset is not None:
+            params['offset'] = offset
+        if after is not None:
+            params['after'] = after
+        if sort is not None:
+            params['sort'] = sort
+        if expired is not None:
+            params['expired'] = expired
+        if type is not None:
+            params['type'] = type
+        if invitation is not None:
+            params['invitation'] = invitation
 
         response = self.session.get(self.invitations_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
@@ -783,14 +833,13 @@ class OpenReviewClient(object):
         note = None,
         prefix = None,
         tags = None,
-        limit = None,
-        offset = None,
         minduedate = None,
         duedate = None,
         pastdue = None,
         replyto = None,
         details = None,
         expired = None,
+        sort = None,
         type = None,
         with_count=False,
         invitation = None
@@ -816,10 +865,6 @@ class OpenReviewClient(object):
         :type prefix: str, optional
         :param tags: Invitations that contain these tags
         :type tags: Tag, optional
-        :param int limit: Maximum amount of Invitations that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Invitations will be returned
-        :type limit: int, optional
-        :param int offset: Indicates the position to start retrieving Invitations. For example, if there are 10 Invitations and you want to obtain the last 3, then the offset would need to be 7.
-        :type offset: int, optional
         :param minduedate: Invitations that have at least this value as due date
         :type minduedate: int, optional
         :param duedate: Invitations that contain this due date
@@ -836,30 +881,48 @@ class OpenReviewClient(object):
         :return: List of Invitations
         :rtype: list[Invitation]
         """
-        params = {
-            'id': id,
-            'ids': ids,
-            'invitee': invitee,
-            'replytoNote': replytoNote,
-            'replyForum': replyForum,
-            'signature': signature,
-            'note': note,
-            'prefix': prefix,
-            'tags': tags,
-            'limit': limit,
-            'offset': offset,
-            'minduedate': minduedate,
-            'duedate': duedate,
-            'pastdue': pastdue,
-            'replyto': replyto,
-            'details': details,
-            'expired': expired,
-            'type': type,
-            'with_count': with_count,
-            'invitation': invitation
-        }
+        params = {}
 
-        return tools.concurrent_get(self, self.get_invitations, **params)
+        if id is not None:
+            params['id'] = id
+        if ids is not None:
+            params['ids'] = ids
+        if invitee is not None:
+            params['invitee'] = invitee
+        if replytoNote is not None:
+            params['replytoNote'] = replytoNote
+        if replyForum is not None:
+            params['replyForum'] = replyForum
+        if signature is not None:
+            params['signature'] = signature
+        if note is not None:
+            params['note'] = note
+        if prefix is not None:
+            params['prefix'] = prefix
+        if tags is not None:
+            params['tags'] = tags
+        if minduedate is not None:
+            params['minduedate'] = minduedate
+        if duedate is not None:
+            params['duedate'] = duedate
+        if pastdue is not None:
+            params['pastdue'] = pastdue
+        if replyto is not None:
+            params['replyto'] = replyto
+        if details is not None:
+            params['details'] = details
+        if expired is not None:
+            params['expired'] = expired
+        if sort is not None:
+            params['sort'] = sort
+        if type is not None:
+            params['type'] = type
+        if with_count is not None:
+            params['with_count'] = with_count
+        if invitation is not None:
+            params['invitation'] = invitation
+
+        return list(tools.efficient_iterget(self.get_invitations, desc='Getting V2 Invitations', **params))
 
     def get_invitation_edit(self, id):
         """
@@ -904,7 +967,6 @@ class OpenReviewClient(object):
     def get_notes(self, id = None,
             paperhash = None,
             forum = None,
-            original = None,
             invitation = None,
             replyto = None,
             tauthor = None,
@@ -917,6 +979,7 @@ class OpenReviewClient(object):
             content = None,
             limit = None,
             offset = None,
+            after = None,
             mintcdate = None,
             details = None,
             sort = None,
@@ -933,8 +996,6 @@ class OpenReviewClient(object):
         :type paperhash: str, optional
         :param forum: A Note ID. If provided, returns Notes whose forum matches the given ID.
         :type forum: str, optional
-        :param original: A Note ID. If provided, returns Notes whose original matches the given ID.
-        :type original: str, optional
         :param invitation: An Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
         :type invitation: str, optional
         :param replyto: A Note ID. If provided, returns Notes whose replyto field matches the given ID.
@@ -960,6 +1021,8 @@ class OpenReviewClient(object):
         :type limit: int, optional
         :param offset: Indicates the position to start retrieving Notes. For example, if there are 10 Notes and you want to obtain the last 3, then the offset would need to be 7.
         :type offset: int, optional
+        :param after: Note id to start getting the list of notes from.
+        :type after: str, optional
         :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns Notes
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
         :type mintcdate: int, optional
@@ -1007,8 +1070,10 @@ class OpenReviewClient(object):
             params['mintcdate'] = mintcdate
         if details is not None:
             params['details'] = details
-        params['sort'] = sort
-        params['original'] = original
+        if after is not None:
+            params['after'] = after
+        if sort is not None:
+            params['sort'] = sort
 
         response = self.session.get(self.notes_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1023,10 +1088,8 @@ class OpenReviewClient(object):
     def get_all_notes(self, id = None,
             paperhash = None,
             forum = None,
-            original = None,
             invitation = None,
             replyto = None,
-            tauthor = None,
             signature = None,
             transitive_members = None,
             signatures = None,
@@ -1034,10 +1097,9 @@ class OpenReviewClient(object):
             trash = None,
             number = None,
             content = None,
-            limit = None,
-            offset = None,
             mintcdate = None,
             details = None,
+            select = None,
             sort = None,
             with_count=False
             ):
@@ -1052,14 +1114,10 @@ class OpenReviewClient(object):
         :type paperhash: str, optional
         :param forum: A Note ID. If provided, returns Notes whose forum matches the given ID.
         :type forum: str, optional
-        :param original: A Note ID. If provided, returns Notes whose original matches the given ID.
-        :type original: str, optional
         :param invitation: An Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
         :type invitation: str, optional
         :param replyto: A Note ID. If provided, returns Notes whose replyto field matches the given ID.
         :type replyto: str, optional
-        :param tauthor: A Group ID. If provided, returns Notes whose tauthor field ("true author") matches the given ID, or is a transitive member of the Group represented by the given ID.
-        :type tauthor: str, optional
         :param signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
         :type signature: str, optional
         :param transitive_members: If true, returns Notes whose tauthor field is a transitive member of the Group represented by the given Group ID.
@@ -1075,10 +1133,8 @@ class OpenReviewClient(object):
         :type number: int, optional
         :param content: If present, includes Notes whose each key is present in the content field and it is equals the given value.
         :type content: dict, optional
-        :param limit: Maximum amount of Notes that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Notes will be returned
-        :type limit: int, optional
-        :param offset: Indicates the position to start retrieving Notes. For example, if there are 10 Notes and you want to obtain the last 3, then the offset would need to be 7.
-        :type offset: int, optional
+        :param after: Note id to start getting the list of notes from.
+        :type after: str, optional
         :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns Notes
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
         :type mintcdate: int, optional
@@ -1091,30 +1147,43 @@ class OpenReviewClient(object):
         :rtype: list[Note]
         """
 
-        params = {
-            'id': id,
-            'paperhash': paperhash,
-            'forum': forum,
-            'original': original,
-            'invitation': invitation,
-            'replyto': replyto,
-            'tauthor': tauthor,
-            'signature': signature,
-            'transitive_members': transitive_members,
-            'signatures': signatures,
-            'writer': writer,
-            'trash': trash,
-            'number': number,
-            'content': content,
-            'limit': limit,
-            'offset': offset,
-            'mintcdate': mintcdate,
-            'details': details,
-            'sort': sort,
-            'with_count': with_count
-        }
+        params = {}
+        if id is not None:
+            params['id'] = id
+        if paperhash is not None:
+            params['paperhash'] = paperhash
+        if forum is not None:
+            params['forum'] = forum
+        if invitation is not None:
+            params['invitation'] = invitation
+        if replyto is not None:
+            params['replyto'] = replyto
+        if signature is not None:
+            params['signature'] = signature
+        if signatures is not None:
+            params['signatures'] = signatures
+        if transitive_members is not None:
+            params['transitive_members'] = transitive_members
+        if writer is not None:
+            params['writer'] = writer
+        if trash == True:
+            params['trash']=True
+        if number is not None:
+            params['number'] = number
+        if content is not None:
+            params['content'] = content
+        if mintcdate is not None:
+            params['mintcdate'] = mintcdate
+        if details is not None:
+            params['details'] = details
+        if select:
+            params['select'] = select
+        if sort is not None:
+            params['sort'] = sort
+        if with_count:
+            params['with_count'] = with_count
 
-        return tools.concurrent_get(self, self.get_notes, **params)
+        return list(tools.efficient_iterget(self.get_notes, desc='Getting V2 Notes', **params))
 
     def get_note_edit(self, id):
         """
@@ -1316,7 +1385,7 @@ class OpenReviewClient(object):
 
         return response.json()['count']
 
-    def get_grouped_edges(self, invitation=None, head=None, tail=None, label=None, groupby='head', select=None, limit=None, offset=None):
+    def get_grouped_edges(self, invitation=None, head=None, tail=None, label=None, groupby='head', select=None, limit=None, offset=None, trash=None):
         '''
         Returns a list of JSON objects where each one represents a group of edges.  For example calling this
         method with default arguments will give back a list of groups where each group is of the form:
@@ -1340,6 +1409,7 @@ class OpenReviewClient(object):
         params['select'] = select
         params['limit'] = limit
         params['offset'] = offset
+        params['trash'] = trash
         response = self.session.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         json = response.json()
@@ -1750,7 +1820,7 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    def post_note_edit(self, invitation, signatures, note=None, readers=None, writers=None):
+    def post_note_edit(self, invitation, signatures, note=None, readers=None, writers=None, nonreaders=None):
         """
         """
         edit_json = {
@@ -1764,6 +1834,9 @@ class OpenReviewClient(object):
 
         if writers is not None:
             edit_json['writers'] = writers
+
+        if nonreaders is not None:
+            edit_json['nonreaders'] = nonreaders
 
         response = self.session.post(self.note_edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
@@ -1836,7 +1909,7 @@ class OpenReviewClient(object):
             'type': 'Group',
             'memberOf': group_id
         }
-        if expertise_selection_id:
+        if expertise_selection_id and tools.get_invitation(self, expertise_selection_id):
             expertise = { 'invitation': expertise_selection_id }
             entityA['expertise'] = expertise
 
@@ -1870,13 +1943,16 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    def request_single_paper_expertise(self, name, group_id, paper_id, model=None, baseurl=None):
+    def request_single_paper_expertise(self, name, group_id, paper_id, expertise_selection_id=None, model=None, baseurl=None):
 
         # Build entityA from group_id
         entityA = {
             'type': 'Group',
             'memberOf': group_id
         }
+        if expertise_selection_id and tools.get_invitation(self, expertise_selection_id):
+            expertise = { 'invitation': expertise_selection_id }
+            entityA['expertise'] = expertise        
 
         # Build entityB from paper_id
         entityB = {
@@ -1903,14 +1979,25 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    def get_expertise_status(self, job_id, baseurl=None):
+    def get_expertise_status(self, job_id=None, group_id=None, paper_id=None, baseurl=None):
 
-        print('get expertise status', baseurl, job_id)
+        print('get expertise status', baseurl, job_id, group_id, paper_id)
         base_url = baseurl if baseurl else self.baseurl
         if base_url.startswith('http://localhost'):
             print('get expertise status localhost, return Completed')
-            return { 'status': 'Completed' }
-        response = self.session.get(base_url + '/expertise/status', params = {'jobId': job_id}, headers = self.headers)
+            if job_id:
+                return { 'status': 'Completed', 'jobId': job_id }
+            return { 'results': [{ 'status': 'Completed', 'jobId': None }]}
+        
+        params = {}
+        if job_id:
+            params['jobId'] = job_id
+        if group_id:
+            params['entityA.memberOf'] = group_id
+        if paper_id:
+            params['entityB.id'] = paper_id
+
+        response = self.session.get(base_url + '/expertise/status', params = params, headers = self.headers)
         response = self.__handle_response(response)
 
         response_json = response.json()
@@ -2336,7 +2423,7 @@ class Invitation(object):
             body['signatures'] = self.signatures
 
         if self.reply_forum_views:
-            body['reply_forum_views'] = self.reply_forum_views
+            body['replyForumViews'] = self.reply_forum_views
 
         if self.content:
             body['content'] = self.content
@@ -2441,7 +2528,7 @@ class Edge(object):
         body = {
             'invitation': self.invitation,
             'head': self.head,
-            'tail': self.tail,
+            'tail': self.tail
         }
         if self.id:
             body['id'] = self.id
@@ -2459,6 +2546,8 @@ class Edge(object):
             body['weight'] = self.weight
         if self.label is not None:
             body['label'] = self.label
+        if self.cdate is not None:
+            body['cdate'] = self.cdate
 
         return body
 
@@ -2606,6 +2695,9 @@ class Group(object):
 
         if self.ddate is not None:
             body['ddate'] = self.ddate
+
+        if self.host is not None:
+            body['host'] = self.host
 
         if self.impersonators is not None:
             body['impersonators'] = self.impersonators 

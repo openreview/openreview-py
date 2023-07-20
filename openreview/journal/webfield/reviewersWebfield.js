@@ -23,6 +23,11 @@ var SUBMISSION_GROUP_NAME = 'Paper';
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var REVIEWERS_CUSTOM_MAX_PAPERS_NAME = 'Custom_Max_Papers';
 var REVIEWERS_AVAILABILITY_NAME = 'Assignment_Availability';
+var REVIEWERS_EXPERTISE_SELECTION_ID = REVIEWERS_ID + '/-/Expertise_Selection';
+var referrerUrl = encodeURIComponent('[Reviewer Console](/group?id=' + VENUE_ID + '/' + REVIEWERS_NAME + '#assigned-papers)');
+
+
+HEADER.instructions += "<br><br><strong>Expertise Selection:</strong><br><a href=/invitation?id=" + REVIEWERS_EXPERTISE_SELECTION_ID + "&referrer=" + referrerUrl + "> Select your expertise</a>"
 
 
 function main() {
@@ -53,25 +58,33 @@ var loadData = function() {
       Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups)}),
       Webfield2.api.getAll('/invitations', {
         id: REVIEWERS_ID + '/-/' + REVIEWERS_AVAILABILITY_NAME,
-        type: 'edges',
-        details: 'repliedEdges'
+        type: 'edges'
       }).then(function(invitations) {
         return invitations[0];
       }),
       Webfield2.api.getAll('/invitations', {
         id: REVIEWERS_ID + '/-/' + REVIEWERS_CUSTOM_MAX_PAPERS_NAME,
-        type: 'edges',
-        details: 'repliedEdges'
+        type: 'edges'
       }).then(function(invitations) {
         return invitations[0];
+      }),
+      Webfield2.api.getAll('/edges', {
+        invitation: REVIEWERS_ID + '/-/' + REVIEWERS_AVAILABILITY_NAME,
+        tail: user.profile.id,
+      }).then(function(edges) {
+        return edges && edges[0];
+      }),
+      Webfield2.api.getAll('/edges', {
+        invitation: REVIEWERS_ID + '/-/' + REVIEWERS_CUSTOM_MAX_PAPERS_NAME,
+        tail: user.profile.id,
+      }).then(function(edges) {
+        return edges && edges[0];
       })
     );
   })
 }
 
-var formatData = function(assignedGroups, actionEditorsByNumber, invitations, submissions, availabilityInvitation, customQuotaInvitation) {
-
-  var referrerUrl = encodeURIComponent('[Reviewer Console](/group?id=' + VENUE_ID + '/' + REVIEWERS_NAME + '#assigned-papers)');
+var formatData = function(assignedGroups, actionEditorsByNumber, invitations, submissions, availabilityInvitation, customQuotaInvitation, availabilityEdge, customQuotaEdge) {
 
   //build the rows
   var rows = [];
@@ -124,6 +137,18 @@ var formatData = function(assignedGroups, actionEditorsByNumber, invitations, su
       }
     })
   })
+
+  if (availabilityInvitation) {
+    availabilityInvitation.details = {
+      repliedEdges: availabilityEdge ? [availabilityEdge] : [],
+    }
+  }
+
+  if (customQuotaInvitation) {
+    customQuotaInvitation.details = {
+      repliedEdges: customQuotaEdge ? [customQuotaEdge] : [],
+    }
+  }  
 
 
   return venueStatusData = {

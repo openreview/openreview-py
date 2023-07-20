@@ -135,7 +135,7 @@ class InvitationBuilder(object):
             edit = {
                 'signatures': { 'param': { 'regex': f'~.*|{self.venue.get_program_chairs_id()}' } },
                 'readers': edit_readers,
-                'writers': [venue_id],
+                'writers': [venue_id, '${2/note/content/authorids/value}'],
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
@@ -156,7 +156,7 @@ class InvitationBuilder(object):
                             'optional': True,
                             'deletable': True
                         }
-                    },                    
+                    },
                     'signatures': [ '${3/signatures}' ],
                     'readers': note_readers,
                     'writers': [venue_id, '${2/content/authorids/value}'],
@@ -210,12 +210,30 @@ class InvitationBuilder(object):
                             'optional': True
                         }
                     },
+                    'odate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
                     'signatures': [ self.venue.get_authors_id('${{2/id}/number}') ],
                     'readers': submission_stage.get_readers(self.venue, '${{2/id}/number}'),
                     'writers': [venue_id, self.venue.get_authors_id('${{2/id}/number}')],
                 }
             }
         )
+
+        note_content['_bibtex'] = {
+            'value': {
+                'param': {
+                    'type': 'string',
+                    'maxLength': 200000,
+                    'input': 'textarea',
+                    'optional': True
+                }
+            }
+        }
 
         if note_content:
             submission_invitation.edit['note']['content'] = note_content
@@ -333,7 +351,7 @@ class InvitationBuilder(object):
 ''',
                     'edit': {
                         'signatures': { 'param': { 'regex': review_stage.get_signatures(self.venue, '${5/content/noteNumber/value}') }},
-                        'readers': review_stage.get_readers(self.venue, '${4/content/noteNumber/value}', '${2/signatures}'),
+                        'readers': ['${2/note/readers}'],
                         'nonreaders': review_stage.get_nonreaders(self.venue, '${4/content/noteNumber/value}'),
                         'writers': [venue_id],
                         'note': {
@@ -370,6 +388,21 @@ class InvitationBuilder(object):
         if review_expdate:
             invitation.edit['invitation']['expdate'] = review_expdate
 
+        if self.venue.ethics_review_stage:
+            invitation.edit['content']['noteReaders'] = {
+                'value': {
+                    'param': {
+                        'type': 'string[]', 'regex': f'{venue_id}/.*|everyone'
+                    }
+                }
+            }
+            invitation.content['review_readers'] = {
+                'value': review_stage.get_readers(self.venue, '{number}')
+            }
+            note_readers = ['${5/content/noteReaders/value}']
+            if review_stage.release_to_reviewers in [openreview.stages.ReviewStage.Readers.REVIEWER_SIGNATURE, openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED]:
+                note_readers.append('${3/signatures}')
+            invitation.edit['invitation']['edit']['note']['readers'] = note_readers
 
         self.save_invitation(invitation, replacement=False)
         return invitation
@@ -733,7 +766,7 @@ class InvitationBuilder(object):
             content['reduced_load'] = reduced_load_dict
         
         process_content = self.get_process_content('process/recruitment_process.py')
-        pre_process_content = self.get_process_content('process/recruitment_pre_process.py')
+        pre_process_content = self.get_process_content('process/recruitment_pre_process.js')
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
             webfield_content = webfield_reader.read()
@@ -741,7 +774,7 @@ class InvitationBuilder(object):
         invitation_id=venue.get_recruitment_id(venue.get_committee_id(name=committee_name))
         current_invitation=tools.get_invitation(self.client, id = invitation_id)
 
-        #if reduced_load hasn't change, no need to repost invitation
+        #if invitation does not exist, post it
         if not current_invitation:
             recruitment_invitation = Invitation(
                 id = invitation_id,
@@ -769,20 +802,26 @@ class InvitationBuilder(object):
         else:
             print('current invitation', current_invitation.edit['note']['content'].get('reduced_load', {}))
             print('new invitation', reduced_load_dict)
+            updated_invitation = Invitation(
+                id = invitation_id
+            )
             if current_invitation.edit['note']['content'].get('reduced_load', {}) != reduced_load_dict:
-                print('update reduce load')
-                return self.save_invitation(Invitation(
-                    id = invitation_id,
-                    edit = {
-                        'note' : {
-                            'content': {
-                                'reduced_load': reduced_load_dict if reduced_load_dict else { 'delete': True }
-                            }
+                updated_invitation.edit = {
+                    'note': {
+                        'content' : {
+                            'reduced_load': reduced_load_dict if reduced_load_dict else { 'delete': True }
                         }
                     }
-                ))
+                }
+            if 'overlap_committee_name' in invitation_content and current_invitation.content.get('overlap_committee_name', {}) != invitation_content['overlap_committee_name']:
+                updated_invitation.content = {
+                    'overlap_committee_name': invitation_content['overlap_committee_name'],
+                    'overlap_committee_id': invitation_content['overlap_committee_id']
+                }
+            if updated_invitation.content or updated_invitation.edit:
+                return self.save_invitation(updated_invitation)
             else:
-                print('do not update reduce load')
+                print('do not update recruitment invitation')
                 return current_invitation
 
     def set_bid_invitations(self):
@@ -840,7 +879,13 @@ class InvitationBuilder(object):
                     },
                     'ddate': {
                         'param': {
-                            # 'type': 'date',
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'cdate': {
+                        'param': {
                             'range': [ 0, 9999999999999 ],
                             'optional': True,
                             'deletable': True
@@ -901,7 +946,7 @@ class InvitationBuilder(object):
             }],
             content={
                 'comment_preprocess_script': {
-                    'value': self.get_process_content('process/comment_pre_process.py')
+                    'value': self.get_process_content('process/comment_pre_process.js')
                 },
                 'comment_process_script': {
                     'value': self.get_process_content('process/comment_process.py')
@@ -935,15 +980,14 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'invitees': invitees,
                     'cdate': comment_cdate,
-                    'preprocess': '''def process(client, edit, invitation):
-    meta_invitation = client.get_invitation(invitation.invitations[0])
-    script = meta_invitation.content['comment_preprocess_script']['value']
-    funcs = {
-        'openreview': openreview
-    }
-    exec(script, funcs)
-    funcs['process'](client, edit, invitation)
-''' if comment_stage.check_mandatory_readers and comment_stage.reader_selection else None,
+                    'preprocess': '''async function process(client, edit, invitation) {
+  client.throwErrors = true;
+  const { invitations } = await client.getInvitations({ id: invitation.invitations[0] })
+  const metaInvitation = invitations[0];
+  const script = metaInvitation.content.comment_preprocess_script.value;
+  eval(`var process = ${script}`);
+  await process(client, edit, invitation);
+}''' if comment_stage.check_mandatory_readers and comment_stage.reader_selection else None,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['comment_process_script']['value']
@@ -992,6 +1036,33 @@ class InvitationBuilder(object):
 
         if comment_expdate:
             invitation.edit['invitation']['expdate'] = comment_expdate
+
+        if self.venue.ethics_review_stage:
+            invitation.edit['content']['noteReaders'] = {
+                'value': {
+                    'param': {
+                        'type': 'string[]', 'regex': f'{venue_id}/.*|everyone'
+                    }
+                }
+            }
+            invitation.content['comment_readers'] = {
+                'value': comment_stage.get_readers(self.venue, '{number}')
+            }
+            invitation.content['readers_delection'] = {
+                'value': comment_stage.reader_selection
+            }
+            comment_readers = ['${5/content/noteReaders/value}']
+            if comment_stage.reader_selection:
+                comment_readers = {
+                    'param': {
+                        'enum': ['${7/content/noteReaders/value}']
+                    }
+                }
+            invitation.edit['invitation']['edit']['note']['readers'] = comment_readers
+
+            invitation.edit['invitation']['invitees'].append(self.venue.get_ethics_reviewers_id('${3/content/noteNumber/value}'))
+            invitation.edit['invitation']['edit']['signatures']['param']['regex'] += '|' + self.venue.get_ethics_reviewers_id('${5/content/noteNumber/value}', anon=True)
+            invitation.edit['invitation']['edit']['signatures']['param']['regex'] += '|' + self.venue.get_ethics_chairs_id()
 
         self.save_invitation(invitation, replacement=False)
         return invitation
@@ -1328,6 +1399,16 @@ class InvitationBuilder(object):
             },
             'venueid': {
                 'value': self.venue.get_withdrawn_submission_venue_id()
+            },
+            '_bibtex': {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 200000,
+                        'input': 'textarea',
+                        'optional': True
+                    }
+                }
             }
         }
         if submission_stage.withdrawn_submission_reveal_authors:
@@ -1599,6 +1680,16 @@ class InvitationBuilder(object):
             },
             'venueid': {
                 'value': self.venue.get_desk_rejected_submission_venue_id()
+            },
+            '_bibtex': {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 200000,
+                        'input': 'textarea',
+                        'optional': True
+                    }
+                }
             }
         }
         if submission_stage.desk_rejected_submission_reveal_authors:
@@ -1993,44 +2084,178 @@ class InvitationBuilder(object):
         return invitation
 
     def set_assignment_invitation(self, committee_id):
-        client = self.client
-        venue = self.venue
         
-        invitation = client.get_invitation(venue.get_assignment_id(committee_id, deployed=True))
+        venue = self.venue
+        venue_id = venue.get_id()
+        assignment_invitation_id = venue.get_assignment_id(committee_id, deployed=True)
+        is_reviewer = committee_id == venue.get_reviewers_id()
         is_area_chair = committee_id == venue.get_area_chairs_id()
         is_senior_area_chair = committee_id == venue.get_senior_area_chairs_id()
+        review_stage = venue.review_stage if is_reviewer else venue.meta_review_stage
+        is_ethics_reviewer = committee_id == venue.get_ethics_reviewers_id()
 
-        paper_group_id = venue.get_reviewers_id(number='{number}')
-        group_name = venue.get_reviewers_name(pretty=True)
+        content = {
+            'review_name': {
+                'value': review_stage.name if review_stage else 'Official_Review'
+            },
+            'reviewers_id': {
+                'value': venue.get_reviewers_id() if is_reviewer else venue.get_area_chairs_id()
+            },
+            'reviewers_name': {
+                'value': venue.reviewers_name if is_reviewer else venue.area_chairs_name
+            },
+            'reviewers_anon_name': {
+                'value': venue.get_anon_reviewers_name() if is_reviewer else venue.get_anon_area_chairs_name()
+            },
+            'sync_sac_id': {
+                'value': venue.get_senior_area_chairs_id(number='{number}') if is_area_chair and venue.use_senior_area_chairs else ''
+            },
+            'sac_assignment_id': {
+                'value': venue.get_assignment_id(venue.get_senior_area_chairs_id(), deployed=True) if is_area_chair and venue.use_senior_area_chairs else ''
+            }
+        }
+
+        if is_ethics_reviewer:
+            content = {
+                'review_name': {
+                    'value': venue.ethics_review_stage.name
+                },
+                'reviewers_id': {
+                    'value': venue.get_ethics_reviewers_id()
+                },
+                'reviewers_name': {
+                    'value': venue.ethics_reviewers_name
+                },
+                'reviewers_anon_name': {
+                    'value': venue.anon_ethics_reviewers_name()
+                },
+                'sync_sac_id': {
+                    'value': ''
+                },
+                'sac_assignment_id': {
+                    'value': ''
+                }
+            }
+
+        preprocess = self.get_process_content('process/assignment_pre_process.js')
+        process = self.get_process_content('process/assignment_post_process.py')
+
+        invitation_readers = [venue_id]
+        edge_invitees = [venue_id]
+        edge_readers = [venue_id]
+        edge_writers = [venue_id]
+        edge_signatures = [venue_id + '$', venue.get_program_chairs_id()]
+        edge_nonreaders = []
+        edge_head = {
+            'param': {
+                'type': 'note',
+                'withVenueid': venue.get_submission_venue_id()
+            }
+        }  
+        
+        if is_reviewer:
+            edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')] 
+            if venue.use_senior_area_chairs:
+                invitation_readers.append(venue.get_senior_area_chairs_id())
+                edge_invitees.append(venue.get_senior_area_chairs_id())
+                edge_readers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
+                edge_writers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
+                edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
+            if venue.use_area_chairs:
+                invitation_readers.append(venue.get_area_chairs_id())
+                edge_invitees.append(venue.get_area_chairs_id())
+                edge_readers.append(venue.get_area_chairs_id(number='${{2/head}/number}'))
+                edge_writers.append(venue.get_area_chairs_id(number='${{2/head}/number}'))
+                edge_signatures.append(venue.get_area_chairs_id(number='.*', anon=True))
+
+        if is_ethics_reviewer:
+            invitation_readers.append(venue.get_ethics_chairs_id())
+            edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')]
+            edge_invitees.append(venue.get_ethics_chairs_id())
+            edge_readers.append(venue.get_ethics_chairs_id())
+            edge_writers.append(venue.get_ethics_chairs_id())
+            edge_signatures.append(venue.get_ethics_chairs_id())
 
         if is_area_chair:
-            paper_group_id = venue.get_area_chairs_id(number='{number}')
-            group_name = venue.get_area_chairs_name(pretty=True)
+            invitation_readers.append(venue.get_area_chairs_id())
+            edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')] 
+            if venue.use_senior_area_chairs:
+                invitation_readers.append(venue.get_senior_area_chairs_id())
+                edge_invitees.append(venue.get_senior_area_chairs_id())
+                edge_readers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
+                edge_writers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
+                edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
+
 
         if is_senior_area_chair:
-            with open(os.path.join(os.path.dirname(__file__), 'process/sac_assignment_post_process.py')) as post:
-                post_content = post.read()
-                invitation.process=post_content
-                invitation.signatures=[venue.get_program_chairs_id()] ## Program Chairs can see the reviews
-                return self.save_invitation(invitation)
+            edge_head = {
+                'param': {
+                    'type': 'profile',
+                    'inGroup': venue.get_area_chairs_id()
+                }
+            }
+            process = self.get_process_content('process/sac_assignment_post_process.py')
+            preprocess=None
+            content=None
+            edge_readers.append('${2/head}')
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/assignment_pre_process.py')) as pre:
-            pre_content = pre.read()
-            if is_area_chair:
-                pre_content = pre_content.replace("REVIEW_NAME_STRING = 'review_name'", "REVIEW_NAME_STRING = 'meta_review_name'")
-                pre_content = pre_content.replace("REVIEWERS_ANON_NAME_STRING = 'reviewers_anon_name'", "REVIEWERS_ANON_NAME_STRING = 'area_chairs_anon_name'")
-            with open(os.path.join(os.path.dirname(__file__), 'process/assignment_post_process.py')) as post:
-                post_content = post.read()
-                post_content = post_content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + paper_group_id + "'")
-                post_content = post_content.replace("GROUP_NAME = ''", "GROUP_NAME = '" + group_name + "'")
-                post_content = post_content.replace("GROUP_ID = ''", "GROUP_ID = '" + committee_id + "'")
-                if venue.use_senior_area_chairs and is_area_chair:
-                    post_content = post_content.replace("SYNC_SAC_ID = ''", "SYNC_SAC_ID = '" + venue.get_senior_area_chairs_id(number='{number}') + "'")
-                    post_content = post_content.replace("SAC_ASSIGNMENT_INVITATION_ID = ''", "SAC_ASSIGNMENT_INVITATION_ID = '" + venue.get_assignment_id(venue.get_senior_area_chairs_id(), deployed=True) + "'")
-                invitation.process=post_content
-                invitation.preprocess=pre_content
-                invitation.signatures=[venue.get_program_chairs_id()] ## Program Chairs can see the reviews
-                return self.save_invitation(invitation)
+        edge_readers.append('${2/tail}')
+
+        invitation = Invitation(
+            id = assignment_invitation_id,
+            invitees = edge_invitees,
+            readers = invitation_readers,
+            writers = [venue_id],
+            signatures = [venue.get_program_chairs_id()],
+            process=process,
+            preprocess=preprocess,
+            content=content,
+            edge = {
+                'id': {
+                    'param': {
+                        'withInvitation': assignment_invitation_id,
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers':  edge_readers,
+                'nonreaders': edge_nonreaders,
+                'writers': edge_writers,
+                'signatures': {
+                    'param': { 
+                        'regex': '|'.join(edge_signatures),
+                        'default': [venue.get_program_chairs_id()]
+                    }
+                },
+                'head': edge_head,
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'inGroup': committee_id
+                    }                
+                },
+                'weight': {
+                    'param': {
+                        'minimum': -1
+                    }            
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)            
 
     def set_expertise_selection_invitations(self):
 
@@ -2063,6 +2288,13 @@ class InvitationBuilder(object):
                     'ddate': {
                         'param': {
                             # 'type': 'date',
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'cdate': {
+                        'param': {
                             'range': [ 0, 9999999999999 ],
                             'optional': True,
                             'deletable': True
@@ -2243,7 +2475,7 @@ class InvitationBuilder(object):
 
         process_file='process/simple_paper_recruitment_process.py' if proposed else 'process/paper_recruitment_process.py'
         process_content = self.get_process_content(process_file)
-        preprocess_content = self.get_process_content('process/paper_recruitment_pre_process.py')
+        preprocess_content = self.get_process_content('process/paper_recruitment_pre_process.js')
 
         edge_readers = []
         edge_writers = []
@@ -2463,4 +2695,258 @@ class InvitationBuilder(object):
         )
 
         self.save_invitation(invitation, replacement=False)
-        return invitation        
+        return invitation
+
+    def set_ethics_paper_groups_invitation(self):
+
+        venue = self.venue
+        venue_id = self.venue_id
+        ethics_stage = venue.ethics_review_stage
+        invitation_id = venue.get_invitation_id(f'{venue.submission_stage.name}_Group', prefix=self.venue.get_ethics_reviewers_id())
+
+        invitation = Invitation(id=invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            cdate=tools.datetime_millis(datetime.datetime.utcnow()),
+            date_processes=[{
+                'dates': ["#{4/cdate}", self.update_date_string],
+                'script': self.group_edit_process
+            }],
+            content = {
+                'source': {
+                    'value': 'flagged_for_ethics_review'
+                }
+            },
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'group': {
+                    'id': venue.get_ethics_reviewers_id(number='${2/content/noteNumber/value}'),
+                    'readers': [venue_id,
+                                venue.get_ethics_reviewers_id(number='${3/content/noteNumber/value}'),
+                                venue.get_ethics_chairs_id()],
+                    'nonreaders': [venue.get_authors_id('${3/content/noteNumber/value}')],
+                    'deanonymizers': [venue_id, venue.get_ethics_chairs_id()],
+                    'writers': [venue_id],
+                    'signatures': [venue_id],
+                    'signatories': [venue_id],
+                    'anonids': True
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
+    
+    def set_ethics_review_invitation(self):
+
+        venue_id = self.venue_id
+        ethics_review_stage = self.venue.ethics_review_stage
+        ethics_review_invitation_id = self.venue.get_invitation_id(ethics_review_stage.name)
+        ethics_review_cdate = tools.datetime_millis(ethics_review_stage.start_date if ethics_review_stage.start_date else datetime.datetime.utcnow())
+        ethics_review_duedate = tools.datetime_millis(ethics_review_stage.due_date) if ethics_review_stage.due_date else None
+        ethics_review_expdate = tools.datetime_millis(ethics_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN))  if ethics_review_stage.due_date else None
+        
+        content = ethics_review_stage.get_content(api_version='2', conference=self.venue)
+
+        invitation = Invitation(id=ethics_review_invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            cdate=ethics_review_cdate,
+            date_processes=[{ 
+                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                'script': self.invitation_edit_process              
+            }],
+            content={
+                'source': {
+                    'value': 'flagged_for_ethics_review'
+                },
+                'ethics_review_process_script': {
+                    'value': self.get_process_content('process/ethics_review_process.py')
+                }
+            },
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': { 
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer' 
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string' 
+                            }
+                        }
+                    }
+                },
+                'replacement': True,
+                'invitation': {
+                    'id': self.venue.get_invitation_id(ethics_review_stage.name, '${2/content/noteNumber/value}'),
+                    'signatures': [ venue_id ],
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'invitees': [venue_id, self.venue.get_ethics_reviewers_id(number='${3/content/noteNumber/value}')],
+                    'maxReplies': 1,
+                    'cdate': ethics_review_cdate,
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['ethics_review_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
+                    'edit': {
+                        'signatures': { 'param': { 'regex': ethics_review_stage.get_signatures(self.venue, '${5/content/noteNumber/value}') }},
+                        'readers': ethics_review_stage.get_readers(self.venue, '${4/content/noteNumber/value}', '${2/signatures}'),
+                        'nonreaders': ethics_review_stage.get_nonreaders(self.venue, '${4/content/noteNumber/value}'),
+                        'writers': [venue_id],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': self.venue.get_invitation_id(ethics_review_stage.name, '${6/content/noteNumber/value}'),
+                                    'optional': True
+                                }
+                            },
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': '${4/content/noteId/value}',
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True                                 
+                                }
+                            },
+                            'signatures': ['${3/signatures}'],
+                            'readers': ethics_review_stage.get_readers(self.venue, '${5/content/noteNumber/value}', '${3/signatures}'),
+                            'nonreaders': ethics_review_stage.get_nonreaders(self.venue, '${5/content/noteNumber/value}'),
+                            'writers': [venue_id, '${3/signatures}'],
+                            'content': content
+                        }
+                    }
+                }
+
+            }
+        )
+
+        if ethics_review_duedate:
+            invitation.edit['invitation']['duedate'] = ethics_review_duedate
+
+        if ethics_review_expdate:
+            invitation.edit['invitation']['expdate'] = ethics_review_expdate
+
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
+
+    def set_ethics_stage_invitation(self):
+        venue_id = self.venue_id
+        ethics_review_stage = self.venue.ethics_review_stage
+        ethics_stage_name = ethics_review_stage.name
+        ethics_stage_id = f'{venue_id}/-/{ethics_stage_name}_Flag'
+        submission_id = self.venue.submission_stage.get_submission_id(self.venue)
+
+        flag_readers = [venue_id, self.venue.get_ethics_chairs_id(), self.venue.get_ethics_reviewers_id('${{4/id}/number}')]
+        if self.venue.use_senior_area_chairs:
+            flag_readers.append(self.venue.get_senior_area_chairs_id('${{4/id}/number}'))
+        if self.venue.use_area_chairs:
+            flag_readers.append(self.venue.get_area_chairs_id('${{4/id}/number}'))
+        flag_readers.append(self.venue.get_reviewers_id('${{4/id}/number}'))
+
+        ethics_stage_invitation = Invitation(
+            id=ethics_stage_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = ['everyone'],
+            writers = [venue_id],
+            content = {
+                'review_readers': {
+                    'value': self.venue.review_stage.get_readers(self.venue, '{number}')
+                },
+                'comment_readers': {
+                    'value': self.venue.comment_stage.get_readers(self.venue, '{number}')
+                },
+                'readers_selection': {
+                    'value': self.venue.comment_stage.reader_selection
+                }
+            },
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': submission_id,
+                            'optional': True
+                        }
+                    },
+                    'signatures': [ self.venue.get_authors_id('${{2/id}/number}') ],
+                    'writers': [venue_id, self.venue.get_authors_id('${{2/id}/number}')],
+                    'content': {
+                        'flagged_for_ethics_review': {
+                            'value': {
+                                'param': {
+                                    'type': 'boolean',
+                                    'enum': [True, False]
+                                }
+                            },
+                            'readers': flag_readers
+                        },
+                        'ethics_comments': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'markdown': True,
+                                    'input': 'textarea',
+                                    'optional': True
+                                }
+                            },
+                            'readers': [venue_id, self.venue.get_ethics_chairs_id(), self.venue.get_ethics_reviewers_id('${{4/id}/number}')]
+                        }
+                    }
+                }
+            },
+            process=self.get_process_content('process/ethics_flag_process.py')
+        )
+
+        if 'everyone' not in self.venue.submission_stage.get_readers(self.venue, '${{2/id}/number}'):
+            ethics_stage_invitation.edit['note']['readers'] = {
+                'param': {
+                    'const': {
+                        'append': [self.venue.get_ethics_reviewers_id('${{3/id}/number}')]
+                    }
+                }
+            }
+
+        self.save_invitation(ethics_stage_invitation, replacement=False)
+        return ethics_stage_invitation

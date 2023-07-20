@@ -38,6 +38,11 @@ def process(client, edit, invitation):
     print('Enable Camera Ready Revision')
     journal.invitation_builder.set_note_camera_ready_revision_invitation(submission, journal.get_due_date(weeks = journal.get_camera_ready_period_length()))
 
+    ## Expire reviewer tasks
+    print('Expire reviewer tasks')
+    journal.invitation_builder.expire_invitation(journal.get_review_id(submission.number))
+    journal.invitation_builder.expire_invitation(journal.get_reviewer_recommendation_id(submission.number))
+
     ## Send email to authors
     print('Send email to authors')
     if decision.content['recommendation']['value'] == 'Accept as is':

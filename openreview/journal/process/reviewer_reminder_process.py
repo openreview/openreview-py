@@ -75,6 +75,7 @@ The {journal.short_name} Editors-in-Chief
         for profile in profiles:
             client.post_message(
                 recipients=[journal.get_editors_in_chief_id()],
+                ignoreRecipients=[journal.get_authors_id(number=submission.number)],
                 subject=f'''[{journal.short_name}] Reviewer is late in performing a task for assigned paper {submission.number}: {submission.content['title']['value']}''',
                 message=f'''Hi {{{{fullname}}}},
 

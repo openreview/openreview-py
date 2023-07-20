@@ -231,12 +231,12 @@ class Matching(object):
         invitation = self.client.post_invitation(invitation)
         return invitation
 
-    def _build_conflicts(self, submissions, user_profiles, get_profile_info):
+    def _build_conflicts(self, submissions, user_profiles, get_profile_info, compute_conflicts_n_years):
         if self.alternate_matching_group:
             other_matching_group = self.client.get_group(self.alternate_matching_group)
             other_matching_profiles = tools.get_profiles(self.client, other_matching_group.members)
             return self._build_profile_conflicts(other_matching_profiles, user_profiles)
-        return self._build_note_conflicts(submissions, user_profiles, get_profile_info)
+        return self._build_note_conflicts(submissions, user_profiles, get_profile_info, compute_conflicts_n_years)
 
     def append_note_conflicts(self, profile_id, build_conflicts=None):
         '''
@@ -249,7 +249,7 @@ class Matching(object):
         # Check for existing OpenReview profile - perform dummy check
         if user_profiles[0].active == None:
             raise openreview.OpenReviewException('No profile exists')
-        get_profile_info = openreview.tools.get_neurips_profile_info if build_conflicts == 'neurips' else openreview.tools.get_profile_info
+        get_profile_info = openreview.tools.get_neurips_profile_info if build_conflicts == 'NeurIPS' else openreview.tools.get_profile_info
         info_function = openreview.tools.info_function_builder(get_profile_info)
         user_profiles_info = [info_function(p) for p in user_profiles]
 
@@ -322,14 +322,14 @@ class Matching(object):
         return invitation
 
 
-    def _build_note_conflicts(self, submissions, user_profiles, get_profile_info):
+    def _build_note_conflicts(self, submissions, user_profiles, get_profile_info, compute_conflicts_n_years=None):
         '''
         Create conflict edges between the given Notes and Profiles
         '''
         info_function = tools.info_function_builder(get_profile_info)
         invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id))
         # Get profile info from the match group
-        user_profiles_info = [info_function(p) for p in user_profiles]
+        user_profiles_info = [info_function(p, compute_conflicts_n_years) for p in user_profiles]
         # Get profile info from all the authors
         all_authorids = []
         for submission in submissions:
@@ -355,7 +355,7 @@ class Matching(object):
             author_publications = set()
             for authorid in authorids:
                 if author_profile_by_id.get(authorid):
-                    author_info = info_function(author_profile_by_id[authorid])
+                    author_info = info_function(author_profile_by_id[authorid], compute_conflicts_n_years)
                     author_domains.update(author_info['domains'])
                     author_emails.update(author_info['emails'])
                     author_relations.update(author_info['relations'])
@@ -889,14 +889,14 @@ class Matching(object):
             })
         self.client.post_invitation(config_inv)
 
-    def compute_alternate_conflicts(self, assignment_title, conflict_label='Conflict', build_conflicts='neurips'):
+    def compute_alternate_conflicts(self, assignment_title, conflict_label='Conflict', build_conflicts='NeurIPS'):
         if not self.alternate_matching_group:
             raise openreview.OpenReviewException('No alternate group selected')
 
         ## Compute conflicts for the matching group
         submissions = self.conference.client.get_all_notes(invitation=self.conference.get_blind_submission_id(), details='original')
         user_profiles = tools.get_profiles(self.client, self.match_group.members, with_publications=build_conflicts)
-        self._build_note_conflicts(submissions, user_profiles, openreview.tools.get_neurips_profile_info if build_conflicts == 'neurips' else openreview.tools.get_profile_info)
+        self._build_note_conflicts(submissions, user_profiles, openreview.tools.get_neurips_profile_info if build_conflicts == 'NeurIPS' else openreview.tools.get_profile_info)
 
         ## Get proposed assignments and conflicts from both groups: match and alternate groups
         proposed_assignment_edges =  { e['id']['head']: [v['tail'] for v in e['values']][0] for e in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
@@ -929,7 +929,7 @@ class Matching(object):
         print(f'Poster {len(edges)} alternate conflict edges')
     
     
-    def setup(self, compute_affinity_scores=False, tpms_score_file=None, elmo_score_file=None, build_conflicts=None):
+    def setup(self, compute_affinity_scores=False, tpms_score_file=None, elmo_score_file=None, build_conflicts=None, compute_conflicts_n_years=None):
         '''
         Build all the invitations and edges necessary to run a match
         '''
@@ -1061,7 +1061,7 @@ class Matching(object):
                 }
 
         if build_conflicts:
-            self._build_conflicts(submissions, user_profiles, openreview.tools.get_neurips_profile_info if build_conflicts == 'neurips' else openreview.tools.get_profile_info)
+            self._build_conflicts(submissions, user_profiles, openreview.tools.get_neurips_profile_info if build_conflicts == 'NeurIPS' else openreview.tools.get_profile_info, compute_conflicts_n_years)
 
         self._build_config_invitation(score_spec)
         return matching_status

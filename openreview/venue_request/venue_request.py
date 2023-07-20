@@ -18,27 +18,33 @@ class VenueStages():
 
     def setup_venue_revision(self):
 
-        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Paper Matching', 'reviewer_identity', 'area_chair_identity', 'senior_area_chair_identity', 'submissions_visibility', 'submission_readers', 'api_version', 'secondary_area_chairs', 'force_profiles_only']
+        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'reviewer_identity', 'area_chair_identity', 'senior_area_chair_identity', 'submissions_visibility', 'submission_readers', 'api_version', 'secondary_area_chairs', 'force_profiles_only']
         revision_content = {key: self.venue_request.request_content[key] for key in self.venue_request.request_content if key not in remove_fields}
         revision_content['Additional Submission Options'] = {
             'order': 18,
             'value-dict': {},
             'description': 'Configure additional options in the submission form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
         }
+        revision_content['hide_fields'] = {
+                'values-regex': '.*',
+                'required': False,
+                'description': 'Comma separated values of submission fields to be hidden, author names are already hidden. These fields will be hidden from all readers of the submissions, except for program chairs and paper authors. Write the field name exactly as it appears in the submission invitation. For reference, please see: https://docs.openreview.net/reference/default-forms/default-submission-form',
+                'order': 19
+        }
         revision_content['remove_submission_options'] = {
-            'order': 19,
+            'order': 20,
             'values-dropdown':  ['abstract','keywords', 'pdf', 'TL;DR'],
             'description': 'Fields to remove from the default form: abstract, keywords, pdf, TL;DR'
         }
         revision_content['submission_email'] = {
-            'order': 20,
+            'order': 21,
             'description': 'Please review the email sent to authors when a submission is posted. Make sure not to remove the parenthesized tokens.',
             'default': '''Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}}''',
             'value-regex':'[\\S\\s]{1,10000}',
             'hidden': True
         }
         revision_content['homepage_override'] = {
-            'order': 21,
+            'order': 22,
             'value-dict': {},
             'description': 'Override homepage defaults: title, subtitle, deadline, date, website, location. Valid JSON expected.'
         }
@@ -90,6 +96,8 @@ class VenueStages():
                 'value-regex': '[0-9]*'
             }
         }
+        with open(os.path.join(os.path.dirname(__file__), 'process/bid_stage_pre_process.py')) as pre:
+            pre_process_file_content = pre.read()
 
         return self.venue_request.client.post_invitation(openreview.Invitation(
             id='{}/-/Bid_Stage'.format(self.venue_request.support_group.id),
@@ -99,6 +107,7 @@ class VenueStages():
             invitees=['everyone'],
             multiReply=True,
             process_string=self.file_content,
+            preprocess=pre_process_file_content,
             reply={
                 'readers': {
                     'values-copied': [
@@ -353,6 +362,7 @@ class VenueStages():
                     'Ethics reviews should be immediately revealed to all reviewers and ethics reviewers',
                     'Ethics reviews should be immediately revealed to the paper\'s reviewers and ethics reviewers',
                     'Ethics reviews should be immediately revealed to the paper\'s ethics reviewers',
+                    'Ethics reviews should be immediately revealed to the paper\'s ethics reviewers who have already submitted their ethics review',
                     'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review'
                 ],
                 'required': True,
@@ -362,7 +372,8 @@ class VenueStages():
             'ethics_review_submissions': {
                 'order' : 6,
                 'value-regex': '.*',
-                'required': True,
+                'required': False,
+                'hidden': True,
                 'description': 'Comma separated values of submission numbers that need ethics reviews.'
             },
             'additional_ethics_review_form_options': {
@@ -545,19 +556,20 @@ class VenueStages():
             'recommendation_options': {
                 'description': 'What are the meta review recommendation options (provide comma separated values, e.g. Accept (Best Paper), Accept, Reject)? Leave empty for default options - Accept (Oral), Accept (Poster), Reject',
                 'value-regex': '.*',
+                'hidden': True,
                 'order': 29
             },
             'additional_meta_review_form_options': {
                 'order' : 30,
                 'value-dict': {},
                 'required': False,
-                'description': 'Configure additional options in the meta review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
+                'description': 'Configure additional options in the meta review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected. For more information on the default meta review form, please refer to our FAQ: https://openreview.net/faq#question-default-forms'
             },
             'remove_meta_review_form_options': {
                 'order': 31,
-                'value-regex': r'^[^,]+(,\s*[^,]*)*$',
+                'values-dropdown': ['recommendation', 'confidence'],
                 'required': False,
-                'description': 'Comma separated list of fields (metareview, recommendation, confidence) that you want removed from the meta review form. For more information on the default meta review form, please refer to our FAQ: https://openreview.net/faq#question-default-forms'
+                'description': 'Select which fields should be removed from the meta review form. For more information on the default meta review form, please refer to our FAQ: https://openreview.net/faq#question-default-forms'
             }
         }
 
@@ -1181,15 +1193,14 @@ class VenueRequest():
                 'value-regex': '.*',
                 'order': 16
             },
-            'Paper Matching': {
-                'description': 'Choose options for assigning papers to reviewers (and ACs, if present). If using the OpenReview Paper Matching System, see the top of the page for a description of each feature type. If you want to make manual assignments, do not select any options.',
-                'values-checkbox': [
-                    'Reviewer Bid Scores',
-                    'Reviewer Recommendation Scores',
-                    'OpenReview Affinity'
+            'submission_reviewer_assignment': {
+                'description': 'How do you want to assign reviewers to submissions?. Automatic assignment will assign reviewers to submissions based on their expertise and/or bids. Manual assignment will allow you to assign reviewers to submissions manually.',
+                'value-radio': [
+                    'Automatic',
+                    'Manual'
                 ],
                 'order': 17,
-                'required': False
+                'required': True
             },
             'Author and Reviewer Anonymity': {
                 'description': 'What policy best describes your anonymity policy? (If none of the options apply then please describe your request below)',
@@ -1279,25 +1290,19 @@ class VenueRequest():
                 'default': ['Program chairs and paper authors only'],
                 'required': True
             },
-            'hide_fields': {
-                'values-regex': '.*',
-                'required': False,
-                'description': 'Comma separated values of submission fields to be hidden, author names are already hidden. These fields will be hidden from all readers of the submissions, except for program chairs and paper authors.',
-                'order': 25
-            },
             'submissions_visibility': {
                 'description': 'This option is only available for non-blind, public submissions. Double-blind submissions will be released to their respective readers after the submission deadline.',
                 'value-radio': [
                     'Yes, submissions should be immediately revealed to the public.',
                     'No, wait until the submission deadline has passed to make them public.'],
                 'default': 'No, wait until the submission deadline has passed to make them public.',
-                'order': 26
+                'order': 25
             },
             'withdraw_submission_expiration': {
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'description': 'By when authors can withdraw their submission? Please specify the expiration date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
                 'required': False,
-                'order': 27
+                'order': 26
             },
             'withdrawn_submissions_visibility': {
                 'description': 'Would you like to make withdrawn submissions public?',
@@ -1305,7 +1310,7 @@ class VenueRequest():
                     'Yes, withdrawn submissions should be made public.',
                     'No, withdrawn submissions should not be made public.'],
                 'default': 'No, withdrawn submissions should not be made public.',
-                'order': 28
+                'order': 27
             },
             'withdrawn_submissions_author_anonymity': {
                 'description': 'Do you want the author indentities revealed for withdrawn papers? Note: Author identities can only be anonymized for Double blind submissions.',
@@ -1313,7 +1318,7 @@ class VenueRequest():
                     'Yes, author identities of withdrawn submissions should be revealed.',
                     'No, author identities of withdrawn submissions should not be revealed.'],
                 'default': 'No, author identities of withdrawn submissions should not be revealed.',
-                'order': 29
+                'order': 28
             },
             'email_pcs_for_withdrawn_submissions': {
                 'description': 'Do you want email notifications to PCs when a submission is withdrawn?',
@@ -1322,7 +1327,7 @@ class VenueRequest():
                     'No, do not email PCs.'
                 ],
                 'default': 'No, do not email PCs.',
-                'order': 30
+                'order': 29
             },
             'desk_rejected_submissions_visibility': {
                 'description': 'Would you like to make desk rejected submissions public?',
@@ -1330,7 +1335,7 @@ class VenueRequest():
                     'Yes, desk rejected submissions should be made public.',
                     'No, desk rejected submissions should not be made public.'],
                 'default': 'No, desk rejected submissions should not be made public.',
-                'order': 31
+                'order': 30
             },
             'desk_rejected_submissions_author_anonymity': {
                 'description': 'Do you want the author indentities revealed for desk rejected submissions? Note: Author identities can only be anonymized for Double blind submissions.',
@@ -1338,7 +1343,7 @@ class VenueRequest():
                     'Yes, author identities of desk rejected submissions should be revealed.',
                     'No, author identities of desk rejected submissions should not be revealed.'],
                 'default': 'No, author identities of desk rejected submissions should not be revealed.',
-                'order': 32
+                'order': 31
             },
             'email_pcs_for_desk_rejected_submissions': {
                 'description': 'Do you want email notifications to PCs when a submission is desk-rejected?',
@@ -1347,12 +1352,12 @@ class VenueRequest():
                     'No, do not email PCs.'
                 ],
                 'default': 'No, do not email PCs.',
-                'order': 33
+                'order': 32
             },
             'Expected Submissions': {
                 'value-regex': '[0-9]*',
                 'description': 'How many submissions are expected in this venue? Please provide a number.',
-                'order': 34,
+                'order': 33,
                 'required': True
             },
             'email_pcs_for_new_submissions': {
@@ -1362,71 +1367,71 @@ class VenueRequest():
                     'No, do not email PCs.'
                 ],
                 'default': 'No, do not email PCs.',
-                'order': 35
+                'order': 34
             },
             'Other Important Information': {
                 'value-regex': '[\\S\\s]{1,5000}',
                 'description': 'Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
-                'order': 36
+                'order': 35
             },
             'How did you hear about us?': {
                 'value-regex': '.*',
                 'description': 'Please briefly describe how you heard about OpenReview.',
-                'order': 37
+                'order': 36
             },
             'submission_name': {
                 'value-regex': '\S*',
                 'description': 'Enter what you would like to have displayed in the submission button for your venue. Use underscores to represent spaces',
                 'default': 'Submission',
-                'order': 38,
+                'order': 37,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'reviewer_roles': {
                 'values-regex': '.*',
                 'default': ['Reviewers'],
-                'order': 39,
+                'order': 38,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'area_chair_roles': {
                 'values-regex': '.*',
                 'default': ['Area_Chairs'],
-                'order': 40,
+                'order': 39,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'senior_area_chair_roles': {
                 'values-regex': '.*',
                 'default': ['Senior_Area_Chairs'],
-                'order': 41,
+                'order': 40,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'use_recruitment_template': {
                 'value-radio': ['Yes', 'No'],
                 'default': 'No',
-                'order': 42,
+                'order': 41,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'api_version': {
-                'description': 'Which API version would you like to use? API 2 is still in the experimental phase, contact us if you would like more information.',
+                'description': 'Which API version would you like to use? All new venues should use the latest API version, unless previously discussed. If you are unsure, please select the latest version.',
                 'value-radio': ['1', '2'],
-                'default': '1',
-                'order': 43
+                'default': '2',
+                'order': 42
             },
             'include_expertise_selection': {
                 'value-radio': ['Yes', 'No'],
                 'default': 'No',
-                'order': 44,
+                'order': 43,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'submission_deadline_author_reorder': {
                 'value-radio': ['Yes', 'No'],
                 'default': 'No',
-                'order': 45,
+                'order': 44,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             }
@@ -1503,7 +1508,7 @@ class VenueRequest():
                             'order': 1,
                             'value-regex': '.{1,500}',
                             'description': 'Brief summary of your comment.',
-                            'required': True
+                            'required': False
                         },
                         'comment': {
                             'order': 2,
@@ -1572,9 +1577,9 @@ class VenueRequest():
                 'description': 'Force creating blind submissions if conference is double blind'
             },
             'hide_fields': {
-                'values-regex': '.*',
+                'values-dropdown': ['keywords', 'TLDR', 'abstract', 'pdf'] ,#default submission field that can be hidden
                 'required': False,
-                'description': 'Comma separated values of submission fields to be hidden, author names are already hidden. These fields will be hidden from all readers of the submissions, except for program chairs and paper authors.'
+                'description': 'Select which submission fields should be hidden if conference is double blind. Author names are already hidden. These fields will be hidden from all readers of the submissions, except for program chairs and paper authors.'
             }
         }
 
@@ -1934,21 +1939,26 @@ If you would like to change your decision, please follow the link in the previou
                 'order': 2
             },
             'compute_conflicts': {
-                'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. By default, conflicts will be computed.',
-                'value-radio': ['Yes', 'No'],
-                'default': 'Yes',
+                'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. Select the conflict policy below or "No" if you don\'t want to compute conflicts.',
+                'value-radio': ['Default', 'NeurIPS', 'No'],
                 'required': True,
                 'order': 3
             },
+            'compute_conflicts_N_years': {
+                'description': 'If conflict policy was selected, enter the number of the years we should use to get the information from the OpenReview profile in order to detect conflicts. Leave it empty if you want to use all the available information.',
+                'value-regex': '[0-9]+',
+                'required': False,
+                'order': 4
+            },            
             'compute_affinity_scores': {
                 'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically.',
-                'order': 4,
+                'order': 5,
                 'value-radio': ['Yes', 'No'],
                 'required': True,
             },
             'upload_affinity_scores': {
                 'description': 'If you would like to use your own affinity scores, upload a CSV file containing affinity scores for reviewer-paper pairs (one reviewer-paper pair per line in the format: submission_id, reviewer_id, affinity_score)',
-                'order': 5,
+                'order': 6,
                 'value-file': {
                     'fileTypes': ['csv'],
                     'size': 50
@@ -2005,7 +2015,7 @@ If you would like to change your decision, please follow the link in the previou
                 'order': 3
             },
             'error': {
-                'value-regex': '[\\S\\s]{0,20000}',
+                'value-regex': '[\\S\\s]{0,200000}',
                 'description': 'Error due to which matching setup failed',
                 'required': False,
                 'markdown': True,

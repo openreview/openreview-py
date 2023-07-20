@@ -116,21 +116,24 @@ class GroupBuilder(object):
         venue_id = self.venue_id
         groups = self.build_groups(venue_id)
         venue_group = groups[-1]
+        if venue_group.content is None:
+            venue_group.content = {}
 
         if venue_group.web is None:
-
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
-                content = f.read()
-                self.post_group(openreview.api.Group(
-                    id = venue_group.id,
-                    web = content
-                ))
 
             self.client_v1.add_members_to_group('venues', venue_id)
             root_id = groups[0].id
             if root_id == root_id.lower():
                 root_id = groups[1].id        
             self.client_v1.add_members_to_group('host', root_id)
+
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
+                content = f.read()
+                self.post_group(openreview.api.Group(
+                    id = venue_group.id,
+                    web = content,
+                    host = root_id
+                ))
 
         ## Update settings
         content = {
@@ -151,10 +154,14 @@ class GroupBuilder(object):
             'subtitle': { 'value': self.venue.short_name if self.venue.short_name else '' },
             'website': { 'value': self.venue.website if self.venue.website else '' },
             'contact': { 'value': self.venue.contact if self.venue.contact else '' },
+            'location': { 'value': self.venue.location if self.venue.location else '' },
+            'instructions': { 'value': self.venue.instructions if self.venue.instructions else '' },
+            'start_date': { 'value': self.venue.start_date if self.venue.start_date else '' },
+            'date': { 'value': self.venue.date if self.venue.date else '' },
             'program_chairs_id': { 'value': self.venue.get_program_chairs_id() },
             'reviewers_id': { 'value': self.venue.get_reviewers_id() },
             'reviewers_name': { 'value': self.venue.reviewers_name },
-            'reviewers_anon_name': { 'value': 'Reviewer_' },
+            'reviewers_anon_name': { 'value': self.venue.get_anon_reviewers_name() },
             'reviewers_submitted_name': { 'value': 'Submitted' },
             'reviewers_custom_max_papers_id': { 'value': self.venue.get_custom_max_papers_id(self.venue.get_reviewers_id()) },
             'reviewers_affinity_score_id': { 'value': self.venue.get_affinity_score_id(self.venue.get_reviewers_id()) },
@@ -162,7 +169,6 @@ class GroupBuilder(object):
             'reviewers_assignment_id': { 'value': self.venue.get_assignment_id(self.venue.get_reviewers_id(), deployed=True) },
             'reviewers_invite_assignment_id': { 'value': self.venue.get_assignment_id(self.venue.get_reviewers_id(), invite=True) },
             'reviewers_proposed_assignment_id': { 'value': self.venue.get_assignment_id(self.venue.get_reviewers_id()) },
-            'enable_reviewers_reassignment': { 'value': self.venue.enable_reviewers_reassignment },
             'reviewers_recruitment_id': { 'value': self.venue.get_recruitment_id(self.venue.get_reviewers_id()) },
             'authors_id': { 'value': self.venue.get_authors_id() },
             'authors_accepted_id': { 'value': f'{self.venue.get_authors_id()}/Accepted' },
@@ -173,25 +179,24 @@ class GroupBuilder(object):
             'withdraw_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
             'withdrawal_name': { 'value': 'Withdrawal'},
             'withdrawal_email_pcs': { 'value': self.venue.submission_stage.email_pcs_on_withdraw },
+            'withdrawn_submission_reveal_authors': { 'value': self.venue.submission_stage.withdrawn_submission_reveal_authors },
             'desk_rejected_submission_id': { 'value': self.venue.get_desk_rejected_id() },
             'desk_reject_expiration_id': { 'value': self.venue.get_invitation_id('Desk_Reject_Expiration') },
             'desk_rejection_reversion_id': { 'value': self.venue.get_invitation_id('Desk_Rejection_Reversion') },
             'desk_reject_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
             'desk_rejection_name': { 'value': 'Desk_Rejection'},
-            'conflict_policy': { 'value': self.venue.conflict_policy },
+            'desk_rejected_submission_reveal_authors': { 'value': self.venue.submission_stage.desk_rejected_submission_reveal_authors },
+            'automatic_reviewer_assignment': { 'value': self.venue.automatic_reviewer_assignment },
             'decision_heading_map': { 'value': self.venue.decision_heading_map }
         }
 
         if self.venue.submission_stage.subject_areas:
             content['subject_areas'] = { 'value': self.venue.submission_stage.subject_areas }
 
-        if self.venue.reviewers_proposed_assignment_title:
-            content['reviewers_proposed_assignment_title'] = { 'value': self.venue.reviewers_proposed_assignment_title }
-
         if self.venue.use_area_chairs:
             content['area_chairs_id'] = { 'value': self.venue.get_area_chairs_id() }
             content['area_chairs_name'] = { 'value': self.venue.area_chairs_name }
-            content['area_chairs_anon_name'] = { 'value': 'Area_Chair_' }
+            content['area_chairs_anon_name'] = { 'value': self.venue.get_anon_area_chairs_name() }
             content['area_chairs_custom_max_papers_id'] = { 'value': self.venue.get_custom_max_papers_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_affinity_score_id'] = { 'value': self.venue.get_affinity_score_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_conflict_id'] = { 'value': self.venue.get_conflict_score_id(self.venue.get_area_chairs_id()) }
@@ -236,7 +241,32 @@ class GroupBuilder(object):
         if self.venue.review_rebuttal_stage:
             content['rebuttal_email_pcs'] = { 'value': self.venue.review_rebuttal_stage.email_pcs}
 
-        update_content = self.get_update_content(venue_group.content if venue_group.content else {}, content)
+        if self.venue.ethics_review_stage:
+            content['ethics_chairs_id'] = { 'value': self.venue.get_ethics_chairs_id() }
+            content['ethics_chairs_name'] = { 'value': self.venue.ethics_chairs_name }
+            content['ethics_reviewers_name'] = { 'value': self.venue.ethics_reviewers_name }
+            content['ethics_review_name'] = { 'value': self.venue.ethics_review_stage.name }
+            content['anon_ethics_reviewer_name'] = { 'value': self.venue.anon_ethics_reviewers_name()}
+
+        if venue_group.content.get('enable_reviewers_reassignment'):
+            content['enable_reviewers_reassignment'] = venue_group.content.get('enable_reviewers_reassignment')
+
+        if venue_group.content.get('reviewers_proposed_assignment_title'):
+            content['reviewers_proposed_assignment_title'] = venue_group.content.get('reviewers_proposed_assignment_title')
+
+        if venue_group.content.get('reviewers_conflict_policy'):
+            content['reviewers_conflict_policy'] = venue_group.content.get('reviewers_conflict_policy')
+
+        if venue_group.content.get('reviewers_conflict_n_years'):
+            content['reviewers_conflict_n_years'] = venue_group.content.get('reviewers_conflict_n_years')
+
+        if venue_group.content.get('area_chairs_conflict_policy'):
+            content['area_chairs_conflict_policy'] = venue_group.content.get('area_chairs_conflict_policy')
+
+        if venue_group.content.get('area_chairs_conflict_n_years'):
+            content['area_chairs_conflict_n_years'] = venue_group.content.get('area_chairs_conflict_n_years')            
+
+        update_content = self.get_update_content(venue_group.content, content)
         if update_content:
             self.client.post_group_edit(
                 invitation = self.venue.get_meta_invitation_id(),
@@ -257,7 +287,7 @@ class GroupBuilder(object):
         pc_group = openreview.tools.get_group(self.client, pc_group_id)
         if not pc_group:
             pc_group=Group(id=pc_group_id,
-                            readers=['everyone'],
+                            readers=[venue_id],
                             writers=[venue_id, pc_group_id],
                             signatures=[venue_id],
                             signatories=[pc_group_id, venue_id],
@@ -379,7 +409,11 @@ class GroupBuilder(object):
                             signatories=[venue_id],
                             members=[]
                         )
-            self.post_group(ethics_reviewers_group)
+            
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/ethicsReviewersWebfield.js')) as f:
+                content = f.read()
+                ethics_reviewers_group.web = content
+                self.post_group(ethics_reviewers_group)
                 
     def create_ethics_chairs_group(self):
         venue_id = self.venue.id
@@ -392,8 +426,12 @@ class GroupBuilder(object):
                             signatures=[venue_id],
                             signatories=[venue_id],
                             members=[]
-                        )                
-            self.post_group(ethics_chairs_group)
+                        )
+
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/ethicsChairsWebfield.js')) as f:
+                content = f.read()
+                ethics_chairs_group.web = content
+                self.post_group(ethics_chairs_group)
 
     def create_publication_chair_group(self):
         venue_id = self.venue_id
@@ -514,4 +552,4 @@ class GroupBuilder(object):
                             ))
 
         if create_paper_groups:
-            tools.concurrent_requests(create_paper_group, venue.get_submissions(sort='number"asc'), desc='Creating paper groups')
+            tools.concurrent_requests(create_paper_group, venue.get_submissions(sort='number:asc'), desc='Creating paper groups')

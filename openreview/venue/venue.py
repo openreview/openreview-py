@@ -26,6 +26,10 @@ class Venue(object):
         self.short_name = 'TBD'
         self.website = None
         self.contact = None
+        self.location = None
+        self.instructions = None
+        self.start_date = 'TBD'
+        self.date = 'TBD'
         self.id = venue_id # get compatibility with conference
         self.program_chairs_name = 'Program_Chairs'
         self.reviewers_name = 'Reviewers'
@@ -63,9 +67,7 @@ class Venue(object):
         self.reviewer_identity_readers = []
         self.area_chair_identity_readers = []
         self.senior_area_chair_identity_readers = []
-        self.enable_reviewers_reassignment = False
-        self.reviewers_proposed_assignment_title = None
-        self.conflict_policy = 'default'
+        self.automatic_reviewer_assignment = False
         self.decision_heading_map = {}
         self.publication_chair = None
 
@@ -200,7 +202,9 @@ class Venue(object):
         return self.get_committee_id(committee_name) + '/Declined'
 
     ## Compatibility with Conference, refactor conference references to use get_reviewers_id
-    def get_anon_reviewer_id(self, number, anon_id):
+    def get_anon_reviewer_id(self, number, anon_id, name=None):
+        if name == self.ethics_reviewers_name:
+            return self.get_ethics_reviewers_id(number, True)
         return self.get_reviewers_id(number, True)
 
     def get_reviewers_name(self, pretty=True):
@@ -208,6 +212,14 @@ class Venue(object):
             name=self.reviewers_name.replace('_', ' ')
             return name[:-1] if name.endswith('s') else name
         return self.reviewers_name
+    
+    def get_anon_reviewers_name(self, pretty=True):
+        rev_name = self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
+        return rev_name + '_'    
+
+    def get_anon_reviewers_name(self, pretty=True):
+        rev_name = self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
+        return rev_name + '_'
 
     def get_ethics_reviewers_name(self, pretty=True):
         if pretty:
@@ -215,15 +227,23 @@ class Venue(object):
             return name[:-1] if name.endswith('s') else name
         return self.ethics_reviewers_name
 
+    def anon_ethics_reviewers_name(self, pretty=True):
+        rev_name = self.ethics_reviewers_name[:-1] if self.ethics_reviewers_name.endswith('s') else self.ethics_reviewers_name
+        return rev_name + '_'
+
     def get_area_chairs_name(self, pretty=True):
         if pretty:
             name=self.area_chairs_name.replace('_', ' ')
             return name[:-1] if name.endswith('s') else name
         return self.area_chairs_name
-    
+
+    def get_anon_area_chairs_name(self, pretty=True):
+        rev_name = self.area_chairs_name[:-1] if self.area_chairs_name.endswith('s') else self.area_chairs_name
+        return rev_name + '_' 
+
     def get_reviewers_id(self, number = None, anon=False, submitted=False):
-        rev_name = self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
-        reviewers_id = self.get_committee_id(f'{rev_name}_.*' if anon else self.reviewers_name, number)
+        rev_name = self.get_anon_reviewers_name()
+        reviewers_id = self.get_committee_id(f'{rev_name}.*' if anon else self.reviewers_name, number)
         if submitted:
             return reviewers_id + '/Submitted'
         return reviewers_id
@@ -238,8 +258,8 @@ class Venue(object):
         return self.get_committee_id(self.program_chairs_name)
 
     def get_area_chairs_id(self, number = None, anon=False):
-        ac_name = self.area_chairs_name[:-1] if self.area_chairs_name.endswith('s') else self.area_chairs_name
-        return self.get_committee_id(f'{ac_name}_.*' if anon else self.area_chairs_name, number)
+        ac_name = self.get_anon_area_chairs_name()
+        return self.get_committee_id(f'{ac_name}.*' if anon else self.area_chairs_name, number)
 
     ## Compatibility with Conference, refactor conference references to use get_area_chairs_id
     def get_anon_area_chair_id(self, number, anon_id):
@@ -252,7 +272,8 @@ class Venue(object):
         return self.get_committee_id(self.ethics_chairs_name, number)
 
     def get_ethics_reviewers_id(self, number = None, anon=False):
-        return self.get_committee_id('Ethics_Reviewer_.*' if anon else self.ethics_reviewers_name, number)
+        rev_name = self.anon_ethics_reviewers_name()
+        return self.get_committee_id(f'{rev_name}.*' if anon else self.ethics_reviewers_name, number)
 
     def get_withdrawal_id(self, number = None):
         return self.get_invitation_id(self.submission_stage.withdrawal_name, number)
@@ -307,7 +328,7 @@ class Venue(object):
             return f'{self.venue_id}/Rejected_{self.submission_stage.name}'
         return f'{self.venue_id}/Rejected_Submission' 
 
-    def get_submissions(self, venueid=None, accepted=False, sort=None, details=None):
+    def get_submissions(self, venueid=None, accepted=False, sort='tmdate', details=None):
         if accepted:
             accepted_notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort)
             if len(accepted_notes) == 0:
@@ -406,14 +427,16 @@ class Venue(object):
             self.invitation_builder.set_expertise_selection_invitations()
 
         if self.submission_stage.second_due_date:
+            stage = self.submission_stage
             submission_revision_stage = openreview.stages.SubmissionRevisionStage(name='Revision',
-                start_date=self.submission_stage.exp_date,
-                due_date=self.submission_stage.second_due_date,
-                additional_fields=self.submission_stage.additional_fields,
-                remove_fields=self.submission_stage.remove_fields,
+                start_date=stage.exp_date,
+                due_date=stage.second_due_date,
+                additional_fields=stage.second_deadline_additional_fields if stage.second_deadline_additional_fields else stage.additional_fields,
+                remove_fields=stage.second_deadline_remove_fields if stage.second_deadline_remove_fields else stage.remove_fields,
                 only_accepted=False,
                 multiReply=True,
-                allow_author_reorder=True
+                allow_author_reorder=stage.author_reorder_after_first_deadline
+            
             )
             self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)                        
 
@@ -482,6 +505,54 @@ class Venue(object):
 
     def create_custom_stage(self):
         return self.invitation_builder.set_custom_stage_invitation()
+    
+    def create_ethics_review_stage(self):
+
+        flag_invitation = self.invitation_builder.set_ethics_stage_invitation()
+        self.invitation_builder.set_ethics_paper_groups_invitation()
+        self.invitation_builder.set_review_invitation()
+        self.invitation_builder.set_ethics_review_invitation()
+
+        # setup paper matching
+        group = tools.get_group(self.client, id=self.get_ethics_reviewers_id())
+        if group and len(group.members) > 0:
+            self.setup_committee_matching(group.id, compute_affinity_scores=False, compute_conflicts=True)
+            self.invitation_builder.set_assignment_invitation(group.id)
+
+        flagged_submission_numbers = self.ethics_review_stage.submission_numbers
+        print(flagged_submission_numbers)
+        notes = self.get_submissions()
+        for note in notes:
+            if note.number in flagged_submission_numbers:
+                self.client.post_note_edit(
+                    invitation=flag_invitation.id,
+                    note=openreview.api.Note(
+                        id=note.id
+                    ),
+                    signatures=[self.venue_id]
+                )
+
+    def update_conflict_policies(self, committee_id, compute_conflicts, compute_conflicts_n_years):
+        content = {}
+        if committee_id == self.get_reviewers_id():
+            content['reviewers_conflict_policy'] = { 'value': compute_conflicts } if compute_conflicts else { 'delete': True}
+            content['reviewers_conflict_n_years'] = { 'value': compute_conflicts_n_years } if compute_conflicts_n_years else { 'delete': True}
+
+        if committee_id == self.get_area_chairs_id():
+            content['area_chairs_conflict_policy'] = { 'value': compute_conflicts } if compute_conflicts else { 'delete': True}
+            content['area_chairs_conflict_n_years'] = { 'value': compute_conflicts_n_years } if compute_conflicts_n_years else { 'delete': True}
+
+        if content:
+            self.client.post_group_edit(
+                invitation=self.get_meta_invitation_id(),
+                readers=[self.venue_id],
+                writers=[self.venue_id],
+                signatures=[self.venue_id],
+                group=openreview.api.Group(
+                    id=self.venue_id,
+                    content=content
+                )
+            )
 
     def post_decisions(self, decisions_file, api1_client):
 
@@ -583,7 +654,7 @@ Total Errors: {len(errors)}
                 content={
                     'title': 'Decision Upload Status',
                     'decision_posted': f'''{len(results)} Papers''',
-                    'error': error_status
+                    'error': error_status[:200000]
                 }
             )
 
@@ -606,7 +677,7 @@ Total Errors: {len(errors)}
         if submission_readers:
             self.submission_stage.readers = submission_readers
 
-        for submission in submissions:
+        def update_note(submission):
             decision_note = None
             if submission.details:
                 for reply in submission.details['directReplies']:
@@ -630,13 +701,34 @@ Total Errors: {len(errors)}
                 }
             }
 
-            if is_release_authors(note_accepted):
-                content['authorids'] = {
-                    'readers': { 'delete': True }
-                }
-                content['authors'] = {
-                    'readers': { 'delete': True }
-                }
+            anonymous = False
+            final_hide_fields = []
+            final_hide_fields.extend(hide_fields)
+
+            if not is_release_authors(note_accepted) and self.submission_stage.double_blind:
+                anonymous = True
+                final_hide_fields.extend(['authors', 'authorids'])
+
+            for field, value in submission.content.items():
+                if field in final_hide_fields:
+                    content[field] = {
+                        'readers': [venue_id, self.get_authors_id(submission.number)]
+                    }
+                if field not in final_hide_fields and 'readers' in value:
+                    content[field] = {
+                        'readers': { 'delete': True }
+                    }
+
+            content['_bibtex'] = {
+                'value': tools.generate_bibtex(
+                    note=submission,
+                    venue_fullname=self.name,
+                    year=str(datetime.datetime.utcnow().year),
+                    url_forum=submission.forum,
+                    paper_status = 'accepted' if note_accepted else 'rejected',
+                    anonymous=anonymous
+                )
+            }
 
             self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
                 readers=[venue_id, self.get_authors_id(submission.number)],
@@ -649,9 +741,10 @@ Total Errors: {len(errors)}
                         pdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if (submission.pdate is None and note_accepted) else None
                     )
                 )
+        tools.concurrent_requests(update_note, submissions)
 
     def send_decision_notifications(self, decision_options, messages):
-        paper_notes = self.get_submissions(venueid=self.venue_id, details='directReplies')
+        paper_notes = self.get_submissions(details='directReplies')
 
         def send_notification(note):
             decision_note = None
@@ -672,14 +765,14 @@ Total Errors: {len(errors)}
 
         tools.concurrent_requests(send_notification, paper_notes)
 
-    def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, alternate_matching_group=None):
+    def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None):
         if committee_id is None:
             committee_id=self.get_reviewers_id()
         if self.use_senior_area_chairs and committee_id == self.get_senior_area_chairs_id() and not alternate_matching_group:
             alternate_matching_group = self.get_area_chairs_id()
         venue_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
 
-        return venue_matching.setup(compute_affinity_scores, self.conflict_policy if compute_conflicts else False)
+        return venue_matching.setup(compute_affinity_scores, compute_conflicts, compute_conflicts_n_years)
 
     def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
 
@@ -701,7 +794,8 @@ Total Errors: {len(errors)}
             edge.label='Conflict Detected'
             edge.tail=user_profile.id
             edge.readers=None
-            edge.writers=None            
+            edge.writers=None
+            edge.cdate = None            
             client.post_edge(edge)
 
             ## Send email to reviewer
@@ -734,6 +828,7 @@ OpenReview Team'''
             edge.tail=user_profile.id
             edge.readers=None
             edge.writers=None
+            edge.cdate = None
             client.post_edge(edge)
 
             short_phrase = venue_group.content['subtitle']['value']
@@ -839,14 +934,14 @@ OpenReview Team'''
                                             ## Check if the user was invited again with a profile id
                                             invitation_edges = client.get_edges(invitation=invite_assignment_invitation.id, label='Invitation Sent', head=submission.id, tail=user_profile.id)
                                             if invitation_edges:
-                                                print(f'User invited twice, remove double invitation edge {invitation_edge.id}')
                                                 invitation_edge = invitation_edges[0]
+                                                print(f'User invited twice, remove double invitation edge {invitation_edge.id}')
                                                 invitation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
                                                 client.post_edge(invitation_edge)
 
                                             ## Check conflicts
                                             author_profiles = openreview.tools.get_profiles(client, submission.content['authorids']['value'], with_publications=True)
-                                            conflicts=openreview.tools.get_conflicts(author_profiles, user_profile, policy=venue_group.content.get('conflict_policy', {}).get('value'))
+                                            conflicts=openreview.tools.get_conflicts(author_profiles, user_profile, policy=venue_group.content.get('reviewers_conflict_policy', {}).get('value'), n_years=venue_group.content.get('reviewers_conflict_n_years', {}).get('value'))
 
                                             if conflicts:
                                                 print(f'Conflicts detected for {edge.head} and {user_profile.id}', conflicts)

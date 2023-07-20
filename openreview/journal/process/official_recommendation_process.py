@@ -53,3 +53,5 @@ The {journal.short_name} Editors-in-Chief
 ''',
             replyTo=journal.contact_info
         )
+
+        journal.invitation_builder.expire_invitation(journal.get_review_rating_enabling_id(submission.number))

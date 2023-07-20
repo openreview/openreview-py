@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
+import inspect
 
 import json
 import os
@@ -470,7 +471,9 @@ def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='un
     :rtype: str
     """
 
-    first_word = re.sub('[^a-zA-Z]', '', note.content['title'].split(' ')[0].lower())
+    note_title = note.content['title'] if isinstance(note.content['title'], str) else note.content['title']['value']
+
+    first_word = re.sub('[^a-zA-Z]', '', note_title.split(' ')[0].lower())
 
     forum = note.forum if not url_forum else url_forum
 
@@ -478,17 +481,18 @@ def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='un
         first_author_last_name = 'anonymous'
         authors = 'Anonymous'
     else:
-        first_author_last_name = note.content['authors'][0].split(' ')[-1].lower()
+        note_author_list = note.content['authors'] if isinstance(note.content['authors'], list) else note.content['authors']['value']
+        first_author_last_name = note_author_list[0].split(' ')[-1].lower()
         if names_reversed:
             # last, first
             author_list = []
-            for name in note.content['authors']:
+            for name in note_author_list:
                 last = name.split(' ')[-1]
                 rest = (' ').join(name.split(' ')[:-1])
                 author_list.append(last+', '+rest)
             authors = ' and '.join(author_list)
         else:
-            authors = ' and '.join(note.content['authors'])
+            authors = ' and '.join(note_author_list)
 
     u = UnicodeToLatexEncoder(
         conversion_rules=[
@@ -500,7 +504,7 @@ def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='un
             'defaults'
         ]
     )
-    bibtex_title = u.unicode_to_latex(note.content['title'])
+    bibtex_title = u.unicode_to_latex(note_title)
 
     if paper_status == 'under review':
 
@@ -788,6 +792,69 @@ class iterget:
 
     next = __next__
 
+class efficient_iterget:
+    """
+    This class can create an iterator from a getter method that returns a list. Below all the iterators that can be created from a getter method:
+
+    :meth:`openreview.Client.get_tags` --> :func:`tools.iterget_tags`
+
+    :meth:`openreview.Client.get_notes` --> :func:`tools.iterget_notes`
+
+    :meth:`openreview.Client.get_references` --> :func:`tools.iterget_references`
+
+    :meth:`openreview.Client.get_invitations` --> :func:`tools.iterget_invitations`
+
+    :meth:`openreview.Client.get_groups` --> :func:`tools.iterget_groups`
+
+    :param get_function: Any of the aforementioned methods
+    :type get_function: function
+    :param params: Dictionary containing parameters for the corresponding method. Refer to the passed method documentation for details
+    :type params: dict
+    """
+    def __init__(self, get_function, desc='Gathering Responses', **params):
+        self.obj_index = 0
+
+        self.params = params
+        self.params.update({
+            'with_count': True,
+            'sort': params.get('sort') or 'id',
+            'limit': params.get('limit') or 1000
+        })
+
+        self.get_function = get_function
+        self.current_batch, total = self.get_function(**self.params)
+
+        self.gathering_responses = tqdm(total=total, desc=desc)
+
+    def update_batch(self):
+        after = self.current_batch[-1].id
+        self.params['after'] = after
+        self.params['with_count'] = False
+        next_batch = self.get_function(**self.params)
+        if next_batch:
+            self.current_batch = next_batch
+        else:
+            self.current_batch = []
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if len(self.current_batch) == 0:
+            self.gathering_responses.close()
+            raise StopIteration
+        else:
+            next_obj = self.current_batch[self.obj_index]
+            if (self.obj_index + 1) == len(self.current_batch):
+                self.update_batch()
+                self.obj_index = 0
+            else:
+                self.gathering_responses.update(1)
+                self.obj_index += 1
+            return next_obj
+
+    next = __next__
+
 
 def iterget_messages(client, to = None, subject = None, status = None):
     """
@@ -893,7 +960,6 @@ def iterget_grouped_edges(
 
         yield group_edges
 
-
 def iterget_notes(client,
     id = None,
     paperhash = None,
@@ -973,7 +1039,7 @@ def iterget_notes(client,
         params['details'] = details
     params['sort'] = sort
 
-    return iterget(client.get_notes, **params)
+    return efficient_iterget(client.get_notes, desc='Getting Notes', **params)
 
 def iterget_references(client, referent = None, invitation = None, mintcdate = None):
     """
@@ -1002,7 +1068,7 @@ def iterget_references(client, referent = None, invitation = None, mintcdate = N
 
     return iterget(client.get_references, **params)
 
-def iterget_invitations(client, id=None, ids=None, invitee=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replytoNote=None, replyForum=None, signature=None, note=None, replyto=None, details=None, expired=None, super=None):
+def iterget_invitations(client, id=None, ids=None, invitee=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replytoNote=None, replyForum=None, signature=None, note=None, replyto=None, details=None, expired=None, super=None, sort=None):
     """
     Returns an iterator over invitations, filtered by the provided parameters, ignoring API limit.
 
@@ -1074,9 +1140,13 @@ def iterget_invitations(client, id=None, ids=None, invitee=None, regex=None, tag
         params['replyto'] = replyto
     if super is not None:
         params['super'] = super
-    params['expired'] = expired
+    if expired is not None:
+        params['expired'] = expired
+    if sort is not None:
+        params['sort'] = sort
 
-    return iterget(client.get_invitations, **params)
+
+    return efficient_iterget(client.get_invitations, desc='Getting Invitations', **params)
 
 def iterget_groups(client, id = None, regex = None, member = None, host = None, signatory = None, web = None):
     """
@@ -1115,7 +1185,7 @@ def iterget_groups(client, id = None, regex = None, member = None, host = None, 
     if web is not None:
         params['web'] = web
 
-    return iterget(client.get_groups, **params)
+    return efficient_iterget(client.get_groups, desc='Getting Groups', **params)
 
 def timestamp_GMT(year, month, day, hour=0, minute=0, second=0):
     """
@@ -1244,10 +1314,14 @@ def get_all_venues(client):
     return client.get_group("host").members
 
 def info_function_builder(policy_function):
-    def inner(profile, n_years=None):
+    def inner(profile, n_years=None, submission_venueid=None):
         common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
                     'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
-        result = policy_function(profile, n_years)
+        argspec = inspect.getfullargspec(policy_function)
+        if 'submission_venueid' in argspec.args:
+            result = policy_function(profile, n_years, submission_venueid)
+        else:
+            result = policy_function(profile, n_years)
         domains = set()
         subdomains_dict = {}
         for domain in result['domains']:
@@ -1288,7 +1362,7 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=None)
 
     if callable(policy):
         info_function = info_function_builder(policy)
-    elif policy == 'neurips':
+    elif policy == 'NeurIPS':
         info_function = info_function_builder(get_neurips_profile_info)
     else:
         info_function = info_function_builder(get_profile_info)
@@ -1340,9 +1414,12 @@ def get_profile_info(profile, n_years=None):
         if email.startswith("****@"):
             raise openreview.OpenReviewException("You do not have the required permissions as some emails are obfuscated. Please login with the correct account or contact support.")
         # split email
-        domain = email.split('@')[1]
-        domains.add(domain)
-        emails.add(email)
+        if '@' in email:
+            domain = email.split('@')[1]
+            domains.add(domain)
+            emails.add(email)
+        else:
+            print('Profile with invalid email:', profile.id, email)
 
     ## Institution section
     for history in profile.content.get('history', []):
@@ -1356,14 +1433,21 @@ def get_profile_info(profile, n_years=None):
 
     ## Relations section
     for relation in profile.content.get('relations', []):
-        if relation.get('end') is None or int(relation.get('end')) > cut_off_year:
+        try:
+            end = int(relation.get('end'))
+        except:
+            end = None
+        if end is None or end > cut_off_year:
             relations.add(relation['email'])
 
     ## Publications section: get publications within last n years, default is all publications from previous years
     for publication in profile.content.get('publications', []):
         publication_date = publication.pdate or publication.cdate or publication.tcdate or 0
-        if datetime.datetime.fromtimestamp(publication_date/1000).year > cut_off_year:
-            publications.add(publication.id)
+        try:
+            if datetime.datetime.fromtimestamp(publication_date/1000).year > cut_off_year:
+                publications.add(publication.id)
+        except:
+            print('Error extracting the date for publication: ', publication.id)
 
     return {
         'id': profile.id,
@@ -1412,7 +1496,11 @@ def get_neurips_profile_info(profile, n_years=None):
     ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
     for r in profile.content.get('relations', []):
         if (r.get('relation', '') or '') in ['Coauthor','Coworker']:
-            if r.get('end') is None or int(r.get('end')) > cut_off_year:
+            try:
+                end = int(r.get('end'))
+            except:
+                end = None
+            if end is None or end > cut_off_year:
                 relations.add(r['email'])
         else:
             relations.add(r['email'])
@@ -1421,13 +1509,19 @@ def get_neurips_profile_info(profile, n_years=None):
     for email in profile.content['emails']:
         if email.startswith("****@"):
             raise openreview.OpenReviewException("You do not have the required permissions as some emails are obfuscated. Please login with the correct account or contact support.")
-        emails.add(email)
+        if '@' in email:
+            emails.add(email)
+        else:
+            print('Profile with invalid email:', profile.id, email)
 
     ## if institution section is empty, add email domains
     if not domains:
         for email in profile.content['emails']:
-            domain = email.split('@')[1]
-            domains.add(domain)
+            if '@' in email:
+                domain = email.split('@')[1]
+                domains.add(domain)
+            else:
+                print('Profile with invalid email:', profile.id, email)
 
     ## Publications section: get publications within last n years
     curr_year = datetime.datetime.now().year
@@ -1442,7 +1536,11 @@ def get_neurips_profile_info(profile, n_years=None):
                 year = None
         if not year:
             timtestamp = pub.cdate if pub.cdate else pub.tcdate
-            year = int(datetime.datetime.fromtimestamp(timtestamp/1000).year)
+            try:
+                year = int(datetime.datetime.fromtimestamp(timtestamp/1000).year)
+            except:
+                year = -1
+                print('Error extracting the date for publication: ', pub.id)            
         if year > cut_off_year:
             publications.add(pub.id)
 
@@ -1454,6 +1552,61 @@ def get_neurips_profile_info(profile, n_years=None):
         'publications': publications
     }
 
+def get_current_submissions_profile_info(profile, n_years=None, submission_venueid=None):
+    """
+    Gets only submissions submitted to the current venue
+
+    :param profile: Profile from which all publications will be obtained
+    :type profile: Profile
+    :param submission_venue_id: venue_id of submissions we want to obtain
+    :type submission_venue_id: str
+
+    :return: Dictionary with the current publications associated with the passed Profile
+    :rtype: dict
+    """
+    domains = set()
+    relations = set()
+    publications = set()
+
+    if n_years is not None:
+        cut_off_date = datetime.datetime.now()
+        cut_off_date = cut_off_date.replace(year=cut_off_date.year - n_years)
+        cut_off_year = cut_off_date.year
+    else:
+        cut_off_year = -1
+
+    ## Institution section, get history within the last n years, excluding internships
+    for h in profile.content.get('history', []):
+        position = h.get('position')
+        if not position or (isinstance(position, str) and 'intern' not in position.lower()):
+            try:
+                end = int(h.get('end', 0) or 0)
+            except:
+                end = 0
+            if not end or (int(end) > cut_off_year):
+                domain = h.get('institution', {}).get('domain', '')
+                domains.add(domain)
+
+    ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
+    for r in profile.content.get('relations', []):
+        if (r.get('relation', '') or '') in ['Coauthor','Coworker']:
+            if r.get('end') is None or int(r.get('end')) > cut_off_year:
+                relations.add(r['email'])
+        else:
+            relations.add(r['email'])
+
+    ## Get publications
+    for publication in profile.content.get('publications', []):
+        if isinstance(publication.content.get('venueid'), dict) and publication.content['venueid']['value'] == submission_venueid:
+            publications.add(publication.id)
+
+    return {
+        'id': profile.id,
+        'domains': domains,
+        'emails': set(),
+        'relations': relations,
+        'publications': publications
+    }
 
 def post_bulk_edges (client, edges, batch_size = 50000):
     num_edges = len(edges)

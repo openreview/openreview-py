@@ -1,5 +1,5 @@
 // Webfield component
-const committeeName = entity.content.committee_name.value
+const committeeName = entity.content.committee_name?.value
 const affinityScoreId = domain.content[`${committeeName.toLowerCase()}_affinity_score_id`]?.value
 
 return {
@@ -19,6 +19,6 @@ return {
     apiVersion: 2,
     venueId: domain.id,
     scoreIds: affinityScoreId ? [affinityScoreId] : [],
-    profileGroupId: domain.content.area_chairs_id.value
+    profileGroupId: domain.content.area_chairs_id?.value
   }
 }

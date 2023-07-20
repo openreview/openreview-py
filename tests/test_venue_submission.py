@@ -25,6 +25,7 @@ class TestVenueSubmission():
         venue = Venue(openreview_client, conference_id, 'openreview.net/Support')
         venue.invitation_builder.update_wait_time = 2000
         venue.invitation_builder.update_date_string = "#{4/mdate} + 2000"
+        venue.automatic_reviewer_assignment = True 
         venue.use_area_chairs = True
         venue.name = 'Test Venue V2'
         venue.short_name = 'TV 22'
@@ -131,12 +132,23 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
             contact_info='testvenue@contact.com',
             reduced_load_on_decline = ['1','2','3'])
 
+        #make sure there's no error if recruitment invitation does not have to be updated
+        venue.recruit_reviewers(title='[TV 22] Invitation to serve as Reviewer',
+            message=message,
+            invitees = ['ana@mail.com'],
+            contact_info='testvenue@contact.com',
+            reduced_load_on_decline = ['1','2','3'])
+
         venue.recruit_reviewers(title='[TV 22] Invitation to serve as Area Chair',
             message=message,
             invitees = ['~Reviewer_Venue_One1'],
             reviewers_name = 'Area_Chairs',
             contact_info='testvenue@contact.com',
             allow_overlap_official_committee = True)
+
+        recruitment_inv = openreview_client.get_invitation('TestVenue.cc/Area_Chairs/-/Recruitment')
+        assert 'overlap_committee_name' not in recruitment_inv.content
+        assert 'reduced_load' not in recruitment_inv.edit['note']['content']
 
         messages = openreview_client.get_messages(to='reviewer_venue_one@mail.com')
         assert messages
@@ -145,7 +157,19 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         reviewer_group = openreview_client.get_group('TestVenue.cc/Reviewers')
         assert reviewer_group
-        assert '~Reviewer_Venue_One1' in reviewer_group.members    
+        assert '~Reviewer_Venue_One1' in reviewer_group.members
+
+        venue.recruit_reviewers(title='[TV 22] Invitation to serve as Area Chair',
+            message=message,
+            invitees = ['celeste@email.com'],
+            reviewers_name = 'Area_Chairs',
+            contact_info='testvenue@contact.com',
+            allow_overlap_official_committee = False,
+            reduced_load_on_decline = ['1', '2'])
+
+        recruitment_inv = openreview_client.get_invitation('TestVenue.cc/Area_Chairs/-/Recruitment')
+        assert 'overlap_committee_name' in recruitment_inv.content and recruitment_inv.content['overlap_committee_name']['value'] == 'Reviewers'
+        assert 'reduced_load' in recruitment_inv.edit['note']['content'] and recruitment_inv.edit['note']['content']['reduced_load']['value']['param']['enum'] == ['1', '2']
     
     def test_submission_stage(self, venue, openreview_client, helpers):
 
@@ -649,13 +673,13 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Public_Comment')
         assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
-        messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 desk-rejected by program chairs')
+        messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 desk-rejected by Program Chairs')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been desk-rejected by the program chairs.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
+        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been desk-rejected by Program Chairs.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
 
-        messages = openreview_client.get_messages(to='venue_pc@mail.com', subject='[TV 22]: Paper #2 desk-rejected by program chairs')
+        messages = openreview_client.get_messages(to='venue_pc@mail.com', subject='[TV 22]: Paper #2 desk-rejected by Program Chairs')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been desk-rejected by the program chairs.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
+        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been desk-rejected by Program Chairs.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
 
         assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Desk_Rejection_Reversion')
 

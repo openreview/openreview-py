@@ -51,7 +51,7 @@ The OpenReview Team.
                     authorids.append(preferred_id)
                     needs_change = True
                 else:
-                    if publication.content.get('authors'):
+                    if publication.content.get('authors') and len(publication.content['authors']) > index:
                         authors.append(publication.content['authors'][index])
                     authorids.append(publication.content['authorids'][index])
             if needs_change:
@@ -82,6 +82,9 @@ The OpenReview Team.
         for publication in publications:
             authors = []
             authorids = []
+            signatures = None
+            readers = None
+            writers = None
             needs_change = False
             for index, author in enumerate(publication.content.get('authorids', {}).get('value')):
                 if username == author:
@@ -89,9 +92,17 @@ The OpenReview Team.
                     authorids.append(preferred_id)
                     needs_change = True
                 else:
-                    if publication.content.get('authors'):
+                    if publication.content.get('authors') and len(publication.content['authors']['value']) > index:
                         authors.append(publication.content['authors']['value'][index])
                     authorids.append(publication.content['authorids']['value'][index])
+
+            if username in publication.signatures:
+                signatures = [profile.id if g == username else g for g in publication.signatures]
+            if username in publication.readers:
+                readers = [profile.id if g == username else g for g in publication.readers]
+            if username in publication.writers:
+                writers = [profile.id if g == username else g for g in publication.writers]
+
             if needs_change:
                 content = {
                     'authors': { 'value': authors },
@@ -105,7 +116,10 @@ The OpenReview Team.
                     signatures = [SUPPORT_USER_ID],
                     note = openreview.api.Note(
                         id=publication.id, 
-                        content=content
+                        content=content,
+                        readers=readers,
+                        writers=writers,
+                        signatures=signatures
                 ))
         
         print('Change all the notes that contain the name to remove as signatures')

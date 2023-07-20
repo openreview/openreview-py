@@ -1,5 +1,5 @@
 // Webfield component
-const committeeName = entity.content.committee_name.value
+const committeeName = entity.content.committee_name?.value
 const affinityScoreId = domain.content[`${committeeName.toLowerCase()}_affinity_score_id`]?.value
 
 return {
@@ -24,9 +24,9 @@ ${affinityScoreId ? '- Papers are sorted based on keyword similarity with the pa
     },
     apiVersion: 2,
     venueId: domain.id,
-    submissionVenueId: domain.content.submission_venue_id.value,
+    submissionVenueId: domain.content.submission_venue_id?.value,
     scoreIds: affinityScoreId ? [affinityScoreId] : [],
-    conflictInvitationId: domain.content[`${committeeName.toLowerCase()}_conflict_id`].value,
+    conflictInvitationId: domain.content[`${committeeName.toLowerCase()}_conflict_id`]?.value,
     subjectAreas: domain.content.subject_areas?.value
   }
 }
