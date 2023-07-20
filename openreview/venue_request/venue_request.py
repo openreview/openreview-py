@@ -1125,7 +1125,7 @@ class VenueRequest():
                 'order': 6
             },
             'publication_chair_email': {
-                'description': 'Please provide the *lower-cased* email address of the Publication Chair. The Publication Chair will only have access to accepted submissions, the author group in order to email authors of accepted submissions and the Submission Revision Stage to configure the camera-ready revisions',
+                'description': 'Please provide the *lower-cased* email address of the Publication Chair. The Publication Chair will only have access to accepted submissions and the author accepted group in order to email authors of accepted submissions.',
                 'value-regex': r'([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
                 'required': False,
                 'order': 7
