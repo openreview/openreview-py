@@ -785,7 +785,7 @@ Total Errors: {len(errors)}
         conference_matching = matching.Matching(self, match_group)
         return conference_matching.setup_invite_assignment(hash_seed, assignment_title, due_date, invitation_labels=invitation_labels, email_template=email_template)
     
-    def set_track_sac_assignments(self, file_path, conflict_policy=None, conflict_n_years=None):
+    def set_track_sac_assignments(self, track_sac_file, conflict_policy=None, conflict_n_years=None, track_ac_file=None):
 
         if not self.use_senior_area_chairs:
             raise openreview.OpenReviewException('The venue does not have senior area chairs enabled. Please enable senior area chairs in the venue.')
@@ -794,7 +794,7 @@ Total Errors: {len(errors)}
             raise openreview.OpenReviewException('The submission stage does not have tracks enabled. Please enable tracks in the submission stage.')
 
         sac_tracks = {}
-        with open(file_path) as file_handle:
+        with open(track_sac_file) as file_handle:
             for row in csv.reader(file_handle):
                 if row[0] not in sac_tracks:
                     sac_tracks[row[0]] = []
@@ -850,6 +850,48 @@ Total Errors: {len(errors)}
                         self.client.add_members_to_group(sac_group_id, sac_tracks[submission.content['track']['value']])
                     else:
                         print(f'conflict detected between {sac} and {submission.number}')
+
+        if not track_ac_file:
+            return
+        
+        ac_tracks = {}
+        with open(track_ac_file) as file_handle:
+            for row in csv.reader(file_handle):
+                if row[0] not in ac_tracks:
+                    ac_tracks[row[0]] = row[1]
+    
+        print(ac_tracks)
+
+        assignment_edges = []
+        all_acs = []
+        assignment_invitation_id = self.get_assignment_id(self.get_senior_area_chairs_id(), deployed=True)
+        for track, ac_role in ac_tracks.items():
+            sacs = sac_tracks[track]
+            ac_group = self.client.get_group(f'{self.venue_id}/{ac_role}')
+            acs = openreview.tools.replace_members_with_ids(self.client, ac_group).members
+            all_acs = all_acs + acs
+
+            for sac in sacs:
+                print('sac', sac)
+                for ac in acs:
+                    print('ac', ac)
+                    assignment_edges.append(openreview.api.Edge(
+                        invitation=assignment_invitation_id,
+                        signatures=[self.venue_id],
+                        readers=[self.venue_id, ac, sac],
+                        writers=[self.venue_id],
+                        head=ac,
+                        tail=sac,
+                        weight=1
+                    ))
+
+    
+        print('assignment edges', assignment_edges)
+        self.invitation_builder.set_assignment_invitation(self.get_senior_area_chairs_id())
+        print('Posting bulk edges', len(assignment_edges))
+        openreview.tools.post_bulk_edges(self.client, assignment_edges)
+        print('Builiding ac group')
+        self.client.add_members_to_group(self.get_area_chairs_id(), all_acs)
 
 
     @classmethod

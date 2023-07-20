@@ -50,7 +50,7 @@ class TestVenueWithTracks():
         helpers.create_user('ac8@webconf.com', 'AC', 'WebChairEight')
         helpers.create_user('ac9@webconf.com', 'AC', 'WebChairNine')
         helpers.create_user('ac10@webconf.com', 'AC', 'WebChairTen')
-        helpers.create_user('ac11@gmail.com', 'AC', 'WebChairEleven')
+        helpers.create_user('ac11@webconf.com', 'AC', 'WebChairEleven')
         helpers.create_user('ac12@webconf.com', 'AC', 'WebChairTwelve')        
         helpers.create_user('ac13@webconf.com', 'AC', 'WebChairThirdTeen')        
         helpers.create_user('ac14@webconf.com', 'AC', 'WebChairFourTeen')        
@@ -61,7 +61,30 @@ class TestVenueWithTracks():
         helpers.create_user('ac19@webconf.com', 'AC', 'WebChairNineTeen')        
         helpers.create_user('ac20@webconf.com', 'AC', 'WebChairTwenty')        
         helpers.create_user('ac21@webconf.com', 'AC', 'WebChairTwentyOne')        
-        helpers.create_user('ac22@webconf.com', 'AC', 'WebChairTwentyTwo')        
+        helpers.create_user('ac22@webconf.com', 'AC', 'WebChairTwentyTwo')
+
+        helpers.create_user('reviewer1@webconf.com', 'Reviewer', 'WebChairOne')
+        helpers.create_user('reviewer2@webconf.com', 'Reviewer', 'WebChairTwo')
+        helpers.create_user('reviewer3@webconf.com', 'Reviewer', 'WebChairThree')
+        helpers.create_user('reviewer4@webconf.com', 'Reviewer', 'WebChairFour')
+        helpers.create_user('reviewer5@webconf.com', 'Reviewer', 'WebChairFive')
+        helpers.create_user('reviewer6@webconf.com', 'Reviewer', 'WebChairSix')
+        helpers.create_user('reviewer7@webconf.com', 'Reviewer', 'WebChairSeven')
+        helpers.create_user('reviewer8@webconf.com', 'Reviewer', 'WebChairEight')
+        helpers.create_user('reviewer9@webconf.com', 'Reviewer', 'WebChairNine')
+        helpers.create_user('reviewer10@webconf.com', 'Reviewer', 'WebChairTen')
+        helpers.create_user('reviewer11@webconf.com', 'Reviewer', 'WebChairEleven')
+        helpers.create_user('reviewer12@webconf.com', 'Reviewer', 'WebChairTwelve')        
+        helpers.create_user('reviewer13@webconf.com', 'Reviewer', 'WebChairThirdTeen')        
+        helpers.create_user('reviewer14@webconf.com', 'Reviewer', 'WebChairFourTeen')        
+        helpers.create_user('reviewer15@webconf.com', 'Reviewer', 'WebChairFifthTeen')        
+        helpers.create_user('reviewer16@webconf.com', 'Reviewer', 'WebChairSixTeen')        
+        helpers.create_user('reviewer17@webconf.com', 'Reviewer', 'WebChairSevenTeen')        
+        helpers.create_user('reviewer18@webconf.com', 'Reviewer', 'WebChairEightTeen')        
+        helpers.create_user('reviewer19@webconf.com', 'Reviewer', 'WebChairNineTeen')        
+        helpers.create_user('reviewer20@webconf.com', 'Reviewer', 'WebChairTwenty')        
+        helpers.create_user('reviewer21@webconf.com', 'Reviewer', 'WebChairTwentyOne')        
+        helpers.create_user('reviewer22@webconf.com', 'Reviewer', 'WebChairTwentyTwo')                
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
@@ -93,6 +116,20 @@ class TestVenueWithTracks():
                     "Mining_Area_Chairs",
                     "COI_Area_Chairs"                    
                 ],
+                'reviewer_roles': [
+                    "Reviewers",
+                    "Econ_Reviewers",
+                    "Graph_Reviewers",
+                    "RespWeb_Reviewers",
+                    "Search_Reviewers",
+                    "Security_Reviewers",
+                    "Semantics_Reviewers",
+                    "Social_Reviewers",
+                    "Systems_Reviewers",
+                    "RecSys_Reviewers",
+                    "Mining_Reviewers",
+                    "COI_Reviewers"                    
+                ],                
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
@@ -352,39 +389,6 @@ class TestVenueWithTracks():
         helpers.await_queue()
 
 
-    def test_sac_assignment(self, client, openreview_client, helpers):
-
-        pc_client=openreview.Client(username='pc@webconf.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
-
-        venue = openreview.helpers.get_conference(pc_client, request_form_id=request_form.id, setup=False)     
-
-        ## Assign SACs to submissions based on track
-        with open(os.path.join(os.path.dirname(__file__), 'data/track_sacs.csv'), 'w') as file_handle:
-            writer = csv.writer(file_handle)
-            writer.writerow(["Economics, Online Markets, and Human Computation",'~SAC_WebChairOne1'])
-            writer.writerow(["Economics, Online Markets, and Human Computation",'~SAC_WebChairTwelve1'])
-            writer.writerow(["Graph Algorithms and Learning for the Web",'~SAC_WebChairTwo1'])
-            writer.writerow(["Responsible Web",'~SAC_WebChairThree1'])
-            writer.writerow(["Search",'~SAC_WebChairFour1'])
-            writer.writerow(["Security",'~SAC_WebChairFive1'])
-            writer.writerow(["Semantics and Knowledge",'~SAC_WebChairSix1'])
-            writer.writerow(["Social Networks, Social Media, and Society",'~SAC_WebChairSeven1'])
-            writer.writerow(["Systems and Infrastructure for Web, Mobile, and WoT",'~SAC_WebChairEight1'])
-            writer.writerow(["User Modeling and Recommendation",'~SAC_WebChairNine1'])
-            writer.writerow(["Web Mining and Content Analysis",'~SAC_WebChairTen1'])
-            writer.writerow(["COI", '~SAC_WebChairEleven1'])
-
-
-        venue.set_track_sac_assignments(file_path=os.path.join(os.path.dirname(__file__), 'data/track_sacs.csv'), conflict_policy='NeurIPS', conflict_n_years=3)
-
-        assert openreview_client.get_group('ACM.org/TheWebConf/2024/Conference/Submission1/Senior_Area_Chairs').members == ['~SAC_WebChairEleven1']
-        group = openreview_client.get_group('ACM.org/TheWebConf/2024/Conference/Submission10/Senior_Area_Chairs')
-        assert len(group.members) == 2
-        assert '~SAC_WebChairOne1' in group.members
-        assert '~SAC_WebChairTwelve1' in group.members
-
-
     def test_recruit_acs(self, client, openreview_client, helpers, selenium, request_page):
 
         pc_client=openreview.Client(username='pc@webconf.org', password=helpers.strong_password)
@@ -432,6 +436,73 @@ ac{ac_counter + 1}@webconf.com, Area ChairTwo
 
             assert len(openreview_client.get_group(f'ACM.org/TheWebConf/2024/Conference/{ac_role}').members) == 2
 
+    def test_sac_assignment(self, client, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@webconf.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        venue = openreview.helpers.get_conference(pc_client, request_form_id=request_form.id, setup=False)     
+
+        ## Assign SACs to submissions based on track
+        with open(os.path.join(os.path.dirname(__file__), 'data/track_sacs.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            writer.writerow(["Economics, Online Markets, and Human Computation",'~SAC_WebChairOne1'])
+            writer.writerow(["Economics, Online Markets, and Human Computation",'~SAC_WebChairTwelve1'])
+            writer.writerow(["Graph Algorithms and Learning for the Web",'~SAC_WebChairTwo1'])
+            writer.writerow(["Responsible Web",'~SAC_WebChairThree1'])
+            writer.writerow(["Search",'~SAC_WebChairFour1'])
+            writer.writerow(["Security",'~SAC_WebChairFive1'])
+            writer.writerow(["Semantics and Knowledge",'~SAC_WebChairSix1'])
+            writer.writerow(["Social Networks, Social Media, and Society",'~SAC_WebChairSeven1'])
+            writer.writerow(["Systems and Infrastructure for Web, Mobile, and WoT",'~SAC_WebChairEight1'])
+            writer.writerow(["User Modeling and Recommendation",'~SAC_WebChairNine1'])
+            writer.writerow(["Web Mining and Content Analysis",'~SAC_WebChairTen1'])
+            writer.writerow(["COI", '~SAC_WebChairEleven1'])
+
+        ac_roles = ["Econ_Area_Chairs", "Graph_Area_Chairs", "RespWeb_Area_Chairs", "Search_Area_Chairs", "Security_Area_Chairs", "Semantics_Area_Chairs", "Social_Area_Chairs", "Systems_Area_Chairs", "RecSys_Area_Chairs", "Mining_Area_Chairs", "COI_Area_Chairs"]
+        tracks = [ "Economics, Online Markets, and Human Computation",
+            "Graph Algorithms and Learning for the Web",
+            "Responsible Web",
+            "Search",
+            "Security",
+            "Semantics and Knowledge",
+            "Social Networks, Social Media, and Society",
+            "Systems and Infrastructure for Web, Mobile, and WoT",
+            "User Modeling and Recommendation",
+            "Web Mining and Content Analysis",
+            "COI"
+        ]            
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/track_acs.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            writer.writerow(["Economics, Online Markets, and Human Computation",'Econ_Area_Chairs'])
+            writer.writerow(["Graph Algorithms and Learning for the Web",'Graph_Area_Chairs'])
+            writer.writerow(["Responsible Web",'RespWeb_Area_Chairs'])
+            writer.writerow(["Search",'Search_Area_Chairs'])
+            writer.writerow(["Security",'Security_Area_Chairs'])
+            writer.writerow(["Semantics and Knowledge",'Semantics_Area_Chairs'])
+            writer.writerow(["Social Networks, Social Media, and Society",'Social_Area_Chairs'])
+            writer.writerow(["Systems and Infrastructure for Web, Mobile, and WoT",'Systems_Area_Chairs'])
+            writer.writerow(["User Modeling and Recommendation",'RecSys_Area_Chairs'])
+            writer.writerow(["Web Mining and Content Analysis",'Mining_Area_Chairs'])
+            writer.writerow(["COI", 'COI_Area_Chairs'])
+
+        venue.set_track_sac_assignments(track_sac_file=os.path.join(os.path.dirname(__file__), 'data/track_sacs.csv'), conflict_policy='NeurIPS', conflict_n_years=3, track_ac_file=os.path.join(os.path.dirname(__file__), 'data/track_acs.csv'))
+
+        assert openreview_client.get_group('ACM.org/TheWebConf/2024/Conference/Submission1/Senior_Area_Chairs').members == ['~SAC_WebChairEleven1']
+        group = openreview_client.get_group('ACM.org/TheWebConf/2024/Conference/Submission10/Senior_Area_Chairs')
+        assert len(group.members) == 2
+        assert '~SAC_WebChairOne1' in group.members
+        assert '~SAC_WebChairTwelve1' in group.members
+
+        assignments = openreview_client.get_edges(invitation='ACM.org/TheWebConf/2024/Conference/Senior_Area_Chairs/-/Assignment', head='~AC_WebChairTwo1')
+        assert len(assignments) == 2
+        sacs = [e.tail for e in assignments]
+        assert '~SAC_WebChairOne1' in sacs
+        assert '~SAC_WebChairTwelve1' in sacs
+   
+    
+    
     def test_ac_assignment(self, client, openreview_client, helpers, selenium, request_page):
 
         pc_client=openreview.Client(username='pc@webconf.org', password=helpers.strong_password)
@@ -489,9 +560,47 @@ ac{ac_counter + 1}@webconf.com, Area ChairTwo
 
             assert openreview_client.get_invitation(f'{ac_id}/-/Conflict')
             assert openreview_client.get_invitation(f'{ac_id}/-/Affinity_Score')
+            assert openreview_client.get_invitation(f'{ac_id}/-/Proposed_Assignment')
             assignment_configuration_invitation = openreview_client.get_invitation(f'{ac_id}/-/Assignment_Configuration')
             assert assignment_configuration_invitation.edit['note']['content']['paper_invitation']['value']['param']['default'] == 'ACM.org/TheWebConf/2024/Conference/-/Submission&content.venueid=ACM.org/TheWebConf/2024/Conference/Submission&content.track=' + tracks[index]                  
 
+
+        ## Build proposed assignments
+        for submission in submissions:
+            print('process submission ', submission.number)
+            index = submission.number % 10
+            if submission.number == 1 or submission.number == 101:
+                index = 10
+            print('index', index)
+            ac_role = ac_roles[index]
+            ac_id = f'ACM.org/TheWebConf/2024/Conference/{ac_role}'
+            ac_profile = pc_client_v2.get_profile(f'ac{((index * 2) + 1)}@webconf.com')
+            pc_client_v2.post_edge(
+                openreview.api.Edge(
+                    invitation=f'{ac_id}/-/Proposed_Assignment',
+                    signatures=['ACM.org/TheWebConf/2024/Conference'],
+                    head=submission.id,
+                    tail=ac_profile.id,
+                    label='ac-assignment',
+                    weight=1.0
+                )
+            )
+
+        venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
+
+        for ac_role in ac_roles:
+            venue.set_assignments(assignment_title='ac-assignment', committee_id=f'ACM.org/TheWebConf/2024/Conference/{ac_role}')
+
+        assert pc_client_v2.get_group('ACM.org/TheWebConf/2024/Conference/Submission1/Area_Chairs').members == ['~AC_WebChairTwentyOne1']                        
+        assert pc_client_v2.get_group('ACM.org/TheWebConf/2024/Conference/Submission2/Area_Chairs').members == ['~AC_WebChairFive1']                        
+        assert pc_client_v2.get_group('ACM.org/TheWebConf/2024/Conference/Submission3/Area_Chairs').members == ['~AC_WebChairSeven1']                        
+        assert pc_client_v2.get_group('ACM.org/TheWebConf/2024/Conference/Submission4/Area_Chairs').members == ['~AC_WebChairNine1']                        
+        assert pc_client_v2.get_group('ACM.org/TheWebConf/2024/Conference/Submission5/Area_Chairs').members == ['~AC_WebChairEleven1']                        
+        assert pc_client_v2.get_group('ACM.org/TheWebConf/2024/Conference/Submission6/Area_Chairs').members == ['~AC_WebChairThirdTeen1']                        
+        assert pc_client_v2.get_group('ACM.org/TheWebConf/2024/Conference/Submission7/Area_Chairs').members == ['~AC_WebChairFifthTeen1']                        
+        assert pc_client_v2.get_group('ACM.org/TheWebConf/2024/Conference/Submission8/Area_Chairs').members == ['~AC_WebChairSevenTeen1']                        
+        assert pc_client_v2.get_group('ACM.org/TheWebConf/2024/Conference/Submission9/Area_Chairs').members == ['~AC_WebChairNineTeen1']                        
+        assert pc_client_v2.get_group('ACM.org/TheWebConf/2024/Conference/Submission10/Area_Chairs').members == ['~AC_WebChairOne1']                        
 
 #     def test_add_pcs(self, client, openreview_client, helpers):
 
