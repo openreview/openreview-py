@@ -891,6 +891,44 @@ reviewer6@gmail.com, Reviewer ICMLSix
         assert note
         assert note.invitations == ['ICML.cc/2023/Conference/-/Submission', 'ICML.cc/2023/Conference/-/Post_Submission', 'ICML.cc/2023/Conference/-/Desk_Rejected_Submission']
 
+        assert desk_reject_note['readers'] == [
+            "ICML.cc/2023/Conference/Program_Chairs",
+            f"ICML.cc/2023/Conference/Submission{submission.number}/Senior_Area_Chairs",
+            f"ICML.cc/2023/Conference/Submission{submission.number}/Area_Chairs",
+            f"ICML.cc/2023/Conference/Submission{submission.number}/Reviewers",
+            f"ICML.cc/2023/Conference/Submission{submission.number}/Authors"
+        ]
+
+        # reverse desk-rejection and withdraw paper
+        desk_rejection_reversion_note = openreview_client.post_note_edit(invitation=f'ICML.cc/2023/Conference/Submission{submission.number}/-/Desk_Rejection_Reversion',
+                                    signatures=['ICML.cc/2023/Conference/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'revert_desk_rejection_confirmation': { 'value': 'We approve the reversion of desk-rejected submission.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_reversion_note['id'])
+
+        withdrawal_note = pc_openreview_client.post_note_edit(invitation=f'ICML.cc/2023/Conference/Submission{submission.number}/-/Withdrawal',
+                                    signatures=[f'ICML.cc/2023/Conference/Submission{submission.number}/Authors'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=withdrawal_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/-/Withdrawn_Submission')
+
+        assert withdrawal_note['readers'] == [
+            "ICML.cc/2023/Conference/Program_Chairs",
+            f"ICML.cc/2023/Conference/Submission{submission.number}/Senior_Area_Chairs",
+            f"ICML.cc/2023/Conference/Submission{submission.number}/Area_Chairs",
+            f"ICML.cc/2023/Conference/Submission{submission.number}/Reviewers",
+            f"ICML.cc/2023/Conference/Submission{submission.number}/Authors"
+        ]
+
         submissions = venue.get_submissions(sort='number:asc')
         assert len(submissions) == 100
 
