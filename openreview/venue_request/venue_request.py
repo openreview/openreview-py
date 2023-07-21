@@ -1455,14 +1455,16 @@ class VenueRequest():
                             'values-copied': [
                                 self.support_group.id,
                                 '{signatures}',
-                                '{content["program_chair_emails"]}'
+                                '{content["program_chair_emails"]}',
+                                '{content["publication_chair_email"]}'
                             ]
                         },
                         'writers': {
                             'values-copied': [
                                 self.support_group.id,
                                 '{signatures}',
-                                '{content["program_chair_emails"]}'
+                                '{content["program_chair_emails"]}',
+                                '{content["publication_chair_email"]}'
                             ]
                         },
                         'signatures': {
