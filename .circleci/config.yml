@@ -38,9 +38,9 @@ jobs:
             sudo apt-get install -y mongodb-org=6.0.7
             mongosh mongodb://localhost:27017 --eval "rs.initiate()"
       - run: 
-        name: Install openreview-py
-        command: |
-          pip install ~/openreview-py-repo
+          name: Install openreview-py
+          command: |
+            pip install ~/openreview-py-repo
       - run:
           name: Clone OpenReview API V1 branch << pipeline.parameters.openreview-api-v1-branch >>
           command: |
