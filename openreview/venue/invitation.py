@@ -1037,6 +1037,33 @@ class InvitationBuilder(object):
         if comment_expdate:
             invitation.edit['invitation']['expdate'] = comment_expdate
 
+        if self.venue.ethics_review_stage:
+            invitation.edit['content']['noteReaders'] = {
+                'value': {
+                    'param': {
+                        'type': 'string[]', 'regex': f'{venue_id}/.*|everyone'
+                    }
+                }
+            }
+            invitation.content['comment_readers'] = {
+                'value': comment_stage.get_readers(self.venue, '{number}')
+            }
+            invitation.content['readers_delection'] = {
+                'value': comment_stage.reader_selection
+            }
+            comment_readers = ['${5/content/noteReaders/value}']
+            if comment_stage.reader_selection:
+                comment_readers = {
+                    'param': {
+                        'enum': ['${7/content/noteReaders/value}']
+                    }
+                }
+            invitation.edit['invitation']['edit']['note']['readers'] = comment_readers
+
+            invitation.edit['invitation']['invitees'].append(self.venue.get_ethics_reviewers_id('${3/content/noteNumber/value}'))
+            invitation.edit['invitation']['edit']['signatures']['param']['regex'] += '|' + self.venue.get_ethics_reviewers_id('${5/content/noteNumber/value}', anon=True)
+            invitation.edit['invitation']['edit']['signatures']['param']['regex'] += '|' + self.venue.get_ethics_chairs_id()
+
         self.save_invitation(invitation, replacement=False)
         return invitation
 
@@ -1311,7 +1338,7 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)''',
                     'edit': {
                         'signatures': { 'param': { 'regex': self.venue.get_authors_id(number='${5/content/noteNumber/value}')  }},
-                        'readers': ['${{2/note/forum}/readers}'],
+                        'readers': submission_stage.get_withdrawal_readers(self.venue, '${4/content/noteNumber/value}'),
                         'writers': [ venue_id, self.venue.get_authors_id(number='${4/content/noteNumber/value}')],
                         'note': {
                             'forum': '${4/content/noteId/value}',
@@ -1512,7 +1539,7 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)''',
                     'edit': {
                         'signatures': [self.venue.get_program_chairs_id()],
-                        'readers': ['${{2/note/forum}/readers}'],
+                        'readers': submission_stage.get_withdrawal_readers(self.venue, '${{4/content/noteId/value}/number}'),
                         'writers': [ venue_id],
                         'note': {
                             'forum': '${4/content/noteId/value}',
@@ -2847,6 +2874,13 @@ class InvitationBuilder(object):
         ethics_stage_id = f'{venue_id}/-/{ethics_stage_name}_Flag'
         submission_id = self.venue.submission_stage.get_submission_id(self.venue)
 
+        flag_readers = [venue_id, self.venue.get_ethics_chairs_id(), self.venue.get_ethics_reviewers_id('${{4/id}/number}')]
+        if self.venue.use_senior_area_chairs:
+            flag_readers.append(self.venue.get_senior_area_chairs_id('${{4/id}/number}'))
+        if self.venue.use_area_chairs:
+            flag_readers.append(self.venue.get_area_chairs_id('${{4/id}/number}'))
+        flag_readers.append(self.venue.get_reviewers_id('${{4/id}/number}'))
+
         ethics_stage_invitation = Invitation(
             id=ethics_stage_id,
             invitees = [venue_id],
@@ -2856,6 +2890,12 @@ class InvitationBuilder(object):
             content = {
                 'review_readers': {
                     'value': self.venue.review_stage.get_readers(self.venue, '{number}')
+                },
+                'comment_readers': {
+                    'value': self.venue.comment_stage.get_readers(self.venue, '{number}')
+                },
+                'readers_selection': {
+                    'value': self.venue.comment_stage.reader_selection
                 }
             },
             edit = {
@@ -2876,9 +2916,22 @@ class InvitationBuilder(object):
                             'value': {
                                 'param': {
                                     'type': 'boolean',
-                                    'const': True
+                                    'enum': [True, False]
                                 }
-                            }
+                            },
+                            'readers': flag_readers
+                        },
+                        'ethics_comments': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'markdown': True,
+                                    'input': 'textarea',
+                                    'optional': True
+                                }
+                            },
+                            'readers': [venue_id, self.venue.get_ethics_chairs_id(), self.venue.get_ethics_reviewers_id('${{4/id}/number}')]
                         }
                     }
                 }
