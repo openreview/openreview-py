@@ -65,7 +65,7 @@ class VenueStages():
                     'readers': {
                         'values-copied': [
                             self.venue_request.support_group.id,
-                            '{content["program_chair_emails"]}'
+                            '{content.program_chair_emails}'
                         ]
                     },
                     'writers': {
@@ -112,7 +112,7 @@ class VenueStages():
                 'readers': {
                     'values-copied': [
                         self.venue_request.support_group.id,
-                        '{content["program_chair_emails"]}'
+                        '{content.program_chair_emails}'
                     ]
                 },
                 'writers': {
@@ -227,7 +227,7 @@ class VenueStages():
                 'readers': {
                     'values-copied': [
                         self.venue_request.support_group.id,
-                        '{content["program_chair_emails"]}'
+                        '{content.program_chair_emails}'
                     ]
                 },
                 'writers': {
@@ -309,7 +309,7 @@ class VenueStages():
                 'readers': {
                     'values-copied': [
                         self.venue_request.support_group.id,
-                        '{content["program_chair_emails"]}'
+                        '{content.program_chair_emails}'
                     ]
                 },
                 'writers': {
@@ -408,7 +408,7 @@ class VenueStages():
                 'readers': {
                     'values-copied': [
                         self.venue_request.support_group.id,
-                        '{content["program_chair_emails"]}'
+                        '{content.program_chair_emails}'
                     ]
                 },
                 'writers': {
@@ -488,7 +488,7 @@ class VenueStages():
             reply={
                 'readers': {
                     'values-copied': [
-                        '{content["program_chair_emails"]}',
+                        '{content.program_chair_emails}',
                         self.venue_request.support_group.id
                     ]
                 },
@@ -586,7 +586,7 @@ class VenueStages():
                 'readers': {
                     'values-copied': [
                         self.venue_request.support_group.id,
-                        '{content["program_chair_emails"]}'
+                        '{content.program_chair_emails}'
                     ]
                 },
                 'writers': {
@@ -663,7 +663,7 @@ class VenueStages():
                 'readers': {
                     'values-copied': [
                         self.venue_request.support_group.id,
-                        '{content["program_chair_emails"]}'
+                        '{content.program_chair_emails}'
                     ]
                 },
                 'writers': {
@@ -829,7 +829,7 @@ class VenueStages():
                 'readers': {
                     'values-copied': [
                         self.venue_request.support_group.id,
-                        '{content["program_chair_emails"]}'
+                        '{content.program_chair_emails}'
                     ]
                 },
                 'writers': {
@@ -883,7 +883,7 @@ class VenueStages():
                 'readers': {
                     'values-copied': [
                         self.venue_request.support_group.id,
-                        '{content["program_chair_emails"]}'
+                        '{content.program_chair_emails}'
                     ]
                 },
                 'writers': {
@@ -952,7 +952,7 @@ class VenueStages():
                 'readers': {
                     'values-copied': [
                         self.venue_request.support_group.id,
-                        '{content["program_chair_emails"]}'
+                        '{content.program_chair_emails}'
                     ]
                 },
                 'writers': {
@@ -1020,7 +1020,7 @@ class VenueStages():
                 'readers': {
                     'values-copied': [
                         self.venue_request.support_group.id,
-                        '{content["program_chair_emails"]}'
+                        '{content.program_chair_emails}'
                     ]
                 },
                 'writers': {
@@ -1455,16 +1455,16 @@ class VenueRequest():
                             'values-copied': [
                                 self.support_group.id,
                                 '{signatures}',
-                                '{content["program_chair_emails"]}',
-                                '{content["publication_chair_email"]}'
+                                '{content.program_chair_emails}',
+                                '{content.publication_chair_email}'
                             ]
                         },
                         'writers': {
                             'values-copied': [
                                 self.support_group.id,
                                 '{signatures}',
-                                '{content["program_chair_emails"]}',
-                                '{content["publication_chair_email"]}'
+                                '{content.program_chair_emails}',
+                                '{content.publication_chair_email}'
                             ]
                         },
                         'signatures': {
