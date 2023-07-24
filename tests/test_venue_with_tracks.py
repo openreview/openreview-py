@@ -102,6 +102,20 @@ class TestVenueWithTracks():
                 'program_chair_emails': ['pc@webconf.org'],
                 'contact_email': 'pc@webconf.org',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
+                'senior_area_chair_roles': [
+                    "Senior_Area_Chairs",
+                    "Econ_Senior_Area_Chairs",
+                    "Graph_Senior_Area_Chairs",
+                    "RespWeb_Senior_Area_Chairs",
+                    "Search_Senior_Area_Chairs",
+                    "Security_Senior_Area_Chairs",
+                    "Semantics_Senior_Area_Chairs",
+                    "Social_Senior_Area_Chairs",
+                    "Systems_Senior_Area_Chairs",
+                    "RecSys_Senior_Area_Chairs",
+                    "Mining_Senior_Area_Chairs",
+                    "COI_Senior_Area_Chairs"                    
+                ],
                 'area_chair_roles': [
                     "Area_Chairs",
                     "Econ_Area_Chairs",
@@ -242,7 +256,42 @@ class TestVenueWithTracks():
         assert submission_invitation
         assert 'track' in submission_invitation.edit['note']['content']
 
-        openreview_client.add_members_to_group('ACM.org/TheWebConf/2024/Conference/Senior_Area_Chairs', [
+        # openreview_client.add_members_to_group('ACM.org/TheWebConf/2024/Conference/Senior_Area_Chairs', [
+        #     'sac1@webconf.com',
+        #     'sac2@webconf.com',
+        #     'sac3@webconf.com',
+        #     'sac4@webconf.com',
+        #     'sac5@webconf.com',
+        #     'sac6@webconf.com',
+        #     'sac7@webconf.com',
+        #     'sac8@webconf.com',
+        #     'sac9@webconf.com',
+        #     'sac10@webconf.com',
+        #     'sac11@gmail.com',
+        #     'sac12@webconf.com'
+        # ])
+
+    def test_recruit_sacs(self, client, openreview_client, helpers, selenium, request_page):
+
+        pc_client=openreview.Client(username='pc@webconf.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        sac_roles = [
+            "Senior_Area_Chairs",
+            "Econ_Senior_Area_Chairs",
+            "Graph_Senior_Area_Chairs",
+            "RespWeb_Senior_Area_Chairs",
+            "Search_Senior_Area_Chairs",
+            "Security_Senior_Area_Chairs",
+            "Semantics_Senior_Area_Chairs",
+            "Social_Senior_Area_Chairs",
+            "Systems_Senior_Area_Chairs",
+            "RecSys_Senior_Area_Chairs",
+            "Mining_Senior_Area_Chairs",
+            "COI_Senior_Area_Chairs"                    
+        ]
+
+        sacs = [
             'sac1@webconf.com',
             'sac2@webconf.com',
             'sac3@webconf.com',
@@ -255,7 +304,54 @@ class TestVenueWithTracks():
             'sac10@webconf.com',
             'sac11@gmail.com',
             'sac12@webconf.com'
-        ])
+        ]
+
+        sac_counter = 1
+
+        for sac_role in sac_roles:
+
+            reviewer_details = f'''sac{sac_counter}@{'gmail' if sac_counter == 11 else 'webconf'}.com, Area ChairOne'''
+            if sac_counter == 1:
+                reviewer_details += f'''sac12@webconf.com, Area ChairOne'''
+            
+            sac_counter += 1
+            pc_client.post_note(openreview.Note(
+                content={
+                    'title': 'Recruitment',
+                    'invitee_role': sac_role,
+                    'invitee_details': reviewer_details,
+                    'invitee_reduced_load': ["1", "2", "3"],
+                    'invitation_email_subject': '[TheWebConf 2023] Invitation to serve as {{invitee_role}}',
+                    'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
+                },
+                forum=request_form.forum,
+                replyto=request_form.forum,
+                invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
+                readers=['ACM.org/TheWebConf/2024/Conference/Program_Chairs', 'openreview.net/Support'],
+                signatures=['~Program_WebChair1'],
+                writers=[]
+            ))
+
+            helpers.await_queue()
+
+            role = sac_role.replace('_', ' ')
+            role = role[:-1] if role.endswith('s') else role        
+            messages = openreview_client.get_messages(subject = f'[TheWebConf 2023] Invitation to serve as {role}')
+            if sac_counter == 1:
+                assert len(messages) == 2
+            else:
+                assert len(messages) == 1
+
+            for message in messages:
+                text = message['content']['text']
+
+                invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+                helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+            if sac_counter == 1:
+                assert len(openreview_client.get_group(f'ACM.org/TheWebConf/2024/Conference/{sac_role}').members) == 2
+            else:
+                assert len(openreview_client.get_group(f'ACM.org/TheWebConf/2024/Conference/{sac_role}').members) == 1
 
     def test_submissions(self, client, openreview_client, helpers, test_client):
 

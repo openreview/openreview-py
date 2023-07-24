@@ -810,8 +810,8 @@ Total Errors: {len(errors)}
             all_authorids = all_authorids + authorids
 
         author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, as_dict=True)
-        sac_group = tools.replace_members_with_ids(self.client, self.client.get_group(self.get_senior_area_chairs_id()))
-        sac_profile_by_id = tools.get_profiles(self.client, sac_group.members, with_publications=True, as_dict=True)   
+        all_sacs = sac_tracks.values().flatten()
+        sac_profile_by_id = tools.get_profiles(self.client, all_sacs, with_publications=True, as_dict=True)   
 
         info_function = tools.info_function_builder(openreview.tools.get_neurips_profile_info if conflict_policy == 'NeurIPS' else openreview.tools.get_profile_info)
 
