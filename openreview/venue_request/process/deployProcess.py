@@ -363,16 +363,20 @@ If you would like to change your decision, please follow the link in the previou
     ))
 
     # revision_stage_invitation
+    submission_revision_readers = []
+    submission_revision_readers.extend(readers)
+    if 'publication_chair_email' in forum.content:
+        submission_revision_readers.append(forum.content['publication_chair_email'])
     client.post_invitation(openreview.Invitation(
         id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Submission_Revision_Stage',
         super=SUPPORT_GROUP + '/-/Submission_Revision_Stage',
-        invitees=readers,
+        invitees=submission_revision_readers,
         reply={
             'forum': forum.id,
             'referent': forum.id,
             'readers' : {
                 'description': 'The users who will be allowed to read the above content.',
-                'values' : readers
+                'values' : submission_revision_readers
             }
         },
         signatures=['~Super_User1']

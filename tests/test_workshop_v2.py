@@ -293,7 +293,7 @@ class TestWorkshopV2():
                     )
                 )
             
-            helpers.await_queue(openreview_client)
+            helpers.await_queue_edit(openreview_client, edit_id=decision['id'])
 
         invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Post_Decision_Stage')
         invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
@@ -332,6 +332,8 @@ class TestWorkshopV2():
         group = openreview_client.get_group('PRL/2023/ICAPS/Publication_Chair')
         assert group
         assert 'publicationchair@mail.com' in group.members
+        submission_revision_inv = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Submission_Revision_Stage')
+        assert 'publicationchair@mail.com' in submission_revision_inv.invitees
 
         #Post a post decision note, release accepted papers to publication chair
         now = datetime.datetime.utcnow()
@@ -393,9 +395,62 @@ Best,
                 f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors'
             ]
                 
-        publication_chair_client=helpers.create_user('publicationchair@mail.com', 'Publication', 'Chair')
+        helpers.create_user('publicationchair@mail.com', 'Publication', 'Chair')
         publication_chair_client_v2=openreview.api.OpenReviewClient(username='publicationchair@mail.com', password=helpers.strong_password)
 
         assert publication_chair_client_v2.get_group('PRL/2023/ICAPS/Authors/Accepted')
         submissions = publication_chair_client_v2.get_notes(invitation='PRL/2023/ICAPS/-/Submission', sort='number:asc')
         assert len(submissions) == 6
+
+    def test_enable_camera_ready_revisions(self, client, openreview_client, helpers):
+
+        publication_chair_client = openreview.Client(username='publicationchair@mail.com', password=helpers.strong_password)
+        request_form=publication_chair_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
+        # post submission revision stage note
+        revision_stage_note = publication_chair_client.post_note(openreview.Note(
+            content={
+                'submission_revision_name': 'Camera_Ready_Revision',
+                'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
+                'accepted_submissions_only': 'Enable revision for accepted submissions only',
+                'submission_author_edition': 'Allow addition and removal of authors',
+                'submission_revision_additional_options': {
+                    "supplementary_materials": {
+                        "value": {
+                            "param": {
+                                "type": "file",
+                                "extensions": [
+                                    "zip",
+                                    "pdf",
+                                    "tgz",
+                                    "gz"
+                                ],
+                                "maxSize": 100
+                            }
+                        },
+                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
+                        "order": 1
+                    },
+                },
+                'submission_revision_remove_options': ['title', 'authors', 'authorids', 'abstract', 'pdf', 'keywords']
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Submission_Revision_Stage'.format(request_form.number),
+            readers=['{}/Program_Chairs'.format('PRL/2023/ICAPS'), 'openreview.net/Support', 'publicationchair@mail.com'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Publication_Chair1'],
+            writers=[]
+        ))
+        assert revision_stage_note
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id = revision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        invitations = openreview_client.get_invitations(invitation='PRL/2023/ICAPS/-/Camera_Ready_Revision')
+        assert len(invitations) == 6
