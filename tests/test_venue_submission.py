@@ -41,7 +41,8 @@ class TestVenueSubmission():
             withdrawn_submission_public=True, 
             withdrawn_submission_reveal_authors=True, 
             desk_rejected_submission_public=True,
-            force_profiles=True
+            force_profiles=True,
+            remove_fields=['abstract']
         )
 
         venue.bid_stages = [
@@ -184,7 +185,6 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
             note=Note(
                 content={
                     'title': { 'value': 'Paper 1 Title' },
-                    'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Celeste MartinezEleven']},
                     'authorids': { 'value': ['~Celeste_MartinezEleven1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
@@ -209,7 +209,6 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
             note=Note(id=submission.id,
                 content={
                     'title': { 'value': 'Paper 1 Title UPDATED' },
-                    'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Celeste MartinezEleven']},
                     'authorids': { 'value': ['~Celeste_MartinezEleven1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
@@ -232,7 +231,6 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
                 note=Note(
                     content={
                         'title': { 'value': 'Paper 2 Title' },
-                        'abstract': { 'value': 'Paper abstract' },
                         'authors': { 'value': ['Celeste MartinezEleven', 'Melisa BokEleven']},
                         'authorids': { 'value': ['~Celeste_MartinezEleven1', 'melisa@maileleven.com']},
                         'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
@@ -248,7 +246,6 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
                 note=Note(
                     content={
                         'title': { 'value': 'Paper 2 Title' },
-                        'abstract': { 'value': 'Paper abstract' },
                         'authors': { 'value': ['Celeste MartinezEleven', 'Melisa BokEleven']},
                         'authorids': { 'value': ['~Celeste_MartinezEleven1', '~Melisa_BokEleven1']},
                         'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
@@ -299,7 +296,6 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
             note=Note(
                 content={
                     'title': { 'value': 'Paper 3 Title' },
-                    'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Celeste MartinezEleven']},
                     'authorids': { 'value': ['~Celeste_MartinezEleven1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
@@ -750,7 +746,9 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         venue.post_decision_stage()
 
-    def test_submission_revision_stage(self, venue, openreview_client, helpers):
+    def test_submission_revision_stage(self, venue, client, openreview_client, helpers):
+
+        submissions = openreview_client.get_notes(invitation='TestVenue.cc/-/Submission', sort='number:asc')
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Camera_Ready_Revision')
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation TestVenue.cc/Submission1/-/Camera_Ready_Revision was not found'):
@@ -776,6 +774,33 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         assert openreview_client.get_invitation('TestVenue.cc/-/Camera_Ready_Revision')
         assert openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Submission1/-/Camera_Ready_Revision')
         assert not openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Submission2/-/Camera_Ready_Revision')
+
+        author_client = OpenReviewClient(username='celeste@maileleven.com', password=helpers.strong_password)
+        # post revision for a submission without abstract
+        updated_submission = author_client.post_note_edit(invitation='TestVenue.cc/Submission1/-/Camera_Ready_Revision',
+            signatures=['TestVenue.cc/Submission1/Authors'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper 1 Title REVISED AGAIN' },
+                    'authors': { 'value': ['Celeste MartinezEleven']},
+                    'authorids': { 'value': ['~Celeste_MartinezEleven1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'keywords': {'value': ['aa'] }
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=updated_submission['id'])
+
+        updated_note = author_client.get_note(id=submissions[0].forum)
+
+        messages = client.get_messages(to = 'celeste@maileleven.com', subject='TV 22 has received a new revision of your submission titled Paper 1 Title REVISED AGAIN')
+        assert messages and len(messages) == 1
+
+        message_text = f'''Your new revision of the submission to TV 22 has been posted.
+
+Title: Paper 1 Title REVISED AGAIN
+
+To view your submission, click here: https://openreview.net/forum?id={updated_note.id}'''
+        assert message_text in messages[0]['content']['text']
 
     def test_custom_stage(self, venue, openreview_client, helpers):
 
@@ -831,13 +856,13 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         verification_note = openreview_client.get_notes(invitation='TestVenue.cc/Submission1/-/Camera_Ready_Verification')[0]
 
-        messages = openreview_client.get_messages(subject='[TV 22] A camera ready verification has been received on your Paper Number: 1, Paper Title: "Paper 1 Title UPDATED"')
+        messages = openreview_client.get_messages(subject='[TV 22] A camera ready verification has been received on your Paper Number: 1, Paper Title: "Paper 1 Title REVISED AGAIN"')
         assert len(messages) == 1
         assert 'celeste@maileleven.com' in messages[0]['content']['to']
         assert messages[0]['content']['text'] == f'''The camera ready verification for submission number {str(submissions[0].number)} has been posted.
 Please follow this link: https://openreview.net/forum?id={submissions[0].id}&noteId={verification_note.id}'''
 
-        messages = openreview_client.get_messages(subject='[TV 22] Your camera ready verification has been received on Paper Number: 1, Paper Title: "Paper 1 Title UPDATED"')
+        messages = openreview_client.get_messages(subject='[TV 22] Your camera ready verification has been received on Paper Number: 1, Paper Title: "Paper 1 Title REVISED AGAIN"')
         assert len(messages) == 1
         assert 'venue_pc@mail.com' in messages[0]['content']['to']
         assert messages[0]['content']['text'] == f'''The camera ready verification for submission number {str(submissions[0].number)} has been posted.

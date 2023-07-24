@@ -2426,6 +2426,15 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         messages = client.get_messages(to = 'venue_author_v2_2@mail.com', subject='TestVenue@OR\'2030V2 has received a new revision of your submission titled revised test submission 3')
         assert messages and len(messages) == 1
 
+        message_text = f'''Your new revision of the submission to TestVenue@OR'2030V2 has been posted.
+
+Title: revised test submission 3
+
+Abstract revised abstract 3
+
+To view your submission, click here: https://openreview.net/forum?id={updated_note.id}'''
+        assert message_text in messages[0]['content']['text']
+
     def test_venue_submission_revision_stage_accepted_papers_only(self, client, test_client, helpers, venue, openreview_client):
 
         # Post a revision stage note
