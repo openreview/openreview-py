@@ -209,8 +209,8 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
             note=Note(id=submission.id,
                 content={
                     'title': { 'value': 'Paper 1 Title UPDATED' },
-                    'authors': { 'value': ['Celeste MartinezEleven']},
-                    'authorids': { 'value': ['~Celeste_MartinezEleven1']},
+                    'authors': { 'value': ['Celeste MartinezEleven', 'Celeste MartinezTwelve']},
+                    'authorids': { 'value': ['~Celeste_MartinezEleven1', '~Celeste_MartinezEleven1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'keywords': {'value': ['aa'] }
                 }
@@ -222,7 +222,8 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         assert len(messages) == 1
         assert 'Your submission to TV 22 has been updated.' in messages[0]['content']['text']
 
-        #TODO: check author console
+        authors_group = openreview_client.get_group('TestVenue.cc/Submission1/Authors')
+        assert len(authors_group.members) == 1 and ['~Celeste_MartinezEleven1'] == authors_group.members
 
         with pytest.raises(openreview.OpenReviewException, match=r'authorids value/1 must match pattern "~.*"'):
             submission_note_2 = author_client.post_note_edit(

@@ -94,7 +94,7 @@ To view the submission, click here: https://openreview.net/forum?id={note.forum}
             writers=[venue_id],
             signatures=[venue_id],
             signatories=[venue_id, authors_group_id],
-            members=note.content['authorids']['value'] ## always update authors
+            members=list(set(note.content['authorids']['value'])) ## always update authors
         )
     )    
     if action == 'posted' or action == 'updated':
