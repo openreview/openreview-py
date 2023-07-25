@@ -794,11 +794,13 @@ Total Errors: {len(errors)}
             raise openreview.OpenReviewException('The submission stage does not have tracks enabled. Please enable tracks in the submission stage.')
 
         sac_tracks = {}
+        all_sacs = set()
         with open(track_sac_file) as file_handle:
             for row in csv.reader(file_handle):
                 if row[0] not in sac_tracks:
                     sac_tracks[row[0]] = []
                 sac_tracks[row[0]].append(row[1])
+                all_sacs.add(row[1])
     
         print(sac_tracks)
 
@@ -810,8 +812,7 @@ Total Errors: {len(errors)}
             all_authorids = all_authorids + authorids
 
         author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, as_dict=True)
-        all_sacs = sac_tracks.values().flatten()
-        sac_profile_by_id = tools.get_profiles(self.client, all_sacs, with_publications=True, as_dict=True)   
+        sac_profile_by_id = tools.get_profiles(self.client, list(all_sacs), with_publications=True, as_dict=True)   
 
         info_function = tools.info_function_builder(openreview.tools.get_neurips_profile_info if conflict_policy == 'NeurIPS' else openreview.tools.get_profile_info)
 
