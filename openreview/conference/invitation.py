@@ -1232,7 +1232,7 @@ class PaperReviewRevisionInvitation(openreview.Invitation):
             super = conference.get_invitation_id(review_revision_stage.name),
             writers = [conference.id],
             signatures = [conference.id],
-            invitees = review.signatures + [conference.support_user],
+            invitees = review.signatures + [conference.id, conference.support_user],
             reply = reply
         )
 
