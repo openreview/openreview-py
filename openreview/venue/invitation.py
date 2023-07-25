@@ -1037,7 +1037,7 @@ class InvitationBuilder(object):
         if comment_expdate:
             invitation.edit['invitation']['expdate'] = comment_expdate
 
-        if self.venue.ethics_review_stage:
+        if self.venue.ethics_review_stage and self.venue.ethics_review_stage.enable_comments:
             invitation.edit['content']['noteReaders'] = {
                 'value': {
                     'param': {
@@ -1048,7 +1048,7 @@ class InvitationBuilder(object):
             invitation.content['comment_readers'] = {
                 'value': comment_stage.get_readers(self.venue, '{number}')
             }
-            invitation.content['readers_delection'] = {
+            invitation.content['readers_selection'] = {
                 'value': comment_stage.reader_selection
             }
             comment_readers = ['${5/content/noteReaders/value}']
@@ -2890,12 +2890,6 @@ class InvitationBuilder(object):
             content = {
                 'review_readers': {
                     'value': self.venue.review_stage.get_readers(self.venue, '{number}')
-                },
-                'comment_readers': {
-                    'value': self.venue.comment_stage.get_readers(self.venue, '{number}')
-                },
-                'readers_selection': {
-                    'value': self.venue.comment_stage.reader_selection
                 }
             },
             edit = {
@@ -2946,6 +2940,14 @@ class InvitationBuilder(object):
                         'append': [self.venue.get_ethics_reviewers_id('${{3/id}/number}')]
                     }
                 }
+            }
+
+        if ethics_review_stage.enable_comments:
+            ethics_stage_invitation.content['comment_readers'] = {
+                'value': self.venue.comment_stage.get_readers(self.venue, '{number}')
+            }
+            ethics_stage_invitation.content['readers_selection'] = {
+                'value': self.venue.comment_stage.reader_selection
             }
 
         self.save_invitation(ethics_stage_invitation, replacement=False)
