@@ -156,7 +156,13 @@ class Recruitment(object):
                     if 'NotFoundError' in error_string:
                         error_string = 'InvalidGroup'
                     else:
-                        self.client.remove_members_from_group(committee_invited_id, email)
+                        try:
+                            self.client.remove_members_from_group(committee_invited_id, email)
+                        except Exception as e:
+                            new_error_string = repr(e)
+                            if new_error_string not in recruitment_status['errors']:
+                                recruitment_status['errors'][new_error_string] = []
+                            recruitment_status['errors'][new_error_string].append(email)
                     if error_string not in recruitment_status['errors']:
                         recruitment_status['errors'][error_string] = []
                     recruitment_status['errors'][error_string].append(email)
