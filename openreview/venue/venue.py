@@ -508,6 +508,8 @@ class Venue(object):
         self.invitation_builder.set_ethics_paper_groups_invitation()
         self.invitation_builder.set_review_invitation()
         self.invitation_builder.set_ethics_review_invitation()
+        if self.ethics_review_stage.enable_comments:
+            self.invitation_builder.set_official_comment_invitation()
 
         # setup paper matching
         group = tools.get_group(self.client, id=self.get_ethics_reviewers_id())
