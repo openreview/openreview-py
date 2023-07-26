@@ -3311,7 +3311,8 @@ ICML 2023 Conference Program Chairs'''
                         }
                     }
                 },
-                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
+                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers',
+                'enable_comments_for_ethics_reviewers': 'Yes, enable commenting for ethics reviewers.'
             },
             forum=request_form.forum,
             referent=request_form.forum,
@@ -3417,6 +3418,12 @@ ICML 2023 Conference Program Chairs'''
         invitation = openreview_client.get_invitations(id='ICML.cc/2023/Conference/Submission52/-/Ethics_Review')[0]
         assert invitation
         assert 'ICML.cc/2023/Conference/Submission52/Ethics_Reviewers' in invitation.invitees
+
+        # comment invitations are created for all papers, with only PCs and ethics reviewers as invitees
+        invitations = openreview_client.get_all_invitations(invitation='ICML.cc/2023/Conference/-/Official_Comment')
+        assert len(invitations) == 100
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Comment')
+        assert invitation.invitees == ['ICML.cc/2023/Conference', 'openreview.net/Support', 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers']
 
     def test_comment_stage(self, openreview_client, helpers):
 

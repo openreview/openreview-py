@@ -622,7 +622,8 @@ def get_ethics_review_stage(request_forum):
         release_to_reviewers = release_to_reviewers,
         additional_fields = review_form_additional_options,
         remove_fields = review_form_remove_options,
-        submission_numbers = flagged_submissions
+        submission_numbers = flagged_submissions,
+        enable_comments = (request_forum.content.get('enable_comments_for_ethics_reviewers', '').startswith('Yes'))
     )
 
 def get_meta_review_stage(request_forum):

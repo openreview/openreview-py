@@ -608,7 +608,7 @@ class ReviewStage(object):
 
     def get_signatures(self, conference, number):
         if self.allow_de_anonymization:
-            return '~.*|'
+            return '~.*'
 
         return conference.get_anon_reviewer_id(number=number, anon_id='.*')
     
@@ -654,7 +654,8 @@ class EthicsReviewStage(object):
         release_to_reviewers = Readers.ETHICS_REVIEWER_SIGNATURE,
         additional_fields = {},
         remove_fields = [],
-        submission_numbers = []
+        submission_numbers = [],
+        enable_comments = False
     ):
 
         self.start_date = start_date
@@ -666,6 +667,7 @@ class EthicsReviewStage(object):
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.submission_numbers = submission_numbers
+        self.enable_comments = enable_comments
 
     def get_readers(self, conference, number, ethics_review_signature=None):
 

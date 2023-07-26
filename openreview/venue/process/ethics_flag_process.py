@@ -92,8 +92,8 @@ def process(client, edit, invitation):
         )
 
         # edit comment invitation
-        invitation = openreview.tools.get_invitation(client, f'{venue_id}/{submission_name}{submission.number}/-/Official_Comment')
-        if invitation:
+        comment_invitation = openreview.tools.get_invitation(client, f'{venue_id}/{submission_name}{submission.number}/-/Official_Comment')
+        if comment_invitation and 'comment_readers' in invitation.content:
             comment_readers = invitation.content['comment_readers']['value']
             final_readers = []
             final_readers.extend(comment_readers)
