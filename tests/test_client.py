@@ -72,6 +72,9 @@ class TestClient():
         assert client.profile
         assert '~SomeFirstName_User1' == client.profile.id
 
+        os.environ.pop("OPENREVIEW_USERNAME")
+        os.environ.pop("OPENREVIEW_PASSWORD")       
+
     def test_login_user(self, client, helpers):
 
         guest = openreview.Client()
@@ -330,6 +333,8 @@ class TestClient():
 
         venueRes = super_user.post_venue(venue)
         assert venue == venueRes
+        os.environ.pop("OPENREVIEW_USERNAME")
+        os.environ.pop("OPENREVIEW_PASSWORD")        
 
     @pytest.mark.xfail
     def test_get_venues(self, client, helpers):
@@ -375,6 +380,10 @@ class TestClient():
         assert len(venues) == 2
         assert venues[0].get('id') == '.HCOMP/2013'
         assert venues[1].get('id') == venue.get('id')
+
+        os.environ.pop("OPENREVIEW_USERNAME")
+        os.environ.pop("OPENREVIEW_PASSWORD")        
+
 
     def test_get_messages(self, client):
 
