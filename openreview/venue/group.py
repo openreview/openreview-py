@@ -384,21 +384,22 @@ class GroupBuilder(object):
     def create_senior_area_chairs_group(self):
 
         venue_id = self.venue.id
-        senior_area_chairs_id = self.venue.get_senior_area_chairs_id()
-        senior_area_chairs_group = openreview.tools.get_group(self.client, senior_area_chairs_id)
-        if not senior_area_chairs_group:
-            senior_area_chairs_group = Group(id=senior_area_chairs_id,
-                            readers=[venue_id, senior_area_chairs_id],
-                            writers=[venue_id],
-                            signatures=[venue_id],
-                            signatories=[venue_id],
-                            members=[]
-                        )
+        for index, role in enumerate(self.venue.senior_area_chair_roles):
+            senior_area_chairs_id = self.venue.get_committee_id(role)
+            senior_area_chairs_group = openreview.tools.get_group(self.client, senior_area_chairs_id)
+            if not senior_area_chairs_group:
+                senior_area_chairs_group = Group(id=senior_area_chairs_id,
+                                readers=[venue_id, senior_area_chairs_id],
+                                writers=[venue_id],
+                                signatures=[venue_id],
+                                signatories=[venue_id],
+                                members=[]
+                            )
 
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/seniorAreaChairsWebfield.js')) as f:
-                content = f.read()
-                senior_area_chairs_group.web = content
-                self.post_group(senior_area_chairs_group)
+                with open(os.path.join(os.path.dirname(__file__), 'webfield/seniorAreaChairsWebfield.js')) as f:
+                    content = f.read()
+                    senior_area_chairs_group.web = content
+                    self.post_group(senior_area_chairs_group)
 
     def create_ethics_reviewers_group(self):
         venue_id = self.venue.id

@@ -1,5 +1,5 @@
 // Webfield component
-const committee_name = entity.id.split('/').slice(-1)[0].replace('_', ' ')
+const committee_name = entity.id.split('/').slice(-1)[0].replaceAll('_', ' ')
 const startParam = `${domain.content.area_chairs_assignment_id?.value},tail:{ac.profile.id}`
 const traverseParam = `${domain.content.reviewers_assignment_id?.value}`
 const browseInvitations = []

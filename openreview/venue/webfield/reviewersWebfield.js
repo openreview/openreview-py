@@ -1,5 +1,5 @@
 // Webfield component
-const committee_name = entity.id.split('/').slice(-1)[0].replace('_', ' ')
+const committee_name = entity.id.split('/').slice(-1)[0].replaceAll('_', ' ')
 return {
   component: 'ReviewerConsole',
   version: 1,

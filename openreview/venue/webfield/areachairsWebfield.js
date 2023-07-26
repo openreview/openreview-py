@@ -1,5 +1,5 @@
 // Webfield component
-const committee_name = entity.id.split('/').slice(-1)[0].replace('_', ' ')
+const committee_name = entity.id.split('/').slice(-1)[0].replaceAll('_', ' ')
 const reviewerAssignmentTitle = domain.content.reviewers_proposed_assignment_title?.value
 const areaChairsId = domain.content.area_chairs_id?.value
 const reviewerGroup = domain.content.reviewers_id?.value
