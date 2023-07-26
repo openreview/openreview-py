@@ -160,7 +160,7 @@ var main = function() {
       officialReviews = officialReviews.concat(paperOfficialReviews);
       metaReviews = metaReviews.concat(paperMetaReviews);
       decisions = decisions.concat(decisions);
-      getOfficialReviews(paperOfficialReviews, groups.anonReviewerGroups[submission.number]);
+      submission.details.reviews = getOfficialReviews(paperOfficialReviews, groups.anonReviewerGroups[submission.number]);
       submission.details.metaReview = paperMetaReviews;
       submission.details.decision = paperDecisions;
       submission.details.reviewers = reviewerGroupMaps.byNotes[submission.number];
