@@ -891,6 +891,44 @@ reviewer6@gmail.com, Reviewer ICMLSix
         assert note
         assert note.invitations == ['ICML.cc/2023/Conference/-/Submission', 'ICML.cc/2023/Conference/-/Post_Submission', 'ICML.cc/2023/Conference/-/Desk_Rejected_Submission']
 
+        assert desk_reject_note['readers'] == [
+            "ICML.cc/2023/Conference/Program_Chairs",
+            f"ICML.cc/2023/Conference/Submission{submission.number}/Senior_Area_Chairs",
+            f"ICML.cc/2023/Conference/Submission{submission.number}/Area_Chairs",
+            f"ICML.cc/2023/Conference/Submission{submission.number}/Reviewers",
+            f"ICML.cc/2023/Conference/Submission{submission.number}/Authors"
+        ]
+
+        # reverse desk-rejection and withdraw paper
+        desk_rejection_reversion_note = openreview_client.post_note_edit(invitation=f'ICML.cc/2023/Conference/Submission{submission.number}/-/Desk_Rejection_Reversion',
+                                    signatures=['ICML.cc/2023/Conference/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'revert_desk_rejection_confirmation': { 'value': 'We approve the reversion of desk-rejected submission.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_reversion_note['id'])
+
+        withdrawal_note = pc_openreview_client.post_note_edit(invitation=f'ICML.cc/2023/Conference/Submission{submission.number}/-/Withdrawal',
+                                    signatures=[f'ICML.cc/2023/Conference/Submission{submission.number}/Authors'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=withdrawal_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/-/Withdrawn_Submission')
+
+        assert withdrawal_note['readers'] == [
+            "ICML.cc/2023/Conference/Program_Chairs",
+            f"ICML.cc/2023/Conference/Submission{submission.number}/Senior_Area_Chairs",
+            f"ICML.cc/2023/Conference/Submission{submission.number}/Area_Chairs",
+            f"ICML.cc/2023/Conference/Submission{submission.number}/Reviewers",
+            f"ICML.cc/2023/Conference/Submission{submission.number}/Authors"
+        ]
+
         submissions = venue.get_submissions(sort='number:asc')
         assert len(submissions) == 100
 
@@ -3128,8 +3166,6 @@ ICML 2023 Conference Program Chairs'''
         assert len(group.members) == 1
         assert 'reviewerethics@gmail.com' in group.members
 
-        openreview_client.add_members_to_group(f'ICML.cc/2023/Conference/Ethics_Chairs', '~Celeste_ICML1')
-
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
@@ -3174,7 +3210,11 @@ ICML 2023 Conference Program Chairs'''
             note_edit = pc_client_v2.post_note_edit(
                 invitation='ICML.cc/2023/Conference/-/Ethics_Review_Flag',
                 note=openreview.api.Note(
-                    id=note.id
+                    id=note.id,
+                    content = {
+                        'flagged_for_ethics_review': { 'value': True },
+                        'ethics_comments': { 'value': 'These are ethics comments visible to ethics chairs and ethics reviewers' }
+                    }
                 ),
                 signatures=['ICML.cc/2023/Conference']
             )
@@ -3182,16 +3222,36 @@ ICML 2023 Conference Program Chairs'''
             helpers.await_queue()
             helpers.await_queue_edit(openreview_client, edit_id=note_edit['id'])
 
+        openreview_client.add_members_to_group('ICML.cc/2023/Conference/Submission5/Ethics_Reviewers', '~Celeste_ICML1')
+
         submissions = openreview_client.get_notes(content= { 'venueid': 'ICML.cc/2023/Conference/Submission'}, sort='number:asc')
         assert submissions and len(submissions) == 100
-        assert 'flagged_for_ethics_review' in submissions[0].content
+        assert 'flagged_for_ethics_review' in submissions[0].content and submissions[0].content['flagged_for_ethics_review']['value']
+        assert 'ethics_comments' in submissions[0].content
+        assert submissions[0].content['flagged_for_ethics_review']['readers'] == [
+            'ICML.cc/2023/Conference',
+            'ICML.cc/2023/Conference/Ethics_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers',
+            'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Area_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Reviewers'
+        ]
+        assert 'flagged_for_ethics_review' in submissions[4].content and submissions[4].content['flagged_for_ethics_review']['value']
+        assert 'ethics_comments' in submissions[4].content
+        assert submissions[4].content['flagged_for_ethics_review']['readers'] == [
+            'ICML.cc/2023/Conference',
+            'ICML.cc/2023/Conference/Ethics_Chairs',
+            'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers',
+            'ICML.cc/2023/Conference/Submission5/Senior_Area_Chairs',
+            'ICML.cc/2023/Conference/Submission5/Area_Chairs',
+            'ICML.cc/2023/Conference/Submission5/Reviewers'
+        ]
         ethics_group = openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers')
         assert ethics_group
         ethics_group = openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Submission2/Ethics_Reviewers')
         assert not ethics_group
         ethics_group = openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers')
-        assert ethics_group
-        assert 'flagged_for_ethics_review' in submissions[4].content
+        assert ethics_group and '~Celeste_ICML1' in ethics_group.members
         assert submissions[0].readers == [
             "ICML.cc/2023/Conference",
             "ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs",
@@ -3251,7 +3311,8 @@ ICML 2023 Conference Program Chairs'''
                         }
                     }
                 },
-                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
+                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers',
+                'enable_comments_for_ethics_reviewers': 'Yes, enable commenting for ethics reviewers.'
             },
             forum=request_form.forum,
             referent=request_form.forum,
@@ -3269,7 +3330,10 @@ ICML 2023 Conference Program Chairs'''
             note_edit = pc_client_v2.post_note_edit(
                 invitation='ICML.cc/2023/Conference/-/Ethics_Review_Flag',
                 note=openreview.api.Note(
-                    id=note.id
+                    id=note.id,
+                    content = {
+                        'flagged_for_ethics_review': { 'value': True },
+                    }
                 ),
                 signatures=['ICML.cc/2023/Conference']
             )
@@ -3279,7 +3343,7 @@ ICML 2023 Conference Program Chairs'''
 
         submissions = openreview_client.get_notes(content= { 'venueid': 'ICML.cc/2023/Conference/Submission'}, sort='number:asc')
         assert submissions and len(submissions) == 100
-        assert 'flagged_for_ethics_review' in submissions[-1].content
+        assert 'flagged_for_ethics_review' in submissions[-1].content and submissions[-1].content['flagged_for_ethics_review']['value']
         ethics_group = openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Submission7/Ethics_Reviewers')
         assert ethics_group
         ethics_group = openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Submission8/Ethics_Reviewers')
@@ -3334,7 +3398,10 @@ ICML 2023 Conference Program Chairs'''
         note_edit = pc_client_v2.post_note_edit(
             invitation='ICML.cc/2023/Conference/-/Ethics_Review_Flag',
             note=openreview.api.Note(
-                id=note.id
+                id=note.id,
+                content = {
+                    'flagged_for_ethics_review': { 'value': True },
+                }
             ),
             signatures=['ICML.cc/2023/Conference']
         )
@@ -3344,13 +3411,19 @@ ICML 2023 Conference Program Chairs'''
 
         submissions = openreview_client.get_notes(content= { 'venueid': 'ICML.cc/2023/Conference/Submission'}, sort='number:asc')
         assert submissions and len(submissions) == 100
-        assert 'flagged_for_ethics_review' in submissions[51].content
+        assert 'flagged_for_ethics_review' in submissions[51].content and submissions[51].content['flagged_for_ethics_review']['value']
         assert 'ICML.cc/2023/Conference/Submission52/Ethics_Reviewers' in submissions[51].readers
         ethics_group = openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Submission52/Ethics_Reviewers')
         assert ethics_group
         invitation = openreview_client.get_invitations(id='ICML.cc/2023/Conference/Submission52/-/Ethics_Review')[0]
         assert invitation
         assert 'ICML.cc/2023/Conference/Submission52/Ethics_Reviewers' in invitation.invitees
+
+        # comment invitations are created for all papers, with only PCs and ethics reviewers as invitees
+        invitations = openreview_client.get_all_invitations(invitation='ICML.cc/2023/Conference/-/Official_Comment')
+        assert len(invitations) == 100
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Comment')
+        assert invitation.invitees == ['ICML.cc/2023/Conference', 'openreview.net/Support', 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers']
 
     def test_comment_stage(self, openreview_client, helpers):
 
@@ -3380,11 +3453,54 @@ ICML 2023 Conference Program Chairs'''
 
         helpers.await_queue()
 
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Comment')
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Official_Comment')
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Comment')
+        assert invitation
+        assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers' in invitation.invitees
+        assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers' in invitation.edit['note']['readers']['param']['enum']
+        assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewer_.*' in invitation.edit['signatures']['param']['regex']
+        assert 'ICML.cc/2023/Conference/Ethics_Chairs' in invitation.edit['signatures']['param']['regex']
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Official_Comment')
+        assert invitation
+        assert 'ICML.cc/2023/Conference/Submission2/Ethics_Reviewers' not in invitation.edit['note']['readers']['param']['enum']
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission3/-/Official_Comment')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Official_Comment')
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Official_Comment')
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Official_Comment')
+        assert invitation        
+        assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers' in invitation.invitees
+        assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers' in invitation.edit['note']['readers']['param']['enum']
+        assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewer_.*' in invitation.edit['signatures']['param']['regex']
+        assert 'ICML.cc/2023/Conference/Ethics_Chairs' in invitation.edit['signatures']['param']['regex']
+
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
+        # unflag a paper
+        note = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', number=[5])[0]
+        note_edit = pc_client_v2.post_note_edit(
+            invitation='ICML.cc/2023/Conference/-/Ethics_Review_Flag',
+            note=openreview.api.Note(
+                id=note.id,
+                content = {
+                    'flagged_for_ethics_review': { 'value': False },
+                }
+            ),
+            signatures=['ICML.cc/2023/Conference']
+        )
+
+        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, edit_id=note_edit['id'])
+
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Official_Comment')
+        assert invitation        
+        assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers' not in invitation.invitees
+        assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers' in invitation.edit['note']['readers']['param']['enum']
+        assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewer_.*' in invitation.edit['signatures']['param']['regex']
+
+        submissions = openreview_client.get_notes(content= { 'venueid': 'ICML.cc/2023/Conference/Submission'}, sort='number:asc')
+        assert submissions and len(submissions) == 100
+        assert 'flagged_for_ethics_review' in submissions[4].content and not submissions[4].content['flagged_for_ethics_review']['value']
+        invitation = openreview_client.get_invitations(id='ICML.cc/2023/Conference/Submission5/-/Ethics_Review')[0]
+        assert invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        ethics_group = openreview_client.get_group('ICML.cc/2023/Conference/Submission5/Ethics_Reviewers')
+        assert ethics_group and '~Celeste_ICML1' in ethics_group.members
 
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
 
@@ -3402,7 +3518,8 @@ ICML 2023 Conference Program Chairs'''
                     'ICML.cc/2023/Conference/Program_Chairs',
                     'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
                     'ICML.cc/2023/Conference/Submission1/Area_Chairs',
-                    anon_group_id
+                    anon_group_id,
+                    'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers'
                 ],
                 content={
                     'comment': { 'value': 'I can not review this paper' },
@@ -3430,7 +3547,8 @@ ICML 2023 Conference Program Chairs'''
                     'ICML.cc/2023/Conference/Program_Chairs',
                     'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
                     'ICML.cc/2023/Conference/Submission1/Area_Chairs',
-                    anon_group_id
+                    anon_group_id,
+                    'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers'
                 ],
                 content={
                     'comment': { 'value': 'I can not review this paper, EDITED' },
