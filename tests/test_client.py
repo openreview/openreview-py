@@ -212,6 +212,7 @@ class TestClient():
     #     invitations = client.get_invitations(invitee = True, duedate = True, tags = True, details = 'repliedTags')
     #     assert len(invitations) == 0
 
+
     def test_get_notes_by_content(self, client, helpers):
 
         now = datetime.datetime.utcnow()
