@@ -179,17 +179,23 @@ class TestVenueWithTracks():
         assert openreview_client.get_group('ACM.org/TheWebConf/2024/Conference')
         assert openreview_client.get_group('ACM.org/TheWebConf/2024/Conference/Senior_Area_Chairs')
         assert openreview_client.get_group('ACM.org/TheWebConf/2024/Conference/Area_Chairs')
-        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Econ_Area_Chairs')
-        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Graph_Area_Chairs')
-        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/RespWeb_Area_Chairs')
-        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Search_Area_Chairs')
-        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Security_Area_Chairs')
-        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Semantics_Area_Chairs')
-        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Social_Area_Chairs')
-        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Systems_Area_Chairs')
-        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/RecSys_Area_Chairs')
-        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Mining_Area_Chairs')
-        assert not openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/COI_Area_Chairs')
+        group = openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Econ_Reviewers')
+        assert group
+        assert group.readers == ["ACM.org/TheWebConf/2024/Conference", "ACM.org/TheWebConf/2024/Conference/Econ_Senior_Area_Chairs", "ACM.org/TheWebConf/2024/Conference/Econ_Area_Chairs", "ACM.org/TheWebConf/2024/Conference/Econ_Reviewers"]
+
+        group = openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Econ_Area_Chairs')
+        assert group
+        assert group.readers == ["ACM.org/TheWebConf/2024/Conference", "ACM.org/TheWebConf/2024/Conference/Econ_Senior_Area_Chairs", "ACM.org/TheWebConf/2024/Conference/Econ_Area_Chairs"]
+        assert openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Graph_Area_Chairs')
+        assert openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/RespWeb_Area_Chairs')
+        assert openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Search_Area_Chairs')
+        assert openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Security_Area_Chairs')
+        assert openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Semantics_Area_Chairs')
+        assert openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Social_Area_Chairs')
+        assert openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Systems_Area_Chairs')
+        assert openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/RecSys_Area_Chairs')
+        assert openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/Mining_Area_Chairs')
+        assert openreview.tools.get_group(openreview_client, 'ACM.org/TheWebConf/2024/Conference/COI_Area_Chairs')
         
         assert openreview_client.get_group('ACM.org/TheWebConf/2024/Conference/Reviewers')
         assert openreview_client.get_group('ACM.org/TheWebConf/2024/Conference/Authors')
