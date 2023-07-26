@@ -246,10 +246,7 @@ class TestJournal():
 
         peter_client=helpers.create_user('petersnow@yahoo.com', 'Peter', 'Snow')
         peter_client=OpenReviewClient(username='petersnow@yahoo.com', password=helpers.strong_password)
-        if os.environ.get("OPENREVIEW_USERNAME"):
-            os.environ.pop("OPENREVIEW_USERNAME")
-        if os.environ.get("OPENREVIEW_PASSWORD"):
-            os.environ.pop("OPENREVIEW_PASSWORD")
+
         guest_client=OpenReviewClient()
         now = datetime.datetime.utcnow()
 
