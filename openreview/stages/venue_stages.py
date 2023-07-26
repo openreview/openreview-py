@@ -604,7 +604,7 @@ class ReviewStage(object):
 
     def get_signatures(self, conference, number):
         if self.allow_de_anonymization:
-            return '~.*|'
+            return '~.*'
 
         return conference.get_anon_reviewer_id(number=number, anon_id='.*')
     
