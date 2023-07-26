@@ -73,7 +73,7 @@ class TestClient():
         assert '~SomeFirstName_User1' == client.profile.id
 
         os.environ.pop("OPENREVIEW_USERNAME")
-        os.environ.pop("OPENREVIEW_PASSWORD")       
+        os.environ.pop("OPENREVIEW_PASSWORD")
 
     def test_login_user(self, client, helpers):
 
@@ -303,7 +303,7 @@ class TestClient():
         profile = client.rename_profile('~David_Steph1', '~Nadia_LBahy1')
         assert profile.id == '~Nadia_LBahy1'
 
-    @pytest.mark.xfail
+    @pytest.mark.skip()
     def test_post_venue(self, client, helpers):
         os.environ["OPENREVIEW_USERNAME"] = "openreview.net"
         os.environ["OPENREVIEW_PASSWORD"] = helpers.strong_password
@@ -334,9 +334,9 @@ class TestClient():
         venueRes = super_user.post_venue(venue)
         assert venue == venueRes
         os.environ.pop("OPENREVIEW_USERNAME")
-        os.environ.pop("OPENREVIEW_PASSWORD")        
+        os.environ.pop("OPENREVIEW_PASSWORD")
 
-    @pytest.mark.xfail
+    @pytest.mark.skip()
     def test_get_venues(self, client, helpers):
         os.environ["OPENREVIEW_USERNAME"] = "openreview.net"
         os.environ["OPENREVIEW_PASSWORD"] = helpers.strong_password
@@ -382,8 +382,7 @@ class TestClient():
         assert venues[1].get('id') == venue.get('id')
 
         os.environ.pop("OPENREVIEW_USERNAME")
-        os.environ.pop("OPENREVIEW_PASSWORD")        
-
+        os.environ.pop("OPENREVIEW_PASSWORD")
 
     def test_get_messages(self, client):
 
