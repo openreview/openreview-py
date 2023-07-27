@@ -1926,7 +1926,7 @@ class OpenReviewClient(object):
             entityB = {
                 'type': 'Note',
                 'withVenueid': venue_id,
-                'content': submission_content
+                'withContent': submission_content
             }
 
         expertise_request = {
