@@ -393,6 +393,16 @@ class VenueStages():
                 "order": 9,
                 "value-checkbox": "We confirm we want to release the submissions and reviews to the ethics reviewers",
                 "required": True
+            },
+            'enable_comments_for_ethics_reviewers': {
+                'description': 'Should ethics reviewers be able to post comments? Note you can control the comment stage deadline as well who else can post comments by using the Comment Stage button.',
+                'value-radio': [
+                    'Yes, enable commenting for ethics reviewers.',
+                    'No, do not enable commenting for ethics reviewers.'
+                ],
+                'required': False,
+                'default': 'No, do not enable commenting for ethics reviewers.',
+                'order': 10
             }
         }
 
