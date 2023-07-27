@@ -343,8 +343,8 @@ class GroupBuilder(object):
         for index, role in enumerate(self.venue.reviewer_roles):
 
             reviewers_id = self.venue.get_committee_id(role)
-            area_chairs_id = self.venue.get_committee_id(self.venue.area_chair_roles[index]) if index <= len(self.venue.area_chair_roles) else self.venue.get_area_chairs_id()
-            senior_area_chairs_id = self.venue.get_committee_id(self.venue.senior_area_chair_roles[index]) if index <= len(self.venue.senior_area_chair_roles) else self.venue.get_senior_area_chairs_id()
+            area_chairs_id = self.venue.get_committee_id(self.venue.area_chair_roles[index]) if index < len(self.venue.area_chair_roles) else self.venue.get_area_chairs_id()
+            senior_area_chairs_id = self.venue.get_committee_id(self.venue.senior_area_chair_roles[index]) if index < len(self.venue.senior_area_chair_roles) else self.venue.get_senior_area_chairs_id()
             reviewer_group = openreview.tools.get_group(self.client, reviewers_id)
             if not reviewer_group:
                 reviewer_group = Group(id=reviewers_id,
@@ -365,7 +365,7 @@ class GroupBuilder(object):
         venue_id = self.venue.id
         for index, role in enumerate(self.venue.area_chair_roles):
             area_chairs_id = self.venue.get_committee_id(role)
-            senior_area_chairs_id = self.venue.get_committee_id(self.venue.senior_area_chair_roles[index]) if index <= len(self.venue.senior_area_chair_roles) else self.venue.get_senior_area_chairs_id()
+            senior_area_chairs_id = self.venue.get_committee_id(self.venue.senior_area_chair_roles[index]) if index < len(self.venue.senior_area_chair_roles) else self.venue.get_senior_area_chairs_id()
             area_chairs_group = openreview.tools.get_group(self.client, area_chairs_id)
             if not area_chairs_group:
                 area_chairs_group = Group(id=area_chairs_id,
