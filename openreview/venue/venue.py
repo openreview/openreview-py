@@ -796,15 +796,18 @@ Total Errors: {len(errors)}
             raise openreview.OpenReviewException('The submission stage does not have tracks enabled. Please enable tracks in the submission stage.')
 
         sac_tracks = {}
-        all_sacs = set()
+        all_sacs = []
         with open(track_sac_file) as file_handle:
             for row in csv.reader(file_handle):
                 if row[0] not in sac_tracks:
                     sac_tracks[row[0]] = []
-                sac_tracks[row[0]].append(row[1])
-                all_sacs.add(row[1])
-    
-        print(sac_tracks)
+                sac_group = openreview.tools.get_group(self.client, self.get_committee_id(row[1]))
+                if sac_group:
+                    sacs = openreview.tools.replace_members_with_ids(self.client, sac_group).members
+                    sac_tracks[row[0]] = sac_tracks[row[0]] + sacs
+                    all_sacs = all_sacs + sacs
+
+        print(list(set(all_sacs)))
 
         submissions = self.get_submissions()
 
@@ -814,7 +817,7 @@ Total Errors: {len(errors)}
             all_authorids = all_authorids + authorids
 
         author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, as_dict=True)
-        sac_profile_by_id = tools.get_profiles(self.client, list(all_sacs), with_publications=True, as_dict=True)   
+        sac_profile_by_id = tools.get_profiles(self.client, list(set(all_sacs)), with_publications=True, as_dict=True)   
 
         info_function = tools.info_function_builder(openreview.tools.get_neurips_profile_info if conflict_policy == 'NeurIPS' else openreview.tools.get_profile_info)
 
@@ -852,7 +855,7 @@ Total Errors: {len(errors)}
                         print(f'adding {sac_tracks[submission.content["track"]["value"]]} to {sac_group_id}')
                         self.client.add_members_to_group(sac_group_id, sac_tracks[submission.content['track']['value']])
                     else:
-                        print(f'conflict detected between {sac} and {submission.number}')
+                        print(f'conflict detected between {sac} and {submission.number}', conflicts, conflict_policy)
 
         if not track_ac_file:
             return
@@ -870,7 +873,9 @@ Total Errors: {len(errors)}
         assignment_invitation_id = self.get_assignment_id(self.get_senior_area_chairs_id(), deployed=True)
         for track, ac_role in ac_tracks.items():
             sacs = sac_tracks[track]
-            ac_group = self.client.get_group(f'{self.venue_id}/{ac_role}')
+            ac_group = openreview.tools.get_group(self.client, self.get_committee_id(ac_role))
+            if not ac_group:
+                raise openreview.OpenReviewException(f'Group not found: {self.get_committee_id(ac_role)}')
             acs = openreview.tools.replace_members_with_ids(self.client, ac_group).members
             all_acs = all_acs + acs
 

@@ -283,7 +283,6 @@ class TestVenueWithTracks():
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         sac_roles = [
-            "Senior_Area_Chairs",
             "Econ_Senior_Area_Chairs",
             "Graph_Senior_Area_Chairs",
             "RespWeb_Senior_Area_Chairs",
@@ -318,9 +317,8 @@ class TestVenueWithTracks():
 
             reviewer_details = f'''sac{sac_counter}@{'gmail' if sac_counter == 11 else 'webconf'}.com, Area ChairOne'''
             if sac_counter == 1:
-                reviewer_details += f'''sac12@webconf.com, Area ChairOne'''
+                reviewer_details += f'''\nsac12@webconf.com, Area ChairOne'''
             
-            sac_counter += 1
             pc_client.post_note(openreview.Note(
                 content={
                     'title': 'Recruitment',
@@ -358,6 +356,8 @@ class TestVenueWithTracks():
                 assert len(openreview_client.get_group(f'ACM.org/TheWebConf/2024/Conference/{sac_role}').members) == 2
             else:
                 assert len(openreview_client.get_group(f'ACM.org/TheWebConf/2024/Conference/{sac_role}').members) == 1
+            sac_counter += 1
+
 
     def test_submissions(self, client, openreview_client, helpers, test_client):
 
@@ -548,32 +548,17 @@ ac{ac_counter + 1}@webconf.com, Area ChairTwo
         ## Assign SACs to submissions based on track
         with open(os.path.join(os.path.dirname(__file__), 'data/track_sacs.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
-            writer.writerow(["Economics, Online Markets, and Human Computation",'~SAC_WebChairOne1'])
-            writer.writerow(["Economics, Online Markets, and Human Computation",'~SAC_WebChairTwelve1'])
-            writer.writerow(["Graph Algorithms and Learning for the Web",'~SAC_WebChairTwo1'])
-            writer.writerow(["Responsible Web",'~SAC_WebChairThree1'])
-            writer.writerow(["Search",'~SAC_WebChairFour1'])
-            writer.writerow(["Security",'~SAC_WebChairFive1'])
-            writer.writerow(["Semantics and Knowledge",'~SAC_WebChairSix1'])
-            writer.writerow(["Social Networks, Social Media, and Society",'~SAC_WebChairSeven1'])
-            writer.writerow(["Systems and Infrastructure for Web, Mobile, and WoT",'~SAC_WebChairEight1'])
-            writer.writerow(["User Modeling and Recommendation",'~SAC_WebChairNine1'])
-            writer.writerow(["Web Mining and Content Analysis",'~SAC_WebChairTen1'])
-            writer.writerow(["COI", '~SAC_WebChairEleven1'])
-
-        ac_roles = ["Econ_Area_Chairs", "Graph_Area_Chairs", "RespWeb_Area_Chairs", "Search_Area_Chairs", "Security_Area_Chairs", "Semantics_Area_Chairs", "Social_Area_Chairs", "Systems_Area_Chairs", "RecSys_Area_Chairs", "Mining_Area_Chairs", "COI_Area_Chairs"]
-        tracks = [ "Economics, Online Markets, and Human Computation",
-            "Graph Algorithms and Learning for the Web",
-            "Responsible Web",
-            "Search",
-            "Security",
-            "Semantics and Knowledge",
-            "Social Networks, Social Media, and Society",
-            "Systems and Infrastructure for Web, Mobile, and WoT",
-            "User Modeling and Recommendation",
-            "Web Mining and Content Analysis",
-            "COI"
-        ]            
+            writer.writerow(["Economics, Online Markets, and Human Computation",'Econ_Senior_Area_Chairs'])
+            writer.writerow(["Graph Algorithms and Learning for the Web",'Graph_Senior_Area_Chairs'])
+            writer.writerow(["Responsible Web",'RespWeb_Senior_Area_Chairs'])
+            writer.writerow(["Search",'Search_Senior_Area_Chairs'])
+            writer.writerow(["Security",'Security_Senior_Area_Chairs'])
+            writer.writerow(["Semantics and Knowledge",'Semantics_Senior_Area_Chairs'])
+            writer.writerow(["Social Networks, Social Media, and Society",'Social_Senior_Area_Chairs'])
+            writer.writerow(["Systems and Infrastructure for Web, Mobile, and WoT",'Systems_Senior_Area_Chairs'])
+            writer.writerow(["User Modeling and Recommendation",'RecSys_Senior_Area_Chairs'])
+            writer.writerow(["Web Mining and Content Analysis",'Mining_Senior_Area_Chairs'])
+            writer.writerow(["COI", 'COI_Senior_Area_Chairs'])
 
         with open(os.path.join(os.path.dirname(__file__), 'data/track_acs.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
