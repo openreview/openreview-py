@@ -203,6 +203,10 @@ class TestVenueWithTracks():
         invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/Recruitment')
         assert 'Econ_Area_Chairs' in invitation.reply['content']['invitee_role']['value-dropdown']
 
+        invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/Paper_Matching_Setup')
+        print(invitation.reply['content']['matching_group']['value-dropdown'])
+        assert 'ACM.org/TheWebConf/2024/Conference/COI_Senior_Area_Chairs' in invitation.reply['content']['matching_group']['value-dropdown']
+
         submission_invitation = openreview_client.get_invitation('ACM.org/TheWebConf/2024/Conference/-/Submission')
         assert submission_invitation
         assert submission_invitation.duedate
@@ -276,6 +280,11 @@ class TestVenueWithTracks():
         #     'sac11@gmail.com',
         #     'sac12@webconf.com'
         # ])
+
+        invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/Paper_Matching_Setup')
+        print(invitation.reply['content']['matching_group']['value-dropdown'])
+        assert 'ACM.org/TheWebConf/2024/Conference/COI_Senior_Area_Chairs' in invitation.reply['content']['matching_group']['value-dropdown']
+
 
     def test_recruit_sacs(self, client, openreview_client, helpers, selenium, request_page):
 
@@ -489,6 +498,11 @@ class TestVenueWithTracks():
         ))
 
         helpers.await_queue()
+
+        invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup')
+        print(invitation.reply['content']['matching_group']['value-dropdown'])
+        assert 'ACM.org/TheWebConf/2024/Conference/COI_Senior_Area_Chairs' in invitation.reply['content']['matching_group']['value-dropdown']
+
 
 
     def test_recruit_acs(self, client, openreview_client, helpers, selenium, request_page):
@@ -882,5 +896,10 @@ reviewer{reviewer_counter + 1}@webconf.com, Reviewer ChairTwo
         assert len(group.members) == 2
         assert '~Reviewer_WebChairOne1' in group.members
         assert '~Reviewer_WebChairTwo1' in group.members
+
+        invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup')
+        print(invitation.reply['content']['matching_group']['value-dropdown'])
+        assert 'ACM.org/TheWebConf/2024/Conference/COI_Senior_Area_Chairs' in invitation.reply['content']['matching_group']['value-dropdown']
+
 
 

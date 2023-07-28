@@ -121,6 +121,7 @@ def process(client, note, invitation):
                 if paper_matching_invitation:
                     paper_matching_invitation.reply['content']['matching_group']['value-dropdown'] = [conference.get_committee_id(r) for r in conference.reviewer_roles]
                     paper_matching_invitation.reply['content']['matching_group']['value-dropdown'] = paper_matching_invitation.reply['content']['matching_group']['value-dropdown'] + [conference.get_committee_id(r) for r in conference.area_chair_roles]
+                    paper_matching_invitation.reply['content']['matching_group']['value-dropdown'] = paper_matching_invitation.reply['content']['matching_group']['value-dropdown'] + [conference.get_committee_id(r) for r in conference.senior_area_chair_roles]
                     client.post_invitation(paper_matching_invitation)
 
             
