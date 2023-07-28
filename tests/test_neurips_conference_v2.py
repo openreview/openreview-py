@@ -1562,6 +1562,69 @@ If you would like to change your decision, please follow the link in the previou
 
         helpers.await_queue(openreview_client)
 
+    def test_comment_stage(self, helpers, openreview_client):
+
+        pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        # Post an official comment stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        end_date = now + datetime.timedelta(days=3)
+        comment_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'commentary_start_date': start_date.strftime('%Y/%m/%d'),
+                'commentary_end_date': end_date.strftime('%Y/%m/%d'),
+                'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
+                'additional_readers': ['Program Chairs'],
+                'email_program_chairs_about_official_comments': 'No, do not email PCs for each official comment made in the venue'
+            },
+            forum=request_form.forum,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment_Stage',
+            readers=['NeurIPS.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        invitation = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/Submission1/-/Official_Comment')
+        assert invitation
+        assert invitation.invitees == [
+            'NeurIPS.cc/2023/Conference',
+            'openreview.net/Support',
+            'NeurIPS.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission1/Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission1/Reviewers'
+        ]
+
+        rev_client_v2=openreview.api.OpenReviewClient(username='reviewer5@google.com', password=helpers.strong_password)
+        anon_groups = rev_client_v2.get_groups(prefix='NeurIPS.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_Google1')
+        anon_group_id = anon_groups[0].id
+
+        submissions = openreview_client.get_notes(invitation='NeurIPS.cc/2023/Conference/-/Submission', sort='number:asc')
+
+        comment_edit = rev_client_v2.post_note_edit(
+            invitation='NeurIPS.cc/2023/Conference/Submission1/-/Official_Comment',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                replyto = submissions[0].id,
+                readers = [
+                    'NeurIPS.cc/2023/Conference/Program_Chairs',
+                    'NeurIPS.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+                    'NeurIPS.cc/2023/Conference/Submission1/Area_Chairs',
+                    'NeurIPS.cc/2023/Conference/Submission1/Reviewers',
+                ],
+                content={
+                    'comment': { 'value': 'Sorry, I can\'t review this paper' },
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+        
     def test_ethics_review_stage(self, helpers, openreview_client, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
@@ -2083,106 +2146,44 @@ If you would like to change your decision, please follow the link in the previou
         assert invitation.maxReplies == 1
         assert invitation.edit['note']['replyto'] == submissions[0].id
 
-#     def test_comment_stage(self, conference, helpers, test_client, client):
+    def test_discussion_stage(self, helpers, test_client, openreview_client):
 
-#         now = datetime.datetime.utcnow()
-#         due_date = now + datetime.timedelta(days=3)
-#         comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
-#                             openreview.stages.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED]
-#         conference.comment_stage = openreview.stages.CommentStage(reader_selection=True, check_mandatory_readers=True, invitees=comment_invitees, readers=comment_invitees)
-#         conference.create_comment_stage()
+        pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-#         reviewer_client=openreview.Client(username='reviewer1@umass.edu', password=helpers.strong_password)
+        # Post an official comment stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        end_date = now + datetime.timedelta(days=3)
+        comment_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'commentary_start_date': start_date.strftime('%Y/%m/%d'),
+                'commentary_end_date': end_date.strftime('%Y/%m/%d'),
+                'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Authors'],
+                'additional_readers': ['Program Chairs'],
+                'email_program_chairs_about_official_comments': 'No, do not email PCs for each official comment made in the venue'
+            },
+            forum=request_form.forum,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment_Stage',
+            readers=['NeurIPS.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
 
-#         signatory_groups=client.get_groups(regex='NeurIPS.cc/2023/Conference/Paper5/Reviewer_', signatory='reviewer1@umass.edu')
-#         assert len(signatory_groups) == 1
+        helpers.await_queue()
 
-#         submissions=conference.get_submissions(number=5)
-#         assert len(submissions) == 1
-
-#         review_note=reviewer_client.post_note(openreview.Note(
-#             invitation='NeurIPS.cc/2023/Conference/Paper5/-/Official_Comment',
-#             forum=submissions[0].id,
-#             replyto=submissions[0].id,
-#             readers=['NeurIPS.cc/2023/Conference/Program_Chairs', 'NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs', signatory_groups[0].id],
-#             #nonreaders=['NeurIPS.cc/2023/Conference/Paper5/Authors'],
-#             writers=[signatory_groups[0].id],
-#             signatures=[signatory_groups[0].id],
-#             content={
-#                 'title': 'Test comment',
-#                 'comment': 'This is a comment'
-#             }
-#         ))
-
-#         helpers.await_queue()
-
-#         process_logs = client.get_process_logs(id=review_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
-
-#         messages = client.get_messages(to='reviewer1@umass.edu', subject='[NeurIPS 2023] Your comment was received on Paper Number: 5, Paper Title: \"Paper title 5\"')
-#         assert messages and len(messages) == 1
-
-#         messages = client.get_messages(to='ac1@mit.edu', subject='\[NeurIPS 2023\] Reviewer .* commented on a paper in your area. Paper Number: 5, Paper Title: \"Paper title 5\"')
-#         assert messages and len(messages) == 1
-
-#         messages = client.get_messages(to='sac1@google.com', subject='\[NeurIPS 2023\] Reviewer .* commented on a paper in your area. Paper Number: 5, Paper Title: \"Paper title 5\"')
-#         assert not messages
-
-#         ac_client=openreview.Client(username='ac1@mit.edu', password=helpers.strong_password)
-
-#         signatory_groups=client.get_groups(regex='NeurIPS.cc/2023/Conference/Paper5/Area_Chair_', signatory='ac1@mit.edu')
-#         assert len(signatory_groups) == 1
-
-#         comment_note=ac_client.post_note(openreview.Note(
-#             invitation='NeurIPS.cc/2023/Conference/Paper5/-/Official_Comment',
-#             forum=submissions[0].id,
-#             replyto=submissions[0].id,
-#             readers=['NeurIPS.cc/2023/Conference/Program_Chairs', 'NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs'],
-#             #nonreaders=['NeurIPS.cc/2023/Conference/Paper5/Authors'],
-#             writers=[signatory_groups[0].id],
-#             signatures=[signatory_groups[0].id],
-#             content={
-#                 'title': 'Test an AC comment',
-#                 'comment': 'This is an AC comment'
-#             }
-#         ))
-
-#         helpers.await_queue()
-
-#         process_logs = client.get_process_logs(id=comment_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
-
-#         messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2023] Your comment was received on Paper Number: 5, Paper Title: \"Paper title 5\"')
-#         assert messages and len(messages) == 1
-
-#         messages = client.get_messages(to='sac1@google.com', subject='\[NeurIPS 2023\] Area Chair .* commented on a paper in your area. Paper Number: 5, Paper Title: \"Paper title 5\"')
-#         assert messages and len(messages) == 1
-
-#         sac_client=openreview.Client(username='sac1@google.com', password=helpers.strong_password)
-
-#         comment_note=sac_client.post_note(openreview.Note(
-#             invitation='NeurIPS.cc/2023/Conference/Paper5/-/Official_Comment',
-#             forum=submissions[0].id,
-#             replyto=submissions[0].id,
-#             readers=['NeurIPS.cc/2023/Conference/Program_Chairs', 'NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs'],
-#             writers=['NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs'],
-#             signatures=['NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs'],
-#             content={
-#                 'title': 'Test an SAC comment',
-#                 'comment': 'This is an SAC comment'
-#             }
-#         ))
-
-#         helpers.await_queue()
-
-#         process_logs = client.get_process_logs(id=comment_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
-
-#         messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2023] Your comment was received on Paper Number: 5, Paper Title: \"Paper title 5\"')
-#         assert messages and len(messages) == 1
+        invitation = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/Submission1/-/Official_Comment')
+        assert invitation
+        assert invitation.invitees == [
+            'NeurIPS.cc/2023/Conference',
+            'openreview.net/Support',
+            'NeurIPS.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission1/Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission1/Reviewers',
+            'NeurIPS.cc/2023/Conference/Submission1/Authors'
+        ]
 
 #     def test_meta_review_stage(self, conference, helpers, test_client, client):
 
