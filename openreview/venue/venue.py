@@ -771,14 +771,15 @@ Total Errors: {len(errors)}
             committee_id=self.get_reviewers_id()
         if self.use_senior_area_chairs and committee_id == self.get_senior_area_chairs_id() and not alternate_matching_group:
             alternate_matching_group = self.get_area_chairs_id()
-        venue_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
+        venue_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group, { 'track': submission_track })
 
-        return venue_matching.setup(compute_affinity_scores, compute_conflicts, compute_conflicts_n_years, submission_track)
+        return venue_matching.setup(compute_affinity_scores, compute_conflicts, compute_conflicts_n_years)
 
     def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
 
         match_group = self.client.get_group(committee_id)
-        conference_matching = matching.Matching(self, match_group)
+        assignment_invitation = self.client.get_invitation(self.get_assignment_id(match_group.id))
+        conference_matching = matching.Matching(self, match_group, submission_content=assignment_invitation.edit.get('head', {}).get('param', {}).get('withContent'))
         return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment)
 
     def setup_assignment_recruitment(self, committee_id, hash_seed, due_date, assignment_title=None, invitation_labels={}, email_template=None):

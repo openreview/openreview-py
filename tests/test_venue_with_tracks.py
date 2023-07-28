@@ -652,7 +652,8 @@ ac{ac_counter + 1}@webconf.com, Area ChairTwo
             assert openreview_client.get_invitation(f'{ac_id}/-/Proposed_Assignment')
             assignment_configuration_invitation = openreview_client.get_invitation(f'{ac_id}/-/Assignment_Configuration')
             assert assignment_configuration_invitation.edit['note']['content']['paper_invitation']['value']['param']['default'] == 'ACM.org/TheWebConf/2024/Conference/-/Submission&content.venueid=ACM.org/TheWebConf/2024/Conference/Submission&content.track=' + tracks[index]                  
-
+            proposed_assignment_invitation = openreview_client.get_invitation(f'{ac_id}/-/Proposed_Assignment')
+            assert proposed_assignment_invitation.edit['head']['param']['withContent'] == { 'track': track }
 
         ## Build proposed assignments
         for submission in submissions:
@@ -677,8 +678,12 @@ ac{ac_counter + 1}@webconf.com, Area ChairTwo
 
         venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
 
-        for ac_role in ac_roles:
+        for index, ac_role  in enumerate(ac_roles):
             venue.set_assignments(assignment_title='ac-assignment', committee_id=f'ACM.org/TheWebConf/2024/Conference/{ac_role}')
+            ac_id = f'ACM.org/TheWebConf/2024/Conference/{ac_role}'
+            assignment_invitation = openreview_client.get_invitation(f'{ac_id}/-/Assignment')
+            assert assignment_invitation.edit['head']['param']['withContent'] == { 'track': tracks[index] }
+
 
         assert pc_client_v2.get_group('ACM.org/TheWebConf/2024/Conference/Submission1/Area_Chairs').members == ['~AC_WebChairTwentyOne1']                        
         assert pc_client_v2.get_group('ACM.org/TheWebConf/2024/Conference/Submission2/Area_Chairs').members == ['~AC_WebChairFive1']                        
