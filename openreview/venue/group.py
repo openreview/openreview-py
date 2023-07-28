@@ -446,11 +446,11 @@ class GroupBuilder(object):
                             signatories=[publication_chair_group_id, venue_id],
                             members=[self.venue.publication_chair]
                             )
-            self.post_group(publication_chair_group)
-            # with open(os.path.join(os.path.dirname(__file__), 'webfield/programChairsWebfield.js')) as f:
-            #     content = f.read()
-            #     pc_group.web = content
-            #     self.post_group(pc_group)
+
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/publicationChairWebfield.js')) as f:
+                content = f.read()
+                publication_chair_group.web = content
+                self.post_group(publication_chair_group)
 
         elif publication_chair_group.members[0] != self.venue.publication_chair:
             self.client.remove_members_from_group(publication_chair_group, publication_chair_group.members[0])

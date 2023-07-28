@@ -12,6 +12,7 @@ from openreview.api import Note
 from openreview.api import Group
 from openreview.api import Invitation
 from openreview.api import Edge
+from selenium.webdriver.common.by import By
 
 from openreview.venue import Venue
 from openreview.stages import SubmissionStage, BidStage
@@ -402,7 +403,7 @@ Best,
         submissions = publication_chair_client_v2.get_notes(invitation='PRL/2023/ICAPS/-/Submission', sort='number:asc')
         assert len(submissions) == 6
 
-    def test_enable_camera_ready_revisions(self, client, openreview_client, helpers):
+    def test_enable_camera_ready_revisions(self, client, openreview_client, helpers, selenium, request_page):
 
         publication_chair_client = openreview.Client(username='publicationchair@mail.com', password=helpers.strong_password)
         request_form=publication_chair_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -454,3 +455,10 @@ Best,
 
         invitations = openreview_client.get_invitations(invitation='PRL/2023/ICAPS/-/Camera_Ready_Revision')
         assert len(invitations) == 6
+
+        request_page(selenium, 'http://localhost:3030/group?id=PRL/2023/ICAPS/Publication_Chair', publication_chair_client.token, wait_for_element='header')
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element(By.LINK_TEXT, "Accepted Submissions")
