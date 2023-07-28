@@ -204,7 +204,6 @@ class TestVenueWithTracks():
         assert 'Econ_Area_Chairs' in invitation.reply['content']['invitee_role']['value-dropdown']
 
         invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/Paper_Matching_Setup')
-        print(invitation.reply['content']['matching_group']['value-dropdown'])
         assert 'ACM.org/TheWebConf/2024/Conference/COI_Senior_Area_Chairs' in invitation.reply['content']['matching_group']['value-dropdown']
 
         submission_invitation = openreview_client.get_invitation('ACM.org/TheWebConf/2024/Conference/-/Submission')
@@ -282,7 +281,6 @@ class TestVenueWithTracks():
         # ])
 
         invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/Paper_Matching_Setup')
-        print(invitation.reply['content']['matching_group']['value-dropdown'])
         assert 'ACM.org/TheWebConf/2024/Conference/COI_Senior_Area_Chairs' in invitation.reply['content']['matching_group']['value-dropdown']
 
 
@@ -500,7 +498,6 @@ class TestVenueWithTracks():
         helpers.await_queue()
 
         invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup')
-        print(invitation.reply['content']['matching_group']['value-dropdown'])
         assert 'ACM.org/TheWebConf/2024/Conference/COI_Senior_Area_Chairs' in invitation.reply['content']['matching_group']['value-dropdown']
 
 
@@ -671,11 +668,9 @@ ac{ac_counter + 1}@webconf.com, Area ChairTwo
 
         ## Build proposed assignments
         for submission in submissions:
-            print('process submission ', submission.number)
             index = submission.number % 10
             if submission.number == 1 or submission.number == 101:
                 index = 10
-            print('index', index)
             ac_role = ac_roles[index]
             ac_id = f'ACM.org/TheWebConf/2024/Conference/{ac_role}'
             ac_profile = pc_client_v2.get_profile(f'ac{((index * 2) + 1)}@webconf.com')
@@ -847,11 +842,9 @@ reviewer{reviewer_counter + 1}@webconf.com, Reviewer ChairTwo
 
         ## Build proposed assignments
         for submission in submissions:
-            print('process submission ', submission.number)
             index = submission.number % 10
             if submission.number == 1 or submission.number == 101:
                 index = 10
-            print('index', index)
             reviewer_role = reviewer_roles[index]
             reviewer_id = f'ACM.org/TheWebConf/2024/Conference/{reviewer_role}'
             reviewer_profile = pc_client_v2.get_profile(f'reviewer{((index * 2) + 1)}@webconf.com')
@@ -898,7 +891,6 @@ reviewer{reviewer_counter + 1}@webconf.com, Reviewer ChairTwo
         assert '~Reviewer_WebChairTwo1' in group.members
 
         invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup')
-        print(invitation.reply['content']['matching_group']['value-dropdown'])
         assert 'ACM.org/TheWebConf/2024/Conference/COI_Senior_Area_Chairs' in invitation.reply['content']['matching_group']['value-dropdown']
 
 
