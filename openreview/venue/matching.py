@@ -14,7 +14,7 @@ from functools import reduce
 
 class Matching(object):
 
-    def __init__(self, venue, match_group, alternate_matching_group=None):
+    def __init__(self, venue, match_group, alternate_matching_group=None, submission_content=None):
         self.venue = venue
         self.client = venue.client
         self.match_group = match_group
@@ -26,7 +26,16 @@ class Matching(object):
         self.should_read_by_area_chair = venue.get_reviewers_id() == match_group.id and venue.use_area_chairs
         self.sac_profile_info = None #expects a policy, for example: openreview.tools.get_sac_profile_info
         self.sac_n_years = None
+        self.submission_content = submission_content
 
+    def _get_submission_content_query(self):
+        if not self.submission_content:
+            return ''
+        query = ''
+        for key, value in self.submission_content.items():
+            query += f'&content.{key}={value}'
+        return query
+    
     def _get_edge_invitation_id(self, edge_name):
         return self.venue.get_invitation_id(edge_name, prefix=self.match_group.id)
 
@@ -133,6 +142,9 @@ class Matching(object):
                     'withVenueid': venue.get_submission_venue_id()
                 }
             }
+            if self.submission_content:
+                edge_head['param']['withContent'] = self.submission_content
+
         edge_weight = {
             'param': {
                 'minimum': -1
@@ -533,6 +545,7 @@ class Matching(object):
                 name=venue.get_short_name(),
                 group_id=self.match_group.id,
                 venue_id=venue.get_submission_venue_id(),
+                submission_content=self.submission_content,
                 alternate_match_group=self.alternate_matching_group,
                 expertise_selection_id=venue.get_expertise_selection_id(self.match_group.id),
                 model='specter+mfr'
@@ -654,7 +667,7 @@ class Matching(object):
                                 'param': {
                                     'type': 'string',
                                     'regex': self.alternate_matching_group if self.alternate_matching_group else venue.get_submission_id() + '.*',
-                                    'default': self.alternate_matching_group if self.alternate_matching_group else f'{venue.get_submission_id()}&content.venueid={venue.get_submission_venue_id()}',
+                                    'default': self.alternate_matching_group if self.alternate_matching_group else (f'{venue.get_submission_id()}&content.venueid={venue.get_submission_venue_id()}' + self._get_submission_content_query()),
                                 }
                             }
                         },
@@ -958,7 +971,7 @@ class Matching(object):
 
             self._build_config_invitation(score_spec)            
         else:
-            venue.invitation_builder.set_assignment_invitation(self.match_group.id)
+            venue.invitation_builder.set_assignment_invitation(self.match_group.id, self.submission_content)
 
         self._build_custom_max_papers(user_profiles)
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))
@@ -1154,7 +1167,7 @@ class Matching(object):
 
     def deploy(self, assignment_title, overwrite=False, enable_reviewer_reassignment=False):
 
-        self.venue.invitation_builder.set_assignment_invitation(self.match_group.id)
+        self.venue.invitation_builder.set_assignment_invitation(self.match_group.id, self.submission_content)
         recruitment_invitation_id=self.venue.get_invitation_id('Proposed_Assignment_Recruitment', prefix=self.match_group.id)
         self.venue.invitation_builder.expire_invitation(recruitment_invitation_id)
         self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id))

@@ -581,6 +581,9 @@ class Conference(object):
             roles = roles + [self.ethics_reviewers_name]
 
         return roles
+    
+    def submission_tracks(self):
+        return []
 
     def get_submission_id(self):
         return self.submission_stage.get_submission_id(self)
@@ -1304,7 +1307,7 @@ class Conference(object):
 
         return conference_matching.setup(affinity_score_file, tpms_score_file, elmo_score_file, build_conflicts)
 
-    def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None):
+    def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None, submission_track=None): ## only APi 2 venue can select the submission track
         if committee_id is None:
             committee_id=self.get_reviewers_id()
         if self.use_senior_area_chairs and committee_id == self.get_senior_area_chairs_id() and not alternate_matching_group:

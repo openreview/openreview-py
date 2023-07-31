@@ -100,14 +100,17 @@ class Venue(object):
     def get_roles(self):
         roles = self.reviewer_roles
         if self.use_area_chairs:
-            roles = self.reviewer_roles + [self.area_chairs_name]
+            roles = self.reviewer_roles + self.area_chair_roles
         if self.use_senior_area_chairs:
-            roles = roles + [self.senior_area_chairs_name]
+            roles = roles + self.senior_area_chair_roles
         if self.use_ethics_chairs:
             roles = roles + [self.ethics_chairs_name]
         if self.use_ethics_reviewers:
             roles = roles + [self.ethics_reviewers_name]            
         return roles
+    
+    def submission_tracks(self):
+        return self.submission_stage.get_submission_tracks()
 
     def get_meta_invitation_id(self):
         return f'{self.venue_id}/-/Edit'
@@ -770,19 +773,20 @@ Total Errors: {len(errors)}
 
         tools.concurrent_requests(send_notification, paper_notes)
 
-    def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None):
+    def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None, submission_track=None):
         if committee_id is None:
             committee_id=self.get_reviewers_id()
         if self.use_senior_area_chairs and committee_id == self.get_senior_area_chairs_id() and not alternate_matching_group:
             alternate_matching_group = self.get_area_chairs_id()
-        venue_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
+        venue_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group, { 'track': submission_track } if submission_track else None)
 
         return venue_matching.setup(compute_affinity_scores, compute_conflicts, compute_conflicts_n_years)
 
     def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
 
         match_group = self.client.get_group(committee_id)
-        conference_matching = matching.Matching(self, match_group)
+        assignment_invitation = self.client.get_invitation(self.get_assignment_id(match_group.id))
+        conference_matching = matching.Matching(self, match_group, submission_content=assignment_invitation.edit.get('head', {}).get('param', {}).get('withContent'))
         return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment)
 
     def setup_assignment_recruitment(self, committee_id, hash_seed, due_date, assignment_title=None, invitation_labels={}, email_template=None):
@@ -790,6 +794,120 @@ Total Errors: {len(errors)}
         match_group = self.client.get_group(committee_id)
         conference_matching = matching.Matching(self, match_group)
         return conference_matching.setup_invite_assignment(hash_seed, assignment_title, due_date, invitation_labels=invitation_labels, email_template=email_template)
+    
+    def set_track_sac_assignments(self, track_sac_file, conflict_policy=None, conflict_n_years=None, track_ac_file=None):
+
+        if not self.use_senior_area_chairs:
+            raise openreview.OpenReviewException('The venue does not have senior area chairs enabled. Please enable senior area chairs in the venue.')
+
+        if not self.submission_tracks():
+            raise openreview.OpenReviewException('The submission stage does not have tracks enabled. Please enable tracks in the submission stage.')
+
+        sac_tracks = {}
+        all_sacs = []
+        with open(track_sac_file) as file_handle:
+            for row in csv.reader(file_handle):
+                if row[0] not in sac_tracks:
+                    sac_tracks[row[0]] = []
+                sac_group = openreview.tools.get_group(self.client, self.get_committee_id(row[1]))
+                if sac_group:
+                    sacs = openreview.tools.replace_members_with_ids(self.client, sac_group).members
+                    sac_tracks[row[0]] = sac_tracks[row[0]] + sacs
+                    all_sacs = all_sacs + sacs
+
+        print(list(set(all_sacs)))
+
+        submissions = self.get_submissions()
+
+        all_authorids = []
+        for submission in submissions:
+            authorids = submission.content['authorids']['value']
+            all_authorids = all_authorids + authorids
+
+        author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, as_dict=True)
+        sac_profile_by_id = tools.get_profiles(self.client, list(set(all_sacs)), with_publications=True, as_dict=True)   
+
+        info_function = tools.info_function_builder(openreview.tools.get_neurips_profile_info if conflict_policy == 'NeurIPS' else openreview.tools.get_profile_info)
+
+        for submission in submissions:
+            authorids = submission.content['authorids']['value']
+
+            # Extract domains from each authorprofile
+            author_domains = set()
+            author_emails = set()
+            author_relations = set()
+            author_publications = set()            
+            for authorid in authorids:
+                if author_profile_by_id.get(authorid):
+                    author_info = info_function(author_profile_by_id[authorid], conflict_n_years)
+                    author_domains.update(author_info['domains'])
+                    author_emails.update(author_info['emails'])
+                    author_relations.update(author_info['relations'])
+                    author_publications.update(author_info['publications'])
+                else:
+                    print(f'Profile not found: {authorid}')
+
+            if submission.content['track']['value'] in sac_tracks:
+                sacs = sac_tracks[submission.content['track']['value']]
+                for sac in sacs:
+                    sac_info = info_function(sac_profile_by_id.get(sac), conflict_n_years)
+                    conflicts = set()
+                    conflicts.update(author_domains.intersection(sac_info['domains']))
+                    conflicts.update(author_relations.intersection(sac_info['emails']))
+                    conflicts.update(author_emails.intersection(sac_info['relations']))
+                    conflicts.update(author_emails.intersection(sac_info['emails']))
+                    conflicts.update(author_publications.intersection(sac_info['publications']))
+
+                    if not conflict_policy or not conflicts:                
+                        sac_group_id = self.get_senior_area_chairs_id(submission.number)
+                        print(f'adding {sac_tracks[submission.content["track"]["value"]]} to {sac_group_id}')
+                        self.client.add_members_to_group(sac_group_id, sac_tracks[submission.content['track']['value']])
+                    else:
+                        print(f'conflict detected between {sac} and {submission.number}', conflicts, conflict_policy)
+
+        if not track_ac_file:
+            return
+        
+        ac_tracks = {}
+        with open(track_ac_file) as file_handle:
+            for row in csv.reader(file_handle):
+                if row[0] not in ac_tracks:
+                    ac_tracks[row[0]] = row[1]
+    
+        print(ac_tracks)
+
+        assignment_edges = []
+        all_acs = []
+        assignment_invitation_id = self.get_assignment_id(self.get_senior_area_chairs_id(), deployed=True)
+        for track, ac_role in ac_tracks.items():
+            sacs = sac_tracks[track]
+            ac_group = openreview.tools.get_group(self.client, self.get_committee_id(ac_role))
+            if not ac_group:
+                raise openreview.OpenReviewException(f'Group not found: {self.get_committee_id(ac_role)}')
+            acs = openreview.tools.replace_members_with_ids(self.client, ac_group).members
+            all_acs = all_acs + acs
+
+            for sac in sacs:
+                print('sac', sac)
+                for ac in acs:
+                    print('ac', ac)
+                    assignment_edges.append(openreview.api.Edge(
+                        invitation=assignment_invitation_id,
+                        signatures=[self.venue_id],
+                        readers=[self.venue_id, ac, sac],
+                        writers=[self.venue_id],
+                        head=ac,
+                        tail=sac,
+                        weight=1
+                    ))
+
+    
+        print('assignment edges', assignment_edges)
+        self.invitation_builder.set_assignment_invitation(self.get_senior_area_chairs_id())
+        print('Posting bulk edges', len(assignment_edges))
+        openreview.tools.post_bulk_edges(self.client, assignment_edges)
+        print('Builiding ac group')
+        self.client.add_members_to_group(self.get_area_chairs_id(), all_acs)
 
 
     @classmethod
