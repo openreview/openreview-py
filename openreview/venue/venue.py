@@ -69,6 +69,7 @@ class Venue(object):
         self.senior_area_chair_identity_readers = []
         self.automatic_reviewer_assignment = False
         self.decision_heading_map = {}
+        self.publication_chair = None
 
     def get_id(self):
         return self.venue_id
@@ -385,6 +386,9 @@ class Venue(object):
         if self.use_ethics_chairs:
             self.group_builder.create_ethics_chairs_group()
 
+        if self.publication_chair:
+            self.group_builder.create_publication_chair_group()
+
     def recruit_reviewers(self,
         title,
         message,
@@ -686,7 +690,7 @@ Total Errors: {len(errors)}
                         decision_note = reply
                         break
             note_accepted = decision_note and 'Accept' in decision_note['content']['decision']['value']
-            submission_readers = self.submission_stage.get_readers(self, submission.number, decision_note['content']['decision']['value'] if decision_note else None)
+            submission_readers = self.submission_stage.get_readers(self, submission.number, decision_note['content']['decision']['value'] if decision_note else None, add_publication_chair=self.publication_chair)
 
             venue = self.short_name
             decision_option = decision_note['content']['decision']['value'] if decision_note else ''
