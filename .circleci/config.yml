@@ -12,12 +12,14 @@ parameters:
 
 jobs:
   build:
+    # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
+    resource_class: large
     parallelism: 10
     working_directory: ~/openreview-py-repo
     docker:
-      - image: cimg/python:3.7.14-node
+      - image: cimg/python:3.10.12-node
       - image: cimg/redis:6.2.6
-      - image: circleci/mongo:5.0.2
+      - image: mongo:6.0
         command: [ --replSet, rs0 ]
       - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
         environment:
@@ -26,101 +28,108 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Initialize Replica Set
+          name: Initialize replica set
           command: |
-            wget -qO - https://www.mongodb.org/static/pgp/server-5.0.asc | sudo apt-key add -
-            sudo touch /etc/apt/sources.list.d/mongodb-org-5.0.list
-            echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/5.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-5.0.list
+            sudo apt-get install gnupg curl
+            curl -fsSL https://pgp.mongodb.com/server-6.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-6.0.gpg --dearmor
+            echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
             sudo apt-get update
-            sudo apt-get install -y mongodb-org=5.0.13 mongodb-org-database=5.0.13 mongodb-org-server=5.0.13 mongodb-org-shell=5.0.13 mongodb-org-mongos=5.0.13 mongodb-org-tools=5.0.13
+            sudo apt-get upgrade -y
+            sudo apt-get install -y mongodb-org=6.0.7
             mongosh mongodb://localhost:27017 --eval "rs.initiate()"
-      - run: pip install ~/openreview-py-repo
-      - run: git clone
-          https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api-v1.git
-          ~/openreview
-      - run: cd ~/openreview && git checkout <<
-          pipeline.parameters.openreview-api-v1-branch >>
-      - run: git clone
-          https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git
-          ~/openreview-web
-      - run: git clone
-          https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api.git
-          ~/openreview-v2
-      - run: cd ~/openreview-v2 && git checkout <<
-          pipeline.parameters.openreview-api-v2-branch >>
-      - run: mkdir ~/openreview/logs
-      - run: mkdir ~/openreview/files
-      - run: mkdir ~/openreview/files/attachments
-      - run: mkdir ~/openreview/files/pdfs
-      - run: mkdir ~/openreview/files/temp
-      - run: mkdir ~/openreview-v2/logs
-      - run: mkdir ~/openreview-v2/files
-      - run: mkdir ~/openreview-v2/files/attachments
-      - run: mkdir ~/openreview-v2/files/pdfs
-      - run: mkdir ~/openreview-v2/files/temp
-      - run: mkdir ~/openreview-py-repo/coverage
+      - run: 
+          name: Install openreview-py
+          command: |
+            pip install ~/openreview-py-repo
       - run:
-          name: install api
+          name: Clone OpenReview API V1 branch << pipeline.parameters.openreview-api-v1-branch >>
+          command: |
+            git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api-v1.git ~/openreview
+            cd ~/openreview && git checkout << pipeline.parameters.openreview-api-v1-branch >>
+      - run:
+          name: Clone OpenReview API V2 branch << pipeline.parameters.openreview-api-v2-branch >>
+          command: |
+            git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api.git ~/openreview-v2
+            cd ~/openreview-v2 && git checkout << pipeline.parameters.openreview-api-v2-branch >>
+      - run:
+          name: Clone openreview-web
+          command: |
+            git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
+      - run:
+          name: Create API directories
+          command: |
+            mkdir -p ~/openreview/logs
+            mkdir -p ~/openreview/files/attachments
+            mkdir -p ~/openreview/files/pdfs
+            mkdir -p ~/openreview/files/temp
+            mkdir -p ~/openreview-v2/logs
+            mkdir -p ~/openreview-v2/files/attachments
+            mkdir -p ~/openreview-v2/files/pdfs
+            mkdir -p ~/openreview-v2/files/temp
+            mkdir -p ~/openreview-py-repo/coverage
+      - run:
+          # source: https://support.mozilla.org/en-US/kb/install-firefox-linux#w_system-firefox-installation-for-advanced-users
+          # source: https://ubuntu-mate.community/t/firefox-installation-guide-non-snap/25299
+          name: Install Firefox
+          command: |
+            wget "https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US" -O firefox-latest.tar.bz2
+            tar xjf firefox-*.tar.bz2
+            sudo mv firefox /opt
+            sudo ln -s /opt/firefox/firefox /usr/local/bin/firefox
+            sudo apt-get install libgtk-3-0
+            sudo apt-get install libasound2
+            sudo apt-get install libdbus-glib-1-2
+            echo export PATH="$PATH:/usr/local/bin/firefox" >> ~/.bashrc
+            source ~/.bashrc
+      - run:
+          name: Start API V1
           command: |
             cd ~/openreview
-            npm install
-      - run:
-          name: run api
-          command: |
-            cd ~/openreview
-            NODE_ENV=circleci node scripts/clean_start_app.js
+            npm run cleanStart
           background: true
       - run:
+          name: Wait for API V1 to start
           shell: /bin/sh
           command: |
-            wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 10 http://localhost:3000
+            wget --retry-connrefused --waitretry=2 --read-timeout=20 --timeout=150 http://localhost:3000
             :
       - run:
-          name: install web-app
+          name: Start API V2
+          command: |
+            cd ~/openreview-v2
+            npm run cleanStart
+          background: true
+      - run:
+          name: Wait for API V2 to start
+          shell: /bin/sh
+          command: |
+            wget --retry-connrefused --waitretry=2 --read-timeout=20 --timeout=150 http://localhost:3001
+            :
+      - run:
+          name: Install openreview-web
           command: |
             cd ~/openreview-web
             npm install
             cp .env.example .env.local
             NODE_ENV=production SUPER_USER=openreview.net npm run build
       - run:
-          name: run web-app
+          name: Start openreview-web
           command: |
             cd ~/openreview-web
             export NEXT_PORT=3030
             NODE_ENV=production SUPER_USER=openreview.net npm run start
           background: true
       - run:
-          shell: /bin/sh
-          command: |
-            wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 10 http://localhost:3030
-            :
-      - run:
-          name: install api-v2
-          command: |
-            cd ~/openreview-v2
-            npm install
-      - run:
-          name: run api-v2
-          command: |
-            cd ~/openreview-v2
-            NODE_ENV=circleci node scripts/setup_app.js
-          background: true
-      - run:
-          shell: /bin/sh
-          command: |
-            wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 10 http://localhost:3001
-            :
-      - run:
-          name: install firefox driver
+          name: Install Firefox driver
           command: |
             sudo apt-get update
             sudo apt-get install firefox
             cd ~/openreview-py-repo/tests/drivers
-            wget https://github.com/mozilla/geckodriver/releases/download/v0.30.0/geckodriver-v0.30.0-linux64.tar.gz
+            wget https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-linux64.tar.gz
             tar -xvzf geckodriver*
             chmod +x geckodriver
       - run:
-          name: run tests
+          name: Run tests
           command: |
             cd ~/openreview-py-repo
             pip install -U pytest
@@ -134,8 +143,6 @@ jobs:
           path: test-reports
       - store_artifacts:
           path: test-reports
-    # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
-    resource_class: large
   deploy:
     working_directory: ~/openreview-py-repo
     docker:

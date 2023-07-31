@@ -422,7 +422,10 @@ class Journal(object):
         return self.settings.get('skip_ac_recommendation', False)
 
     def get_certifications(self):
-        return self.settings.get('certifications', [])        
+        return self.settings.get('certifications', []) 
+
+    def get_eic_certifications(self):
+        return self.settings.get('eic_certifications', [])            
 
     def get_submission_length(self):
         return self.settings.get('submission_length', [])

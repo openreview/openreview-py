@@ -52,7 +52,7 @@ if (domain.content.public_desk_rejected_submissions?.value) {
     },
     options: {
       hideWhenEmpty: true
-    }    
+    }
   })
 }
 
@@ -60,7 +60,7 @@ tabs.push({
   name: 'Recent Activity',
   type: 'activity'
 })
-  
+
 return {
   component: 'VenueHomepage',
   version: 1,

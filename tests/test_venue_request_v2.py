@@ -41,7 +41,8 @@ class TestVenueRequest():
                 support_group_id,
                 '~SomeFirstName_User1',
                 'test@mail.com',
-                'tom_venue@mail.com'
+                'tom_venue@mail.com',
+                'publicationchair@testvenue.com'
             ],
             writers=[],
             content={
@@ -53,6 +54,7 @@ class TestVenueRequest():
                     'test@mail.com',
                     'tom_venue@mail.com'],
                 'contact_email': 'test@mail.com',
+                'publication_chair_email': 'publicationchair@testvenue.com',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'Venue Start Date': now.strftime('%Y/%m/%d'),
@@ -100,6 +102,10 @@ class TestVenueRequest():
         assert submission_inv.duedate == openreview.tools.datetime_millis(due_date)
         assert submission_inv.expdate == openreview.tools.datetime_millis(due_date + datetime.timedelta(minutes = 30))
         assert '~.*' == submission_inv.edit['note']['content']['authorids']['value']['param']['regex']
+
+        submission_revision = client.get_invitation(f'{support_group_id}/-/Request{request_form_note.number}/Submission_Revision_Stage')
+        assert 'publicationchair@testvenue.com' in submission_revision.invitees
+        assert 'publicationchair@testvenue.com' in submission_revision.reply['readers']['values']
 
         # Return venue details as a dict
         venue_details = {
@@ -481,6 +487,36 @@ class TestVenueRequest():
                        '  ]\n' \
                        '}'
         assert error_string in last_comment.content['error']
+        assert '0 users' in last_comment.content['invited']
+
+        # make sure we catch both KeyError and Group Not Found error
+        reviewer_details = '''celeste@uni-a,de, Celeste'''
+        recruitment_note = test_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'Reviewers',
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert recruitment_note
+
+        helpers.await_queue()
+        process_logs = client.get_process_logs(id=recruitment_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
+
+        assert '"OpenReviewException({\'name\': \'NotFoundError\', \'message\': \'Group Not Found: celeste@uni-a\'' in last_comment.content['error']
+        assert '"KeyError(\'name\')"' in last_comment.content['error']
         assert '0 users' in last_comment.content['invited']
 
     def test_venue_recruitment(self, client, test_client, selenium, request_page, venue, helpers, openreview_client):
@@ -2383,7 +2419,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
-            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id'], 'publicationchair@testvenue.com'],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~SomeFirstName_User1'],
@@ -2420,6 +2456,15 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         messages = client.get_messages(to = 'venue_author_v2_2@mail.com', subject='TestVenue@OR\'2030V2 has received a new revision of your submission titled revised test submission 3')
         assert messages and len(messages) == 1
 
+        message_text = f'''Your new revision of the submission to TestVenue@OR'2030V2 has been posted.
+
+Title: revised test submission 3
+
+Abstract revised abstract 3
+
+To view your submission, click here: https://openreview.net/forum?id={updated_note.id}'''
+        assert message_text in messages[0]['content']['text']
+
     def test_venue_submission_revision_stage_accepted_papers_only(self, client, test_client, helpers, venue, openreview_client):
 
         # Post a revision stage note
@@ -2437,7 +2482,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
-            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id'], 'publicationchair@testvenue.com'],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~SomeFirstName_User1'],
@@ -2618,7 +2663,7 @@ Best,
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
-            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id'], 'publicationchair@testvenue.com'],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~SomeFirstName_User1'],
@@ -2763,7 +2808,7 @@ Best,
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
-            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id'], 'publicationchair@testvenue.com'],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~SomeFirstName_User1'],

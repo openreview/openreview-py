@@ -21,7 +21,11 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.use_senior_area_chairs = note.content.get('senior_area_chairs') == 'Yes, our venue has Senior Area Chairs'
         venue.use_ethics_chairs = note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers'
         venue.use_ethics_reviewers = note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers'
+        venue.publication_chair = note.content.get('publication_chair_email')
         venue.automatic_reviewer_assignment = note.content.get('submission_reviewer_assignment', '') == 'Automatic'
+        venue.senior_area_chair_roles = note.content.get('senior_area_chair_roles', ['Senior_Area_Chairs'])
+        venue.area_chair_roles = note.content.get('area_chair_roles', ['Area_Chairs'])
+        venue.reviewer_roles = note.content.get('reviewer_roles', ['Reviewers'])
         set_homepage_options(note, venue)
         venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')
         venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
@@ -37,6 +41,8 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.submission_revision_stage = get_submission_revision_stage(note)
         venue.review_rebuttal_stage = get_rebuttal_stage(note)
         venue.registration_stages = get_registration_stages(note, venue)
+        if 'ethics_review_deadline' in note.content:
+            venue.ethics_review_stage = get_ethics_review_stage(note)
 
         include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
         venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date, include_option=include_expertise_selection)
@@ -600,6 +606,7 @@ def get_ethics_review_stage(request_forum):
         'Ethics reviews should be immediately revealed to all reviewers and ethics reviewers': openreview.stages.EthicsReviewStage.Readers.ALL_COMMITTEE,
         'Ethics reviews should be immediately revealed to the paper\'s reviewers and ethics reviewers': openreview.stages.EthicsReviewStage.Readers.ALL_ASSIGNED_COMMITTEE,
         'Ethics reviews should be immediately revealed to the paper\'s ethics reviewers': openreview.stages.EthicsReviewStage.Readers.ASSIGNED_ETHICS_REVIEWERS,
+        'Ethics reviews should be immediately revealed to the paper\'s ethics reviewers who have already submitted their ethics review': openreview.stages.EthicsReviewStage.Readers.ETHICS_REVIEWERS_SUBMITTED,
         'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review': openreview.stages.EthicsReviewStage.Readers.ETHICS_REVIEWER_SIGNATURE
     }
     release_to_reviewers = readers_map.get(request_forum.content.get('release_ethics_reviews_to_reviewers', ''), openreview.stages.EthicsReviewStage.Readers.ETHICS_REVIEWER_SIGNATURE)
@@ -616,7 +623,8 @@ def get_ethics_review_stage(request_forum):
         release_to_reviewers = release_to_reviewers,
         additional_fields = review_form_additional_options,
         remove_fields = review_form_remove_options,
-        submission_numbers = flagged_submissions
+        submission_numbers = flagged_submissions,
+        enable_comments = (request_forum.content.get('enable_comments_for_ethics_reviewers', '').startswith('Yes'))
     )
 
 def get_meta_review_stage(request_forum):

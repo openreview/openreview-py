@@ -129,7 +129,7 @@ class GroupBuilder(object):
             content = content.replace("var DESK_REJECTED_ID = '';", "var DESK_REJECTED_ID = '" + venue_id + "/Desk_Rejection';")
             content = content.replace("var WITHDRAWN_ID = '';", "var WITHDRAWN_ID = '" + venue_id + "/Withdrawn_Submission';")
             content = content.replace("var REJECTED_ID = '';", "var REJECTED_ID = '" + venue_id + "/Rejection';")
-            content = content.replace("var CERTIFICATIONS = [];", "var CERTIFICATIONS = " + json.dumps(self.journal.get_certifications() + [self.journal.get_expert_reviewer_certification()] if self.journal.has_expert_reviewers() else []) + ";")
+            content = content.replace("var CERTIFICATIONS = [];", "var CERTIFICATIONS = " + json.dumps(self.journal.get_certifications() + self.journal.get_eic_certifications() + [self.journal.get_expert_reviewer_certification()] if self.journal.has_expert_reviewers() else []) + ";")
             if not venue_group.web:
                 venue_group.web = content
                 self.post_group(venue_group)

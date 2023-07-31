@@ -37,6 +37,7 @@ var ANON_REVIEWER_NAME = 'Reviewer_';
 var ANON_AREA_CHAIR_NAME = 'Area_Chair_';
 var ENABLE_REVIEWER_REASSIGNMENT = false;
 var PAPER_REVIEWS_COMPLETE_THRESHOLD = 3;
+var IS_NON_ANONYMOUS_VENUE = false;
 var PAGE_SIZE = 25;
 var filterOperators = ['!=','>=','<=','>','<','=']; // sequence matters
 var propertiesAllowed ={
@@ -159,7 +160,7 @@ var main = function() {
       officialReviews = officialReviews.concat(paperOfficialReviews);
       metaReviews = metaReviews.concat(paperMetaReviews);
       decisions = decisions.concat(decisions);
-      submission.details.reviews = getOfficialReviews(paperOfficialReviews);
+      submission.details.reviews = getOfficialReviews(paperOfficialReviews, groups.anonReviewerGroups[submission.number]);
       submission.details.metaReview = paperMetaReviews;
       submission.details.decision = paperDecisions;
       submission.details.reviewers = reviewerGroupMaps.byNotes[submission.number];
@@ -717,13 +718,23 @@ var buildSeniorAreaChairGroupMaps = function(noteNumbers, seniorAreaChairGroups)
   };
 };
 
-var getOfficialReviews = function(notes) {
+var getOfficialReviews = function (notes, anonReviewerGroup) {
   var ratingExp = /^(\d+): .*/;
 
   var reviewByAnonId = {};
 
   _.forEach(notes, function(n) {
-    var anonId = getNumberfromGroup(n.signatures[0], ANON_REVIEWER_NAME);
+    var anonId;
+    if (IS_NON_ANONYMOUS_VENUE) {
+      var reviewerProfileId = n.signatures[0];
+      anonId = getNumberfromGroup(
+        (anonReviewerGroup && anonReviewerGroup[reviewerProfileId]) || '',
+        ANON_REVIEWER_NAME
+      );
+    } else {
+      anonId = getNumberfromGroup(n.signatures[0], ANON_REVIEWER_NAME);
+    }
+
     // Need to parse rating and confidence strings into ints
     ratingNumber = n.content[REVIEW_RATING_NAME] ? n.content[REVIEW_RATING_NAME].substring(0, n.content[REVIEW_RATING_NAME].indexOf(':')) : null;
     n.rating = ratingNumber ? parseInt(ratingNumber, 10) : null;
@@ -3020,6 +3031,8 @@ $('#group-container').on('click', 'a.show-activity-modal', function(e) {
   var reviewerNum = $(this).data('reviewerNum');
   var reviewerName = $(this).data('reviewerName');
   var reviewerEmail = $(this).data('reviewerEmail');
+  var reviewerProfile = findProfile(reviewerEmail)
+  var reviewerSignature = IS_NON_ANONYMOUS_VENUE ? reviewerProfile.id : CONFERENCE_ID + '/Paper' + paperNum + '/Reviewer_' + reviewerNum
 
   $('#reviewer-activity-modal').remove();
 
@@ -3038,13 +3051,13 @@ $('#group-container').on('click', 'a.show-activity-modal', function(e) {
   );
   $('#reviewer-activity-modal').modal('show');
 
-  Webfield.get('/notes', { signature: CONFERENCE_ID + '/Paper' + paperNum + '/Reviewer_' + reviewerNum })
+  Webfield.get('/notes', { signature: reviewerSignature })
     .then(function(response) {
       $('#reviewer-activity-modal .modal-body').empty();
       Webfield.ui.searchResults(response.notes, {
         container: '#reviewer-activity-modal .modal-body',
         openInNewTab: true,
-        emptyMessage: 'Reviewer ' + reviewerNum + ' has not posted any comments or reviews yet.'
+        emptyMessage: 'Reviewer ' + IS_NON_ANONYMOUS_VENUE ? reviewerProfile.id : reviewerNum + ' has not posted any comments or reviews yet.'
       });
     });
 

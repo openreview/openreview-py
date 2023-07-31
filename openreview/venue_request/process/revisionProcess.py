@@ -121,7 +121,22 @@ def process(client, note, invitation):
                 if paper_matching_invitation:
                     paper_matching_invitation.reply['content']['matching_group']['value-dropdown'] = [conference.get_committee_id(r) for r in conference.reviewer_roles]
                     paper_matching_invitation.reply['content']['matching_group']['value-dropdown'] = paper_matching_invitation.reply['content']['matching_group']['value-dropdown'] + [conference.get_committee_id(r) for r in conference.area_chair_roles]
+                    paper_matching_invitation.reply['content']['matching_group']['value-dropdown'] = paper_matching_invitation.reply['content']['matching_group']['value-dropdown'] + [conference.get_committee_id(r) for r in conference.senior_area_chair_roles]
                     client.post_invitation(paper_matching_invitation)
+
+            
+            submission_tracks = conference.submission_tracks()
+            if submission_tracks:
+                paper_matching_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Paper_Matching_Setup')
+                if paper_matching_invitation:
+                    paper_matching_invitation.reply['content']['submission_track'] = {
+                        'value-dropdown': submission_tracks,
+                        'required': False,
+                        'description': 'Select the submission track that you would like to assign to this paper matching group. If you do not select a track, this group will be assigned to all submissions.',
+                        'order': 15
+                    }
+                    client.post_invitation(paper_matching_invitation)
+
 
             if conference.use_ethics_chairs or conference.use_ethics_reviewers:
                 client.post_invitation(openreview.Invitation(
@@ -185,6 +200,15 @@ def process(client, note, invitation):
                         reveal_submission=conference.submission_stage.desk_rejected_submission_public,
                         hide_fields=forum_note.content.get('hide_fields', [])
                     )
+
+                if 'publication_chair_email' in forum_note.content:
+                    submission_revision_inv = client.get_invitation(f'{SUPPORT_GROUP}/-/Request{forum_note.number}/Submission_Revision_Stage')
+                    if forum_note.content['publication_chair_email'] not in submission_revision_inv.invitees:
+                        invitees = submission_revision_inv.invitees
+                        invitees.append(forum_note.content['publication_chair_email'])
+                        submission_revision_inv.invitees = invitees
+                        submission_revision_inv.reply['readers']['values'] = invitees
+                        client.post_invitation(submission_revision_inv)
 
             if forum_note.content.get('api_version') == '2':
                 #update post submission hide_fields
