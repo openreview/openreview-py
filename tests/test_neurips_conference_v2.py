@@ -2055,7 +2055,7 @@ If you would like to change your decision, please follow the link in the previou
                         'value': {
                             'param': {
                                 'type': 'string',
-                                'maxLength': 1500,
+                                'maxLength': 5000,
                                 'markdown': True,
                                 'input': 'textarea'
                             }
@@ -2097,6 +2097,16 @@ If you would like to change your decision, please follow the link in the previou
             )
         )
 
+        helpers.await_queue(openreview_client)
+
+        rebuttal = openreview_client.get_note(rebuttal_edit['note']['id'])
+        assert rebuttal.readers == [
+            'NeurIPS.cc/2023/Conference/Program_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission1/Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission1/Authors'
+        ]
+
         with pytest.raises(openreview.OpenReviewException, match=r'.*You have reached the maximum number \(1\) of replies for this Invitation.*'):
             rebuttal_edit = test_client.post_note_edit(
                 invitation=f'{review.signatures[0]}/-/Rebuttal',
@@ -2120,7 +2130,7 @@ If you would like to change your decision, please follow the link in the previou
             due_date=due_date,
             exp_date=due_date + datetime.timedelta(days=1),
             invitees=[openreview.stages.CustomStage.Participants.AUTHORS],
-            readers=[openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED, openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED],
+            readers=[openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED, openreview.stages.CustomStage.Participants.AUTHORS],
             content={
                 'rebuttal': {
                     'order': 1,
@@ -2128,9 +2138,21 @@ If you would like to change your decision, please follow the link in the previou
                     'value': {
                         'param': {
                             'type': 'string',
-                            'maxLength': 2500,
+                            'maxLength': 5000,
                             'markdown': True,
                             'input': 'textarea'
+                        }
+                    }
+                },
+                'pdf': {
+                    'order': 2,
+                    'description': 'Upload a PDF file that ends with .pdf.',
+                    'value': {
+                        'param': {
+                            'type': 'file',
+                            'maxSize': 50,
+                            'extensions': ['pdf'],
+                            'optional': True
                         }
                     }
                 }
@@ -2145,6 +2167,147 @@ If you would like to change your decision, please follow the link in the previou
         invitation = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/Submission1/-/Author_Rebuttal')
         assert invitation.maxReplies == 1
         assert invitation.edit['note']['replyto'] == submissions[0].id
+
+        rebuttal_edit = test_client.post_note_edit(
+            invitation='NeurIPS.cc/2023/Conference/Submission1/-/Author_Rebuttal',
+            signatures=['NeurIPS.cc/2023/Conference/Submission1/Authors'],
+            note=openreview.api.Note(
+                replyto = submissions[0].id,
+                content={
+                    'rebuttal': { 'value': 'This is a rebuttal reply to a submission.' }
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        rebuttal = openreview_client.get_note(rebuttal_edit['note']['id'])
+        assert rebuttal.readers == [
+            'NeurIPS.cc/2023/Conference/Program_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission1/Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission1/Authors'
+        ]
+
+        with pytest.raises(openreview.OpenReviewException, match=r'.*You have reached the maximum number \(1\) of replies for this Invitation.*'):
+            rebuttal_edit = test_client.post_note_edit(
+                invitation='NeurIPS.cc/2023/Conference/Submission1/-/Author_Rebuttal',
+                signatures=['NeurIPS.cc/2023/Conference/Submission1/Authors'],
+                note=openreview.api.Note(
+                    replyto = submissions[0].id,
+                    content={
+                        'rebuttal': { 'value': 'This is a another reply to a submission.' }
+                    }
+                )
+            )
+
+    def test_release_rebuttals(self, helpers, test_client, openreview_client, client):
+
+        pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@neurips.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        # release rebuttals to reviewers
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        pc_client.post_note(openreview.Note(
+            content={
+                'rebuttal_start_date': start_date.strftime('%Y/%m/%d'),
+                'rebuttal_deadline': due_date.strftime('%Y/%m/%d'),
+                'number_of_rebuttals': 'One author rebuttal per posted review',
+                'rebuttal_readers': ['Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers who already submitted their review'],
+                'additional_rebuttal_form_options': {
+                    'rebuttal': {
+                        'order': 1,
+                        'description': 'Rebuttals can include Markdown formatting and LaTeX forumulas, for more information see https://openreview.net/faq , max length: 1500',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 5000,
+                                'markdown': True,
+                                'input': 'textarea'
+                            }
+                        }
+                    }
+                },
+                'email_program_chairs_about_rebuttals': 'No, do not email program chairs about received rebuttals'
+            },
+            forum=request_form.forum,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Rebuttal_Stage',
+            readers=['NeurIPS.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        
+        reviews = pc_client_v2.get_notes(invitation='NeurIPS.cc/2023/Conference/Submission1/-/Official_Review')
+        review = reviews[0]
+
+        rebuttal = openreview_client.get_notes(invitation=f'{review.signatures[0]}/-/Rebuttal')[0]
+        assert rebuttal.readers == [
+            'NeurIPS.cc/2023/Conference/Program_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission1/Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission1/Reviewers/Submitted',
+            'NeurIPS.cc/2023/Conference/Submission1/Authors'
+        ]
+
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+
+        # release author rebuttals with custom stage
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        venue.custom_stage = openreview.stages.CustomStage(name='Author_Rebuttal',
+            reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            due_date=due_date,
+            exp_date=due_date + datetime.timedelta(days=1),
+            invitees=[openreview.stages.CustomStage.Participants.AUTHORS],
+            readers=[openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED, openreview.stages.CustomStage.Participants.REVIEWERS_SUBMITTED, openreview.stages.CustomStage.Participants.AUTHORS],
+            content={
+                'rebuttal': {
+                    'order': 1,
+                    'description': 'Rebuttals can include Markdown formatting and LaTeX forumulas, for more information see https://openreview.net/faq , max length: 2500',
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'maxLength': 5000,
+                            'markdown': True,
+                            'input': 'textarea'
+                        }
+                    }
+                },
+                'pdf': {
+                    'order': 2,
+                    'description': 'Upload a PDF file that ends with .pdf.',
+                    'value': {
+                        'param': {
+                            'type': 'file',
+                            'maxSize': 50,
+                            'extensions': ['pdf'],
+                            'optional': True
+                        }
+                    }
+                }
+            },
+            notify_readers=False,
+            email_sacs=False)
+
+        venue.create_custom_stage()
+
+        rebuttal = openreview_client.get_notes(invitation='NeurIPS.cc/2023/Conference/Submission1/-/Author_Rebuttal')[0]
+        assert rebuttal.readers == [
+            'NeurIPS.cc/2023/Conference/Program_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission1/Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission1/Reviewers/Submitted',
+            'NeurIPS.cc/2023/Conference/Submission1/Authors'
+        ]
 
     def test_discussion_stage(self, helpers, test_client, openreview_client):
 
