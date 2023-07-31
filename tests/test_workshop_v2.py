@@ -396,7 +396,7 @@ Best,
                 f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors'
             ]
                 
-        helpers.create_user('publicationchair@mail.com', 'Publication', 'Chair')
+        helpers.create_user('publicationchair@mail.com', 'Publication', 'ICAPSChair')
         publication_chair_client_v2=openreview.api.OpenReviewClient(username='publicationchair@mail.com', password=helpers.strong_password)
 
         assert publication_chair_client_v2.get_group('PRL/2023/ICAPS/Authors/Accepted')
@@ -443,7 +443,7 @@ Best,
             readers=['{}/Program_Chairs'.format('PRL/2023/ICAPS'), 'openreview.net/Support', 'publicationchair@mail.com'],
             referent=request_form.forum,
             replyto=request_form.forum,
-            signatures=['~Publication_Chair1'],
+            signatures=['~Publication_ICAPSChair1'],
             writers=[]
         ))
         assert revision_stage_note

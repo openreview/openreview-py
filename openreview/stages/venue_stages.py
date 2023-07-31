@@ -352,6 +352,10 @@ class SubmissionStage(object):
             readers.append(conference.get_reviewers_id(number))
             readers.append(conference.get_authors_id(number))
             return readers
+        
+    def get_submission_tracks(self):
+        if self.additional_fields and 'track' in self.additional_fields:
+            return self.additional_fields['track']['value']['param']['enum']
 
 class BidStage(object):
 

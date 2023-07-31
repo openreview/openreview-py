@@ -2083,7 +2083,7 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_assignment_invitation(self, committee_id):
+    def set_assignment_invitation(self, committee_id, submission_content=None):
         
         venue = self.venue
         venue_id = venue.get_id()
@@ -2151,7 +2151,9 @@ class InvitationBuilder(object):
                 'type': 'note',
                 'withVenueid': venue.get_submission_venue_id()
             }
-        }  
+        }
+        if submission_content:
+            edge_head['param']['withContent'] = submission_content
         
         if is_reviewer:
             edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')] 
