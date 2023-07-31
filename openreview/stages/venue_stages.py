@@ -156,7 +156,7 @@ class SubmissionStage(object):
                 submission_readers.append(conference.get_ethics_reviewers_id(number=number))
 
         if add_publication_chair and decision and 'Accept' in decision:
-            submission_readers.append(conference.get_committee_id('Publication_Chair'))
+            submission_readers.append(conference.get_publication_chairs_id())
 
         submission_readers.append(conference.get_authors_id(number=number))
         return submission_readers

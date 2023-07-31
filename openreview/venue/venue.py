@@ -69,7 +69,7 @@ class Venue(object):
         self.senior_area_chair_identity_readers = []
         self.automatic_reviewer_assignment = False
         self.decision_heading_map = {}
-        self.publication_chair = None
+        self.publication_chair = []
 
     def get_id(self):
         return self.venue_id
@@ -274,6 +274,9 @@ class Venue(object):
     def get_ethics_reviewers_id(self, number = None, anon=False):
         rev_name = self.anon_ethics_reviewers_name()
         return self.get_committee_id(f'{rev_name}.*' if anon else self.ethics_reviewers_name, number)
+    
+    def get_publication_chairs_id(self):
+        return self.get_committee_id('Publication_Chairs')
 
     def get_withdrawal_id(self, number = None):
         return self.get_invitation_id(self.submission_stage.withdrawal_name, number)
