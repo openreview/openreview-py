@@ -111,7 +111,7 @@ class SubmissionStage(object):
         self.second_deadline_additional_fields = second_deadline_additional_fields
         self.second_deadline_remove_fields = second_deadline_remove_fields
 
-    def get_readers(self, conference, number, decision=None, add_publication_chair=None):
+    def get_readers(self, conference, number, decision=None):
 
         if self.Readers.EVERYONE in self.readers:
             return ['everyone']
@@ -155,7 +155,7 @@ class SubmissionStage(object):
             if conference.use_ethics_reviewers:
                 submission_readers.append(conference.get_ethics_reviewers_id(number=number))
 
-        if add_publication_chair and decision and 'Accept' in decision:
+        if conference.use_publication_chairs and decision and 'Accept' in decision:
             submission_readers.append(conference.get_publication_chairs_id())
 
         submission_readers.append(conference.get_authors_id(number=number))

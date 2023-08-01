@@ -54,7 +54,7 @@ class TestVenueRequest():
                     'test@mail.com',
                     'tom_venue@mail.com'],
                 'contact_email': 'test@mail.com',
-                'publication_chair_emails': ['publicationchair@testvenue.com'],
+                'publication_chairs_emails': ['publicationchair@testvenue.com'],
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'Venue Start Date': now.strftime('%Y/%m/%d'),

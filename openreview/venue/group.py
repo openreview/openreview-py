@@ -329,10 +329,10 @@ class GroupBuilder(object):
 
         authors_accepted_id = self.venue.get_authors_accepted_id()
         authors_accepted_group = openreview.tools.get_group(self.client, authors_accepted_id)
-        if not authors_accepted_group or self.venue.publication_chairs and self.venue.get_publication_chairs_id() not in authors_accepted_group.readers:
+        if not authors_accepted_group or self.venue.use_publication_chairs and self.venue.get_publication_chairs_id() not in authors_accepted_group.readers:
             authors_accepted_group = self.post_group(Group(id=authors_accepted_id,
-                            readers=[venue_id, authors_accepted_id, self.venue.get_publication_chairs_id()] if self.venue.publication_chairs else [venue_id, authors_accepted_id],
-                            writers=[venue_id, self.venue.get_publication_chairs_id()] if self.venue.publication_chairs else [venue_id],
+                            readers=[venue_id, authors_accepted_id, self.venue.get_publication_chairs_id()] if self.venue.use_publication_chairs else [venue_id, authors_accepted_id],
+                            writers=[venue_id, self.venue.get_publication_chairs_id()] if self.venue.use_publication_chairs else [venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id],
                             members=[]))
@@ -437,32 +437,32 @@ class GroupBuilder(object):
                 ethics_chairs_group.web = content
                 self.post_group(ethics_chairs_group)
 
-    def create_publication_chair_group(self):
+    def create_publication_chairs_group(self, publication_chairs_ids):
         venue_id = self.venue_id
 
-        publication_chair_group_id = self.venue.get_publication_chairs_id()
-        publication_chair_group = openreview.tools.get_group(self.client, publication_chair_group_id)
-        if not publication_chair_group:
-            publication_chair_group=Group(id=publication_chair_group_id,
+        publication_chairs_group_id = self.venue.get_publication_chairs_id()
+        publication_chairs_group = openreview.tools.get_group(self.client, publication_chairs_group_id)
+        if not publication_chairs_group:
+            publication_chairs_group=Group(id=publication_chairs_group_id,
                             readers=['everyone'],
-                            writers=[venue_id, publication_chair_group_id],
+                            writers=[venue_id, publication_chairs_group_id],
                             signatures=[venue_id],
-                            signatories=[publication_chair_group_id, venue_id],
-                            members=self.venue.publication_chairs
+                            signatories=[publication_chairs_group_id, venue_id],
+                            members=publication_chairs_ids
                             )
 
             with open(os.path.join(os.path.dirname(__file__), 'webfield/publicationChairWebfield.js')) as f:
                 content = f.read()
-                publication_chair_group.web = content
-                self.post_group(publication_chair_group)
+                publication_chairs_group.web = content
+                self.post_group(publication_chairs_group)
 
-        elif publication_chair_group.members != self.venue.publication_chairs:
-            members_to_add = list(set(self.venue.publication_chairs) - set(publication_chair_group.members))
-            members_to_remove = list(set(publication_chair_group.members) - set(self.venue.publication_chairs))
+        elif publication_chairs_group.members != publication_chairs_ids:
+            members_to_add = list(set(publication_chairs_ids) - set(publication_chairs_group.members))
+            members_to_remove = list(set(publication_chairs_group.members) - set(publication_chairs_ids))
             if members_to_add:
-                self.client.add_members_to_group(publication_chair_group_id, members_to_add)
+                self.client.add_members_to_group(publication_chairs_group_id, members_to_add)
             if members_to_remove:
-                self.client.remove_members_from_group(publication_chair_group_id, members_to_remove)
+                self.client.remove_members_from_group(publication_chairs_group_id, members_to_remove)
 
     def add_to_active_venues(self):
         active_venues = self.client_v1.get_group('active_venues')
