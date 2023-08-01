@@ -1,16 +1,15 @@
 // Webfield component
-const startParam = `${domain.content.area_chairs_assignment_id?.value},tail:{ac.profile.id}` 
+const committee_name = entity.id.split('/').slice(-1)[0].replaceAll('_', ' ')
+const startParam = `${domain.content.area_chairs_assignment_id?.value},tail:{ac.profile.id}`
 const traverseParam = `${domain.content.reviewers_assignment_id?.value}`
 const browseInvitations = []
 
 if (domain.content.reviewers_affinity_score_id?.value) {
   browseInvitations.push(domain.content.reviewers_affinity_score_id?.value)
 }
-
 if (domain.content.bid_name?.value) {
   browseInvitations.push(`${domain.content.reviewers_id?.value}/-/${domain.content.bid_name?.value}`)
 }
-
 if (domain.content.reviewers_custom_max_papers_id?.value) {
   browseInvitations.push(`${domain.content.reviewers_custom_max_papers_id?.value},head:ignore`)
 }
@@ -22,8 +21,8 @@ return {
   version: 1,
   properties: {
     header: {
-      title: 'Senior Area Chairs Console',
-      instructions: `<p class=\"dark\">This page provides information and status updates for the ${domain.content.subtitle?.value}. It will be regularly updated as the conference progresses, so please check back frequently.</p>`
+      title: `${committee_name} Console`,
+      instructions: `<p class="dark">This page provides information and status updates for the ${domain.content.subtitle?.value}. It will be regularly updated as the conference progresses, so please check back frequently.</p>`
     },
     apiVersion: 2,
     venueId: domain.id,

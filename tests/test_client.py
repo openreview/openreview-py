@@ -72,6 +72,9 @@ class TestClient():
         assert client.profile
         assert '~SomeFirstName_User1' == client.profile.id
 
+        os.environ.pop("OPENREVIEW_USERNAME")
+        os.environ.pop("OPENREVIEW_PASSWORD")
+
     def test_login_user(self, client, helpers):
 
         guest = openreview.Client()
@@ -209,6 +212,7 @@ class TestClient():
     #     invitations = client.get_invitations(invitee = True, duedate = True, tags = True, details = 'repliedTags')
     #     assert len(invitations) == 0
 
+
     def test_get_notes_by_content(self, client, helpers):
 
         now = datetime.datetime.utcnow()
@@ -300,7 +304,7 @@ class TestClient():
         profile = client.rename_profile('~David_Steph1', '~Nadia_LBahy1')
         assert profile.id == '~Nadia_LBahy1'
 
-    @pytest.mark.xfail
+    @pytest.mark.skip()
     def test_post_venue(self, client, helpers):
         os.environ["OPENREVIEW_USERNAME"] = "openreview.net"
         os.environ["OPENREVIEW_PASSWORD"] = helpers.strong_password
@@ -330,8 +334,10 @@ class TestClient():
 
         venueRes = super_user.post_venue(venue)
         assert venue == venueRes
+        os.environ.pop("OPENREVIEW_USERNAME")
+        os.environ.pop("OPENREVIEW_PASSWORD")
 
-    @pytest.mark.xfail
+    @pytest.mark.skip()
     def test_get_venues(self, client, helpers):
         os.environ["OPENREVIEW_USERNAME"] = "openreview.net"
         os.environ["OPENREVIEW_PASSWORD"] = helpers.strong_password
@@ -375,6 +381,9 @@ class TestClient():
         assert len(venues) == 2
         assert venues[0].get('id') == '.HCOMP/2013'
         assert venues[1].get('id') == venue.get('id')
+
+        os.environ.pop("OPENREVIEW_USERNAME")
+        os.environ.pop("OPENREVIEW_PASSWORD")
 
     def test_get_messages(self, client):
 

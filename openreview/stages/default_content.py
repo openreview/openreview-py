@@ -276,6 +276,36 @@ ethics_review = {
     }
 }
 
+ethics_review_v2 = {
+    "recommendation": {
+        'order': 1,
+        'value': {
+            'param': {
+                'type': 'string',
+                'input': 'radio',
+                'enum': [
+                    "1: No serious ethical issues",
+                    "2: Serious ethical issues that need to be addressed in the final version",
+                    "3: Paper should be rejected due to ethical issues"
+                ]
+            }
+        }
+    },
+    "ethics_review": {
+        'order': 2,
+        'description': 'Provide justification for your suggested ethics issues. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+        'value': {
+            'param': {
+                'type': 'string',
+                'maxLength': 200000,
+                'markdown': True,
+                'input': 'textarea',
+                'optional': True
+            }
+        }
+    }
+}
+
 meta_review = {
     'metareview': {
         'order': 1,

@@ -10,6 +10,8 @@ def process(client, invitation):
     decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'Decision')
     review_name = domain.content.get('review_name', {}).get('value')
     meta_review_name = domain.content.get('meta_review_name', {}).get('value')
+    ethics_chairs_id = domain.content.get('ethics_chairs_id', {}).get('value')
+    ethics_reviewers_name = domain.content.get('ethics_reviewers_name', {}).get('value')
 
     now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
     cdate = invitation.edit['invitation']['cdate'] if 'cdate' in invitation.edit['invitation'] else invitation.cdate
@@ -59,6 +61,9 @@ def process(client, invitation):
 
             if source == 'public_submissions':
                 source_submissions = [s for s in source_submissions if s.readers == ['everyone']]
+
+            if source == 'flagged_for_ethics_review':
+                source_submissions = [s for s in source_submissions if s.content.get('flagged_for_ethics_review', {}).get('value', False)]
 
         if reply_to == 'reviews':
             children_notes = [openreview.api.Note.from_json(reply) for s in source_submissions for reply in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{review_name}' in reply['invitations']]
@@ -127,6 +132,18 @@ def process(client, invitation):
             content['noteNumber'] = { 'value': int(paper_number) }
             content['replyto'] = { 'value': note.id }
             content['replytoSignatures'] = { 'value': note.signatures[0] }
+
+        if 'noteReaders' in invitation.edit['content']:
+            paper_readers = invitation.content.get('review_readers',{}).get('value') or invitation.content.get('comment_readers',{}).get('value')
+            final_readers = []
+            final_readers.extend(paper_readers)
+            final_readers = [reader.replace('{number}', str(note.number)) for reader in final_readers]
+            if '{signatures}' in final_readers:
+                final_readers.remove('{signatures}')
+            if note.content.get('flagged_for_ethics_review', {}).get('value', False):
+                if 'everyone' not in final_readers or invitation.content.get('reader_selection',{}).get('value'):
+                    final_readers.append(f'{venue_id}/{submission_name}{note.number}/{ethics_reviewers_name}')
+            content['noteReaders'] = { 'value': final_readers }
 
         paper_invitation_edit = client.post_invitation_edit(invitations=invitation.id,
             readers=[venue_id],

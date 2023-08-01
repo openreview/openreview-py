@@ -1145,39 +1145,39 @@ If you would like to change your decision, please follow the link in the previou
             'NeurIPS.cc/2023/Conference/Reviewers',
             'NeurIPS.cc/2023/Conference/Submission4/Authors']
 
-        # assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs').readers == ['NeurIPS.cc/2023/Conference',
-        #     'NeurIPS.cc/2023/Conference/Program_Chairs',
-        #     'NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs',
-        #     'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs',
-        #     'NeurIPS.cc/2023/Conference/Paper5/Reviewers']
-        # assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs').nonreaders == ['NeurIPS.cc/2023/Conference/Paper5/Authors']
+        assert client.get_group('NeurIPS.cc/2023/Conference/Submission4/Senior_Area_Chairs').readers == ['NeurIPS.cc/2023/Conference',
+            'NeurIPS.cc/2023/Conference/Program_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission4/Senior_Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission4/Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission4/Reviewers']
+        assert client.get_group('NeurIPS.cc/2023/Conference/Submission4/Senior_Area_Chairs').nonreaders == ['NeurIPS.cc/2023/Conference/Submission4/Authors']
 
-        # assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Area_Chairs').readers == ['NeurIPS.cc/2023/Conference',
-        #     'NeurIPS.cc/2023/Conference/Program_Chairs',
-        #     'NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs',
-        #     'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs',
-        #     'NeurIPS.cc/2023/Conference/Paper5/Reviewers']
+        assert client.get_group('NeurIPS.cc/2023/Conference/Submission4/Area_Chairs').readers == ['NeurIPS.cc/2023/Conference',
+            'NeurIPS.cc/2023/Conference/Program_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission4/Senior_Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission4/Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission4/Reviewers']
 
-        # assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Area_Chairs').deanonymizers == ['NeurIPS.cc/2023/Conference',
-        #     'NeurIPS.cc/2023/Conference/Program_Chairs',
-        #     'NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs',
-        #     'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs',
-        #     'NeurIPS.cc/2023/Conference/Paper5/Reviewers']
+        assert client.get_group('NeurIPS.cc/2023/Conference/Submission4/Area_Chairs').deanonymizers == ['NeurIPS.cc/2023/Conference',
+            'NeurIPS.cc/2023/Conference/Program_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission4/Senior_Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission4/Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission4/Reviewers']
 
-        # assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Area_Chairs').nonreaders == ['NeurIPS.cc/2023/Conference/Paper5/Authors']
+        assert client.get_group('NeurIPS.cc/2023/Conference/Submission4/Area_Chairs').nonreaders == ['NeurIPS.cc/2023/Conference/Submission4/Authors']
 
-        # assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Reviewers').readers == ['NeurIPS.cc/2023/Conference',
-        #     'NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs',
-        #     'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs',
-        #     'NeurIPS.cc/2023/Conference/Paper5/Reviewers']
+        assert client.get_group('NeurIPS.cc/2023/Conference/Submission4/Reviewers').readers == ['NeurIPS.cc/2023/Conference',
+            'NeurIPS.cc/2023/Conference/Submission4/Senior_Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission4/Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission4/Reviewers']
 
-        # assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Reviewers').deanonymizers == ['NeurIPS.cc/2023/Conference',
-        #     'NeurIPS.cc/2023/Conference/Program_Chairs',
-        #     'NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs',
-        #     'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs',
-        #     'NeurIPS.cc/2023/Conference/Paper5/Reviewers']
+        assert client.get_group('NeurIPS.cc/2023/Conference/Submission4/Reviewers').deanonymizers == ['NeurIPS.cc/2023/Conference',
+            'NeurIPS.cc/2023/Conference/Program_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission4/Senior_Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission4/Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission4/Reviewers']
 
-        # assert client.get_group('NeurIPS.cc/2023/Conference/Paper5/Reviewers').nonreaders == ['NeurIPS.cc/2023/Conference/Paper5/Authors']
+        assert client.get_group('NeurIPS.cc/2023/Conference/Submission4/Reviewers').nonreaders == ['NeurIPS.cc/2023/Conference/Submission4/Authors']
 
 #     def test_update_withdraw_desk_reject_invitations(self, conference, client, helpers):
 #         pc_client = openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
