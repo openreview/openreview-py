@@ -1537,7 +1537,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                         },
                         'readers': [
                             "V2.cc/2030/Conference",
-                            "V2.cc/2030/Conference/Submission${7/content/noteNumber/value}/Reviewers"
+                            "${5/signatures}"
                         ]
                     }
                 },
@@ -1566,7 +1566,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert 'readers' in reviews[0].content['rating']
         assert reviews[0].content['rating']['readers'] == [
             "V2.cc/2030/Conference",
-            "V2.cc/2030/Conference/Submission1/Reviewers"
+            reviews[0].signatures[0]
         ]
 
     def test_rebuttal_stage(self, client, test_client, venue, openreview_client, helpers):
