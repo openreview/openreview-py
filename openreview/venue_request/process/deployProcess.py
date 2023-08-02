@@ -365,8 +365,8 @@ If you would like to change your decision, please follow the link in the previou
     # revision_stage_invitation
     submission_revision_readers = []
     submission_revision_readers.extend(readers)
-    if 'publication_chair_email' in forum.content:
-        submission_revision_readers.append(forum.content['publication_chair_email'])
+    if 'publication_chairs_emails' in forum.content:
+        submission_revision_readers.append(conference.get_publication_chairs_id())
     client.post_invitation(openreview.Invitation(
         id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Submission_Revision_Stage',
         super=SUPPORT_GROUP + '/-/Submission_Revision_Stage',
