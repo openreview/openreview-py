@@ -1,4 +1,5 @@
 // Webfield component
+const committee_name = entity.id.split('/').slice(-1)[0].replaceAll('_', ' ')
 const startParam = `${domain.content.area_chairs_assignment_id?.value},tail:{ac.profile.id}`
 const traverseParam = `${domain.content.reviewers_assignment_id?.value}`
 const browseInvitations = []
@@ -20,7 +21,7 @@ return {
   version: 1,
   properties: {
     header: {
-      title: 'Senior Area Chairs Console',
+      title: `${committee_name} Console`,
       instructions: `<p class="dark">This page provides information and status updates for the ${domain.content.subtitle?.value}. It will be regularly updated as the conference progresses, so please check back frequently.</p>`
     },
     apiVersion: 2,

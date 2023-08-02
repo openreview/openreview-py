@@ -21,8 +21,11 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.use_senior_area_chairs = note.content.get('senior_area_chairs') == 'Yes, our venue has Senior Area Chairs'
         venue.use_ethics_chairs = note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers'
         venue.use_ethics_reviewers = note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers'
-        venue.publication_chair = note.content.get('publication_chair_email')
+        venue.use_publication_chairs = 'publication_chairs_emails' in note.content
         venue.automatic_reviewer_assignment = note.content.get('submission_reviewer_assignment', '') == 'Automatic'
+        venue.senior_area_chair_roles = note.content.get('senior_area_chair_roles', ['Senior_Area_Chairs'])
+        venue.area_chair_roles = note.content.get('area_chair_roles', ['Area_Chairs'])
+        venue.reviewer_roles = note.content.get('reviewer_roles', ['Reviewers'])
         set_homepage_options(note, venue)
         venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')
         venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
@@ -45,7 +48,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date, include_option=include_expertise_selection)
 
         if setup:
-            venue.setup(note.content.get('program_chair_emails'))
+            venue.setup(note.content.get('program_chair_emails'), note.content.get('publication_chairs_emails'))
         return venue
 
     builder = get_conference_builder(client, request_form_id, support_user)
