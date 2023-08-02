@@ -86,10 +86,11 @@ def process(client, invitation):
         def updated_content_readers(note, paper_inv):
             updated_content = {}
             for key in note.content.keys():
-                invitation_readers = paper_inv.edit['note']['content'].get(key, {}).get('readers', [])
-                if note.content[key].get('readers', []) != invitation_readers:
+                content_readers = paper_inv.edit['note']['content'].get(key, {}).get('readers', [])
+                final_content_readers = list(dict.fromkeys([note.signatures[0] if 'signatures' in r else r for r in content_readers]))
+                if note.content[key].get('readers', []) != final_content_readers:
                     updated_content[key] = {
-                        'readers': invitation_readers if invitation_readers else { 'delete': True }
+                        'readers': final_content_readers if final_content_readers else { 'delete': True }
                     }
             return updated_content
 

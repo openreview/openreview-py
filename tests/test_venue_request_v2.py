@@ -1536,7 +1536,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                         },
                         'readers': [
                             "V2.cc/2030/Conference",
-                            "V2.cc/2030/Conference/Submission${7/content/noteNumber/value}/Reviewers"
+                            "V2.cc/2030/Conference/Submission${7/content/noteNumber/value}/Area_Chairs",
+                            "${5/signatures}"
                         ]
                     }
                 },
@@ -1565,7 +1566,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert 'readers' in reviews[0].content['rating']
         assert reviews[0].content['rating']['readers'] == [
             "V2.cc/2030/Conference",
-            "V2.cc/2030/Conference/Submission1/Reviewers"
+            "V2.cc/2030/Conference/Submission1/Area_Chairs",
+            reviews[0].signatures[0]
         ]
 
     def test_rebuttal_stage(self, client, test_client, venue, openreview_client, helpers):
@@ -1639,6 +1641,15 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+
+        reviews = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Submission2/-/Official_Review')
+        assert len(reviews) == 1
+        assert 'readers' in reviews[0].content['rating']
+        assert reviews[0].content['rating']['readers'] == [
+            "V2.cc/2030/Conference",
+            "V2.cc/2030/Conference/Submission2/Area_Chairs",
+            reviews[0].signatures[0]
+        ]
 
         invitation = openreview_client.get_invitation(f'{reviewer_anon_groups[0].id}/-/Rebuttal')
         assert invitation
