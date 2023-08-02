@@ -69,7 +69,7 @@ class Venue(object):
         self.senior_area_chair_identity_readers = []
         self.automatic_reviewer_assignment = False
         self.decision_heading_map = {}
-        self.publication_chair = None
+        self.use_publication_chairs = False
 
     def get_id(self):
         return self.venue_id
@@ -277,6 +277,9 @@ class Venue(object):
     def get_ethics_reviewers_id(self, number = None, anon=False):
         rev_name = self.anon_ethics_reviewers_name()
         return self.get_committee_id(f'{rev_name}.*' if anon else self.ethics_reviewers_name, number)
+    
+    def get_publication_chairs_id(self):
+        return self.get_committee_id('Publication_Chairs')
 
     def get_withdrawal_id(self, number = None):
         return self.get_invitation_id(self.submission_stage.withdrawal_name, number)
@@ -362,7 +365,7 @@ class Venue(object):
             invitation = f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{invitation_name}'
             self.invitation_builder.expire_invitation(invitation)
 
-    def setup(self, program_chair_ids=[]):
+    def setup(self, program_chair_ids=[], publication_chairs_ids=[]):
     
         self.invitation_builder.set_meta_invitation()
 
@@ -386,8 +389,8 @@ class Venue(object):
         if self.use_ethics_chairs:
             self.group_builder.create_ethics_chairs_group()
 
-        if self.publication_chair:
-            self.group_builder.create_publication_chair_group()
+        if self.use_publication_chairs:
+            self.group_builder.create_publication_chairs_group(publication_chairs_ids)
 
     def recruit_reviewers(self,
         title,
@@ -690,7 +693,7 @@ Total Errors: {len(errors)}
                         decision_note = reply
                         break
             note_accepted = decision_note and 'Accept' in decision_note['content']['decision']['value']
-            submission_readers = self.submission_stage.get_readers(self, submission.number, decision_note['content']['decision']['value'] if decision_note else None, add_publication_chair=self.publication_chair)
+            submission_readers = self.submission_stage.get_readers(self, submission.number, decision_note['content']['decision']['value'] if decision_note else None)
 
             venue = self.short_name
             decision_option = decision_note['content']['decision']['value'] if decision_note else ''
