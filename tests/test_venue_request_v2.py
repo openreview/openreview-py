@@ -54,7 +54,7 @@ class TestVenueRequest():
                     'test@mail.com',
                     'tom_venue@mail.com'],
                 'contact_email': 'test@mail.com',
-                'publication_chair_email': 'publicationchair@testvenue.com',
+                'publication_chairs_emails': ['publicationchair@testvenue.com'],
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'Venue Start Date': now.strftime('%Y/%m/%d'),
@@ -104,8 +104,7 @@ class TestVenueRequest():
         assert '~.*' == submission_inv.edit['note']['content']['authorids']['value']['param']['regex']
 
         submission_revision = client.get_invitation(f'{support_group_id}/-/Request{request_form_note.number}/Submission_Revision_Stage')
-        assert 'publicationchair@testvenue.com' in submission_revision.invitees
-        assert 'publicationchair@testvenue.com' in submission_revision.reply['readers']['values']
+        assert 'V2.cc/2030/Conference/Publication_Chairs' in submission_revision.invitees
 
         # Return venue details as a dict
         venue_details = {
@@ -1537,7 +1536,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                         },
                         'readers': [
                             "V2.cc/2030/Conference",
-                            "V2.cc/2030/Conference/Submission${7/content/noteNumber/value}/Reviewers"
+                            "V2.cc/2030/Conference/Submission${7/content/noteNumber/value}/Area_Chairs",
+                            "${5/signatures}"
                         ]
                     }
                 },
@@ -1566,7 +1566,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert 'readers' in reviews[0].content['rating']
         assert reviews[0].content['rating']['readers'] == [
             "V2.cc/2030/Conference",
-            "V2.cc/2030/Conference/Submission1/Reviewers"
+            "V2.cc/2030/Conference/Submission1/Area_Chairs",
+            reviews[0].signatures[0]
         ]
 
     def test_rebuttal_stage(self, client, test_client, venue, openreview_client, helpers):
@@ -1640,6 +1641,15 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+
+        reviews = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Submission2/-/Official_Review')
+        assert len(reviews) == 1
+        assert 'readers' in reviews[0].content['rating']
+        assert reviews[0].content['rating']['readers'] == [
+            "V2.cc/2030/Conference",
+            "V2.cc/2030/Conference/Submission2/Area_Chairs",
+            reviews[0].signatures[0]
+        ]
 
         invitation = openreview_client.get_invitation(f'{reviewer_anon_groups[0].id}/-/Rebuttal')
         assert invitation
@@ -2419,7 +2429,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
-            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id'], 'publicationchair@testvenue.com'],
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id'], '{}/Publication_Chairs'.format(venue['venue_id'])],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~SomeFirstName_User1'],
@@ -2482,7 +2492,7 @@ To view your submission, click here: https://openreview.net/forum?id={updated_no
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
-            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id'], 'publicationchair@testvenue.com'],
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id'], '{}/Publication_Chairs'.format(venue['venue_id'])],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~SomeFirstName_User1'],
@@ -2663,7 +2673,7 @@ Best,
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
-            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id'], 'publicationchair@testvenue.com'],
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id'], '{}/Publication_Chairs'.format(venue['venue_id'])],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~SomeFirstName_User1'],
@@ -2808,7 +2818,7 @@ Best,
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
-            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id'], 'publicationchair@testvenue.com'],
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id'], '{}/Publication_Chairs'.format(venue['venue_id'])],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~SomeFirstName_User1'],

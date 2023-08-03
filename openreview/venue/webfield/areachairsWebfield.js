@@ -1,4 +1,5 @@
 // Webfield component
+const committee_name = entity.id.split('/').slice(-1)[0].replaceAll('_', ' ')
 const reviewerAssignmentTitle = domain.content.reviewers_proposed_assignment_title?.value
 const areaChairsId = domain.content.area_chairs_id?.value
 const reviewerGroup = domain.content.reviewers_id?.value
@@ -30,7 +31,7 @@ return {
   version: 1,
   properties: {
     header: {
-      title: 'Area Chair Console',
+      title: `${committee_name} Console`,
       instructions: `<p class="dark">This page provides information and status updates for the ${domain.content.subtitle?.value}. It will be regularly updated as the conference progresses, so please check back frequently.</p>`,
     },
     apiVersion: 2,

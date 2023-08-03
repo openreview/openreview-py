@@ -1,11 +1,12 @@
 // Webfield component
+const committee_name = entity.id.split('/').slice(-1)[0].replaceAll('_', ' ')
 return {
   component: 'ReviewerConsole',
   version: 1,
   properties: {
     header: {
-      title: 'Reviewer Console',
-      instructions: '<div><p>some instructions</p></div>'
+      title: `${committee_name} Console`,
+      instructions: `<p class="dark">This page provides information and status updates for ${domain.content.subtitle?.value}. It will be regularly updated as the conference progresses, so please check back frequently.</p>`
     },
     apiVersion: 2,
     venueId: domain.id,

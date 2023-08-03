@@ -1134,9 +1134,9 @@ class VenueRequest():
                 'required': True,
                 'order': 6
             },
-            'publication_chair_email': {
-                'description': 'Please provide the *lower-cased* email address of the Publication Chair. The Publication Chair will only have access to accepted submissions and the author accepted group in order to email authors of accepted submissions.',
-                'value-regex': r'([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+            'publication_chairs_emails': {
+                'description': 'Please provide the *lower-cased* email addresses of the Publication Chairs. The Publication Chairs will only have access to accepted submissions and the author accepted group in order to email authors of accepted submissions.',
+                'values-regex': r'([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
                 'required': False,
                 'order': 7
             },
@@ -1466,7 +1466,7 @@ class VenueRequest():
                                 self.support_group.id,
                                 '{signatures}',
                                 '{content.program_chair_emails}',
-                                '{content.publication_chair_email}'
+                                '{content.publication_chairs_emails}'
                             ]
                         },
                         'writers': {
@@ -1474,7 +1474,7 @@ class VenueRequest():
                                 self.support_group.id,
                                 '{signatures}',
                                 '{content.program_chair_emails}',
-                                '{content.publication_chair_email}'
+                                '{content.publication_chairs_emails}'
                             ]
                         },
                         'signatures': {
