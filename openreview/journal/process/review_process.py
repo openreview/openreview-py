@@ -113,3 +113,24 @@ The {journal.short_name} Editors-in-Chief
 ''',
             replyTo=journal.contact_info
         )
+
+        assigned_reviewers = client.get_group(id=journal.get_reviewers_id(number=submission.number)).members
+        if len(assigned_reviewers) > number_of_reviewers:
+            print('Send another email to action editor')
+            client.post_message(
+                recipients=[journal.get_action_editors_id(number=submission.number)],
+                subject=f'''[{journal.short_name}] Too many reviewers assigned to {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
+                message=f'''Hi {{{{fullname}}}},
+
+It appears that, while submission {submission.number}: {submission.content['title']['value']} now has its minimum of {number_of_reviewers} reviews submitted, there are some additional assigned reviewers who have pending reviews. This may be because you had assigned additional emergency reviewers, e.g. because some of the initially assigned reviewers were late or unresponsive. If that is the case, or generally if these additional reviews are no longer needed, please unassign the extra reviewers and let them know that their review is no longer needed.
+
+Additionally, if any extra reviewer corresponds to a reviewer who was unresponsive, please consider submitting a reviewer report, so we can track such undesirable behavior. You can submit a report through link "Reviewers Report" at the top of your AE console.
+
+For more details and guidelines on the {journal.short_name} review process, visit {journal.website}.
+
+We thank you for your essential contribution to {journal.short_name}!
+
+The {journal.short_name} Editors-in-Chief
+''',
+                replyTo=journal.contact_info
+            )            

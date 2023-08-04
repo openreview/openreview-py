@@ -1641,6 +1641,22 @@ We thank you for your essential contribution to TMLR!
 The TMLR Editors-in-Chief
 '''
 
+        messages = openreview_client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Too many reviewers assigned to TMLR submission 1: Paper title UPDATED')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
+
+It appears that, while submission 1: Paper title UPDATED now has its minimum of 3 reviews submitted, there are some additional assigned reviewers who have pending reviews. This may be because you had assigned additional emergency reviewers, e.g. because some of the initially assigned reviewers were late or unresponsive. If that is the case, or generally if these additional reviews are no longer needed, please unassign the extra reviewers and let them know that their review is no longer needed.
+
+Additionally, if any extra reviewer corresponds to a reviewer who was unresponsive, please consider submitting a reviewer report, so we can track such undesirable behavior. You can submit a report through link \"Reviewers Report\" at the top of your AE console.
+
+For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
+
+We thank you for your essential contribution to TMLR!
+
+The TMLR Editors-in-Chief
+'''
+
+
         ## Edit a review and don't release the review again
         review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
             signatures=[david_anon_groups[0].id],
