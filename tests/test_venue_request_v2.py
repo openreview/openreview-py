@@ -57,6 +57,7 @@ class TestVenueRequest():
                 'publication_chairs_emails': ['publicationchair@testvenue.com'],
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
+                'Submission Start Date': 'asdf',
                 'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
@@ -74,6 +75,11 @@ class TestVenueRequest():
                 'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
                 'api_version': '2'
             })
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Submission Start Date must be of the format YYYY/MM/DD'):
+           request_form_note=test_client.post_note(request_form_note)
+
+        request_form_note.content["Submission Start Date"] = now.strftime('%Y/%m/%d')
 
         with pytest.raises(openreview.OpenReviewException, match=r'Assigned area chairs must see the reviewer identity'):
             request_form_note=test_client.post_note(request_form_note)
