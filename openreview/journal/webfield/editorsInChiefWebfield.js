@@ -185,6 +185,7 @@ var loadData = function() {
       }, {})
     }),
     Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME, { withProfiles: true}),
+    Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME + '/Archived', { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getAll('/invitations', {
       prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
@@ -223,6 +224,7 @@ var formatData = function(
   responsibilityNotes,
   reviewerReportByReviewerId,
   actionEditors,
+  archivedActionEditors,
   reviewers,
   invitationsById,
   superInvitationIds,
@@ -299,6 +301,34 @@ var formatData = function(
       }
     };
   });
+
+  archivedActionEditors.members.forEach(function(actionEditor, index) {
+    actionEditorStatusById[actionEditor.id] = {
+      index: { number: index + 1 },
+      summary: {
+        id: actionEditor.id,
+        name: actionEditor.name,
+        email: actionEditor.email,
+        status: {
+          Profile: actionEditor.id.startsWith('~') ? 'Yes' : 'No',
+          Publications: '-',
+          Archived: 'Yes'
+        }
+      },
+      reviewProgressData: {
+        numCompletedReviews: 0,
+        numPapers: 0,
+        papers: [],
+        referrer: referrerUrl
+      },
+      decisionProgressData: {
+        metaReviewName: 'Decision',
+        numPapers: 0,
+        numCompletedMetaReviews: 0,
+        papers: []
+      }
+    };
+  });  
 
   var paperStatusRows = [];
   var authorSubmissionsCount = {};
