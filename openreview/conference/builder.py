@@ -569,6 +569,9 @@ class Conference(object):
             if name.endswith('s'):
                 return name[:-1]
         return name
+    
+    def get_publication_chairs_id(self):
+        return self.id + '/Publication_Chairs'
 
     def get_roles(self):
         roles = self.reviewer_roles
