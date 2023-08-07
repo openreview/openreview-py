@@ -2954,3 +2954,80 @@ class InvitationBuilder(object):
 
         self.save_invitation(ethics_stage_invitation, replacement=False)
         return ethics_stage_invitation
+
+    def set_SAC_ethics_flag_invitation(self, sac_ethics_flag_duedate=None):
+
+        venue_id = self.venue_id
+        venue = self.venue
+        ethics_review_stage = self.venue.ethics_review_stage
+        sac_ethics_flag_name = f'SAC_{ethics_review_stage.name}_Flag'
+        sac_ethics_flag_id = f'{venue_id}/-/{sac_ethics_flag_name}'
+
+        invitation = Invitation(id=sac_ethics_flag_id,
+            invitees=[venue_id, venue.get_senior_area_chairs_id()],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            expdate=tools.datetime_millis(sac_ethics_flag_duedate) if sac_ethics_flag_duedate else None,
+            edit={
+                    'signatures': { 'param': { 'regex': f"{venue.get_senior_area_chairs_id(number='${{1/note/forum}/number}')}|{venue.get_program_chairs_id()}" }},
+                    'readers': [venue.get_program_chairs_id(), venue.get_senior_area_chairs_id(number='${{2/note/forum}/number}')],
+                    'nonreaders': [venue.get_authors_id(number='${{2/note/forum}/number}')],
+                    'writers': [venue_id],
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': sac_ethics_flag_id,
+                                'optional': True
+                            }
+                        },
+                        'forum': {
+                            'param': {
+                                'withInvitation': venue.submission_stage.get_submission_id(self.venue)
+                            }
+                        },
+                        'replyto': {
+                            'param': {
+                                'withInvitation': venue.submission_stage.get_submission_id(self.venue)
+                            }
+                        },
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'signatures': ['${3/signatures}'],
+                        'readers': [venue.get_program_chairs_id(), venue.get_senior_area_chairs_id(number='${{3/note/forum}/number}')],
+                        'nonreaders': [venue.get_authors_id(number='${{3/note/forum}/number}')],
+                        'writers': [venue_id, '${3/signatures}'],
+                        'content': {
+                            'ethics_review_flag': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'enum': ['Yes'],
+                                        'input': 'checkbox'
+                                    }
+                                }
+                            },
+                            'comments': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 5000,
+                                        'markdown': True,
+                                        'input': 'textarea',
+                                        'optional': True
+                                    }
+                                },
+                                'description': 'Optional comment to Program Chairs.'
+                            }
+                        }
+                    }
+                },
+                process=self.get_process_content('process/sac_ethics_flag_process.py')
+        )
+
+        self.save_invitation(invitation, replacement=True)
