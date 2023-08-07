@@ -246,7 +246,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_group(self, id):
+    def get_group(self, id, anonids=False):
         """
         Get a single Group by id if available
 
@@ -263,7 +263,14 @@ class OpenReviewClient(object):
         response = self.session.get(self.groups_url, params = {'id':id}, headers = self.headers)
         response = self.__handle_response(response)
         g = response.json()['groups'][0]
-        return Group.from_json(g)
+        group = Group.from_json(g)
+
+        if group.anonids and not anonids:
+            anon_prefix = (group.id[:-1] if group.id.endswith('s') else group.id) + '_'
+            members_by_id = { g.id:g.members for g in self.get_groups(prefix=anon_prefix) }
+            group.members = [members_by_id[member][0] if member in members_by_id else member for member in group.members]
+
+        return group
 
     def get_invitation(self, id):
         """
@@ -1649,14 +1656,22 @@ class OpenReviewClient(object):
         :type: Group
         """
         def remove_member(group, members):
-            group = self.get_group(group) if type(group) in string_types else group
+            members_to_remove = list(set(members))
+            group = self.get_group(group, anonids=True) if type(group) in string_types else group
             if group.invitations:
+                if group.anonids:
+                    anon_prefix = (group.id[:-1] if group.id.endswith('s') else group.id) + '_'
+                    anonids_by_member = { g.members[0]:g.id for g in self.get_groups(prefix=anon_prefix) }
+                    for index, member in enumerate(members_to_remove):
+                        if member not in group.members and anonids_by_member.get(member, None) in group.members:
+                            members_to_remove[index] = anonids_by_member[member]
+
                 self.post_group_edit(invitation = f'{group.domain}/-/Edit', 
                     signatures = group.signatures, 
                     group = Group(
                         id = group.id, 
                         members = {
-                            'remove': list(set(members))
+                            'remove': members_to_remove
                         }
                     ), 
                     readers=group.signatures, 
