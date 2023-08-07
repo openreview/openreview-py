@@ -246,7 +246,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_group(self, id, anonids=False):
+    def get_group(self, id):
         """
         Get a single Group by id if available
 
@@ -265,11 +265,21 @@ class OpenReviewClient(object):
         g = response.json()['groups'][0]
         group = Group.from_json(g)
 
-        if group.anonids and not anonids:
+        if group.anonids:
             anon_prefix = (group.id[:-1] if group.id.endswith('s') else group.id) + '_'
-            members_by_id = { g.id:g.members for g in self.get_groups(prefix=anon_prefix) }
-            group.members = [members_by_id[member][0] if member in members_by_id else member for member in group.members]
-
+            members_by_anonid = { g.id:g.members[0] for g in self.get_groups(prefix=anon_prefix) if g.members }
+            members_by_id = { g.members[0]:g.id for g in self.get_groups(prefix=anon_prefix) if g.members }
+            members = []
+            anon_members = []
+            for member in group.members:
+                if member in members_by_anonid:
+                    anon_members.append(member)
+                    members.append(members_by_anonid[member])
+                elif member in members_by_id:
+                    anon_members.append(members_by_id[member])
+                    members.append(member)
+            group.anon_members = anon_members
+            group.members = members
         return group
 
     def get_invitation(self, id):
@@ -1657,14 +1667,14 @@ class OpenReviewClient(object):
         """
         def remove_member(group, members):
             members_to_remove = list(set(members))
-            group = self.get_group(group, anonids=True) if type(group) in string_types else group
+            group = self.get_group(group if type(group) in string_types else group.id)
             if group.invitations:
                 if group.anonids:
-                    anon_prefix = (group.id[:-1] if group.id.endswith('s') else group.id) + '_'
-                    anonids_by_member = { g.members[0]:g.id for g in self.get_groups(prefix=anon_prefix) }
                     for index, member in enumerate(members_to_remove):
-                        if member not in group.members and anonids_by_member.get(member, None) in group.members:
-                            members_to_remove[index] = anonids_by_member[member]
+                        if member in group.members:
+                            members_to_remove[index] = group.anon_members[group.members.index(member)]
+                        elif member in group.anon_members:
+                            members_to_remove[index] = member
 
                 self.post_group_edit(invitation = f'{group.domain}/-/Edit', 
                     signatures = group.signatures, 
