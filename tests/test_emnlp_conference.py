@@ -56,7 +56,8 @@ class TestEMNLPConference():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '1000',
                 'use_recruitment_template': 'Yes',
-                'api_version': '2'
+                'api_version': '2',
+                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers'
             }))
 
         helpers.await_queue()
@@ -812,3 +813,45 @@ url={https://openreview.net/forum?id='''
             assert submission.odate
             assert '_bibtex' in submission.content
 
+
+    def test_enable_ethics_reviewers(self, client, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@emnlp.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0] 
+
+        assert openreview_client.get_group('EMNLP/2023/Conference/Ethics_Reviewers')
+
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'ethics_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'ethics_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_ethics_reviews_public': 'No, ethics reviews should NOT be revealed publicly when they are posted',
+                'release_ethics_reviews_to_authors': "No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors",
+                'release_ethics_reviews_to_reviewers': 'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review',
+                'remove_ethics_review_form_options': 'ethics_review',
+                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
+            },
+            forum=request_form.forum,
+            referent=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number),
+            readers=['EMNLP/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_EMNLPChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+        helpers.await_queue(openreview_client)
+
+
+    def test_enable_SAC_ethics_review(self, client, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@emnlp.org', password=helpers.strong_password)
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
+
+
+        venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
+
+        venue.set_SAC_ethics_review_process()
