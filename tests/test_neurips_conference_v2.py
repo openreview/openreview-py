@@ -2193,8 +2193,11 @@ If you would like to change your decision, please follow the link in the previou
         forum_url = 'http://localhost:3030/forum?id=' + submissions[0].id
         request_page(selenium, forum_url, test_client.token, wait_for_element='5-metareview-status')
 
-        assert selenium.find_element_by_xpath(f'//div[@data-id="{rebuttal.id}"]')
-
+        note_panel = selenium.find_element_by_xpath(f'//div[@data-id="{rebuttal.id}"]')
+        fields = note_panel.find_elements_by_class_name('note-content-field')
+        assert len(fields) == 2
+        assert fields[0].text == 'Rebuttal:'
+        assert fields[1].text == 'PDF:'
 
         with pytest.raises(openreview.OpenReviewException, match=r'.*You have reached the maximum number \(1\) of replies for this Invitation.*'):
             rebuttal_edit = test_client.post_note_edit(
