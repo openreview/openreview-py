@@ -2175,7 +2175,7 @@ If you would like to change your decision, please follow the link in the previou
                 replyto = submissions[0].id,
                 content={
                     'rebuttal': { 'value': 'This is a rebuttal reply to a submission.' },
-                    'pdf': { 'value': '/attachment/' + 's' * 40 +'.zip' }
+                    'pdf': { 'value': '/attachment/' + 's' * 40 +'.pdf' }
                 }
             )
         )
