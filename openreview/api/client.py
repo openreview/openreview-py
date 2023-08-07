@@ -268,15 +268,13 @@ class OpenReviewClient(object):
         if group.anonids:
             anon_prefix = (group.id[:-1] if group.id.endswith('s') else group.id) + '_'
             members_by_anonid = { g.id:g.members[0] for g in self.get_groups(prefix=anon_prefix) if g.members }
-            members_by_id = { g.members[0]:g.id for g in self.get_groups(prefix=anon_prefix) if g.members }
             members = []
             anon_members = []
             for member in group.members:
                 if member in members_by_anonid:
                     anon_members.append(member)
                     members.append(members_by_anonid[member])
-                elif member in members_by_id:
-                    anon_members.append(members_by_id[member])
+                else:
                     members.append(member)
             group.anon_members = anon_members
             group.members = members
@@ -1671,9 +1669,9 @@ class OpenReviewClient(object):
             if group.invitations:
                 if group.anonids:
                     for index, member in enumerate(members_to_remove):
-                        if member in group.members:
+                        if member in group.members and group.anon_members:
                             members_to_remove[index] = group.anon_members[group.members.index(member)]
-                        elif member in group.anon_members:
+                        else:
                             members_to_remove[index] = member
 
                 self.post_group_edit(invitation = f'{group.domain}/-/Edit', 
