@@ -25,6 +25,10 @@ class TestEMNLPConference():
         helpers.create_user('reviewer4@emnlp.com', 'Reviewer', 'EMNLPFour')
         helpers.create_user('reviewer5@emnlp.com', 'Reviewer', 'EMNLPFive')
         helpers.create_user('reviewer6@emnlp.com', 'Reviewer', 'EMNLPSix')
+        helpers.create_user('ethics_chair1@google.com', 'Ethics', 'ChairOne')
+        helpers.create_user('ethics_chair2@emnlp.com', 'Ethics', 'ChairTwo')
+        helpers.create_user('ethics_reviewer1@emnlp.com', 'Ethics', 'ReviewerOne')
+        helpers.create_user('ethics_reviewer2@emnlp.com', 'Ethics', 'ReviewerTwo')
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
@@ -56,7 +60,8 @@ class TestEMNLPConference():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '1000',
                 'use_recruitment_template': 'Yes',
-                'api_version': '2'
+                'api_version': '2',
+                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers'
             }))
 
         helpers.await_queue()
@@ -792,7 +797,7 @@ url={https://openreview.net/forum?id='''
         pc_client.post_note(openreview.Note(
             content= {
                 'force': 'Yes',
-                'submission_readers': 'Everyone (submissions are public)'
+                'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)'
             },
             forum= request_form.id,
             invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
@@ -809,6 +814,117 @@ url={https://openreview.net/forum?id='''
         assert len(submissions) == 3
 
         for submission in submissions:
-            assert submission.odate
-            assert '_bibtex' in submission.content
+            submission.readers = [
+                "EMNLP/2023/Conference",
+                f"EMNLP/2023/Conference/Submission{submission.number}/Senior_Area_Chairs",
+                f"EMNLP/2023/Conference/Submission{submission.number}/Area_Chairs",
+                f"EMNLP/2023/Conference/Submission{submission.number}/Reviewers",
+                f"EMNLP/2023/Conference/Submission{submission.number}/Authors"
+            ]
+        #     assert submission.odate
+        #     assert '_bibtex' in submission.content
 
+    def test_enable_ethics_reviewers(self, client, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@emnlp.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0] 
+
+        ethics_reviewers_group = openreview_client.get_group('EMNLP/2023/Conference/Ethics_Reviewers')
+        assert ethics_reviewers_group
+        openreview_client.add_members_to_group(ethics_reviewers_group, ['ethics_reviewer1@emnlp.com','ethics_reviewer2@emnlp.com'])
+        ethics_chairs_group = openreview_client.get_group('EMNLP/2023/Conference/Ethics_Chairs')
+        openreview_client.add_members_to_group(ethics_chairs_group, ['ethics_chair1@google.com', 'ethics_chair2@emnlp.com'])
+
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'ethics_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'ethics_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_ethics_reviews_public': 'No, ethics reviews should NOT be revealed publicly when they are posted',
+                'release_ethics_reviews_to_authors': "No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors",
+                'release_ethics_reviews_to_reviewers': 'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review',
+                'remove_ethics_review_form_options': 'ethics_review',
+                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
+            },
+            forum=request_form.forum,
+            referent=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number),
+            readers=['EMNLP/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_EMNLPChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+        helpers.await_queue(openreview_client)
+
+        ethics_chairs_group = openreview_client.get_group('EMNLP/2023/Conference/Ethics_Chairs')
+        assert '~Ethics_ChairOne1' in ethics_chairs_group.members
+        assert '~Ethics_ChairTwo1' in ethics_chairs_group.members
+
+    def test_enable_SAC_ethics_review(self, client, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@emnlp.org', password=helpers.strong_password)
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
+
+
+        venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
+
+        venue.set_SAC_ethics_review_process()
+
+        invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/SAC_Ethics_Review_Flag')
+        assert len(invitations) == 3
+        invitation = openreview_client.get_invitation(id='EMNLP/2023/Conference/Submission3/-/SAC_Ethics_Review_Flag')
+        assert invitation.invitees == ['EMNLP/2023/Conference', 'EMNLP/2023/Conference/Submission3/Senior_Area_Chairs']
+
+        sac_group = openreview_client.get_group('EMNLP/2023/Conference/Submission3/Senior_Area_Chairs')
+        assert '~SAC_EMNLPOne1' in sac_group.members
+
+        sac_client = openreview.api.OpenReviewClient(username='sac@emnlp.com', password=helpers.strong_password)
+        sac_ethics_flag_note = sac_client.post_note_edit(invitation=invitation.id,
+                                    signatures=['EMNLP/2023/Conference/Submission3/Senior_Area_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'ethics_review_flag': { 'value': 'Yes' },
+                                            'comments': { 'value': 'Private comments to PCs.' }
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=sac_ethics_flag_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Ethics_Review_Flag', count=1)
+
+        sac_group = openreview_client.get_group('EMNLP/2023/Conference/Submission3/Senior_Area_Chairs')
+        assert '~SAC_EMNLPOne1' in sac_group.members
+        assert '~Ethics_ChairTwo1' in sac_group.members
+        assert '~Ethics_ChairOne1' not in sac_group.members
+
+        submissions = openreview_client.get_notes(content={'venueid':'EMNLP/2023/Conference/Submission'}, sort='number:asc')
+        assert len(submissions) == 3
+
+        custom_demand_edge = openreview_client.get_edges(invitation='EMNLP/2023/Conference/Ethics_Reviewers/-/Custom_User_Demands', head=submissions[0].id)[0]
+        assert custom_demand_edge.weight == 2
+
+        assert 'flagged_for_ethics_review' in submissions[0].content and submissions[0].content['flagged_for_ethics_review']['value'] == True
+        assert submissions[0].content['flagged_for_ethics_review']['readers'] == [
+            'EMNLP/2023/Conference',
+            'EMNLP/2023/Conference/Ethics_Chairs',
+            'EMNLP/2023/Conference/Submission3/Ethics_Reviewers',
+            'EMNLP/2023/Conference/Submission3/Senior_Area_Chairs',
+            'EMNLP/2023/Conference/Submission3/Area_Chairs',
+            'EMNLP/2023/Conference/Submission3/Reviewers'
+        ]
+        assert submissions[0].readers == [
+            "EMNLP/2023/Conference",
+            "EMNLP/2023/Conference/Submission3/Senior_Area_Chairs",
+            "EMNLP/2023/Conference/Submission3/Area_Chairs",
+            "EMNLP/2023/Conference/Submission3/Reviewers",
+            "EMNLP/2023/Conference/Submission3/Authors",
+            "EMNLP/2023/Conference/Submission3/Ethics_Reviewers"
+        ]
+
+        invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Ethics_Review')
+        assert len(invitations) == 1
+        invitation = openreview_client.get_invitations(id='EMNLP/2023/Conference/Submission3/-/Ethics_Review')[0]
+        assert invitation
+        assert 'EMNLP/2023/Conference/Submission3/Ethics_Reviewers' in invitation.invitees
