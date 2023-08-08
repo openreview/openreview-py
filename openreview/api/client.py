@@ -1574,6 +1574,9 @@ class OpenReviewClient(object):
         :return: Contains the message that was sent to each Group
         :rtype: dict
         """
+        # if parentGroup:
+        #     recipients = self.get_group(parentGroup).transform_to_anon_ids(recipients)
+        
         response = self.session.post(self.messages_url, json = {
             'groups': recipients,
             'subject': subject ,
@@ -1667,12 +1670,8 @@ class OpenReviewClient(object):
             members_to_remove = list(set(members))
             group = self.get_group(group if type(group) in string_types else group.id)
             if group.invitations:
-                if group.anonids:
-                    for index, member in enumerate(members_to_remove):
-                        if member in group.members and group.anon_members:
-                            members_to_remove[index] = group.anon_members[group.members.index(member)]
-                        else:
-                            members_to_remove[index] = member
+
+                members_to_remove = group.transform_to_anon_ids(members_to_remove)
 
                 self.post_group_edit(invitation = f'{group.domain}/-/Edit', 
                     signatures = group.signatures, 
@@ -2834,5 +2833,15 @@ class Group(object):
         :type client: Client
         """
         client.post_group(self)
+
+
+    def transform_to_anon_ids(self, elements):
+        if self.anonids:
+            for index, element in enumerate(elements):
+                if element in self.members and self.anon_members:
+                    elements[index] = self.anon_members[self.members.index(element)]
+                else:
+                    elements[index] = element
+        return elements        
 
 
