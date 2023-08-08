@@ -1574,8 +1574,8 @@ class OpenReviewClient(object):
         :return: Contains the message that was sent to each Group
         :rtype: dict
         """
-        # if parentGroup:
-        #     recipients = self.get_group(parentGroup).transform_to_anon_ids(recipients)
+        if parentGroup:
+            recipients = self.get_group(parentGroup).transform_to_anon_ids(recipients)
         
         response = self.session.post(self.messages_url, json = {
             'groups': recipients,
