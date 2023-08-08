@@ -7,7 +7,8 @@ def process(client, edit, invitation):
     ethics_chairs_id = domain.get_content_value('ethics_chairs_id')
     conflict_policy = domain.content.get('reviewers_conflict_policy', {}).get('value', 'Default')
     conflict_n_years = domain.content.get('reviewers_conflict_n_years', {}).get('value')
-    senior_area_chairs_id = domain.content.get('senior_area_chairs_id', {}).get('value')
+    senior_area_chairs_name = domain.content.get('senior_area_chairs_name', {}).get('value')
+    submission_name = domain.get_content_value('submission_name')
 
     flag_note = client.get_note(edit.note.id)
     submission = client.get_note(flag_note.forum)
@@ -26,7 +27,8 @@ def process(client, edit, invitation):
                 if not conflicts:
                     members_without_conflict.append(user_profile.id)
 
-            client.add_members_to_group(senior_area_chairs_id, members_without_conflict)
+            paper_senior_area_chairs = f'{venue_id}/{submission_name}{submission.number}/{senior_area_chairs_name}'
+            client.add_members_to_group(paper_senior_area_chairs, members_without_conflict)
 
         # create Custom User Demand edge
         client.post_edge(openreview.api.Edge(
