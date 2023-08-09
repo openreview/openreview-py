@@ -928,3 +928,61 @@ url={https://openreview.net/forum?id='''
         invitation = openreview_client.get_invitations(id='EMNLP/2023/Conference/Submission3/-/Ethics_Review')[0]
         assert invitation
         assert 'EMNLP/2023/Conference/Submission3/Ethics_Reviewers' in invitation.invitees
+
+    def test_enable_ethics_metareview(self, client, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@emnlp.org', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@emnlp.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+            
+        venue.custom_stage = openreview.stages.CustomStage(name='Ethics_Meta_Review',
+            reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            due_date=due_date,
+            invitees=[openreview.stages.CustomStage.Participants.ETHICS_CHAIRS],
+            readers=[openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
+                    openreview.stages.CustomStage.Participants.REVIEWERS_SUBMITTED, openreview.stages.CustomStage.Participants.ETHICS_REVIEWERS_ASSIGNED, openreview.stages.CustomStage.Participants.AUTHORS],
+            content={
+                'ethics_meta_review': {
+                    'order': 1,
+                    'description': 'Ethics metareviews can include Markdown formatting and LaTeX forumulas, for more information see https://openreview.net/faq, max length: 6000',
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'maxLength': 6000,
+                            'markdown': True,
+                            'input': 'textarea'
+                        }
+                    }
+                }
+            },
+            notify_readers=False,
+            email_sacs=False
+        )
+
+        venue.create_custom_stage()
+        helpers.await_queue(openreview_client)
+
+        submissions = openreview_client.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission'}, sort='number:asc')
+
+        invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Ethics_Meta_Review')
+        assert len(invitations) == 3
+        assert invitations[0].invitees == ['EMNLP/2023/Conference/Program_Chairs', 'EMNLP/2023/Conference/Ethics_Chairs']
+        assert invitations[0].edit['note']['forum']== submissions[0].id
+        assert invitations[0].edit['note']['replyto'] == submissions[0].id
+        assert 'ethics_meta_review' in invitations[0].edit['note']['content']
+        assert invitations[0].minReplies == 1
+        assert invitations[0].maxReplies == 1
+        assert invitations[0].edit['note']['readers'] == [
+            "EMNLP/2023/Conference/Program_Chairs",
+            "EMNLP/2023/Conference/Submission3/Senior_Area_Chairs",
+            "EMNLP/2023/Conference/Submission3/Area_Chairs",
+            "EMNLP/2023/Conference/Submission3/Reviewers/Submitted",
+            "EMNLP/2023/Conference/Submission3/Authors",
+            "EMNLP/2023/Conference/Submission3/Ethics_Reviewers"
+        ]

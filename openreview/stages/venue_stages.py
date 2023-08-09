@@ -1294,6 +1294,9 @@ class CustomStage(object):
         REVIEWERS_ASSIGNED = 6
         REVIEWERS_SUBMITTED = 7
         AUTHORS = 8
+        ETHICS_CHAIRS = 9
+        ETHICS_REVIEWERS = 10
+        ETHICS_REVIEWERS_ASSIGNED = 11
 
     class Source(Enum):
         ALL_SUBMISSIONS = 0
@@ -1303,8 +1306,8 @@ class CustomStage(object):
     class ReplyTo(Enum):
         FORUM = 0
         WITHFORUM = 1
-        REVIEWS = 2
-        METAREVIEWS = 3
+        REVIEWS = 3
+        METAREVIEWS = 4
 
     def __init__(self, name, reply_to, source, start_date=None, due_date=None, exp_date=None, invitees=[], readers=[], content={}, multi_reply = False, email_pcs = False, email_sacs = False, notify_readers=False, email_template=None):
         self.name = name
@@ -1340,6 +1343,12 @@ class CustomStage(object):
         if self.Participants.AUTHORS in self.invitees:
             invitees.append(conference.get_authors_id(number))
 
+        if conference.use_ethics_chairs and self.Participants.ETHICS_CHAIRS in self.invitees:
+            invitees.append(conference.get_ethics_chairs_id())
+
+        if conference.use_ethics_reviewers and self.Participants.ETHICS_REVIEWERS_ASSIGNED in self.invitees:
+            invitees.append(conference.get_ethics_reviewers_id(number))
+
         return invitees
 
     def get_readers(self, conference, number):
@@ -1363,6 +1372,12 @@ class CustomStage(object):
         if self.Participants.AUTHORS in self.readers:
             readers.append(conference.get_authors_id(number))
 
+        if conference.use_ethics_chairs and self.Participants.ETHICS_CHAIRS in self.readers:
+            readers.append(conference.get_ethics_chairs_id())
+
+        if conference.use_ethics_reviewers and self.Participants.ETHICS_REVIEWERS_ASSIGNED in self.readers:
+            readers.append(conference.get_ethics_reviewers_id(number))
+
         return readers
 
     def get_signatures_regex(self, conference, number):
@@ -1379,6 +1394,12 @@ class CustomStage(object):
 
         if self.Participants.AUTHORS in self.invitees:
             committee.append(conference.get_authors_id(number))
+
+        if conference.use_ethics_chairs and self.Participants.ETHICS_CHAIRS in self.invitees:
+            committee.append(conference.get_ethics_chairs_id())
+
+        if conference.use_ethics_reviewers and self.Participants.ETHICS_REVIEWERS_ASSIGNED in self.invitees:
+            committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*', name=conference.ethics_reviewers_name))
 
         return '|'.join(committee)
 
