@@ -1295,8 +1295,7 @@ class CustomStage(object):
         REVIEWERS_SUBMITTED = 7
         AUTHORS = 8
         ETHICS_CHAIRS = 9
-        ETHICS_REVIEWERS = 10
-        ETHICS_REVIEWERS_ASSIGNED = 11
+        ETHICS_REVIEWERS_ASSIGNED = 10
 
     class Source(Enum):
         ALL_SUBMISSIONS = 0
@@ -1306,8 +1305,8 @@ class CustomStage(object):
     class ReplyTo(Enum):
         FORUM = 0
         WITHFORUM = 1
-        REVIEWS = 3
-        METAREVIEWS = 4
+        REVIEWS = 2
+        METAREVIEWS = 3
 
     def __init__(self, name, reply_to, source, start_date=None, due_date=None, exp_date=None, invitees=[], readers=[], content={}, multi_reply = False, email_pcs = False, email_sacs = False, notify_readers=False, email_template=None):
         self.name = name
