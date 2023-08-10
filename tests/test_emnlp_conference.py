@@ -946,18 +946,84 @@ url={https://openreview.net/forum?id='''
             due_date=due_date,
             invitees=[openreview.stages.CustomStage.Participants.ETHICS_CHAIRS],
             readers=[openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
-                    openreview.stages.CustomStage.Participants.REVIEWERS_SUBMITTED, openreview.stages.CustomStage.Participants.ETHICS_REVIEWERS_ASSIGNED, openreview.stages.CustomStage.Participants.AUTHORS],
+                    openreview.stages.CustomStage.Participants.REVIEWERS_SUBMITTED, openreview.stages.CustomStage.Participants.ETHICS_CHAIRS, openreview.stages.CustomStage.Participants.ETHICS_REVIEWERS_ASSIGNED, openreview.stages.CustomStage.Participants.AUTHORS],
             content={
-                'ethics_meta_review': {
-                    'order': 1,
-                    'description': 'Ethics metareviews can include Markdown formatting and LaTeX forumulas, for more information see https://openreview.net/faq, max length: 6000',
-                    'value': {
-                        'param': {
-                            'type': 'string',
-                            'maxLength': 6000,
-                            'markdown': True,
-                            'input': 'textarea'
-                        }
+                "ethics_violations": {
+                    "value": {
+                    "param": {
+                        "type": "string",
+                        "enum": [
+                        "Yes",
+                        "No"
+                        ],
+                        "input": "radio"
+                    }
+                    },
+                    "order": 1,
+                    "description": "Are there any substantial ethical issues with the research presented in this submission?"
+                },
+                "Category": {
+                    "order": 2,
+                    "description": "Please check **all** issues that apply with respect to the ACL code of ethics. The numbers refer to the sections and subsections in the ACM/ACL Code of Ethics above.",
+                    "value": {
+                    "param": {
+                        "type": "string[]",
+                        "enum": [
+                        "1.1: Contribute to society and to human well-being, acknowledging that all people are stakeholders in computing",
+                        "1.2: Avoid harm",
+                        "1.3: Be honest and trustworthy",
+                        "1.4: Be fair and take action not to discriminate",
+                        "1.5: Respect the work required to produce new ideas, inventions, creative works, and computing artifacts",
+                        "1.6: Respect privacy",
+                        "1.7: Honor confidentiality",
+                        "2.1: Strive to achieve high quality in both the processes and products of professional work",
+                        "2.2: Maintain high standards of professional competence, conduct, and ethical practice",
+                        "2.3: Know and respect existing rules pertaining to professional work",
+                        "2.4: Accept and provide an appropriate professional review",
+                        "2.5: Give comprehensive and thorough evaluations of computer systems and their impacts, including analysis of possible risks",
+                        "2.6: Perform work only in areas of competence",
+                        "2.7: Foster public awareness and understanding of computing, related technologies, and their consequences",
+                        "2.8: Access computing and communication resources only when authorized or when compelled by the public good",
+                        "2.9: Design and implement systems that are robustly and usably secure",
+                        "3.1: Ensure that the public good is the central concern during all professional computing work",
+                        "3.2: Articulate, encourage acceptance of, and evaluate fulfillment of social responsibilities by members of the organization or group",
+                        "3.3: Manage personnel and resources to enhance the quality of working life",
+                        "3.4: Articulate, apply, and support policies and processes that reflect the principles of the Code",
+                        "3.5: Create opportunities for members of the organization or group to grow as professionals",
+                        "3.6: Use care when modifying or retiring systems",
+                        "3.7: Recognize and take special care of systems that become integrated into the infrastructure of society",
+                        "4.1: Uphold, promote, and respect the principles of the Code",
+                        "4.2: Treat violations of the Code as inconsistent with membership in the ACM"
+                        ],
+                        "input": "checkbox"
+                    }
+                    }
+                },
+                "ethics_concerns": {
+                    "order": 3,
+                    "description": "3. For each item selected, please enter the number and a short justification, and describe how you would suggest the authors address it.",
+                    "value": {
+                    "param": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 20000,
+                        "input": "textarea"
+                    }
+                    }
+                },
+                "ethics_review_recommendation": {
+                    "order": 4,
+                    "description": "Please select one of the following: ",
+                    "value": {
+                    "param": {
+                        "type": "string",
+                        "enum": [
+                        "1: No issues, accept as is",
+                        "2: Some ethical issues to be addressed before acceptance.",
+                        "3: Reject on the basis of serious ethics violations"
+                        ],
+                        "input": "radio"
+                    }
                     }
                 }
             },
@@ -976,7 +1042,7 @@ url={https://openreview.net/forum?id='''
         assert invitation.invitees == ['EMNLP/2023/Conference/Program_Chairs', 'EMNLP/2023/Conference/Ethics_Chairs']
         assert invitation.edit['note']['forum']== submissions[0].id
         assert invitation.edit['note']['replyto'] == submissions[0].id
-        assert 'ethics_meta_review' in invitations[0].edit['note']['content']
+        assert 'ethics_review_recommendation' in invitations[0].edit['note']['content']
         assert invitation.minReplies == 1
         assert invitation.maxReplies == 1
         assert invitation.edit['note']['readers'] == [
@@ -985,5 +1051,6 @@ url={https://openreview.net/forum?id='''
             "EMNLP/2023/Conference/Submission3/Area_Chairs",
             "EMNLP/2023/Conference/Submission3/Reviewers/Submitted",
             "EMNLP/2023/Conference/Submission3/Authors",
+            "EMNLP/2023/Conference/Ethics_Chairs"
             "EMNLP/2023/Conference/Submission3/Ethics_Reviewers"
         ]
