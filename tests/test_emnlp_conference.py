@@ -942,7 +942,7 @@ url={https://openreview.net/forum?id='''
             
         venue.custom_stage = openreview.stages.CustomStage(name='Ethics_Meta_Review',
             reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
-            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            source=openreview.stages.CustomStage.Source.FLAGGED_SUBMISSIONS,
             due_date=due_date,
             invitees=[openreview.stages.CustomStage.Participants.ETHICS_CHAIRS],
             readers=[openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
@@ -1037,7 +1037,7 @@ url={https://openreview.net/forum?id='''
         submissions = openreview_client.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission'}, sort='number:asc')
 
         invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Ethics_Meta_Review')
-        assert len(invitations) == 3
+        assert len(invitations) == 1
         invitation = openreview_client.get_invitation(id='EMNLP/2023/Conference/Submission3/-/Ethics_Meta_Review')
         assert invitation.invitees == ['EMNLP/2023/Conference/Program_Chairs', 'EMNLP/2023/Conference/Ethics_Chairs']
         assert invitation.edit['note']['forum']== submissions[0].id
