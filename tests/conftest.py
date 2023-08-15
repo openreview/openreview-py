@@ -55,7 +55,7 @@ class Helpers:
         return openreview.Client(baseurl = 'http://localhost:3000', username = email, password = Helpers.strong_password)
 
     @staticmethod
-    def await_queue(super_client=None, jobNames=None, version=1):
+    def await_queue(super_client=None, jobNames=None, api_version=1):
         if jobNames is None:
             jobNames = set([
                 'emailQueueStatus',
@@ -68,7 +68,7 @@ class Helpers:
                 'fileDeletionQueueStatus'
             ])
         if super_client is None:
-            if version == 1:
+            if api_version == 1:
                 super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password=Helpers.strong_password)
                 assert super_client is not None, 'Super Client is none'
             else:
