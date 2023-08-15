@@ -55,16 +55,32 @@ class Helpers:
         return openreview.Client(baseurl = 'http://localhost:3000', username = email, password = Helpers.strong_password)
 
     @staticmethod
-    def await_queue(super_client=None):
+    def await_queue(super_client=None, jobNames=None, version=1):
+        if jobNames is None:
+            jobNames = set([
+                'emailQueueStatus',
+                'jsEntityQueueStatus',
+                'pyEntityQueueStatus',
+                'gatherEmailsQueueStatus',
+                'jsDateProcessQueueStatus',
+                'pyDateProcessQueueStatus',
+                'fileUploaderQueueStatus',
+                'fileDeletionQueueStatus'
+            ])
         if super_client is None:
-            super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password=Helpers.strong_password)
-            assert super_client is not None, 'Super Client is none'
+            if version == 1:
+                super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password=Helpers.strong_password)
+                assert super_client is not None, 'Super Client is none'
+            else:
+                super_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001', username='openreview.net', password=Helpers.strong_password)
+                assert super_client is not None, 'Super Client is none'
 
         while True:
             jobs = super_client.get_jobs_status()
             jobCount = 0
             for jobName, job in jobs.items():
-                jobCount += job.get('waiting', 0) + job.get('active', 0) + job.get('delayed', 0)
+                if jobName in jobNames:
+                    jobCount += job.get('waiting', 0) + job.get('active', 0) + job.get('delayed', 0)
 
             if jobCount == 0:
                 break

@@ -806,7 +806,7 @@ note={Withdrawn}
         ))
 
          # wait for process function delay (5 seconds) and check email has been sent
-        time.sleep(6)
+        helpers.await_queue()
         messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Assignment to review new TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi David Belanger,
