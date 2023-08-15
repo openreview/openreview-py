@@ -1068,6 +1068,7 @@ class VenueRequest():
         self.deploy_process = os.path.join(os.path.dirname(__file__), 'process/deployProcess.py')
         self.recruitment_process = os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py')
         self.remind_recruitment_process = os.path.join(os.path.dirname(__file__), 'process/remindRecruitmentProcess.py')
+        self.recruitment_pre_process = os.path.join(os.path.dirname(__file__), 'process/recruitment_pre_process.js')
         self.matching_process = os.path.join(os.path.dirname(__file__), 'process/matchingProcess.py')
         self.matching_pre_process = os.path.join(os.path.dirname(__file__), 'process/matching_pre_process.py')
         self.stage_pre_process = os.path.join(os.path.dirname(__file__), 'process/stage_pre_process.py')
@@ -1707,31 +1708,34 @@ The {SHORT_PHRASE} program chairs will be contacting you with more information r
 If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
             }}
 
-        with open(self.recruitment_process, 'r') as f:
-            file_content = f.read()
-            file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
+        with open(self.recruitment_pre_process, 'r') as pre:
+            with open(self.recruitment_process, 'r') as f:
+                pre_process_file_content = pre.read()
+                file_content = f.read()
+                file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
 
-            self.recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
-                id=self.support_group.id + '/-/Recruitment',
-                readers=['everyone'],
-                writers=[],
-                signatures=[self.support_group.id],
-                invitees=[self.support_group.id],
-                process_string=file_content,
-                multiReply=True,
-                reply={
-                    'readers': {
-                        'values': ['everyone']
-                    },
-                    'writers': {
-                        'values':[],
-                    },
-                    'signatures': {
-                        'values-regex': '~.*|{}'.format(self.support_group.id)
-                    },
-                    'content': recruitment_content
-                }
-            ))
+                self.recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
+                    id=self.support_group.id + '/-/Recruitment',
+                    readers=['everyone'],
+                    writers=[],
+                    signatures=[self.support_group.id],
+                    invitees=[self.support_group.id],
+                    process_string=file_content,
+                    preprocess=pre_process_file_content,
+                    multiReply=True,
+                    reply={
+                        'readers': {
+                            'values': ['everyone']
+                        },
+                        'writers': {
+                            'values':[],
+                        },
+                        'signatures': {
+                            'values-regex': '~.*|{}'.format(self.support_group.id)
+                        },
+                        'content': recruitment_content
+                    }
+                ))
 
         recruitment_status_content = {
             'title': {
@@ -1854,31 +1858,34 @@ If you would like to change your decision, please follow the link in the previou
         '''
         }}
 
-        with open(self.remind_recruitment_process, 'r') as f:
-            file_content = f.read()
-            file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
+        with open(self.recruitment_pre_process, 'r') as pre:
+            with open(self.remind_recruitment_process, 'r') as f:
+                pre_process_file_content = pre.read()
+                file_content = f.read()
+                file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
 
-            self.remind_recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
-                id=self.support_group.id + '/-/Remind_Recruitment',
-                readers=['everyone'],
-                writers=[],
-                signatures=[self.support_group.id],
-                invitees=[self.support_group.id],
-                process_string=file_content,
-                multiReply=True,
-                reply={
-                    'readers': {
-                        'values': ['everyone']
-                    },
-                    'writers': {
-                        'values':[],
-                    },
-                    'signatures': {
-                        'values-regex': '~.*|{}'.format(self.support_group.id)
-                    },
-                    'content': remind_recruitment_content
-                }
-            ))
+                self.remind_recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
+                    id=self.support_group.id + '/-/Remind_Recruitment',
+                    readers=['everyone'],
+                    writers=[],
+                    signatures=[self.support_group.id],
+                    invitees=[self.support_group.id],
+                    process_string=file_content,
+                    preprocess=pre_process_file_content,
+                    multiReply=True,
+                    reply={
+                        'readers': {
+                            'values': ['everyone']
+                        },
+                        'writers': {
+                            'values':[],
+                        },
+                        'signatures': {
+                            'values-regex': '~.*|{}'.format(self.support_group.id)
+                        },
+                        'content': remind_recruitment_content
+                    }
+                ))
 
         remind_recruitment_status_content = {
             'title': {
