@@ -1650,23 +1650,30 @@ class VenueRequest():
                 'required': False,
                 'order': 4
             },
+            'invitee_accept_reduced_load': {
+                'description': 'Select "yes" if you want invited Reviewers to choose their reduced load upon acceptance, otherwise this will default to selecting a reduced load when the user declines.',
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'required': False,
+                'order': 5
+            },
             'invitee_details': {
                 'value-regex': '[\\S\\s]{1,50000}',
                 'description': 'Enter a list of invitees with one per line. Either tilde IDs (∼Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee". Do not use parentheses in your list of invitees.',
                 'required': True,
-                'order': 5
+                'order': 6
             },
             'invitation_email_subject': {
                 'value-regex': '.*',
                 'description': 'Please carefully review the email subject for the recruitment emails. Make sure not to remove the parenthesized tokens.',
-                'order': 6,
+                'order': 7,
                 'required': True,
                 'default': '[{Abbreviated_Venue_Name}] Invitation to serve as {{invitee_role}}'
             },
             'invitation_email_content': {
                 'value-regex': '[\\S\\s]{1,10000}',
                 'description': 'Please carefully review the template below before you click submit to send out recruitment emails. Make sure not to remove the parenthesized tokens.',
-                'order': 7,
+                'order': 8,
                 'required': True,
                 'default': '''Dear {{fullname}},
 
