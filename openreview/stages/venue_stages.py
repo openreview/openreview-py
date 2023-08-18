@@ -111,7 +111,7 @@ class SubmissionStage(object):
         self.second_deadline_additional_fields = second_deadline_additional_fields
         self.second_deadline_remove_fields = second_deadline_remove_fields
 
-    def get_readers(self, conference, number, decision=None, add_publication_chair=None):
+    def get_readers(self, conference, number, decision=None):
 
         if self.Readers.EVERYONE in self.readers:
             return ['everyone']
@@ -155,8 +155,8 @@ class SubmissionStage(object):
             if conference.use_ethics_reviewers:
                 submission_readers.append(conference.get_ethics_reviewers_id(number=number))
 
-        if add_publication_chair and decision and 'Accept' in decision:
-            submission_readers.append(conference.get_committee_id('Publication_Chair'))
+        if conference.use_publication_chairs and decision and 'Accept' in decision:
+            submission_readers.append(conference.get_publication_chairs_id())
 
         submission_readers.append(conference.get_authors_id(number=number))
         return submission_readers
@@ -1294,6 +1294,8 @@ class CustomStage(object):
         REVIEWERS_ASSIGNED = 6
         REVIEWERS_SUBMITTED = 7
         AUTHORS = 8
+        ETHICS_CHAIRS = 9
+        ETHICS_REVIEWERS_ASSIGNED = 10
 
     class Source(Enum):
         ALL_SUBMISSIONS = 0
@@ -1340,6 +1342,12 @@ class CustomStage(object):
         if self.Participants.AUTHORS in self.invitees:
             invitees.append(conference.get_authors_id(number))
 
+        if conference.use_ethics_chairs and self.Participants.ETHICS_CHAIRS in self.invitees:
+            invitees.append(conference.get_ethics_chairs_id())
+
+        if conference.use_ethics_reviewers and self.Participants.ETHICS_REVIEWERS_ASSIGNED in self.invitees:
+            invitees.append(conference.get_ethics_reviewers_id(number))
+
         return invitees
 
     def get_readers(self, conference, number):
@@ -1363,6 +1371,12 @@ class CustomStage(object):
         if self.Participants.AUTHORS in self.readers:
             readers.append(conference.get_authors_id(number))
 
+        if conference.use_ethics_chairs and self.Participants.ETHICS_CHAIRS in self.readers:
+            readers.append(conference.get_ethics_chairs_id())
+
+        if conference.use_ethics_reviewers and self.Participants.ETHICS_REVIEWERS_ASSIGNED in self.readers:
+            readers.append(conference.get_ethics_reviewers_id(number))
+
         return readers
 
     def get_signatures_regex(self, conference, number):
@@ -1379,6 +1393,12 @@ class CustomStage(object):
 
         if self.Participants.AUTHORS in self.invitees:
             committee.append(conference.get_authors_id(number))
+
+        if conference.use_ethics_chairs and self.Participants.ETHICS_CHAIRS in self.invitees:
+            committee.append(conference.get_ethics_chairs_id())
+
+        if conference.use_ethics_reviewers and self.Participants.ETHICS_REVIEWERS_ASSIGNED in self.invitees:
+            committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*', name=conference.ethics_reviewers_name))
 
         return '|'.join(committee)
 

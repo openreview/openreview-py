@@ -81,6 +81,7 @@ class Conference(object):
         self.reviewer_identity_readers = []
         self.area_chair_identity_readers = []
         self.senior_area_chair_identity_readers = []
+        self.use_publication_chairs = False # compatibility with venue class
 
     def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, additional_readers = [], exclude_self_reader=False):
         group = tools.get_group(self.client, id = group_id)
@@ -568,6 +569,9 @@ class Conference(object):
             if name.endswith('s'):
                 return name[:-1]
         return name
+    
+    def get_publication_chairs_id(self):
+        return self.id + '/Publication_Chairs'
 
     def get_roles(self):
         roles = self.reviewer_roles

@@ -1134,9 +1134,9 @@ class VenueRequest():
                 'required': True,
                 'order': 6
             },
-            'publication_chair_email': {
-                'description': 'Please provide the *lower-cased* email address of the Publication Chair. The Publication Chair will only have access to accepted submissions and the author accepted group in order to email authors of accepted submissions.',
-                'value-regex': r'([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+            'publication_chairs_emails': {
+                'description': 'Please provide the *lower-cased* email addresses of the Publication Chairs. The Publication Chairs will only have access to accepted submissions and the author accepted group in order to email authors of accepted submissions.',
+                'values-regex': r'([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
                 'required': False,
                 'order': 7
             },
@@ -1178,8 +1178,8 @@ class VenueRequest():
                 'order': 11
             },            
             'Submission Start Date': {
-                'description': 'When would you (ideally) like to have your OpenReview submission portal opened? Please specify the date and time in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59). (Skip this if only requesting paper matching service)',
-                'value-regex': '.*',
+                'description': 'When would you (ideally) like to have your OpenReview submission portal opened? Please specify the date and time in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59). (Leave blank if you would like the portal to open for submissions as soon as possible or if you are only requesting paper matching service)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'order': 12
             },
             'abstract_registration_deadline': {
@@ -1466,7 +1466,7 @@ class VenueRequest():
                                 self.support_group.id,
                                 '{signatures}',
                                 '{content.program_chair_emails}',
-                                '{content.publication_chair_email}'
+                                '{content.publication_chairs_emails}'
                             ]
                         },
                         'writers': {
@@ -1474,7 +1474,7 @@ class VenueRequest():
                                 self.support_group.id,
                                 '{signatures}',
                                 '{content.program_chair_emails}',
-                                '{content.publication_chair_email}'
+                                '{content.publication_chairs_emails}'
                             ]
                         },
                         'signatures': {
