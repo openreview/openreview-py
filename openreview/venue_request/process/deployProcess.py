@@ -161,37 +161,44 @@ If you would like to change your decision, please follow the link in the previou
                     'required': True,
                     'order': 2
                 },
+                'allow_accept_with_reduced_load': {
+                    'description': 'Select "yes" if you want invited Reviewers to choose their reduced load upon acceptance, otherwise this will default to selecting a reduced load when the user declines.',
+                    'value-radio': ['Yes', 'No'],
+                    'default': 'No',
+                    'required': False,
+                    'order': 4
+                },
                 'invitee_reduced_load': {
                     'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list.',
                     'values-regex': '[0-9]+',
                     'default': ['1', '2', '3'],
                     'required': False,
-                    'order': 4
+                    'order': 5
                 },
                 'invitee_details': {
                     'value-regex': '[\\S\\s]{1,50000}',
                     'description': 'Enter a list of invitees with one per line. Either tilde IDs (∼Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee". Do not use parentheses in your list of invitees.',
                     'required': True,
-                    'order': 5
+                    'order': 6
                 },
                 'invitation_email_subject': {
                     'value-regex': '.*',
                     'description': 'Please carefully review the email subject for the recruitment emails. Make sure not to remove the parenthesized tokens.',
-                    'order': 6,
+                    'order': 7,
                     'required': True,
                     'default': recruitment_email_subject
                 },
                 'invitation_email_content': {
                     'value-regex': '[\\S\\s]{1,10000}',
                     'description': 'Please carefully review the template below before you click submit to send out recruitment emails. Make sure not to remove the parenthesized tokens.',
-                    'order': 7,
+                    'order': 8,
                     'required': True,
                     'default': recruitment_email_body
                 },
                 'accepted_email_template': {
                     'value-regex': '[\\S\\s]{1,10000}',
                     'description': 'Please review the email sent to users when they accept a recruitment invitation. Make sure not to remove the parenthesized tokens.',
-                    'order': 8,
+                    'order': 9,
                     'hidden': True,
                     'default': accepted_email
                 }
