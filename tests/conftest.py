@@ -102,17 +102,21 @@ class Helpers:
         ))
 
     @staticmethod
-    def respond_invitation(selenium, request_page, url, accept, quota=None, comment=None):
+    def respond_invitation(selenium, request_page, url, accept, quota=None, comment=None, allow_accept_with_reduced_load=False):
 
         request_page(selenium, url, by=By.CLASS_NAME, wait_for_element='note_editor')
 
         container = selenium.find_element_by_class_name('note_editor')
 
         buttons = container.find_elements_by_tag_name("button")
-        assert len(buttons) == 2
+
+        if allow_accept_with_reduced_load:
+            assert len(buttons) == 3
+        else: 
+            assert len(buttons) == 2
 
         if quota:
-            buttons[1].click() ## Decline
+            buttons[-1].click() ## Decline
             time.sleep(1)
             reduce_quota_link = selenium.find_element_by_class_name('reduced-load-link')
             reduce_quota_link.click()
@@ -127,7 +131,7 @@ class Helpers:
             button = selenium.find_element_by_xpath('//button[text()="Submit"]')
             button.click()
         elif comment:
-            buttons[1].click()
+            buttons[-1].click()
             time.sleep(1)
             text_area = selenium.find_element_by_css_selector(".note_content_value, [class*='TextareaWidget_textarea']")
             text_area.send_keys("I am too busy.")
@@ -136,7 +140,7 @@ class Helpers:
         elif accept:
             buttons[0].click()
         else:
-            buttons[1].click()
+            buttons[-1].click()
 
         time.sleep(2)
 

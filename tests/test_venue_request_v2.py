@@ -539,6 +539,7 @@ class TestVenueRequest():
             content={
                 'title': 'Recruitment',
                 'invitee_role': 'Reviewers',
+                'allow_accept_with_reduced_load': 'Yes',
                 'invitee_reduced_load': ['1', '2', '3'],
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
@@ -585,13 +586,13 @@ class TestVenueRequest():
 
         invalid_accept_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1].replace('user=reviewer_candidate2_v2%40mail.com', 'user=reviewer_candidate2_v1%40mail.com')
         print(invalid_accept_url)
-        helpers.respond_invitation(selenium, request_page, invalid_accept_url, accept=True)
+        helpers.respond_invitation(selenium, request_page, invalid_accept_url, accept=True, allow_accept_with_reduced_load=True)
         error_message = selenium.find_element_by_class_name('important_message')
         assert 'Wrong key, please refer back to the recruitment email' == error_message.text
 
         openreview_client.remove_members_from_group('V2.cc/2030/Conference/Reviewers/Invited', 'reviewer_candidate2_v2@mail.com')
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
-        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True, allow_accept_with_reduced_load=True)
         error_message = selenium.find_element_by_class_name('important_message')
         assert 'User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text
 
@@ -599,7 +600,7 @@ class TestVenueRequest():
 
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
         print('invitation_url', invitation_url)
-        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True, allow_accept_with_reduced_load=True)
 
         helpers.await_queue_edit(openreview_client, invitation='V2.cc/2030/Conference/Reviewers/-/Recruitment')
 
