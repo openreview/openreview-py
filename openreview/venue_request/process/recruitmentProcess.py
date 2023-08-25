@@ -58,6 +58,7 @@ def process(client, note, invitation):
         title = note.content['invitation_email_subject'].strip(),
         message = note.content['invitation_email_content'].strip(),
         reduced_load_on_decline = reduced_load,
+        allow_accept_with_reduced_load = 'Yes' in note.content.get('allow_accept_with_reduced_load', 'No'),
         contact_info = contact_info,
         allow_overlap_official_committee = 'Yes' in note.content.get('allow_role_overlap', 'No'),
         accept_recruitment_template=accept_recruitment_template

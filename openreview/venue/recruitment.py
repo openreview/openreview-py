@@ -21,6 +21,7 @@ class Recruitment(object):
             retry_declined,
             contact_info,
             reduced_load_on_decline,
+            allow_accept_with_reduced_load,
             # default_load,
             allow_overlap_official_committee):
 
@@ -44,7 +45,8 @@ class Recruitment(object):
 
         options = {
             'allow_overlap_official_committee': allow_overlap_official_committee,
-            'reduced_load_on_decline': reduced_load_on_decline
+            'reduced_load_on_decline': reduced_load_on_decline,
+            'allow_accept_with_reduced_load': allow_accept_with_reduced_load
         }
 
         invitation = venue.invitation_builder.set_recruitment_invitation(committee_name, options)

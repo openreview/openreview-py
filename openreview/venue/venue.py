@@ -402,6 +402,7 @@ class Venue(object):
         retry_declined = False,
         contact_info = '',
         reduced_load_on_decline = None,
+        allow_accept_with_reduced_load = False,
         default_load= 0,
         allow_overlap_official_committee = False,
         accept_recruitment_template=None):
@@ -415,6 +416,7 @@ class Venue(object):
             retry_declined,
             contact_info,
             reduced_load_on_decline,
+            allow_accept_with_reduced_load,
             # default_load, ##can this be removed? We never get it from the request form
             allow_overlap_official_committee)
 

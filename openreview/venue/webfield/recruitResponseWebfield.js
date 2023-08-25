@@ -30,6 +30,6 @@ return {
 If you chose to decline the invitation because the paper load is too high, you can request to reduce your load.
 You can request a reduced reviewer load below:
 `,
-    allowAcceptWithReducedLoad: false
+    allowAcceptWithReducedLoad: entity.content.allow_accept_with_reduced_load.value
   }
 }
