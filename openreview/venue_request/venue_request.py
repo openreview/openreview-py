@@ -1280,7 +1280,7 @@ class VenueRequest():
                 'hidden': True
             },
             'force_profiles_only': {
-                'description': 'Should all authors of papers have OpenReview profiles before submitting a paper?',
+                'description': 'Submitting authors must have an OpenReview profile, however, should all co-authors be required to have profiles?',
                 'value-radio': [
                     'Yes, require all authors to have an OpenReview profile',
                     'No, allow submissions with email addresses'
