@@ -552,12 +552,12 @@ class TestVenueRequest():
             writers=[]
         )
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Invalid token: .* does not exist.'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid token: {{serve}} does not exist.'):
            recruitment_note=test_client.post_note(recruitment_note)
 
         recruitment_note.content['invitation_email_subject'] = '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {invitee_role'
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Invalid token: .* Tokens must be wrapped in double curly braces.'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid token: {invitee_role. Tokens must be wrapped in double curly braces.'):
            recruitment_note=test_client.post_note(recruitment_note)
                                                                
         recruitment_note.content['invitation_email_subject'] = '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}'
