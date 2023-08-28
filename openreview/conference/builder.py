@@ -1368,6 +1368,7 @@ class Conference(object):
         retry_declined=False,
         contact_info = 'info@openreview.net',
         reduced_load_on_decline=None,
+        allow_accept_with_reduced_load=False,
         default_load=0,
         allow_overlap_official_committee=False,
         accept_recruitment_template=None):
@@ -1404,6 +1405,7 @@ class Conference(object):
             'reduced_load_id': None,
             'allow_overlap_official_committee': allow_overlap_official_committee,
             'reduced_load_on_decline': reduced_load_on_decline,
+            'allow_accept_with_reduced_load': allow_accept_with_reduced_load,
             'accept_recruitment_template': accept_recruitment_template
         }
         if reduced_load_on_decline and not self.use_recruitment_template:
@@ -1412,7 +1414,7 @@ class Conference(object):
             invitation = self.webfield_builder.set_reduced_load_page(self.id, invitation, self.get_homepage_options())
 
         invitation = self.invitation_builder.set_reviewer_recruiter_invitation(self, options)
-        invitation = self.webfield_builder.set_recruit_page(self, invitation, options['reduced_load_id'])
+        invitation = self.webfield_builder.set_recruit_page(self, invitation, options['reduced_load_id'], options['allow_accept_with_reduced_load'])
 
         role = reviewers_name.replace('_', ' ')
         role = role[:-1] if role.endswith('s') else role
