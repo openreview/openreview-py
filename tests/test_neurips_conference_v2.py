@@ -145,7 +145,7 @@ class TestNeurIPSConference():
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
                 'homepage_override': {
-                    'instructions': '''**Authors**  
+                    'instructions': '''**Authors**
 Please see our [call for papers](https://nips.cc/Conferences/2023/CallForPapers) and read the [ethics guidelines](https://nips.cc/public/EthicsGuidelines)'''
                 }
             }
@@ -215,7 +215,7 @@ Please see our [call for papers](https://nips.cc/Conferences/2023/CallForPapers)
 The NeurIPS 2023 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
 
 If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
-        
+
         messages = client.get_messages(to='sac2@gmail.com', subject='[NeurIPS 2023] Invitation to serve as Senior Area Chair')
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == '[NeurIPS 2023] Invitation to serve as Senior Area Chair'
@@ -264,7 +264,7 @@ If you would like to change your decision, please follow the link in the previou
         helpers.await_queue()
 
         messages = client.get_messages(to = 'ac1@mit.edu', subject = '[NeurIPS 2023] Invitation to serve as Area Chair')
-        assert len(messages) == 1   
+        assert len(messages) == 1
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
         assert 'You have been nominated by the program chair committee of NeurIPS 2023 to serve as Area Chair' in text
@@ -388,7 +388,7 @@ If you would like to change your decision, please follow the link in the previou
         edges=sac_client.get_edges_count(invitation='NeurIPS.cc/2023/Conference/Senior_Area_Chairs/-/Affinity_Score', tail='~SeniorArea_GoogleChair1')
         assert edges == 3
 
-        tasks_url = 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference/Senior_Area_Chairs#senior-areachair-tasks'
+        tasks_url = 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference/Senior_Area_Chairs#seniorareachair-tasks'
         request_page(selenium, tasks_url, sac_client.token, by=By.LINK_TEXT, wait_for_element='Senior Area Chair Bid')
 
         task_panel = selenium.find_element(By.LINK_TEXT, "Senior Area Chair Tasks")
@@ -540,15 +540,15 @@ If you would like to change your decision, please follow the link in the previou
 
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
         notes = selenium.find_element_by_class_name("note_editor")
-        assert notes        
+        assert notes
         messages = notes.find_elements_by_tag_name("h4")
         assert messages
         assert 'You have declined the invitation from NeurIPS 2023.' == messages[0].text
         messages = notes.find_elements_by_tag_name("p")
         assert 'If you chose to decline the invitation because the paper load is too high, you can request to reduce your load. You can request a reduced reviewer load below:' == messages[0].text
 
-        helpers.await_queue_edit(openreview_client, invitation='NeurIPS.cc/2023/Conference/Reviewers/-/Recruitment', count=1) 
-        
+        helpers.await_queue_edit(openreview_client, invitation='NeurIPS.cc/2023/Conference/Reviewers/-/Recruitment', count=1)
+
         assert len(client.get_group('NeurIPS.cc/2023/Conference/Reviewers').members) == 0
 
         group = client.get_group('NeurIPS.cc/2023/Conference/Reviewers/Declined')
@@ -579,7 +579,7 @@ If you would like to change your decision, please follow the link in the previou
         button = selenium.find_element_by_xpath('//button[text()="Submit"]')
         button.click()
         time.sleep(0.5)
-        helpers.await_queue_edit(openreview_client, invitation='NeurIPS.cc/2023/Conference/Reviewers/-/Recruitment', count=2)        
+        helpers.await_queue_edit(openreview_client, invitation='NeurIPS.cc/2023/Conference/Reviewers/-/Recruitment', count=2)
 
         reviewers_group=openreview_client.get_group('NeurIPS.cc/2023/Conference/Reviewers')
         assert len(reviewers_group.members) == 1
@@ -592,7 +592,7 @@ You have selected a reduced load of 4 submissions to review.
 
 The NeurIPS 2023 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
 
-If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''        
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
 
         ## Check reviewers console load
         reviewer_client=openreview.api.OpenReviewClient(username='reviewer1@umass.edu', password=helpers.strong_password)
@@ -601,7 +601,7 @@ If you would like to change your decision, please follow the link in the previou
         strong_elements = header.find_elements_by_tag_name('strong')
         assert len(strong_elements) == 1
         assert strong_elements[0].text == '4 papers'
-        
+
         ## Remind reviewers
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
@@ -645,11 +645,11 @@ If you would like to change your decision, please follow the link in the previou
     def test_enable_ethics_reviewers(self, client, helpers):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0] 
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
-        first_date = now + datetime.timedelta(days=1)               
+        first_date = now + datetime.timedelta(days=1)
 
         venue_revision_note = pc_client.post_note(openreview.Note(
             content={
@@ -676,14 +676,14 @@ If you would like to change your decision, please follow the link in the previou
             signatures=['~Program_NeurIPSChair1'],
             writers=[]
         ))
-        
+
         helpers.await_queue()
 
-        assert pc_client.get_group('NeurIPS.cc/2023/Conference/Ethics_Chairs')      
+        assert pc_client.get_group('NeurIPS.cc/2023/Conference/Ethics_Chairs')
         assert pc_client.get_group('NeurIPS.cc/2023/Conference/Ethics_Reviewers')
 
         assert pc_client.get_invitation('openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number))
-    
+
     def test_recruit_ethics_reviewers(self, client, request_page, selenium, helpers):
 
         ## Need super user permission to add the venue to the active_venues group
@@ -709,8 +709,8 @@ If you would like to change your decision, please follow the link in the previou
             writers=[]
         ))
         assert recruitment_note
-        helpers.await_queue()        
-              
+        helpers.await_queue()
+
         assert client.get_group('NeurIPS.cc/2023/Conference/Ethics_Reviewers')
         assert client.get_group('NeurIPS.cc/2023/Conference/Ethics_Reviewers/Declined')
         group = client.get_group('NeurIPS.cc/2023/Conference/Ethics_Reviewers/Invited')
@@ -747,7 +747,7 @@ If you would like to change your decision, please follow the link in the previou
                 preprocess = 'def process(client, edit, invitation):\n    domain = client.get_group(invitation.domain)\n  \n    note = edit.note\n    \n    if note.ddate:\n        return\n\n'
             )
         )
-        
+
         # use revision button
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
@@ -790,7 +790,7 @@ If you would like to change your decision, please follow the link in the previou
             signatures=['~Program_NeurIPSChair1'],
             writers=[]
         ))
-        
+
         helpers.await_queue()
 
         submission_inv = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Submission')
@@ -839,13 +839,13 @@ If you would like to change your decision, please follow the link in the previou
 
             test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/-/Submission',
                 signatures=['~SomeFirstName_User1'],
-                note=note)            
+                note=note)
 
 
         ## finish submission deadline
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
-        first_date = now - datetime.timedelta(minutes=28)               
+        first_date = now - datetime.timedelta(minutes=28)
 
         venue_revision_note = openreview.Note(
             content={
@@ -879,7 +879,7 @@ If you would like to change your decision, please follow the link in the previou
 
         venue_revision_note.content['hide_fields'] = ['keywords']
         pc_client.post_note(venue_revision_note)
-        
+
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Post_Submission-0-0')
         helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Withdrawal-0-0')
@@ -963,7 +963,7 @@ If you would like to change your decision, please follow the link in the previou
                     'keywords': { 'value': ['machine learning', 'nlp'] },
                 }
             ))
-        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])        
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
 
         ## update submission
         revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission4/-/Revision',
@@ -1000,7 +1000,7 @@ If you would like to change your decision, please follow the link in the previou
         assert note.content['venue']['value'] == 'NeurIPS 2023 Conference Withdrawn Submission'
         assert note.content['venueid']['value'] == 'NeurIPS.cc/2023/Conference/Withdrawn_Submission'
         assert 'readers' in note.content['authors']
-        assert 'readers' in note.content['authorids'] 
+        assert 'readers' in note.content['authorids']
 
         messages = client.get_messages(subject='[NeurIPS 2023]: Paper #5 withdrawn by paper authors')
         assert len(messages) == 3
@@ -1073,7 +1073,7 @@ If you would like to change your decision, please follow the link in the previou
                         },
                         "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
                         "order": 1
-                    },            
+                    },
                 },
                 'submission_revision_remove_options': ['title', 'authors', 'authorids', 'TLDR', 'abstract', 'pdf', 'keywords']
             },
@@ -1624,12 +1624,12 @@ If you would like to change your decision, please follow the link in the previou
         )
 
         helpers.await_queue(openreview_client)
-        
+
     def test_ethics_review_stage(self, helpers, openreview_client, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]  
-              
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
         assert openreview_client.get_group('NeurIPS.cc/2023/Conference/Ethics_Reviewers')
         assert openreview_client.get_group('NeurIPS.cc/2023/Conference/Ethics_Reviewers/Declined')
         group = openreview_client.get_group('NeurIPS.cc/2023/Conference/Ethics_Reviewers/Invited')
@@ -1774,7 +1774,7 @@ If you would like to change your decision, please follow the link in the previou
             "NeurIPS.cc/2023/Conference/Submission2/Senior_Area_Chairs",
             "NeurIPS.cc/2023/Conference/Submission2/Area_Chairs",
             "NeurIPS.cc/2023/Conference/Submission2/Reviewers",
-            "NeurIPS.cc/2023/Conference/Submission2/Authors"        
+            "NeurIPS.cc/2023/Conference/Submission2/Authors"
         ]
 
         reviews = openreview_client.get_notes(invitation='NeurIPS.cc/2023/Conference/Submission1/-/Official_Review')
@@ -2254,7 +2254,7 @@ If you would like to change your decision, please follow the link in the previou
 
         helpers.await_queue()
 
-        
+
         reviews = pc_client_v2.get_notes(invitation='NeurIPS.cc/2023/Conference/Submission1/-/Official_Review')
         review = reviews[0]
 
