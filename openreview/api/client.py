@@ -2669,6 +2669,7 @@ class Group(object):
         self.anonids = anonids
         self.deanonymizers = deanonymizers
         self.details = details
+        self.anon_members = []
 
     def get_content_value(self, field_name, default_value=None):
         if self.content:
