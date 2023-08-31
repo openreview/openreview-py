@@ -1992,6 +1992,7 @@ The TMLR Editors-in-Chief
 
         decision_note = joelle_client.get_note(decision_note['note']['id'])
         assert decision_note.readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors"]
+        assert decision_note.writers == [venue_id, f"{venue_id}/Paper1/Action_Editors"]
 
         submission = openreview_client.get_note(note_id_1)
         assert 'TMLR/Decision_Pending' == submission.content['venueid']['value']
@@ -2032,8 +2033,8 @@ The TMLR Editors-in-Chief
 
         decision_note = raia_client.get_note(decision_note.id)
         assert decision_note.readers == ['everyone']
+        assert decision_note.writers == ['TMLR']
         assert decision_note.nonreaders == []
-
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
