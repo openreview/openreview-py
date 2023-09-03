@@ -513,9 +513,7 @@ var getUserProfiles = function(userIds, reviewerBidCounts, areaChairBidCounts, a
 
       return searchResults.reduce(function(profileMap, profile) {
         var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
-        name = name ?
-          [name.first, name.middle, name.last].filter(_.identity).join(' ') :
-          view.prettyId(profile.id);
+        name = name ? name.fullname : view.prettyId(profile.id);
 
         profileMap[profile.id] = {
           id: profile.id,
@@ -526,7 +524,7 @@ var getUserProfiles = function(userIds, reviewerBidCounts, areaChairBidCounts, a
           allEmails: profile.content.emailsConfirmed,
           bidCount: reviewerBidCounts[profile.id] || areaChairBidCounts[profile.id] || 0,
           acRecommendationCount: areaChairRecommendationCounts[profile.id] || 0,
-          affiliation: profile.content.history && profile.content.history[0],	
+          affiliation: profile.content.history && profile.content.history[0],
           expertise: profile.content.expertise
         };
         return profileMap;
@@ -3290,9 +3288,9 @@ var buildReviewersCSV = function(){
   var rowData = [];
   rowData.push(['id',
   'name',
-  'email',	
-  'gender',	
-  'position or title',	
+  'email',
+  'gender',
+  'position or title',
   'expertise',
   'institution name',
   'institution domain',
@@ -3337,30 +3335,30 @@ var buildReviewersCSV = function(){
     var institution = (reviewerProfile.affiliation && reviewerProfile.affiliation.institution) || {};
     var institutionName = institution && institution.name;
     var institutionDomain = institution && institution.domain;
-    var affiliationTitle = reviewerProfile.affiliation && reviewerProfile.affiliation.position;	
-    var gender = reviewerProfile.gender;	
-    var allExpertise = reviewerProfile.expertise && reviewerProfile.expertise	
-      .filter(e => !e.end)	
-      .reduce(	
-        (previousValue, currentValue) => {	
-          previousValue.push(...currentValue.keywords);	
-          return previousValue;	
-        },	
-        []	
-      )	
-      .join(',');	
+    var affiliationTitle = reviewerProfile.affiliation && reviewerProfile.affiliation.position;
+    var gender = reviewerProfile.gender;
+    var allExpertise = reviewerProfile.expertise && reviewerProfile.expertise
+      .filter(e => !e.end)
+      .reduce(
+        (previousValue, currentValue) => {
+          previousValue.push(...currentValue.keywords);
+          return previousValue;
+        },
+        []
+      )
+      .join(',');
 
-    rowData.push([	
-      reviewerProfile.id,	
-      '"' + reviewerProfile.name + '"',	
-      reviewerProfile.email,	
-      gender,	
-      affiliationTitle,	
-      '"' + allExpertise + '"',	
-      '"' + (institutionName || '') + '"',	
-      institutionDomain,	
-      reviewerPapers.length,	
-      reviewerReviews.length	
+    rowData.push([
+      reviewerProfile.id,
+      '"' + reviewerProfile.name + '"',
+      reviewerProfile.email,
+      gender,
+      affiliationTitle,
+      '"' + allExpertise + '"',
+      '"' + (institutionName || '') + '"',
+      institutionDomain,
+      reviewerPapers.length,
+      reviewerReviews.length
     ].join(',') + '\n');
   });
 
@@ -3383,21 +3381,21 @@ var buildAreaChairsCSV = function(){
     var sacName = ac.seniorSummary && ac.seniorSummary.name
     var sacEmail = ac.seniorSummary && ac.seniorSummary.email
 
-    var gender = conferenceStatusData.profiles[id].gender;	
-    var institution = (conferenceStatusData.profiles[id].affiliation && conferenceStatusData.profiles[id].affiliation.institution) || {};	
-    var institutionName = institution && institution.name;	
-    var institutionDomain = institution && institution.domain;	
-    var affiliationTitle = conferenceStatusData.profiles[id].affiliation && conferenceStatusData.profiles[id].affiliation.position;	
-    var allExpertise = conferenceStatusData.profiles[id].expertise && conferenceStatusData.profiles[id].expertise	
-      .filter(e => !e.end)	
-      .reduce(	
-        (previousValue, currentValue) => {	
-          previousValue.push(...currentValue.keywords);	
-          return previousValue;	
-        },	
-        []	
-      )	
-      .join(',');	
+    var gender = conferenceStatusData.profiles[id].gender;
+    var institution = (conferenceStatusData.profiles[id].affiliation && conferenceStatusData.profiles[id].affiliation.institution) || {};
+    var institutionName = institution && institution.name;
+    var institutionDomain = institution && institution.domain;
+    var affiliationTitle = conferenceStatusData.profiles[id].affiliation && conferenceStatusData.profiles[id].affiliation.position;
+    var allExpertise = conferenceStatusData.profiles[id].expertise && conferenceStatusData.profiles[id].expertise
+      .filter(e => !e.end)
+      .reduce(
+        (previousValue, currentValue) => {
+          previousValue.push(...currentValue.keywords);
+          return previousValue;
+        },
+        []
+      )
+      .join(',');
 
     if(SENIOR_AREA_CHAIRS_ID){
       rowData.push([id,name,email,gender,affiliationTitle,'"'+allExpertise+'"','"'+institutionName+'"', institutionDomain,assignedPapers,reviewsCompleted,metaReviewsCompleted,sacId,sacName,sacEmail].join(',') + '\n');
