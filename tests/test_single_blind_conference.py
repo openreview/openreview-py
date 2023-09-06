@@ -610,8 +610,8 @@ class TestSingleBlindConference():
         tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.ID, 'your-consoles')
-        assert len(tabs.find_elements(By.ID, 'your-consoles').find_elements(By.TAG_NAME, 'ul')) == 1
-        console = tabs.find_elements(By.ID, 'your-consoles').find_elements(By.TAG_NAME, 'ul')[0]
+        assert len(tabs.find_element(By.ID, 'your-consoles').find_elements(By.TAG_NAME, 'ul')) == 1
+        console = tabs.find_element(By.ID, 'your-consoles').find_elements(By.TAG_NAME, 'ul')[0]
         assert 'Author Console' == console.find_element(By.TAG_NAME, 'a').text
 
         request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", test_client.token, wait_for_element='your-submissions')
@@ -634,8 +634,8 @@ class TestSingleBlindConference():
         assert header
         assert len(header.find_elements(By.TAG_NAME, 'h1')) == 1
         assert 'Author Console' == header.find_elements(By.TAG_NAME, 'h1')[0].text
-        assert len(header.find_element(By.CLASS_NAME, 'description')) == 1
-        assert 'Set of instructions' == header.find_element(By.CLASS_NAME, 'description')[0].text
+        assert len(header.find_elements(By.CLASS_NAME, 'description')) == 1
+        assert 'Set of instructions' == header.find_elements(By.CLASS_NAME, 'description')[0].text
         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.ID, 'author-tasks')
@@ -659,9 +659,9 @@ class TestSingleBlindConference():
         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.ID, 'assigned-papers')
-        assert len(tabs.find_element(By.ID, 'assigned-papers').find_element(By.CLASS_NAME, 'note')) == 1
+        assert len(tabs.find_element(By.ID, 'assigned-papers').find_elements(By.CLASS_NAME, 'note')) == 1
         assert tabs.find_element(By.ID, 'reviewer-tasks')
-        assert len(tabs.find_element(By.ID, 'reviewer-tasks').find_element(By.CLASS_NAME, 'note')) == 1
+        assert len(tabs.find_element(By.ID, 'reviewer-tasks').find_elements(By.CLASS_NAME, 'note')) == 1
 
         conference.set_reviewerpage_header({
             'title': 'Reviewer Console',
@@ -675,14 +675,14 @@ class TestSingleBlindConference():
         assert header
         assert len(header.find_elements(By.TAG_NAME, 'h1')) == 1
         assert 'Reviewer Console' == header.find_elements(By.TAG_NAME, 'h1')[0].text
-        assert len(header.find_element(By.CLASS_NAME, 'description')) == 1
-        assert 'Set of instructions' == header.find_element(By.CLASS_NAME, 'description')[0].text
+        assert len(header.find_elements(By.CLASS_NAME, 'description')) == 1
+        assert 'Set of instructions' == header.find_elements(By.CLASS_NAME, 'description')[0].text
         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.ID, 'assigned-papers')
-        assert len(tabs.find_element(By.ID, 'assigned-papers').find_element(By.CLASS_NAME, 'note')) == 1
+        assert len(tabs.find_element(By.ID, 'assigned-papers').find_elements(By.CLASS_NAME, 'note')) == 1
         assert tabs.find_element(By.ID, 'reviewer-tasks')
-        assert len(tabs.find_element(By.ID, 'reviewer-tasks').find_element(By.CLASS_NAME, 'note')) == 1
+        assert len(tabs.find_element(By.ID, 'reviewer-tasks').find_elements(By.CLASS_NAME, 'note')) == 1
 
         # Area chair user
         ac_client = helpers.create_user('ac2@mail.com', 'AC', 'MLITS')
@@ -700,10 +700,10 @@ class TestSingleBlindConference():
         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.ID, 'assigned-papers')
-        assert len(tabs.find_element(By.ID, 'assigned-papers').find_element(By.CLASS_NAME, 'note')) == 1
+        assert len(tabs.find_element(By.ID, 'assigned-papers').find_elements(By.CLASS_NAME, 'note')) == 1
         assert tabs.find_element(By.ID, 'areachair-tasks')
-        assert len(tabs.find_element(By.ID, 'areachair-tasks').find_element(By.CLASS_NAME, 'note')) == 0
-        reviews = tabs.find_element(By.CLASS_NAME, 'reviewer-progress')
+        assert len(tabs.find_element(By.ID, 'areachair-tasks').find_elements(By.CLASS_NAME, 'note')) == 0
+        reviews = tabs.find_elements(By.CLASS_NAME, 'reviewer-progress')
         assert reviews
         assert len(reviews) == 1
         headers = reviews[0].find_elements(By.TAG_NAME, 'h4')
