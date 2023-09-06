@@ -626,7 +626,7 @@ class TestVenueRequest():
         assert recruitment_div
         reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
         assert reply_row
-        buttons = reply_row.find_element(By.CLASS_NAME, 'btn-xs')
+        buttons = reply_row.find_elements(By.CLASS_NAME, 'btn-xs')
         assert [btn for btn in buttons if btn.text == 'Recruitment']
         helpers.create_user('reviewer_one_tilde@mail.com', 'Reviewer', 'OneTilde')
         helpers.create_user('reviewer_two_tilde@mail.com', 'Reviewer', 'TwoTilde')
