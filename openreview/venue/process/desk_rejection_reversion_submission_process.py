@@ -18,6 +18,7 @@ def process(client, edit, invitation):
         print(f'remove edit {submission_edit.id}')
         submission_edit.ddate = now
         submission_edit.note.mdate = None
+        submission_edit.note.cdate = None
         submission_edit.note.forum = None
         client.post_edit(submission_edit)
 
@@ -29,6 +30,8 @@ def process(client, edit, invitation):
         for invitation_edit in invitation_edits:
             print(f'remove edit {edit.id}')
             invitation_edit.ddate = now
+            invitation_edit.invitation.expdate = None
+            invitation_edit.invitation.cdate = None
             client.post_edit(invitation_edit)
 
     formatted_committee = [committee.format(number=submission.number) for committee in desk_reject_committee]
