@@ -310,8 +310,8 @@ class TestSingleBlindConference():
 
         request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token, by=By.CLASS_NAME, wait_for_element='edit_button')
 
-        assert len(selenium.find_element(By.CLASS_NAME, 'edit_button')) == 1
-        assert len(selenium.find_element(By.CLASS_NAME, 'trash_button')) == 1
+        assert len(selenium.find_elements(By.CLASS_NAME, 'edit_button')) == 1
+        assert len(selenium.find_elements(By.CLASS_NAME, 'trash_button')) == 1
 
     def test_open_comments(self, client, test_client, selenium, request_page):
 
@@ -331,9 +331,9 @@ class TestSingleBlindConference():
         request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
 
         reply_row = selenium.find_element(By.CLASS_NAME, 'reply_row')
-        assert len(reply_row.find_element(By.CLASS_NAME, 'btn')) == 2
-        assert 'Official Comment' == reply_row.find_element(By.CLASS_NAME, 'btn')[0].text
-        assert 'Withdraw' == reply_row.find_element(By.CLASS_NAME, 'btn')[1].text
+        assert len(reply_row.find_elements(By.CLASS_NAME, 'btn')) == 2
+        assert 'Official Comment' == reply_row.find_elements(By.CLASS_NAME, 'btn')[0].text
+        assert 'Withdraw' == reply_row.find_elements(By.CLASS_NAME, 'btn')[1].text
 
     def test_close_comments(self, client, test_client, selenium, request_page):
 
@@ -352,8 +352,8 @@ class TestSingleBlindConference():
         request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
 
         reply_row = selenium.find_element(By.CLASS_NAME, 'reply_row')
-        assert len(reply_row.find_element(By.CLASS_NAME, 'btn')) == 1
-        assert 'Withdraw' == reply_row.find_element(By.CLASS_NAME, 'btn')[0].text        
+        assert len(reply_row.find_elements(By.CLASS_NAME, 'btn')) == 1
+        assert 'Withdraw' == reply_row.find_elements(By.CLASS_NAME, 'btn')[0].text        
 
     def test_open_reviews(self, client, test_client, selenium, request_page, helpers):
 
@@ -414,15 +414,15 @@ class TestSingleBlindConference():
         request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, reviewer_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
 
         reply_row = selenium.find_element(By.CLASS_NAME, 'reply_row')
-        assert len(reply_row.find_element(By.CLASS_NAME, 'btn')) == 1
-        assert 'Official Review' == reply_row.find_element(By.CLASS_NAME, 'btn')[0].text
+        assert len(reply_row.find_elements(By.CLASS_NAME, 'btn')) == 1
+        assert 'Official Review' == reply_row.find_elements(By.CLASS_NAME, 'btn')[0].text
 
         # Author
         request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
 
         reply_row = selenium.find_element(By.CLASS_NAME, 'reply_row')
-        assert len(reply_row.find_element(By.CLASS_NAME, 'btn')) == 1
-        assert 'Withdraw' == reply_row.find_element(By.CLASS_NAME, 'btn')[0].text
+        assert len(reply_row.find_elements(By.CLASS_NAME, 'btn')) == 1
+        assert 'Withdraw' == reply_row.find_elements(By.CLASS_NAME, 'btn')[0].text
 
         anon_groups = reviewer_client.get_groups(regex='NIPS.cc/2018/Workshop/MLITS/Paper1/Reviewer_', signatory='~Reviewer_SomeLastName1')
         assert len(anon_groups) == 1
@@ -610,8 +610,8 @@ class TestSingleBlindConference():
         tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.ID, 'your-consoles')
-        assert len(tabs.find_element(By.ID, 'your-consoles').find_elements(By.TAG_NAME, 'ul')) == 1
-        console = tabs.find_element(By.ID, 'your-consoles').find_elements(By.TAG_NAME, 'ul')[0]
+        assert len(tabs.find_elements(By.ID, 'your-consoles').find_elements(By.TAG_NAME, 'ul')) == 1
+        console = tabs.find_elements(By.ID, 'your-consoles').find_elements(By.TAG_NAME, 'ul')[0]
         assert 'Author Console' == console.find_element(By.TAG_NAME, 'a').text
 
         request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", test_client.token, wait_for_element='your-submissions')
