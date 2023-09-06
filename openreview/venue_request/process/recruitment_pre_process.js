@@ -1,11 +1,13 @@
 function(){
     // V1 invitation
 
-    const tokens = ['fullname', 'invitee_role', 'invitation_url', 'contact_info', 'reviewer_name', 'accept_url', 'decline_url'];
-    const fields = ['invitation_email_subject', 'invitation_email_content', 'accepted_email_template'];
+    const fieldTokens = {
+        "invitation_email_subject": ['invitee_role'],
+        "invitation_email_content": ['fullname', 'invitee_role', 'invitation_url', 'contact_info'],
+        "accepted_email_template": ['fullname', 'reviewer_name']
+    };
 
-    
-    for (const field of fields) {
+    for (const [field, tokens] of Object.entries(fieldTokens)) {
         if (field in note.content) {
             // Find all words wrapped in double curly braces. If it's not a token, raise an error.
             let regex = /{{([^{}]+)}}/g;
@@ -14,7 +16,7 @@ function(){
             while ((match = regex.exec(note.content[field])) !== null) {
                 parenthesizedToken = match[1];
                 if (!tokens.includes(parenthesizedToken)) {
-                    done(`Invalid token: {{${parenthesizedToken}}} does not exist.`);
+                    done(`Invalid token: {{${parenthesizedToken}}} in ${field} is not supported. Please use the following tokens in this field: ${tokens.toString()}.`);
                 }
             }
 
@@ -23,7 +25,7 @@ function(){
                 regex = new RegExp(`(?<!{)[{]?${token}[}]+|[{]+${token}[}]?(?!})`, 'g');
                 while ((match = regex.exec(note.content[field])) !== null) {
                     parenthesizedToken = match[0];
-                    done(`Invalid token: ${parenthesizedToken}. Tokens must be wrapped in double curly braces.`);
+                    done(`Invalid token: ${parenthesizedToken} in ${field}. Tokens must be wrapped in double curly braces.`);
                 }
             }
         }
