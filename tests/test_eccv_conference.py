@@ -412,7 +412,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         request_page(selenium, 'http://localhost:3030/invitation?id=thecvf.com/ECCV/2020/Conference/-/Expertise_Selection', reviewer_client.token, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert header
-        notes = header.find_element(By.CLASS_NAME, "description")
+        notes = header.find_elements(By.CLASS_NAME, "description")
         assert notes
         assert len(notes) == 1
         assert notes[0].text == '''Listed below are all the papers you have authored that exist in the OpenReview database.
@@ -469,7 +469,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         request_page(selenium, 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Reviewers', reviewer_client.token, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert header
-        notes = header.find_element(By.CLASS_NAME, "description")
+        notes = header.find_elements(By.CLASS_NAME, "description")
         assert notes
         assert len(notes) == 1
         assert notes[0].text == 'This page provides information and status updates for the ECCV 2020. It will be regularly updated as the conference progresses, so please check back frequently.\nYou have agreed to review up to 7 papers.'
@@ -478,7 +478,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         request_page(selenium, 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Reviewers', reviewer2_client.token, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert header
-        notes = header.find_element(By.CLASS_NAME, "description")
+        notes = header.find_elements(By.CLASS_NAME, "description")
         assert notes
         assert len(notes) == 1
         assert notes[0].text == 'This page provides information and status updates for the ECCV 2020. It will be regularly updated as the conference progresses, so please check back frequently.\nYou have agreed to review up to 4 papers.'
@@ -1391,7 +1391,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
 
         request_page(selenium, 'http://localhost:3030/forum?id=' + blinded_notes[2].id , test_client.token, by=By.CLASS_NAME, wait_for_element='note_with_children')
-        notes = selenium.find_element(By.CLASS_NAME, 'note_with_children')
+        notes = selenium.find_elements(By.CLASS_NAME, 'note_with_children')
         assert len(notes) == 2
 
     def test_paper_ranking_stage(self, conference, client, test_client, selenium, request_page, helpers):
@@ -1403,13 +1403,13 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         status = selenium.find_element(By.ID, '1-metareview-status')
         assert status
 
-        assert not status.find_element(By.CLASS_NAME, 'tag-widget')
+        assert not status.find_elements(By.CLASS_NAME, 'tag-widget')
 
         reviewer_client = openreview.Client(username='reviewer1@fb.com', password=helpers.strong_password)
         reviewer_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Reviewers'
         request_page(selenium, reviewer_url, reviewer_client.token, by=By.CLASS_NAME, wait_for_element='tag-widget')
 
-        assert not selenium.find_element(By.CLASS_NAME, 'tag-widget')
+        assert not selenium.find_elements(By.CLASS_NAME, 'tag-widget')
 
         now = datetime.datetime.utcnow()
         conference.open_paper_ranking(conference.get_area_chairs_id(), due_date=now + datetime.timedelta(minutes = 40))
@@ -1446,7 +1446,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         reviewer_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Reviewers'
         request_page(selenium, reviewer_url, reviewer_client.token, by=By.CLASS_NAME, wait_for_element='tag-widget')
 
-        tags = selenium.find_element(By.CLASS_NAME, 'tag-widget')
+        tags = selenium.find_elements(By.CLASS_NAME, 'tag-widget')
         assert tags
 
         options = tags[0].find_elements(By.TAG_NAME, 'li')
@@ -1495,7 +1495,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         conference.review_rebuttal_stage = openreview.stages.ReviewRebuttalStage(due_date=now + datetime.timedelta(minutes = 40))
         conference.create_review_rebuttal_stage()
         request_page(selenium, 'http://localhost:3030/forum?id=' + blinded_notes[2].id , test_client.token, by=By.CLASS_NAME, wait_for_element='note_with_children')
-        notes = selenium.find_element(By.CLASS_NAME, 'note_with_children')
+        notes = selenium.find_elements(By.CLASS_NAME, 'note_with_children')
         assert len(notes) == 2
 
         button = notes[0].find_element(By.CLASS_NAME, 'btn')
@@ -1575,13 +1575,13 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         reviewer_client = openreview.Client(username='reviewer2@google.com', password=helpers.strong_password)
 
         request_page(selenium, 'http://localhost:3030/forum?id=' + blinded_notes[2].id , reviewer_client.token, by=By.CLASS_NAME, wait_for_element='note_with_children')
-        notes = selenium.find_element(By.CLASS_NAME, 'note_with_children')
+        notes = selenium.find_elements(By.CLASS_NAME, 'note_with_children')
         assert len(notes) == 4
 
-        buttons = notes[0].find_element(By.CLASS_NAME, 'btn')
+        buttons = notes[0].find_elements(By.CLASS_NAME, 'btn')
         assert len(buttons) == 4
 
-        buttons = notes[1].find_element(By.CLASS_NAME, 'btn')
+        buttons = notes[1].find_elements(By.CLASS_NAME, 'btn')
         assert len(buttons) == 7
 
         signatory = reviewer_client.get_groups(regex='thecvf.com/ECCV/2020/Conference/Paper1/Reviewer_.*', signatory='reviewer2@google.com')[0].id
@@ -1650,13 +1650,13 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         blinded_notes = conference.get_submissions(sort='tmdate')
 
         request_page(selenium, 'http://localhost:3030/forum?id=' + blinded_notes[2].id , ac_client.token, by=By.CLASS_NAME, wait_for_element='note_with_children')
-        notes = selenium.find_element(By.CLASS_NAME, 'note_with_children')
+        notes = selenium.find_elements(By.CLASS_NAME, 'note_with_children')
         assert len(notes) == 4
 
-        buttons = notes[0].find_element(By.CLASS_NAME, 'btn')
+        buttons = notes[0].find_elements(By.CLASS_NAME, 'btn')
         assert len(buttons) == 2
 
-        buttons = notes[1].find_element(By.CLASS_NAME, 'btn')
+        buttons = notes[1].find_elements(By.CLASS_NAME, 'btn')
         assert len(buttons) == 5
 
         reviews = ac_client.get_notes(forum=blinded_notes[2].id, invitation=f'thecvf.com/ECCV/2020/Conference/Paper{blinded_notes[2].number}/-/Official_Review')

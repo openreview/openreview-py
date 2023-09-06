@@ -171,7 +171,7 @@ Please see our [call for papers](https://nips.cc/Conferences/2023/CallForPapers)
         assert recruitment_div
         reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
         assert reply_row
-        buttons = reply_row.find_element(By.CLASS_NAME, 'btn-xs')
+        buttons = reply_row.find_elements(By.CLASS_NAME, 'btn-xs')
         assert [btn for btn in buttons if btn.text == 'Recruitment']
 
         reviewer_details = '''sac1@google.com, SAC One\nsac2@gmail.com, SAC Two'''
@@ -401,7 +401,7 @@ If you would like to change your decision, please follow the link in the previou
 
         notes = selenium.find_element(By.ID, 'all-area-chairs')
         assert notes
-        assert len(notes.find_element(By.CLASS_NAME, 'bid-container')) == 3
+        assert len(notes.find_elements(By.CLASS_NAME, 'bid-container')) == 3
 
         header = selenium.find_element(By.ID, 'header')
         instruction = header.find_element(By.TAG_NAME, 'li')
@@ -499,7 +499,7 @@ If you would like to change your decision, please follow the link in the previou
         assert recruitment_div
         reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
         assert reply_row
-        buttons = reply_row.find_element(By.CLASS_NAME, 'btn-xs')
+        buttons = reply_row.find_elements(By.CLASS_NAME, 'btn-xs')
         assert [btn for btn in buttons if btn.text == 'Recruitment']
 
         reviewer_details = '''reviewer1@umass.edu, Reviewer UMass\nreviewer2@mit.edu, Reviewer MIT\nsac1@google.com, SAC One\nsac2@gmail.com, SAC Two'''
@@ -2391,7 +2391,7 @@ If you would like to change your decision, please follow the link in the previou
 #         status = selenium.find_element(By.ID, '5-metareview-status')
 #         assert status
 
-#         assert not status.find_element(By.CLASS_NAME, 'tag-widget')
+#         assert not status.find_elements(By.CLASS_NAME, 'tag-widget')
 
 #         reviewer_client=openreview.Client(username='reviewer1@umass.edu', password=helpers.strong_password)
 
@@ -2402,7 +2402,7 @@ If you would like to change your decision, please follow the link in the previou
 #         reviewer_url = 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference/Reviewers'
 #         request_page(selenium, reviewer_url, reviewer_client.token)
 
-#         assert not selenium.find_element(By.CLASS_NAME, 'tag-widget')
+#         assert not selenium.find_elements(By.CLASS_NAME, 'tag-widget')
 
 #         now = datetime.datetime.utcnow()
 #         conference.open_paper_ranking(conference.get_area_chairs_id(), due_date=now + datetime.timedelta(minutes = 40))
@@ -2437,7 +2437,7 @@ If you would like to change your decision, please follow the link in the previou
 #         reviewer_url = 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference/Reviewers'
 #         request_page(selenium, reviewer_url, reviewer_client.token, by=By.CLASS_NAME, wait_for_element='tag-widget')
 
-#         tags = selenium.find_element(By.CLASS_NAME, 'tag-widget')
+#         tags = selenium.find_elements(By.CLASS_NAME, 'tag-widget')
 #         assert tags
 
 #         options = tags[0].find_elements(By.TAG_NAME, 'li')

@@ -340,7 +340,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         request_page(selenium, 'http://localhost:3030/group?id=ICLR.cc/2021/Conference/Reviewers', reviewer_client.token, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert header
-        notes = header.find_element(By.CLASS_NAME, "description")
+        notes = header.find_elements(By.CLASS_NAME, "description")
         assert notes
         assert len(notes) == 1
         assert notes[0].text == 'This page provides information and status updates for the ICLR 2021. It will be regularly updated as the conference progresses, so please check back frequently.'
@@ -351,8 +351,8 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert selenium.find_element(By.LINK_TEXT, 'Expertise Selection')
         tasks = selenium.find_element(By.ID, 'reviewer-tasks')
         assert tasks
-        assert len(tasks.find_element(By.CLASS_NAME, 'note')) == 2
-        assert len(tasks.find_element(By.CLASS_NAME, 'completed')) == 1
+        assert len(tasks.find_elements(By.CLASS_NAME, 'note')) == 2
+        assert len(tasks.find_elements(By.CLASS_NAME, 'completed')) == 1
 
     def test_remind_registration(self, conference, helpers, client):
 

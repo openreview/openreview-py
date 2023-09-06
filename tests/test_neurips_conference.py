@@ -122,7 +122,7 @@ class TestNeurIPSConference():
         assert recruitment_div
         reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
         assert reply_row
-        buttons = reply_row.find_element(By.CLASS_NAME, 'btn-xs')
+        buttons = reply_row.find_elements(By.CLASS_NAME, 'btn-xs')
         assert [btn for btn in buttons if btn.text == 'Recruitment']
 
         reviewer_details = '''sac1@google.com, SAC One\nsac2@gmail.com, SAC Two'''
@@ -245,7 +245,7 @@ If you would like to change your decision, please follow the link in the previou
         dropdown = selenium.find_element(By.CLASS_NAME, 'dropdown-select__input-container')
         dropdown.click()
         time.sleep(0.5)
-        values = selenium.find_element(By.CLASS_NAME, 'dropdown-select__option')
+        values = selenium.find_elements(By.CLASS_NAME, 'dropdown-select__option')
         assert len(values) > 0
         values[1].click()
         time.sleep(0.5)
@@ -335,7 +335,7 @@ If you would like to change your decision, please follow the link in the previou
 
         notes = selenium.find_element(By.ID, 'notes')
         assert notes
-        assert len(notes.find_element(By.CLASS_NAME, 'note')) == 3
+        assert len(notes.find_elements(By.CLASS_NAME, 'note')) == 3
 
         header = selenium.find_element(By.ID, 'header')
         instruction = header.find_element(By.TAG_NAME, 'li')
@@ -453,7 +453,7 @@ If you would like to change your decision, please follow the link in the previou
         assert recruitment_div
         reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
         assert reply_row
-        buttons = reply_row.find_element(By.CLASS_NAME, 'btn-xs')
+        buttons = reply_row.find_elements(By.CLASS_NAME, 'btn-xs')
         assert [btn for btn in buttons if btn.text == 'Recruitment']
 
         reviewer_details = '''reviewer1@umass.edu, Reviewer UMass\nreviewer2@mit.edu, Reviewer MIT\nsac1@google.com, SAC One\nsac2@gmail.com, SAC Two'''
@@ -524,7 +524,7 @@ If you would like to change your decision, please follow the link in the previou
         dropdown = selenium.find_element(By.CLASS_NAME, 'dropdown-select__input-container')
         dropdown.click()
         time.sleep(0.5)
-        values = selenium.find_element(By.CLASS_NAME, 'dropdown-select__option')
+        values = selenium.find_elements(By.CLASS_NAME, 'dropdown-select__option')
         assert len(values) > 0
         values[2].click()
         time.sleep(0.5)
@@ -933,7 +933,7 @@ If you would like to change your decision, please follow the link in the previou
         ## authors_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Authors'
         ##request_page(selenium, authors_url, test_client.token, by=By.CLASS_NAME, wait_for_element='tag-widget')
 
-        ##assert selenium.find_element(By.CLASS_NAME, 'tag-widget')
+        ##assert selenium.find_elements(By.CLASS_NAME, 'tag-widget')
 
         client.post_invitation(openreview.Invitation(id=f'{conference.get_authors_id()}/-/Perceived_Likelihood',
             invitees=[conference.get_authors_id()],
@@ -2641,7 +2641,7 @@ NeurIPS 2021 Conference Program Chairs'''
         status = selenium.find_element(By.ID, '5-metareview-status')
         assert status
 
-        assert not status.find_element(By.CLASS_NAME, 'tag-widget')
+        assert not status.find_elements(By.CLASS_NAME, 'tag-widget')
 
         reviewer_client=openreview.Client(username='reviewer1@umass.edu', password=helpers.strong_password)
 
@@ -2652,7 +2652,7 @@ NeurIPS 2021 Conference Program Chairs'''
         reviewer_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Reviewers'
         request_page(selenium, reviewer_url, reviewer_client.token)
 
-        assert not selenium.find_element(By.CLASS_NAME, 'tag-widget')
+        assert not selenium.find_elements(By.CLASS_NAME, 'tag-widget')
 
         now = datetime.datetime.utcnow()
         conference.open_paper_ranking(conference.get_area_chairs_id(), due_date=now + datetime.timedelta(minutes = 40))
@@ -2687,7 +2687,7 @@ NeurIPS 2021 Conference Program Chairs'''
         reviewer_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Reviewers'
         request_page(selenium, reviewer_url, reviewer_client.token, by=By.CLASS_NAME, wait_for_element='tag-widget')
 
-        tags = selenium.find_element(By.CLASS_NAME, 'tag-widget')
+        tags = selenium.find_elements(By.CLASS_NAME, 'tag-widget')
         assert tags
 
         options = tags[0].find_elements(By.TAG_NAME, 'li')
