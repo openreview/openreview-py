@@ -4129,7 +4129,7 @@ ICML 2023 Conference Program Chairs'''
         with pytest.raises(openreview.OpenReviewException, match=r'Can not remove assignment, the user ~AC_ICMLTwo1 already posted a Meta Review.'):
             pc_client_v2.post_edge(assignment)
 
-    def test_meta_review_agreement(self, client, openreview_client, helpers):
+    def test_meta_review_agreement(self, client, openreview_client, helpers, selenium, request_page):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -4256,6 +4256,17 @@ ICML 2023 Conference Program Chairs'''
             'ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs'
         ]
 
+        submissions = sac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
+        note = submissions[1]
+
+        # check SACs can't see Metareview Revision button
+        request_page(selenium, 'http://localhost:3030/forum?id=' + note.id, sac_client.token, by=By.CLASS_NAME, wait_for_element='invitations-container')
+        invitations_container = selenium.find_element_by_class_name('invitations-container')
+        invitation_buttons = invitations_container.find_element_by_class_name('invitation-buttons')
+        buttons = invitation_buttons.find_elements_by_tag_name('button')
+        assert len(buttons) ==  1
+        assert buttons[0].text == 'Official Comment'
+
         ## SAC can edit the meta review
         meta_review_edit = sac_client.post_note_edit(
             invitation='ICML.cc/2023/Conference/Submission2/-/Meta_Review_SAC_Revision',
@@ -4268,7 +4279,6 @@ ICML 2023 Conference Program Chairs'''
                 }
             )
         )
-
 
     def test_decision_stage(self, client, openreview_client, helpers):
 
