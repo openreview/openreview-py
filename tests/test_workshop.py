@@ -266,14 +266,14 @@ class TestWorkshop():
 
         request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, reviewer_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
         reply_row = selenium.find_element(By.CLASS_NAME, 'reply_row')
-        assert len(reply_row.find_element(By.CLASS_NAME, 'btn')) == 1
+        assert len(reply_row.find_elements(By.CLASS_NAME, 'btn')) == 1
         assert 'Official Review' == reply_row.find_elements(By.CLASS_NAME, 'btn')[0].text
 
         # Author
         request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
 
         reply_row = selenium.find_element(By.CLASS_NAME, 'reply_row')
-        assert len(reply_row.find_element(By.CLASS_NAME, 'btn')) == 1
+        assert len(reply_row.find_elements(By.CLASS_NAME, 'btn')) == 1
         assert 'Withdraw' == reply_row.find_elements(By.CLASS_NAME, 'btn')[0].text
 
         anon_reviewers_group_id = reviewer_client.get_groups(regex=f'{conference.id}/Paper1/Reviewer_', signatory='reviewer4@mail.com')[0].id
@@ -558,7 +558,7 @@ class TestWorkshop():
         assert tabs
         accepted_panel = selenium.find_element(By.ID, 'oral-presentations')
         assert accepted_panel
-        accepted_notes = accepted_panel.find_element(By.CLASS_NAME, 'note')
+        accepted_notes = accepted_panel.find_elements(By.CLASS_NAME, 'note')
         assert accepted_notes
         assert len(accepted_notes) == 1
 
