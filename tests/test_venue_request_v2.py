@@ -1029,6 +1029,21 @@ class TestVenueRequest():
                     }
                 ))
 
+        with pytest.raises(openreview.OpenReviewException, match=r'keywords value/0 must match pattern ".+"'):
+            submission_note_1 = author_client.post_note_edit(
+                invitation=f'{venue_id}/-/Submission',
+                signatures= ['~VenueTwo_Author1'],
+                note=Note(
+                    content={
+                        'title': { 'value': 'test submission' },
+                        'abstract': { 'value': 'test abstract' },
+                        'authors': { 'value': ['VenueTwo Author']},
+                        'authorids': { 'value': ['~VenueTwo_Author1']},
+                        'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                        'keywords': {'value': [''] }
+                    }
+                ))
+
         submission_note_1 = author_client.post_note_edit(
             invitation=f'{venue_id}/-/Submission',
             signatures= ['~VenueTwo_Author1'],
