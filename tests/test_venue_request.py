@@ -129,9 +129,9 @@ class TestVenueRequest():
 
         helpers.await_queue()
         request_page(selenium, 'http://localhost:3030/group?id={}'.format(support_group_id), client.token)
-        header_div = selenium.find_element_by_id('header')
+        header_div = selenium.find_element(By.ID, 'header')
         assert header_div
-        title_tag = header_div.find_element_by_tag_name('h1')
+        title_tag = header_div.find_element(By.TAG_NAME, 'h1')
         assert title_tag
         assert title_tag.text == 'Host a Venue'
 
@@ -357,9 +357,9 @@ class TestVenueRequest():
 
         # Test Revision
         request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token, wait_for_element='header')
-        header_div = selenium.find_element_by_id('header')
+        header_div = selenium.find_element(By.ID, 'header')
         assert header_div
-        title_tag = header_div.find_element_by_tag_name('h1')
+        title_tag = header_div.find_element(By.TAG_NAME, 'h1')
         assert title_tag
         assert title_tag.text == venue['request_form_note'].content['title']
 
@@ -424,9 +424,9 @@ class TestVenueRequest():
 
         # Test Revision
         request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token, wait_for_element='header')
-        header_div = selenium.find_element_by_id('header')
+        header_div = selenium.find_element(By.ID, 'header')
         assert header_div
-        title_tag = header_div.find_element_by_tag_name('h1')
+        title_tag = header_div.find_element(By.TAG_NAME, 'h1')
         assert title_tag
         assert title_tag.text == venue['request_form_note'].content['title']
 
@@ -483,9 +483,9 @@ class TestVenueRequest():
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number)
 
         request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token, wait_for_element='header')
-        header_div = selenium.find_element_by_id('header')
+        header_div = selenium.find_element(By.ID, 'header')
         assert header_div
-        title_tag = header_div.find_element_by_tag_name('h1')
+        title_tag = header_div.find_element(By.TAG_NAME, 'h1')
         assert title_tag
         assert title_tag.text == '{} Updated'.format(venue['request_form_note'].content['title'])
 
@@ -510,11 +510,11 @@ class TestVenueRequest():
 
         # Test Reviewer Recruitment
         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
-        recruitment_div = selenium.find_element_by_id('note_{}'.format(venue['request_form_note'].id))
+        recruitment_div = selenium.find_element(By.ID, 'note_{}'.format(venue['request_form_note'].id))
         assert recruitment_div
-        reply_row = recruitment_div.find_element_by_class_name('reply_row')
+        reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
         assert reply_row
-        buttons = reply_row.find_elements_by_class_name('btn-xs')
+        buttons = reply_row.find_element(By.CLASS_NAME, 'btn-xs')
         assert [btn for btn in buttons if btn.text == 'Recruitment']
         reviewer_details = '''(reviewer_candidate1@email.com, Reviewer One)\nreviewer_candidate2@email.com, Reviewer Two\n '''
         recruitment_note = test_client.post_note(openreview.Note(
@@ -565,11 +565,11 @@ class TestVenueRequest():
 
         # Test Reviewer Recruitment
         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
-        recruitment_div = selenium.find_element_by_id('note_{}'.format(venue['request_form_note'].id))
+        recruitment_div = selenium.find_element(By.ID, 'note_{}'.format(venue['request_form_note'].id))
         assert recruitment_div
-        reply_row = recruitment_div.find_element_by_class_name('reply_row')
+        reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
         assert reply_row
-        buttons = reply_row.find_elements_by_class_name('btn-xs')
+        buttons = reply_row.find_element(By.CLASS_NAME, 'btn-xs')
         assert [btn for btn in buttons if btn.text == 'Recruitment']
         reviewer_details = '''reviewer_candidate1@email.com, Reviewer One\nreviewer_candidate2@email.com, Reviewer Two'''
         recruitment_note = test_client.post_note(openreview.Note(
@@ -622,11 +622,11 @@ class TestVenueRequest():
 
         # Test Reviewer Recruitment
         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
-        recruitment_div = selenium.find_element_by_id('note_{}'.format(venue['request_form_note'].id))
+        recruitment_div = selenium.find_element(By.ID, 'note_{}'.format(venue['request_form_note'].id))
         assert recruitment_div
-        reply_row = recruitment_div.find_element_by_class_name('reply_row')
+        reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
         assert reply_row
-        buttons = reply_row.find_elements_by_class_name('btn-xs')
+        buttons = reply_row.find_element(By.CLASS_NAME, 'btn-xs')
         assert [btn for btn in buttons if btn.text == 'Recruitment']
         helpers.create_user('reviewer_one_tilde@mail.com', 'Reviewer', 'OneTilde')
         helpers.create_user('reviewer_two_tilde@mail.com', 'Reviewer', 'TwoTilde')
@@ -687,11 +687,11 @@ class TestVenueRequest():
 
         # Test Reviewer Remind Recruitment
         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
-        recruitment_div = selenium.find_element_by_id('note_{}'.format(venue['request_form_note'].id))
+        recruitment_div = selenium.find_element(By.ID, 'note_{}'.format(venue['request_form_note'].id))
         assert recruitment_div
-        reply_row = recruitment_div.find_element_by_class_name('reply_row')
+        reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
         assert reply_row
-        buttons = reply_row.find_elements_by_class_name('btn-xs')
+        buttons = reply_row.find_element(By.CLASS_NAME, 'btn-xs')
         assert [btn for btn in buttons if btn.text == 'Remind Recruitment']
 
         remind_recruitment_note = test_client.post_note(openreview.Note(
@@ -984,7 +984,7 @@ class TestVenueRequest():
         reviewer_url = 'http://localhost:3030/group?id={}#reviewer-tasks'.format(reviewer_group_id)
         request_page(selenium, reviewer_url, reviewer_client.token)
         with pytest.raises(NoSuchElementException):
-            assert selenium.find_element_by_link_text('Reviewer Bid')
+            assert selenium.find_element(By.LINK_TEXT, 'Reviewer Bid')
 
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
@@ -1012,7 +1012,7 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
 
         request_page(selenium, reviewer_url, reviewer_client.token, By.LINK_TEXT, wait_for_element='Reviewer Bid')
-        assert selenium.find_element_by_link_text('Reviewer Bid')
+        assert selenium.find_element(By.LINK_TEXT, 'Reviewer Bid')
 
     def test_venue_matching_setup(self, client, test_client, selenium, request_page, helpers, venue):
         # add a member to PC group
@@ -1400,9 +1400,9 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         reviewer_page_url = 'http://localhost:3030/group?id={}/Reviewers#assigned-papers'.format(venue['venue_id'])
         request_page(selenium, reviewer_page_url, token=reviewer_client.token, by=By.LINK_TEXT, wait_for_element='test submission')
 
-        note_div = selenium.find_element_by_id('note-summary-1')
+        note_div = selenium.find_element(By.ID, 'note-summary-1')
         assert note_div
-        assert 'test submission' == note_div.find_element_by_link_text('test submission').text
+        assert 'test submission' == note_div.find_element(By.LINK_TEXT, 'test submission').text
 
         review_invitations = client.get_invitations(super='{}/-/Official_Review'.format(venue['venue_id']))
         assert review_invitations and len(review_invitations) == 2
@@ -1460,13 +1460,13 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         ac_page_url = 'http://localhost:3030/group?id={}/Area_Chairs'.format(venue['venue_id'])
         request_page(selenium, ac_page_url, token=meta_reviewer_client.token, wait_for_element='1-metareview-status')
 
-        submit_div_1 = selenium.find_element_by_id('1-metareview-status')
+        submit_div_1 = selenium.find_element(By.ID, '1-metareview-status')
         with pytest.raises(NoSuchElementException):
-            assert submit_div_1.find_element_by_link_text('Submit')
+            assert submit_div_1.find_element(By.LINK_TEXT, 'Submit')
 
-        submit_div_2 = selenium.find_element_by_id('2-metareview-status')
+        submit_div_2 = selenium.find_element(By.ID, '2-metareview-status')
         with pytest.raises(NoSuchElementException):
-            assert submit_div_2.find_element_by_link_text('Submit')
+            assert submit_div_2.find_element(By.LINK_TEXT, 'Submit')
 
         # Post a meta review stage note
         now = datetime.datetime.utcnow()
@@ -1516,18 +1516,18 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         # Assert that AC now see the Submit button for assigned papers
         request_page(selenium, ac_page_url, token=meta_reviewer_client.token, wait_for_element='note-summary-2')
 
-        note_div_1 = selenium.find_element_by_id('note-summary-1')
+        note_div_1 = selenium.find_element(By.ID, 'note-summary-1')
         assert note_div_1
-        note_div_2 = selenium.find_element_by_id('note-summary-2')
+        note_div_2 = selenium.find_element(By.ID, 'note-summary-2')
         assert note_div_2
-        assert 'test submission' == note_div_1.find_element_by_link_text('test submission').text
-        assert 'test submission 2' == note_div_2.find_element_by_link_text('test submission 2').text
+        assert 'test submission' == note_div_1.find_element(By.LINK_TEXT, 'test submission').text
+        assert 'test submission 2' == note_div_2.find_element(By.LINK_TEXT, 'test submission 2').text
 
-        submit_div_1 = selenium.find_element_by_id('1-metareview-status')
-        assert submit_div_1.find_element_by_link_text('Submit')
+        submit_div_1 = selenium.find_element(By.ID, '1-metareview-status')
+        assert submit_div_1.find_element(By.LINK_TEXT, 'Submit')
 
-        submit_div_2 = selenium.find_element_by_id('2-metareview-status')
-        assert submit_div_2.find_element_by_link_text('Submit')
+        submit_div_2 = selenium.find_element(By.ID, '2-metareview-status')
+        assert submit_div_2.find_element(By.LINK_TEXT, 'Submit')
 
         meta_review_invitations = client.get_invitations(super='{}/-/Meta_Review'.format(venue['venue_id']))
         assert meta_review_invitations and len(meta_review_invitations) == 2
@@ -2179,13 +2179,13 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         author_page_url = 'http://localhost:3030/forum?id={}'.format(blind_submissions[0].forum, by=By.CLASS_NAME, wait_for_element='edit_button')
         request_page(selenium, author_page_url, token=author_client.token)
 
-        meta_actions = selenium.find_elements_by_class_name('meta_actions')
+        meta_actions = selenium.find_element(By.CLASS_NAME, 'meta_actions')
         assert len(meta_actions) == 2
         ## Edit and trash buttons, the submission invitation is still open
-        assert meta_actions[0].find_element_by_class_name('edit_button')
-        assert meta_actions[0].find_element_by_class_name('trash_button')
+        assert meta_actions[0].find_element(By.CLASS_NAME, 'edit_button')
+        assert meta_actions[0].find_element(By.CLASS_NAME, 'trash_button')
         ## Reference invitations
-        assert 'Revision' == meta_actions[1].find_element_by_class_name('edit_button').text
+        assert 'Revision' == meta_actions[1].find_element(By.CLASS_NAME, 'edit_button').text
 
         # Post revision note for a submission
         revision_note = author_client.post_note(openreview.Note(
@@ -2645,18 +2645,18 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
 
         #make sure homepage webfield was not overwritten after doing get_conference()
         request_page(selenium, "http://localhost:3030/group?id=TEST.cc/2030/Conference", wait_for_element='reject')
-        notes_panel = selenium.find_element_by_id('notes')
+        notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel
-        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
-        accepted_panel = selenium.find_element_by_id('accept')
+        accepted_panel = selenium.find_element(By.ID, 'accept')
         assert accepted_panel
-        accepted_notes = accepted_panel.find_elements_by_class_name('note')
+        accepted_notes = accepted_panel.find_element(By.CLASS_NAME, 'note')
         assert accepted_notes
         assert len(accepted_notes) == 1
-        rejected_panel = selenium.find_element_by_id('reject')
+        rejected_panel = selenium.find_element(By.ID, 'reject')
         assert rejected_panel
-        rejected_notes = rejected_panel.find_elements_by_class_name('note')
+        rejected_notes = rejected_panel.find_element(By.CLASS_NAME, 'note')
         assert rejected_notes
         assert len(rejected_notes) == 2
 

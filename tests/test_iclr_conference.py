@@ -301,8 +301,8 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         reviewer_tasks_url = 'http://localhost:3030/group?id=ICLR.cc/2021/Conference/Reviewers#reviewer-tasks'
         request_page(selenium, reviewer_tasks_url, reviewer_client.token, by=By.LINK_TEXT, wait_for_element='Reviewer Registration')
 
-        assert selenium.find_element_by_link_text('Reviewer Registration')
-        assert selenium.find_element_by_link_text('Expertise Selection')
+        assert selenium.find_element(By.LINK_TEXT, 'Reviewer Registration')
+        assert selenium.find_element(By.LINK_TEXT, 'Expertise Selection')
 
         registration_notes = reviewer_client.get_notes(invitation = 'ICLR.cc/2021/Conference/Reviewers/-/Registration_Form')
         assert registration_notes
@@ -338,21 +338,21 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
 
         request_page(selenium, 'http://localhost:3030/group?id=ICLR.cc/2021/Conference/Reviewers', reviewer_client.token, wait_for_element='header')
-        header = selenium.find_element_by_id('header')
+        header = selenium.find_element(By.ID, 'header')
         assert header
-        notes = header.find_elements_by_class_name("description")
+        notes = header.find_element(By.CLASS_NAME, "description")
         assert notes
         assert len(notes) == 1
         assert notes[0].text == 'This page provides information and status updates for the ICLR 2021. It will be regularly updated as the conference progresses, so please check back frequently.'
 
         request_page(selenium, reviewer_tasks_url, reviewer_client.token, by=By.LINK_TEXT, wait_for_element='Reviewer Registration')
 
-        assert selenium.find_element_by_link_text('Reviewer Registration')
-        assert selenium.find_element_by_link_text('Expertise Selection')
-        tasks = selenium.find_element_by_id('reviewer-tasks')
+        assert selenium.find_element(By.LINK_TEXT, 'Reviewer Registration')
+        assert selenium.find_element(By.LINK_TEXT, 'Expertise Selection')
+        tasks = selenium.find_element(By.ID, 'reviewer-tasks')
         assert tasks
-        assert len(tasks.find_elements_by_class_name('note')) == 2
-        assert len(tasks.find_elements_by_class_name('completed')) == 1
+        assert len(tasks.find_element(By.CLASS_NAME, 'note')) == 2
+        assert len(tasks.find_element(By.CLASS_NAME, 'completed')) == 1
 
     def test_remind_registration(self, conference, helpers, client):
 

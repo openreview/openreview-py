@@ -56,25 +56,25 @@ class TestWorkshop():
         request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", wait_for_element='recent-activity')
 
         assert "ICAPS 2019 Workshop HSDIP | OpenReview" in selenium.title
-        header = selenium.find_element_by_id('header')
+        header = selenium.find_element(By.ID, 'header')
         assert header
-        assert "Heuristics and Search for Domain-independent Planning" == header.find_element_by_tag_name("h1").text
-        assert "ICAPS 2019 Workshop" == header.find_element_by_tag_name("h3").text
-        assert "Berkeley, CA, USA" == header.find_element_by_xpath(".//span[@class='venue-location']").text
-        assert "July 11-15, 2019" == header.find_element_by_xpath(".//span[@class='venue-date']").text
-        assert "https://icaps19.icaps-conference.org/workshops/HSDIP/index" in header.find_element_by_xpath(".//span[@class='venue-website']/a").text
-        invitation_panel = selenium.find_element_by_id('invitation')
+        assert "Heuristics and Search for Domain-independent Planning" == header.find_element(By.TAG_NAME, "h1").text
+        assert "ICAPS 2019 Workshop" == header.find_element(By.TAG_NAME, "h3").text
+        assert "Berkeley, CA, USA" == header.find_element(By.XPATH, ".//span[@class='venue-location']").text
+        assert "July 11-15, 2019" == header.find_element(By.XPATH, ".//span[@class='venue-date']").text
+        assert "https://icaps19.icaps-conference.org/workshops/HSDIP/index" in header.find_element(By.XPATH, ".//span[@class='venue-website']/a").text
+        invitation_panel = selenium.find_element(By.ID, 'invitation')
         assert invitation_panel
-        assert len(invitation_panel.find_elements_by_tag_name('div')) == 1
-        assert 'ICAPS 2019 Workshop HSDIP Submission' == invitation_panel.find_element_by_class_name('btn').text
-        notes_panel = selenium.find_element_by_id('notes')
+        assert len(invitation_panel.find_elements(By.TAG_NAME, 'div')) == 1
+        assert 'ICAPS 2019 Workshop HSDIP Submission' == invitation_panel.find_element(By.CLASS_NAME, 'btn').text
+        notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel
-        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('your-consoles')
-        assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 0
-        assert tabs.find_element_by_id('recent-activity')
-        assert len(tabs.find_element_by_id('recent-activity').find_elements_by_tag_name('ul')) == 0
+        assert tabs.find_element(By.ID, 'your-consoles')
+        assert len(tabs.find_element(By.ID, 'your-consoles').find_elements(By.TAG_NAME, 'ul')) == 0
+        assert tabs.find_element(By.ID, 'recent-activity')
+        assert len(tabs.find_element(By.ID, 'recent-activity').find_elements(By.TAG_NAME, 'ul')) == 0
 
     def test_post_submissions(self, client, conference, test_client, peter_client, selenium, request_page):
 
@@ -95,68 +95,68 @@ class TestWorkshop():
 
         # Author user
         request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", test_client.token, wait_for_element='recent-activity')
-        invitation_panel = selenium.find_element_by_id('invitation')
+        invitation_panel = selenium.find_element(By.ID, 'invitation')
         assert invitation_panel
-        assert len(invitation_panel.find_elements_by_tag_name('div')) == 1
-        assert 'ICAPS 2019 Workshop HSDIP Submission' == invitation_panel.find_element_by_class_name('btn').text
-        notes_panel = selenium.find_element_by_id('notes')
+        assert len(invitation_panel.find_elements(By.TAG_NAME, 'div')) == 1
+        assert 'ICAPS 2019 Workshop HSDIP Submission' == invitation_panel.find_element(By.CLASS_NAME, 'btn').text
+        notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel
-        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('your-consoles')
-        assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
-        console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
-        assert 'Author Console' == console.find_element_by_tag_name('a').text
-        assert tabs.find_element_by_id('recent-activity')
-        assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 1
+        assert tabs.find_element(By.ID, 'your-consoles')
+        assert len(tabs.find_element(By.ID, 'your-consoles').find_elements(By.TAG_NAME, 'ul')) == 1
+        console = tabs.find_element(By.ID, 'your-consoles').find_elements(By.TAG_NAME, 'ul')[0]
+        assert 'Author Console' == console.find_element(By.TAG_NAME, 'a').text
+        assert tabs.find_element(By.ID, 'recent-activity')
+        assert len(tabs.find_element(By.ID, 'recent-activity').find_elements(By.CLASS_NAME, 'activity-list')) == 1
 
         request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Authors", test_client.token, wait_for_element='your-submissions')
-        tabs = selenium.find_element_by_class_name('tabs-container')
+        tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('author-tasks')
-        assert tabs.find_element_by_id('your-submissions')
-        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
-        assert len(papers.find_elements_by_tag_name('tr')) == 2
+        assert tabs.find_element(By.ID, 'author-tasks')
+        assert tabs.find_element(By.ID, 'your-submissions')
+        papers = tabs.find_element(By.ID, 'your-submissions').find_element(By.CLASS_NAME, 'console-table')
+        assert len(papers.find_elements(By.TAG_NAME, 'tr')) == 2
 
         # Guest user
         request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", wait_for_element='your-consoles')
-        invitation_panel = selenium.find_element_by_id('invitation')
+        invitation_panel = selenium.find_element(By.ID, 'invitation')
         assert invitation_panel
-        assert len(invitation_panel.find_elements_by_tag_name('div')) == 1
-        assert 'ICAPS 2019 Workshop HSDIP Submission' == invitation_panel.find_element_by_class_name('btn').text
-        notes_panel = selenium.find_element_by_id('notes')
+        assert len(invitation_panel.find_elements(By.TAG_NAME, 'div')) == 1
+        assert 'ICAPS 2019 Workshop HSDIP Submission' == invitation_panel.find_element(By.CLASS_NAME, 'btn').text
+        notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel
-        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('your-consoles')
-        assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 0
-        assert tabs.find_element_by_id('recent-activity')
-        assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 0
+        assert tabs.find_element(By.ID, 'your-consoles')
+        assert len(tabs.find_element(By.ID, 'your-consoles').find_elements(By.TAG_NAME, 'ul')) == 0
+        assert tabs.find_element(By.ID, 'recent-activity')
+        assert len(tabs.find_element(By.ID, 'recent-activity').find_elements(By.CLASS_NAME, 'activity-list')) == 0
 
         # Co-author user
         request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", peter_client.token, wait_for_element='recent-activity')
-        invitation_panel = selenium.find_element_by_id('invitation')
+        invitation_panel = selenium.find_element(By.ID, 'invitation')
         assert invitation_panel
-        assert len(invitation_panel.find_elements_by_tag_name('div')) == 1
-        assert 'ICAPS 2019 Workshop HSDIP Submission' == invitation_panel.find_element_by_class_name('btn').text
-        notes_panel = selenium.find_element_by_id('notes')
+        assert len(invitation_panel.find_elements(By.TAG_NAME, 'div')) == 1
+        assert 'ICAPS 2019 Workshop HSDIP Submission' == invitation_panel.find_element(By.CLASS_NAME, 'btn').text
+        notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel
-        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('your-consoles')
-        assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
-        console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
-        assert 'Author Console' == console.find_element_by_tag_name('a').text
-        assert tabs.find_element_by_id('recent-activity')
-        assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 1
+        assert tabs.find_element(By.ID, 'your-consoles')
+        assert len(tabs.find_element(By.ID, 'your-consoles').find_elements(By.TAG_NAME, 'ul')) == 1
+        console = tabs.find_element(By.ID, 'your-consoles').find_elements(By.TAG_NAME, 'ul')[0]
+        assert 'Author Console' == console.find_element(By.TAG_NAME, 'a').text
+        assert tabs.find_element(By.ID, 'recent-activity')
+        assert len(tabs.find_element(By.ID, 'recent-activity').find_elements(By.CLASS_NAME, 'activity-list')) == 1
 
         request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Authors", peter_client.token, wait_for_element='your-submissions')
-        tabs = selenium.find_element_by_class_name('tabs-container')
+        tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('author-tasks')
-        assert tabs.find_element_by_id('your-submissions')
-        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
-        assert len(papers.find_elements_by_tag_name('tr')) == 2
+        assert tabs.find_element(By.ID, 'author-tasks')
+        assert tabs.find_element(By.ID, 'your-submissions')
+        papers = tabs.find_element(By.ID, 'your-submissions').find_element(By.CLASS_NAME, 'console-table')
+        assert len(papers.find_elements(By.TAG_NAME, 'tr')) == 2
 
     def test_create_blind_submissions(self, client, test_client, conference):
 
@@ -265,16 +265,16 @@ class TestWorkshop():
         conference.set_assignment('reviewer4@mail.com', submission.number)
 
         request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, reviewer_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
-        reply_row = selenium.find_element_by_class_name('reply_row')
-        assert len(reply_row.find_elements_by_class_name('btn')) == 1
-        assert 'Official Review' == reply_row.find_elements_by_class_name('btn')[0].text
+        reply_row = selenium.find_element(By.CLASS_NAME, 'reply_row')
+        assert len(reply_row.find_element(By.CLASS_NAME, 'btn')) == 1
+        assert 'Official Review' == reply_row.find_elements(By.CLASS_NAME, 'btn')[0].text
 
         # Author
         request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
 
-        reply_row = selenium.find_element_by_class_name('reply_row')
-        assert len(reply_row.find_elements_by_class_name('btn')) == 1
-        assert 'Withdraw' == reply_row.find_elements_by_class_name('btn')[0].text
+        reply_row = selenium.find_element(By.CLASS_NAME, 'reply_row')
+        assert len(reply_row.find_element(By.CLASS_NAME, 'btn')) == 1
+        assert 'Withdraw' == reply_row.find_elements(By.CLASS_NAME, 'btn')[0].text
 
         anon_reviewers_group_id = reviewer_client.get_groups(regex=f'{conference.id}/Paper1/Reviewer_', signatory='reviewer4@mail.com')[0].id
 
@@ -545,26 +545,26 @@ class TestWorkshop():
 
         request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP#oral-presentations", client.token, wait_for_element='oral-presentations')
         assert "ICAPS 2019 Workshop HSDIP | OpenReview" in selenium.title
-        header = selenium.find_element_by_id('header')
+        header = selenium.find_element(By.ID, 'header')
         assert header
-        assert "Heuristics and Search for Domain-independent Planning" == header.find_element_by_tag_name("h1").text
-        assert "ICAPS 2019 Workshop" == header.find_element_by_tag_name("h3").text
-        assert "Berkeley, CA, USA" == header.find_element_by_xpath(".//span[@class='venue-location']").text
-        assert "July 11-15, 2019" == header.find_element_by_xpath(".//span[@class='venue-date']").text
-        assert "https://icaps19.icaps-conference.org/workshops/HSDIP/index" in header.find_element_by_xpath(".//span[@class='venue-website']/a").text
-        notes_panel = selenium.find_element_by_id('notes')
+        assert "Heuristics and Search for Domain-independent Planning" == header.find_element(By.TAG_NAME, "h1").text
+        assert "ICAPS 2019 Workshop" == header.find_element(By.TAG_NAME, "h3").text
+        assert "Berkeley, CA, USA" == header.find_element(By.XPATH, ".//span[@class='venue-location']").text
+        assert "July 11-15, 2019" == header.find_element(By.XPATH, ".//span[@class='venue-date']").text
+        assert "https://icaps19.icaps-conference.org/workshops/HSDIP/index" in header.find_element(By.XPATH, ".//span[@class='venue-website']/a").text
+        notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel
-        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
-        accepted_panel = selenium.find_element_by_id('oral-presentations')
+        accepted_panel = selenium.find_element(By.ID, 'oral-presentations')
         assert accepted_panel
-        accepted_notes = accepted_panel.find_elements_by_class_name('note')
+        accepted_notes = accepted_panel.find_element(By.CLASS_NAME, 'note')
         assert accepted_notes
         assert len(accepted_notes) == 1
 
         pc_client = openreview.Client(username='program_chairs@hsdip.org', password=helpers.strong_password)
         request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", pc_client.token, wait_for_element='your-consoles')
-        consoles_tab = selenium.find_element_by_id('your-consoles')
+        consoles_tab = selenium.find_element(By.ID, 'your-consoles')
         assert consoles_tab
 
     def test_pc_console(self, client, conference, selenium, request_page, helpers):
@@ -573,22 +573,22 @@ class TestWorkshop():
 
         request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs#paper-status", pc_client.token, wait_for_element='paper-status')
         assert "ICAPS 2019 Workshop HSDIP Program Chairs | OpenReview" in selenium.title
-        notes_panel = selenium.find_element_by_id('notes')
+        notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel
-        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('paper-status')
-        assert tabs.find_element_by_id('reviewer-status')
+        assert tabs.find_element(By.ID, 'paper-status')
+        assert tabs.find_element(By.ID, 'reviewer-status')
         with pytest.raises(NoSuchElementException):
-            assert tabs.find_element_by_id('areachair-status')
+            assert tabs.find_element(By.ID, 'areachair-status')
 
-        assert '#' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-1').text
-        assert 'Paper Summary' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-2').text
-        assert 'Review Progress' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-3').text
-        assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4').text
+        assert '#' == tabs.find_element(By.ID, 'paper-status').find_element(By.CLASS_NAME, 'row-1').text
+        assert 'Paper Summary' == tabs.find_element(By.ID, 'paper-status').find_element(By.CLASS_NAME, 'row-2').text
+        assert 'Review Progress' == tabs.find_element(By.ID, 'paper-status').find_element(By.CLASS_NAME, 'row-3').text
+        assert 'Decision' == tabs.find_element(By.ID, 'paper-status').find_element(By.CLASS_NAME, 'row-4').text
 
         with pytest.raises(NoSuchElementException):
-            assert tabs.find_element_by_id('paper-status').find_element_by_class_name('row-5')
+            assert tabs.find_element(By.ID, 'paper-status').find_element(By.CLASS_NAME, 'row-5')
 
     def test_accepted_papers(self, client, conference, test_client, helpers):
 
