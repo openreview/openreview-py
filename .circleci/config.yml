@@ -134,7 +134,7 @@ jobs:
             cd ~/openreview-py-repo
             pip install -U pytest
             pip install selenium==4.2.0
-            pip install pytest-selenium
+            pip install pytest-selenium==3
             pip install -e .
             TEST_FILES=$(circleci tests glob "tests/test_*.py" | circleci tests split --split-by=timings)
             mkdir test-reports
