@@ -572,7 +572,7 @@ If you would like to change your decision, please follow the link in the previou
         dropdown = selenium.find_element(By.CLASS_NAME, 'dropdown-select__input-container')
         dropdown.click()
         time.sleep(0.5)
-        values = selenium.find_element(By.CLASS_NAME, 'dropdown-select__option')
+        values = selenium.find_elements(By.CLASS_NAME, 'dropdown-select__option')
         assert len(values) > 0
         values[2].click()
         time.sleep(0.5)

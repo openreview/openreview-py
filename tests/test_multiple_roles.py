@@ -103,7 +103,7 @@ class TestMultipleRoles():
         assert recruitment_div
         reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
         assert reply_row
-        buttons = reply_row.find_element(By.CLASS_NAME, 'btn-xs')
+        buttons = reply_row.find_elements(By.CLASS_NAME, 'btn-xs')
         assert [btn for btn in buttons if btn.text == 'Recruitment']
 
         reviewer_details = '''reviewer1@lifelong-ml.cc, Reviewer UMass\nreviewer2@lifelong-ml.cc, reviewer3@lifelong-ml.cc, Reviewer UMass\nreviewer4@lifelong-ml.cc'''

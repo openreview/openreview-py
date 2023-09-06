@@ -447,7 +447,7 @@ class TestVenueRequest():
         # assert recruitment_div
         # reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
         # assert reply_row
-        # buttons = reply_row.find_element(By.CLASS_NAME, 'btn-xs')
+        # buttons = reply_row.find_elements(By.CLASS_NAME, 'btn-xs')
         # assert [btn for btn in buttons if btn.text == 'Recruitment']
         reviewer_details = '''reviewer_candidate1_v2@mail.com, Reviewer One\nreviewer_candidate2_v2@mail.com, Reviewer Two'''
         recruitment_note = test_client.post_note(openreview.Note(
@@ -532,7 +532,7 @@ class TestVenueRequest():
         # assert recruitment_div
         # reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
         # assert reply_row
-        # buttons = reply_row.find_element(By.CLASS_NAME, 'btn-xs')
+        # buttons = reply_row.find_elements(By.CLASS_NAME, 'btn-xs')
         # assert [btn for btn in buttons if btn.text == 'Recruitment']
         reviewer_details = '''reviewer_candidate1_v2@mail.com, Reviewer One\nreviewer_error@mail.com;, Reviewer Error\nReviewer_Candidate2_v2@mail.com, Reviewer Two'''
         recruitment_note = test_client.post_note(openreview.Note(
@@ -645,7 +645,7 @@ class TestVenueRequest():
         # assert recruitment_div
         # reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
         # assert reply_row
-        # buttons = reply_row.find_element(By.CLASS_NAME, 'btn-xs')
+        # buttons = reply_row.find_elements(By.CLASS_NAME, 'btn-xs')
         # assert [btn for btn in buttons if btn.text == 'Recruitment']
         helpers.create_user('reviewer_one_tilde_v2@mail.com', 'Reviewer', 'OneTildeV')
         helpers.create_user('reviewer_two_tilde_v2@mail.com', 'Reviewer', 'TwoTildeV')
@@ -758,7 +758,7 @@ class TestVenueRequest():
         # assert recruitment_div
         # reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
         # assert reply_row
-        # buttons = reply_row.find_element(By.CLASS_NAME, 'btn-xs')
+        # buttons = reply_row.find_elements(By.CLASS_NAME, 'btn-xs')
         # assert [btn for btn in buttons if btn.text == 'Remind Recruitment']
 
         remind_recruitment_note = test_client.post_note(openreview.Note(
@@ -2875,6 +2875,6 @@ Best,
 #         assert len(accepted_notes) == 1
 #         rejected_panel = selenium.find_element(By.ID, 'reject')
 #         assert rejected_panel
-#         rejected_notes = rejected_panel.find_element(By.CLASS_NAME, 'note')
+#         rejected_notes = rejected_panel.find_elements(By.CLASS_NAME, 'note')
 #         assert rejected_notes
 #         assert len(rejected_notes) == 2

@@ -514,7 +514,7 @@ class TestVenueRequest():
         assert recruitment_div
         reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
         assert reply_row
-        buttons = reply_row.find_element(By.CLASS_NAME, 'btn-xs')
+        buttons = reply_row.find_elements(By.CLASS_NAME, 'btn-xs')
         assert [btn for btn in buttons if btn.text == 'Recruitment']
         reviewer_details = '''(reviewer_candidate1@email.com, Reviewer One)\nreviewer_candidate2@email.com, Reviewer Two\n '''
         recruitment_note = test_client.post_note(openreview.Note(
@@ -569,7 +569,7 @@ class TestVenueRequest():
         assert recruitment_div
         reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
         assert reply_row
-        buttons = reply_row.find_element(By.CLASS_NAME, 'btn-xs')
+        buttons = reply_row.find_elements(By.CLASS_NAME, 'btn-xs')
         assert [btn for btn in buttons if btn.text == 'Recruitment']
         reviewer_details = '''reviewer_candidate1@email.com, Reviewer One\nreviewer_candidate2@email.com, Reviewer Two'''
         recruitment_note = test_client.post_note(openreview.Note(
@@ -691,7 +691,7 @@ class TestVenueRequest():
         assert recruitment_div
         reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
         assert reply_row
-        buttons = reply_row.find_element(By.CLASS_NAME, 'btn-xs')
+        buttons = reply_row.find_elements(By.CLASS_NAME, 'btn-xs')
         assert [btn for btn in buttons if btn.text == 'Remind Recruitment']
 
         remind_recruitment_note = test_client.post_note(openreview.Note(
@@ -2179,7 +2179,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         author_page_url = 'http://localhost:3030/forum?id={}'.format(blind_submissions[0].forum, by=By.CLASS_NAME, wait_for_element='edit_button')
         request_page(selenium, author_page_url, token=author_client.token)
 
-        meta_actions = selenium.find_element(By.CLASS_NAME, 'meta_actions')
+        meta_actions = selenium.find_elements(By.CLASS_NAME, 'meta_actions')
         assert len(meta_actions) == 2
         ## Edit and trash buttons, the submission invitation is still open
         assert meta_actions[0].find_element(By.CLASS_NAME, 'edit_button')
@@ -2651,12 +2651,12 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
         assert tabs
         accepted_panel = selenium.find_element(By.ID, 'accept')
         assert accepted_panel
-        accepted_notes = accepted_panel.find_element(By.CLASS_NAME, 'note')
+        accepted_notes = accepted_panel.find_elements(By.CLASS_NAME, 'note')
         assert accepted_notes
         assert len(accepted_notes) == 1
         rejected_panel = selenium.find_element(By.ID, 'reject')
         assert rejected_panel
-        rejected_notes = rejected_panel.find_element(By.CLASS_NAME, 'note')
+        rejected_notes = rejected_panel.find_elements(By.CLASS_NAME, 'note')
         assert rejected_notes
         assert len(rejected_notes) == 2
 
