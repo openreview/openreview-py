@@ -1301,6 +1301,7 @@ class CustomStage(object):
         ALL_SUBMISSIONS = 0
         ACCEPTED_SUBMISSIONS = 1
         PUBLIC_SUBMISSIONS = 2
+        FLAGGED_SUBMISSIONS = 3
 
     class ReplyTo(Enum):
         FORUM = 0
@@ -1410,6 +1411,8 @@ class CustomStage(object):
             source = 'public_submissions'
         elif self.source == self.Source.ALL_SUBMISSIONS:
             source = 'all_submissions'
+        elif self.source == self.Source.FLAGGED_SUBMISSIONS:
+            source = 'flagged_for_ethics_review'
         
         return source
 

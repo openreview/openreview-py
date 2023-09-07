@@ -708,7 +708,6 @@ class InvitationBuilder(object):
                                     }
                                 },
                                 'forum': '${4/content/noteId/value}',
-                                'replyto': '${4/content/noteId/value}',
                                 'content': content
                             }
                         }

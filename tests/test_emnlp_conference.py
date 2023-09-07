@@ -942,7 +942,7 @@ url={https://openreview.net/forum?id='''
             
         venue.custom_stage = openreview.stages.CustomStage(name='Ethics_Meta_Review',
             reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
-            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            source=openreview.stages.CustomStage.Source.FLAGGED_SUBMISSIONS,
             due_date=due_date,
             invitees=[openreview.stages.CustomStage.Participants.ETHICS_CHAIRS],
             readers=[openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
@@ -1037,7 +1037,7 @@ url={https://openreview.net/forum?id='''
         submissions = openreview_client.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission'}, sort='number:asc')
 
         invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Ethics_Meta_Review')
-        assert len(invitations) == 3
+        assert len(invitations) == 1
         invitation = openreview_client.get_invitation(id='EMNLP/2023/Conference/Submission3/-/Ethics_Meta_Review')
         assert invitation.invitees == ['EMNLP/2023/Conference/Program_Chairs', 'EMNLP/2023/Conference/Ethics_Chairs']
         assert invitation.edit['note']['forum']== submissions[0].id
@@ -1054,3 +1054,19 @@ url={https://openreview.net/forum?id='''
             "EMNLP/2023/Conference/Ethics_Chairs",
             "EMNLP/2023/Conference/Submission3/Ethics_Reviewers"
         ]
+
+    def test_add_impersonator(self, client, request_page, selenium, helpers):
+        ## Need super user permission to add the venue to the active_venues group
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
+        conference=openreview.helpers.get_conference(client, request_form.id)
+
+        conference.set_impersonators(impersonators=['pc@emnlp.org'])
+
+        pc_client = openreview.Client(username='pc@emnlp.org', password=helpers.strong_password)
+        acs_id = conference.get_area_chairs_id()
+        area_chairs = client.get_group(acs_id).members
+        assert len(area_chairs) > 0
+        result = pc_client.impersonate(area_chairs[0])
+
+        assert result.get('token') is not None
+        assert result.get('user', {}).get('id') == area_chairs[0]
