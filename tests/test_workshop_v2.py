@@ -458,8 +458,8 @@ Best,
         assert len(invitations) == 6
 
         request_page(selenium, 'http://localhost:3030/group?id=PRL/2023/ICAPS/Publication_Chairs', publication_chair_client.token, wait_for_element='header')
-        notes_panel = selenium.find_element_by_id('notes')
+        notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel
-        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.LINK_TEXT, "Accepted Submissions")
