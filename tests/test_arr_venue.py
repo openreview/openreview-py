@@ -8,6 +8,7 @@ import os
 import re
 import csv
 import random
+from selenium.webdriver.common.by import By
 
 class TestARRVenue():
 
@@ -659,9 +660,9 @@ class TestARRVenue():
 
         invitation_url = re.search('https://.*\n', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        notes = selenium.find_element_by_class_name('note_editor')
+        notes = selenium.find_element(By.CLASS_NAME, 'note_editor')
         assert notes
-        messages = notes.find_elements_by_tag_name('h4')
+        messages = notes.find_elements(By.TAG_NAME, 'h4')
         assert messages
         assert 'Thank you for accepting this invitation from ACL Rolling Review - September 2021.' == messages[0].text
 
@@ -715,9 +716,9 @@ ACL ARR 2021 September Program Chairs'''
 
         invitation_url = re.search('https://.*\n', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
-        notes = selenium.find_element_by_class_name('note_editor')
+        notes = selenium.find_element(By.CLASS_NAME, 'note_editor')
         assert notes
-        messages = notes.find_elements_by_tag_name("h4")
+        messages = notes.find_elements(By.TAG_NAME, 'h4')
         assert messages
         assert 'You have declined the invitation from ACL Rolling Review - September 2021.' == messages[0].text
 
@@ -744,9 +745,9 @@ OpenReview Team'''
         ## Check the AC console edge browser url
         ac_client = openreview.Client(username='ac1@gmail.com', password=helpers.strong_password)
         request_page(selenium, "http://localhost:3030/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs", ac_client.token, wait_for_element='edge_browser_url')
-        header = selenium.find_element_by_id("header")
+        header = selenium.find_element(By.ID, 'header')
         assert header
-        url = header.find_element_by_id("edge_browser_url")
+        url = header.find_element(By.ID, 'edge_browser_url')
         assert url
         assert 'Reviewers/-/Proposed_Assignment,label:reviewer-matching' in url.get_attribute('href')
 
@@ -768,9 +769,9 @@ OpenReview Team'''
 
         invitation_url = re.search('https://.*\n', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        notes = selenium.find_element_by_class_name('note_editor')
+        notes = selenium.find_element(By.CLASS_NAME, 'note_editor')
         assert notes
-        messages = notes.find_elements_by_tag_name("h4")
+        messages = notes.find_elements(By.TAG_NAME, 'h4')
         assert messages
         assert 'Thank you for accepting this invitation from ACL Rolling Review - September 2021.' == messages[0].text
 
@@ -827,9 +828,9 @@ ACL ARR 2021 September Program Chairs'''
 
         invitation_url = re.search('https://.*\n', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
-        notes = selenium.find_element_by_class_name('note_editor')
+        notes = selenium.find_element(By.CLASS_NAME, 'note_editor')
         assert notes
-        messages = notes.find_elements_by_tag_name("h4")
+        messages = notes.find_elements(By.TAG_NAME, 'h4')
         assert messages
         assert 'You have declined the invitation from ACL Rolling Review - September 2021.' == messages[0].text
 
@@ -865,9 +866,9 @@ OpenReview Team'''
         ## Check the AC console edge browser url
         ac_client = openreview.Client(username='ac1@gmail.com', password=helpers.strong_password)
         request_page(selenium, "http://localhost:3030/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs", ac_client.token, wait_for_element='edge_browser_url')
-        header = selenium.find_element_by_id("header")
+        header = selenium.find_element(By.ID, 'header')
         assert header
-        url = header.find_element_by_id("edge_browser_url")
+        url = header.find_element(By.ID, 'edge_browser_url')
         assert url
         assert 'Reviewers/-/Assignment' in url.get_attribute('href')
 
@@ -908,7 +909,7 @@ OpenReview Team'''
 
         invitation_url = re.search('https://.*\n', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        error_message = selenium.find_element_by_class_name('important_message')
+        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
         assert 'This submission is no longer under review. No action is required from your end.' == error_message.text
 
 
