@@ -131,7 +131,7 @@ class Helpers:
         elif comment:
             buttons[1].click()
             time.sleep(1)
-            text_area = selenium.find_element(By. CSS_SELECTOR, ".note_content_value, [class*='TextareaWidget_textarea']")
+            text_area = selenium.find_element(By.CSS_SELECTOR, ".note_content_value, [class*='TextareaWidget_textarea']")
             text_area.send_keys("I am too busy.")
             button = selenium.find_element(By.XPATH, '//button[text()="Submit"]')
             button.click()
