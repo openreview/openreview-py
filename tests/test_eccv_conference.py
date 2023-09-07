@@ -724,7 +724,7 @@ Please contact info@openreview.net with any questions or concerns about this int
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/temp.csv'))
 
         request_page(selenium, url='http://localhost:3030/assignments?group=thecvf.com/ECCV/2020/Conference/Reviewers', token=conference.client.token, wait_for_element='note-editor-modal')
-        new_assignment_btn = selenium.find_element(By. XPATH, '//button[text()="New Assignment Configuration"]')
+        new_assignment_btn = selenium.find_element(By.XPATH, '//button[text()="New Assignment Configuration"]')
         assert new_assignment_btn
         new_assignment_btn.click()
 

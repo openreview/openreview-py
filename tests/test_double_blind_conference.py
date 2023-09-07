@@ -1540,20 +1540,20 @@ class TestDoubleBlindConference():
         ac_client=openreview.Client(baseurl = 'http://localhost:3000', username='ac@mail.com', password=helpers.strong_password)
         request_page(selenium,"http://localhost:3030/group?id=AKBC.ws/2019/Conference/Area_Chairs",ac_client.token, by=By.XPATH, wait_for_element='//*[@id="1-reviewer-progress"]/a')
 
-        show_Reviewers_AnchorTag=selenium.find_element(By. XPATH, '//*[@id="1-reviewer-progress"]/a')
+        show_Reviewers_AnchorTag=selenium.find_element(By.XPATH, '//*[@id="1-reviewer-progress"]/a')
         selenium.execute_script("arguments[0].click()",show_Reviewers_AnchorTag) #click on "show reviewers anchor tag"
         time.sleep(5) #leave some time for the API and js to complete
 
         #get the reviewers textbox and click on it to show dropdown
         assign_Reviewer_Textbox_Present=EC.presence_of_element_located((By.XPATH,'//*[@id="1-add-reviewer"]/div/input'))
         WebDriverWait(selenium,5).until(assign_Reviewer_Textbox_Present)
-        assign_Reviewer_Textbox=selenium.find_element(By. XPATH, '//*[@id="1-add-reviewer"]/div/input')
+        assign_Reviewer_Textbox=selenium.find_element(By.XPATH, '//*[@id="1-add-reviewer"]/div/input')
         selenium.execute_script("arguments[0].click()",assign_Reviewer_Textbox)
 
         #get the dropdown div and check how many dropdown options in it
         dropdown_Options_Present=EC.presence_of_element_located((By.XPATH,'//*[@id="1-add-reviewer"]/div/div'))
         WebDriverWait(selenium,5).until(dropdown_Options_Present)
-        dropdown_Options=selenium.find_element(By. XPATH, '//*[@id="1-add-reviewer"]/div/div')
+        dropdown_Options=selenium.find_element(By.XPATH, '//*[@id="1-add-reviewer"]/div/div')
         assert len(dropdown_Options.find_elements(By. XPATH, '//*[@id="1-add-reviewer"]/div/div/div'))==1
 
     def test_open_revise_submissions(self, client, test_client, helpers):

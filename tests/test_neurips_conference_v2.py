@@ -576,7 +576,7 @@ If you would like to change your decision, please follow the link in the previou
         assert len(values) > 0
         values[2].click()
         time.sleep(0.5)
-        button = selenium.find_element(By. XPATH, '//button[text()="Submit"]')
+        button = selenium.find_element(By.XPATH, '//button[text()="Submit"]')
         button.click()
         time.sleep(0.5)
         helpers.await_queue_edit(openreview_client, invitation='NeurIPS.cc/2023/Conference/Reviewers/-/Recruitment', count=2)

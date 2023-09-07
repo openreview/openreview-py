@@ -192,8 +192,8 @@ class TestBuilder():
         pc_client = helpers.create_user('pc_testconsole1@mail.com', 'SomeFirstName', 'PCConsole')
         request_page(selenium, 'http://localhost:3030/group?id=' + conference.get_program_chairs_id() + '#paper-status', pc_client.token, wait_for_element='venue-configuration')
 
-        assert selenium.find_element(By. XPATH, '//a[@href="#paper-status"]')
-        assert selenium.find_element(By. XPATH, '//div[@id="venue-configuration"]//h3')
+        assert selenium.find_element(By.XPATH, '//a[@href="#paper-status"]')
+        assert selenium.find_element(By.XPATH, '//div[@id="venue-configuration"]//h3')
 
         WebDriverWait(selenium, 10).until(
             EC.presence_of_element_located((By.CLASS_NAME, 'message-papers-btn'))
