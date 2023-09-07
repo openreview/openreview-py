@@ -2,6 +2,7 @@ import openreview
 import pytest
 import time
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.by import By
 
 
 class TestAgora():
@@ -23,16 +24,16 @@ class TestAgora():
         agora = openreview.agora.Agora(client, support_group.id, 'openreview.net', 'editor@agora.net')
 
         request_page(selenium, "http://localhost:3030/group?id=-Agora/COVID-19", by='class name', wait_for_element='tabs-container')
-        header = selenium.find_element_by_id('header')
+        header = selenium.find_element(By.ID, 'header')
         assert header
-        invitation_panel = selenium.find_element_by_id('invitation')
+        invitation_panel = selenium.find_element(By.ID, 'invitation')
         assert invitation_panel
-        notes_panel = selenium.find_element_by_id('notes')
+        notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel
-        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         with pytest.raises(NoSuchElementException):
-            notes_panel.find_element_by_class_name('spinner-container')
+            notes_panel.find_element(By.CLASS_NAME, 'spinner-container')
 
     def test_post_submission(self, client, helpers):
 

@@ -389,6 +389,9 @@ class Venue(object):
         if self.use_publication_chairs:
             self.group_builder.create_publication_chairs_group(publication_chairs_ids)
 
+    def set_impersonators(self, impersonators):
+        self.group_builder.set_impersonators(impersonators)
+
     def recruit_reviewers(self,
         title,
         message,
@@ -519,6 +522,8 @@ class Venue(object):
             self.invitation_builder.set_official_comment_invitation()
 
         # setup paper matching
+        ethics_chairs_group = tools.get_group(self.client, self.get_ethics_chairs_id())
+        tools.replace_members_with_ids(self.client, ethics_chairs_group)
         group = tools.get_group(self.client, id=self.get_ethics_reviewers_id())
         if group and len(group.members) > 0:
             self.setup_committee_matching(group.id, compute_affinity_scores=False, compute_conflicts=True)
@@ -906,6 +911,8 @@ Total Errors: {len(errors)}
         print('Builiding ac group')
         self.client.add_members_to_group(self.get_area_chairs_id(), all_acs)
 
+    def set_SAC_ethics_review_process(self, sac_ethics_flag_duedate=None):
+        self.invitation_builder.set_SAC_ethics_flag_invitation(sac_ethics_flag_duedate)
 
     @classmethod
     def check_new_profiles(Venue, client):
