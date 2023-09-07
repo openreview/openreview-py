@@ -1054,3 +1054,19 @@ url={https://openreview.net/forum?id='''
             "EMNLP/2023/Conference/Ethics_Chairs",
             "EMNLP/2023/Conference/Submission3/Ethics_Reviewers"
         ]
+
+    def test_add_impersonator(self, client, request_page, selenium, helpers):
+        ## Need super user permission to add the venue to the active_venues group
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
+        conference=openreview.helpers.get_conference(client, request_form.id)
+
+        conference.set_impersonators(impersonators=['pc@emnlp.org'])
+
+        pc_client = openreview.Client(username='pc@emnlp.org', password=helpers.strong_password)
+        acs_id = conference.get_area_chairs_id()
+        area_chairs = client.get_group(acs_id).members
+        assert len(area_chairs) > 0
+        result = pc_client.impersonate(area_chairs[0])
+
+        assert result.get('token') is not None
+        assert result.get('user', {}).get('id') == area_chairs[0]
