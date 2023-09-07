@@ -1558,4 +1558,9 @@ The {journal.short_name} Editors-in-Chief
                     'Current custom max quota'
                 ])
                 for row in rows:
-                    writer.writerow(row)                 
+                    writer.writerow(row)     
+
+
+    def set_impersonators(self, impersonators):
+        self.group_builder.set_impersonators(impersonators)
+            

@@ -169,20 +169,20 @@ class TestSingleBlindPrivateConference():
 
         request_page(selenium, "http://localhost:3030/group?id=MICCAI.org/2021/Challenges", wait_for_element='tabs-container')
         assert "MICCAI 2021 Challenges | OpenReview" in selenium.title
-        header = selenium.find_element_by_id('header')
+        header = selenium.find_element(By.ID, 'header')
         assert header
-        assert "MICCAI.org/2021/Challenges" == header.find_element_by_tag_name("h1").text
-        invitation_panel = selenium.find_element_by_id('invitation')
+        assert "MICCAI.org/2021/Challenges" == header.find_element(By.TAG_NAME, "h1").text
+        invitation_panel = selenium.find_element(By.ID, 'invitation')
         assert invitation_panel
-        assert len(invitation_panel.find_elements_by_tag_name('div')) == 0
-        notes_panel = selenium.find_element_by_id('notes')
+        assert len(invitation_panel.find_elements(By.TAG_NAME, 'div')) == 0
+        notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel
-        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         with pytest.raises(NoSuchElementException):
-            notes_panel.find_element_by_class_name('spinner-container')
-        assert tabs.find_element_by_id('oral')
-        assert tabs.find_element_by_id('poster')
+            notes_panel.find_element(By.CLASS_NAME, 'spinner-container')
+        assert tabs.find_element(By.ID, 'oral')
+        assert tabs.find_element(By.ID, 'poster')
 
     def test_enable_public_comments(self, conference, helpers, test_client, client):
         notes = test_client.get_notes(invitation='MICCAI.org/2021/Challenges/-/Submission', sort='tmdate')

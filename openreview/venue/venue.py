@@ -392,6 +392,9 @@ class Venue(object):
         if self.use_publication_chairs:
             self.group_builder.create_publication_chairs_group(publication_chairs_ids)
 
+    def set_impersonators(self, impersonators):
+        self.group_builder.set_impersonators(impersonators)
+
     def recruit_reviewers(self,
         title,
         message,
