@@ -216,21 +216,3 @@ def request_page():
             print("Timed out waiting for page to load")
 
     return request
-
-@pytest.fixture
-def selenium():
-    # Specify the path to the Firefox WebDriver executable
-    geckodriver_path = 'drivers/geckodriver'  # Replace with the actual path
-    
-    # Set up Firefox options and specify the executable path
-    options = Options()
-    options.headless = True
-    options.executable_path = geckodriver_path
-
-    # Initialize the Firefox WebDriver with the options
-    driver = webdriver.Firefox(options=options)
-    
-    yield driver
-
-    # Teardown: Close the WebDriver session
-    driver.quit()
