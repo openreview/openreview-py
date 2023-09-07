@@ -2028,7 +2028,7 @@ If you would like to change your decision, please follow the link in the previou
             reviews[0].signatures[0]
         ]
 
-    def test_rebuttal_stage(self, helpers, test_client, openreview_client, client):
+    def test_rebuttal_stage(self, helpers, test_client, openreview_client, client, selenium, request_page):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@neurips.cc', password=helpers.strong_password)
@@ -2174,7 +2174,8 @@ If you would like to change your decision, please follow the link in the previou
             note=openreview.api.Note(
                 replyto = submissions[0].id,
                 content={
-                    'rebuttal': { 'value': 'This is a rebuttal reply to a submission.' }
+                    'rebuttal': { 'value': 'This is a rebuttal reply to a submission.' },
+                    'pdf': { 'value': '/attachment/' + 's' * 40 +'.pdf' }
                 }
             )
         )
@@ -2188,6 +2189,15 @@ If you would like to change your decision, please follow the link in the previou
             'NeurIPS.cc/2023/Conference/Submission1/Area_Chairs',
             'NeurIPS.cc/2023/Conference/Submission1/Authors'
         ]
+
+        forum_url = 'http://localhost:3030/forum?id=' + submissions[0].id
+        request_page(selenium, forum_url, test_client.token, wait_for_element='5-metareview-status')
+
+        note_panel = selenium.find_element(By.XPATH, f'//div[@data-id="{rebuttal.id}"]')
+        fields = note_panel.find_elements(By.CLASS_NAME, 'note-content-field')
+        assert len(fields) == 2
+        assert fields[0].text == 'Rebuttal:'
+        assert fields[1].text == 'PDF:'
 
         with pytest.raises(openreview.OpenReviewException, match=r'.*You have reached the maximum number \(1\) of replies for this Invitation.*'):
             rebuttal_edit = test_client.post_note_edit(
