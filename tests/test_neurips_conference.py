@@ -118,11 +118,11 @@ class TestNeurIPSConference():
 
         # Test Reviewer Recruitment
         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
-        recruitment_div = selenium.find_element_by_id('note_{}'.format(request_form.id))
+        recruitment_div = selenium.find_element(By.ID, 'note_{}'.format(request_form.id))
         assert recruitment_div
-        reply_row = recruitment_div.find_element_by_class_name('reply_row')
+        reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
         assert reply_row
-        buttons = reply_row.find_elements_by_class_name('btn-xs')
+        buttons = reply_row.find_elements(By.CLASS_NAME, 'btn-xs')
         assert [btn for btn in buttons if btn.text == 'Recruitment']
 
         reviewer_details = '''sac1@google.com, SAC One\nsac2@gmail.com, SAC Two'''
@@ -179,14 +179,14 @@ If you would like to change your decision, please follow the link in the previou
 
         sac_client = openreview.Client(username='sac1@google.com', password=helpers.strong_password)
         request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference", sac_client.token, wait_for_element='notes')
-        notes_panel = selenium.find_element_by_id('notes')
+        notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel
-        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('your-consoles')
-        assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
-        console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
-        assert 'Senior Area Chair Console' == console.find_element_by_tag_name('a').text
+        assert tabs.find_element(By.ID, 'your-consoles')
+        assert len(tabs.find_element(By.ID, 'your-consoles').find_elements(By.TAG_NAME, 'ul')) == 1
+        console = tabs.find_element(By.ID, 'your-consoles').find_elements(By.TAG_NAME, 'ul')[0]
+        assert 'Senior Area Chair Console' == console.find_element(By.TAG_NAME, 'a').text
 
     def test_recruit_area_chairs(self, client, selenium, request_page, helpers):
 
@@ -223,12 +223,12 @@ If you would like to change your decision, please follow the link in the previou
         assert len(rejected_group.members) == 0
 
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
-        notes = selenium.find_element_by_class_name("note_editor")
+        notes = selenium.find_element(By.CLASS_NAME, "note_editor")
         assert notes
-        messages = notes.find_elements_by_tag_name("h4")
+        messages = notes.find_elements(By.TAG_NAME, 'h4')
         assert messages
         assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
-        messages = notes.find_elements_by_tag_name("p")
+        messages = notes.find_elements(By.TAG_NAME, 'p')
         assert 'If you chose to decline the invitation because the paper load is too high, you can request to reduce your load. You can request a reduced reviewer load below:' == messages[0].text
         
         rejected_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs/Declined')
@@ -239,17 +239,17 @@ If you would like to change your decision, please follow the link in the previou
         assert len(accepted_group.members) == 0
 
         ## Accept with reduced quota
-        link = selenium.find_element_by_class_name('reduced-load-link')
+        link = selenium.find_element(By.CLASS_NAME, 'reduced-load-link')
         link.click()
         time.sleep(0.5)
-        dropdown = selenium.find_element_by_class_name('dropdown-select__input-container')
+        dropdown = selenium.find_element(By.CLASS_NAME, 'dropdown-select__input-container')
         dropdown.click()
         time.sleep(0.5)
-        values = selenium.find_elements_by_class_name('dropdown-select__option')
+        values = selenium.find_elements(By.CLASS_NAME, 'dropdown-select__option')
         assert len(values) > 0
         values[1].click()
         time.sleep(0.5)
-        button = selenium.find_element_by_xpath('//button[text()="Submit"]')
+        button = selenium.find_element(By.XPATH, '//button[text()="Submit"]')
         button.click()
         time.sleep(0.5)
         helpers.await_queue()
@@ -327,18 +327,18 @@ If you would like to change your decision, please follow the link in the previou
         tasks_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Senior_Area_Chairs#senior-areachair-tasks'
         request_page(selenium, tasks_url, sac_client.token, by=By.LINK_TEXT, wait_for_element='Senior Area Chair Bid')
 
-        assert selenium.find_element_by_link_text('Senior Area Chair Bid')
+        assert selenium.find_element(By.LINK_TEXT, 'Senior Area Chair Bid')
 
 
         bid_url = 'http://localhost:3030/invitation?id=NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid'
         request_page(selenium, bid_url, sac_client.token, wait_for_element='notes')
 
-        notes = selenium.find_element_by_id('notes')
+        notes = selenium.find_element(By.ID, 'notes')
         assert notes
-        assert len(notes.find_elements_by_class_name('note')) == 3
+        assert len(notes.find_elements(By.CLASS_NAME, 'note')) == 3
 
-        header = selenium.find_element_by_id('header')
-        instruction = header.find_element_by_tag_name('li')
+        header = selenium.find_element(By.ID, 'header')
+        instruction = header.find_element(By.TAG_NAME, 'li')
         assert 'Please indicate your level of interest in the list of Area Chairs below, on a scale from "Very Low" interest to "Very High" interest. Area Chairs were automatically pre-ranked using the expertise information in your profile.' == instruction.text
 
         sac_client.post_edge(openreview.Edge(
@@ -449,11 +449,11 @@ If you would like to change your decision, please follow the link in the previou
 
         # Test Reviewer Recruitment
         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client.token, by=By.ID, wait_for_element='note_{}'.format(request_form.id))
-        recruitment_div = selenium.find_element_by_id('note_{}'.format(request_form.id))
+        recruitment_div = selenium.find_element(By.ID, 'note_{}'.format(request_form.id))
         assert recruitment_div
-        reply_row = recruitment_div.find_element_by_class_name('reply_row')
+        reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
         assert reply_row
-        buttons = reply_row.find_elements_by_class_name('btn-xs')
+        buttons = reply_row.find_elements(By.CLASS_NAME, 'btn-xs')
         assert [btn for btn in buttons if btn.text == 'Recruitment']
 
         reviewer_details = '''reviewer1@umass.edu, Reviewer UMass\nreviewer2@mit.edu, Reviewer MIT\nsac1@google.com, SAC One\nsac2@gmail.com, SAC Two'''
@@ -493,12 +493,12 @@ If you would like to change your decision, please follow the link in the previou
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
 
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
-        notes = selenium.find_element_by_class_name("note_editor")
+        notes = selenium.find_element(By.CLASS_NAME, "note_editor")
         assert notes        
-        messages = notes.find_elements_by_tag_name("h4")
+        messages = notes.find_elements(By.TAG_NAME, 'h4')
         assert messages
         assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
-        messages = notes.find_elements_by_tag_name("p")
+        messages = notes.find_elements(By.TAG_NAME, 'p')
         assert 'If you chose to decline the invitation because the paper load is too high, you can request to reduce your load. You can request a reduced reviewer load below:' == messages[0].text
 
         assert len(client.get_group('NeurIPS.cc/2021/Conference/Reviewers').members) == 0
@@ -518,17 +518,17 @@ If you would like to change your decision, please follow the link in the previou
         assert len(notes) == 1
 
         ## Accept with reduced load
-        link = selenium.find_element_by_class_name('reduced-load-link')
+        link = selenium.find_element(By.CLASS_NAME, 'reduced-load-link')
         link.click()
         time.sleep(0.5)
-        dropdown = selenium.find_element_by_class_name('dropdown-select__input-container')
+        dropdown = selenium.find_element(By.CLASS_NAME, 'dropdown-select__input-container')
         dropdown.click()
         time.sleep(0.5)
-        values = selenium.find_elements_by_class_name('dropdown-select__option')
+        values = selenium.find_elements(By.CLASS_NAME, 'dropdown-select__option')
         assert len(values) > 0
         values[2].click()
         time.sleep(0.5)
-        button = selenium.find_element_by_xpath('//button[text()="Submit"]')
+        button = selenium.find_element(By.XPATH, '//button[text()="Submit"]')
         button.click()
         time.sleep(0.5)
         helpers.await_queue()        
@@ -549,8 +549,8 @@ If you would like to change your decision, please follow the link in the previou
         ## Check reviewers console load
         reviewer_client=openreview.Client(username='reviewer1@umass.edu', password=helpers.strong_password)
         request_page(selenium, 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Reviewers', reviewer_client.token, by=By.ID, wait_for_element='header')
-        header = selenium.find_element_by_id('header')
-        strong_elements = header.find_elements_by_tag_name('strong')
+        header = selenium.find_element(By.ID, 'header')
+        strong_elements = header.find_elements(By.TAG_NAME, 'strong')
         assert len(strong_elements) == 1
         assert strong_elements[0].text == '4 papers'
         
@@ -933,7 +933,7 @@ If you would like to change your decision, please follow the link in the previou
         ## authors_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Authors'
         ##request_page(selenium, authors_url, test_client.token, by=By.CLASS_NAME, wait_for_element='tag-widget')
 
-        ##assert selenium.find_elements_by_class_name('tag-widget')
+        ##assert selenium.find_elements(By.CLASS_NAME, 'tag-widget')
 
         client.post_invitation(openreview.Invitation(id=f'{conference.get_authors_id()}/-/Perceived_Likelihood',
             invitees=[conference.get_authors_id()],
@@ -1454,15 +1454,15 @@ Thank you,
 
         invalid_accept_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1].replace('user=~External_Reviewer_Amazon1', 'user=~External_Reviewer_Amazon2').replace('&amp;', '&')
         helpers.respond_invitation(selenium, request_page, invalid_accept_url, accept=True)
-        error_message = selenium.find_element_by_class_name('important_message')
+        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
         assert 'Wrong key, please refer back to the recruitment email' == error_message.text
 
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
 
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        notes = selenium.find_element_by_class_name("note_editor")
+        notes = selenium.find_element(By.CLASS_NAME, "note_editor")
         assert notes
-        messages = notes.find_elements_by_tag_name("h4")
+        messages = notes.find_elements(By.TAG_NAME, 'h4')
         assert messages
         assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
@@ -1513,9 +1513,9 @@ OpenReview Team'''
         ## External reviewer declines the invitation, assignment rollback
         invitation_url = re.search('https://.*\n', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
-        notes = selenium.find_element_by_class_name("note_editor")
+        notes = selenium.find_element(By.CLASS_NAME, "note_editor")
         assert notes
-        messages = notes.find_elements_by_tag_name("h4")
+        messages = notes.find_elements(By.TAG_NAME, 'h4')
         assert messages
         assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
@@ -1566,9 +1566,9 @@ OpenReview Team'''
         ## External reviewer accepts the invitation again
         invitation_url = re.search('https://.*\n', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        notes = selenium.find_element_by_class_name("note_editor")
+        notes = selenium.find_element(By.CLASS_NAME, "note_editor")
         assert notes
-        messages = notes.find_elements_by_tag_name("h4")
+        messages = notes.find_elements(By.TAG_NAME, 'h4')
         assert messages
         assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
@@ -1649,9 +1649,9 @@ OpenReview Team'''
         assert messages and len(messages) == 1
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
-        notes = selenium.find_element_by_class_name("note_editor")
+        notes = selenium.find_element(By.CLASS_NAME, "note_editor")
         assert notes
-        messages = notes.find_elements_by_tag_name("h4")
+        messages = notes.find_elements(By.TAG_NAME, 'h4')
         assert messages
         assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
@@ -1720,9 +1720,9 @@ OpenReview Team'''
         assert messages and len(messages) == 1
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        notes = selenium.find_element_by_class_name("note_editor")
+        notes = selenium.find_element(By.CLASS_NAME, "note_editor")
         assert notes
-        messages = notes.find_elements_by_tag_name("h4")
+        messages = notes.find_elements(By.TAG_NAME, 'h4')
         assert messages
         assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
@@ -1768,9 +1768,9 @@ OpenReview Team'''
         external_reviewer=helpers.create_user('external_reviewer4@gmail.com', 'Reviewer', 'External')
 
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        notes = selenium.find_element_by_class_name("note_editor")
+        notes = selenium.find_element(By.CLASS_NAME, "note_editor")
         assert notes
-        messages = notes.find_elements_by_tag_name("h4")
+        messages = notes.find_elements(By.TAG_NAME, 'h4')
         assert messages
         assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
@@ -1821,9 +1821,9 @@ OpenReview Team'''
         assert messages and len(messages) == 1
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
-        notes = selenium.find_element_by_class_name("note_editor")
+        notes = selenium.find_element(By.CLASS_NAME, "note_editor")
         assert notes
-        messages = notes.find_elements_by_tag_name("h4")
+        messages = notes.find_elements(By.TAG_NAME, 'h4')
         assert messages
         assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
@@ -2256,9 +2256,9 @@ OpenReview Team'''
         assert messages and len(messages) == 1
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        notes = selenium.find_element_by_class_name("note_editor")
+        notes = selenium.find_element(By.CLASS_NAME, "note_editor")
         assert notes
-        messages = notes.find_elements_by_tag_name("h4")
+        messages = notes.find_elements(By.TAG_NAME, 'h4')
         assert messages
         assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
@@ -2370,9 +2370,9 @@ NeurIPS 2021 Conference Program Chairs'''
         assert messages and len(messages) == 1
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        notes = selenium.find_element_by_class_name("note_editor")
+        notes = selenium.find_element(By.CLASS_NAME, "note_editor")
         assert notes
-        messages = notes.find_elements_by_tag_name("h4")
+        messages = notes.find_elements(By.TAG_NAME, 'h4')
         assert messages
         assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
@@ -2638,10 +2638,10 @@ NeurIPS 2021 Conference Program Chairs'''
         ac_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Area_Chairs'
         request_page(selenium, ac_url, ac_client.token, wait_for_element='5-metareview-status')
 
-        status = selenium.find_element_by_id("5-metareview-status")
+        status = selenium.find_element(By.ID, '5-metareview-status')
         assert status
 
-        assert not status.find_elements_by_class_name('tag-widget')
+        assert not status.find_elements(By.CLASS_NAME, 'tag-widget')
 
         reviewer_client=openreview.Client(username='reviewer1@umass.edu', password=helpers.strong_password)
 
@@ -2652,7 +2652,7 @@ NeurIPS 2021 Conference Program Chairs'''
         reviewer_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Reviewers'
         request_page(selenium, reviewer_url, reviewer_client.token)
 
-        assert not selenium.find_elements_by_class_name('tag-widget')
+        assert not selenium.find_elements(By.CLASS_NAME, 'tag-widget')
 
         now = datetime.datetime.utcnow()
         conference.open_paper_ranking(conference.get_area_chairs_id(), due_date=now + datetime.timedelta(minutes = 40))
@@ -2661,17 +2661,17 @@ NeurIPS 2021 Conference Program Chairs'''
         ac_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Area_Chairs'
         request_page(selenium, ac_url, ac_client.token, by=By.ID, wait_for_element='5-metareview-status')
 
-        status = selenium.find_element_by_id("5-metareview-status")
+        status = selenium.find_element(By.ID, '5-metareview-status')
         assert status
 
-        tag = status.find_element_by_class_name('tag-widget')
+        tag = status.find_element(By.CLASS_NAME, 'tag-widget')
         assert tag
 
-        options = tag.find_elements_by_tag_name("li")
+        options = tag.find_elements(By.TAG_NAME, 'li')
         assert options
         assert len(options) == 3
 
-        options = tag.find_elements_by_tag_name("a")
+        options = tag.find_elements(By.TAG_NAME, 'a')
         assert options
         assert len(options) == 3
 
@@ -2687,14 +2687,14 @@ NeurIPS 2021 Conference Program Chairs'''
         reviewer_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Reviewers'
         request_page(selenium, reviewer_url, reviewer_client.token, by=By.CLASS_NAME, wait_for_element='tag-widget')
 
-        tags = selenium.find_elements_by_class_name('tag-widget')
+        tags = selenium.find_elements(By.CLASS_NAME, 'tag-widget')
         assert tags
 
-        options = tags[0].find_elements_by_tag_name("li")
+        options = tags[0].find_elements(By.TAG_NAME, 'li')
         assert options
         assert len(options) == 5
 
-        options = tags[0].find_elements_by_tag_name("a")
+        options = tags[0].find_elements(By.TAG_NAME, 'a')
         assert options
         assert len(options) == 5
 
@@ -2814,20 +2814,20 @@ NeurIPS 2021 Conference Program Chairs'''
 
         request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Program_Chairs#paper-status", pc_client.token, wait_for_element='notes')
         assert "NeurIPS 2021 Conference Program Chairs | OpenReview" in selenium.title
-        notes_panel = selenium.find_element_by_id('notes')
+        notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel
-        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('venue-configuration')
-        assert tabs.find_element_by_id('paper-status')
-        assert tabs.find_element_by_id('reviewer-status')
-        assert tabs.find_element_by_id('areachair-status')
+        assert tabs.find_element(By.ID, 'venue-configuration')
+        assert tabs.find_element(By.ID, 'paper-status')
+        assert tabs.find_element(By.ID, 'reviewer-status')
+        assert tabs.find_element(By.ID, 'areachair-status')
 
-        assert '#' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-1').text
-        assert 'Paper Summary' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-2').text
-        assert 'Review Progress' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-3').text
-        assert 'Status' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4').text
-        assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-5').text
+        assert '#' == tabs.find_element(By.ID, 'paper-status').find_element(By.CLASS_NAME, 'row-1').text
+        assert 'Paper Summary' == tabs.find_element(By.ID, 'paper-status').find_element(By.CLASS_NAME, 'row-2').text
+        assert 'Review Progress' == tabs.find_element(By.ID, 'paper-status').find_element(By.CLASS_NAME, 'row-3').text
+        assert 'Status' == tabs.find_element(By.ID, 'paper-status').find_element(By.CLASS_NAME, 'row-4').text
+        assert 'Decision' == tabs.find_element(By.ID, 'paper-status').find_element(By.CLASS_NAME, 'row-5').text
 
     def test_desk_reject_after_review(self, conference, helpers, test_client, client, selenium, request_page):
 
