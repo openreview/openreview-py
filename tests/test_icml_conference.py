@@ -4261,9 +4261,9 @@ ICML 2023 Conference Program Chairs'''
 
         # check SACs can't see Metareview Revision button
         request_page(selenium, 'http://localhost:3030/forum?id=' + note.id, sac_client.token, by=By.CLASS_NAME, wait_for_element='invitations-container')
-        invitations_container = selenium.find_element_by_class_name('invitations-container')
-        invitation_buttons = invitations_container.find_element_by_class_name('invitation-buttons')
-        buttons = invitation_buttons.find_elements_by_tag_name('button')
+        invitations_container = selenium.find_element(By.CLASS_NAME, 'invitations-container')
+        invitation_buttons = invitations_container.find_element(By.CLASS_NAME, 'invitation-buttons')
+        buttons = invitation_buttons.find_elements(By.TAG_NAME, 'button')
         assert len(buttons) ==  1
         assert buttons[0].text == 'Official Comment'
 
