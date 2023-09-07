@@ -133,7 +133,6 @@ jobs:
           command: |
             cd ~/openreview-py-repo
             pip install -U pytest
-            pip install py
             pip install selenium
             pip install pytest-selenium
             pip install -e .

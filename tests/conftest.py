@@ -218,7 +218,7 @@ def request_page():
     return request
 
 @pytest.fixture
-def selenium(request):
+def selenium():
     # Specify the path to the Firefox WebDriver executable
     geckodriver_path = 'drivers/geckodriver'  # Replace with the actual path
     
