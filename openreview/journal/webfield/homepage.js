@@ -1,15 +1,28 @@
 // Webfield component
-// Constants
-const submissionInvitationId = ''
-const underReviewId = ''
-const decisionPendingId = ''
-const certifications = []
-const header = {}
+const instructions = ''
+
+const title = domain.content.title.value
+const submissionInvitationId = domain.content.submission_id.value
+const underReviewId = domain.content.under_review_venue_id.value
+const decisionPendingId = domain.content.decision_pending_venue_id.value
+const certifications = (domain.content.certifications?.value || []).concat(domain.content.eic_certifications?.value || [])
+if (domain.content.expert_certification?.value) {
+  certifications.push(domain.content.expert_certification?.value)
+}
 
 const tabs = [{
   name: 'Your Consoles',
   type: 'consoles'
 }]
+
+if (domain.content.event_certifications?.value) {
+  tabs.push({
+    name: 'Event Certifications',
+    links: domain.content.event_certifications?.value.map(certification => {
+      return { name: certification, url: `/group?id=${domain.id}/Event_Certifications&event=${certification}` }
+    })
+  })
+}
 
 tabs.push({
   name: 'Accepted Papers',
@@ -82,8 +95,8 @@ return {
   version: 1,
   properties: {
     header: {
-      title: header.title,
-      instructions: header.instructions,
+      title: title,
+      instructions: instructions,
     },
     submissionId: submissionInvitationId,
     parentGroupId: domain.parent,

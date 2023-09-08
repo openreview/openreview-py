@@ -93,6 +93,9 @@ class TestJournal():
                             ],
                             'eic_certifications': [
                                 'Outstanding Certification'
+                            ],
+                            'event_certifications': [
+                                'lifelong-ml.cc/CoLLAs/2023/Journal_Track'
                             ],                            
                             'submission_length': [
                                 'Regular submission (no more than 12 pages of main content)', 
@@ -130,8 +133,14 @@ class TestJournal():
 
         openreview_client.add_members_to_group('TMLR/Expert_Reviewers', ['~Andrew_McCallum1'])
 
-        assert openreview_client.get_group('TMLR')
-
+        tmlr =  openreview_client.get_group('TMLR')
+        assert tmlr
+        assert tmlr.members == ['~Fabian_Pedregosa1', 'TMLR/Editors_In_Chief']
+        assert tmlr.content['submission_id']['value'] == 'TMLR/-/Submission'
+        assert tmlr.content['certifications']['value'] == ['Featured Certification', 'Reproducibility Certification', 'Survey Certification']
+        assert tmlr.content['eic_certifications']['value'] == ['Outstanding Certification']
+        assert tmlr.content['expert_reviewer_certification']['value'] == 'Expert Certification'
+        assert tmlr.content['event_certifications']['value'] == ['lifelong-ml.cc/CoLLAs/2023/Journal_Track']
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
@@ -4612,3 +4621,13 @@ note={Expert Certification}
         journal.invitation_builder.expire_paper_invitations(note)
         journal.invitation_builder.expire_reviewer_responsibility_invitations()
         journal.invitation_builder.expire_assignment_availability_invitations()
+
+        ## Add Event certification
+        raia_client.post_note_edit(invitation='TMLR/-/Event_Certification',
+            signatures=["TMLR"],
+            note=Note(
+                id = note_id_13,
+                content= {
+                    'event_certifications': { 'value': ['lifelong-ml.cc/CoLLAs/2023/Journal_Track'] }
+                }
+            ))        

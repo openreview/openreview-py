@@ -27,8 +27,22 @@ class GroupBuilder(object):
         group.web = group.web.replace(f"var {variable_name} = '';", f"var {variable_name} = '{value}';")
         self.post_group(group)
     
+    def get_update_content(self, current_content, new_content):
+        update_content = {}
+
+        for key, value in current_content.items():
+            if key in new_content and value != new_content[key]:
+                update_content[key] = new_content[key]
+            
+            if key not in new_content:
+                update_content[key] = { 'delete': True }
+
+        for key, value in new_content.items():
+            if key not in current_content:
+                update_content[key] = new_content[key]
+        return update_content
+    
     def set_groups(self, support_role, editors):
-        header = self.journal.header
         venue_id = self.journal.venue_id
         editor_in_chief_id = self.journal.get_editors_in_chief_id()
         reviewer_report_form = self.journal.get_reviewer_report_form()
@@ -45,10 +59,41 @@ class GroupBuilder(object):
                             members=[support_role],
                             host=venue_id
                             ))
+            venue_group.content = {}
 
             self.client_v1.add_members_to_group('host', venue_id)
             self.client_v1.add_members_to_group('venues', venue_id)
             self.client_v1.add_members_to_group('active_venues', venue_id)
+
+        ## Update settings
+        content = {
+            'title': { 'value': self.journal.full_name },
+            'submission_id': { 'value': self.journal.get_author_submission_id() },
+            'under_review_venue_id': { 'value': self.journal.under_review_venue_id },
+            'decision_pending_venue_id': { 'value': self.journal.decision_pending_venue_id },
+        }
+
+        if self.journal.get_certifications():
+            content['certifications'] = { 'value': self.journal.get_certifications() }
+        if self.journal.get_eic_certifications():
+            content['eic_certifications'] = { 'value': self.journal.get_eic_certifications() }
+        if self.journal.get_expert_reviewer_certification():
+            content['expert_reviewer_certification'] = { 'value': self.journal.get_expert_reviewer_certification() }
+        if self.journal.get_event_certifications():
+            content['event_certifications'] = { 'value': self.journal.get_event_certifications() }
+
+        update_content = self.get_update_content(venue_group.content, content)
+        if update_content:
+            self.client.post_group_edit(
+                invitation = self.journal.get_meta_invitation_id(),
+                readers = [venue_id],
+                writers = [venue_id],
+                signatures = [venue_id],
+                group = openreview.api.Group(
+                    id = venue_id,
+                    content = update_content
+                )
+            )            
 
         ## editor in chief
         editor_in_chief_group = openreview.tools.get_group(self.client, editor_in_chief_id)
@@ -82,7 +127,7 @@ class GroupBuilder(object):
             name=m.replace('~', ' ').replace('_', ' ')[:-1]
             editors+=f'[{name}](https://openreview.net/profile?id={m})  \n'
 
-        header['instructions'] = f'''
+        instructions = f'''
 **Editors-in-chief:**  
 {editors}
 
@@ -99,18 +144,14 @@ class GroupBuilder(object):
 For more information on {venue_id}, visit [{self.journal.contact_info}](http://{self.journal.contact_info})
 '''
         if self.journal.has_expert_reviewers():
-            header['instructions'] += f'''
+            instructions += f'''
             
 Visit [this page](https://openreview.net/group?id={self.journal.get_expert_reviewers_id()}) for the list of our Expert Reviewers.
 '''
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/homepage.js')) as f:
             content = f.read()
-            content = content.replace("const header = {}", "const header = " + json.dumps(header) + "")
-            content = content.replace("const submissionInvitationId = ''", "const submissionInvitationId = '" + self.journal.get_author_submission_id() + "'")
-            content = content.replace("const underReviewId = ''", "const underReviewId = '" + venue_id + "/Under_Review'")
-            content = content.replace("const decisionPendingId = ''", "const decisionPendingId = '" + venue_id + "/Decision_Pending'")
-            content = content.replace("const certifications = []", "const certifications = " + json.dumps(self.journal.get_certifications() + self.journal.get_eic_certifications() + [self.journal.get_expert_reviewer_certification()] if self.journal.has_expert_reviewers() else []) + "")
+            content = content.replace("const instructions = ''", "const instructions = `" + instructions + "`")
             if not venue_group.web:
                 venue_group.web = content
                 self.post_group(venue_group)
@@ -155,6 +196,21 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
 
             action_editor_group.web = content
             self.post_group(action_editor_group)
+
+        if self.journal.get_event_certifications():
+            event_group = openreview.tools.get_group(self.client, f'{venue_id}/Event_Certifications')
+            if not event_group:
+                event_group=self.post_group(Group(id=f'{venue_id}/Event_Certifications',
+                                readers=['everyone'],
+                                writers=[venue_id],
+                                signatures=[venue_id],
+                                signatories=[venue_id],
+                                members=[]))            
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/eventCertificationsWebfield.js')) as f:
+                content = f.read()
+                if not event_group.web:
+                    event_group.web = content
+                    self.post_group(event_group)            
 
         ## action editors invited group
         action_editors_invited_id = f'{action_editors_id}/Invited'
