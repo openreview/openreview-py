@@ -1,6 +1,4 @@
 // Webfield component
-console.log(args)
-
 const tabs = []
 tabs.push({
   name: 'Accepted Papers',
@@ -17,7 +15,7 @@ return {
   properties: {
     header: {
       title: domain.content.title.value,
-      subtitle: `TODO: event certification ${args.event}`
+      subtitle: `TODO: event certification ${utils.prettyId(args.event)}`
     },
     parentGroupId: domain.parent,
     apiVersion: 2,

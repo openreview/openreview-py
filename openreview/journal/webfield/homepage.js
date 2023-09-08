@@ -19,7 +19,7 @@ if (domain.content.event_certifications?.value) {
   tabs.push({
     name: 'Event Certifications',
     links: domain.content.event_certifications?.value.map(certification => {
-      return { name: certification, url: `/group?id=${domain.id}/Event_Certifications&event=${certification}` }
+      return { name: utils.prettyId(certification), url: `/group?id=${domain.id}/Event_Certifications&event=${certification}` }
     })
   })
 }
