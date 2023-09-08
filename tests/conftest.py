@@ -2,6 +2,8 @@ import openreview
 import pytest
 import requests
 import time
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -122,32 +124,32 @@ class Helpers:
 
         request_page(selenium, url, by=By.CLASS_NAME, wait_for_element='note_editor')
 
-        container = selenium.find_element_by_class_name('note_editor')
+        container = selenium.find_element(By.CLASS_NAME, 'note_editor')
 
-        buttons = container.find_elements_by_tag_name("button")
+        buttons = container.find_elements(By.TAG_NAME, "button")
         assert len(buttons) == 2
 
         if quota:
             buttons[1].click() ## Decline
             time.sleep(1)
-            reduce_quota_link = selenium.find_element_by_class_name('reduced-load-link')
+            reduce_quota_link = selenium.find_element(By.CLASS_NAME, 'reduced-load-link')
             reduce_quota_link.click()
             time.sleep(1)
-            dropdown = selenium.find_element_by_class_name('dropdown-select__input-container')
+            dropdown = selenium.find_element(By.CLASS_NAME, 'dropdown-select__input-container')
             dropdown.click()
             time.sleep(1)
-            values = selenium.find_elements_by_class_name('dropdown-select__option')
+            values = selenium.find_elements(By.CLASS_NAME, 'dropdown-select__option')
             assert len(values) > 0
             values[0].click()
             time.sleep(1)
-            button = selenium.find_element_by_xpath('//button[text()="Submit"]')
+            button = selenium.find_element(By.XPATH, '//button[text()="Submit"]')
             button.click()
         elif comment:
             buttons[1].click()
             time.sleep(1)
-            text_area = selenium.find_element_by_css_selector(".note_content_value, [class*='TextareaWidget_textarea']")
+            text_area = selenium.find_element(By.CSS_SELECTOR, ".note_content_value, [class*='TextareaWidget_textarea']")
             text_area.send_keys("I am too busy.")
-            button = selenium.find_element_by_xpath('//button[text()="Submit"]')
+            button = selenium.find_element(By.XPATH, '//button[text()="Submit"]')
             button.click()
         elif accept:
             buttons[0].click()

@@ -52,6 +52,7 @@ return {
     officialMetaReviewName: domain.content.meta_review_name?.value,
     metaReviewContentField: domain.content.meta_review_recommendation?.value,
     shortPhrase: domain.content.subtitle?.value,
-    enableQuerySearch: true
+    enableQuerySearch: true,
+    emailReplyTo: domain.content.contact?.value
   }
 }
