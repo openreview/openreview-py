@@ -3,6 +3,7 @@ def process(client, note, invitation):
 
     GROUP_PREFIX = ''
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
+    RECRUITMENT_PRE_PROCESS = None
     conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP, setup=True)
     conference.create_submission_stage()
 
@@ -138,6 +139,7 @@ If you would like to change your decision, please follow the link in the previou
         id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Recruitment',
         super = SUPPORT_GROUP + '/-/Recruitment',
         invitees = readers,
+        preprocess=None,
         reply = {
             'forum': forum.id,
             'replyto': forum.id,
@@ -199,6 +201,12 @@ If you would like to change your decision, please follow the link in the previou
         },
         signatures = ['~Super_User1'] ##Temporarily use the super user, until we can get a way to send email to invitees
     )
+
+    # If conference is an API 2 venue, add recruitment preprocess validation
+    if isinstance(conference, openreview.venue.Venue):
+        with open(RECRUITMENT_PRE_PROCESS, 'r') as pre:
+            pre_process_file_content = pre.read()
+            recruitment_invitation.preprocess = pre_process_file_content
 
     remind_recruitment_invitation = openreview.Invitation(
         id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Remind_Recruitment',
