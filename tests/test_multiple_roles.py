@@ -99,11 +99,11 @@ class TestMultipleRoles():
 
         # Test Reviewer Recruitment
         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
-        recruitment_div = selenium.find_element_by_id('note_{}'.format(request_form.id))
+        recruitment_div = selenium.find_element(By.ID, 'note_{}'.format(request_form.id))
         assert recruitment_div
-        reply_row = recruitment_div.find_element_by_class_name('reply_row')
+        reply_row = recruitment_div.find_element(By.CLASS_NAME, 'reply_row')
         assert reply_row
-        buttons = reply_row.find_elements_by_class_name('btn-xs')
+        buttons = reply_row.find_elements(By.CLASS_NAME, 'btn-xs')
         assert [btn for btn in buttons if btn.text == 'Recruitment']
 
         reviewer_details = '''reviewer1@lifelong-ml.cc, Reviewer UMass\nreviewer2@lifelong-ml.cc, reviewer3@lifelong-ml.cc, Reviewer UMass\nreviewer4@lifelong-ml.cc'''
