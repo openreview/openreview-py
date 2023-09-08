@@ -48,6 +48,7 @@ return {
     recommendationName: domain.content.meta_review_recommendation?.value || 'recommendation',
     shortPhrase: domain.content.subtitle?.value,
     enableQuerySearch: true,
+    emailReplyTo: domain.content.contact?.value,
     edgeBrowserDeployedUrl: `/edges/browse?start=${startParam}&traverse=${traverseParam}&edit=${editParam}&browse=${browseInvitations.join(';')}${otherParams}`
   }
 }
