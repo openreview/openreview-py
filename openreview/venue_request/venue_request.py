@@ -1068,7 +1068,7 @@ class VenueRequest():
         self.deploy_process = os.path.join(os.path.dirname(__file__), 'process/deployProcess.py')
         self.recruitment_process = os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py')
         self.remind_recruitment_process = os.path.join(os.path.dirname(__file__), 'process/remindRecruitmentProcess.py')
-        self.recruitment_pre_process = os.path.join(os.path.dirname(__file__), 'process/recruitment_pre_process.js')
+        # self.recruitment_pre_process = os.path.join(os.path.dirname(__file__), 'process/recruitment_pre_process.js')
         self.matching_process = os.path.join(os.path.dirname(__file__), 'process/matchingProcess.py')
         self.matching_pre_process = os.path.join(os.path.dirname(__file__), 'process/matching_pre_process.py')
         self.stage_pre_process = os.path.join(os.path.dirname(__file__), 'process/stage_pre_process.py')
@@ -1537,7 +1537,6 @@ class VenueRequest():
         with open(self.deploy_process, 'r') as f:
             file_content = f.read()
             file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
-            file_content = file_content.replace("RECRUITMENT_PRE_PROCESS = None", "RECRUITMENT_PRE_PROCESS = '" + self.recruitment_pre_process + "'")
 
             self.deploy_super_invitation = self.client.post_invitation(openreview.Invitation(
                 id=self.support_group.id + '/-/Deploy',
