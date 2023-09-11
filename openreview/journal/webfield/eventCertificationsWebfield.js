@@ -1,18 +1,21 @@
 // Webfield component
 const tabs = []
-tabs.push({
-  name: 'Accepted Papers',
-  query: {
-    'content.venueid': domain.id,
-    details: 'replyCount,presentation',
-    sort: 'pdate:desc'    
-  },
-  options: {
-    postQuery: {
-      'content.event_certifications': args.event
+
+if (args.event) {
+  tabs.push({
+    name: 'Accepted Papers',
+    query: {
+      'content.venueid': domain.id,
+      details: 'replyCount,presentation',
+      sort: 'pdate:desc'    
+    },
+    options: {
+      postQuery: {
+        'content.event_certifications': args.event
+      }
     }
-  }
-})
+  })
+}
 
 return {
   component: 'VenueHomepage',
