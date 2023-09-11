@@ -29,7 +29,7 @@ def process(client, invitation):
                         year=str(datetime.datetime.utcnow().year),
                         url_forum=submission.forum,
                         paper_status='under review',
-                        anonymous='readers' in submission.content['authors']
+                        anonymous='readers' in submission.content['authors'] or 'readers' in invitation.edit.get('note', {}).get('content', {}).get('authors', {})
                     )
                 }
             }
