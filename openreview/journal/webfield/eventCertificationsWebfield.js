@@ -6,6 +6,9 @@ tabs.push({
     'content.venueid': domain.id,
     details: 'replyCount,presentation',
     sort: 'pdate:desc'    
+  },
+  postQuery: {
+    'content.event_certification': args.event
   }
 })
 
@@ -15,9 +18,9 @@ return {
   properties: {
     header: {
       title: domain.content.title.value,
-      subtitle: `TODO: event certification ${utils.prettyId(args.event)}`
+      subtitle: `Event certification ${utils.prettyId(args.event)}`
     },
-    parentGroupId: domain.parent,
+    parentGroupId: entity.parent,
     apiVersion: 2,
     tabs: tabs
   }
