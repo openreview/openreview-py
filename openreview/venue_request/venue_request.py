@@ -1068,7 +1068,6 @@ class VenueRequest():
         self.deploy_process = os.path.join(os.path.dirname(__file__), 'process/deployProcess.py')
         self.recruitment_process = os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py')
         self.remind_recruitment_process = os.path.join(os.path.dirname(__file__), 'process/remindRecruitmentProcess.py')
-        # self.recruitment_pre_process = os.path.join(os.path.dirname(__file__), 'process/recruitment_pre_process.js')
         self.matching_process = os.path.join(os.path.dirname(__file__), 'process/matchingProcess.py')
         self.matching_pre_process = os.path.join(os.path.dirname(__file__), 'process/matching_pre_process.py')
         self.stage_pre_process = os.path.join(os.path.dirname(__file__), 'process/stage_pre_process.py')

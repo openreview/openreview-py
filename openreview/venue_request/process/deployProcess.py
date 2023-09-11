@@ -174,7 +174,6 @@ If you would like to change your decision, please follow the link in the previou
         id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Recruitment',
         super = SUPPORT_GROUP + '/-/Recruitment',
         invitees = readers,
-        preprocess=None,
         reply = {
             'forum': forum.id,
             'replyto': forum.id,
