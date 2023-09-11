@@ -30,24 +30,17 @@ tabs.push({
     'content.venueid': domain.id,
     details: 'replyCount,presentation',
     sort: 'pdate:desc'    
-  },
-  options: {
-    hideWhenEmpty: true
   }
 })
 
-tabs.push({
-  name: 'Accepted Papers with Video',
-  query: {
-    invitation: submissionInvitationId,
-    'content.venueid': domain.id,
-    details: 'replyCount,presentation',
-    sort: 'pdate:desc'    
-  },
-  options: {
-    hideWhenEmpty: true
-  }
-})
+if (domain.content.videos_url?.value) {
+  tabs.push({
+    name: 'Accepted Papers with Video',
+    links: [
+      { name: `${domain.id} Infinite Conference`, url: domain.content.videos_url.value }
+    ]
+  })
+}
 
 tabs.push({
   name: 'Under Review Submissions',
@@ -56,9 +49,6 @@ tabs.push({
     'content.venueid': [underReviewId, decisionPendingId].join(','),
     details: 'replyCount,presentation',
     sort: 'mdate:desc'    
-  },
-  options: {
-    hideWhenEmpty: true
   }
 })
 
@@ -68,9 +58,6 @@ tabs.push({
     invitation: submissionInvitationId,
     details: 'replyCount,presentation',
     sort: 'mdate:desc'    
-  },
-  options: {
-    hideWhenEmpty: true
   }
 })
 
@@ -83,9 +70,6 @@ certifications.forEach(function(certification, index) {
       'content.certifications': certification,      
       details: 'replyCount,presentation',
       sort: 'pdate:desc'    
-    },
-    options: {
-      hideWhenEmpty: true
     }
   })
 })

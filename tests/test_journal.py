@@ -107,7 +107,8 @@ class TestJournal():
                                 'evaluation_criteria': 'https://jmlr.org/tmlr/editorial-policies.html#evaluation',
                                 'reviewer_guide': 'https://jmlr.org/tmlr/reviewer-guide.html',
                                 'editorial_policies': 'https://jmlr.org/tmlr/editorial-policies.html',
-                                'faq': 'https://jmlr.org/tmlr/contact.html'                     
+                                'faq': 'https://jmlr.org/tmlr/contact.html',
+                                'videos': 'https://tmlr.infinite-conf.org'                
                             },
                             'editors_email': 'tmlr-editors@jmlr.org',
                             'skip_ac_recommendation': False,
