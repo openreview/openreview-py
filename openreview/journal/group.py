@@ -143,7 +143,7 @@ class GroupBuilder(object):
 - {venue_id} employs a rolling submission process, shortened review period, flexible timelines, and variable manuscript length, to enable deep and sustained interactions among authors, reviewers, editors and readers.
 - {venue_id} does not accept submissions that have any overlap with previously published work.
 
-For more information on {venue_id}, visit [{self.journal.contact_info}](http://{self.journal.contact_info})
+For more information on {venue_id}, visit [{self.journal.website}](http://{self.journal.website})
 '''
         if self.journal.has_expert_reviewers():
             instructions += f'''
