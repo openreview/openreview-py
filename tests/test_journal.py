@@ -2052,7 +2052,7 @@ The TMLR Editors-in-Chief
 
 We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission "1: Paper title UPDATED" is accepted as is.
 
-To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={note_id_1}
+To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={note_id_1}. Please submit the final version of your paper within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}).
 
 In addition to your final manuscript, we strongly encourage you to submit a link to 1) code associated with your and 2) a short video presentation of your work. You can provide these links to the corresponding entries on the revision page.
 
@@ -3267,7 +3267,7 @@ The TMLR Editors-in-Chief
 
 We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission "5: Paper title 5" is accepted with minor revision.
 
-To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={note_id_5}
+To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={note_id_5}. Please submit the final version of your paper, including the minor revisions requested by the Action Editor, within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}).
 
 The Action Editor responsible for your submission will have provided a description of the revision expected for accepting your final manuscript.
 
