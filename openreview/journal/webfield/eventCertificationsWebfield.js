@@ -7,8 +7,10 @@ tabs.push({
     details: 'replyCount,presentation',
     sort: 'pdate:desc'    
   },
-  postQuery: {
-    'content.event_certification': args.event
+  options: {
+    postQuery: {
+      'content.event_certifications': args.event
+    }
   }
 })
 
