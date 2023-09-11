@@ -816,8 +816,7 @@ note={Withdrawn}
             weight=1
         ))
 
-         # wait for process function delay (5 seconds) and check email has been sent
-        time.sleep(6)
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
         messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Assignment to review new TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi David Belanger,
@@ -844,7 +843,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
         paper_assignment_edge = joelle_client.post_edge(paper_assignment_edge)
 
         # check that David Belanger has been removed from reviewer group
-        time.sleep(6)
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id, count=2)
         note = journal.client.get_note(note_id_1)
         group = journal.client.get_group('TMLR/Paper1/Reviewers')
         assert len(group.members) == 0

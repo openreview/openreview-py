@@ -60,8 +60,8 @@ class TestVenueWithTracks():
         helpers.create_user('ac18@webconf.com', 'AC', 'WebChairEightTeen')        
         helpers.create_user('ac19@webconf.com', 'AC', 'WebChairNineTeen')        
         helpers.create_user('ac20@webconf.com', 'AC', 'WebChairTwenty')        
-        helpers.create_user('ac21@webconf.com', 'AC', 'WebChairTwentyOne')        
-        helpers.create_user('ac22@webconf.com', 'AC', 'WebChairTwentyTwo')
+        helpers.create_user('ac21@gmail.com', 'AC', 'WebChairTwentyOne')        
+        helpers.create_user('ac22@gmail.com', 'AC', 'WebChairTwentyTwo')
 
         helpers.create_user('reviewer1@webconf.com', 'Reviewer', 'WebChairOne')
         helpers.create_user('reviewer2@webconf.com', 'Reviewer', 'WebChairTwo')
@@ -83,8 +83,8 @@ class TestVenueWithTracks():
         helpers.create_user('reviewer18@webconf.com', 'Reviewer', 'WebChairEightTeen')        
         helpers.create_user('reviewer19@webconf.com', 'Reviewer', 'WebChairNineTeen')        
         helpers.create_user('reviewer20@webconf.com', 'Reviewer', 'WebChairTwenty')        
-        helpers.create_user('reviewer21@webconf.com', 'Reviewer', 'WebChairTwentyOne')        
-        helpers.create_user('reviewer22@webconf.com', 'Reviewer', 'WebChairTwentyTwo')                
+        helpers.create_user('reviewer21@gmail.com', 'Reviewer', 'WebChairTwentyOne')        
+        helpers.create_user('reviewer22@gmail.com', 'Reviewer', 'WebChairTwentyTwo')                
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
@@ -264,21 +264,6 @@ class TestVenueWithTracks():
         submission_invitation = openreview_client.get_invitation('ACM.org/TheWebConf/2024/Conference/-/Submission')
         assert submission_invitation
         assert 'track' in submission_invitation.edit['note']['content']
-
-        # openreview_client.add_members_to_group('ACM.org/TheWebConf/2024/Conference/Senior_Area_Chairs', [
-        #     'sac1@webconf.com',
-        #     'sac2@webconf.com',
-        #     'sac3@webconf.com',
-        #     'sac4@webconf.com',
-        #     'sac5@webconf.com',
-        #     'sac6@webconf.com',
-        #     'sac7@webconf.com',
-        #     'sac8@webconf.com',
-        #     'sac9@webconf.com',
-        #     'sac10@webconf.com',
-        #     'sac11@gmail.com',
-        #     'sac12@webconf.com'
-        # ])
 
         invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/Paper_Matching_Setup')
         assert 'ACM.org/TheWebConf/2024/Conference/COI_Senior_Area_Chairs' in invitation.reply['content']['matching_group']['value-dropdown']
@@ -513,8 +498,8 @@ class TestVenueWithTracks():
 
         for ac_role in ac_roles:
 
-            reviewer_details = f'''ac{ac_counter}@webconf.com, Area ChairOne
-ac{ac_counter + 1}@webconf.com, Area ChairTwo
+            reviewer_details = f'''ac{ac_counter}@{'gmail' if ac_counter == 21 else 'webconf'}.com, Area ChairOne
+ac{ac_counter + 1}@{'gmail' if ac_counter == 21 else 'webconf'}.com, Area ChairTwo
 '''
             ac_counter += 2
             pc_client.post_note(openreview.Note(
@@ -665,6 +650,13 @@ ac{ac_counter + 1}@webconf.com, Area ChairTwo
             assert assignment_configuration_invitation.edit['note']['content']['paper_invitation']['value']['param']['default'] == 'ACM.org/TheWebConf/2024/Conference/-/Submission&content.venueid=ACM.org/TheWebConf/2024/Conference/Submission&content.track=' + tracks[index]                  
             proposed_assignment_invitation = openreview_client.get_invitation(f'{ac_id}/-/Proposed_Assignment')
             assert proposed_assignment_invitation.edit['head']['param']['withContent'] == { 'track': track }
+            assert proposed_assignment_invitation.readers == ['ACM.org/TheWebConf/2024/Conference', f'ACM.org/TheWebConf/2024/Conference/{ac_role.replace("Area_Chairs", "Senior_Area_Chairs")}', f'ACM.org/TheWebConf/2024/Conference/{ac_role}']
+            assert proposed_assignment_invitation.edit['readers'] == ["ACM.org/TheWebConf/2024/Conference", 'ACM.org/TheWebConf/2024/Conference/Submission${{2/head}/number}/Senior_Area_Chairs', "${2/tail}"]
+            affinity_score_invitation = openreview_client.get_invitation(f'{ac_id}/-/Affinity_Score')
+            assert affinity_score_invitation.edit['head']['param']['withContent'] == { 'track': track }
+            assert affinity_score_invitation.readers == ['ACM.org/TheWebConf/2024/Conference', f'ACM.org/TheWebConf/2024/Conference/{ac_role.replace("Area_Chairs", "Senior_Area_Chairs")}']
+            assert affinity_score_invitation.edit['readers'] == ["ACM.org/TheWebConf/2024/Conference", f'ACM.org/TheWebConf/2024/Conference/{ac_role.replace("Area_Chairs", "Senior_Area_Chairs")}', "${2/tail}"]
+
 
         ## Build proposed assignments
         for submission in submissions:
@@ -673,7 +665,7 @@ ac{ac_counter + 1}@webconf.com, Area ChairTwo
                 index = 10
             ac_role = ac_roles[index]
             ac_id = f'ACM.org/TheWebConf/2024/Conference/{ac_role}'
-            ac_profile = pc_client_v2.get_profile(f'ac{((index * 2) + 1)}@webconf.com')
+            ac_profile = pc_client_v2.get_profile(f'ac{((index * 2) + 1)}@{"gmail" if ((index * 2) + 1) == 21 else "webconf"}.com')
             pc_client_v2.post_edge(
                 openreview.api.Edge(
                     invitation=f'{ac_id}/-/Proposed_Assignment',
@@ -706,6 +698,33 @@ ac{ac_counter + 1}@webconf.com, Area ChairTwo
         assert pc_client_v2.get_group('ACM.org/TheWebConf/2024/Conference/Submission10/Area_Chairs').members == ['~AC_WebChairOne1']
 
 
+        ## Add second AC
+        posted_edge = pc_client_v2.post_edge(
+            openreview.api.Edge(
+                invitation=f'{ac_id}/-/Assignment',
+                signatures=['ACM.org/TheWebConf/2024/Conference'],
+                head=submissions[0].id,
+                tail='~AC_WebChairFive1',
+                weight=1.0
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, posted_edge.id)      
+
+        assert pc_client_v2.get_group('ACM.org/TheWebConf/2024/Conference/Submission1/Area_Chairs').members == ['~AC_WebChairTwentyOne1', '~AC_WebChairFive1']                        
+        assert pc_client_v2.get_group('ACM.org/TheWebConf/2024/Conference/Submission1/Senior_Area_Chairs').members == ['~SAC_WebChairEleven1']
+
+        ## Remove second AC
+        edges = pc_client_v2.get_edges(invitation=f'{ac_id}/-/Assignment', head=submissions[0].id, tail='~AC_WebChairTwentyOne1')
+        edge = edges[0]
+        edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        posted_edge = pc_client_v2.post_edge(edge)
+
+        helpers.await_queue_edit(openreview_client, posted_edge.id)                      
+
+        assert pc_client_v2.get_group('ACM.org/TheWebConf/2024/Conference/Submission1/Area_Chairs').members == ['~AC_WebChairFive1']                        
+        assert pc_client_v2.get_group('ACM.org/TheWebConf/2024/Conference/Submission1/Senior_Area_Chairs').members == ['~SAC_WebChairEleven1']
+
     def test_recruit_reviewers(self, client, openreview_client, helpers, selenium, request_page):
 
         pc_client=openreview.Client(username='pc@webconf.org', password=helpers.strong_password)
@@ -729,8 +748,8 @@ ac{ac_counter + 1}@webconf.com, Area ChairTwo
 
         for reviewer_role in reviewer_roles:
 
-            reviewer_details = f'''reviewer{reviewer_counter}@webconf.com, Reviewer ChairOne
-reviewer{reviewer_counter + 1}@webconf.com, Reviewer ChairTwo
+            reviewer_details = f'''reviewer{reviewer_counter}@{'gmail' if reviewer_counter == 21 else 'webconf'}.com, Reviewer ChairOne
+reviewer{reviewer_counter + 1}@{'gmail' if reviewer_counter == 21 else 'webconf'}.com, Reviewer ChairTwo
 '''
             reviewer_counter += 2
             pc_client.post_note(openreview.Note(
@@ -847,7 +866,7 @@ reviewer{reviewer_counter + 1}@webconf.com, Reviewer ChairTwo
                 index = 10
             reviewer_role = reviewer_roles[index]
             reviewer_id = f'ACM.org/TheWebConf/2024/Conference/{reviewer_role}'
-            reviewer_profile = pc_client_v2.get_profile(f'reviewer{((index * 2) + 1)}@webconf.com')
+            reviewer_profile = pc_client_v2.get_profile(f'reviewer{((index * 2) + 1)}@{"gmail" if ((index * 2) + 1) == 21 else "webconf"}.com')
             pc_client_v2.post_edge(
                 openreview.api.Edge(
                     invitation=f'{reviewer_id}/-/Proposed_Assignment',
@@ -858,7 +877,7 @@ reviewer{reviewer_counter + 1}@webconf.com, Reviewer ChairTwo
                     weight=1.0
                 )
             )
-            reviewer_profile = pc_client_v2.get_profile(f'reviewer{((index * 2) + 2)}@webconf.com')
+            reviewer_profile = pc_client_v2.get_profile(f'reviewer{((index * 2) + 2)}@{"gmail" if ((index * 2) + 2) == 22 else "webconf"}.com')
             pc_client_v2.post_edge(
                 openreview.api.Edge(
                     invitation=f'{reviewer_id}/-/Proposed_Assignment',
@@ -872,8 +891,10 @@ reviewer{reviewer_counter + 1}@webconf.com, Reviewer ChairTwo
 
         venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
 
-        for reviewer_role in reviewer_roles:
-            venue.set_assignments(assignment_title='reviewer-assignment', committee_id=f'ACM.org/TheWebConf/2024/Conference/{reviewer_role}')
+        for index, reviewer_role in enumerate(reviewer_roles):
+            venue.set_assignments(assignment_title='reviewer-assignment', committee_id=f'ACM.org/TheWebConf/2024/Conference/{reviewer_role}', enable_reviewer_reassignment=True)
+            invite_assignment_invitation = openreview_client.get_invitation(f'ACM.org/TheWebConf/2024/Conference/{reviewer_role}/-/Invite_Assignment')
+            assert invite_assignment_invitation.edit['head']['param']['withContent'] == { 'track': tracks[index] }
 
         group = pc_client_v2.get_group('ACM.org/TheWebConf/2024/Conference/Submission1/Reviewers')
         assert len(group.members) == 2
