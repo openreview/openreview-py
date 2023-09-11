@@ -263,7 +263,22 @@ class OpenReviewClient(object):
         response = self.session.get(self.groups_url, params = {'id':id}, headers = self.headers)
         response = self.__handle_response(response)
         g = response.json()['groups'][0]
-        return Group.from_json(g)
+        group = Group.from_json(g)
+
+        if group.anonids:
+            anon_prefix = (group.id[:-1] if group.id.endswith('s') else group.id) + '_'
+            members_by_anonid = { g.id:g.members[0] for g in self.get_groups(prefix=anon_prefix) if g.members }
+            members = []
+            anon_members = []
+            for member in group.members:
+                if member in members_by_anonid:
+                    anon_members.append(member)
+                    members.append(members_by_anonid[member])
+                else:
+                    members.append(member)
+            group.anon_members = anon_members
+            group.members = members
+        return group
 
     def get_invitation(self, id):
         """
@@ -1559,6 +1574,9 @@ class OpenReviewClient(object):
         :return: Contains the message that was sent to each Group
         :rtype: dict
         """
+        if parentGroup:
+            recipients = self.get_group(parentGroup).transform_to_anon_ids(recipients)
+        
         response = self.session.post(self.messages_url, json = {
             'groups': recipients,
             'subject': subject ,
@@ -1649,14 +1667,18 @@ class OpenReviewClient(object):
         :type: Group
         """
         def remove_member(group, members):
-            group = self.get_group(group) if type(group) in string_types else group
+            members_to_remove = list(set(members))
+            group = self.get_group(group if type(group) in string_types else group.id)
             if group.invitations:
+
+                members_to_remove = group.transform_to_anon_ids(members_to_remove)
+
                 self.post_group_edit(invitation = f'{group.domain}/-/Edit', 
                     signatures = group.signatures, 
                     group = Group(
                         id = group.id, 
                         members = {
-                            'remove': list(set(members))
+                            'remove': members_to_remove
                         }
                     ), 
                     readers=group.signatures, 
@@ -2647,6 +2669,7 @@ class Group(object):
         self.anonids = anonids
         self.deanonymizers = deanonymizers
         self.details = details
+        self.anon_members = []
 
     def get_content_value(self, field_name, default_value=None):
         if self.content:
@@ -2811,5 +2834,15 @@ class Group(object):
         :type client: Client
         """
         client.post_group(self)
+
+
+    def transform_to_anon_ids(self, elements):
+        if self.anonids:
+            for index, element in enumerate(elements):
+                if element in self.members and self.anon_members:
+                    elements[index] = self.anon_members[self.members.index(element)]
+                else:
+                    elements[index] = element
+        return elements        
 
 

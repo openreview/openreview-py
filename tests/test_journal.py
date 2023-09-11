@@ -12,6 +12,7 @@ from openreview.api import Note
 from openreview.journal import Journal
 from openreview.journal import JournalRequest
 from openreview import ProfileManagement
+from selenium.webdriver.common.by import By
 
 class TestJournal():
 
@@ -153,9 +154,9 @@ class TestJournal():
             accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
             request_page(selenium, accept_url, alert=True)
 
-            notes = selenium.find_element_by_id("notes")
+            notes = selenium.find_element(By.ID, 'notes')
             assert notes
-            messages = notes.find_elements_by_tag_name("h3")
+            messages = notes.find_elements(By.TAG_NAME, 'h3')
             assert messages
             assert 'Thank you for accepting this invitation from Transactions on Machine Learning Research' == messages[0].text
 
@@ -168,9 +169,9 @@ class TestJournal():
 
         joelle_client = OpenReviewClient(username='joelle@mailseven.com', password=helpers.strong_password)
         request_page(selenium, "http://localhost:3030/group?id=TMLR/Action_Editors", joelle_client.token, wait_for_element='group-container')
-        header = selenium.find_element_by_id('header')
+        header = selenium.find_element(By.ID, 'header')
         assert header
-        titles = header.find_elements_by_tag_name('strong')
+        titles = header.find_elements(By.TAG_NAME, 'strong')
         assert 'Reviewer Assignment Browser:' in titles[0].text
         assert 'Journal Recruitment:' in titles[1].text
         assert 'Reviewer Report:' in titles[2].text
@@ -195,9 +196,9 @@ class TestJournal():
             accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
             request_page(selenium, accept_url, alert=True)
 
-            notes = selenium.find_element_by_id("notes")
+            notes = selenium.find_element(By.ID, 'notes')
             assert notes
-            messages = notes.find_elements_by_tag_name("h3")
+            messages = notes.find_elements(By.TAG_NAME, 'h3')
             assert messages
             assert 'Thank you for accepting this invitation from Transactions on Machine Learning Research' == messages[0].text
 
@@ -805,8 +806,7 @@ note={Withdrawn}
             weight=1
         ))
 
-         # wait for process function delay (5 seconds) and check email has been sent
-        time.sleep(6)
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
         messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Assignment to review new TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi David Belanger,
@@ -833,7 +833,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
         paper_assignment_edge = joelle_client.post_edge(paper_assignment_edge)
 
         # check that David Belanger has been removed from reviewer group
-        time.sleep(6)
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id, count=2)
         note = journal.client.get_note(note_id_1)
         group = journal.client.get_group('TMLR/Paper1/Reviewers')
         assert len(group.members) == 0

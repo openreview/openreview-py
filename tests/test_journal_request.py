@@ -78,9 +78,9 @@ class TestJournalRequest():
         test_client = OpenReviewClient(username='support_role@mail.com', password=helpers.strong_password)
 
         request_page(selenium, 'http://localhost:3030/forum?id=' + request_form['note']['id'], openreview_client.token, by=By.CLASS_NAME, wait_for_element='invitations-container')
-        invitations_container = selenium.find_element_by_class_name('invitations-container')
-        invitation_buttons = invitations_container.find_element_by_class_name('invitation-buttons')
-        buttons = invitation_buttons.find_elements_by_tag_name('button')
+        invitations_container = selenium.find_element(By.CLASS_NAME, 'invitations-container')
+        invitation_buttons = invitations_container.find_element(By.CLASS_NAME, 'invitation-buttons')
+        buttons = invitation_buttons.find_elements(By.TAG_NAME, 'button')
         assert len(buttons) ==  4
         assert [btn for btn in buttons if btn.text == 'Comment']
 
@@ -108,9 +108,9 @@ TJ22 Editors-in-Chief
         test_client = OpenReviewClient(username='support_role@mail.com', password=helpers.strong_password)
 
         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal.request_form_id), test_client.token, by=By.CLASS_NAME, wait_for_element='invitations-container')
-        invitations_container = selenium.find_element_by_class_name('invitations-container')
-        invitation_buttons = invitations_container.find_element_by_class_name('invitation-buttons')
-        buttons = invitation_buttons.find_elements_by_tag_name('button')
+        invitations_container = selenium.find_element(By.CLASS_NAME, 'invitations-container')
+        invitation_buttons = invitations_container.find_element(By.CLASS_NAME, 'invitation-buttons')
+        buttons = invitation_buttons.find_elements(By.TAG_NAME, 'button')
         assert len(buttons) ==  3
 
         assert [btn for btn in buttons if btn.text == 'Reviewer Recruitment']
@@ -231,9 +231,9 @@ TJ22 Editors-in-Chief
         ae_client = OpenReviewClient(username='ae_journal1@mail.com', password=helpers.strong_password)
 
         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal.request_form_id), ae_client.token, by=By.CLASS_NAME, wait_for_element='invitations-container')
-        invitations_container = selenium.find_element_by_class_name('invitations-container')
-        invitation_buttons = invitations_container.find_element_by_class_name('invitation-buttons')
-        buttons = invitation_buttons.find_elements_by_tag_name('button')
+        invitations_container = selenium.find_element(By.CLASS_NAME, 'invitations-container')
+        invitation_buttons = invitations_container.find_element(By.CLASS_NAME, 'invitation-buttons')
+        buttons = invitation_buttons.find_elements(By.TAG_NAME, 'button')
         assert len(buttons) == 1
         assert [btn for btn in buttons if btn.text == 'Reviewer Recruitment by AE']
 
