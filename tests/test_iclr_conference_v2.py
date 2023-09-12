@@ -152,7 +152,8 @@ class TestICLRConference():
 
         ## close the submissions
         now = datetime.datetime.utcnow()
-        due_date = now - datetime.timedelta(minutes=28)
+        abstract_date = now - datetime.timedelta(minutes=28)
+        due_date = now + datetime.timedelta(days=3)        
         pc_client.post_note(openreview.Note(
             content={
                 'title': 'International Conference on Learning Representations',
@@ -162,6 +163,7 @@ class TestICLRConference():
                 'program_chair_emails': ['pc@iclr.cc', 'pc3@iclr.cc'],
                 'contact_email': 'pc@iclr.cc',
                 'Venue Start Date': '2024/07/01',
+                'abstract_registration_deadline': abstract_date.strftime('%Y/%m/%d'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
