@@ -23,12 +23,13 @@ class TestICLRConference():
     def test_create_conference(self, client, openreview_client, helpers, profile_management):
 
         now = datetime.datetime.utcnow()
+        abstract_date = now + datetime.timedelta(days=1)
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note
         pc_client=helpers.create_user('pc@iclr.cc', 'Program', 'ICLRChair')
 
-        sac_client = helpers.create_user('sac1@gmail.com', 'SAC', 'ICLROne')
+        sac_client = helpers.create_user('sac10@gmail.com', 'SAC', 'ICLROne')
         helpers.create_user('sac2@iclr.cc', 'SAC', 'ICLRTwo')
         helpers.create_user('ac1@iclr.cc', 'AC', 'ICLROne')
         helpers.create_user('ac2@iclr.cc', 'AC', 'ICLRTwo')
@@ -59,6 +60,7 @@ class TestICLRConference():
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
                 'Venue Start Date': '2024/07/01',
+                'abstract_registration_deadline': abstract_date.strftime('%Y/%m/%d'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
@@ -90,7 +92,9 @@ class TestICLRConference():
 
         helpers.await_queue()
 
-        assert openreview_client.get_group('ICLR.cc/2024/Conference')
+        venue_group = openreview_client.get_group('ICLR.cc/2024/Conference')
+        assert venue_group
+        assert venue_group.content['date']['value'] == f'Abstract Registration: {abstract_date.strftime("%b %d %Y %I:%M%p")} UTC-0, Submission Deadline: {due_date.strftime("%b %d %Y")} UTC-0'
         assert openreview_client.get_group('ICLR.cc/2024/Conference/Senior_Area_Chairs')
         assert openreview_client.get_group('ICLR.cc/2024/Conference/Area_Chairs')
         assert openreview_client.get_group('ICLR.cc/2024/Conference/Reviewers')
