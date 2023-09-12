@@ -94,7 +94,7 @@ class TestICLRConference():
 
         venue_group = openreview_client.get_group('ICLR.cc/2024/Conference')
         assert venue_group
-        assert venue_group.content['date']['value'] == f'Abstract Registration: {abstract_date.strftime("%b %d %Y")} 12:00AM UTC-0, Submission Deadline: {due_date.strftime("%b %d %Y")} UTC-0'
+        assert venue_group.content['date']['value'] == f'Abstract Registration: {abstract_date.strftime("%b %d %Y")} 12:00AM UTC-0, Submission Deadline: {due_date.strftime("%b %d %Y")} 12:00AM UTC-0'
         assert openreview_client.get_group('ICLR.cc/2024/Conference/Senior_Area_Chairs')
         assert openreview_client.get_group('ICLR.cc/2024/Conference/Area_Chairs')
         assert openreview_client.get_group('ICLR.cc/2024/Conference/Reviewers')
