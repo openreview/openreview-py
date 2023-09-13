@@ -14,6 +14,42 @@ def process(client, note, invitation):
 
     readers = [conference.get_program_chairs_id(), SUPPORT_GROUP]
 
+    recruitment_pre_preprocess = '''function(){
+    // V1 invitation
+
+    const fieldTokens = {
+        "invitation_email_subject": ['invitee_role'],
+        "invitation_email_content": ['fullname', 'invitee_role', 'invitation_url', 'contact_info'],
+        "accepted_email_template": ['fullname', 'reviewer_name']
+    };
+
+    for (const [field, tokens] of Object.entries(fieldTokens)) {
+        if (field in note.content) {
+            // Find all words wrapped in double curly braces. If it's not a token, raise an error.
+            let regex = /{{([^{}]+)}}/g;
+            let parenthesizedToken = '';
+            let match;
+            while ((match = regex.exec(note.content[field])) !== null) {
+                parenthesizedToken = match[1];
+                if (!tokens.includes(parenthesizedToken)) {
+                    done(`Invalid token: {{${parenthesizedToken}}} in ${field} is not supported. Please use the following tokens in this field: ${tokens.toString()}.`);
+                }
+            }
+
+            // Check for tokens that don't have double curly braces, raise an error.
+            for (const token of tokens) {
+                regex = new RegExp(`(?<!{)[{]?${token}[}]+|[{]+${token}[}]?(?!})`, 'g');
+                while ((match = regex.exec(note.content[field])) !== null) {
+                    parenthesizedToken = match[0];
+                    done(`Invalid token: ${parenthesizedToken} in ${field}. Tokens must be wrapped in double curly braces.`);
+                }
+            }
+        }
+    }
+    done()
+}
+'''
+
     comment_invitation = client.post_invitation(openreview.Invitation(
         id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Comment',
         super=SUPPORT_GROUP + '/-/Comment',
@@ -257,6 +293,10 @@ If you would like to change your decision, please follow the link in the previou
         signatures = ['~Super_User1'] ##Temporarily use the super user, until we can get a way to send email to invitees
     )
 
+    if isinstance(conference, openreview.venue.Venue):
+       recruitment_invitation.preprocess = recruitment_pre_preprocess
+       remind_recruitment_invitation.preprocess = recruitment_pre_preprocess
+    
     if len(conference.get_roles()) > 1:
         recruitment_invitation.reply['content']['allow_role_overlap'] = {
             'description': 'Do you want to allow the overlap of users in different roles? Selecting "Yes" would allow a user to be invited to serve as both a Reviewer and Area Chair.',
@@ -365,8 +405,8 @@ If you would like to change your decision, please follow the link in the previou
     # revision_stage_invitation
     submission_revision_readers = []
     submission_revision_readers.extend(readers)
-    if 'publication_chair_email' in forum.content:
-        submission_revision_readers.append(forum.content['publication_chair_email'])
+    if forum.content.get('api_version') == '2' and 'publication_chairs_emails' in forum.content and forum.content['publication_chairs_emails']:
+        submission_revision_readers.append(conference.get_publication_chairs_id())
     client.post_invitation(openreview.Invitation(
         id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Submission_Revision_Stage',
         super=SUPPORT_GROUP + '/-/Submission_Revision_Stage',

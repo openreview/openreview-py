@@ -466,7 +466,7 @@ submission_v2 = {
         'value': {
             'param': {
                 'type': 'string[]',
-                'regex': '(^$)|[^;,\\n]+(,[^,\\n]+)*'
+                'regex': '.+'
             }
         }
     },

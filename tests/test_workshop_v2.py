@@ -300,7 +300,7 @@ class TestWorkshopV2():
         invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
         client.post_invitation(invitation)
 
-        # add publication chair
+        # add publication chairs
         pc_client.post_note(openreview.Note(
             content={
                 'title': 'PRL Workshop Series Bridging the Gap Between AI Planning and Reinforcement Learning',
@@ -308,7 +308,7 @@ class TestWorkshopV2():
                 'Abbreviated Venue Name': 'PRL ICAPS 2023',
                 'Official Website URL': 'https://prl-theworkshop.github.io/',
                 'program_chair_emails': ['pc@icaps.cc'],
-                'publication_chair_email': 'publicationchair@mail.com',
+                'publication_chairs_emails': ['publicationchair@mail.com', 'publicationchair2@mail.com'],
                 'contact_email': 'pc@icaps.cc',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': request_form.content['Submission Deadline'],
@@ -330,11 +330,12 @@ class TestWorkshopV2():
 
         helpers.await_queue()
 
-        group = openreview_client.get_group('PRL/2023/ICAPS/Publication_Chair')
+        group = openreview_client.get_group('PRL/2023/ICAPS/Publication_Chairs')
         assert group
         assert 'publicationchair@mail.com' in group.members
+        assert 'publicationchair2@mail.com' in group.members
         submission_revision_inv = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Submission_Revision_Stage')
-        assert 'publicationchair@mail.com' in submission_revision_inv.invitees
+        assert 'PRL/2023/ICAPS/Publication_Chairs' in submission_revision_inv.invitees
 
         #Post a post decision note, release accepted papers to publication chair
         now = datetime.datetime.utcnow()
@@ -386,7 +387,7 @@ Best,
                 submissions[idx].readers = [
                 'PRL/2023/ICAPS',
                 'PRL/2023/ICAPS/Reviewers',
-                'PRL/2023/ICAPS/Publication_Chair',
+                'PRL/2023/ICAPS/Publication_Chairs',
                 f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors'
             ]
             else:
@@ -440,7 +441,7 @@ Best,
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Submission_Revision_Stage'.format(request_form.number),
-            readers=['{}/Program_Chairs'.format('PRL/2023/ICAPS'), 'openreview.net/Support', 'publicationchair@mail.com'],
+            readers=['{}/Program_Chairs'.format('PRL/2023/ICAPS'), 'openreview.net/Support', '{}/Publication_Chairs'.format('PRL/2023/ICAPS')],
             referent=request_form.forum,
             replyto=request_form.forum,
             signatures=['~Publication_ICAPSChair1'],
@@ -456,9 +457,9 @@ Best,
         invitations = openreview_client.get_invitations(invitation='PRL/2023/ICAPS/-/Camera_Ready_Revision')
         assert len(invitations) == 6
 
-        request_page(selenium, 'http://localhost:3030/group?id=PRL/2023/ICAPS/Publication_Chair', publication_chair_client.token, wait_for_element='header')
-        notes_panel = selenium.find_element_by_id('notes')
+        request_page(selenium, 'http://localhost:3030/group?id=PRL/2023/ICAPS/Publication_Chairs', publication_chair_client.token, wait_for_element='header')
+        notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel
-        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.LINK_TEXT, "Accepted Submissions")
