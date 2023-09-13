@@ -318,7 +318,7 @@ class WebfieldBuilder(object):
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             return self.__update_invitation(invitation, content)
 
-    def set_recruit_page(self, conference, invitation, reduced_load_id=None, allow_accept_with_reduced_load=False):
+    def set_recruit_page(self, conference, invitation, reduced_load_id=None):
 
         ## recruitment webfield
         template_name = 'recruitResponseWebfield.js' if conference.use_recruitment_template else 'legacyRecruitResponseWebfield.js'
@@ -334,8 +334,6 @@ class WebfieldBuilder(object):
                 content = content.replace("var REDUCED_LOAD_INVITATION_ID = '';", "var REDUCED_LOAD_INVITATION_ID = '" + conference.id + '/-/no_name' + "';")
             if 'reduced_load' in invitation.reply['content']:
                 content = content.replace("var USE_REDUCED_LOAD = false;", "var USE_REDUCED_LOAD = true;")
-            if allow_accept_with_reduced_load:
-                content = content.replace("var ALLOW_ACCEPT_WITH_REDUCED_LOAD = false;", "var ALLOW_ACCEPT_WITH_REDUCED_LOAD = true;")
             return self.__update_invitation(invitation, content)
 
     def set_paper_recruitment_page(self, conference, invitation):

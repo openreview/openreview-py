@@ -2,7 +2,6 @@
 var HEADER = {};
 var USE_REDUCED_LOAD = false;
 var ROLE_NAME = '';
-var ALLOW_ACCEPT_WITH_REDUCED_LOAD = false;
 
 return {
   component: 'RecruitmentForm',
@@ -29,7 +28,6 @@ return {
     reducedLoadMessage: USE_REDUCED_LOAD && `
 If you chose to decline the invitation because the paper load is too high, you can request to reduce your load.
 You can request a reduced reviewer load below:
-`,
-    allowAcceptWithReducedLoad: ALLOW_ACCEPT_WITH_REDUCED_LOAD
+`
   }
 }
