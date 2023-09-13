@@ -507,6 +507,8 @@ class GroupBuilder(object):
                             signatories=[venue_id, committee_invited_id],
                             members=[]
                             ))
+            
+        self.venue.invitation_builder.set_group_recruitment_invitations(committee_name)
 
     def set_external_reviewer_recruitment_groups(self, name='External_Reviewers', create_paper_groups=False):
 

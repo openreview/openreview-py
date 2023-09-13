@@ -3075,3 +3075,75 @@ class InvitationBuilder(object):
                 invitation.edit['invitation']['expdate'] = tools.datetime_millis(sac_ethics_flag_duedate)
 
             self.save_invitation(invitation, replacement=True)
+
+    def set_group_recruitment_invitations(self, committee_name):
+
+        venue_id = self.venue_id
+        venue = self.venue
+
+        invitation = Invitation(id=venue.get_group_recruitment_id(committee_name),
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            process=self.get_process_content('process/group_recruitment.py'),
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'group': {
+                    'id': venue.get_committee_id_invited(committee_name),
+                    'members': {
+                        'param': {
+                            'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                            'change': 'append'
+                        }
+                    }
+                }
+            })
+        
+        self.save_invitation(invitation, replacement=False)
+
+        invitation = Invitation(id=venue.get_committee_id_invited(committee_name)+'/-/Edit',
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'group': {
+                    'id': venue.get_committee_id_invited(committee_name),
+                    'content': {
+                        'reduced_load': {
+                            'value': {
+                                'param': {
+                                    'type': 'integer[]',
+                                    'optional': True
+                                }
+                            }
+                        },
+                        'recruitment_template': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                    'optional': True
+                                }
+                            }
+                        },
+                        'allow_overlap': {
+                            'value': {
+                                'param': {
+                                    'type': 'boolean',
+                                    'enum': [True, False]
+                                }
+                            }
+                        }
+                    }
+                }
+            })
+        
+        self.save_invitation(invitation, replacement=False)

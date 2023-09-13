@@ -292,6 +292,9 @@ class Venue(object):
 
     def get_desk_rejected_id(self):
         return self.get_invitation_id(f'Desk_Rejected_{self.submission_stage.name}')
+    
+    def get_group_recruitment_id(self, committee_name):
+        return self.get_invitation_id(name='Recruitment', prefix=self.get_committee_id_invited(committee_name))
 
     def get_participants(self, number=None, with_program_chairs=False, with_authors=False):
         committee = []
