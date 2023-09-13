@@ -378,3 +378,10 @@ class GroupBuilder(object):
                 signatures=[venue_id],
                 signatories=[],
                 members=[]))
+            
+
+    def set_impersonators(self, impersonators):
+        return self.post_group(openreview.api.Group(
+            id = self.venue_id,
+            impersonators = impersonators
+        ))

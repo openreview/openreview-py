@@ -365,6 +365,7 @@ def get_submission_stage(request_forum, venue):
             submission_second_due_date = datetime.datetime.strptime(submission_second_due_date, '%Y/%m/%d %H:%M')
         except ValueError:
             submission_second_due_date = datetime.datetime.strptime(submission_second_due_date, '%Y/%m/%d')
+        submission_deadline_str = submission_second_due_date.strftime('%b %d %Y %I:%M%p') + ' UTC-0'
         submission_due_date = request_forum.content.get('abstract_registration_deadline', '').strip()
         if submission_due_date:
             try:
@@ -375,7 +376,6 @@ def get_submission_stage(request_forum, venue):
         else:
             submission_due_date = submission_second_due_date
             submission_second_due_date = None
-        submission_deadline_str = submission_due_date.strftime('%b %d %Y') + ' UTC-0'
     else:
         submission_second_due_date = submission_due_date = None
 

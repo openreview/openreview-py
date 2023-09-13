@@ -216,13 +216,12 @@ class Venue(object):
             return name[:-1] if name.endswith('s') else name
         return self.reviewers_name
     
+    def get_anon_committee_name(self, name):
+        rev_name = name[:-1] if name.endswith('s') else name
+        return rev_name + '_'         
+    
     def get_anon_reviewers_name(self, pretty=True):
-        rev_name = self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
-        return rev_name + '_'    
-
-    def get_anon_reviewers_name(self, pretty=True):
-        rev_name = self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
-        return rev_name + '_'
+        return self.get_anon_committee_name(self.reviewers_name)
 
     def get_ethics_reviewers_name(self, pretty=True):
         if pretty:
@@ -231,8 +230,7 @@ class Venue(object):
         return self.ethics_reviewers_name
 
     def anon_ethics_reviewers_name(self, pretty=True):
-        rev_name = self.ethics_reviewers_name[:-1] if self.ethics_reviewers_name.endswith('s') else self.ethics_reviewers_name
-        return rev_name + '_'
+        return self.get_anon_committee_name(self.ethics_reviewers_name)
 
     def get_area_chairs_name(self, pretty=True):
         if pretty:
@@ -241,8 +239,7 @@ class Venue(object):
         return self.area_chairs_name
 
     def get_anon_area_chairs_name(self, pretty=True):
-        rev_name = self.area_chairs_name[:-1] if self.area_chairs_name.endswith('s') else self.area_chairs_name
-        return rev_name + '_' 
+        return self.get_anon_committee_name(self.area_chairs_name)
 
     def get_reviewers_id(self, number = None, anon=False, submitted=False):
         rev_name = self.get_anon_reviewers_name()
@@ -391,6 +388,9 @@ class Venue(object):
 
         if self.use_publication_chairs:
             self.group_builder.create_publication_chairs_group(publication_chairs_ids)
+
+    def set_impersonators(self, impersonators):
+        self.group_builder.set_impersonators(impersonators)
 
     def recruit_reviewers(self,
         title,
