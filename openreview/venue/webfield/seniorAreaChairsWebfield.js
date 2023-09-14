@@ -49,6 +49,7 @@ return {
     shortPhrase: domain.content.subtitle?.value,
     enableQuerySearch: true,
     emailReplyTo: domain.content.contact?.value,
-    edgeBrowserDeployedUrl: `/edges/browse?start=${startParam}&traverse=${traverseParam}&edit=${editParam}&browse=${browseInvitations.join(';')}${otherParams}`
+    edgeBrowserDeployedUrl: `/edges/browse?start=${startParam}&traverse=${traverseParam}&edit=${editParam}&browse=${browseInvitations.join(';')}${otherParams}`,
+    filterFunction: entity.content?.track?.value && `return note.content?.track?.value==="${entity.content?.track?.value}"`
   }
 }
