@@ -806,7 +806,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'type': 'string',
                                     'maxLength': 200000,
                                     'input': 'textarea',
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             }
                         }                                                
@@ -907,7 +908,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'type': 'file',
                                     'extensions': ['zip', 'pdf'],
                                     'maxSize': 100,
-                                    "optional": True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             },
                             "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
@@ -919,7 +921,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                 'param': {
                                     'type': "string",
                                     'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             },
                             'description': f'If a version of this submission was previously rejected by {short_name}, give the OpenReview link to the original {short_name} submission (which must still be anonymous) and describe the changes below.',
@@ -932,6 +935,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'maxLength': 5000,
                                     'input': 'textarea',
                                     'optional': True,
+                                    'deletable': True,
                                     'markdown': True
                                 }
                             },
@@ -1069,6 +1073,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'label': {
                     'param': {
                         'optional': True,
+                        'deletable': True,
                         'minLength': 1
                     }
                 }
@@ -1130,6 +1135,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'label': {
                     'param': {
                         'optional': True,
+                        'deletable': True,
                         'minLength': 1
                     }
                 }
@@ -1190,6 +1196,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'label': {
                     'param': {
                         'optional': True,
+                        'deletable': True,
                         'minLength': 1
                     }
                 }
@@ -1252,6 +1259,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'label': {
                     'param': {
                         'optional': True,
+                        'deletable': True,
                         'minLength': 1
                     }
                 }
@@ -1314,6 +1322,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'label': {
                     'param': {
                         'optional': True,
+                        'deletable': True,
                         'minLength': 1
                     }
                 }
@@ -1381,6 +1390,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'label': {
                     'param': {
                         'optional': True,
+                        'deletable': True,
                         'minLength': 1
                     }
                 }
@@ -1441,6 +1451,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'label': {
                     'param': {
                         'optional': True,
+                        'deletable': True,
                         'minLength': 1
                     }
                 }
@@ -1751,6 +1762,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'label': {
                     'param': {
                         'optional': True,
+                        'deletable': True,
                         'minLength': 1
                     }
                 }
@@ -1812,6 +1824,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'label': {
                     'param': {
                         'optional': True,
+                        'deletable': True,
                         'minLength': 1
                     }
                 }
@@ -1879,6 +1892,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'label': {
                     'param': {
                         'optional': True,
+                        'deletable': True,
                         'minLength': 1
                     }
                 }
@@ -1951,6 +1965,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'label': {
                     'param': {
                         'optional': True,
+                        'deletable': True,
                         'minLength': 1
                     }
                 }
@@ -2228,6 +2243,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'maxLength': 200000,
                                     'input': 'textarea',
                                     'optional': True,
+                                    'deletable': True,
                                     'markdown': True
                                 }
                             }
@@ -2336,6 +2352,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'maxLength': 200000,
                                     'input': 'textarea',
                                     'optional': True,
+                                    'deletable': True,
                                     'markdown': True
                                 }
                             }
@@ -2432,6 +2449,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'maxLength': 200000,
                                     'input': 'textarea',
                                     'optional': True,
+                                    'deletable': True,
                                     'markdown': True
                                 }
                             }
@@ -2505,6 +2523,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'maxLength': 200000,
                                     'input': 'textarea',
                                     'optional': True,
+                                    'deletable': True,
                                     'markdown': True
                                 }
                             }
@@ -3090,6 +3109,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'type': 'string[]',
                         'enum': certification_options,
                         'optional': True,
+                        'deletable': True,
                         'input': 'select'
                     }
                 }
@@ -3103,7 +3123,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': {
                         'fieldName': f'Authors that are also {self.journal.short_name} Expert Reviewers',
                         'type': 'string[]',
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 }
             }                        
@@ -3686,6 +3707,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'maxLength': 200000,
                                     'input': 'textarea',
                                     'optional': True,
+                                    'deletable': True,
                                     'markdown': True
                                 }
                             }
@@ -3704,6 +3726,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'type': 'string[]',
                         'enum': self.journal.get_certifications(),
                         'optional': True,
+                        'deletable': True,
                         'input': 'checkbox'
                     }
                 }
@@ -3814,6 +3837,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'maxLength': 200000,
                                     'input': 'textarea',
                                     'optional': True,
+                                    'deletable': True,
                                     'markdown': True
                                 }
                             }
@@ -3934,6 +3958,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'maxLength': 200000,
                                     'input': 'textarea',
                                     'optional': True,
+                                    'deletable': True,
                                     'markdown': True
                                 }
                             }
@@ -4028,7 +4053,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'type': "string",
                                     'maxLength': 5000,
                                     'input': 'textarea',
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             },
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
@@ -4063,7 +4089,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                 'param': {
                                     'type': "string",
                                     'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             },
                             'description': f'If a version of this submission was previously rejected by {short_name}, give the OpenReview link to the original {short_name} submission (which must still be anonymous) and describe the changes below.',
@@ -4076,6 +4103,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'maxLength': 5000,
                                     'input': 'textarea',
                                     'optional': True,
+                                    'deletable': True,
                                     'markdown': True
                                 }
                             },
@@ -4247,7 +4275,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'type': 'string',
                                     'maxLength': 500,
                                     'input': 'text',
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True,
                                 }
                             }
                         },
@@ -4335,7 +4364,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'type': 'string',
                                     'maxLength': 500,
                                     'input': 'text',
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True,
                                 }
                             }
                         },
@@ -4395,7 +4425,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'type': 'string',
                                     'maxLength': 500,
                                     'input': 'text',
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             },
                             'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), '${5/signatures}']
@@ -4635,7 +4666,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                         'The authors may consider submitting a major revision at a later time.'
                                     ],
                                     'input': 'checkbox',
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             }
                         }
@@ -4656,6 +4688,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'type': 'string[]',
                         'enum': self.journal.get_certifications(),
                         'optional': True,
+                        'deletable': True,
                         'input': 'checkbox'
                     }
                 }
@@ -4758,6 +4791,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'maxLength': 200000,
                                     'input': 'textarea',
                                     'optional': True,
+                                    'deletable': True,
                                     'markdown': True
                                 }
                             }
@@ -5133,7 +5167,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'type': 'file',
                                     'extensions': ['zip', 'pdf'],
                                     'maxSize': 100,
-                                    "optional": True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             },
                             "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
@@ -5145,7 +5180,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                 'param': {
                                     'type': 'string',
                                     'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             },
                             'description': f'If a version of this submission was previously rejected by {short_name}, give the OpenReview link to the original {short_name} submission (which must still be anonymous) and describe the changes below.',
@@ -5158,6 +5194,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'maxLength': 5000,
                                     'input': 'textarea',
                                     'optional': True,
+                                    'deletable': True,
                                     'markdown': True
 
                                 }
@@ -5196,7 +5233,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                 'param': {
                                     'type': 'string',
                                     "regex": 'https?://.+',
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             }
                         },
@@ -5207,7 +5245,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                 'param': {
                                     'type': 'string',
                                     "regex": 'https?://.+',
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             }
                         }
@@ -5420,7 +5459,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'type': 'file',
                                     'extensions': ['zip', 'pdf'],
                                     'maxSize': 100,
-                                    "optional": True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             },
                             "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
@@ -5431,7 +5471,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                 'param': {
                                     'type': 'string',
                                     'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             },
                             'description': f'If a version of this submission was previously rejected by {short_name}, give the OpenReview link to the original {short_name} submission (which must still be anonymous) and describe the changes below.',
@@ -5444,6 +5485,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'maxLength': 5000,
                                     'input': 'textarea',
                                     'optional': True,
+                                    'deletable': True,
                                     'markdown': True
 
                                 }
@@ -5482,7 +5524,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                 'param': {
                                     'type': 'string',
                                     "regex": 'https?://.+',
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             }
                         },
@@ -5493,7 +5536,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                 'param': {
                                     'type': 'string',
                                     "regex": 'https?://.+',
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             }
                         }
@@ -5761,7 +5805,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                 'param': {
                                     'type': 'string',
                                     #'default': '{}/-/Custom_User_Demands'.format(self.match_group.id),
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             }
                         },
@@ -5814,6 +5859,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'type': 'string',
                                     'regex':  '.*',
                                     'optional': True,
+                                    'deletable': True,
                                     'hidden': True
                                 }
                             }
@@ -5827,6 +5873,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'enum':  ['Yes', 'No'],
                                     'input': 'radio',
                                     'optional': True,
+                                    'deletable': True,
                                     'default': 'Yes'
                                 }
                             }
@@ -5839,6 +5886,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'type': 'string',
                                     'regex':  r'[-+]?[0-9]*\.?[0-9]*',
                                     'optional': True,
+                                    'deletable': True,
                                     'default': '1'
                                 }
                             }
@@ -5851,6 +5899,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'type': 'string',
                                     'regex':  r'[-+]?[0-9]*\.?[0-9]*',
                                     'optional': True,
+                                    'deletable': True,
                                     'default': '',
                                     'hidden': True
                                 }

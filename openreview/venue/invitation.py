@@ -237,7 +237,8 @@ class InvitationBuilder(object):
                     'type': 'string',
                     'maxLength': 200000,
                     'input': 'textarea',
-                    'optional': True
+                    'optional': True,
+                    'deletable': True
                 }
             }
         }
@@ -783,7 +784,8 @@ class InvitationBuilder(object):
                         'type': 'string',
                         'enum': reduced_load,
                         'input': 'select',
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 }
             }
@@ -1089,8 +1091,8 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['edit']['note']['readers'] = comment_readers
 
             invitation.edit['invitation']['invitees'].append(self.venue.get_ethics_reviewers_id('${3/content/noteNumber/value}'))
-            invitation.edit['invitation']['edit']['signatures']['param']['regex'] += '|' + self.venue.get_ethics_reviewers_id('${5/content/noteNumber/value}', anon=True)
-            invitation.edit['invitation']['edit']['signatures']['param']['regex'] += '|' + self.venue.get_ethics_chairs_id()
+            invitation.edit['invitation']['edit']['signatures']['param']['items'].append({ 'prefix': self.venue.get_ethics_reviewers_id('${7/content/noteNumber/value}', anon=True), 'optional': True })
+            invitation.edit['invitation']['edit']['signatures']['param']['items'].append({ 'value': self.venue.get_ethics_chairs_id(), 'optional': True })
 
         self.save_invitation(invitation, replacement=False)
         return invitation
@@ -1405,6 +1407,7 @@ class InvitationBuilder(object):
                                             'maxLength': 200000,
                                             'input': 'textarea',
                                             'optional': True,
+                                            'deletable': True,
                                             'markdown': True
                                         }
                                     }
@@ -1442,7 +1445,8 @@ class InvitationBuilder(object):
                         'type': 'string',
                         'maxLength': 200000,
                         'input': 'textarea',
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 }
             }
@@ -1606,6 +1610,7 @@ class InvitationBuilder(object):
                                             'maxLength': 200000,
                                             'input': 'textarea',
                                             'optional': True,
+                                            'deletable': True,
                                             'markdown': True
                                         }
                                     }
@@ -1723,7 +1728,8 @@ class InvitationBuilder(object):
                         'type': 'string',
                         'maxLength': 200000,
                         'input': 'textarea',
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 }
             }
@@ -2886,7 +2892,11 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 ''',
                     'edit': {
-                        'signatures': { 'param': { 'regex': ethics_review_stage.get_signatures(self.venue, '${5/content/noteNumber/value}') }},
+                        'signatures': { 
+                            'param': { 
+                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in ethics_review_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')] 
+                            }
+                        },
                         'readers': ethics_review_stage.get_readers(self.venue, '${4/content/noteNumber/value}', '${2/signatures}'),
                         'nonreaders': ethics_review_stage.get_nonreaders(self.venue, '${4/content/noteNumber/value}'),
                         'writers': [venue_id],
@@ -2983,7 +2993,8 @@ class InvitationBuilder(object):
                                     'maxLength': 5000,
                                     'markdown': True,
                                     'input': 'textarea',
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             },
                             'readers': [venue_id, self.venue.get_ethics_chairs_id(), self.venue.get_ethics_reviewers_id('${{4/id}/number}')]
@@ -3078,7 +3089,14 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 ''',
                             'edit': {
-                                'signatures': { 'param': { 'regex': f"{venue.get_senior_area_chairs_id(number='${5/content/noteNumber/value}')}|{venue.get_program_chairs_id()}" }},
+                                'signatures': { 
+                                    'param': { 
+                                        'items': [
+                                            { 'value': venue.get_senior_area_chairs_id(number='${5/content/noteNumber/value}'), 'optional': True }, 
+                                            { 'value': venue.get_program_chairs_id(), 'optional': True }
+                                        ] 
+                                    }
+                                },                                
                                 'readers': ['${2/note/readers}'],
                                 'nonreaders': ['${2/note/nonreaders}'],
                                 'writers': [venue_id],
@@ -3119,7 +3137,8 @@ class InvitationBuilder(object):
                                                     'maxLength': 5000,
                                                     'markdown': True,
                                                     'input': 'textarea',
-                                                    'optional': True
+                                                    'optional': True,
+                                                    'deletable': True
                                                 }
                                             },
                                             'description': 'Optional comment to Program Chairs.'

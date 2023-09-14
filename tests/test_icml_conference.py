@@ -3457,8 +3457,32 @@ ICML 2023 Conference Program Chairs'''
         assert invitation
         assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers' in invitation.invitees
         assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers' in invitation.edit['note']['readers']['param']['enum']
-        assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewer_.*' in invitation.edit['signatures']['param']['regex']
-        assert 'ICML.cc/2023/Conference/Ethics_Chairs' in invitation.edit['signatures']['param']['regex']
+        assert invitation.edit['signatures']['param']['items'] == [
+            {
+            "value": "ICML.cc/2023/Conference/Program_Chairs",
+            "optional": True
+            },
+            {
+            "value": "ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission1/Area_Chair_.*",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission1/Reviewer_.*",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission1/Ethics_Reviewer_.*",
+            "optional": True
+            },
+            {
+            "value": "ICML.cc/2023/Conference/Ethics_Chairs",
+            "optional": True
+            }
+        ]
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Official_Comment')
         assert invitation
         assert 'ICML.cc/2023/Conference/Submission2/Ethics_Reviewers' not in invitation.edit['note']['readers']['param']['enum']
@@ -3468,9 +3492,34 @@ ICML 2023 Conference Program Chairs'''
         assert invitation        
         assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers' in invitation.invitees
         assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers' in invitation.edit['note']['readers']['param']['enum']
-        assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewer_.*' in invitation.edit['signatures']['param']['regex']
-        assert 'ICML.cc/2023/Conference/Ethics_Chairs' in invitation.edit['signatures']['param']['regex']
-
+        
+        assert invitation.edit['signatures']['param']['items'] == [
+            {
+            "value": "ICML.cc/2023/Conference/Program_Chairs",
+            "optional": True
+            },
+            {
+            "value": "ICML.cc/2023/Conference/Submission5/Senior_Area_Chairs",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission5/Area_Chair_.*",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission5/Reviewer_.*",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission5/Ethics_Reviewer_.*",
+            "optional": True
+            },
+            {
+            "value": "ICML.cc/2023/Conference/Ethics_Chairs",
+            "optional": True
+            }
+        ]
+        
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
         # unflag a paper
         note = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', number=[5])[0]
@@ -3492,8 +3541,32 @@ ICML 2023 Conference Program Chairs'''
         assert invitation        
         assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers' not in invitation.invitees
         assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers' in invitation.edit['note']['readers']['param']['enum']
-        assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewer_.*' in invitation.edit['signatures']['param']['regex']
-
+        assert invitation.edit['signatures']['param']['items'] == [
+            {
+            "value": "ICML.cc/2023/Conference/Program_Chairs",
+            "optional": True
+            },
+            {
+            "value": "ICML.cc/2023/Conference/Submission5/Senior_Area_Chairs",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission5/Area_Chair_.*",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission5/Reviewer_.*",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission5/Ethics_Reviewer_.*",
+            "optional": True
+            },
+            {
+            "value": "ICML.cc/2023/Conference/Ethics_Chairs",
+            "optional": True
+            }
+        ]
         submissions = openreview_client.get_notes(content= { 'venueid': 'ICML.cc/2023/Conference/Submission'}, sort='number:asc')
         assert submissions and len(submissions) == 100
         assert 'flagged_for_ethics_review' in submissions[4].content and not submissions[4].content['flagged_for_ethics_review']['value']

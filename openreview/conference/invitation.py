@@ -1013,7 +1013,7 @@ class PaperEthicsReviewInvitation(openreview.Invitation):
     def __init__(self, conference, note):
 
         ethics_review_stage = conference.ethics_review_stage
-        signature_regex = ethics_review_stage.get_signatures(conference, note.number)
+        signature_regex = '|'.join(ethics_review_stage.get_signatures(conference, note.number))
         readers = ethics_review_stage.get_readers(conference, note.number)
         nonreaders = ethics_review_stage.get_nonreaders(conference, note.number)
 

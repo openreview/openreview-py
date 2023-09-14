@@ -175,7 +175,8 @@ class Matching(object):
         edge_label = {
             'param': {
                 'regex': '.*',
-                'optional': True
+                'optional': True,
+                'deletable': True
             }
         }
 
@@ -1050,6 +1051,7 @@ class Matching(object):
                     'Conflict Detected'
                 ],
                 'optional': True,
+                'deletable': True,
                 'default': invited_label
             }
         }

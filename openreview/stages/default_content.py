@@ -300,7 +300,8 @@ ethics_review_v2 = {
                 'maxLength': 200000,
                 'markdown': True,
                 'input': 'textarea',
-                'optional': True
+                'optional': True,
+                'deletable': True
             }
         }
     }
