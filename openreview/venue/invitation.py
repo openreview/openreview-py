@@ -3092,7 +3092,7 @@ class InvitationBuilder(object):
                                 'signatures': { 
                                     'param': { 
                                         'items': [
-                                            { 'value': venue.get_senior_area_chairs_id(number='${5/content/noteNumber/value}'), 'optional': True }, 
+                                            { 'value': venue.get_senior_area_chairs_id(number='${7/content/noteNumber/value}'), 'optional': True }, 
                                             { 'value': venue.get_program_chairs_id(), 'optional': True }
                                         ] 
                                     }

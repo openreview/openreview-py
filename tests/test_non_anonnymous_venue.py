@@ -142,5 +142,10 @@ class TestNonAnonymousVenue():
         assert len(invitations) == 1
 
         invitation = openreview_client.get_invitation('TestNonAnonymousVenue.cc/Submission1/-/Official_Review')
-        assert '~.*' == invitation.edit['signatures']['param']['regex']
+        assert invitation.edit['signatures']['param']['items'] == [
+            {
+            "prefix": "~.*",
+            "optional": True
+            }
+        ]
 
