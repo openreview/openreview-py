@@ -198,7 +198,7 @@ If you would like to change your decision, please follow the link in the previou
                     'order': 2
                 },
                 'invitee_reduced_load': {
-                    'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list.',
+                    'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list. Note: This will set the reduced load for everyone in the selected role. If you set a new reduced load for this role in a different recruitment batch, then the value will get overwritten.',
                     'values-regex': '[0-9]+',
                     'default': ['1', '2', '3'],
                     'required': False,
