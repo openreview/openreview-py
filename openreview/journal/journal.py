@@ -362,6 +362,7 @@ class Journal(object):
         self.group_builder.set_groups(support_role, editors)
         self.invitation_builder.set_invitations(assignment_delay)
         self.group_builder.set_group_variable(self.get_action_editors_id(), 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())
+        self.group_builder.set_group_variable(self.get_action_editors_id() + '/Archived', 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())
         self.group_builder.set_group_variable(self.get_editors_in_chief_id(), 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())
         self.group_builder.set_group_variable(self.get_editors_in_chief_id(), 'REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID', self.get_acknowledgement_responsibility_form())
 
