@@ -811,13 +811,25 @@ Total Errors: {len(errors)}
         all_sacs = []
         with open(track_sac_file) as file_handle:
             for row in csv.reader(file_handle):
-                if row[0] not in sac_tracks:
-                    sac_tracks[row[0]] = []
-                sac_group = openreview.tools.get_group(self.client, self.get_committee_id(row[1]))
+                track = row[0].strip()
+                if track not in sac_tracks:
+                    sac_tracks[track] = []
+                sac_group_id = self.get_committee_id(row[1]).strip()
+                sac_group = openreview.tools.get_group(self.client, sac_group_id)
                 if sac_group:
                     sacs = openreview.tools.replace_members_with_ids(self.client, sac_group).members
-                    sac_tracks[row[0]] = sac_tracks[row[0]] + sacs
+                    sac_tracks[track] = sac_tracks[track] + sacs
                     all_sacs = all_sacs + sacs
+                    self.client.post_group_edit(
+                        invitation=self.get_meta_invitation_id(),
+                        signatures=[self.venue_id],
+                        group=openreview.api.Group(
+                            id=sac_group_id,
+                            content={
+                                'track': { 'value': track }
+                            }
+                        )
+                    )
 
         print(list(set(all_sacs)))
 
