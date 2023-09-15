@@ -2981,7 +2981,8 @@ class InvitationBuilder(object):
                             'value': {
                                 'param': {
                                     'type': 'boolean',
-                                    'enum': [True, False]
+                                    'enum': [True, False],
+                                    'input': 'radio'
                                 }
                             },
                             'readers': flag_readers

@@ -235,7 +235,8 @@ review_v2 = {
                     { 'value': 3, 'description': '3: Clear rejection' },
                     { 'value': 2, 'description': '2: Strong rejection' },
                     { 'value': 1, 'description': '1: Trivial or wrong' }
-                ]
+                ],
+                'input': 'radio'
             }
         }
     },
@@ -250,7 +251,8 @@ review_v2 = {
                     { 'value': 3, 'description': '3: The reviewer is fairly confident that the evaluation is correct' },
                     { 'value': 2, 'description': '2: The reviewer is willing to defend the evaluation, but it is quite likely that the reviewer did not understand central parts of the paper' },
                     { 'value': 1, 'description': '1: The reviewer\'s evaluation is an educated guess' }
-                ]
+                ],
+                'input': 'radio'
             }
         }
     }
@@ -359,7 +361,8 @@ meta_review_v2 = {
                     'Accept (Oral)',
                     'Accept (Poster)',
                     'Reject'
-                ]
+                ],
+                'input': 'radio'
             }
         }
     },
@@ -738,7 +741,8 @@ decision_v2 = {
                     'Accept (Oral)',
                     'Accept (Poster)',
                     'Reject'
-                ]
+                ],
+                'input': 'radio'
             }
         }
     },
