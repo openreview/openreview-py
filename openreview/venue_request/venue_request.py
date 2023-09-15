@@ -1635,13 +1635,6 @@ class VenueRequest():
                 'required': False,
                 'order': 3
             },
-            'allow_accept_with_reduced_load': {
-                'description': 'Select "yes" if you want invited Reviewers to choose their reduced load upon acceptance, otherwise this will default to selecting a reduced load when the user declines.',
-                'value-radio': ['Yes', 'No'],
-                'default': 'No',
-                'required': False,
-                'order': 4
-            },
             'invitee_reduced_load': {
                 'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list.',
                 'values-regex': '[0-9]+',

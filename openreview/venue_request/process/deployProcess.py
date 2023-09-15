@@ -197,13 +197,6 @@ If you would like to change your decision, please follow the link in the previou
                     'required': True,
                     'order': 2
                 },
-                'allow_accept_with_reduced_load': {
-                    'description': 'Select "yes" if you want invited Reviewers to choose their reduced load upon acceptance, otherwise this will default to selecting a reduced load when the user declines.',
-                    'value-radio': ['Yes', 'No'],
-                    'default': 'No',
-                    'required': False,
-                    'order': 4
-                },
                 'invitee_reduced_load': {
                     'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list. Note: This will set the reduced load for everyone in the selected role. If you set a new reduced load for this role in a different recruitment batch, then the value will get overwritten.',
                     'values-regex': '[0-9]+',
@@ -301,9 +294,17 @@ If you would like to change your decision, please follow the link in the previou
     )
 
     if isinstance(conference, openreview.venue.Venue):
-       recruitment_invitation.preprocess = recruitment_pre_preprocess
-       remind_recruitment_invitation.preprocess = recruitment_pre_preprocess
-    
+        recruitment_invitation.preprocess = recruitment_pre_preprocess
+        remind_recruitment_invitation.preprocess = recruitment_pre_preprocess
+
+        recruitment_invitation.reply['content']['allow_accept_with_reduced_load'] = {
+            'description': 'Select "yes" if you want invited Reviewers to choose their reduced load upon acceptance, otherwise this will default to selecting a reduced load when the user declines.',
+            'value-radio': ['Yes', 'No'],
+            'default': 'No',
+            'required': False,
+            'order': 4
+        }
+
     if len(conference.get_roles()) > 1:
         recruitment_invitation.reply['content']['allow_role_overlap'] = {
             'description': 'Do you want to allow the overlap of users in different roles? Selecting "Yes" would allow a user to be invited to serve as both a Reviewer and Area Chair.',
