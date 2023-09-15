@@ -539,7 +539,6 @@ class TestVenueRequest():
             content={
                 'title': 'Recruitment',
                 'invitee_role': 'Reviewers',
-                'allow_accept_with_reduced_load': 'Yes',
                 'invitee_reduced_load': ['1', '2', '3'],
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}. Contact: {{contact_info}}',
@@ -611,8 +610,7 @@ class TestVenueRequest():
 
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
         print('invitation_url', invitation_url)
-        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True, allow_accept_with_reduced_load=True)
-
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
         helpers.await_queue_edit(openreview_client, invitation='V2.cc/2030/Conference/Reviewers/-/Recruitment')
 
         messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="[TestVenue@OR'2030V2] Reviewer Invitation accepted")
@@ -716,6 +714,7 @@ class TestVenueRequest():
                 'title': 'Recruitment',
                 'invitee_role': 'Area_Chairs',
                 'allow_role_overlap': 'Yes',
+                'allow_accept_with_reduced_load': 'Yes',
                 'invitee_reduced_load': ['2', '4', '6'],
                 'invitee_details': ac_details,
                 'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
@@ -755,11 +754,11 @@ class TestVenueRequest():
         #accept AC invitation after having accepted reviewer invitation
         invitation_url = re.search('https://.*\n', messages[2]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
         print('invitation_url', invitation_url)
-        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True, quota=1)
 
         helpers.await_queue_edit(openreview_client, invitation='V2.cc/2030/Conference/Area_Chairs/-/Recruitment')
 
-        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="[TestVenue@OR'2030V2] Area Chair Invitation accepted")
+        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="[TestVenue@OR'2030V2] Area Chair Invitation accepted with reduced load")
         assert messages and len(messages) == 1
 
     def test_venue_remind_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
