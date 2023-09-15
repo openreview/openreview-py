@@ -1398,9 +1398,32 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'make_reviews_public': 'Yes, reviews should be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
-                'remove_review_form_options': 'title',
+                'remove_review_form_options': 'rating,title',
                 'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received',
-                'review_rating_field_name': 'review_rating'
+                'review_rating_field_name': 'review_rating',
+                'additional_review_form_options': {
+                    'review_rating': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'integer',
+                                'enum': [
+                                    { 'value': 10, 'description': '10: Top 5% of accepted papers, seminal paper' },
+                                    { 'value': 9, 'description': '9: Top 15% of accepted papers, strong accept' },
+                                    { 'value': 8, 'description': '8: Top 50% of accepted papers, clear accept' },
+                                    { 'value': 7, 'description': '7: Good paper, accept' },
+                                    { 'value': 6, 'description': '6: Marginally above acceptance threshold' },
+                                    { 'value': 5, 'description': '5: Marginally below acceptance threshold' },
+                                    { 'value': 4, 'description': '4: Ok but not good enough - rejection' },
+                                    { 'value': 3, 'description': '3: Clear rejection' },
+                                    { 'value': 2, 'description': '2: Strong rejection' },
+                                    { 'value': 1, 'description': '1: Trivial or wrong' }
+                                ],
+                                'input': 'radio'
+                            }
+                        }
+                    }
+                },                
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1472,7 +1495,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             note=Note(
                 content={
                     'review': { 'value': 'great paper!' },
-                    'rating': { 'value': 10 },
+                    'review_rating': { 'value': 10 },
                     'confidence': { 'value': 3 }
                 }
             )
@@ -1504,8 +1527,32 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'Yes, reviews should be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers',
-                'remove_review_form_options': 'title',
-                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received'
+                'remove_review_form_options': 'rating,title',
+                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received',
+                'review_rating_field_name': 'review_rating',
+                'additional_review_form_options': {
+                    'review_rating': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'integer',
+                                'enum': [
+                                    { 'value': 10, 'description': '10: Top 5% of accepted papers, seminal paper' },
+                                    { 'value': 9, 'description': '9: Top 15% of accepted papers, strong accept' },
+                                    { 'value': 8, 'description': '8: Top 50% of accepted papers, clear accept' },
+                                    { 'value': 7, 'description': '7: Good paper, accept' },
+                                    { 'value': 6, 'description': '6: Marginally above acceptance threshold' },
+                                    { 'value': 5, 'description': '5: Marginally below acceptance threshold' },
+                                    { 'value': 4, 'description': '4: Ok but not good enough - rejection' },
+                                    { 'value': 3, 'description': '3: Clear rejection' },
+                                    { 'value': 2, 'description': '2: Strong rejection' },
+                                    { 'value': 1, 'description': '1: Trivial or wrong' }
+                                ],
+                                'input': 'radio'
+                            }
+                        }
+                    }
+                }, 
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1531,7 +1578,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert 'V2.cc/2030/Conference/Submission1/Reviewers' in reviews[0].readers
         assert 'V2.cc/2030/Conference/Submission1/Authors' in reviews[0].readers
         assert len(reviews[0].nonreaders) == 0
-        assert 'readers' not in reviews[0].content['rating']
+        assert 'readers' not in reviews[0].content['review_rating']
 
         #hide ratings from authors without changing readers of reviews
         now = datetime.datetime.utcnow()
@@ -1546,8 +1593,11 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'Yes, reviews should be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers',
+                'remove_review_form_options': 'rating,title',
+                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received',
+                'review_rating_field_name': 'review_rating',
                 'additional_review_form_options': {
-                    'rating': {
+                    'review_rating': {
                         'order': 3,
                         'value': {
                             'param': {
@@ -1563,7 +1613,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                     { 'value': 3, 'description': '3: Clear rejection' },
                                     { 'value': 2, 'description': '2: Strong rejection' },
                                     { 'value': 1, 'description': '1: Trivial or wrong' }
-                                ]
+                                ],
+                                'input': 'radio'
                             }
                         },
                         'readers': [
@@ -1572,9 +1623,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                             "${5/signatures}"
                         ]
                     }
-                },
-                'remove_review_form_options': 'title',
-                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received'
+                }, 
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1595,8 +1644,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert 'V2.cc/2030/Conference/Submission1/Reviewers' in reviews[0].readers
         assert 'V2.cc/2030/Conference/Submission1/Authors' in reviews[0].readers
         assert len(reviews[0].nonreaders) == 0
-        assert 'readers' in reviews[0].content['rating']
-        assert reviews[0].content['rating']['readers'] == [
+        assert 'readers' in reviews[0].content['review_rating']
+        assert reviews[0].content['review_rating']['readers'] == [
             "V2.cc/2030/Conference",
             "V2.cc/2030/Conference/Submission1/Area_Chairs",
             reviews[0].signatures[0]
@@ -1666,7 +1715,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             note=Note(
                 content={
                     'review': { 'value': 'very good paper' },
-                    'rating': { 'value': 7 },
+                    'review_rating': { 'value': 7 },
                     'confidence': { 'value': 3 }
                 }
             )
@@ -1676,8 +1725,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         reviews = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Submission2/-/Official_Review')
         assert len(reviews) == 1
-        assert 'readers' in reviews[0].content['rating']
-        assert reviews[0].content['rating']['readers'] == [
+        assert 'readers' in reviews[0].content['review_rating']
+        assert reviews[0].content['review_rating']['readers'] == [
             "V2.cc/2030/Conference",
             "V2.cc/2030/Conference/Submission2/Area_Chairs",
             reviews[0].signatures[0]
