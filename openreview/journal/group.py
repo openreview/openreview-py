@@ -27,8 +27,22 @@ class GroupBuilder(object):
         group.web = group.web.replace(f"var {variable_name} = '';", f"var {variable_name} = '{value}';")
         self.post_group(group)
     
+    def get_update_content(self, current_content, new_content):
+        update_content = {}
+
+        for key, value in current_content.items():
+            if key in new_content and value != new_content[key]:
+                update_content[key] = new_content[key]
+            
+            if key not in new_content:
+                update_content[key] = { 'delete': True }
+
+        for key, value in new_content.items():
+            if key not in current_content:
+                update_content[key] = new_content[key]
+        return update_content
+    
     def set_groups(self, support_role, editors):
-        header = self.journal.header
         venue_id = self.journal.venue_id
         editor_in_chief_id = self.journal.get_editors_in_chief_id()
         reviewer_report_form = self.journal.get_reviewer_report_form()
@@ -45,10 +59,43 @@ class GroupBuilder(object):
                             members=[support_role],
                             host=venue_id
                             ))
+            venue_group.content = {}
 
             self.client_v1.add_members_to_group('host', venue_id)
             self.client_v1.add_members_to_group('venues', venue_id)
             self.client_v1.add_members_to_group('active_venues', venue_id)
+
+        ## Update settings
+        content = {
+            'title': { 'value': self.journal.full_name },
+            'submission_id': { 'value': self.journal.get_author_submission_id() },
+            'under_review_venue_id': { 'value': self.journal.under_review_venue_id },
+            'decision_pending_venue_id': { 'value': self.journal.decision_pending_venue_id },
+        }
+
+        if self.journal.get_certifications():
+            content['certifications'] = { 'value': self.journal.get_certifications() }
+        if self.journal.get_eic_certifications():
+            content['eic_certifications'] = { 'value': self.journal.get_eic_certifications() }
+        if self.journal.get_expert_reviewer_certification():
+            content['expert_reviewer_certification'] = { 'value': self.journal.get_expert_reviewer_certification() }
+        if self.journal.get_event_certifications():
+            content['event_certifications'] = { 'value': self.journal.get_event_certifications() }
+        if self.journal.get_website_url('videos'):
+            content['videos_url'] = { 'value': self.journal.get_website_url('videos') }
+
+        update_content = self.get_update_content(venue_group.content, content)
+        if update_content:
+            self.client.post_group_edit(
+                invitation = self.journal.get_meta_invitation_id(),
+                readers = [venue_id],
+                writers = [venue_id],
+                signatures = [venue_id],
+                group = openreview.api.Group(
+                    id = venue_id,
+                    content = update_content
+                )
+            )            
 
         ## editor in chief
         editor_in_chief_group = openreview.tools.get_group(self.client, editor_in_chief_id)
@@ -80,56 +127,33 @@ class GroupBuilder(object):
         editors=""
         for m in editor_in_chief_group.members:
             name=m.replace('~', ' ').replace('_', ' ')[:-1]
-            editors+=f'<a href="https://openreview.net/profile?id={m}">{name}</a></br>'
+            editors+=f'[{name}](https://openreview.net/profile?id={m})  \n'
 
-        header['instructions'] = f'''
-        <p>
-            <strong>Editors-in-chief:</strong></br>
-            {editors}
-            <strong>Managing Editors:</strong></br>
-            <a href=\"https://openreview.net/profile?id={support_role}\">{openreview.tools.pretty_id(support_role)}</a>
-        </p>
-        <p>
-            {self.journal.full_name} ({venue_id}) is a venue for dissemination of machine learning research that is intended to complement JMLR while supporting the unmet needs of a growing ML community.
-        </p>
-        <ul>
-            <li>
-                <p>{venue_id} emphasizes technical correctness over subjective significance, in order to ensure we facilitate scientific discourses on topics that are deemed less significant by contemporaries but may be so in the future.</p>
-            </li>
-            <li>
-                <p>{venue_id} caters to the shorter format manuscripts that are usually submitted to conferences, providing fast turnarounds and double blind reviewing. </p>
-            </li>
-            <li>
-                <p>{venue_id} employs a rolling submission process, shortened review period, flexible timelines, and variable manuscript length, to enable deep and sustained interactions among authors, reviewers, editors and readers.</p>
-            </li>
-            <li>
-                <p>{venue_id} does not accept submissions that have any overlap with previously published work.</p>
-            </li>
-        </ul>
-        <p>
-            For more information on {venue_id}, visit
-            <a href="http://{self.journal.contact_info}" target="_blank" rel="nofollow">{self.journal.contact_info}</a>.
-        </p>
-        '''
+        instructions = f'''
+**Editors-in-chief:**  
+{editors}
+
+**Managing Editors:**  
+[{openreview.tools.pretty_id(support_role)}](https://openreview.net/profile?id={support_role})
+
+{self.journal.full_name} ({venue_id}) is a venue for dissemination of machine learning research that is intended to complement JMLR while supporting the unmet needs of a growing ML community.  
+
+- {venue_id} emphasizes technical correctness over subjective significance, in order to ensure we facilitate scientific discourses on topics that are deemed less significant by contemporaries but may be so in the future.
+- {venue_id} caters to the shorter format manuscripts that are usually submitted to conferences, providing fast turnarounds and double blind reviewing.
+- {venue_id} employs a rolling submission process, shortened review period, flexible timelines, and variable manuscript length, to enable deep and sustained interactions among authors, reviewers, editors and readers.
+- {venue_id} does not accept submissions that have any overlap with previously published work.
+
+For more information on {venue_id}, visit [{self.journal.website}](http://{self.journal.website})
+'''
         if self.journal.has_expert_reviewers():
-            header['instructions'] += f'''
-            <p>
-                Visit <a href="https://openreview.net/group?id={self.journal.get_expert_reviewers_id()}" target="_blank" rel="nofollow">this page</a> for the list of our Expert Reviewers.
-            </p>
-            '''
+            instructions += f'''
+            
+Visit [this page](https://openreview.net/group?id={self.journal.get_expert_reviewers_id()}) for the list of our Expert Reviewers.
+'''
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/homepage.js')) as f:
             content = f.read()
-            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + self.journal.get_author_submission_id() + "';")
-            content = content.replace("var SUBMITTED_ID = '';", "var SUBMITTED_ID = '" + venue_id + "/Submitted';")
-            content = content.replace("var UNDER_REVIEW_ID = '';", "var UNDER_REVIEW_ID = '" + venue_id + "/Under_Review';")
-            content = content.replace("var DECISION_PENDING_ID = '';", "var DECISION_PENDING_ID = '" + venue_id + "/Decision_Pending';")
-            content = content.replace("var DESK_REJECTED_ID = '';", "var DESK_REJECTED_ID = '" + venue_id + "/Desk_Rejection';")
-            content = content.replace("var WITHDRAWN_ID = '';", "var WITHDRAWN_ID = '" + venue_id + "/Withdrawn_Submission';")
-            content = content.replace("var REJECTED_ID = '';", "var REJECTED_ID = '" + venue_id + "/Rejection';")
-            content = content.replace("var CERTIFICATIONS = [];", "var CERTIFICATIONS = " + json.dumps(self.journal.get_certifications() + self.journal.get_eic_certifications() + [self.journal.get_expert_reviewer_certification()] if self.journal.has_expert_reviewers() else []) + ";")
+            content = content.replace("const instructions = ''", "const instructions = `" + instructions + "`")
             if not venue_group.web:
                 venue_group.web = content
                 self.post_group(venue_group)
@@ -175,6 +199,21 @@ class GroupBuilder(object):
             action_editor_group.web = content
             self.post_group(action_editor_group)
 
+        if self.journal.get_event_certifications():
+            event_group = openreview.tools.get_group(self.client, f'{venue_id}/Event_Certifications')
+            if not event_group:
+                event_group=self.post_group(Group(id=f'{venue_id}/Event_Certifications',
+                                readers=['everyone'],
+                                writers=[venue_id],
+                                signatures=[venue_id],
+                                signatories=[venue_id],
+                                members=[]))            
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/eventCertificationsWebfield.js')) as f:
+                content = f.read()
+                if not event_group.web:
+                    event_group.web = content
+                    self.post_group(event_group)            
+
         ## action editors invited group
         action_editors_invited_id = f'{action_editors_id}/Invited'
         action_editors_invited_group = openreview.tools.get_group(self.client, action_editors_invited_id)
@@ -215,6 +254,8 @@ class GroupBuilder(object):
             content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + self.journal.action_editors_name + "';")
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + self.journal.reviewers_name + "';")
             content = content.replace("var SUBMISSION_GROUP_NAME = '';", "var SUBMISSION_GROUP_NAME = '" + self.journal.submission_group_name + "';")
+            if reviewer_report_form:
+                content = content.replace("var REVIEWER_REPORT_ID = '';", "var REVIEWER_REPORT_ID = '" + reviewer_report_form + "';")
 
             action_editor_archived_group.web = content
             self.post_group(action_editor_archived_group)            
