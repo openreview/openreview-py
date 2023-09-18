@@ -27,6 +27,8 @@ var ACTION_EDITORS_EXPERTISE_SELECTION_ID = ACTION_EDITOR_ID + '/-/Expertise_Sel
 var CUSTOM_MAX_PAPERS_NAME = 'Custom_Max_Papers';
 var AVAILABILITY_NAME = 'Assignment_Availability';
 var REVIEWERS_AVAILABILITY_ID = REVIEWERS_ID + '/-/' + AVAILABILITY_NAME;
+var REVIEWERS_REPORT_ID = REVIEWERS_ID + '/-/Reviewer_Report';
+
 
 var SUBMISSION_GROUP_NAME = 'Paper';
 var RECOMMENDATION_NAME = 'Recommendation';
@@ -338,6 +340,9 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
       var status = {
         'profileID': reviewer.id
       };
+      var links = {
+        'Report': '/forum?id=' + REVIEWER_REPORT_ID + '&noteId=' + REVIEWER_REPORT_ID + '&invitationId=' + REVIEWERS_REPORT_ID + '&edit.note.content.reviewer_id=' + reviewer.id + '&referrer=' + referrerUrl,
+      }
 
       if (assignmentAcknowledgement && assignmentAcknowledgement.length) {
         status.Acknowledged = 'Yes';
@@ -366,6 +371,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         forum: submission.id,
         note: completedReview && completedReview.id,
         status: status,
+        links: links,
         forumUrl: 'https://openreview.net/forum?' + $.param({
           id: submission.id,
           noteId: submission.id,
