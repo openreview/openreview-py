@@ -714,7 +714,6 @@ class TestVenueRequest():
                 'title': 'Recruitment',
                 'invitee_role': 'Area_Chairs',
                 'allow_role_overlap': 'Yes',
-                'allow_accept_with_reduced_load': 'Yes',
                 'invitee_reduced_load': ['2', '4', '6'],
                 'invitee_details': ac_details,
                 'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
@@ -758,7 +757,7 @@ class TestVenueRequest():
 
         helpers.await_queue_edit(openreview_client, invitation='V2.cc/2030/Conference/Area_Chairs/-/Recruitment')
 
-        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="[TestVenue@OR'2030V2] Area Chair Invitation accepted with reduced load")
+        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="[TestVenue@OR'2030V2] Area Chair Invitation accepted")
         assert messages and len(messages) == 1
 
     def test_venue_remind_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
