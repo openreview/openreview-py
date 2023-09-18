@@ -132,6 +132,9 @@ class Journal(object):
 
     def get_retracted_id(self):
         return self.__get_invitation_id(name='Retracted')
+    
+    def get_event_certification_id(self):
+        return self.__get_invitation_id(name='Event_Certification')
 
     def get_under_review_id(self):
         return self.__get_invitation_id(name='Under_Review')
@@ -359,6 +362,7 @@ class Journal(object):
         self.group_builder.set_groups(support_role, editors)
         self.invitation_builder.set_invitations(assignment_delay)
         self.group_builder.set_group_variable(self.get_action_editors_id(), 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())
+        self.group_builder.set_group_variable(self.get_action_editors_id() + '/Archived', 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())
         self.group_builder.set_group_variable(self.get_editors_in_chief_id(), 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())
         self.group_builder.set_group_variable(self.get_editors_in_chief_id(), 'REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID', self.get_acknowledgement_responsibility_form())
 
@@ -425,7 +429,10 @@ class Journal(object):
         return self.settings.get('certifications', []) 
 
     def get_eic_certifications(self):
-        return self.settings.get('eic_certifications', [])            
+        return self.settings.get('eic_certifications', []) 
+
+    def get_event_certifications(self):
+        return self.settings.get('event_certifications', [])                
 
     def get_submission_length(self):
         return self.settings.get('submission_length', [])
