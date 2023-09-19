@@ -66,6 +66,7 @@ class InvitationBuilder(object):
         self.set_withdrawn_invitation()
         self.set_accepted_invitation()
         self.set_retracted_invitation()
+        self.set_event_certificate_invitation()
         self.set_authors_release_invitation()
         self.set_ae_assignment(assignment_delay)
         self.set_reviewer_assignment(assignment_delay)
@@ -2924,6 +2925,59 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         )
         self.save_invitation(invitation)
 
+    def set_event_certificate_invitation(self):
+
+        event_certifications = self.journal.get_event_certifications()
+        if not event_certifications:
+            return
+        
+        venue_id = self.journal.venue_id
+
+        invitation = Invitation(id=self.journal.get_event_certification_id(),
+            invitees=[venue_id],
+            readers=['everyone'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                "ddate": {
+                    "param": {
+                    "range": [
+                        0,
+                        9999999999999
+                    ],
+                    "optional": True,
+                    "deletable": True
+                    }
+                },
+                "signatures": [venue_id],
+                "readers": ["everyone"],
+                "writers": [venue_id],
+                'note': {
+                    'id': { 
+                        'param': {
+                            'withInvitation': self.journal.get_accepted_id() 
+                        }
+                    },
+                    'content': {
+                        "event_certifications": {
+                            "order": 1,
+                            "description": "Select a certification",
+                            "value": {
+                                "param": {
+                                        "type": "string[]",
+                                        "enum": event_certifications,
+                                        "input": "select",
+                                        "optional": True
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        )
+        self.save_invitation(invitation)        
+    
     def set_rejected_invitation(self):
 
         venue_id = self.journal.venue_id
@@ -4104,6 +4158,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         for edit in self.client.get_note_edits(note.id, invitation=revision_invitation_id, sort='tmdate:asc'):
             edit.readers = self.journal.get_under_review_submission_readers(note.number)
             edit.note.mdate = None
+            edit.note.cdate = None
             edit.note.forum = None
             self.client.post_edit(edit)
 
@@ -4113,6 +4168,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             edit.signatures = [self.journal.venue_id]
             edit.readers = self.journal.get_under_review_submission_readers(note.number)
             edit.note.mdate = None
+            edit.note.cdate = None
             self.client.post_edit(edit)         
 
     def set_comment_invitation(self):
@@ -4744,6 +4800,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'note': {
                     'id': { 'param': { 'withInvitation': self.journal.get_ae_decision_id(number='${6/content/noteNumber/value}') }},
                     'readers': self.journal.get_release_decision_readers('${5/content/noteNumber/value}'),
+                    'writers':  [ venue_id ],
                     'nonreaders': []
                 }
             }

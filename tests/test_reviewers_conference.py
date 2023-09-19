@@ -37,37 +37,37 @@ class TestReviewersConference():
 
         # Reviewer user
         request_page(selenium, "http://localhost:3030/group?id=learningtheory.org/COLT/2019/Conference", test_client.token, wait_for_element='invitation')
-        invitation_panel = selenium.find_element_by_id('invitation')
+        invitation_panel = selenium.find_element(By.ID, 'invitation')
         assert invitation_panel
-        assert len(invitation_panel.find_elements_by_tag_name('div')) == 0
-        notes_panel = selenium.find_element_by_id('notes')
+        assert len(invitation_panel.find_elements(By.TAG_NAME, 'div')) == 0
+        notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel
-        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('your-consoles')
-        assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
-        console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
-        assert 'Program Committee Console' == console.find_element_by_tag_name('a').text
-        assert tabs.find_element_by_id('recent-activity')
-        assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 0
+        assert tabs.find_element(By.ID, 'your-consoles')
+        assert len(tabs.find_element(By.ID, 'your-consoles').find_elements(By.TAG_NAME, 'ul')) == 1
+        console = tabs.find_element(By.ID, 'your-consoles').find_elements(By.TAG_NAME, 'ul')[0]
+        assert 'Program Committee Console' == console.find_element(By.TAG_NAME, 'a').text
+        assert tabs.find_elements(By.ID, 'recent-activity')
+        assert len(tabs.find_element(By.ID, 'recent-activity').find_elements(By.CLASS_NAME, 'activity-list')) == 0
 
         # Guest user
         request_page(selenium, "http://localhost:3030/group?id=learningtheory.org/COLT/2019/Conference", wait_for_element='invitation')
-        invitation_panel = selenium.find_element_by_id('invitation')
+        invitation_panel = selenium.find_element(By.ID, 'invitation')
         assert invitation_panel
-        assert len(invitation_panel.find_elements_by_tag_name('div')) == 0
-        notes_panel = selenium.find_element_by_id('notes')
+        assert len(invitation_panel.find_elements(By.TAG_NAME, 'div')) == 0
+        notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel
-        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('your-consoles')
-        assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 0
-        assert tabs.find_element_by_id('recent-activity')
-        assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 0
+        assert tabs.find_element(By.ID, 'your-consoles')
+        assert len(tabs.find_element(By.ID, 'your-consoles').find_elements(By.TAG_NAME, 'ul')) == 0
+        assert tabs.find_element(By.ID, 'recent-activity')
+        assert len(tabs.find_element(By.ID, 'recent-activity').find_elements(By.CLASS_NAME, 'activity-list')) == 0
 
         # Reviewer console
         request_page(selenium, "http://localhost:3030/group?id=learningtheory.org/COLT/2019/Conference/Program_Committee", test_client.token, by=By.CLASS_NAME, wait_for_element='tabs-container')
-        tabs = selenium.find_element_by_class_name('tabs-container')
+        tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
 
     def test_allow_review_de_anonymization(self, client, test_client, helpers, selenium, request_page):
@@ -117,15 +117,15 @@ class TestReviewersConference():
         conference.create_review_stage()
 
         request_page(selenium, "http://localhost:3030/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs#paper-status", client.token, by=By.CLASS_NAME, wait_for_element='reviewer-progress')
-        reviews = selenium.find_elements_by_class_name('reviewer-progress')
+        reviews = selenium.find_elements(By.CLASS_NAME, 'reviewer-progress')
         assert reviews
         assert len(reviews) == 1
-        headers = reviews[0].find_elements_by_tag_name('h4')
+        headers = reviews[0].find_elements(By.TAG_NAME, 'h4')
         assert headers
         assert headers[0].text == '0 of 2 Reviews Submitted'
 
         request_page(selenium, "http://localhost:3030/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs#reviewer-status", client.token, by=By.CLASS_NAME, wait_for_element='reviewer-progress')
-        reviews = selenium.find_elements_by_class_name('reviewer-progress')
+        reviews = selenium.find_elements(By.CLASS_NAME, 'reviewer-progress')
         assert reviews
         # assert len(reviews) == 5 temporally disable assert
 
@@ -148,20 +148,20 @@ class TestReviewersConference():
         assert review_note
 
         request_page(selenium, "http://localhost:3030/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs#paper-status", client.token, by=By.CLASS_NAME, wait_for_element='reviewer-progress')
-        reviews = selenium.find_elements_by_class_name('reviewer-progress')
+        reviews = selenium.find_elements(By.CLASS_NAME, 'reviewer-progress')
         assert reviews
         assert len(reviews) == 1
-        headers = reviews[0].find_elements_by_tag_name('h4')
+        headers = reviews[0].find_elements(By.TAG_NAME, 'h4')
         assert headers
         assert headers[0].text == '1 of 2 Reviews Submitted'
 
-        assert selenium.find_element_by_link_text('Paper Status')
+        assert selenium.find_element(By.LINK_TEXT, 'Paper Status')
         try:
-            selenium.find_element_by_link_text('Area Chair Status')
+            selenium.find_element(By.LINK_TEXT, 'Area Chair Status')
         except NoSuchElementException as e:
             assert e
 
-        assert selenium.find_element_by_link_text('Reviewer Status')
+        assert selenium.find_element(By.LINK_TEXT, 'Reviewer Status')
 
 
 

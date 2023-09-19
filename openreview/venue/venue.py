@@ -216,13 +216,12 @@ class Venue(object):
             return name[:-1] if name.endswith('s') else name
         return self.reviewers_name
     
+    def get_anon_committee_name(self, name):
+        rev_name = name[:-1] if name.endswith('s') else name
+        return rev_name + '_'         
+    
     def get_anon_reviewers_name(self, pretty=True):
-        rev_name = self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
-        return rev_name + '_'    
-
-    def get_anon_reviewers_name(self, pretty=True):
-        rev_name = self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
-        return rev_name + '_'
+        return self.get_anon_committee_name(self.reviewers_name)
 
     def get_ethics_reviewers_name(self, pretty=True):
         if pretty:
@@ -231,8 +230,7 @@ class Venue(object):
         return self.ethics_reviewers_name
 
     def anon_ethics_reviewers_name(self, pretty=True):
-        rev_name = self.ethics_reviewers_name[:-1] if self.ethics_reviewers_name.endswith('s') else self.ethics_reviewers_name
-        return rev_name + '_'
+        return self.get_anon_committee_name(self.ethics_reviewers_name)
 
     def get_area_chairs_name(self, pretty=True):
         if pretty:
@@ -241,8 +239,7 @@ class Venue(object):
         return self.area_chairs_name
 
     def get_anon_area_chairs_name(self, pretty=True):
-        rev_name = self.area_chairs_name[:-1] if self.area_chairs_name.endswith('s') else self.area_chairs_name
-        return rev_name + '_' 
+        return self.get_anon_committee_name(self.area_chairs_name)
 
     def get_reviewers_id(self, number = None, anon=False, submitted=False):
         rev_name = self.get_anon_reviewers_name()
@@ -391,6 +388,9 @@ class Venue(object):
 
         if self.use_publication_chairs:
             self.group_builder.create_publication_chairs_group(publication_chairs_ids)
+
+    def set_impersonators(self, impersonators):
+        self.group_builder.set_impersonators(impersonators)
 
     def recruit_reviewers(self,
         title,
@@ -809,13 +809,25 @@ Total Errors: {len(errors)}
         all_sacs = []
         with open(track_sac_file) as file_handle:
             for row in csv.reader(file_handle):
-                if row[0] not in sac_tracks:
-                    sac_tracks[row[0]] = []
-                sac_group = openreview.tools.get_group(self.client, self.get_committee_id(row[1]))
+                track = row[0].strip()
+                if track not in sac_tracks:
+                    sac_tracks[track] = []
+                sac_group_id = self.get_committee_id(row[1]).strip()
+                sac_group = openreview.tools.get_group(self.client, sac_group_id)
                 if sac_group:
                     sacs = openreview.tools.replace_members_with_ids(self.client, sac_group).members
-                    sac_tracks[row[0]] = sac_tracks[row[0]] + sacs
+                    sac_tracks[track] = sac_tracks[track] + sacs
                     all_sacs = all_sacs + sacs
+                    self.client.post_group_edit(
+                        invitation=self.get_meta_invitation_id(),
+                        signatures=[self.venue_id],
+                        group=openreview.api.Group(
+                            id=sac_group_id,
+                            content={
+                                'track': { 'value': track }
+                            }
+                        )
+                    )
 
         print(list(set(all_sacs)))
 

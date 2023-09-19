@@ -102,6 +102,7 @@ class TestSingleBlindVenueV2():
         submission_inv = openreview_client.get_invitation('V2.cc/2050/Conference_Single_Blind/-/Submission')
         assert submission_inv.duedate == openreview.tools.datetime_millis(due_date)
         assert submission_inv.expdate == openreview.tools.datetime_millis(due_date + datetime.timedelta(minutes = 30))
+        assert r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$" == submission_inv.edit['note']['content']['authorids']['value']['param']['regex']
 
         # Return venue details as a dict
         venue_details = {
@@ -149,6 +150,37 @@ class TestSingleBlindVenueV2():
             ))
         
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id'])
+
+        with pytest.raises(openreview.OpenReviewException, match=r'authorids value must be a valid email or profile ID'):
+            submission_note_3 = author_client.post_note_edit(
+                invitation=f'{venue_id}/-/Submission',
+                signatures= ['~SingleBlind_Author1'],
+                note=Note(
+                    content={
+                        'title': { 'value': 'Test Paper 3' },
+                        'abstract': { 'value': 'test abstract' },
+                        'authors': { 'value': ['SingleBlind Author', 'Emilia Rubio']},
+                        'authorids': { 'value': ['~SingleBlind_Author1', 'émiliav2@mail.com']}, # Accent in email
+                        'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                        'keywords': {'value': ['aa'] }
+                    }
+                ))
+            
+        submission_note_3 = author_client.post_note_edit(
+            invitation=f'{venue_id}/-/Submission',
+            signatures= ['~SingleBlind_Author1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Test Paper 3' },
+                    'abstract': { 'value': 'test abstract' },
+                    'authors': { 'value': ['SingleBlind Author', 'Emilia Rubio']},
+                    'authorids': { 'value': ['~SingleBlind_Author1', 'emiliav2@mail.com']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'keywords': {'value': ['aa'] }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_3['id'])
 
     def test_post_decision_stage(self, helpers, venue, test_client, client, openreview_client):
 
@@ -204,7 +236,7 @@ class TestSingleBlindVenueV2():
         helpers.await_queue()
 
         submissions = openreview_client.get_notes(invitation='V2.cc/2050/Conference_Single_Blind/-/Submission', sort='number:asc')
-        assert submissions and len(submissions) == 2
+        assert submissions and len(submissions) == 3
 
         # assert authors are still public for all papers and keywords and pdf are hidden
         assert 'readers' not in submissions[0].content['authors']
@@ -325,7 +357,7 @@ Best,
         assert process_logs[0]['status'] == 'ok'
 
         submissions = openreview_client.get_notes(invitation='V2.cc/2050/Conference_Single_Blind/-/Submission', sort='number:asc')
-        assert submissions and len(submissions) == 2
+        assert submissions and len(submissions) == 3
 
         # assert authors are still public for all papers and keywords are hidden/pdfs are visible
         assert 'readers' not in submissions[0].content['authors']

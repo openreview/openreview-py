@@ -535,7 +535,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
 
         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2023/Conference/Reviewers", reviewer_client.token, wait_for_element='header')
-        header = selenium.find_element_by_id('header')
+        header = selenium.find_element(By.ID, 'header')
         assert 'You have agreed to review up to 1 papers' in header.text
 
     def test_registrations(self, client, openreview_client, helpers, test_client):
@@ -1426,10 +1426,10 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
         ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password=helpers.strong_password)
         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2023/Conference/Area_Chairs", ac_client.token, wait_for_element='header')
-        header = selenium.find_element_by_id('header')
+        header = selenium.find_element(By.ID, 'header')
         assert 'Reviewer Assignment Browser:' in header.text
 
-        url = header.find_element_by_id('edge_browser_url')
+        url = header.find_element(By.ID, 'edge_browser_url')
         assert url
         assert url.get_attribute('href') == 'http://localhost:3030/edges/browse?start=ICML.cc/2023/Conference/Area_Chairs/-/Assignment,tail:~AC_ICMLOne1&traverse=ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment,label:reviewer-matching&edit=ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment,label:reviewer-matching;ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment&browse=ICML.cc/2023/Conference/Reviewers/-/Aggregate_Score,label:reviewer-matching;ICML.cc/2023/Conference/Reviewers/-/Affinity_Score;ICML.cc/2023/Conference/Reviewers/-/Bid;ICML.cc/2023/Conference/Reviewers/-/Custom_Max_Papers,head:ignore&hide=ICML.cc/2023/Conference/Reviewers/-/Conflict&maxColumns=2&version=2&referrer=[AC%20Console](/group?id=ICML.cc/2023/Conference/Area_Chairs)'
 
@@ -1690,10 +1690,10 @@ OpenReview Team'''
         )
 
         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2023/Conference/Area_Chairs", ac_client.token, wait_for_element='header')
-        header = selenium.find_element_by_id('header')
+        header = selenium.find_element(By.ID, 'header')
         assert 'Reviewer Assignment Browser:' in header.text
 
-        url = header.find_element_by_id('edge_browser_url')
+        url = header.find_element(By.ID, 'edge_browser_url')
         assert url
         assert url.get_attribute('href') == 'http://localhost:3030/edges/browse?start=ICML.cc/2023/Conference/Area_Chairs/-/Assignment,tail:~AC_ICMLTwo1&traverse=ICML.cc/2023/Conference/Reviewers/-/Assignment&edit=ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment&browse=ICML.cc/2023/Conference/Reviewers/-/Affinity_Score;ICML.cc/2023/Conference/Reviewers/-/Bid;ICML.cc/2023/Conference/Reviewers/-/Custom_Max_Papers,head:ignore&hide=ICML.cc/2023/Conference/Reviewers/-/Conflict&maxColumns=2&version=2&referrer=[AC%20Console](/group?id=ICML.cc/2023/Conference/Area_Chairs)'
 
@@ -1729,7 +1729,7 @@ OpenReview Team'''
         assert invite_edges[0].label == 'Pending Sign Up'
 
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        error_message = selenium.find_element_by_class_name('important_message')
+        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
         assert 'You have already accepted this invitation, but the assignment is pending until you create a profile and no conflict are detected.' == error_message.text
 
         assignment_edges=pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment', head=submissions[0].id)
@@ -1796,7 +1796,7 @@ OpenReview Team'''
         assert not openreview_client.get_groups('ICML.cc/2023/Conference/Reviewers', member='carlos@icml.cc')
 
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        error_message = selenium.find_element_by_class_name('important_message')
+        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
         assert "You have already accepted this invitation, but a conflict was detected and the assignment cannot be made." == error_message.text
 
         ac_client.post_edge(
@@ -1866,7 +1866,7 @@ ICML 2023 Conference Program Chairs'''
         assert openreview_client.get_groups('ICML.cc/2023/Conference/Reviewers', member='celeste@icml.cc')
 
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        error_message = selenium.find_element_by_class_name('important_message')
+        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
         assert 'You have already accepted this invitation.' == error_message.text
 
         reviewers_group = pc_client.get_group('ICML.cc/2023/Conference/Submission1/Reviewers')
@@ -1900,7 +1900,7 @@ ICML 2023 Conference Program Chairs'''
         helpers.await_queue(openreview_client)
 
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
-        error_message = selenium.find_element_by_class_name('important_message')
+        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
         assert 'You have already declined this invitation.' == error_message.text
 
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
@@ -1987,7 +1987,7 @@ ICML 2023 Conference Program Chairs'''
 
         #try to accept invitation that has been deleted
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        error_message = selenium.find_element_by_class_name('important_message')
+        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
         assert 'Invitation no longer exists. No action is required from your end.' == error_message.text
 
         #delete assignments before review stage and not get key error
@@ -4129,7 +4129,7 @@ ICML 2023 Conference Program Chairs'''
         with pytest.raises(openreview.OpenReviewException, match=r'Can not remove assignment, the user ~AC_ICMLTwo1 already posted a Meta Review.'):
             pc_client_v2.post_edge(assignment)
 
-    def test_meta_review_agreement(self, client, openreview_client, helpers):
+    def test_meta_review_agreement(self, client, openreview_client, helpers, selenium, request_page):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -4256,6 +4256,17 @@ ICML 2023 Conference Program Chairs'''
             'ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs'
         ]
 
+        submissions = sac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
+        note = submissions[1]
+
+        # check SACs can't see Metareview Revision button
+        request_page(selenium, 'http://localhost:3030/forum?id=' + note.id, sac_client.token, by=By.CLASS_NAME, wait_for_element='invitations-container')
+        invitations_container = selenium.find_element(By.CLASS_NAME, 'invitations-container')
+        invitation_buttons = invitations_container.find_element(By.CLASS_NAME, 'invitation-buttons')
+        buttons = invitation_buttons.find_elements(By.TAG_NAME, 'button')
+        assert len(buttons) ==  1
+        assert buttons[0].text == 'Official Comment'
+
         ## SAC can edit the meta review
         meta_review_edit = sac_client.post_note_edit(
             invitation='ICML.cc/2023/Conference/Submission2/-/Meta_Review_SAC_Revision',
@@ -4268,7 +4279,6 @@ ICML 2023 Conference Program Chairs'''
                 }
             )
         )
-
 
     def test_decision_stage(self, client, openreview_client, helpers):
 

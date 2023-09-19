@@ -56,6 +56,7 @@ return {
     paperStatusExportColumns: null,
     areaChairStatusExportColumns: null,
     requestFormId: domain.content.request_form_id?.value,
-    assignmentUrls: assignmentUrls
+    assignmentUrls: assignmentUrls,
+    emailReplyTo: domain.content.contact?.value
   }
 }
