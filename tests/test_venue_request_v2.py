@@ -753,7 +753,7 @@ class TestVenueRequest():
         #accept AC invitation after having accepted reviewer invitation
         invitation_url = re.search('https://.*\n', messages[2]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
         print('invitation_url', invitation_url)
-        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True, quota=1)
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
         helpers.await_queue_edit(openreview_client, invitation='V2.cc/2030/Conference/Area_Chairs/-/Recruitment')
 
