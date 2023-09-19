@@ -93,6 +93,9 @@ class TestJournal():
                             ],
                             'eic_certifications': [
                                 'Outstanding Certification'
+                            ],
+                            'event_certifications': [
+                                'lifelong-ml.cc/CoLLAs/2023/Journal_Track'
                             ],                            
                             'submission_length': [
                                 'Regular submission (no more than 12 pages of main content)', 
@@ -104,7 +107,8 @@ class TestJournal():
                                 'evaluation_criteria': 'https://jmlr.org/tmlr/editorial-policies.html#evaluation',
                                 'reviewer_guide': 'https://jmlr.org/tmlr/reviewer-guide.html',
                                 'editorial_policies': 'https://jmlr.org/tmlr/editorial-policies.html',
-                                'faq': 'https://jmlr.org/tmlr/contact.html'                     
+                                'faq': 'https://jmlr.org/tmlr/contact.html',
+                                'videos': 'https://tmlr.infinite-conf.org'                
                             },
                             'editors_email': 'tmlr-editors@jmlr.org',
                             'skip_ac_recommendation': False,
@@ -130,8 +134,14 @@ class TestJournal():
 
         openreview_client.add_members_to_group('TMLR/Expert_Reviewers', ['~Andrew_McCallum1'])
 
-        assert openreview_client.get_group('TMLR')
-
+        tmlr =  openreview_client.get_group('TMLR')
+        assert tmlr
+        assert tmlr.members == ['~Fabian_Pedregosa1', 'TMLR/Editors_In_Chief']
+        assert tmlr.content['submission_id']['value'] == 'TMLR/-/Submission'
+        assert tmlr.content['certifications']['value'] == ['Featured Certification', 'Reproducibility Certification', 'Survey Certification']
+        assert tmlr.content['eic_certifications']['value'] == ['Outstanding Certification']
+        assert tmlr.content['expert_reviewer_certification']['value'] == 'Expert Certification'
+        assert tmlr.content['event_certifications']['value'] == ['lifelong-ml.cc/CoLLAs/2023/Journal_Track']
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
@@ -1641,6 +1651,22 @@ We thank you for your essential contribution to TMLR!
 The TMLR Editors-in-Chief
 '''
 
+        messages = openreview_client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Too many reviewers assigned to TMLR submission 1: Paper title UPDATED')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
+
+It appears that, while submission 1: Paper title UPDATED now has its minimum of 3 reviews submitted, there are some additional assigned reviewers who have pending reviews. This may be because you had assigned additional emergency reviewers, e.g. because some of the initially assigned reviewers were late or unresponsive. If that is the case, or generally if these additional reviews are no longer needed, please unassign the extra reviewers and let them know that their review is no longer needed.
+
+Additionally, if any extra reviewer corresponds to a reviewer who was unresponsive, please consider submitting a reviewer report, so we can track such undesirable behavior. You can submit a report through link \"Reviewers Report\" at the top of your AE console.
+
+For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
+
+We thank you for your essential contribution to TMLR!
+
+The TMLR Editors-in-Chief
+'''
+
+
         ## Edit a review and don't release the review again
         review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
             signatures=[david_anon_groups[0].id],
@@ -1976,6 +2002,7 @@ The TMLR Editors-in-Chief
 
         decision_note = joelle_client.get_note(decision_note['note']['id'])
         assert decision_note.readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors"]
+        assert decision_note.writers == [venue_id, f"{venue_id}/Paper1/Action_Editors"]
 
         submission = openreview_client.get_note(note_id_1)
         assert 'TMLR/Decision_Pending' == submission.content['venueid']['value']
@@ -2016,8 +2043,8 @@ The TMLR Editors-in-Chief
 
         decision_note = raia_client.get_note(decision_note.id)
         assert decision_note.readers == ['everyone']
+        assert decision_note.writers == ['TMLR']
         assert decision_note.nonreaders == []
-
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
@@ -2025,7 +2052,7 @@ The TMLR Editors-in-Chief
 
 We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission "1: Paper title UPDATED" is accepted as is.
 
-To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={note_id_1}
+To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={note_id_1}. Please submit the final version of your paper within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}).
 
 In addition to your final manuscript, we strongly encourage you to submit a link to 1) code associated with your and 2) a short video presentation of your work. You can provide these links to the corresponding entries on the revision page.
 
@@ -3240,7 +3267,7 @@ The TMLR Editors-in-Chief
 
 We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission "5: Paper title 5" is accepted with minor revision.
 
-To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={note_id_5}
+To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={note_id_5}. Please submit the final version of your paper, including the minor revisions requested by the Action Editor, within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}).
 
 The Action Editor responsible for your submission will have provided a description of the revision expected for accepting your final manuscript.
 
@@ -4594,3 +4621,13 @@ note={Expert Certification}
         journal.invitation_builder.expire_paper_invitations(note)
         journal.invitation_builder.expire_reviewer_responsibility_invitations()
         journal.invitation_builder.expire_assignment_availability_invitations()
+
+        ## Add Event certification
+        raia_client.post_note_edit(invitation='TMLR/-/Event_Certification',
+            signatures=["TMLR"],
+            note=Note(
+                id = note_id_13,
+                content= {
+                    'event_certifications': { 'value': ['lifelong-ml.cc/CoLLAs/2023/Journal_Track'] }
+                }
+            ))        

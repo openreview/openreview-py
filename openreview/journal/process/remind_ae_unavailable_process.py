@@ -52,9 +52,13 @@ The {journal.short_name} Editors-in-Chief
             client.post_edge(edge)
             client.post_message(available_subject, recipients, available_message, replyTo=journal.contact_info)
         elif edge.tmdate < reminder_period:
-            print(f"remind: {edge.tail}")
-            client.post_message(reminder_subject, recipients, reminder_message, replyTo=journal.contact_info)
-            ## update edge to reset the reminder counter
-            client.post_edge(edge)
+            print(f"check if we need to remind: {edge.tail}")
+            profile = client.get_profile(edge.tail)
+            messages = client.get_messages(to=profile.get_preferred_email(), subject=reminder_subject)
+            if len(messages) > 0 and messages[0]['cdate'] > reminder_period:
+                print(f"already reminded: {edge.tail} on {messages[0]['cdate']}, no action needed")
+            else:
+                print(f"remind: {edge.tail}")
+                client.post_message(reminder_subject, recipients, reminder_message, replyTo=journal.contact_info)
 
 
