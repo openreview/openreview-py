@@ -51,18 +51,32 @@ def process(client, note, invitation):
     if not contact_info:
         raise openreview.OpenReviewException(f'Unable to retrieve field contact_email from the request form')
 
-    recruitment_status=conference.recruit_reviewers(
-        invitees = invitee_emails,
-        invitee_names = invitee_names,
-        reviewers_name = role_name,
-        title = note.content['invitation_email_subject'].strip(),
-        message = note.content['invitation_email_content'].strip(),
-        reduced_load_on_decline = reduced_load,
-        allow_accept_with_reduced_load = 'Yes' in note.content.get('allow_accept_with_reduced_load', 'No'),
-        contact_info = contact_info,
-        allow_overlap_official_committee = 'Yes' in note.content.get('allow_role_overlap', 'No'),
-        accept_recruitment_template=accept_recruitment_template
-    )
+    # Set allow_accept_with_reduced_load for api2 venues only
+    if isinstance(conference, openreview.venue.Venue):
+        recruitment_status=conference.recruit_reviewers(
+            invitees = invitee_emails,
+            invitee_names = invitee_names,
+            reviewers_name = role_name,
+            title = note.content['invitation_email_subject'].strip(),
+            message = note.content['invitation_email_content'].strip(),
+            reduced_load_on_decline = reduced_load,
+            allow_accept_with_reduced_load = 'Yes' in note.content.get('allow_accept_with_reduced_load', 'No'),
+            contact_info = contact_info,
+            allow_overlap_official_committee = 'Yes' in note.content.get('allow_role_overlap', 'No'),
+            accept_recruitment_template=accept_recruitment_template
+        )
+    else:
+        recruitment_status=conference.recruit_reviewers(
+            invitees = invitee_emails,
+            invitee_names = invitee_names,
+            reviewers_name = role_name,
+            title = note.content['invitation_email_subject'].strip(),
+            message = note.content['invitation_email_content'].strip(),
+            reduced_load_on_decline = reduced_load,
+            contact_info = contact_info,
+            allow_overlap_official_committee = 'Yes' in note.content.get('allow_role_overlap', 'No'),
+            accept_recruitment_template=accept_recruitment_template
+        )
 
     already_invited_status='No recruitment invitation was sent to the users listed under \'Already Invited\' because they have already been invited.' if recruitment_status.get('already_invited') else ''
     already_invited_members = recruitment_status.get('already_invited') if recruitment_status.get('already_invited') else []
