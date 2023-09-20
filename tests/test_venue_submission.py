@@ -312,14 +312,14 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         assert openreview_client.get_invitation('TestVenue.cc/Submission3/-/Withdrawal')
         assert openreview_client.get_invitation('TestVenue.cc/Submission3/-/Desk_Rejection')
 
-        # Test that email is not sent to openreview.net when tauthor = openreview.net
+        # Test that email is not sent to openreview.net
         author_client = OpenReviewClient(username='openreview.net', password=helpers.strong_password)
-        submission_note_3 = author_client.post_note_edit(
+        submission_note_4 = author_client.post_note_edit(
                 invitation='TestVenue.cc/-/Submission',
                 signatures= ['~Super_User1'],
                 note=Note(
                     content={
-                        'title': { 'value': 'Paper 3 Title' },
+                        'title': { 'value': 'Paper 4 Title' },
                         'authors': { 'value': ['SuperUser1']},
                         'authorids': { 'value': ['~Super_User1']},
                         'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
@@ -327,7 +327,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
                     }
                 ))
 
-        helpers.await_queue_edit(openreview_client, edit_id=submission_note_3['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_4['id'])
 
         messages = openreview_client.get_messages(to='openreview.net')
         assert len(messages) == 0
