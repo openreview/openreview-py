@@ -456,7 +456,7 @@ class TestVenueRequest():
                 'invitee_role': 'Reviewers',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
-                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the {program} chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the {program} chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
@@ -502,7 +502,7 @@ class TestVenueRequest():
                 'invitee_role': 'Reviewers',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
-                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
@@ -535,13 +535,13 @@ class TestVenueRequest():
         # buttons = reply_row.find_elements(By.CLASS_NAME, 'btn-xs')
         # assert [btn for btn in buttons if btn.text == 'Recruitment']
         reviewer_details = '''reviewer_candidate1_v2@mail.com, Reviewer One\nreviewer_error@mail.com;, Reviewer Error\nReviewer_Candidate2_v2@mail.com, Reviewer Two'''
-        recruitment_note = test_client.post_note(openreview.Note(
+        recruitment_note = openreview.Note(
             content={
                 'title': 'Recruitment',
                 'invitee_role': 'Reviewers',
                 'invitee_reduced_load': ['1', '2', '3'],
                 'invitee_details': reviewer_details,
-                'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
+                'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}. Contact: {{contact_info}}',
                 'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=venue['request_form_note'].forum,
@@ -550,7 +550,18 @@ class TestVenueRequest():
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
             signatures=['~SomeFirstName_User1'],
             writers=[]
-        ))
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid token: {{contact_info}} in invitation_email_subject is not supported.'):
+           recruitment_note=test_client.post_note(recruitment_note)
+
+        recruitment_note.content['invitation_email_subject'] = '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {invitee_role'
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid token: {invitee_role in invitation_email_subject. Tokens must be wrapped in double curly braces.'):
+           recruitment_note=test_client.post_note(recruitment_note)
+
+        recruitment_note.content['invitation_email_subject'] = '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}'
+        recruitment_note = test_client.post_note(recruitment_note)
+
         assert recruitment_note
 
         invite = client.get_invitation('{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number))
@@ -600,7 +611,6 @@ class TestVenueRequest():
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
         print('invitation_url', invitation_url)
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-
         helpers.await_queue_edit(openreview_client, invitation='V2.cc/2030/Conference/Reviewers/-/Recruitment')
 
         messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="[TestVenue@OR'2030V2] Reviewer Invitation accepted")

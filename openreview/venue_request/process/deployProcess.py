@@ -14,6 +14,42 @@ def process(client, note, invitation):
 
     readers = [conference.get_program_chairs_id(), SUPPORT_GROUP]
 
+    recruitment_pre_preprocess = '''function(){
+    // V1 invitation
+
+    const fieldTokens = {
+        "invitation_email_subject": ['invitee_role'],
+        "invitation_email_content": ['fullname', 'invitee_role', 'invitation_url', 'contact_info'],
+        "accepted_email_template": ['fullname', 'reviewer_name']
+    };
+
+    for (const [field, tokens] of Object.entries(fieldTokens)) {
+        if (field in note.content) {
+            // Find all words wrapped in double curly braces. If it's not a token, raise an error.
+            let regex = /{{([^{}]+)}}/g;
+            let parenthesizedToken = '';
+            let match;
+            while ((match = regex.exec(note.content[field])) !== null) {
+                parenthesizedToken = match[1];
+                if (!tokens.includes(parenthesizedToken)) {
+                    done(`Invalid token: {{${parenthesizedToken}}} in ${field} is not supported. Please use the following tokens in this field: ${tokens.toString()}.`);
+                }
+            }
+
+            // Check for tokens that don't have double curly braces, raise an error.
+            for (const token of tokens) {
+                regex = new RegExp(`(?<!{)[{]?${token}[}]+|[{]+${token}[}]?(?!})`, 'g');
+                while ((match = regex.exec(note.content[field])) !== null) {
+                    parenthesizedToken = match[0];
+                    done(`Invalid token: ${parenthesizedToken} in ${field}. Tokens must be wrapped in double curly braces.`);
+                }
+            }
+        }
+    }
+    done()
+}
+'''
+
     comment_invitation = client.post_invitation(openreview.Invitation(
         id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Comment',
         super=SUPPORT_GROUP + '/-/Comment',
@@ -162,36 +198,36 @@ If you would like to change your decision, please follow the link in the previou
                     'order': 2
                 },
                 'invitee_reduced_load': {
-                    'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list.',
+                    'description': 'Please enter a comma separated list of reduced load options. When an invitee responds to the reviewing invitation, they will be able to choose a reduced load from this list. Note: This will set the reduced load for everyone in the selected role. If you set a new reduced load for this role in a different recruitment batch, then the value will get overwritten.',
                     'values-regex': '[0-9]+',
                     'default': ['1', '2', '3'],
                     'required': False,
-                    'order': 4
+                    'order': 5
                 },
                 'invitee_details': {
                     'value-regex': '[\\S\\s]{1,50000}',
                     'description': 'Enter a list of invitees with one per line. Either tilde IDs (∼Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee". Do not use parentheses in your list of invitees.',
                     'required': True,
-                    'order': 5
+                    'order': 6
                 },
                 'invitation_email_subject': {
                     'value-regex': '.*',
                     'description': 'Please carefully review the email subject for the recruitment emails. Make sure not to remove the parenthesized tokens.',
-                    'order': 6,
+                    'order': 7,
                     'required': True,
                     'default': recruitment_email_subject
                 },
                 'invitation_email_content': {
                     'value-regex': '[\\S\\s]{1,10000}',
                     'description': 'Please carefully review the template below before you click submit to send out recruitment emails. Make sure not to remove the parenthesized tokens.',
-                    'order': 7,
+                    'order': 8,
                     'required': True,
                     'default': recruitment_email_body
                 },
                 'accepted_email_template': {
                     'value-regex': '[\\S\\s]{1,10000}',
                     'description': 'Please review the email sent to users when they accept a recruitment invitation. Make sure not to remove the parenthesized tokens.',
-                    'order': 8,
+                    'order': 9,
                     'hidden': True,
                     'default': accepted_email
                 }
@@ -256,6 +292,18 @@ If you would like to change your decision, please follow the link in the previou
         },
         signatures = ['~Super_User1'] ##Temporarily use the super user, until we can get a way to send email to invitees
     )
+
+    if isinstance(conference, openreview.venue.Venue):
+        recruitment_invitation.preprocess = recruitment_pre_preprocess
+        remind_recruitment_invitation.preprocess = recruitment_pre_preprocess
+
+        recruitment_invitation.reply['content']['allow_accept_with_reduced_load'] = {
+            'description': 'Select "yes" if you want invited Reviewers to choose their reduced load upon acceptance, otherwise this will default to selecting a reduced load when the user declines.',
+            'value-radio': ['Yes', 'No'],
+            'default': 'No',
+            'required': False,
+            'order': 4
+        }
 
     if len(conference.get_roles()) > 1:
         recruitment_invitation.reply['content']['allow_role_overlap'] = {
