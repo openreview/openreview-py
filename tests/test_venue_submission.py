@@ -312,6 +312,26 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         assert openreview_client.get_invitation('TestVenue.cc/Submission3/-/Withdrawal')
         assert openreview_client.get_invitation('TestVenue.cc/Submission3/-/Desk_Rejection')
 
+        # Test that email is not sent to openreview.net when tauthor = openreview.net
+        author_client = OpenReviewClient(username='openreview.net', password=helpers.strong_password)
+        submission_note_3 = author_client.post_note_edit(
+                invitation='TestVenue.cc/-/Submission',
+                signatures= ['~Super_User1'],
+                note=Note(
+                    content={
+                        'title': { 'value': 'Paper 3 Title' },
+                        'authors': { 'value': ['SuperUser1']},
+                        'authorids': { 'value': ['~Super_User1']},
+                        'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                        'keywords': {'value': ['aa'] }
+                    }
+                ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_3['id'])
+
+        messages = openreview_client.get_messages(to='openreview.net')
+        assert len(messages) == 0
+
     def test_bid_stage(self, venue, openreview_client, helpers):
         
         reviewer_client = OpenReviewClient(username='reviewer_venue_one@mail.com', password=helpers.strong_password)
@@ -341,7 +361,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Post_Submission-0-1', count=3)
 
         submissions = venue.get_submissions(sort='number:asc')
-        assert len(submissions) == 3
+        assert len(submissions) == 4
         submission = submissions[0]
         assert len(submission.readers) == 1
         assert 'everyone' in submission.readers
@@ -369,7 +389,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         assert scores_invitation
 
         affinity_edges = openreview_client.get_edges_count(invitation='TestVenue.cc/Reviewers/-/Affinity_Score')
-        assert affinity_edges == 9
+        assert affinity_edges == 12
 
         conflict_invitation = openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Reviewers/-/Conflict')
         assert conflict_invitation
@@ -418,7 +438,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Official_Review-0-1', count=2)
 
         invitations = openreview_client.get_invitations(invitation='TestVenue.cc/-/Official_Review')
-        assert len(invitations) == 3
+        assert len(invitations) == 4
         #assert invitation.cdate == new_cdate
         invitation = openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
         assert invitation.cdate == new_cdate
@@ -531,10 +551,11 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         venue.create_submission_stage()
 
         submissions = venue.get_submissions()
-        assert submissions and len(submissions) == 3
+        assert submissions and len(submissions) == 4
         assert submissions[0].readers == ['everyone']
         assert submissions[1].readers == ['everyone']
         assert submissions[2].readers == ['everyone']
+        assert submissions[3].readers == ['everyone']
 
         now = datetime.datetime.utcnow()
         venue.comment_stage = openreview.CommentStage(
@@ -725,7 +746,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
     def test_decision_stage(self, venue, openreview_client, helpers):
 
         submissions = venue.get_submissions(sort='number:asc')
-        assert submissions and len(submissions) == 3
+        assert submissions and len(submissions) == 4
 
         with open(os.path.join(os.path.dirname(__file__), 'data/venue_decision.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
@@ -806,7 +827,7 @@ To view your submission, click here: https://openreview.net/forum?id={updated_no
     def test_custom_stage(self, venue, openreview_client, helpers):
 
         submissions = venue.get_submissions(sort='number:asc')
-        assert submissions and len(submissions) == 3
+        assert submissions and len(submissions) == 4
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Camera_Ready_Verification')
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation TestVenue.cc/Submission1/-/Camera_Ready_Verification was not found'):
