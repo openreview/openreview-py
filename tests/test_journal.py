@@ -125,6 +125,7 @@ class TestJournal():
                             'camera_ready_verification_period': 1,
                             'archived_action_editors': True,
                             'expert_reviewers': True,
+                            'expertise_model': 'specter+mfr'
                         }
                     }
                 }

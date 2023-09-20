@@ -1093,7 +1093,7 @@ class TestVenueRequest():
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
                 'compute_conflicts': 'Default',
-                'compute_affinity_scores': 'Yes'
+                'compute_affinity_scores': 'specter+mfr'
             },
             forum=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
@@ -1124,7 +1124,7 @@ class TestVenueRequest():
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
                 'compute_conflicts': 'Default',
-                'compute_affinity_scores': 'Yes'
+                'compute_affinity_scores': 'specter+mfr'
             },
             forum=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
@@ -1151,7 +1151,7 @@ class TestVenueRequest():
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
                 'compute_conflicts': 'Default',
-                'compute_affinity_scores': 'Yes'
+                'compute_affinity_scores': 'specter+mfr'
             },
             forum=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
@@ -1184,7 +1184,7 @@ class TestVenueRequest():
                     'title': 'Paper Matching Setup',
                     'matching_group': conference.get_id() + '/Reviewers',
                     'compute_conflicts': 'No',
-                    'compute_affinity_scores': 'Yes',
+                    'compute_affinity_scores': 'specter+mfr',
                     'upload_affinity_scores': url
                 },
                 forum=venue['request_form_note'].forum,

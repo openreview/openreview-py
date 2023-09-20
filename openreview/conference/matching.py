@@ -614,7 +614,7 @@ class Matching(object):
             raise openreview.OpenReviewException('Failed during bulk post of edges! Scores found: {0}, Edges posted: {1}'.format(len(edges), edges_posted))
         return invitation
 
-    def _compute_scores(self, score_invitation_id, submissions):
+    def _compute_scores(self, score_invitation_id, submissions, model='specter+mfr'):
 
         matching_status = {
             'no_profiles': [],
@@ -628,7 +628,7 @@ class Matching(object):
                 paper_invitation=self.conference.get_blind_submission_id(),
                 alternate_match_group = self.alternate_matching_group,
                 exclusion_inv=self.conference.get_expertise_selection_id(),
-                model='specter+mfr')
+                model=model)
             status = ''
             call_count = 0
             while 'Completed' not in status and 'Error' not in status:
@@ -1009,11 +1009,18 @@ class Matching(object):
         type_affinity_scores = type(compute_affinity_scores)
 
         if type_affinity_scores == str:
-            invitation = self._build_scores_from_file(
-                self.conference.get_affinity_score_id(self.match_group.id),
-                compute_affinity_scores,
-                submissions
-            )
+            if compute_affinity_scores in ['specter+mfr', 'specter2+scincl']:
+                invitation, matching_status = self._compute_scores(
+                    self.conference.get_affinity_score_id(self.match_group.id),
+                    submissions,
+                    compute_affinity_scores
+                )
+            else:             
+                invitation = self._build_scores_from_file(
+                    self.conference.get_affinity_score_id(self.match_group.id),
+                    compute_affinity_scores,
+                    submissions
+                )
             score_spec[invitation.id] = {
                 'weight': 1,
                 'default': 0

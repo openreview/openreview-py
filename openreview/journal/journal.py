@@ -317,6 +317,9 @@ class Journal(object):
             forum_note = self.client.get_note(self.request_form_id)
             return forum_note.invitations[0].split('/-/')[0]
 
+    def get_expertise_model(self):
+        return self.settings.get('expertise_model', 'specter+mfr')
+    
     def get_ae_recommendation_period_length(self):
         return self.settings.get('ae_recommendation_period', 1)
     

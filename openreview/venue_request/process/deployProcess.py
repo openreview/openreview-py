@@ -493,9 +493,9 @@ If you would like to change your decision, please follow the link in the previou
                     'order': 4
                 },            
                 'compute_affinity_scores': {
-                    'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically.',
+                    'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically. Select the model you want to use to compute the affinity scores or "No" if you don\'t want to compute affinity scores.',
                     'order': 5,
-                    'value-radio': ['Yes', 'No'],
+                    'value-radio': ['specter+mfr', 'specter2+scincl', 'No'],
                     'required': True,
                 },
                 'upload_affinity_scores': {
