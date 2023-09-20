@@ -3086,19 +3086,27 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            process=self.get_process_content('process/group_recruitment.py'),
+            process=self.get_process_content('process/group_recruitment_process.py'),
+            preprocess = self.get_process_content('process/group_recruitment_pre_process.js'),
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
                 'writers': [venue_id],
-                'group': {
-                    'id': venue.get_committee_id_invited(committee_name),
-                    'members': {
-                        'param': {
-                            'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
-                            'change': 'append'
+                'content': {
+                    'inviteeDetails': { 
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 200000,
+                                'input': 'textarea',
+                                'optional': True,
+                                'markdown': True
+                            }
                         }
                     }
+                },
+                'group': {
+                    'id': venue.get_committee_id_invited(committee_name)
                 }
             })
         

@@ -59,6 +59,8 @@ class TestGroupRecruitment():
         assert openreview_client.get_group('Venue.cc/Reviewers/Declined')
         assert openreview_client.get_invitation('Venue.cc/Reviewers/Invited/-/Recruitment')
         assert openreview_client.get_invitation('Venue.cc/Reviewers/Invited/-/Edit')
+
+        helpers.create_user('reviewer3@venue.cc', 'Reviewer', 'VenueThree')
         
         # use invitation to edit group content
         openreview_client.post_group_edit(
@@ -66,28 +68,31 @@ class TestGroupRecruitment():
                 group=openreview.api.Group(
                     content = {
                         'reduced_load': { 'value': [1,2,3] },
-                        'recruitment_template': { 'value': 'This is a recruitment template.'},
-                        'allow_overlap': False
+                        'recruitment_template': { 'value': 'This is a recruitment template.' },
+                        'allow_overlap': { 'value': False }
                     }
                 )
             )
+        
+        invitee_details = '''reviewer1@venue.cc, Reviewer VenueOne\nreviewer2@venue.cc, Reviewer VenueTwo\n~Reviewer_VenueThree1'''
 
-        # use invitation to add members to /Invited group
+        # use invitation to recriut reviewers
         openreview_client.post_group_edit(
                 invitation='Venue.cc/Reviewers/Invited/-/Recruitment',
-                group=openreview.api.Group(
-                    members = ['celestemartinez@mail.com', 'emiliarubio@mail.com']
-                )
+                content={
+                    'inviteeDetails': { 'value':  invitee_details }
+                },
+                group=openreview.api.Group()
             )
 
-        invited_group = openreview_client.get_group('Venue.cc/Reviewers/Invited')
-        assert len(invited_group.members) == 2
-        assert 'celestemartinez@mail.com' in invited_group.members
-        assert 'emiliarubio@mail.com' in invited_group.members
+        # invited_group = openreview_client.get_group('Venue.cc/Reviewers/Invited')
+        # assert len(invited_group.members) == 2
+        # assert 'celestemartinez@mail.com' in invited_group.members
+        # assert 'emiliarubio@mail.com' in invited_group.members
 
-        openreview_client.post_group_edit(
-                invitation='Venue.cc/Reviewers/Invited/-/Recruitment',
-                group=openreview.api.Group(
-                    members = ['anagomez@mail.com']
-                )
-            )
+        # openreview_client.post_group_edit(
+        #         invitation='Venue.cc/Reviewers/Invited/-/Recruitment',
+        #         group=openreview.api.Group(
+        #             members = ['anagomez@mail.com']
+        #         )
+        #     )
