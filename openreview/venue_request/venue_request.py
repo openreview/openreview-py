@@ -1640,25 +1640,25 @@ class VenueRequest():
                 'values-regex': '[0-9]+',
                 'default': ['1', '2', '3'],
                 'required': False,
-                'order': 4
+                'order': 5
             },
             'invitee_details': {
                 'value-regex': '[\\S\\s]{1,50000}',
                 'description': 'Enter a list of invitees with one per line. Either tilde IDs (∼Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee". Do not use parentheses in your list of invitees.',
                 'required': True,
-                'order': 5
+                'order': 6
             },
             'invitation_email_subject': {
                 'value-regex': '.*',
                 'description': 'Please carefully review the email subject for the recruitment emails. Make sure not to remove the parenthesized tokens.',
-                'order': 6,
+                'order': 7,
                 'required': True,
                 'default': '[{Abbreviated_Venue_Name}] Invitation to serve as {{invitee_role}}'
             },
             'invitation_email_content': {
                 'value-regex': '[\\S\\s]{1,10000}',
                 'description': 'Please carefully review the template below before you click submit to send out recruitment emails. Make sure not to remove the parenthesized tokens.',
-                'order': 7,
+                'order': 8,
                 'required': True,
                 'default': '''Dear {{fullname}},
 
