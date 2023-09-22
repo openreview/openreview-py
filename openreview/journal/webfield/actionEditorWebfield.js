@@ -27,6 +27,8 @@ var ACTION_EDITORS_EXPERTISE_SELECTION_ID = ACTION_EDITOR_ID + '/-/Expertise_Sel
 var CUSTOM_MAX_PAPERS_NAME = 'Custom_Max_Papers';
 var AVAILABILITY_NAME = 'Assignment_Availability';
 var REVIEWERS_AVAILABILITY_ID = REVIEWERS_ID + '/-/' + AVAILABILITY_NAME;
+var REVIEWERS_REPORT_ID = REVIEWERS_ID + '/-/Reviewer_Report';
+
 
 var SUBMISSION_GROUP_NAME = 'Paper';
 var RECOMMENDATION_NAME = 'Recommendation';
@@ -126,37 +128,42 @@ var loadData = function() {
       return $.when(
         Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true }),
         Webfield2.api.getAssignedInvitations(VENUE_ID, ACTION_EDITOR_NAME, { numbers: Object.keys(assignedGroups), submissionGroupName: SUBMISSION_GROUP_NAME }),
-        Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups) }),
+        Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups), domain: VENUE_ID }),
         Webfield2.api.getAll('/invitations', {
           prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
           type: 'all',
           select: 'id,cdate,duedate,expdate',
-          sort: 'cdate:asc'
-          // expired: true
+          sort: 'cdate:asc',
+          // expired: true,
+          domain: VENUE_ID
         }).then(function(invitations) {
           return _.keyBy(invitations, 'id');
         }),
         Webfield2.api.getAll('/invitations', {
           id: ACTION_EDITOR_ID + '/-/' + AVAILABILITY_NAME,
-          type: 'edges'
+          type: 'edges',
+          domain: VENUE_ID
         }).then(function(invitations) {
           return invitations[0];
         }),
         Webfield2.api.getAll('/invitations', {
           id: ACTION_EDITOR_ID + '/-/' + CUSTOM_MAX_PAPERS_NAME,
-          type: 'edges'
+          type: 'edges',
+          domain: VENUE_ID
         }).then(function(invitations) {
           return invitations[0];
         }),
         Webfield2.api.getAll('/edges', {
           invitation: ACTION_EDITOR_ID + '/-/' + AVAILABILITY_NAME,
           tail: user.profile.id,
+          domain: VENUE_ID
         }).then(function(edges) {
           return edges && edges[0];
         }),
         Webfield2.api.getAll('/edges', {
           invitation: ACTION_EDITOR_ID + '/-/' + CUSTOM_MAX_PAPERS_NAME,
           tail: user.profile.id,
+          domain: VENUE_ID
         }).then(function(edges) {
           return edges && edges[0];
         })
@@ -338,6 +345,9 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
       var status = {
         'profileID': reviewer.id
       };
+      var links = {
+        'Report': '/forum?id=' + REVIEWER_REPORT_ID + '&noteId=' + REVIEWER_REPORT_ID + '&invitationId=' + REVIEWERS_REPORT_ID + '&edit.note.content.reviewer_id=' + reviewer.id + '&referrer=' + referrerUrl,
+      }
 
       if (assignmentAcknowledgement && assignmentAcknowledgement.length) {
         status.Acknowledged = 'Yes';
@@ -366,6 +376,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         forum: submission.id,
         note: completedReview && completedReview.id,
         status: status,
+        links: links,
         forumUrl: 'https://openreview.net/forum?' + $.param({
           id: submission.id,
           noteId: submission.id,

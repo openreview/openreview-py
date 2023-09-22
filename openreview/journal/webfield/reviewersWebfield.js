@@ -55,28 +55,32 @@ var loadData = function() {
       assignedGroups,
       Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITORS_NAME),
       Webfield2.api.getAssignedInvitations(VENUE_ID, REVIEWERS_NAME, { numbers: Object.keys(assignedGroups), submissionGroupName: SUBMISSION_GROUP_NAME }),
-      Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups)}),
+      Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups), domain: VENUE_ID}),
       Webfield2.api.getAll('/invitations', {
         id: REVIEWERS_ID + '/-/' + REVIEWERS_AVAILABILITY_NAME,
-        type: 'edges'
+        type: 'edges',
+        domain: VENUE_ID
       }).then(function(invitations) {
         return invitations[0];
       }),
       Webfield2.api.getAll('/invitations', {
         id: REVIEWERS_ID + '/-/' + REVIEWERS_CUSTOM_MAX_PAPERS_NAME,
-        type: 'edges'
+        type: 'edges',
+        domain: VENUE_ID
       }).then(function(invitations) {
         return invitations[0];
       }),
       Webfield2.api.getAll('/edges', {
         invitation: REVIEWERS_ID + '/-/' + REVIEWERS_AVAILABILITY_NAME,
         tail: user.profile.id,
+        domain: VENUE_ID
       }).then(function(edges) {
         return edges && edges[0];
       }),
       Webfield2.api.getAll('/edges', {
         invitation: REVIEWERS_ID + '/-/' + REVIEWERS_CUSTOM_MAX_PAPERS_NAME,
         tail: user.profile.id,
+        domain: VENUE_ID
       }).then(function(edges) {
         return edges && edges[0];
       })

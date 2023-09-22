@@ -46,13 +46,14 @@ var loadData = function() {
     'content.authorids': user.profile.id,
     invitation: SUBMISSION_ID,
     details: 'replies',
-    sort: 'number:asc'
+    sort: 'number:asc',
+    domain: VENUE_ID
   });
 
   return $.when(
     notesP,
     Webfield2.api.getAssignedInvitations(VENUE_ID, AUTHOR_NAME),
-    Webfield2.api.get('/edges', { invitation: AE_RECOMMENDATION_ID, groupBy: 'head'})
+    Webfield2.api.get('/edges', { invitation: AE_RECOMMENDATION_ID, groupBy: 'head', domain: VENUE_ID})
     .then(function(result) { return result.groupedEdges; })
   );
 }

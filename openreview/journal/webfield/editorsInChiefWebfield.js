@@ -38,6 +38,7 @@ var ACTION_EDITORS_AFFINITY_SCORE_ID = ACTION_EDITOR_ID + '/-/Affinity_Score';
 var ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID = ACTION_EDITOR_ID + '/-/Custom_Max_Papers';
 var ACTION_EDITORS_RECOMMENDATION_ID = ACTION_EDITOR_ID + '/-/Recommendation';
 var ACTION_EDITORS_AVAILABILITY_ID = ACTION_EDITOR_ID + '/-/' + AVAILABILITY_NAME;
+var REVIEWERS_REPORT_ID = REVIEWERS_ID + '/-/Reviewer_Report';
 
 var REVIEWER_RATING_MAP = {
   "Exceeds expectations": 3,
@@ -169,9 +170,9 @@ var loadData = function() {
   return $.when(
     Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME),
     Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true}),
-    Webfield2.api.getAllSubmissions(SUBMISSION_ID),
-    Webfield2.api.getAll('/notes', { forum: REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID }),
-    Webfield2.api.getAll('/notes', { forum: REVIEWER_REPORT_ID })
+    Webfield2.api.getAllSubmissions(SUBMISSION_ID, { domain: VENUE_ID }),
+    Webfield2.api.getAll('/notes', { forum: REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID, domain: VENUE_ID }),
+    Webfield2.api.getAll('/notes', { forum: REVIEWER_REPORT_ID, domain: VENUE_ID })
     .then(function(notes) {
       return notes.reduce(function(content, currentValue) {
         var reviewer_id = currentValue.content.reviewer_id;
@@ -185,19 +186,21 @@ var loadData = function() {
       }, {})
     }),
     Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME, { withProfiles: true}),
+    Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME + '/Archived', { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getAll('/invitations', {
       prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
       type: 'all',
       select: 'id,cdate,duedate,expdate',
-      sort: 'cdate:asc'
+      sort: 'cdate:asc',
+      domain: VENUE_ID
     }).then(function(invitations) {
       return _.keyBy(invitations, 'id');
     }),
-    Webfield2.api.getAll('/invitations', { prefix: VENUE_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc' }),
-    Webfield2.api.getAll('/invitations', { prefix: REVIEWERS_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc' }),
-    Webfield2.api.getAll('/invitations', { prefix: ACTION_EDITOR_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc' }),
-    Webfield2.api.get('/edges', { invitation: ACTION_EDITORS_RECOMMENDATION_ID, groupBy: 'head', select: 'count'})
+    Webfield2.api.getAll('/invitations', { prefix: VENUE_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID }),
+    Webfield2.api.getAll('/invitations', { prefix: REVIEWERS_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID }),
+    Webfield2.api.getAll('/invitations', { prefix: ACTION_EDITOR_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID }),
+    Webfield2.api.get('/edges', { invitation: ACTION_EDITORS_RECOMMENDATION_ID, groupBy: 'head', select: 'count', domain: VENUE_ID})
     .then(function(response) {
       var groupedEdges = response.groupedEdges;
       var recommendationCount = {};
@@ -223,6 +226,7 @@ var formatData = function(
   responsibilityNotes,
   reviewerReportByReviewerId,
   actionEditors,
+  archivedActionEditors,
   reviewers,
   invitationsById,
   superInvitationIds,
@@ -299,6 +303,34 @@ var formatData = function(
       }
     };
   });
+
+  archivedActionEditors.members.forEach(function(actionEditor, index) {
+    actionEditorStatusById[actionEditor.id] = {
+      index: { number: index + 1 },
+      summary: {
+        id: actionEditor.id,
+        name: actionEditor.name,
+        email: actionEditor.email,
+        status: {
+          Profile: actionEditor.id.startsWith('~') ? 'Yes' : 'No',
+          Publications: '-',
+          Archived: 'Yes'
+        }
+      },
+      reviewProgressData: {
+        numCompletedReviews: 0,
+        numPapers: 0,
+        papers: [],
+        referrer: referrerUrl
+      },
+      decisionProgressData: {
+        metaReviewName: 'Decision',
+        numPapers: 0,
+        numCompletedMetaReviews: 0,
+        papers: []
+      }
+    };
+  });  
 
   var paperStatusRows = [];
   var authorSubmissionsCount = {};
@@ -573,6 +605,9 @@ var formatData = function(
       var reviewerRecommendation = null;
       var status = {};
       var reviewerStatus = reviewerStatusById[reviewer.id];
+      var links = {
+        'Report': '/forum?id=' + REVIEWER_REPORT_ID + '&noteId=' + REVIEWER_REPORT_ID + '&invitationId=' + REVIEWERS_REPORT_ID + '&edit.note.content.reviewer_id=' + reviewer.id + '&referrer=' + referrerUrl,
+      }      
 
       if (assignmentAcknowledgement && assignmentAcknowledgement.length) {
         status.Acknowledged = 'Yes';
@@ -613,6 +648,7 @@ var formatData = function(
         forum: submission.id,
         note: completedReview && completedReview.id,
         status: status,
+        links: links,
         forumUrl: 'https://openreview.net/forum?' + $.param({
           id: submission.id,
           noteId: submission.id,

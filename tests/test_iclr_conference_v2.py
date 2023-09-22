@@ -108,6 +108,71 @@ class TestICLRConference():
         assert openreview_client.get_invitation('ICLR.cc/2024/Conference/Area_Chairs/-/Expertise_Selection')
         assert openreview_client.get_invitation('ICLR.cc/2024/Conference/Senior_Area_Chairs/-/Expertise_Selection')
 
+    def test_reviewer_recruitment(self, client, openreview_client, helpers, request_page, selenium):
+
+        pc_client=openreview.Client(username='pc@iclr.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        reviewer_details = '''reviewer1@iclr.cc, Reviewer ICLROne\nreviewer2@iclr.cc, Reviewer ICLRTwo'''
+        pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'Reviewers',
+                'invitee_details': reviewer_details,
+                'allow_accept_with_reduced_load': 'Yes',
+                'invitee_reduced_load': ["1", "2", "3"],
+                'invitation_email_subject': '[ICLR 2024] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of International Conference on Learning Representations @ ICLR 2024 to serve as {{invitee_role}}.\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
+            readers=['ICLR.cc/2024/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ICLRChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        assert len(openreview_client.get_group('ICLR.cc/2024/Conference/Reviewers').members) == 0
+        assert len(openreview_client.get_group('ICLR.cc/2024/Conference/Reviewers/Invited').members) == 2
+        assert len(openreview_client.get_group('ICLR.cc/2024/Conference/Reviewers/Declined').members) == 0
+
+        messages = openreview_client.get_messages(subject = '[ICLR 2024] Invitation to serve as Reviewer')
+        assert len(messages) == 2
+
+        # Accept invitation with reduced load
+        for message in messages:
+            text = message['content']['text']
+            invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+            helpers.respond_invitation(selenium, request_page, invitation_url, accept=True, quota=3)
+
+        helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2024/Conference/Reviewers/-/Recruitment', count=2)
+
+        messages = client.get_messages(subject='[ICLR 2024] Reviewer Invitation accepted with reduced load')
+        assert len(messages) == 2
+
+        assert len(openreview_client.get_group('ICLR.cc/2024/Conference/Reviewers').members) == 2
+        assert len(openreview_client.get_group('ICLR.cc/2024/Conference/Reviewers/Invited').members) == 2
+        assert len(openreview_client.get_group('ICLR.cc/2024/Conference/Reviewers/Declined').members) == 0
+
+        # Decline invitation
+        messages = openreview_client.get_messages(to='reviewer1@iclr.cc', subject='[ICLR 2024] Invitation to serve as Reviewer')
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
+
+        helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2024/Conference/Reviewers/-/Recruitment', count=3)
+
+        assert len(openreview_client.get_group('ICLR.cc/2024/Conference/Reviewers').members) == 1
+        assert len(openreview_client.get_group('ICLR.cc/2024/Conference/Reviewers/Invited').members) == 2
+        assert len(openreview_client.get_group('ICLR.cc/2024/Conference/Reviewers/Declined').members) == 1
+
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer2@iclr.cc', password=helpers.strong_password)
+
+        request_page(selenium, "http://localhost:3030/group?id=ICLR.cc/2024/Conference/Reviewers", reviewer_client.token, wait_for_element='header')
+        header = selenium.find_element(By.ID, 'header')
+        assert 'You have agreed to review up to 1 papers' in header.text
+
     def test_submissions(self, client, openreview_client, helpers, test_client):
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
