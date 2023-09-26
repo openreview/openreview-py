@@ -128,37 +128,42 @@ var loadData = function() {
       return $.when(
         Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true }),
         Webfield2.api.getAssignedInvitations(VENUE_ID, ACTION_EDITOR_NAME, { numbers: Object.keys(assignedGroups), submissionGroupName: SUBMISSION_GROUP_NAME }),
-        Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups) }),
+        Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups), domain: VENUE_ID }),
         Webfield2.api.getAll('/invitations', {
           prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
           type: 'all',
           select: 'id,cdate,duedate,expdate',
-          sort: 'cdate:asc'
-          // expired: true
+          sort: 'cdate:asc',
+          // expired: true,
+          domain: VENUE_ID
         }).then(function(invitations) {
           return _.keyBy(invitations, 'id');
         }),
         Webfield2.api.getAll('/invitations', {
           id: ACTION_EDITOR_ID + '/-/' + AVAILABILITY_NAME,
-          type: 'edges'
+          type: 'edges',
+          domain: VENUE_ID
         }).then(function(invitations) {
           return invitations[0];
         }),
         Webfield2.api.getAll('/invitations', {
           id: ACTION_EDITOR_ID + '/-/' + CUSTOM_MAX_PAPERS_NAME,
-          type: 'edges'
+          type: 'edges',
+          domain: VENUE_ID
         }).then(function(invitations) {
           return invitations[0];
         }),
         Webfield2.api.getAll('/edges', {
           invitation: ACTION_EDITOR_ID + '/-/' + AVAILABILITY_NAME,
           tail: user.profile.id,
+          domain: VENUE_ID
         }).then(function(edges) {
           return edges && edges[0];
         }),
         Webfield2.api.getAll('/edges', {
           invitation: ACTION_EDITOR_ID + '/-/' + CUSTOM_MAX_PAPERS_NAME,
           tail: user.profile.id,
+          domain: VENUE_ID
         }).then(function(edges) {
           return edges && edges[0];
         })
