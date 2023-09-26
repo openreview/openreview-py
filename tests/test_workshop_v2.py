@@ -239,7 +239,7 @@ class TestWorkshopV2():
 
         helpers.await_queue_edit(openreview_client, edit_id=edge.id)
 
-        assert client.get_group('PRL/2023/ICAPS/Submission1/Reviewers').members == ['~Reviewer_ICAPSOne1']
+        assert openreview_client.get_group('PRL/2023/ICAPS/Submission1/Reviewers').members == ['~Reviewer_ICAPSOne1']
 
     def test_publication_chair(self, client, openreview_client, helpers):
 
