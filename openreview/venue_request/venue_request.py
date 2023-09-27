@@ -1423,17 +1423,23 @@ class VenueRequest():
                 'default': '2',
                 'order': 41
             },
+            'submission_license': {
+                'value-dropdown': ['CC BY 4.0'],
+                'description': 'Which license would you like to use for each submission? If you are unsure, we recommend "CC BY 4.0". If your license is not listed, please let us know and we can add it.',
+                'default': 'CC BY 4.0',
+                'order': 42
+            },
             'include_expertise_selection': {
                 'value-radio': ['Yes', 'No'],
                 'default': 'No',
-                'order': 42,
+                'order': 43,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'submission_deadline_author_reorder': {
                 'value-radio': ['Yes', 'No'],
                 'default': 'No',
-                'order': 43,
+                'order': 44,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             }
