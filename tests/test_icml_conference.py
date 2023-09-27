@@ -4404,7 +4404,6 @@ ICML 2023 Conference Program Chairs'''
         ]
 
         #release decisions to authors and reviewers
-        #post decisions from request form
         decision_stage_note = pc_client.post_note(openreview.Note(
             content={
                 'decision_start_date': start_date.strftime('%Y/%m/%d'),
@@ -4427,8 +4426,7 @@ ICML 2023 Conference Program Chairs'''
                             }
                         }
                     }
-                },
-                'decisions_file': url
+                }
             },
             forum=request_form.forum,
             invitation=decision_stage_invitation,
@@ -4619,6 +4617,52 @@ url={https://openreview.net/forum?id='''
 }'''
 
         assert '_bibtex' in rejected_submissions[0].content and rejected_submissions[0].content['_bibtex']['value'] == valid_bibtex
+
+        #make sure all decision process functions have finished
+        for number in range(1, 101):
+            helpers.await_queue_edit(openreview_client, invitation=f'ICML.cc/2023/Conference/Submission{number}/-/Decision')
+
+        authors_accepted_group = openreview_client.get_group('ICML.cc/2023/Conference/Authors/Accepted')
+        num_accepted_papers = len(authors_accepted_group.members)
+
+        # add publication chair
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Thirty-ninth International Conference on Machine Learning',
+                'Official Venue Name': 'Thirty-ninth International Conference on Machine Learning',
+                'Abbreviated Venue Name': 'ICML 2023',
+                'Official Website URL': 'https://icml.cc',
+                'program_chair_emails': ['pc@icml.cc', 'pc3@icml.cc'],
+                'contact_email': 'pc@icml.cc',
+                'publication_chairs_emails': ['publicationchair@icml.com'],
+                'Venue Start Date': '2023/07/01',
+                'Submission Deadline': request_form.content['Submission Deadline'],
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'Additional Submission Options': request_form.content['Additional Submission Options'],
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        pub_chair_group = openreview_client.get_group('ICML.cc/2023/Conference/Publication_Chairs')
+        assert pub_chair_group and 'publicationchair@icml.com' in pub_chair_group.members
+
+        # check members have not changed
+        authors_accepted_group = openreview_client.get_group('ICML.cc/2023/Conference/Authors/Accepted')
+        assert len(authors_accepted_group.members) == num_accepted_papers
 
     def test_forum_chat(self, openreview_client, helpers):
 
