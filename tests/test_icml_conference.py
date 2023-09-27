@@ -4404,7 +4404,6 @@ ICML 2023 Conference Program Chairs'''
         ]
 
         #release decisions to authors and reviewers
-        #post decisions from request form
         decision_stage_note = pc_client.post_note(openreview.Note(
             content={
                 'decision_start_date': start_date.strftime('%Y/%m/%d'),
@@ -4427,8 +4426,7 @@ ICML 2023 Conference Program Chairs'''
                             }
                         }
                     }
-                },
-                'decisions_file': url
+                }
             },
             forum=request_form.forum,
             invitation=decision_stage_invitation,
@@ -4619,6 +4617,10 @@ url={https://openreview.net/forum?id='''
 }'''
 
         assert '_bibtex' in rejected_submissions[0].content and rejected_submissions[0].content['_bibtex']['value'] == valid_bibtex
+
+        #make sure all decision process functions have finished
+        for number in range(1, 101):
+            helpers.await_queue_edit(openreview_client, invitation=f'ICML.cc/2023/Conference/Submission{number}/-/Decision')
 
         authors_accepted_group = openreview_client.get_group('ICML.cc/2023/Conference/Authors/Accepted')
         num_accepted_papers = len(authors_accepted_group.members)
