@@ -70,6 +70,7 @@ class Venue(object):
         self.automatic_reviewer_assignment = False
         self.decision_heading_map = {}
         self.use_publication_chairs = False
+        self.submission_license = None
 
     def get_id(self):
         return self.venue_id

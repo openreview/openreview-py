@@ -46,6 +46,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
 
         include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
         venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date, include_option=include_expertise_selection)
+        venue.submission_license = note.content.get('submission_license', 'CC BY 4.0')
 
         if setup:
             venue.setup(note.content.get('program_chair_emails'), note.content.get('publication_chairs_emails'))
