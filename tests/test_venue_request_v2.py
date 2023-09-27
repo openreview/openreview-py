@@ -1310,7 +1310,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         }
 
         # Test assignment config title validation
-        with pytest.raises(openreview.OpenReviewException, match=r'title value must be 250 characters or less and not contain the following characters: ",", ";", ":"'):
+        with pytest.raises(openreview.OpenReviewException, match=r'title value must be 250 characters or less and not contain the following characters: ; : or ,'):
             assignment_config_note = pc_client.post_note_edit(invitation=conference.get_invitation_id('Assignment_Configuration', prefix=reviewer_group.id),
                 signatures=[ 'V2.cc/2030/Conference' ],
                 note=openreview.api.Note(
