@@ -639,7 +639,8 @@ class Matching(object):
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '.{1,250}'
+                                    'regex': '^[^,;:]{1,250}$',
+                                    'mismatchError': 'must be 250 characters or less and not contain the following characters: ; : or ,'
                                 }
                             }
                         },
