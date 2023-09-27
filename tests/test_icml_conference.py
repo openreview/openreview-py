@@ -2015,7 +2015,7 @@ ICML 2023 Conference Program Chairs'''
         sac_group = pc_client.get_group('ICML.cc/2023/Conference/Submission11/Senior_Area_Chairs')
         assert [] == sac_group.members
 
-    def test_review_stage(self, client, openreview_client, helpers):
+    def test_review_stage(self, client, openreview_client, helpers, selenium, request_page):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -2526,6 +2526,20 @@ ICML 2023 Conference Program Chairs'''
 
         messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your official review has been received on your assigned Paper number: 1, Paper title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
+
+        ## check how the description is rendered
+        note = review_edit['note']
+        review_id = note['id']
+        request_page(selenium, "http://localhost:3030/forum?id=" + review_edit['note']['forum'], openreview_client.token, by=By.ID, wait_for_element='forum-replies')
+        note_panel = selenium.find_element(By.XPATH, f'//div[@data-id="{review_id}"]')
+        fields = note_panel.find_elements(By.CLASS_NAME, 'note-content-field')
+        assert len(fields) == 11
+        assert fields[8].text == 'Rating:'
+        assert fields[9].text == 'Confidence:'        
+        values = note_panel.find_elements(By.CLASS_NAME, 'note-content-value')
+        assert len(values) == 11
+        assert values[8].text == '10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.'
+        assert values[9].text == '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.'        
 
         review_edit = reviewer_client.post_note_edit(
             invitation='ICML.cc/2023/Conference/Submission1/-/Official_Review',

@@ -757,7 +757,8 @@ class InvitationBuilder(object):
             'committee_name': { 'value': committee_name.replace('_', ' ')[:-1] },
             'committee_id': { 'value': venue.get_committee_id(committee_name) },
             'committee_invited_id': { 'value': venue.get_committee_id_invited(committee_name) },
-            'committee_declined_id': { 'value': venue.get_committee_id_declined(committee_name) }       
+            'committee_declined_id': { 'value': venue.get_committee_id_declined(committee_name) },
+            'allow_accept_with_reduced_load': { 'value': options.get('allow_accept_with_reduced_load') }
         }
 
         if not options.get('allow_overlap_official_committee'):
@@ -839,11 +840,19 @@ class InvitationBuilder(object):
                         }
                     }
                 }
+
+            updated_invitation_content = {}
+
             if 'overlap_committee_name' in invitation_content and current_invitation.content.get('overlap_committee_name', {}) != invitation_content['overlap_committee_name']:
-                updated_invitation.content = {
-                    'overlap_committee_name': invitation_content['overlap_committee_name'],
-                    'overlap_committee_id': invitation_content['overlap_committee_id']
-                }
+                updated_invitation_content['overlap_committee_name'] = invitation_content['overlap_committee_name']
+                updated_invitation_content['overlap_committee_id'] = invitation_content['overlap_committee_id']
+
+            if current_invitation.content.get('allow_accept_with_reduced_load') != invitation_content['allow_accept_with_reduced_load']:
+                updated_invitation_content['allow_accept_with_reduced_load'] = invitation_content['allow_accept_with_reduced_load']
+
+            if updated_invitation_content:
+                updated_invitation.content = updated_invitation_content
+
             if updated_invitation.content or updated_invitation.edit:
                 return self.save_invitation(updated_invitation)
             else:
