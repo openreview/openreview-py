@@ -713,8 +713,7 @@ class Matching(object):
                                 'param': {
                                     'type': 'json',
                                     'default': scores_specification,
-                                    'optional': True,
-                                    'deletable': True
+                                    'optional': True
                                 }
                             }
                         },
