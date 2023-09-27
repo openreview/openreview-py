@@ -320,7 +320,7 @@ class SubmissionStage(object):
                 content['submission_license'] = {
                     'value': {
                         'param': {
-                                'const': conference.submission_license
+                                'const': conference.submission_license if conference.submission_license else 'CC BY 4.0'
                             }
                     }
                 }

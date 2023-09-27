@@ -32,6 +32,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.senior_area_chair_identity_readers = get_identity_readers(note, 'senior_area_chair_identity')
         venue.decision_heading_map = get_decision_heading_map(venue.short_name, note)
 
+        venue.submission_license = note.content.get('submission_license', 'CC BY 4.0')
         venue.submission_stage = get_submission_stage(note, venue)
         venue.review_stage = get_review_stage(note)
         venue.bid_stages = get_bid_stages(note)
@@ -46,7 +47,6 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
 
         include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
         venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date, include_option=include_expertise_selection)
-        venue.submission_license = note.content.get('submission_license', 'CC BY 4.0')
 
         if setup:
             venue.setup(note.content.get('program_chair_emails'), note.content.get('publication_chairs_emails'))
