@@ -303,7 +303,8 @@ class TestVenueRequest():
             client.post_note(venue_revision_note)
 
         venue_revision_note.content['desk_rejected_submissions_author_anonymity'] = 'Yes, author identities of desk rejected submissions should be revealed.'
-        venue_revision_note.content['Submission Deadline'] = request_form_note.content['Submission Deadline'] + ' '
+        venue_revision_note.content['abstract_registration_deadline'] = (now - datetime.timedelta(days=1)).strftime('%Y/%m/%d %H:%M')
+        venue_revision_note.content['Submission Deadline'] = (now - datetime.timedelta(days=1)).strftime('%Y/%m/%d %H:%M')
         venue_revision_note=client.post_note(venue_revision_note)
 
         helpers.await_queue()
