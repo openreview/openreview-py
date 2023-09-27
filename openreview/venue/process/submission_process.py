@@ -117,11 +117,12 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
         )
 
     #send tauthor email
-    client.post_message(
-        subject=author_subject,
-        message=author_message,
-        recipients=[edit.tauthor] if edit.tauthor != 'OpenReview.net' else []
-    )
+    if edit.tauthor.lower() != 'openreview.net':
+        client.post_message(
+            subject=author_subject,
+            message=author_message,
+            recipients=[edit.tauthor]
+        )
 
     # send co-author emails
     if ('authorids' in note.content and len(note.content['authorids']['value'])):
