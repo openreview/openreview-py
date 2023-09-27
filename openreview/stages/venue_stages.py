@@ -315,7 +315,15 @@ class SubmissionStage(object):
                                 'hidden': True
                             }
                         }
-                    }                                            
+                    }
+                
+                content['submission_license'] = {
+                    'value': {
+                        'param': {
+                                'const': conference.submission_license
+                            }
+                    }
+                }
 
         return content
     
