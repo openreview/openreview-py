@@ -334,8 +334,8 @@ class GroupBuilder(object):
                             readers=[venue_id, authors_accepted_id, self.venue.get_publication_chairs_id()] if self.venue.use_publication_chairs else [venue_id, authors_accepted_id],
                             writers=[venue_id, self.venue.get_publication_chairs_id()] if self.venue.use_publication_chairs else [venue_id],
                             signatures=[venue_id],
-                            signatories=[venue_id],
-                            members=[]))
+                            signatories=[venue_id]
+                            ))
     
     def create_reviewers_group(self):
 
