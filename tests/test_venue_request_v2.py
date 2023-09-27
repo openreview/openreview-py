@@ -1290,6 +1290,75 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         last_message = client.get_messages(to='test@mail.com')[-1]
         assert 'Paper Matching Setup Status' in last_message['content']['subject']
 
+        ## Test assignment config
+        assignment_config_invitation = openreview_client.get_invitation(conference.get_invitation_id('Assignment_Configuration', prefix=reviewer_group.id))
+        assert assignment_config_invitation
+        pc_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+
+        # Scores specs for assignment config note
+        scores_specs = { 
+            f'{ reviewer_group.id }/-/Affinity_Score': { 'weight': 1, 'default': 0 },
+            f'{ reviewer_group.id }/-/Bid': { 'weight': 1, 'default': 0,
+                'translate_map': {
+                    'Very High': 1,
+                    'High': 0.5,
+                    'Neutral': 0,
+                    'Low': -0.5,
+                    'Very Low': -1
+                }
+            }
+        }
+
+        # Test assignment config title validation
+        with pytest.raises(openreview.OpenReviewException, match=r'title value must be 250 characters or less and not contain the following characters: ; : or ,'):
+            assignment_config_note = pc_client.post_note_edit(invitation=conference.get_invitation_id('Assignment_Configuration', prefix=reviewer_group.id),
+                signatures=[ 'V2.cc/2030/Conference' ],
+                note=openreview.api.Note(
+                    content={
+                        'title': { 'value': f'matching-config ,,,' }, # Invalid title
+                        'user_demand': { 'value': '1' },
+                        'max_papers': { 'value': '1' },
+                        'min_papers': { 'value': '0' },
+                        'alternates': { 'value': '2' },
+                        'paper_invitation': { 'value': f'{ venue["venue_id"] }/-/Submission&content.venueid={ venue["venue_id"] }/Submission'},
+                        'match_group': { 'value': reviewer_group.id },
+                        'scores_specification': { 'value': scores_specs },
+                        'conflicts_invitation': { 'value': f'{ reviewer_group.id }/-/Conflict' },
+                        'custom_max_papers_invitation': { 'value': f'{ reviewer_group.id }/-/Custom_Max_Papers'},
+                        'aggregate_score_invitation': { 'value': f'{ reviewer_group.id }/-/Aggregate_Score'},
+                        'solver': { 'value': 'MinMax' },
+                        'allow_zero_score_assignments': { 'value': 'No' },
+                        'status': { 'value': 'Initialized' },
+                    }
+                ))
+
+        # Post assignment config note
+        assignment_config_note = pc_client.post_note_edit(invitation=conference.get_invitation_id('Assignment_Configuration', prefix=reviewer_group.id),
+            signatures=[ 'V2.cc/2030/Conference' ],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': f'matching-config-title' },
+                    'user_demand': { 'value': '1' },
+                    'max_papers': { 'value': '1' },
+                    'min_papers': { 'value': '0' },
+                    'alternates': { 'value': '2' },
+                    'paper_invitation': { 'value': f'{ venue["venue_id"] }/-/Submission&content.venueid={ venue["venue_id"] }/Submission'},
+                    'match_group': { 'value': reviewer_group.id },
+                    'scores_specification': { 'value': scores_specs },
+                    'conflicts_invitation': { 'value': f'{ reviewer_group.id }/-/Conflict' },
+                    'custom_max_papers_invitation': { 'value': f'{ reviewer_group.id }/-/Custom_Max_Papers'},
+                    'aggregate_score_invitation': { 'value': f'{ reviewer_group.id }/-/Aggregate_Score'},
+                    'solver': { 'value': 'MinMax' },
+                    'allow_zero_score_assignments': { 'value': 'No' },
+                    'status': { 'value': 'Initialized' },
+                }
+            ))
+        assert assignment_config_note
+
+        assignment_config_notes = pc_client.get_notes(invitation=assignment_config_invitation.id)
+        assert len(assignment_config_notes) == 1
+        assert assignment_config_notes[0].content['title']['value'] == 'matching-config-title'
+
 #     def test_update_withdraw_submission_due_date(self, client, test_client, selenium, request_page, helpers, venue):
 #         now = datetime.datetime.utcnow()
 #         start_date = now - datetime.timedelta(days=2)
