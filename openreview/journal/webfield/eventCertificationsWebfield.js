@@ -12,7 +12,8 @@ if (args.event) {
     options: {
       postQuery: {
         'content.event_certifications': args.event
-      }
+      },
+      pageSize: 1000
     }
   })
 }
