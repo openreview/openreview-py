@@ -639,7 +639,7 @@ class Matching(object):
                                 'param': {
                                     'type': 'string',
                                     'regex': '^[^,;:]{1,250}$',
-                                    'mismatchError': 'must be 250 characters or less and not contain the following characters: ",", ";", ":"'
+                                    'mismatchError': 'must be 250 characters or less and not contain the following characters: ; : or ,'
                                 }
                             }
                         },
