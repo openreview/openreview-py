@@ -170,6 +170,37 @@ class TestARRVenueV2():
         domain = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August')
         assert 'recommendation' == domain.content['meta_review_recommendation']['value']
 
+    def test_copy_members(self, client, openreview_client, helpers):
+        # Create a previous cycle (2023/June) and test the script that copies all roles
+        # (reviewers/ACs/SACs/ethics reviewers/ethics chairs) into the current cycle (2023/August)
+        pass
+
+    def test_unavailability_and_registration_tasks(self, client, openreview_client, helpers):
+        # Set up the forms for max load and tracks for reviewers/ACs/SACs
+        # Also copy expertise edges and registration notes into the current cycle
+        pass
+
+    def test_unavailability_process_functions(self, client, openreview_client, helpers):
+        # Update the process functions for each of the unavailability forms, set up the custom max papers
+        # invitations and test that each note posts an edge
+        pass
+
+    def test_submission_preprocess(self, client, openreview_client, helpers):
+        # Update the submission preprocess function and test validation for combinations
+        # of previous_URL/reassignment_request_action_editor/reassignment_request_reviewers
+        pass
+
+    def test_supplementary_materials_and_preprints(self, client, openreview_client, helpers):
+        # After the submission deadline, opt-in papers have their readers set to everyone
+        # and a subset of the blinded fields are re-posted as supplementary material
+        # Check that the submissions are publicly visible on the homepage
+        pass
+
+    def test_reviewer_tasks(self, client, openreview_client, helpers):
+        # Setup reviewer licensing and recognition tasks (registration forms) and consent forms
+        # (replies to reviews)
+        pass
+
     def test_add_pcs(self, client, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
