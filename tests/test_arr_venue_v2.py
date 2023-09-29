@@ -9,6 +9,7 @@ import csv
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 from openreview import ProfileManagement
+from openreview.stages.arr_content import arr_submission_content
 
 # API2 template from ICML
 class TestARRVenueV2():
@@ -27,39 +28,39 @@ class TestARRVenueV2():
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@icml.cc', 'Program', 'ICMLChair')
+        pc_client=helpers.create_user('pc@aclrollingreview.cc', 'Program', 'ARRChair')
 
-        sac_client = helpers.create_user('sac1@gmail.com', 'SAC', 'ICMLOne')
-        helpers.create_user('sac2@icml.cc', 'SAC', 'ICMLTwo')
-        helpers.create_user('ac1@icml.cc', 'AC', 'ICMLOne')
-        helpers.create_user('ac2@icml.cc', 'AC', 'ICMLTwo')
-        helpers.create_user('reviewer1@icml.cc', 'Reviewer', 'ICMLOne')
-        helpers.create_user('reviewer2@icml.cc', 'Reviewer', 'ICMLTwo')
-        helpers.create_user('reviewer3@icml.cc', 'Reviewer', 'ICMLThree')
-        helpers.create_user('reviewer4@gmail.com', 'Reviewer', 'ICMLFour')
-        helpers.create_user('reviewer5@gmail.com', 'Reviewer', 'ICMLFive')
-        helpers.create_user('reviewer6@gmail.com', 'Reviewer', 'ICMLSix')
-        helpers.create_user('reviewerethics@gmail.com', 'Reviewer', 'ICMLSeven')
+        sac_client = helpers.create_user('sac1@aclrollingreview.com', 'SAC', 'ARROne')
+        helpers.create_user('sac2@aclrollingreview.com', 'SAC', 'ARRTwo')
+        helpers.create_user('ac1@aclrollingreview.com', 'AC', 'ARROne')
+        helpers.create_user('ac2@aclrollingreview.com', 'AC', 'ARRTwo')
+        helpers.create_user('reviewer1@aclrollingreview.com', 'Reviewer', 'ARROne')
+        helpers.create_user('reviewer2@aclrollingreview.com', 'Reviewer', 'ARRTwo')
+        helpers.create_user('reviewer3@aclrollingreview.com', 'Reviewer', 'ARRThree')
+        helpers.create_user('reviewer4@aclrollingreview.com', 'Reviewer', 'ARRFour')
+        helpers.create_user('reviewer5@aclrollingreview.com', 'Reviewer', 'ARRFive')
+        helpers.create_user('reviewer6@aclrollingreview.com', 'Reviewer', 'ARRSix')
+        helpers.create_user('reviewerethics@aclrollingreview.com', 'Reviewer', 'ARRSeven')
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
-            signatures=['~Program_ICMLChair1'],
+            signatures=['~Program_ARRChair1'],
             readers=[
                 'openreview.net/Support',
-                '~Program_ICMLChair1'
+                '~Program_ARRChair1'
             ],
             writers=[],
             content={
-                'title': 'Thirty-ninth International Conference on Machine Learning',
-                'Official Venue Name': 'Thirty-ninth International Conference on Machine Learning',
-                'Abbreviated Venue Name': 'ICML 2023',
-                'Official Website URL': 'https://icml.cc',
-                'program_chair_emails': ['pc@icml.cc'],
-                'contact_email': 'pc@icml.cc',
+                'title': 'ACL Rolling Review 2023 - August',
+                'Official Venue Name': 'ACL Rolling Review 2023 - August',
+                'Abbreviated Venue Name': 'ARR - August 2023',
+                'Official Website URL': 'http://aclrollingreview.org',
+                'program_chair_emails': ['editors@aclrollingreview.org'],
+                'contact_email': 'editors@aclrollingreview.org',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
-                'Venue Start Date': '2023/07/01',
+                'Venue Start Date': '2023/08/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
@@ -79,7 +80,7 @@ class TestARRVenueV2():
 
         # Post a deploy note
         client.post_note(openreview.Note(
-            content={'venue_id': 'ICML.cc/2023/Conference'},
+            content={'venue_id': 'aclweb.org/ACL/ARR/2023/August'},
             forum=request_form_note.forum,
             invitation='openreview.net/Support/-/Request{}/Deploy'.format(request_form_note.number),
             readers=['openreview.net/Support'],
@@ -91,125 +92,69 @@ class TestARRVenueV2():
 
         helpers.await_queue()
 
-        assert openreview_client.get_group('ICML.cc/2023/Conference')
-        assert openreview_client.get_group('ICML.cc/2023/Conference/Senior_Area_Chairs')
-        assert openreview_client.get_group('ICML.cc/2023/Conference/Area_Chairs')
-        assert openreview_client.get_group('ICML.cc/2023/Conference/Reviewers')
-        assert openreview_client.get_group('ICML.cc/2023/Conference/Authors')
+        assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August')
+        assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs')
+        assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs')
+        assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers')
+        assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Authors')
 
-        submission_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Submission')
+        submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Submission')
         assert submission_invitation
         assert submission_invitation.duedate
 
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Expertise_Selection')
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Expertise_Selection')
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Senior_Area_Chairs/-/Expertise_Selection')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Expertise_Selection')
 
         sac_client.post_note(openreview.Note(
             invitation='openreview.net/Archive/-/Direct_Upload',
             readers = ['everyone'],
-            signatures = ['~SAC_ICMLOne1'],
-            writers = ['~SAC_ICMLOne1'],
+            signatures = ['~SAC_ARROne1'],
+            writers = ['~SAC_ARROne1'],
             content = {
                 'title': 'Paper title 1',
                 'abstract': 'Paper abstract 1',
-                'authors': ['SAC ICML', 'Test2 Client'],
-                'authorids': ['~SAC_ICMLOne1', 'test2@mail.com']
+                'authors': ['SAC ARR', 'Test2 Client'],
+                'authorids': ['~SAC_ARROne1', 'test2@mail.com']
             }
         ))
 
         sac_client.post_note(openreview.Note(
             invitation='openreview.net/Archive/-/Direct_Upload',
             readers = ['everyone'],
-            signatures = ['~SAC_ICMLOne1'],
-            writers = ['~SAC_ICMLOne1'],
+            signatures = ['~SAC_ARROne1'],
+            writers = ['~SAC_ARROne1'],
             content = {
                 'title': 'Paper title 2',
                 'abstract': 'Paper abstract 2',
-                'authors': ['SAC ICML', 'Test2 Client'],
-                'authorids': ['~SAC_ICMLOne1', 'test2@mail.com']
+                'authors': ['SAC ARR', 'Test2 Client'],
+                'authorids': ['~SAC_ARROne1', 'test2@mail.com']
             }
         ))
 
         pc_client.post_note(openreview.Note(
             invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision',
             forum=request_form_note.id,
-            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
             referent=request_form_note.id,
             replyto=request_form_note.id,
-            signatures=['~Program_ICMLChair1'],
+            signatures=['~Program_ARRChair1'],
             writers=[],
             content={
-                'title': 'Thirty-ninth International Conference on Machine Learning',
-                'Official Venue Name': 'Thirty-ninth International Conference on Machine Learning',
-                'Abbreviated Venue Name': 'ICML 2023',
-                'Official Website URL': 'https://icml.cc',
-                'program_chair_emails': ['pc@icml.cc'],
-                'contact_email': 'pc@icml.cc',
-                'Venue Start Date': '2023/07/01',
+                'title': 'ACL Rolling Review 2023 - August',
+                'Official Venue Name': 'ACL Rolling Review 2023 - August',
+                'Abbreviated Venue Name': 'ARR - August 2023',
+                'Official Website URL': 'http://aclrollingreview.org',
+                'program_chair_emails': ['editors@aclrollingreview.org'],
+                'contact_email': 'editors@aclrollingreview.org',
+                'Venue Start Date': '2023/08/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
-                'Additional Submission Options': {
-                    "supplementary_material": {
-                        "value": {
-                            "param": {
-                                "type": "file",
-                                "extensions": [
-                                    "zip",
-                                    "pdf",
-                                    "tgz",
-                                    "gz"
-                                ],
-                                "maxSize": 100,
-                                "optional": True,
-                                "deletable": True
-                            }
-                        },
-                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                        "order": 8
-                    },
-                    "financial_aid": {
-                        "order": 9,
-                        "description": "Each paper may designate up to one (1) icml.cc account email address of a corresponding student author who confirms that they would need the support to attend the conference, and agrees to volunteer if they get selected.",
-                        "value": {
-                            "param": {
-                                "type": "string",
-                                "maxLength": 100,
-                                "optional": True
-                            }
-                        }
-                    },
-                    "subject_areas": {
-                        "order": 19,
-                        "description": "Enter subject areas.",
-                        "value": {
-                            "param": {
-                                "type": "string[]",
-                                "enum": [
-                                    'Algorithms: Approximate Inference',
-                                    'Algorithms: Belief Propagation',
-                                    'Learning: Deep Learning',
-                                    'Learning: General',
-                                    'Learning: Nonparametric Bayes',
-                                    'Methodology: Bayesian Methods',
-                                    'Methodology: Calibration',
-                                    'Principles: Causality',
-                                    'Principles: Cognitive Models',
-                                    'Representation: Constraints',
-                                    'Representation: Dempster-Shafer',
-                                    'Representation: Other'
-                                ],
-                                "input": "select"
-                            }
-                        }
-                    }
-                },
+                'Additional Submission Options': arr_submission_content,
                 'remove_submission_options': ['TL;DR'],
-                'homepage_override': {
+                'homepage_override': { #TODO: Update
                     'location': 'Hawaii, USA',
                     'instructions': 'For author guidelines, please click [here](https://icml.cc/Conferences/2023/StyleAuthorInstructions)'
                 }
@@ -217,14 +162,12 @@ class TestARRVenueV2():
         ))
         helpers.await_queue()
 
-        submission_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Submission')
+        submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Submission')
         assert submission_invitation
-        assert 'supplementary_material' in submission_invitation.edit['note']['content']
-        assert 'financial_aid' in submission_invitation.edit['note']['content']
-        assert 'subject_areas' in submission_invitation.edit['note']['content']
+        assert 'responsible_NLP_research' in submission_invitation.edit['note']['content']
         assert 'TLDR' not in submission_invitation.edit['note']['content']
 
-        domain = openreview_client.get_group('ICML.cc/2023/Conference')
+        domain = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August')
         assert 'recommendation' == domain.content['meta_review_recommendation']['value']
 
     def test_add_pcs(self, client, openreview_client, helpers):
