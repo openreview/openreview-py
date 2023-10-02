@@ -198,36 +198,36 @@ If you would like to change your decision, please follow the link in the previou
                     'order': 2
                 },
                 'invitee_reduced_load': {
-                    'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list.',
+                    'description': 'Please enter a comma separated list of reduced load options. When an invitee responds to the reviewing invitation, they will be able to choose a reduced load from this list. Note: This will set the reduced load for everyone in the selected role. If you set a new reduced load for this role in a different recruitment batch, then the value will get overwritten.',
                     'values-regex': '[0-9]+',
                     'default': ['1', '2', '3'],
                     'required': False,
-                    'order': 4
+                    'order': 5
                 },
                 'invitee_details': {
                     'value-regex': '[\\S\\s]{1,50000}',
                     'description': 'Enter a list of invitees with one per line. Either tilde IDs (∼Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee". Do not use parentheses in your list of invitees.',
                     'required': True,
-                    'order': 5
+                    'order': 6
                 },
                 'invitation_email_subject': {
                     'value-regex': '.*',
                     'description': 'Please carefully review the email subject for the recruitment emails. Make sure not to remove the parenthesized tokens.',
-                    'order': 6,
+                    'order': 7,
                     'required': True,
                     'default': recruitment_email_subject
                 },
                 'invitation_email_content': {
                     'value-regex': '[\\S\\s]{1,10000}',
                     'description': 'Please carefully review the template below before you click submit to send out recruitment emails. Make sure not to remove the parenthesized tokens.',
-                    'order': 7,
+                    'order': 8,
                     'required': True,
                     'default': recruitment_email_body
                 },
                 'accepted_email_template': {
                     'value-regex': '[\\S\\s]{1,10000}',
                     'description': 'Please review the email sent to users when they accept a recruitment invitation. Make sure not to remove the parenthesized tokens.',
-                    'order': 8,
+                    'order': 9,
                     'hidden': True,
                     'default': accepted_email
                 }
@@ -294,9 +294,17 @@ If you would like to change your decision, please follow the link in the previou
     )
 
     if isinstance(conference, openreview.venue.Venue):
-       recruitment_invitation.preprocess = recruitment_pre_preprocess
-       remind_recruitment_invitation.preprocess = recruitment_pre_preprocess
-    
+        recruitment_invitation.preprocess = recruitment_pre_preprocess
+        remind_recruitment_invitation.preprocess = recruitment_pre_preprocess
+
+        recruitment_invitation.reply['content']['allow_accept_with_reduced_load'] = {
+            'description': 'Select "yes" if you want invited Reviewers to choose their reduced load upon acceptance, otherwise this will default to selecting a reduced load when the user declines.',
+            'value-radio': ['Yes', 'No'],
+            'default': 'No',
+            'required': False,
+            'order': 4
+        }
+
     if len(conference.get_roles()) > 1:
         recruitment_invitation.reply['content']['allow_role_overlap'] = {
             'description': 'Do you want to allow the overlap of users in different roles? Selecting "Yes" would allow a user to be invited to serve as both a Reviewer and Area Chair.',
