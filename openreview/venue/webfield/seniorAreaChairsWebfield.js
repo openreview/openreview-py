@@ -45,7 +45,7 @@ return {
     officialReviewName: domain.content.review_name?.value,
     officialMetaReviewName: domain.content.meta_review_name?.value,
     decisionName: domain.content.decision_name?.value,
-    recommendationName: domain.content.meta_review_recommendation?.value || 'recommendation',
+    metaReviewRecommendationName: domain.content.meta_review_recommendation?.value || 'recommendation',
     shortPhrase: domain.content.subtitle?.value,
     enableQuerySearch: true,
     emailReplyTo: domain.content.contact?.value,
