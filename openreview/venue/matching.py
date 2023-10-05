@@ -315,7 +315,7 @@ class Matching(object):
         ## for AC conflicts, check SAC conflicts too
         sac_user_info_by_id = {}
         if self.is_area_chair:
-            sacs_by_ac =  { g['id']['head']: [v['tail'] for v in g['values']] for g in self.client.get_grouped_edges(invitation=self.venue.get_assignment_id(self.senior_area_chairs_id), groupby='head', select=None)}
+            sacs_by_ac =  { g['id']['head']: [v['tail'] for v in g['values']] for g in self.client.get_grouped_edges(invitation=self.venue.get_assignment_id(self.senior_area_chairs_id, deployed=True), groupby='head', select=None)}
             if sacs_by_ac:
                 sac_user_profiles = openreview.tools.get_profiles(self.client, self.client.get_group(self.senior_area_chairs_id).members, with_publications=True)
                 if self.sac_profile_info:
@@ -323,6 +323,12 @@ class Matching(object):
                     sac_user_info_by_id = { p.id: info_funcion(p, self.sac_n_years, self.venue.get_submission_venue_id()) for p in sac_user_profiles }
                 else:
                     sac_user_info_by_id = { p.id: info_function(p, compute_conflicts_n_years) for p in sac_user_profiles }
+
+            pcs_by_sac = { g['id']['head']: [v['tail'] for v in g['values']] for g in self.client.get_grouped_edges(invitation=self.venue.get_assignment_id(self.venue.get_program_chairs_id(), deployed=True), groupby='head', select=None)}
+            if pcs_by_sac:
+                pc_user_profiles = openreview.tools.get_profiles(self.client, self.client.get_group(self.venue.get_program_chairs_id()).members, with_publications=True)
+                pc_user_info_by_id = { p.id: info_function(p, compute_conflicts_n_years) for p in pc_user_profiles }
+
         edges = []
 
         for submission in tqdm(submissions, total=len(submissions), desc='_build_conflicts'):
@@ -363,7 +369,19 @@ class Matching(object):
                             conflicts.update(author_relations.intersection(sac_info['emails']))
                             conflicts.update(author_emails.intersection(sac_info['relations']))
                             conflicts.update(author_emails.intersection(sac_info['emails']))
-                            conflicts.update(author_publications.intersection(sac_info['publications']))        
+                            conflicts.update(author_publications.intersection(sac_info['publications']))
+
+                ## Transer PC conflicts
+                if len(conflicts) == 0 and self.is_area_chair:
+                    assigned_pcs = [pcs_by_sac.get(sac) for sac in assigned_sacs]
+                    for pc in assigned_pcs:
+                        pc_info = pc_user_info_by_id.get(pc)
+                        if pc_info:
+                            conflicts.update(author_domains.intersection(pc_info['domains']))
+                            conflicts.update(author_relations.intersection(pc_info['emails']))
+                            conflicts.update(author_emails.intersection(pc_info['relations']))
+                            conflicts.update(author_emails.intersection(pc_info['emails']))
+                            conflicts.update(author_publications.intersection(pc_info['publications']))
 
                 if conflicts:
                     edges.append(Edge(

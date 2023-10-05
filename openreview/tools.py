@@ -824,7 +824,7 @@ class efficient_iterget:
         self.get_function = get_function
         self.current_batch, total = self.get_function(**self.params)
 
-        self.gathering_responses = tqdm(total=total, desc=desc)
+        # self.gathering_responses = tqdm(total=total, desc=desc)
 
     def update_batch(self):
         after = self.current_batch[-1].id
@@ -841,7 +841,7 @@ class efficient_iterget:
 
     def __next__(self):
         if len(self.current_batch) == 0:
-            self.gathering_responses.close()
+            # self.gathering_responses.close()
             raise StopIteration
         else:
             next_obj = self.current_batch[self.obj_index]
@@ -849,7 +849,7 @@ class efficient_iterget:
                 self.update_batch()
                 self.obj_index = 0
             else:
-                self.gathering_responses.update(1)
+                # self.gathering_responses.update(1)
                 self.obj_index += 1
             return next_obj
 
