@@ -372,7 +372,7 @@ class Matching(object):
                             conflicts.update(author_publications.intersection(sac_info['publications']))
 
                 ## Transfer PC conflicts
-                if len(conflicts) == 0 and self.is_area_chair:
+                if len(conflicts) == 0 and self.is_area_chair and pcs_by_sac:
                     assigned_pcs = [pcs_by_sac.get(sac) for sac in assigned_sacs]
                     for pc in assigned_pcs:
                         pc_info = pc_user_info_by_id.get(pc)
