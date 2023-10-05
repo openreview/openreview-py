@@ -4601,6 +4601,28 @@ url={https://openreview.net/forum?id=''' + note_id_13 + '''},
 note={}
 }'''        
 
+        helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Accepted', count=2)
+
+        ## Edit submission as EIC
+        revision_note = raia_client.post_note_edit(invitation=f'{venue_id}/Paper13/-/EIC_Revision',
+            signatures=[f"{venue_id}/Editors_In_Chief"],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title 13 VERSION 3' },
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight', 'Hugo Larochelle']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Eight1', '~Hugo_Larochelle1']},
+                    'abstract': { 'value': 'Paper abstract' },
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'video': { 'value': 'https://youtube.com/dfenxkw'}
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])        
+
         edit_group = raia_client.post_group_edit(
             invitation='TMLR/Expert_Reviewers/-/Member',
             signatures=['TMLR'],
@@ -4619,7 +4641,7 @@ note={}
         assert note.content['certifications']['value'] == ['Expert Certification']
         assert note.content['_bibtex']['value'] == '''@article{
 user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
-title={Paper title 13 {VERSION} 2},
+title={Paper title 13 {VERSION} 3},
 author={SomeFirstName User and Melissa Eight and Hugo Larochelle},
 journal={Transactions on Machine Learning Research},
 issn={2835-8856},
