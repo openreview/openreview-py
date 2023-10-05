@@ -324,7 +324,7 @@ class Matching(object):
                 else:
                     sac_user_info_by_id = { p.id: info_function(p, compute_conflicts_n_years) for p in sac_user_profiles }
 
-            pcs_by_sac = { g['id']['head']: [v['tail'] for v in g['values']] for g in self.client.get_grouped_edges(invitation=self.venue.get_assignment_id(self.venue.get_program_chairs_id(), deployed=True), groupby='head', select=None)}
+            pcs_by_sac = { g['id']['head']: g['values'][0]['tail'] for g in self.client.get_grouped_edges(invitation=self.venue.get_assignment_id(self.venue.get_program_chairs_id(), deployed=True), groupby='head', select=None)}
             if pcs_by_sac:
                 pc_user_profiles = openreview.tools.get_profiles(self.client, self.client.get_group(self.venue.get_program_chairs_id()).members, with_publications=True)
                 pc_user_info_by_id = { p.id: info_function(p, compute_conflicts_n_years) for p in pc_user_profiles }
@@ -371,7 +371,7 @@ class Matching(object):
                             conflicts.update(author_emails.intersection(sac_info['emails']))
                             conflicts.update(author_publications.intersection(sac_info['publications']))
 
-                ## Transer PC conflicts
+                ## Transfer PC conflicts
                 if len(conflicts) == 0 and self.is_area_chair:
                     assigned_pcs = [pcs_by_sac.get(sac) for sac in assigned_sacs]
                     for pc in assigned_pcs:
