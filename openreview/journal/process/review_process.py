@@ -2,38 +2,36 @@ def process(client, edit, invitation):
 
     journal = openreview.journal.Journal()
 
-    note=edit.note
-    submission = client.get_note(note.forum)
-    venue_id = journal.venue_id
+    review_note=client.get_note(edit.note.id)
+    submission = client.get_note(review_note.forum)
 
     ## Notify readers
     journal.notify_readers(edit)
 
     ## Decrease pending reviews counter
-    signature_group = client.get_group(id=note.signatures[0])
+    signature_group = client.get_group(id=review_note.signatures[0])
     edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=signature_group.members[0])
     if edges and edges[0].weight > 0:
         pending_review_edge = edges[0]
-        if note.ddate:
+        if review_note.ddate:
             pending_review_edge.weight += 1
         else:
             pending_review_edge.weight -= 1
         client.post_edge(pending_review_edge)
 
     ## On update or delete return
-    if note.tcdate != note.tmdate:
+    if review_note.tcdate != review_note.tmdate:
         print('Review edited, exit')
         return
 
     ## Expire ack task
     journal.invitation_builder.expire_invitation(journal.get_reviewer_assignment_acknowledgement_id(number=submission.number, reviewer_id=signature_group.members[0]))
 
-    review_note=client.get_note(note.id)
-    if journal.get_release_review_id(number=note.number) in review_note.invitations:
+    if journal.get_release_review_id(number=submission.number) in review_note.invitations:
         print('Review already released, exit')
         return
 
-    reviews=client.get_notes(forum=note.forum, invitation=edit.invitation)
+    reviews=client.get_notes(forum=review_note.forum, invitation=edit.invitation)
     print(f'Reviews found {len(reviews)}')
     number_of_reviewers = journal.get_number_of_reviewers()
     if len(reviews) == number_of_reviewers:
