@@ -5,7 +5,7 @@ def process(client, edit, invitation):
     ## Notify readers
     journal.notify_readers(edit)
 
-    note=edit.note
+    note=client.get_note(edit.note.id)
 
     ## On update or delete return
     if note.tcdate != note.tmdate:
