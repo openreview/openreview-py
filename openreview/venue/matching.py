@@ -194,6 +194,26 @@ class Matching(object):
             }
             edge_label = None
 
+        if venue.get_constraint_label_id(self.match_group.id) == edge_id:
+            edge_head = {
+                'param': {
+                    'type': 'group',
+                    'const': self.match_group.id
+                }
+            }
+
+            edge_weight = {
+                'param': {
+                    'minimum': -1,
+                    'optional': True
+                }
+            }
+            edge_label = {
+                "param": {
+                    "regex": ".*",
+                }                
+            }            
+
         if self.alternate_matching_group:
             edge_head = {
                 'param': {
@@ -638,7 +658,8 @@ class Matching(object):
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '.{1,250}'
+                                    'regex': '^[^,;:]{1,250}$',
+                                    'mismatchError': 'must be 250 characters or less and not contain the following characters: ; : or ,'
                                 }
                             }
                         },
@@ -891,6 +912,19 @@ class Matching(object):
             }
         )
 
+        if venue.allow_gurobi_solver:
+            config_inv.edit['note']['content']['solver']['value']['param']['enum'].append('FairIR')
+            config_inv.edit['note']['content']["constraints_specification"] = {
+                "order": 8,
+                "description": "Manually entered JSON constraints specification",
+                "value": {
+                "param": {
+                    "type": "json",
+                    "optional": True
+                }
+                }
+            }
+
         invitation = venue.invitation_builder.save_invitation(config_inv)
 
     def setup(self, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None):
@@ -990,6 +1024,9 @@ class Matching(object):
                     'weight': 1,
                     'default': 0
                 }
+
+            if venue.allow_gurobi_solver:
+                self._create_edge_invitation(self.venue.get_constraint_label_id(self.match_group.id))
 
             self._build_config_invitation(score_spec)            
         else:

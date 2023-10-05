@@ -254,6 +254,9 @@ class GroupBuilder(object):
         if venue_group.content.get('reviewers_proposed_assignment_title'):
             content['reviewers_proposed_assignment_title'] = venue_group.content.get('reviewers_proposed_assignment_title')
 
+        if venue_group.content.get('allow_gurobi_solver'):
+            content['allow_gurobi_solver'] = venue_group.content.get('allow_gurobi_solver')
+
         if venue_group.content.get('reviewers_conflict_policy'):
             content['reviewers_conflict_policy'] = venue_group.content.get('reviewers_conflict_policy')
 
@@ -334,8 +337,8 @@ class GroupBuilder(object):
                             readers=[venue_id, authors_accepted_id, self.venue.get_publication_chairs_id()] if self.venue.use_publication_chairs else [venue_id, authors_accepted_id],
                             writers=[venue_id, self.venue.get_publication_chairs_id()] if self.venue.use_publication_chairs else [venue_id],
                             signatures=[venue_id],
-                            signatories=[venue_id],
-                            members=[]))
+                            signatories=[venue_id]
+                            ))
     
     def create_reviewers_group(self):
 
