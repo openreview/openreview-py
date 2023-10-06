@@ -304,6 +304,24 @@ arr_submission_content = {
     },
 }
 
+hide_fields = [
+    "TLDR",
+    "preprint",
+    "existing_preprints",
+    "preferred_venue",
+    "consent_to_review",
+    "consent_to_share_data",
+    "software",
+    "data",
+    "responsible_NLP_research",
+    "previous_URL",
+    "previous_PDF",
+    "response_PDF",
+    "reassignment_request_action_editor",
+    "reassignment_request_reviewers",
+    "justification_for_not_keeping_action_editor_or_reviewers"
+]
+
 arr_official_review_content = {
     "confidence": {
         "order": 6,
