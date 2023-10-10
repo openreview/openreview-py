@@ -8,7 +8,7 @@ def process(client, edit, invitation):
     review_name = domain.content.get('review_name', {}).get('value')
     ethics_review_name = domain.content.get('ethics_review_name', {}).get('value')
 
-    submission = client.get_note(edit.note.forum)
+    submission = client.get_note(edit.note.id)
 
     if submission.content['flagged_for_ethics_review']['value']:
 
