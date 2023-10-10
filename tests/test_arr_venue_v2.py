@@ -28,7 +28,7 @@ class TestARRVenueV2():
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@aclrollingreview.cc', 'Program', 'ARRChair')
+        pc_client=helpers.create_user('pc@aclrollingreview.org', 'Program', 'ARRChair')
 
         sac_client = helpers.create_user('sac1@aclrollingreview.com', 'SAC', 'ARROne')
         helpers.create_user('sac2@aclrollingreview.com', 'SAC', 'ARRTwo')
@@ -55,7 +55,7 @@ class TestARRVenueV2():
                 'Official Venue Name': 'ACL Rolling Review 2023 - August',
                 'Abbreviated Venue Name': 'ARR - August 2023',
                 'Official Website URL': 'http://aclrollingreview.org',
-                'program_chair_emails': ['editors@aclrollingreview.org', 'pc@aclrollingreview.cc'],
+                'program_chair_emails': ['editors@aclrollingreview.org', 'pc@aclrollingreview.org'],
                 'contact_email': 'editors@aclrollingreview.org',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
@@ -143,7 +143,7 @@ class TestARRVenueV2():
                 'Official Venue Name': 'ACL Rolling Review 2023 - August',
                 'Abbreviated Venue Name': 'ARR - August 2023',
                 'Official Website URL': 'http://aclrollingreview.org',
-                'program_chair_emails': ['editors@aclrollingreview.org', 'pc@aclrollingreview.cc'],
+                'program_chair_emails': ['editors@aclrollingreview.org', 'pc@aclrollingreview.org'],
                 'contact_email': 'editors@aclrollingreview.org',
                 'Venue Start Date': '2023/08/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
@@ -262,7 +262,7 @@ class TestARRVenueV2():
 
     def test_post_submission(self, client, openreview_client, helpers):
 
-        pc_client=openreview.Client(username='pc@aclrollingreview.cc', password=helpers.strong_password)
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         ## close the submissions
@@ -274,7 +274,7 @@ class TestARRVenueV2():
                 'Official Venue Name': 'ACL Rolling Review 2023 - August',
                 'Abbreviated Venue Name': 'ARR - August 2023',
                 'Official Website URL': 'http://aclrollingreview.org',
-                'program_chair_emails': ['editors@aclrollingreview.org', 'pc@aclrollingreview.cc'],
+                'program_chair_emails': ['editors@aclrollingreview.org', 'pc@aclrollingreview.org'],
                 'contact_email': 'editors@aclrollingreview.org',
                 'Venue Start Date': '2023/08/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
@@ -302,7 +302,7 @@ class TestARRVenueV2():
 
         helpers.await_queue()
 
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.cc', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
         submission_invitation = pc_client_v2.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Submission')
         assert submission_invitation.expdate < openreview.tools.datetime_millis(now)
 
