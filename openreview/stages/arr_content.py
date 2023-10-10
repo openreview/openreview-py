@@ -310,7 +310,10 @@ hide_fields = [
     "existing_preprints",
     "preferred_venue",
     "consent_to_review",
-    "consent_to_share_data",
+    "consent_to_share_data"
+]
+
+hide_fields_from_public = [
     "software",
     "data",
     "responsible_NLP_research",

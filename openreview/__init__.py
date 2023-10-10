@@ -7,3 +7,4 @@ from .profile import *
 from . import journal
 from . import venue
 from . import stages
+from . import arr

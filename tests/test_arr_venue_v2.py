@@ -171,6 +171,12 @@ class TestARRVenueV2():
         domain = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August')
         assert 'recommendation' == domain.content['meta_review_recommendation']['value']
 
+        venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
+        invitation_builder = openreview.arr.InvitationBuilder(venue)
+        invitation_builder.set_preprint_release_submission_invitation()
+
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission')
+
     def test_copy_members(self, client, openreview_client, helpers):
         # Create a previous cycle (2023/June) and test the script that copies all roles
         # (reviewers/ACs/SACs/ethics reviewers/ethics chairs) into the current cycle (2023/August)
@@ -219,7 +225,17 @@ class TestARRVenueV2():
                     'responsible_NLP_research': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'paper_type': { 'value': 'short' },
                     'research_area': { 'value': 'Generation' },
-                    'preprint': { 'value': 'yes' },
+                    'previous_URL': { 'value': 'https://arxiv.org/abs/1234.56789' },
+                    'previous_PDF': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'response_PDF': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                    'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
+                    'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
+                    'data': {'value': '/pdf/' + 'p' * 40 +'.zip' },
+                    'preprint': { 'value': 'yes' if i % 2 == 0 else 'no' },
+                    'existing_preprints': { 'value': 'existing_preprints' },
+                    'preferred_venue': { 'value': 'ACL Conference' },
                     'consent_to_share_data': { 'value': 'yes' },
                     'consent_to_review': { 'value': 'yes' }
                 }
@@ -306,12 +322,117 @@ class TestARRVenueV2():
         assert submissions[0].content['preferred_venue']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['consent_to_review']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
-        assert submissions[0].content['software']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
-        assert submissions[0].content['data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
-        assert submissions[0].content['responsible_NLP_research']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
-        assert submissions[0].content['previous_URL']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
-        assert submissions[0].content['previous_PDF']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
-        assert submissions[0].content['response_PDF']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
-        assert submissions[0].content['reassignment_request_action_editor']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
-        assert submissions[0].content['reassignment_request_reviewers']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
-        assert submissions[0].content['justification_for_not_keeping_action_editor_or_reviewers']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
+        assert 'readers' not in submissions[0].content['software']
+        assert 'readers' not in submissions[0].content['responsible_NLP_research']
+        assert 'readers' not in submissions[0].content['previous_URL']
+        assert 'readers' not in submissions[0].content['previous_PDF']
+        assert 'readers' not in submissions[0].content['response_PDF']
+        assert 'readers' not in submissions[0].content['reassignment_request_action_editor']
+        assert 'readers' not in submissions[0].content['reassignment_request_reviewers']
+        assert 'readers' not in submissions[0].content['justification_for_not_keeping_action_editor_or_reviewers']
+
+        ## release preprint submissions
+        pc_client_v2.post_invitation_edit(
+            invitations='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            signatures=['aclweb.org/ACL/ARR/2023/August'],
+            invitation=openreview.api.Invitation(id='aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(minutes=1)),
+                signatures=['aclweb.org/ACL/ARR/2023/August']
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission-0-1', count=2)
+
+        submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')       
+
+        assert submissions[0].readers == ['aclweb.org/ACL/ARR/2023/August', 
+                                          'aclweb.org/ACL/ARR/2023/August/Submission1/Senior_Area_Chairs',
+                                          'aclweb.org/ACL/ARR/2023/August/Submission1/Area_Chairs',
+                                          'aclweb.org/ACL/ARR/2023/August/Submission1/Reviewers',
+                                          'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
+        assert submissions[0].content['TLDR']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
+        assert submissions[0].content['preprint']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
+        assert submissions[0].content['existing_preprints']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
+        assert submissions[0].content['preferred_venue']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
+        assert submissions[0].content['consent_to_review']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
+        assert submissions[0].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
+        assert 'readers' not in submissions[0].content['software']
+        assert 'readers' not in submissions[0].content['responsible_NLP_research']
+        assert 'readers' not in submissions[0].content['previous_URL']
+        assert 'readers' not in submissions[0].content['previous_PDF']
+        assert 'readers' not in submissions[0].content['response_PDF']
+        assert 'readers' not in submissions[0].content['reassignment_request_action_editor']
+        assert 'readers' not in submissions[0].content['reassignment_request_reviewers']
+        assert 'readers' not in submissions[0].content['justification_for_not_keeping_action_editor_or_reviewers']
+
+
+        assert submissions[1].readers == ['everyone']
+        assert submissions[1].content['TLDR']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+        assert submissions[1].content['preprint']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+        assert submissions[1].content['existing_preprints']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+        assert submissions[1].content['preferred_venue']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+        assert submissions[1].content['consent_to_review']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+        assert submissions[1].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+        assert submissions[1].content['software']['readers'] == [
+            "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
+        ]
+        assert submissions[1].content['data']['readers'] == [
+            "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
+        ]
+        assert submissions[1].content['responsible_NLP_research']['readers'] == [
+            "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
+        ]
+        assert submissions[1].content['previous_URL']['readers'] == [
+            "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
+        ]
+        assert submissions[1].content['previous_PDF']['readers'] == [
+            "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
+        ]
+        assert submissions[1].content['response_PDF']['readers'] == [
+            "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
+        ]  
+        assert submissions[1].content['reassignment_request_action_editor']['readers'] == [
+            "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
+        ]  
+        assert submissions[1].content['reassignment_request_reviewers']['readers'] == [
+            "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
+        ]  
+        assert submissions[1].content['justification_for_not_keeping_action_editor_or_reviewers']['readers'] == [
+            "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
+        ]                                        

@@ -172,21 +172,21 @@ class Venue(object):
     def get_committee(self, number = None, submitted_reviewers = False, with_authors = False):
         committee = []
 
-        if with_authors:
-            committee.append(self.get_authors_id(number))
+        committee.append(self.get_program_chairs_id())
+
+        if self.use_senior_area_chairs:
+            committee.append(self.get_senior_area_chairs_id(number))
+
+        if self.use_area_chairs:
+            committee.append(self.get_area_chairs_id(number))
 
         if submitted_reviewers:
             committee.append(self.get_reviewers_id(number, submitted=True))
         else:
             committee.append(self.get_reviewers_id(number))
 
-        if self.use_area_chairs:
-            committee.append(self.get_area_chairs_id(number))
-
-        if self.use_senior_area_chairs:
-            committee.append(self.get_senior_area_chairs_id(number))
-
-        committee.append(self.get_program_chairs_id())
+        if with_authors:
+            committee.append(self.get_authors_id(number))
 
         return committee
 
