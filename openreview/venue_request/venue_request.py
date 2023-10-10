@@ -1424,7 +1424,7 @@ class VenueRequest():
                 'order': 41
             },
             'submission_license': {
-                'value-dropdown': ['CC BY 4.0'],
+                'value-radio': ['CC BY 4.0', 'CC BY-SA 4.0', 'CC BY-NC 4.0', 'CC BY-ND 4.0', 'CC BY-NC-SA 4.0', 'CC BY-NC-ND 4.0', 'CC0 1.0'],
                 'description': 'Which license would you like to use for each submission? If you are unsure, we recommend "CC BY 4.0". If your license is not listed, please let us know and we can add it.',
                 'default': 'CC BY 4.0',
                 'order': 42
