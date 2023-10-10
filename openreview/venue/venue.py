@@ -70,6 +70,7 @@ class Venue(object):
         self.automatic_reviewer_assignment = False
         self.decision_heading_map = {}
         self.use_publication_chairs = False
+        self.allow_gurobi_solver = False
         self.submission_license = None
 
     def get_id(self):
@@ -146,6 +147,9 @@ class Venue(object):
 
     def get_custom_max_papers_id(self, committee_id):
         return self.get_invitation_id('Custom_Max_Papers', prefix=committee_id)
+    
+    def get_constraint_label_id(self, committee_id):
+        return self.get_invitation_id('Constraint_Label', prefix=committee_id)
 
     def get_recommendation_id(self, committee_id=None):
         if not committee_id:

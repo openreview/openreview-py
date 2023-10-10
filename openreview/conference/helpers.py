@@ -10,6 +10,8 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         urls = openreview.tools.get_base_urls(client)
         openreview_client = openreview.api.OpenReviewClient(baseurl = urls[1], token=client.token)
         venue = openreview.venue.Venue(openreview_client, note.content['venue_id'], support_user)
+        venue_group = openreview.tools.get_group(openreview_client, note.content['venue_id'])
+        venue_content = venue_group.content if venue_group else {}
         
         ## Run test faster
         if 'openreview.net' in support_user:
@@ -26,6 +28,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.senior_area_chair_roles = note.content.get('senior_area_chair_roles', ['Senior_Area_Chairs'])
         venue.area_chair_roles = note.content.get('area_chair_roles', ['Area_Chairs'])
         venue.reviewer_roles = note.content.get('reviewer_roles', ['Reviewers'])
+        venue.allow_gurobi_solver = venue_content.get('allow_gurobi_solver', {}).get('value', False)
         venue.submission_license = note.content.get('submission_license', 'CC BY 4.0')
         set_homepage_options(note, venue)
         venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')

@@ -207,11 +207,11 @@ def get_profiles(client, ids_or_emails, with_publications=False, as_dict=False):
         client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
         client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
 
-        notes_v1 = concurrent_requests(lambda profile : client_v1.get_all_notes(content={'authorids': profile.id}), profiles)
+        notes_v1 = concurrent_requests(lambda profile : client_v1.get_all_notes(content={'authorids': profile.id}), profiles, desc='Loading API v1 publications')
         for idx, publications in enumerate(notes_v1):
             profiles[idx].content['publications'] = publications
 
-        notes_v2 = concurrent_requests(lambda profile : client_v2.get_all_notes(content={'authorids': profile.id}), profiles)
+        notes_v2 = concurrent_requests(lambda profile : client_v2.get_all_notes(content={'authorids': profile.id}), profiles, desc='Loading API v2 publications')
         for idx, publications in enumerate(notes_v2):
             if profiles[idx].content.get('publications'):
                 profiles[idx].content['publications'] = profiles[idx].content['publications'] +  publications
@@ -275,7 +275,7 @@ def get_invitation(client, id):
         print('Can not retrieve invitation', e)
     return invitation
 
-def create_profile(client, email, first, last, middle=None, url='http://no_url', allow_duplicates=False):
+def create_profile(client, email, fullname, url='http://no_url', allow_duplicates=False):
 
     """
     Given email, first name, last name, and middle name (optional), creates a new profile.
@@ -308,29 +308,18 @@ def create_profile(client, email, first, last, middle=None, url='http://no_url',
         # this is so that we catch more potential collisions;
         # let the caller decide what to do with false positives.
 
-        username_response_FL_only = client.get_tildeusername(
-            first,
-            last,
-            None
-        )
-
-        username_response_full = client.get_tildeusername(
-            first,
-            last,
-            middle
-        )
+        username_response = client.get_tildeusername(fullname)
 
         # the username in each response will end with 1
         # if profiles don't exist for those names
-        username_FL_unclaimed = username_response_FL_only['username'].endswith('1')
-        username_full_unclaimed = username_response_full['username'].endswith('1')
+        username_unclaimed = username_response['username'].endswith('1')
 
-        if all([username_FL_unclaimed, username_full_unclaimed]):
+        if username_unclaimed:
             profile_exists = False
         else:
             profile_exists = True
 
-        tilde_id = username_response_full['username']
+        tilde_id = username_response['username']
         if (not profile_exists) or allow_duplicates:
 
             tilde_group = openreview.Group(id=tilde_id, signatures=[client.profile.id], signatories=[tilde_id], readers=[tilde_id], writers=[client.profile.id], members=[email])
@@ -340,9 +329,7 @@ def create_profile(client, email, first, last, middle=None, url='http://no_url',
                 'preferredEmail': email,
                 'names': [
                     {
-                        'first': first,
-                        'middle': middle,
-                        'last': last,
+                        'fullname': fullname,
                         'username': tilde_id
                     }
                 ],
@@ -357,8 +344,8 @@ def create_profile(client, email, first, last, middle=None, url='http://no_url',
 
         else:
             raise openreview.OpenReviewException(
-                'Failed to create new profile {tilde_id}: There is already a profile with the name: \"{first} {middle} {last}\"'.format(
-                    first=first, middle=middle, last=last, tilde_id=tilde_id))
+                'Failed to create new profile {tilde_id}: There is already a profile with the name: \"{fullname}\"'.format(
+                    fullname=fullname, tilde_id=tilde_id))
     else:
         raise openreview.OpenReviewException('There is already a profile with this email address: {}'.format(email))
 
@@ -366,25 +353,6 @@ def create_authorid_profiles(client, note, print=print):
     # for all submissions get authorids, if in form of email address, try to find associated profile
     # if profile doesn't exist, create one
     created_profiles = []
-
-    def clean_name(name):
-        '''
-        Replaces invalid characters with equivalent valid ones.
-        '''
-        return name.replace('’', "'")
-
-    def get_names(author_name):
-        '''
-        Splits a string into first and last (and middle, if applicable) names.
-        '''
-        names = author_name.split(' ')
-        if len(names) > 1:
-            first = names[0]
-            last = names[-1]
-            middle = ' '.join(names[1:-1])
-            return [clean_name(n) for n in [first, last, middle]]
-        else:
-            return []
 
     if 'authorids' in note.content and 'authors' in note.content:
         author_names = [a.replace('*', '') for a in note.content['authors']]
@@ -396,16 +364,12 @@ def create_authorid_profiles(client, note, print=print):
                 author_name = author_name.strip()
 
                 if '@' in author_id:
-                    names = get_names(author_name)
-                    if names:
-                        try:
-                            profile = create_profile(client=client, email=author_id, first=names[0], last=names[1], middle=names[2])
-                            created_profiles.append(profile)
-                            print('{}: profile created with id {}'.format(note.id, profile.id))
-                        except openreview.OpenReviewException as e:
-                            print('Error while creating profile for note id {note_id}, author {author_id}, '.format(note_id=note.id, author_id=author_id), e)
-                    else:
-                        print('{}: invalid author name {}'.format(note.id, author_name))
+                    try:
+                        profile = create_profile(client=client, email=author_id, fullname=author_name)
+                        created_profiles.append(profile)
+                        print('{}: profile created with id {}'.format(note.id, profile.id))
+                    except openreview.OpenReviewException as e:
+                        print('Error while creating profile for note id {note_id}, author {author_id}, '.format(note_id=note.id, author_id=author_id), e)
         else:
             print('{}: length mismatch. authors ({}), authorids ({})'.format(
                 note.id,
@@ -434,17 +398,9 @@ def get_preferred_name(profile, last_name_only=False):
         primary_preferred_name = names[0]
 
     if last_name_only:
-        return primary_preferred_name['last']
+        return primary_preferred_name['fullname'].split(' ')[-1]    
 
-    name_parts = []
-    if primary_preferred_name.get('first'):
-        name_parts.append(primary_preferred_name['first'])
-    if primary_preferred_name.get('middle'):
-        name_parts.append(primary_preferred_name['middle'])
-    if primary_preferred_name.get('last'):
-        name_parts.append(primary_preferred_name['last'])
-
-    return ' '.join(name_parts)
+    return primary_preferred_name['fullname']
 
 def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='under review', anonymous=True, names_reversed=False, baseurl='https://openreview.net', editor=None):
     """
@@ -824,7 +780,7 @@ class efficient_iterget:
         self.get_function = get_function
         self.current_batch, total = self.get_function(**self.params)
 
-        self.gathering_responses = tqdm(total=total, desc=desc)
+        self.gathering_responses = tqdm(total=total, desc=desc) if total > self.params['limit'] else None
 
     def update_batch(self):
         after = self.current_batch[-1].id
@@ -841,7 +797,8 @@ class efficient_iterget:
 
     def __next__(self):
         if len(self.current_batch) == 0:
-            self.gathering_responses.close()
+            if self.gathering_responses:
+                self.gathering_responses.close()
             raise StopIteration
         else:
             next_obj = self.current_batch[self.obj_index]
@@ -849,7 +806,8 @@ class efficient_iterget:
                 self.update_batch()
                 self.obj_index = 0
             else:
-                self.gathering_responses.update(1)
+                if self.gathering_responses:
+                    self.gathering_responses.update(1)
                 self.obj_index += 1
             return next_obj
 

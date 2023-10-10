@@ -4,10 +4,11 @@ def process(client, edit, invitation):
     venue_id = journal.venue_id
 
     ## On update or delete return
-    if edit.note.tcdate != edit.note.tmdate:
+    note = client.get_note(edit.note.id)
+    if note.tcdate != note.tmdate:
         return
 
-    submission = client.get_note(edit.note.forum)
+    submission = client.get_note(note.forum)
     decisions = client.get_notes(invitation=journal.get_ae_decision_id(number=submission.number))
 
     if not decisions:

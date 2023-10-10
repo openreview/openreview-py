@@ -14,7 +14,9 @@ class Helpers:
     strong_password = 'Or$3cur3P@ssw0rd'
 
     @staticmethod
-    def create_user(email, first, last, alternates=[], institution=None):
+    def create_user(email, first, last, alternates=[], institution=None, fullname=None):
+
+        fullname = f'{first} {last}' if fullname is None else fullname
 
         super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password=Helpers.strong_password)
         profile = openreview.tools.get_profile(super_client, email)
@@ -24,14 +26,13 @@ class Helpers:
         client = openreview.Client(baseurl = 'http://localhost:3000')
         assert client is not None, "Client is none"
 
-        res = client.register_user(email = email, first = first, last = last, password = Helpers.strong_password)
+        res = client.register_user(email = email, fullname = fullname, password = Helpers.strong_password)
         username = res.get('id')
         assert res, "Res i none"
         profile_content={
             'names': [
                     {
-                        'first': first,
-                        'last': last,
+                        'fullname': fullname,
                         'username': username,
                         'preferred': True
                     }
