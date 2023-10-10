@@ -114,6 +114,7 @@ class InvitationBuilder(object):
     def set_submission_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
+        submission_license = self.venue.submission_license
 
         content = submission_stage.get_content(api_version='2', conference=self.venue, venue_id=self.venue.get_submission_venue_id())
 
@@ -136,6 +137,7 @@ class InvitationBuilder(object):
                 'signatures': { 'param': { 'regex': f'~.*|{self.venue.get_program_chairs_id()}' } },
                 'readers': edit_readers,
                 'writers': [venue_id, '${2/note/content/authorids/value}'],
+                'license': submission_license,
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
@@ -160,6 +162,7 @@ class InvitationBuilder(object):
                     'signatures': [ '${3/signatures}' ],
                     'readers': note_readers,
                     'writers': [venue_id, '${2/content/authorids/value}'],
+                    'license': submission_license,
                     'content': content
                 }
             },
