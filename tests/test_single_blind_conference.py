@@ -360,13 +360,12 @@ class TestSingleBlindConference():
         now = datetime.datetime.utcnow()
         reviewer_client = openreview.Client(baseurl = 'http://localhost:3000')
         assert reviewer_client is not None, "Client is none"
-        res = reviewer_client.register_user(email = 'reviewer@mail.com', first = 'Reviewer', last = 'SomeLastName', password = helpers.strong_password)
+        res = reviewer_client.register_user(email = 'reviewer@mail.com', fullname = 'Reviewer SomeLastName', password = helpers.strong_password)
         assert res, "Res i none"
         res = reviewer_client.activate_user('reviewer@mail.com', {
             'names': [
                     {
-                        'first': 'Reviewer',
-                        'last': 'SomeLastName',
+                        'fullname': 'Reviewer SomeLastName',
                         'username': '~Reviewer_SomeLastName1'
                     }
                 ],
