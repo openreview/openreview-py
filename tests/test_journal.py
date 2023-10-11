@@ -3119,6 +3119,13 @@ We thank you for your cooperation.
 The TMLR Editors-in-Chief
 '''        
 
+        ## try editing the assignmente edge being the author and get an error
+        paper_assignment_edge.tail = '~Ryan_Adams1'
+        paper_assignment_edge.readers=[venue_id, editor_in_chief_group_id, '~Ryan_Adams1']
+        with pytest.raises(openreview.OpenReviewException, match=r'You cannot edit the tail of this edge'):
+            raia_client.post_edge(paper_assignment_edge)
+       
+        
         raia_client.post_invitation_edit(
             invitations='TMLR/-/Edit',
             readers=[venue_id],
