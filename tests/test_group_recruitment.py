@@ -28,7 +28,7 @@ class TestGroupRecruitment():
         venue.automatic_reviewer_assignment = True 
         venue.use_area_chairs = True
         venue.name = 'Venue V2'
-        venue.short_name = 'V 23'
+        venue.short_name = 'V 24'
         venue.website = 'venue.org'
         venue.contact = 'venue@contact.com'
         venue.reviewer_identity_readers = [openreview.stages.IdentityReaders.PROGRAM_CHAIRS, openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED]
@@ -68,7 +68,29 @@ class TestGroupRecruitment():
                 group=openreview.api.Group(
                     content = {
                         'reduced_load': { 'value': [1,2,3] },
-                        'recruitment_template': { 'value': 'This is a recruitment template.' },
+                        'recruitment_template': { 'value': '''Dear {{fullname}},
+
+You have been nominated by the program chair committee of V 24 to serve as Reviewer. As a respected researcher in the area, we hope you will accept and help us make V 24 a success.
+
+You are also welcome to submit papers, so please also consider submitting to V 24.
+
+We will be using OpenReview.net and a reviewing process that we hope will be engaging and inclusive of the whole community.
+
+To respond the invitation, please click on the following link:
+
+{{invitation_url}}
+
+Please answer within 10 days.
+
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using. Visit http://openreview.net/profile after logging in.
+
+If you have any questions, please contact us at info@openreview.net.
+
+Cheers!
+
+Program Chairs
+''' },
+                        'recruitment_subject': { 'value': '[V 24] Invitation to serve as Reviewer' },
                         'allow_overlap': { 'value': False }
                     }
                 )
@@ -76,7 +98,7 @@ class TestGroupRecruitment():
         
         invitee_details = '''reviewer1@venue.cc, Reviewer VenueOne\nreviewer2@venue.cc, Reviewer VenueTwo\n~Reviewer_VenueThree1'''
 
-        # use invitation to recriut reviewers
+        # use invitation to recruit reviewers
         openreview_client.post_group_edit(
                 invitation='Venue.cc/Reviewers/Invited/-/Recruitment',
                 content={
@@ -84,15 +106,13 @@ class TestGroupRecruitment():
                 },
                 group=openreview.api.Group()
             )
+        helpers.await_queue_edit(openreview_client, invitation='Venue.cc/Reviewers/Invited/-/Recruitment')
 
-        # invited_group = openreview_client.get_group('Venue.cc/Reviewers/Invited')
-        # assert len(invited_group.members) == 2
-        # assert 'celestemartinez@mail.com' in invited_group.members
-        # assert 'emiliarubio@mail.com' in invited_group.members
+        invited_group = openreview_client.get_group('Venue.cc/Reviewers/Invited')
+        assert len(invited_group.members) == 3
+        assert 'reviewer1@venue.cc' in invited_group.members
+        assert 'reviewer2@venue.cc' in invited_group.members
+        assert '~Reviewer_VenueThree1' in invited_group.members
 
-        # openreview_client.post_group_edit(
-        #         invitation='Venue.cc/Reviewers/Invited/-/Recruitment',
-        #         group=openreview.api.Group(
-        #             members = ['anagomez@mail.com']
-        #         )
-        #     )
+        messages = openreview_client.get_messages(subject = '[V 24] Invitation to serve as Reviewer')
+        assert len(messages) == 3

@@ -3106,9 +3106,12 @@ class InvitationBuilder(object):
             invitees=[venue_id],
             readers=[venue_id],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=['~Super_User1'],
             process=self.get_process_content('process/group_recruitment_process.py'),
-            preprocess = self.get_process_content('process/group_recruitment_pre_process.js'),
+            content={
+                'committee_name': { 'value': committee_name },
+                'official_committee_roles': { 'value': venue.get_committee_names()}
+            },
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -3133,6 +3136,9 @@ class InvitationBuilder(object):
         
         self.save_invitation(invitation, replacement=False)
 
+        pretty_role = committee_name.replace('_', ' ')
+        pretty_role = pretty_role[:-1] if pretty_role.endswith('s') else pretty_role
+
         invitation = Invitation(id=venue.get_committee_id_invited(committee_name)+'/-/Edit',
             invitees=[venue_id],
             readers=[venue_id],
@@ -3150,6 +3156,16 @@ class InvitationBuilder(object):
                                 'param': {
                                     'type': 'integer[]',
                                     'optional': True
+                                }
+                            }
+                        },
+                        'recruitment_subject': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '.+',
+                                    'optional': True,
+                                    'default': f'[{venue.short_name}] Invitation to serve as {pretty_role}'
                                 }
                             }
                         },
