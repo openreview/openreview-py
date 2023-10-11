@@ -372,11 +372,11 @@ note: replies to this email will go to the AE, Graham Neubig.
         ## All the reviewes should be visible to all the reviewers now
         reviews=openreview_client.get_notes(forum=note_id_1, invitation='TACL/Paper1/-/Review', sort= 'number:asc')
         assert len(reviews) == 3
-        assert reviews[0].readers == ['TACL/Editors_In_Chief', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+        assert reviews[0].readers == ['TACL/Editors_In_Chief', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert reviews[0].signatures == [david_anon_groups[0].id]
-        assert reviews[1].readers == ['TACL/Editors_In_Chief', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+        assert reviews[1].readers == ['TACL/Editors_In_Chief', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert reviews[1].signatures == [carlos_anon_groups[0].id]
-        assert reviews[2].readers == ['TACL/Editors_In_Chief', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+        assert reviews[2].readers == ['TACL/Editors_In_Chief', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert reviews[2].signatures == [javier_anon_groups[0].id]
 
         invitations = openreview_client.get_invitations(replyForum=note_id_1, prefix='TACL/Paper1')
@@ -549,7 +549,7 @@ note: replies to this email will go to the AE, Graham Neubig.
 
 
         decision_note = brian_client.get_note(decision_note.id)
-        assert decision_note.readers == ['TACL/Editors_In_Chief', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+        assert decision_note.readers == ['TACL/Editors_In_Chief', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert decision_note.nonreaders == []
 
     def test_camera_ready_revision(self, journal, openreview_client, helpers):

@@ -488,17 +488,17 @@ class Journal(object):
     def get_release_review_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]        
+        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]        
     
     def get_release_decision_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]        
+        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]        
 
     def get_release_authors_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(number), self.get_authors_id(number)]        
+        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_authors_id(number)]        
 
     def get_official_comment_readers(self, number):
         readers = []
@@ -507,6 +507,7 @@ class Journal(object):
 
         return readers + [
             self.get_editors_in_chief_id(), 
+            self.get_action_editors_id(), 
             self.get_action_editors_id(number), 
             self.get_reviewers_id(number), 
             self.get_reviewers_id(number, anon=True) + '.*', 
