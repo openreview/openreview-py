@@ -259,7 +259,7 @@ class TestICLRConference():
 
         submissions = pc_client_v2.get_notes(invitation='ICLR.cc/2024/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 11
-        assert submissions[0].license == 'CC BY-SA 4.0' # This fails
+        assert submissions[0].license == 'CC BY-SA 4.0'
         assert submissions[0].readers == ['everyone']
         assert '_bibtex' in submissions[0].content
         assert 'author={Anonymous}' in submissions[0].content['_bibtex']['value']
