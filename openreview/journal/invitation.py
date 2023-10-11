@@ -469,6 +469,9 @@ class InvitationBuilder(object):
         )
         self.save_invitation(invitation)
 
+        if self.journal.should_skip_reviewer_responsibility_acknowledgement():
+            return        
+
         forum_note_id = self.journal.get_acknowledgement_responsibility_form()
         if not forum_note_id:
             forum_edit = self.client.post_note_edit(invitation=self.journal.get_form_id(),

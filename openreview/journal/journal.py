@@ -424,6 +424,9 @@ class Journal(object):
     
     def should_skip_ac_recommendation(self):
         return self.settings.get('skip_ac_recommendation', False)
+    
+    def should_skip_reviewer_responsibility_acknowledgement(self):
+        return self.settings.get('skip_reviewer_responsibility_acknowledgement', False)    
 
     def get_certifications(self):
         return self.settings.get('certifications', []) 
@@ -474,7 +477,7 @@ class Journal(object):
     def get_under_review_submission_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.venue_id, self.get_action_editors_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]
+        return [self.venue_id, self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]
 
     def get_release_review_readers(self, number):
         if self.is_submission_public():
