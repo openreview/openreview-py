@@ -187,7 +187,8 @@ class GroupBuilder(object):
             'desk_rejection_name': { 'value': 'Desk_Rejection'},
             'desk_rejected_submission_reveal_authors': { 'value': self.venue.submission_stage.desk_rejected_submission_reveal_authors },
             'automatic_reviewer_assignment': { 'value': self.venue.automatic_reviewer_assignment },
-            'decision_heading_map': { 'value': self.venue.decision_heading_map }
+            'decision_heading_map': { 'value': self.venue.decision_heading_map },
+            'reviewer_roles': { 'value': self.venue.reviewer_roles }
         }
 
         if self.venue.submission_stage.subject_areas:
@@ -253,6 +254,9 @@ class GroupBuilder(object):
 
         if venue_group.content.get('reviewers_proposed_assignment_title'):
             content['reviewers_proposed_assignment_title'] = venue_group.content.get('reviewers_proposed_assignment_title')
+
+        if venue_group.content.get('allow_gurobi_solver'):
+            content['allow_gurobi_solver'] = venue_group.content.get('allow_gurobi_solver')
 
         if venue_group.content.get('reviewers_conflict_policy'):
             content['reviewers_conflict_policy'] = venue_group.content.get('reviewers_conflict_policy')

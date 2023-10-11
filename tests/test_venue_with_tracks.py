@@ -268,6 +268,16 @@ class TestVenueWithTracks():
         invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/Paper_Matching_Setup')
         assert 'ACM.org/TheWebConf/2024/Conference/COI_Senior_Area_Chairs' in invitation.reply['content']['matching_group']['value-dropdown']
 
+        openreview_client.post_group_edit(
+            invitation='ACM.org/TheWebConf/2024/Conference/-/Edit',
+            signatures=['ACM.org/TheWebConf/2024/Conference'],
+            group=openreview.api.Group(
+                id='ACM.org/TheWebConf/2024/Conference',
+                content={
+                    'allow_gurobi_solver': { 'value': True }
+                }
+            )
+        )
 
     def test_recruit_sacs(self, client, openreview_client, helpers, selenium, request_page):
 
@@ -613,17 +623,17 @@ ac{ac_counter + 1}@{'gmail' if ac_counter == 21 else 'webconf'}.com, Area ChairT
             ac_id = f'ACM.org/TheWebConf/2024/Conference/{ac_role}'
             track = tracks[index]
             openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group(ac_id))
+            track_acs = openreview_client.get_group(ac_id).members
 
             with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
                 writer = csv.writer(file_handle)
                 for submission in submissions:
                     if track == submission.content['track']['value']:
-                        for ac in openreview_client.get_group(ac_id).members:
+                        for ac in track_acs:
                             writer.writerow([submission.id, ac, round(random.random(), 2)])                   
 
             affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
 
-            ## setup matching data before starting bidding
             client.post_note(openreview.Note(
                 content={
                     'title': 'Paper Matching Setup',
@@ -646,6 +656,7 @@ ac{ac_counter + 1}@{'gmail' if ac_counter == 21 else 'webconf'}.com, Area ChairT
             assert openreview_client.get_invitation(f'{ac_id}/-/Conflict')
             assert openreview_client.get_invitation(f'{ac_id}/-/Affinity_Score')
             assert openreview_client.get_invitation(f'{ac_id}/-/Proposed_Assignment')
+            assert openreview_client.get_invitation(f'{ac_id}/-/Constraint_Label')
             assignment_configuration_invitation = openreview_client.get_invitation(f'{ac_id}/-/Assignment_Configuration')
             assert assignment_configuration_invitation.edit['note']['content']['paper_invitation']['value']['param']['default'] == 'ACM.org/TheWebConf/2024/Conference/-/Submission&content.venueid=ACM.org/TheWebConf/2024/Conference/Submission&content.track=' + tracks[index]                  
             proposed_assignment_invitation = openreview_client.get_invitation(f'{ac_id}/-/Proposed_Assignment')
@@ -657,7 +668,51 @@ ac{ac_counter + 1}@{'gmail' if ac_counter == 21 else 'webconf'}.com, Area ChairT
             assert affinity_score_invitation.readers == ['ACM.org/TheWebConf/2024/Conference', f'ACM.org/TheWebConf/2024/Conference/{ac_role.replace("Area_Chairs", "Senior_Area_Chairs")}']
             assert affinity_score_invitation.edit['readers'] == ["ACM.org/TheWebConf/2024/Conference", f'ACM.org/TheWebConf/2024/Conference/{ac_role.replace("Area_Chairs", "Senior_Area_Chairs")}', "${2/tail}"]
 
+            ## Build constraints
+            labels = ['NA+EUR', 'ASIA', 'Africa', 'SA']
+            for index, ac in enumerate(track_acs):
+                openreview_client.post_edge(openreview.api.Edge(
+                    invitation=f'{ac_id}/-/Constraint_Label',
+                    signatures=['ACM.org/TheWebConf/2024/Conference'],
+                    head=ac_id,
+                    tail=ac,
+                    label=labels[index % 4],
+                ))
 
+            # Post assignment config note
+            assignment_config_note = openreview_client.post_note_edit(invitation=f'{ac_id}/-/Assignment_Configuration',
+                signatures=[ 'ACM.org/TheWebConf/2024/Conference' ],
+                note=openreview.api.Note(
+                    content={
+                        'title': { 'value': f'ac-assignment' },
+                        'user_demand': { 'value': '1' },
+                        'max_papers': { 'value': '1' },
+                        'min_papers': { 'value': '0' },
+                        'alternates': { 'value': '2' },
+                        'paper_invitation': { 'value': 'ACM.org/TheWebConf/2024/Conference/-/Submission&content.venueid=ACM.org/TheWebConf/2024/Conference/Submission&content.track=' + tracks[index] },
+                        'match_group': { 'value': ac_id },
+                        'scores_specification': { 'value': { f'{ac_id}/-/Affinity_Score': { 'weight': 1, 'default': 0 }} },
+                        'constraints_specification': { 'value': {
+                            f"{ac_id}/-/Constraint_Label": [
+                                {
+                                    "label": "NA+EUR",
+                                    "min_users": 1
+                                },
+                                {
+                                    "label": "ASIA",
+                                    "min_users": 1
+                                }
+                            ]                            
+                        }},
+                        'conflicts_invitation': { 'value': f'{ac_id}/-/Conflict' },
+                        'custom_max_papers_invitation': { 'value': f'{ac_id}/-/Custom_Max_Papers'},
+                        'aggregate_score_invitation': { 'value': f'{ac_id}/-/Aggregate_Score'},
+                        'solver': { 'value': 'FairIR' },
+                        'allow_zero_score_assignments': { 'value': 'No' },
+                        'status': { 'value': 'Complete' },
+                    }
+                ))                                
+        
         ## Build proposed assignments
         for submission in submissions:
             index = submission.number % 10
@@ -832,7 +887,6 @@ reviewer{reviewer_counter + 1}@{'gmail' if reviewer_counter == 21 else 'webconf'
 
             affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
 
-            ## setup matching data before starting bidding
             client.post_note(openreview.Note(
                 content={
                     'title': 'Paper Matching Setup',
@@ -914,5 +968,51 @@ reviewer{reviewer_counter + 1}@{'gmail' if reviewer_counter == 21 else 'webconf'
         invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup')
         assert 'ACM.org/TheWebConf/2024/Conference/COI_Senior_Area_Chairs' in invitation.reply['content']['matching_group']['value-dropdown']
 
+        ac_client = openreview.api.OpenReviewClient(username='ac5@webconf.com', password=helpers.strong_password)
+        anon_group_id = ac_client.get_groups(prefix='ACM.org/TheWebConf/2024/Conference/Submission1/Area_Chair_', signatory='~AC_WebChairFive1')[0].id
+        edge = ac_client.post_edge(
+            openreview.api.Edge(invitation='ACM.org/TheWebConf/2024/Conference/COI_Reviewers/-/Invite_Assignment',
+                signatures=[anon_group_id],
+                head=submissions[0].id,
+                tail='celeste@acm.org',
+                label='Invitation Sent',
+                weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edge.id)
 
+        assert openreview_client.get_groups('ACM.org/TheWebConf/2024/Conference/Emergency_COI_Reviewers/Invited', member='celeste@acm.org')
 
+        messages = client.get_messages(to='celeste@acm.org', subject='[TheWebConf24] Invitation to review paper titled "Paper title 1"')
+        assert messages and len(messages) == 1
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+        helpers.await_queue(openreview_client)
+
+        ## External reviewer is set pending profile creation
+        invite_edges=pc_client_v2.get_edges(invitation='ACM.org/TheWebConf/2024/Conference/COI_Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='celeste@acm.org')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Pending Sign Up'
+
+        invited_reviewer=helpers.create_user('celeste@acm.org', 'Celeste', 'ACM')
+
+        ## Run Job
+        openreview.venue.Venue.check_new_profiles(openreview_client)
+
+        invite_edges=pc_client.get_edges(invitation='ACM.org/TheWebConf/2024/Conference/COI_Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='celeste@acm.org')
+        assert len(invite_edges) == 0
+
+        invite_edges=pc_client.get_edges(invitation='ACM.org/TheWebConf/2024/Conference/COI_Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Celeste_ACM1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Accepted'
+
+        messages = client.get_messages(to='celeste@acm.org', subject='[TheWebConf24] Reviewer Assignment confirmed for paper 1')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Celeste ACM,
+Thank you for accepting the invitation to review the paper number: 1, title: Paper title 1.
+
+Please go to the TheWebConf24 Reviewers Console and check your pending tasks: https://openreview.net/group?id=ACM.org/TheWebConf/2024/Conference/COI_Reviewers
+
+If you would like to change your decision, please click the Decline link in the previous invitation email.
+
+OpenReview Team'''

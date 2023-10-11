@@ -235,13 +235,12 @@ class TestCommentNotification():
 
         pc_client = openreview.Client(baseurl = 'http://localhost:3000')
         assert pc_client is not None, "Client is none"
-        res = pc_client.register_user(email = 'programchair@midl.io', first = 'Program', last = 'Chair', password = helpers.strong_password)
+        res = pc_client.register_user(email = 'programchair@midl.io', fullname = 'Program Chair', password = helpers.strong_password)
         assert res, "Res i none"
         res = pc_client.activate_user('programchair@midl.io', {
             'names': [
                     {
-                        'first': 'Program',
-                        'last': 'Chair',
+                        'fullname': 'Program Chair',
                         'username': '~Program_Chair1'
                     }
                 ],

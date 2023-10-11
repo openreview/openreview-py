@@ -443,7 +443,7 @@ var getUserProfiles = function(userIds) {
     }
     var addProfileToMap = function(profile) {
       var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
-      profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
+      profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.fullname;
       profile.email = profile.content.preferredEmail || profile.content.emails[0];
       profile.allEmails = profile.content.emailsConfirmed;
       profileMap[profile.id] = profile;
@@ -1218,8 +1218,8 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
       areachair: { name: secondaryAreaChairPrimaryACs[note.number].map(function(m) { return view.prettyId(m);}) },
       metaReview: metaReview,
       referrer: referrerUrl
-    }    
-  }  
+    }
+  }
 
   return {
     cellCheck: cellCheck,

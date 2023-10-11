@@ -70,6 +70,7 @@ class Venue(object):
         self.automatic_reviewer_assignment = False
         self.decision_heading_map = {}
         self.use_publication_chairs = False
+        self.allow_gurobi_solver = False
 
     def get_id(self):
         return self.venue_id
@@ -145,6 +146,9 @@ class Venue(object):
 
     def get_custom_max_papers_id(self, committee_id):
         return self.get_invitation_id('Custom_Max_Papers', prefix=committee_id)
+    
+    def get_constraint_label_id(self, committee_id):
+        return self.get_invitation_id('Constraint_Label', prefix=committee_id)
 
     def get_recommendation_id(self, committee_id=None):
         if not committee_id:
@@ -1041,9 +1045,15 @@ OpenReview Team'''
             if hasattr(venue_group, 'domain') and venue_group.content:
                 
                 print(f'Check active venue {venue_group.id}')
-                invite_assignment_invitation_id = venue_group.content.get('reviewers_invite_assignment_id', {}).get('value')
+                invite_assignment_id = venue_group.content.get('reviewers_invite_assignment_id', {}).get('value')
+                invite_assignment_invitations = []
 
-                if invite_assignment_invitation_id:
+                reviewers_name = venue_group.content.get('reviewers_name', {}).get('value', 'Reviewers')
+
+                for role in venue_group.content.get('reviewer_roles', {}).get('value'):
+                    invite_assignment_invitations.append(invite_assignment_id.replace(reviewers_name, role))
+
+                for invite_assignment_invitation_id in invite_assignment_invitations:
                     
                     ## check if it is expired?
                     invite_assignment_invitation = openreview.tools.get_invitation(client, invite_assignment_invitation_id)
