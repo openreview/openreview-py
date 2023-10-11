@@ -465,7 +465,13 @@ class Journal(object):
         return self.settings.get('reviewers_max_papers', 6)
 
     def get_ae_max_papers(self):
-        return self.settings.get('action_editors_max_papers', 12)       
+        return self.settings.get('action_editors_max_papers', 12)
+
+    def get_official_recommendation_additional_fields(self):
+        return self.settings.get('official_recommendation_additional_fields', {}) 
+
+    def get_decision_additional_fields(self):
+        return self.settings.get('decision_additional_fields', {})        
 
     def should_release_authors(self):
         return self.is_submission_public() and self.are_authors_anonymous()

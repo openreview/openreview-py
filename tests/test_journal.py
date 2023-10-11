@@ -125,6 +125,64 @@ class TestJournal():
                             'camera_ready_verification_period': 1,
                             'archived_action_editors': True,
                             'expert_reviewers': True,
+                            'official_recommendation_additional_fields': {
+                                'pilot_recommendation_to_iclr_track': {
+                                    'order': 98,
+                                    'description': 'Would you recommend this work be invited for presentation at the ICLR Journal-to-Conference Track? Recall that TMLR\'s acceptance criteria are that a work must be sound and of interest to the TMLR audience. Above these requirements, a paper in the ICLR Journal-to-Conference Track should also stand out in novelty or predicted significance for the field (i.e., comparable to the level of a paper in ICLR\'s regular conference track). **Your anonymized response will be shared with ICLR**',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': '[Pilot] Recommendation to ICLR Journal-to-Conference Track',
+                                            'type': 'string',
+                                            'enum': ['Strongly Recommend', 'Weakly Recommend', 'Weakly Oppose', 'Strongly Oppose'],
+                                            'input': 'radio',
+                                        }
+                                    },
+                                    'readers': ['TMLR', 'TMLR/Paper${7/content/noteNumber/value}/Action_Editors', '${5/signatures}']
+                                },
+                                'pilot_explain_recommendation_to_iclr_track': {
+                                    'order': 98,
+                                    'description': '**Your anonymized response will be shared with ICLR**',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': '[Pilot] Explain your recommendation to the ICLR Journal-to-Conference Track',
+                                            'type': 'string',
+                                            'maxLength': 50000,
+                                            'markdown': True,
+                                            'input': 'textarea'
+                                        }
+                                    },
+                                    'readers': ['TMLR', 'TMLR/Paper${7/content/noteNumber/value}/Action_Editors', '${5/signatures}']
+                                }                                
+                            },
+                            'decision_additional_fields': {
+                                'pilot_recommendation_to_iclr_track': {
+                                    'order': 98,
+                                    'description': 'Would you recommend this work be invited for presentation at the ICLR Journal-to-Conference Track? Unlike TMLR, the ICLR Journal-to-Conference Track is intended to feature work that also stands out in their novelty or their predicted significance for the field, commensurate to papers in its regular conference track. Therefore, this recommendation should be made completely separately from the recommendation to accept at TMLR. **Your response will be shared with ICLR**',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': '[Pilot] Recommendation to ICLR Journal-to-Conference Track',
+                                            'type': 'string',
+                                            'enum': ['Strongly Recommend', 'Weakly Recommend', 'Weakly Oppose', 'Strongly Oppose'],
+                                            'input': 'radio',
+                                        }
+                                    },
+                                    'readers': ['TMLR', 'TMLR/Paper${7/content/noteNumber/value}/Action_Editors']
+                                },
+                                'pilot_explain_recommendation_to_iclr_track': {
+                                    'order': 98,
+                                    'description': '**Your response will be shared with ICLR**',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': '[Pilot] Explain your recommendation to the ICLR Journal-to-Conference Track',
+                                            'type': 'string',
+                                            'maxLength': 50000,
+                                            'markdown': True,
+                                            'input': 'textarea'
+                                        }
+                                    },
+                                    'readers': ['TMLR', 'TMLR/Paper${7/content/noteNumber/value}/Action_Editors']
+                                }                                
+                            }                            
                         }
                     }
                 }
@@ -1808,7 +1866,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'decision_recommendation': { 'value': 'Accept' },
                     'certification_recommendations': { 'value': ['Featured Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'audience': { 'value': 'Yes' },
+                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -1834,7 +1894,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'decision_recommendation': { 'value': 'Accept' },
                     'certification_recommendations': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'audience': { 'value': 'Yes' },
+                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -1860,7 +1922,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'decision_recommendation': { 'value': 'Accept' },
                     'certification_recommendations': { 'value': ['Survey Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'audience': { 'value': 'Yes' },
+                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -1874,7 +1938,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'decision_recommendation': { 'value': 'Accept' },
                     'certification_recommendations': { 'value': ['Survey Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'audience': { 'value': 'Yes' },
+                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -1934,7 +2000,9 @@ The TMLR Editors-in-Chief
                     'decision_recommendation': { 'value': 'Leaning Accept' },
                     'certification_recommendations': { 'value': ['Survey Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'audience': { 'value': 'Yes' },
+                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -2006,7 +2074,9 @@ The TMLR Editors-in-Chief
                     'audience': { 'value': 'Accept as is' },
                     'recommendation': { 'value': 'Accept as is' },
                     'comment': { 'value': 'This is a nice paper!' },
-                    'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] }
+                    'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
+                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -2030,7 +2100,9 @@ The TMLR Editors-in-Chief
                         'audience': { 'value': 'Accept as is' },
                         'recommendation': { 'value': 'Accept as is' },
                         'comment': { 'value': 'This is a nice paper!' },
-                        'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] }
+                        'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
+                        'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                        'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                     }
                 )
             )
@@ -2780,7 +2852,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'audience': { 'value': 'Yes' },
+                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -2794,7 +2868,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'audience': { 'value': 'Yes' },
+                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -2836,7 +2912,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
                         'audience': { 'value': 'Accept as is' },
                         'recommendation': { 'value': 'Reject' },
                         'comment': { 'value': 'This is not a good paper' },
-                        'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] }
+                        'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
+                        'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                        'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                     }
                 )
             )
@@ -2849,7 +2927,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'audience': { 'value': 'Accept as is' },
                     'recommendation': { 'value': 'Reject' },
                     'comment': { 'value': 'This is not a good paper' },
-                    'resubmission_of_major_revision': { 'value': 'The authors may consider submitting a major revision at a later time.' }                    
+                    'resubmission_of_major_revision': { 'value': 'The authors may consider submitting a major revision at a later time.' },
+                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }                   
                 }
             )
         )
@@ -3185,7 +3265,9 @@ The TMLR Editors-in-Chief
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'audience': { 'value': 'Yes' },
+                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -3199,7 +3281,9 @@ The TMLR Editors-in-Chief
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'audience': { 'value': 'Yes' },
+                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -3213,7 +3297,9 @@ The TMLR Editors-in-Chief
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'audience': { 'value': 'Yes' },
+                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -3241,7 +3327,9 @@ The TMLR Editors-in-Chief
                     'claims_and_evidence': { 'value': 'Accept as is' },
                     'audience': { 'value': 'Accept as is' },
                     'recommendation': { 'value': 'Accept with minor revision' },
-                    'comment': { 'value': 'This is a good paper' }
+                    'comment': { 'value': 'This is a good paper' },
+                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -3487,7 +3575,9 @@ The TMLR Editors-in-Chief
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'audience': { 'value': 'Yes' },
+                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -3501,7 +3591,9 @@ The TMLR Editors-in-Chief
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'audience': { 'value': 'Yes' },
+                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -3515,7 +3607,9 @@ The TMLR Editors-in-Chief
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'audience': { 'value': 'Yes' },
+                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -4482,7 +4576,9 @@ note={Under review}
                     'decision_recommendation': { 'value': 'Accept' },
                     'certification_recommendations': { 'value': ['Featured Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'audience': { 'value': 'Yes' },
+                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -4496,7 +4592,9 @@ note={Under review}
                     'decision_recommendation': { 'value': 'Accept' },
                     'certification_recommendations': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'audience': { 'value': 'Yes' },
+                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -4510,7 +4608,9 @@ note={Under review}
                     'decision_recommendation': { 'value': 'Accept' },
                     'certification_recommendations': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'audience': { 'value': 'Yes' },
+                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -4541,7 +4641,9 @@ note={Under review}
                     'claims_and_evidence': { 'value': 'Accept as is' },
                     'audience': { 'value': 'Accept as is' },
                     'recommendation': { 'value': 'Accept with minor revision' },
-                    'comment': { 'value': 'This is a good paper' }
+                    'comment': { 'value': 'This is a good paper' },
+                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )

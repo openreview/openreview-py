@@ -3714,7 +3714,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'input': 'checkbox'
                     }
                 }
-            }        
+            }
+
+        if self.journal.get_official_recommendation_additional_fields():
+            for key, value in self.journal.get_official_recommendation_additional_fields().items():
+                invitation['edit']['note']['content'][key] = value                       
 
         self.save_super_invitation(self.journal.get_reviewer_recommendation_id(), invitation_content, edit_content, invitation)
 
@@ -4643,6 +4647,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 }
             }
+
+        if self.journal.get_decision_additional_fields():
+            for key, value in self.journal.get_decision_additional_fields().items():
+                invitation['edit']['note']['content'][key] = value             
 
         self.save_super_invitation(self.journal.get_ae_decision_id(), invitation_content, edit_content, invitation)
 
