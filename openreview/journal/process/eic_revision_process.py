@@ -22,7 +22,7 @@ def process(client, edit, invitation):
         note=openreview.api.Note(id=submission.id,
             content= {
                 '_bibtex': {
-                    'value': journal.get_bibtex(submission, journal.accepted_venue_id, certifications=submission.content.get('certifications', {}).get('value'))
+                    'value': journal.get_bibtex(submission, journal.accepted_venue_id, certifications=submission.content.get('certifications', {}).get('value',[]))
                 }
             }
         )
