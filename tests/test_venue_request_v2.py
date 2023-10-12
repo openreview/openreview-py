@@ -2769,6 +2769,22 @@ Best,
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for accepted submissions only',
                 'submission_author_edition': 'Allow reorder of existing authors only',
+                'submission_revision_additional_options': {
+                    "submission_type": {
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "Regular Long Paper",
+                                    "Regular Short Paper"
+                                ],
+                                "input": "select"
+                            }
+                        },
+                        "description": "Please enter the category under which the submission should be reviewed. This cannot be changed after the abstract submission deadline.",
+                        "order": 20
+                    }
+                },
                 'submission_revision_remove_options': ['keywords']
             },
             forum=venue['request_form_note'].forum,
@@ -2826,7 +2842,10 @@ Best,
         assert submissions[2].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
         assert submissions[2].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
 
-        assert openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission1/-/Camera_Ready_Revision')
+        invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission1/-/Camera_Ready_Revision')
+        assert invitation
+        assert 'submission_type' in invitation.edit['note']['content']
+        assert 20 == invitation.edit['note']['content']['submission_type']['order']
         assert not openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission2/-/Camera_Ready_Revision')
         assert not openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission3/-/Camera_Ready_Revision')
 

@@ -207,11 +207,11 @@ def get_profiles(client, ids_or_emails, with_publications=False, as_dict=False):
         client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
         client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
 
-        notes_v1 = concurrent_requests(lambda profile : client_v1.get_all_notes(content={'authorids': profile.id}), profiles)
+        notes_v1 = concurrent_requests(lambda profile : client_v1.get_all_notes(content={'authorids': profile.id}), profiles, desc='Loading API v1 publications')
         for idx, publications in enumerate(notes_v1):
             profiles[idx].content['publications'] = publications
 
-        notes_v2 = concurrent_requests(lambda profile : client_v2.get_all_notes(content={'authorids': profile.id}), profiles)
+        notes_v2 = concurrent_requests(lambda profile : client_v2.get_all_notes(content={'authorids': profile.id}), profiles, desc='Loading API v2 publications')
         for idx, publications in enumerate(notes_v2):
             if profiles[idx].content.get('publications'):
                 profiles[idx].content['publications'] = profiles[idx].content['publications'] +  publications
@@ -780,7 +780,7 @@ class efficient_iterget:
         self.get_function = get_function
         self.current_batch, total = self.get_function(**self.params)
 
-        self.gathering_responses = tqdm(total=total, desc=desc)
+        self.gathering_responses = tqdm(total=total, desc=desc) if total > self.params['limit'] else None
 
     def update_batch(self):
         after = self.current_batch[-1].id
@@ -797,7 +797,8 @@ class efficient_iterget:
 
     def __next__(self):
         if len(self.current_batch) == 0:
-            self.gathering_responses.close()
+            if self.gathering_responses:
+                self.gathering_responses.close()
             raise StopIteration
         else:
             next_obj = self.current_batch[self.obj_index]
@@ -805,7 +806,8 @@ class efficient_iterget:
                 self.update_batch()
                 self.obj_index = 0
             else:
-                self.gathering_responses.update(1)
+                if self.gathering_responses:
+                    self.gathering_responses.update(1)
                 self.obj_index += 1
             return next_obj
 
