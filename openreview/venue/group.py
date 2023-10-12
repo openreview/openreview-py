@@ -187,9 +187,7 @@ class GroupBuilder(object):
             'desk_rejection_name': { 'value': 'Desk_Rejection'},
             'desk_rejected_submission_reveal_authors': { 'value': self.venue.submission_stage.desk_rejected_submission_reveal_authors },
             'automatic_reviewer_assignment': { 'value': self.venue.automatic_reviewer_assignment },
-            'decision_heading_map': { 'value': self.venue.decision_heading_map },
-            'reviewer_roles': { 'value': self.venue.reviewer_roles }
-        }
+            'decision_heading_map': { 'value': self.venue.decision_heading_map }        }
 
         if self.venue.submission_stage.subject_areas:
             content['subject_areas'] = { 'value': self.venue.submission_stage.subject_areas }
