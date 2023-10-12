@@ -647,6 +647,43 @@ class TestVenueRequest():
         assert '0 users' in last_comment.content['invited']
         assert 'No recruitment invitation was sent to the users listed under \'Already Invited\' because they have already been invited.' in last_comment.content['comment']
 
+        ## Test invitee details with comma only and empty line
+        reviewer_details = ''',\nreviewer_candidate3_v2@mail.com, Reviewer Three\n\n'''
+        recruitment_note = test_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'Reviewers',
+                'invitee_reduced_load': ['1', '2', '3'],
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert recruitment_note
+
+        helpers.await_queue()
+
+        # No error in posting note
+        process_logs = client.get_process_logs(id=recruitment_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[0]['invitation'] == '{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
+
+        # Emails get sent correctly
+        messages = client.get_messages(to='reviewer_candidate3_v2@mail.com')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
+        assert messages[0]['content']['text'].startswith('Dear Reviewer Three,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
+
+        last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
+        assert '1 users' in last_comment.content['invited']
+
     def test_venue_recruitment_tilde_IDs(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Reviewer Recruitment
