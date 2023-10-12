@@ -157,7 +157,7 @@ class TestJournal():
                             'decision_additional_fields': {
                                 'pilot_recommendation_to_iclr_track': {
                                     'order': 98,
-                                    'description': 'Would you recommend this work be invited for presentation at the ICLR Journal-to-Conference Track? Unlike TMLR, the ICLR Journal-to-Conference Track is intended to feature work that also stands out in their novelty or their predicted significance for the field, commensurate to papers in its regular conference track. Therefore, this recommendation should be made completely separately from the recommendation to accept at TMLR. **Your response will be shared with ICLR**',
+                                    'description': 'Would you recommend this work be invited for presentation at the ICLR Journal-to-Conference Track? Recall that TMLR\'s acceptance criteria are that a work must be sound and of interest to the TMLR audience. Above these requirements, a paper in the ICLR Journal-to-Conference Track should also stand out in novelty or predicted significance for the field (i.e., comparable to the level of a paper in ICLR\'s regular conference track. **Your response will be shared with ICLR**',
                                     'value': {
                                         'param': {
                                             'fieldName': '[Pilot] Recommendation to ICLR Journal-to-Conference Track',
