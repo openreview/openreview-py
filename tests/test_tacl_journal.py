@@ -190,9 +190,13 @@ We thank you for your essential contribution to TACL!
 The TACL Editors-in-Chief
 '''
 
+        graham_paper1_anon_groups = graham_client.get_groups(prefix=f'TACL/Paper1/Action_Editor_.*', signatory='~Graham_Neubig1')
+        assert len(graham_paper1_anon_groups) == 1
+        graham_paper1_anon_group = graham_paper1_anon_groups[0]         
+
         ## Accept the submission 1
         under_review_note = graham_client.post_note_edit(invitation= 'TACL/Paper1/-/Review_Approval',
-                                    signatures=['TACL/Paper1/Action_Editors'],
+                                    signatures=[graham_paper1_anon_group.id],
                                     note=Note(content={
                                         'under_review': { 'value': 'Appropriate for Review' }
                                     }))
@@ -246,12 +250,16 @@ note={Under review}
         carlos_client = OpenReviewClient(username='carlos@taclthree.com', password=helpers.strong_password)
         javier_client = OpenReviewClient(username='javier@tacltwo.com', password=helpers.strong_password)
 
+        graham_paper1_anon_groups = graham_client.get_groups(prefix=f'TACL/Paper1/Action_Editor_.*', signatory='~Graham_Neubig1')
+        assert len(graham_paper1_anon_groups) == 1
+        graham_paper1_anon_group = graham_paper1_anon_groups[0]
+
         # add David Belanger again
         paper_assignment_edge = graham_client.post_edge(openreview.Edge(invitation='TACL/Reviewers/-/Assignment',
             readers=["TACL", "TACL/Paper1/Action_Editors", '~David_Bensusan1'],
             nonreaders=["TACL/Paper1/Authors"],
             writers=["TACL", "TACL/Paper1/Action_Editors"],
-            signatures=["TACL/Paper1/Action_Editors"],
+            signatures=[graham_paper1_anon_group.id],
             head=note_id_1,
             tail='~David_Bensusan1',
             weight=1
@@ -287,7 +295,7 @@ note: replies to this email will go to the AE, Graham Neubig.
             readers=["TACL", "TACL/Paper1/Action_Editors", '~Carlos_Gardel1'],
             nonreaders=["TACL/Paper1/Authors"],
             writers=["TACL", "TACL/Paper1/Action_Editors"],
-            signatures=["TACL/Paper1/Action_Editors"],
+            signatures=[graham_paper1_anon_group.id],
             head=note_id_1,
             tail='~Carlos_Gardel1',
             weight=1
@@ -298,7 +306,7 @@ note: replies to this email will go to the AE, Graham Neubig.
             readers=["TACL", "TACL/Paper1/Action_Editors", '~Javier_Barden1'],
             nonreaders=["TACL/Paper1/Authors"],
             writers=["TACL", "TACL/Paper1/Action_Editors"],
-            signatures=["TACL/Paper1/Action_Editors"],
+            signatures=[graham_paper1_anon_group.id],
             head=note_id_1,
             tail='~Javier_Barden1',
             weight=1
@@ -505,10 +513,14 @@ note: replies to this email will go to the AE, Graham Neubig.
         note_id_1 = openreview_client.get_notes(invitation='TACL/-/Submission')[0].id
         reviews=openreview_client.get_notes(forum=note_id_1, invitation='TACL/Paper1/-/Review', sort= 'number:asc')
 
+        graham_paper1_anon_groups = graham_client.get_groups(prefix=f'TACL/Paper1/Action_Editor_.*', signatory='~Graham_Neubig1')
+        assert len(graham_paper1_anon_groups) == 1
+        graham_paper1_anon_group = graham_paper1_anon_groups[0]
+
         for review in reviews:
             signature=review.signatures[0]
             rating_note=graham_client.post_note_edit(invitation=f'{signature}/-/Rating',
-                signatures=["TACL/Paper1/Action_Editors"],
+                signatures=[graham_paper1_anon_group.id],
                 note=Note(
                     content={
                         'rating': { 'value': 'Exceeds expectations' }
@@ -518,7 +530,7 @@ note: replies to this email will go to the AE, Graham Neubig.
             helpers.await_queue_edit(openreview_client, edit_id=rating_note['id'])
 
         decision_note = graham_client.post_note_edit(invitation='TACL/Paper1/-/Decision',
-            signatures=["TACL/Paper1/Action_Editors"],
+            signatures=[graham_paper1_anon_group.id],
             note=Note(
                 content={
                     'claims_and_evidence': { 'value': 'Accept as is' },
@@ -594,11 +606,15 @@ note: replies to this email will go to the AE, Graham Neubig.
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
 
+        graham_paper1_anon_groups = graham_client.get_groups(prefix=f'TACL/Paper1/Action_Editor_.*', signatory='~Graham_Neubig1')
+        assert len(graham_paper1_anon_groups) == 1
+        graham_paper1_anon_group = graham_paper1_anon_groups[0]
+
         ## AE verifies the camera ready revision
         verification_note = graham_client.post_note_edit(invitation='TACL/Paper1/-/Camera_Ready_Verification',
-                            signatures=["TACL/Paper1/Action_Editors"],
+                            signatures=[graham_paper1_anon_group.id],
                             note=Note(
-                                signatures=["TACL/Paper1/Action_Editors"],
+                                signatures=[graham_paper1_anon_group.id],
                                 content= {
                                     'verification': { 'value': 'I confirm that camera ready manuscript complies with the TACL stylefile and, if appropriate, includes the minor revisions that were requested.' }
                                  }
@@ -676,9 +692,13 @@ note={Featured Certification, Reproducibility Certification}
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
+        graham_paper2_anon_groups = graham_client.get_groups(prefix=f'TACL/Paper2/Action_Editor_.*', signatory='~Graham_Neubig1')
+        assert len(graham_paper2_anon_groups) == 1
+        graham_paper2_anon_group = graham_paper2_anon_groups[0]
+
         ## Accept the submission 2
         under_review_note = graham_client.post_note_edit(invitation= 'TACL/Paper2/-/Review_Approval',
-                                    signatures=['TACL/Paper2/Action_Editors'],
+                                    signatures=[graham_paper2_anon_group.id],
                                     note=Note(content={
                                         'under_review': { 'value': 'Appropriate for Review' }
                                     }))

@@ -211,9 +211,13 @@ The MELBA Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
+        aasa_paper1_anon_groups = aasa_client.get_groups(prefix=f'MELBA/Paper1/Action_Editor_.*', signatory='~Aasa_Feragen1')
+        assert len(aasa_paper1_anon_groups) == 1
+        aasa_paper1_anon_group = aasa_paper1_anon_groups[0]         
+
         ## Accept the submission 1
         under_review_note = aasa_client.post_note_edit(invitation= 'MELBA/Paper1/-/Review_Approval',
-                                    signatures=[f'{venue_id}/Paper1/Action_Editors'],
+                                    signatures=[aasa_paper1_anon_group.id],
                                     note=Note(content={
                                         'under_review': { 'value': 'Appropriate for Review' }
                                     }))
@@ -234,7 +238,7 @@ The MELBA Editors-in-Chief
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~MELBARev_One1'],
             nonreaders=[f"{venue_id}/Paper1/Authors"],
             writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
-            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            signatures=[aasa_paper1_anon_group.id],
             head=note_id_1,
             tail='~MELBARev_One1',
             weight=1
@@ -245,7 +249,7 @@ The MELBA Editors-in-Chief
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~MELBARev_Two1'],
             nonreaders=[f"{venue_id}/Paper1/Authors"],
             writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
-            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            signatures=[aasa_paper1_anon_group.id],
             head=note_id_1,
             tail='~MELBARev_Two1',
             weight=1
@@ -256,7 +260,7 @@ The MELBA Editors-in-Chief
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~MELBARev_Three1'],
             nonreaders=[f"{venue_id}/Paper1/Authors"],
             writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
-            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            signatures=[aasa_paper1_anon_group.id],
             head=note_id_1,
             tail='~MELBARev_Three1',
             weight=1
@@ -322,9 +326,9 @@ The MELBA Editors-in-Chief
 
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort='number:desc')
         assert len(reviews) == 3
-        assert reviews[0].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
-        assert reviews[1].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
-        assert reviews[2].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+        assert reviews[0].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+        assert reviews[1].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+        assert reviews[2].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
 
         invitation = eic_client.get_invitation(f'{venue_id}/Paper1/-/Official_Recommendation')
         assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
@@ -387,7 +391,7 @@ The MELBA Editors-in-Chief
         for review in reviews:
             signature=review.signatures[0]
             rating_note=aasa_client.post_note_edit(invitation=f'{signature}/-/Rating',
-                signatures=[f"{venue_id}/Paper1/Action_Editors"],
+                signatures=[aasa_paper1_anon_group.id],
                 note=Note(
                     content={
                         'rating': { 'value': 'Exceeds expectations' }
@@ -400,7 +404,7 @@ The MELBA Editors-in-Chief
             assert process_logs[0]['status'] == 'ok'
 
         decision_note = aasa_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
-            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            signatures=[aasa_paper1_anon_group.id],
             note=Note(
                 content={
                     'claims_and_evidence': { 'value': 'Accept as is' },
@@ -429,7 +433,7 @@ The MELBA Editors-in-Chief
         helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
 
         decision_note = eic_client.get_note(decision_note.id)
-        assert decision_note.readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
+        assert decision_note.readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
         assert decision_note.nonreaders == []
 
         ## post a revision
