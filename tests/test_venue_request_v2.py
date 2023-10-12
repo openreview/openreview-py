@@ -847,7 +847,7 @@ class TestVenueRequest():
         remind_recruitment_status_invitation = '{}/-/Request{}/Remind_Recruitment_Status'.format(venue['support_group_id'],
                                                                                    venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=remind_recruitment_status_invitation, sort='tmdate')[0]
-        assert '3 users' in last_comment.content['reminded']
+        assert '4 users' in last_comment.content['reminded']
 
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Remind Recruitment Status' not in last_message['content']['text']
