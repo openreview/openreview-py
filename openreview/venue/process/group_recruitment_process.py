@@ -17,7 +17,6 @@ def process(client, edit, invitation):
 
     recruitment_status = {
         'invited': [],
-        'reminded': [],
         'already_invited': {},
         'already_member': {},
         'errors': {}
@@ -106,3 +105,22 @@ def process(client, edit, invitation):
                 error_string = repr(e)
 
     print("Invited users:", len(recruitment_status['invited']))
+
+    # add recruitment status to edit content
+    if recruitment_status['invited']:
+        edit.content['invitedStatus'] = {
+            'value': recruitment_status['invited']
+        }
+    if recruitment_status['already_invited']:
+        edit.content['alreadyInvitedStatus'] = {
+            'value': recruitment_status['already_invited']
+        }
+    if recruitment_status['already_member']:
+        edit.content['alreadyMemberStatus'] = {
+            'value': recruitment_status['already_member']
+        }
+    if recruitment_status['errors']:
+        edit.content['errorStatus'] = {
+            'value': recruitment_status['errors']
+        }
+    client.post_edit(edit)

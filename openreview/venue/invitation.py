@@ -3117,7 +3117,7 @@ class InvitationBuilder(object):
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'content': {
-                    'inviteeDetails': { 
+                    'inviteeDetails': {
                         'value': {
                             'param': {
                                 'type': 'string',
@@ -3125,6 +3125,38 @@ class InvitationBuilder(object):
                                 'input': 'textarea',
                                 'optional': True,
                                 'markdown': True
+                            }
+                        }
+                    },
+                    'invitedStatus': {
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'optional': True
+                            }
+                        }
+                    },
+                    'alreadyInvitedStatus': {
+                        'value': {
+                            'param': {
+                                'type': 'json',
+                                'optional': True
+                            }
+                        }
+                    },
+                    'alreadyMemberStatus': {
+                        'value': {
+                            'param': {
+                                'type': 'json',
+                                'optional': True
+                            }
+                        }
+                    },
+                    'errorStatus': {
+                        'value': {
+                            'param': {
+                                'type': 'json',
+                                'optional': True
                             }
                         }
                     }

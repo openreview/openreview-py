@@ -99,7 +99,7 @@ Program Chairs
         invitee_details = '''reviewer1@venue.cc, Reviewer VenueOne\nreviewer2@venue.cc, Reviewer VenueTwo\n~Reviewer_VenueThree1'''
 
         # use invitation to recruit reviewers
-        openreview_client.post_group_edit(
+        edit = openreview_client.post_group_edit(
                 invitation='Venue.cc/Reviewers/Invited/-/Recruitment',
                 content={
                     'inviteeDetails': { 'value':  invitee_details }
@@ -116,3 +116,12 @@ Program Chairs
 
         messages = openreview_client.get_messages(subject = '[V 24] Invitation to serve as Reviewer')
         assert len(messages) == 3
+
+        edit = openreview_client.get_group_edit(edit['id'])
+        assert 'invitedStatus' in edit.content
+        assert 'reviewer1@venue.cc' in edit.content['invitedStatus']['value']
+        assert 'reviewer2@venue.cc' in edit.content['invitedStatus']['value']
+        assert '~Reviewer_VenueThree1' in edit.content['invitedStatus']['value']
+        assert 'alreadyInvitedStatus' not in edit.content
+        assert 'alreadyMemberStatus' not in edit.content
+        assert 'errorStatus' not in edit.content
