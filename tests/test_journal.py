@@ -3095,7 +3095,7 @@ note={Rejected}
         openreview_client.get_invitation('TMLR/Paper5/Action_Editors/-/Recommendation')        
 
         # Assign Action Editor
-        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
+        paper_assignment_edge = cho_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
             writers=[venue_id, editor_in_chief_group_id],
             signatures=[editor_in_chief_group_id],
@@ -3122,7 +3122,7 @@ The TMLR Editors-in-Chief
         ## try editing the assignmente edge being the author and get an error
         paper_assignment_edge.tail = '~Ryan_Adams1'
         paper_assignment_edge.readers=[venue_id, editor_in_chief_group_id, '~Ryan_Adams1']
-        with pytest.raises(openreview.OpenReviewException, match=r'You cannot edit the tail of this edge'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Authors can not edit assignments for this submission: 5'):
             raia_client.post_edge(paper_assignment_edge)
        
         
@@ -3182,7 +3182,8 @@ The TMLR Editors-in-Chief
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Assign Javier Burroni
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
+        ## try editing the assignmente edge being the author and get an error
+        paper_assignment_edge = openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper5/Action_Editors", '~Javier_Burroni1'],
             nonreaders=[f"{venue_id}/Paper5/Authors"],
             writers=[venue_id, f"{venue_id}/Paper5/Action_Editors"],
@@ -3190,9 +3191,12 @@ The TMLR Editors-in-Chief
             head=note_id_5,
             tail='~Javier_Burroni1',
             weight=1
-        ))
+        )
+        with pytest.raises(openreview.OpenReviewException, match=r'Authors can not edit assignments for this submission: 5'):
+            raia_client.post_edge(paper_assignment_edge)
 
-        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+        paper_assignment_edge = joelle_client.post_edge(paper_assignment_edge)
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)      
 
         ## Post a review edit
         david_anon_groups=david_client.get_groups(prefix=f'{venue_id}/Paper5/Reviewer_.*', signatory='~David_Belanger1')

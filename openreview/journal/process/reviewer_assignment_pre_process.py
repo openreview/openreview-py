@@ -4,6 +4,11 @@ def process(client, edge, invitation):
 
     submission = client.get_note(edge.head)
 
+    ## authors should not be able to edit assignments
+    authors_group_id = journal.get_authors_id(number=submission.number)
+    if client.get_groups(id=authors_group_id, member=edge.tauthor):
+        raise openreview.OpenReviewException(f'Authors can not edit assignments for this submission: {submission.number}')    
+
     venue_id = submission.content.get('venueid', {}).get('value')
     if venue_id not in [journal.under_review_venue_id]:
         raise openreview.OpenReviewException(f'Can not edit assignments for this submission: {venue_id}')
