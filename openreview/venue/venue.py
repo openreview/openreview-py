@@ -1047,7 +1047,7 @@ OpenReview Team'''
 
                 reviewers_name = venue_group.content.get('reviewers_name', {}).get('value', 'Reviewers')
 
-                for role in venue_group.content.get('reviewer_roles', {}).get('value'):
+                for role in venue_group.content.get('reviewer_roles', {}).get('value', ['Reviewers']):
                     invite_assignment_invitations.append(invite_assignment_id.replace(reviewers_name, role))
 
                 for invite_assignment_invitation_id in invite_assignment_invitations:
