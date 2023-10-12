@@ -1841,7 +1841,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}')],
                 'signatures': {
                     'param': {
-                        'regex': venue_id + '|' + editor_in_chief_id + '|' + self.journal.get_action_editors_id(number='.*')
+                        'regex': venue_id + '|' + editor_in_chief_id + '|' + self.journal.get_action_editors_id(number='.*', anon=True)
                     }
                 },
                 'head': {
@@ -2171,7 +2171,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'process': self.process_script,
             'dateprocesses': [self.ae_reminder_process],
             'edit': {
-                'signatures': { 'param': { 'regex': f"{editors_in_chief_id}|{self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')}" }},
+                'signatures': { 'param': { 'regex': f"{editors_in_chief_id}|{self.journal.get_action_editors_id(number='${5/content/noteNumber/value}', anon=True)}" }},
                 'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                 'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                 'note': {
@@ -3400,7 +3400,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'process': self.process_script,
             'dateprocesses': [self.reviewer_reminder_process_with_EIC],
             'edit': {
-                'signatures': { 'param': { 'regex': f"{self.journal.get_reviewers_id(number='${5/content/noteNumber/value}', anon=True)}.*|{self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')}" }},
+                'signatures': { 'param': { 'regex': f"{self.journal.get_reviewers_id(number='${5/content/noteNumber/value}', anon=True)}.*|{self.journal.get_action_editors_id(number='${5/content/noteNumber/value}', anon=True)}" }},
                 'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
                 'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
                 'note': {
@@ -3621,7 +3621,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'script': self.get_super_dateprocess_content('cdate_script')
             }, self.reviewer_reminder_process_with_EIC],
             'edit': {
-                'signatures': { 'param': { 'regex': f"{self.journal.get_reviewers_id(number='${5/content/noteNumber/value}', anon=True)}.*|{self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')}" }},
+                'signatures': { 'param': { 'regex': f"{self.journal.get_reviewers_id(number='${5/content/noteNumber/value}', anon=True)}.*|{self.journal.get_action_editors_id(number='${5/content/noteNumber/value}', anon=True)}" }},
                 'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
                 'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
                 'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
@@ -3906,14 +3906,18 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'preprocess': self.preprocess_script,
             'dateprocesses': [self.ae_reminder_process],
             'edit': {
-                'signatures': [ self.journal.get_action_editors_id(number='${4/content/noteNumber/value}') ],
+                'signatures': { 
+                    'param': { 
+                        'items': [{ 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True) }] 
+                    }
+                },
                 'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}') ],
                 'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
                 'writers': [ venue_id ],
                 'note': {
                     'forum': '${4/content/noteId/value}',
                     'replyto': '${4/content/replytoId/value}',
-                    'signatures': [ self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') ],
+                    'signatures': ['${3/signatures}'],
                     'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${5/content/soliciter/value}' ],
                     'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                     'writers': [ venue_id ],
@@ -4285,7 +4289,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'writers': [venue_id],
             'signatures': [venue_id],
             'edit': {
-                'signatures': { 'param': { 'regex': f"{editors_in_chief_id}|{self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')}|{self.journal.get_reviewers_id(number='${5/content/noteNumber/value}', anon=True)}.*|{self.journal.get_authors_id(number='${5/content/noteNumber/value}')}" }},
+                'signatures': { 'param': { 'regex': f"{editors_in_chief_id}|{self.journal.get_action_editors_id(number='${5/content/noteNumber/value}', anon=True)}|{self.journal.get_reviewers_id(number='${5/content/noteNumber/value}', anon=True)}.*|{self.journal.get_authors_id(number='${5/content/noteNumber/value}')}" }},
                 'readers': [ venue_id, '${2/signatures}' ],
                 'writers': [ venue_id, '${2/signatures}' ],
                 'note': {
@@ -4356,7 +4360,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'writers': [venue_id],
             'signatures': [venue_id],
             'edit': {
-                'signatures': { 'param': { 'regex': f"{editors_in_chief_id}|{self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')}" }},
+                'signatures': { 'param': { 'regex': f"{editors_in_chief_id}|{self.journal.get_action_editors_id(number='${5/content/noteNumber/value}', anon=True)}" }},
                 'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                 'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                 'note': {
@@ -4537,7 +4541,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'maxReplies': 1,
             'minReplies': 1,
             'edit': {
-                'signatures': [self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                'signatures': { 
+                    'param': { 
+                        'items': [{ 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True) }] 
+                    }
+                },
                 'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                 'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
                 'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
@@ -4557,7 +4565,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             'deletable': True
                         }
                     },
-                    'signatures': [self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
+                    'signatures': ['${3/signatures}'],
                     'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') ],
                     'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                     'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
@@ -4884,7 +4892,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'signatures': [editors_in_chief_id],
             'maxReplies': 1,
             'edit': {
-                    'signatures': [self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                    'signatures': { 
+                        'param': { 
+                            'items': [{ 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True) }] 
+                        }
+                    },
                     'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                     'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
                     'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
@@ -4897,7 +4909,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         },            
                         'forum': '${4/content/noteId/value}',
                         'replyto': '${4/content/replytoId/value}',
-                        'signatures': [self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
+                        'signatures': ['${3/signatures}'],
                         'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') ],
                         'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                         'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
@@ -5264,11 +5276,15 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'writers': [venue_id],
             'signatures': [venue_id],
             'edit': {
-                'signatures': [self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                'signatures': { 
+                    'param': { 
+                        'items': [{ 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True) }] 
+                    }
+                },
                 'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                 'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                 'note': {
-                    'signatures': [self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
+                    'signatures': ['${3/signatures}'],
                     'forum': '${4/content/noteId/value}',
                     'replyto': '${4/content/noteId/value}',
                     'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],

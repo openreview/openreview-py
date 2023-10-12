@@ -79,8 +79,8 @@ class Journal(object):
     def get_action_editors_archived_id(self):
         return f'{self.get_action_editors_id()}/Archived'    
 
-    def get_action_editors_id(self, number=None):
-        return self.__get_group_id(self.action_editors_name, number)
+    def get_action_editors_id(self, number=None, anon=False):
+        return self.__get_group_id('Action_Editor_' if anon else self.action_editors_name, number)
 
     def get_reviewers_id(self, number=None, anon=False):
         return self.__get_group_id('Reviewer_' if anon else self.reviewers_name, number)
