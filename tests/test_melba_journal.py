@@ -70,7 +70,41 @@ class TestJournal():
                             'author_anonymity': True,
                             'assignment_delay': 0,
                             'show_conflict_details': True,
-                            'has_publication_chairs': True
+                            'has_publication_chairs': True,
+                            'submission_additional_fields': {
+                                # 'competing_interests': {
+                                #     'delete': True
+                                # },
+                                'additional_field': {
+                                    'order': 98,
+                                    'description': 'this is an additional field',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': 'Enter your comments',
+                                            'type': 'string',
+                                            'maxLength': 50000,
+                                            'markdown': True,
+                                            'input': 'textarea'
+                                        }
+                                    }
+                                }                                
+                            },
+                            'review_additional_fields': {
+                                'confidential_comment': {
+                                    'order': 98,
+                                    'description': 'confidential comment',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': 'confidential comment',
+                                            'type': 'string',
+                                            'maxLength': 50000,
+                                            'markdown': True,
+                                            'input': 'textarea'
+                                        }
+                                    },
+                                    'readers': ['MELBA', 'MELBA/Paper${7/content/noteNumber/value}/Action_Editors', '${5/signatures}']
+                                }                             
+                            }
                         }
                     }
                 }
@@ -154,6 +188,7 @@ class TestJournal():
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Celeste_Martinez1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'additional_field': { 'value': 'None beyond the authors normal conflict of interests'},
                     'human_subjects_reporting': { 'value': 'Not applicable'}
                 }
             ))
@@ -279,7 +314,8 @@ The MELBA Editors-in-Chief
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'audience': { 'value': 'Yes' },
+                    'confidential_comment': { 'value': 'confidential_comment' }
                 }
             )
         )
@@ -298,7 +334,8 @@ The MELBA Editors-in-Chief
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'audience': { 'value': 'Yes' },
+                    'confidential_comment': { 'value': 'confidential_comment' }
                 }
             )
         )
@@ -317,7 +354,8 @@ The MELBA Editors-in-Chief
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'audience': { 'value': 'Yes' },
+                    'confidential_comment': { 'value': 'confidential_comment' }
                 }
             )
         )
@@ -449,7 +487,8 @@ The MELBA Editors-in-Chief
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                     'human_subjects_reporting': { 'value': 'Not applicable'},
-                    'video': { 'value': 'https://youtube.com/dfenxkw'}
+                    'video': { 'value': 'https://youtube.com/dfenxkw'},
+                    'additional_field': { 'value': 'None beyond the authors normal conflict of interests'}   
                 }
             )
         )

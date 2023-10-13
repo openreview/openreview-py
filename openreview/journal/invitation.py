@@ -992,6 +992,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'order': 6                
             }
 
+        if self.journal.get_submission_additional_fields():
+            for key, value in self.journal.get_submission_additional_fields().items():
+                invitation.edit['note']['content'][key] = value             
+
+        print(invitation.edit['note']['content'])
         self.save_invitation(invitation)
 
     def set_ae_assignment(self, assignment_delay):
@@ -3498,6 +3503,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             }
         }
 
+        if self.journal.get_review_additional_fields():
+            for key, value in self.journal.get_review_additional_fields().items():
+                invitation['edit']['note']['content'][key] = value         
+
         self.save_super_invitation(self.journal.get_review_id(), invitation_content, edit_content, invitation)
 
         invitation = {
@@ -5221,6 +5230,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'process': self.process_script
         }
 
+        if self.journal.get_submission_additional_fields():
+            for key, value in self.journal.get_submission_additional_fields().items():
+                invitation['edit']['note']['content'][key] = value         
+
         self.save_super_invitation(self.journal.get_camera_ready_revision_id(), invitation_content, edit_content, invitation)
 
     def set_note_camera_ready_revision_invitation(self, note, duedate):
@@ -5523,7 +5536,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         "input": "select"
                     }
                 }
-            }            
+            }
+
+        if self.journal.get_submission_additional_fields():
+            for key, value in self.journal.get_submission_additional_fields().items():
+                invitation['edit']['note']['content'][key] = value                        
 
         self.save_super_invitation(self.journal.get_eic_revision_id(), invitation_content, edit_content, invitation)
 

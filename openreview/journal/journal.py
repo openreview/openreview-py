@@ -467,6 +467,12 @@ class Journal(object):
     def get_ae_max_papers(self):
         return self.settings.get('action_editors_max_papers', 12)
 
+    def get_submission_additional_fields(self):
+        return self.settings.get('submission_additional_fields', {})
+    
+    def get_review_additional_fields(self):
+        return self.settings.get('review_additional_fields', {})
+    
     def get_official_recommendation_additional_fields(self):
         return self.settings.get('official_recommendation_additional_fields', {}) 
 
