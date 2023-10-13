@@ -106,15 +106,16 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
     group_invitations = [i for i in client.get_all_invitations(prefix=venue_id, type='group') if i.is_active()]
 
     for group_invitation in group_invitations:
-        print('create invitation: ', group_invitation.id)
-        client.post_group_edit(
-            invitation=group_invitation.id,
-            content={
-                'noteId': { 'value': note.id },
-                'noteNumber': { 'value': note.number },
-            },
-            group=openreview.api.Group()
-        )
+        if 'noteId' in group_invitation.edit.get('content', {}):
+            print('create invitation: ', group_invitation.id)
+            client.post_group_edit(
+                invitation=group_invitation.id,
+                content={
+                    'noteId': { 'value': note.id },
+                    'noteNumber': { 'value': note.number },
+                },
+                group=openreview.api.Group()
+            )
 
     #send tauthor email
     if edit.tauthor.lower() != 'openreview.net':
