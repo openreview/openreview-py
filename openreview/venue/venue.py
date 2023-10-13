@@ -1042,9 +1042,11 @@ OpenReview Team'''
             if hasattr(venue_group, 'domain') and venue_group.content:
                 
                 print(f'Check active venue {venue_group.id}')
-                invite_assignment_invitation_id = venue_group.content.get('reviewers_invite_assignment_id', {}).get('value')
 
-                if invite_assignment_invitation_id:
+                edge_invitations = client.get_all_invitations(prefix=venue_id, type='edge')
+                invite_assignment_invitations = [inv.id for inv in edge_invitations if inv.id.endswith('Invite_Assignment')]
+
+                for invite_assignment_invitation_id in invite_assignment_invitations:
                     
                     ## check if it is expired?
                     invite_assignment_invitation = openreview.tools.get_invitation(client, invite_assignment_invitation_id)
