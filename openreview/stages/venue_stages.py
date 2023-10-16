@@ -313,7 +313,7 @@ class SubmissionStage(object):
                                 'hidden': True
                             }
                         }
-                    }                                            
+                    }
 
         return content
     

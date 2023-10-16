@@ -2211,7 +2211,8 @@ class Note(object):
         replyto=None,
         nonreaders=None,
         domain=None,
-        details = None):
+        details = None,
+        license=None):
 
         self.id = id
         self.number = number
@@ -2233,6 +2234,7 @@ class Note(object):
         self.details = details
         self.invitations = invitations
         self.domain = domain
+        self.license = license
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -2279,6 +2281,8 @@ class Note(object):
             body['writers'] = self.writers
         if self.readers:
             body['readers'] = self.readers
+        if self.license:
+            body['license'] = self.license
         return body
 
     @classmethod
@@ -2311,7 +2315,8 @@ class Note(object):
         signatures=n.get('signatures'),
         writers=n.get('writers'),
         details=n.get('details'),
-        domain=n.get('domain')
+        domain=n.get('domain'),
+        license=n.get('license')
         )
         return note
 

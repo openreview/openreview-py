@@ -73,7 +73,8 @@ class TestICLRConference():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
-                'api_version': '2'
+                'api_version': '2',
+                'submission_license': 'CC BY-SA 4.0'
             }))
 
         helpers.await_queue()
@@ -204,6 +205,9 @@ class TestICLRConference():
         assert ['ICLR.cc/2024/Conference', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICLROne1'] == submissions[0].readers
         assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICLROne1'] == submissions[0].content['authorids']['value']
 
+        # Check that submission license is same as request form
+        assert submissions[0].license == 'CC BY-SA 4.0'
+
         authors_group = openreview_client.get_group(id='ICLR.cc/2024/Conference/Authors')
 
         for i in range(1,12):
@@ -255,6 +259,7 @@ class TestICLRConference():
 
         submissions = pc_client_v2.get_notes(invitation='ICLR.cc/2024/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 11
+        assert submissions[0].license == 'CC BY-SA 4.0'
         assert submissions[0].readers == ['everyone']
         assert '_bibtex' in submissions[0].content
         assert 'author={Anonymous}' in submissions[0].content['_bibtex']['value']

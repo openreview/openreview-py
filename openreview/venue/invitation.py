@@ -114,6 +114,7 @@ class InvitationBuilder(object):
     def set_submission_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
+        submission_license = self.venue.submission_license
 
         content = submission_stage.get_content(api_version='2', conference=self.venue, venue_id=self.venue.get_submission_venue_id())
 
@@ -165,6 +166,10 @@ class InvitationBuilder(object):
             },
             process=self.get_process_content('process/submission_process.py')
         )
+
+        if submission_license:
+            submission_invitation.edit['license'] = submission_license
+            submission_invitation.edit['note']['license'] = submission_license
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=False)
 
