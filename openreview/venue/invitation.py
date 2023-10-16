@@ -1949,7 +1949,7 @@ class InvitationBuilder(object):
                 'invitation': {
                     'id': self.venue.get_invitation_id(revision_stage.name, '${2/content/noteNumber/value}'),
                     'signatures': [venue_id],
-                    'readers': ['everyone'],
+                    'readers': [venue_id, self.venue.get_authors_id(number='${3/content/noteNumber/value}')],
                     'writers': [venue_id],
                     'invitees': [venue_id, self.venue.get_authors_id(number='${3/content/noteNumber/value}')],
                     'cdate': revision_cdate,
