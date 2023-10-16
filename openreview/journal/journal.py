@@ -995,6 +995,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                                 "maxLength": 200000,
                                 "input": "textarea",
                                 "optional": True,
+                                'deletable': True,
                                 "markdown": True
                             }
 

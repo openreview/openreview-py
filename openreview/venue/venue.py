@@ -71,6 +71,7 @@ class Venue(object):
         self.decision_heading_map = {}
         self.use_publication_chairs = False
         self.allow_gurobi_solver = False
+        self.submission_license = None
 
     def get_id(self):
         return self.venue_id

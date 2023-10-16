@@ -175,7 +175,8 @@ class Matching(object):
         edge_label = {
             'param': {
                 'regex': '.*',
-                'optional': True
+                'optional': True,
+                'deletable': True
             }
         }
 
@@ -818,7 +819,8 @@ class Matching(object):
                                     'type': 'string',
                                     'regex': '{}/.*/-/Custom_User_Demands$'.format(venue.id),
                                     'default': '{}/-/Custom_User_Demands'.format(self.match_group.id),
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             }
                         },
@@ -830,7 +832,8 @@ class Matching(object):
                                     'type': 'string',
                                     'regex':  '{}/.*/-/Custom_Max_Papers$'.format(venue.id),
                                     'default': venue.get_custom_max_papers_id(self.match_group.id),
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             }
                         },
@@ -883,6 +886,7 @@ class Matching(object):
                                     'type': 'string',
                                     'regex':  '.*',
                                     'optional': True,
+                                    'deletable': True,
                                     'hidden': True
                                 }
                             }
@@ -896,6 +900,7 @@ class Matching(object):
                                     'enum':  ['Yes', 'No'],
                                     'input': 'radio',
                                     'optional': True,
+                                    'deletable': True,
                                     'default': 'Yes'
                                 }
                             }
@@ -908,6 +913,7 @@ class Matching(object):
                                     'type': 'string',
                                     'regex':  r'[-+]?[0-9]*\.?[0-9]*',
                                     'optional': True,
+                                    'deletable': True,
                                     'default': '1'
                                 }
                             }
@@ -920,6 +926,7 @@ class Matching(object):
                                     'type': 'string',
                                     'regex':  r'[-+]?[0-9]*\.?[0-9]*',
                                     'optional': True,
+                                    'deletable': True,
                                     'default': '',
                                     'hidden': True
                                 }
@@ -1098,6 +1105,7 @@ class Matching(object):
                     'Conflict Detected'
                 ],
                 'optional': True,
+                'deletable': True,
                 'default': invited_label
             }
         }

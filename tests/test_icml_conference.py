@@ -2015,7 +2015,7 @@ ICML 2023 Conference Program Chairs'''
         sac_group = pc_client.get_group('ICML.cc/2023/Conference/Submission11/Senior_Area_Chairs')
         assert [] == sac_group.members
 
-    def test_review_stage(self, client, openreview_client, helpers):
+    def test_review_stage(self, client, openreview_client, helpers, selenium, request_page):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -2205,18 +2205,18 @@ ICML 2023 Conference Program Chairs'''
                         "description": "Please provide an \"overall score\" for this submission.",
                         "value": {
                             "param": {
-                                "type": "string",
+                                "type": 'integer',
                                 "enum": [
-                                    "10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.",
-                                    "9: Very Strong Accept: Technically flawless paper with groundbreaking impact on at least one area of AI/ML and excellent impact on multiple areas of AI/ML, with flawless evaluation, resources, and reproducibility, and no unaddressed ethical considerations.",
-                                    "8: Strong Accept: Technically strong paper, with novel ideas, excellent impact on at least one area, or high-to-excellent impact on multiple areas, with excellent evaluation, resources, and reproducibility, and no unaddressed ethical considerations.",
-                                    "7: Accept: Technically solid paper, with high impact on at least one sub-area, or moderate-to-high impact on more than one areas, with good-to-excellent evaluation, resources, reproducibility, and no unaddressed ethical considerations.",
-                                    "6: Weak Accept: Technically solid, moderate-to-high impact paper, with no major concerns with respect to evaluation, resources, reproducibility, ethical considerations.",
-                                    "5: Borderline accept: Technically solid paper where reasons to accept outweigh reasons to reject, e.g., limited evaluation. Please use sparingly.",
-                                    "4: Borderline reject: Technically solid paper where reasons to reject, e.g., limited evaluation, outweigh reasons to accept, e.g., good evaluation. Please use sparingly.",
-                                    "3: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations.",
-                                    "2: Strong Reject: For instance, a paper with major technical flaws, and/or poor evaluation, limited impact, poor reproducibility and mostly unaddressed ethical considerations.",
-                                    "1: Very Strong Reject: For instance, a paper with trivial results or unaddressed ethical considerations"
+                                    { 'value': 10, 'description': "10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations." },
+                                    { 'value': 9, 'description': "9: Very Strong Accept: Technically flawless paper with groundbreaking impact on at least one area of AI/ML and excellent impact on multiple areas of AI/ML, with flawless evaluation, resources, and reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 8, 'description': "8: Strong Accept: Technically strong paper, with novel ideas, excellent impact on at least one area, or high-to-excellent impact on multiple areas, with excellent evaluation, resources, and reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 7, 'description': "7: Accept: Technically solid paper, with high impact on at least one sub-area, or moderate-to-high impact on more than one areas, with good-to-excellent evaluation, resources, reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 6, 'description': "6: Weak Accept: Technically solid, moderate-to-high impact paper, with no major concerns with respect to evaluation, resources, reproducibility, ethical considerations." },
+                                    { 'value': 5, 'description': "5: Borderline accept: Technically solid paper where reasons to accept outweigh reasons to reject, e.g., limited evaluation. Please use sparingly." },
+                                    { 'value': 4, 'description': "4: Borderline reject: Technically solid paper where reasons to reject, e.g., limited evaluation, outweigh reasons to accept, e.g., good evaluation. Please use sparingly." },
+                                    { 'value': 3, 'description': "3: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations." },
+                                    { 'value': 2, 'description': "2: Strong Reject: For instance, a paper with major technical flaws, and/or poor evaluation, limited impact, poor reproducibility and mostly unaddressed ethical considerations." },
+                                    { 'value': 1, 'description': "1: Very Strong Reject: For instance, a paper with trivial results or unaddressed ethical considerations" }
                                 ],
                                 "input": "radio"
 
@@ -2228,13 +2228,13 @@ ICML 2023 Conference Program Chairs'''
                         "description": "Please provide a \"confidence score\" for your assessment of this submission to indicate how confident you are in your evaluation.",
                         "value": {
                             "param": {
-                                "type": "string",
+                                "type": 'integer',
                                 "enum": [
-                                    "5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.",
-                                    "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work.",
-                                    "3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
-                                    "2: You are willing to defend your assessment, but it is quite likely that you did not understand the central parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
-                                    "1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked."
+                                   { 'value': 5, 'description': "5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully." },
+                                   { 'value': 4, 'description': "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work." },
+                                   { 'value': 3, 'description': "3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked." },
+                                   { 'value': 2, 'description': "2: You are willing to defend your assessment, but it is quite likely that you did not understand the central parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked." },
+                                   { 'value': 1, 'description': "1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked." }
                                 ],
                                 "input": "radio"
                             }
@@ -2424,18 +2424,18 @@ ICML 2023 Conference Program Chairs'''
                         "description": "Please provide an \"overall score\" for this submission.",
                         "value": {
                             "param": {
-                                "type": "string",
+                                "type": 'integer',
                                 "enum": [
-                                    "10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.",
-                                    "9: Very Strong Accept: Technically flawless paper with groundbreaking impact on at least one area of AI/ML and excellent impact on multiple areas of AI/ML, with flawless evaluation, resources, and reproducibility, and no unaddressed ethical considerations.",
-                                    "8: Strong Accept: Technically strong paper, with novel ideas, excellent impact on at least one area, or high-to-excellent impact on multiple areas, with excellent evaluation, resources, and reproducibility, and no unaddressed ethical considerations.",
-                                    "7: Accept: Technically solid paper, with high impact on at least one sub-area, or moderate-to-high impact on more than one areas, with good-to-excellent evaluation, resources, reproducibility, and no unaddressed ethical considerations.",
-                                    "6: Weak Accept: Technically solid, moderate-to-high impact paper, with no major concerns with respect to evaluation, resources, reproducibility, ethical considerations.",
-                                    "5: Borderline accept: Technically solid paper where reasons to accept outweigh reasons to reject, e.g., limited evaluation. Please use sparingly.",
-                                    "4: Borderline reject: Technically solid paper where reasons to reject, e.g., limited evaluation, outweigh reasons to accept, e.g., good evaluation. Please use sparingly.",
-                                    "3: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations.",
-                                    "2: Strong Reject: For instance, a paper with major technical flaws, and/or poor evaluation, limited impact, poor reproducibility and mostly unaddressed ethical considerations.",
-                                    "1: Very Strong Reject: For instance, a paper with trivial results or unaddressed ethical considerations"
+                                    { 'value': 10, 'description': "10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations." },
+                                    { 'value': 9, 'description': "9: Very Strong Accept: Technically flawless paper with groundbreaking impact on at least one area of AI/ML and excellent impact on multiple areas of AI/ML, with flawless evaluation, resources, and reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 8, 'description': "8: Strong Accept: Technically strong paper, with novel ideas, excellent impact on at least one area, or high-to-excellent impact on multiple areas, with excellent evaluation, resources, and reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 7, 'description': "7: Accept: Technically solid paper, with high impact on at least one sub-area, or moderate-to-high impact on more than one areas, with good-to-excellent evaluation, resources, reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 6, 'description': "6: Weak Accept: Technically solid, moderate-to-high impact paper, with no major concerns with respect to evaluation, resources, reproducibility, ethical considerations." },
+                                    { 'value': 5, 'description': "5: Borderline accept: Technically solid paper where reasons to accept outweigh reasons to reject, e.g., limited evaluation. Please use sparingly." },
+                                    { 'value': 4, 'description': "4: Borderline reject: Technically solid paper where reasons to reject, e.g., limited evaluation, outweigh reasons to accept, e.g., good evaluation. Please use sparingly." },
+                                    { 'value': 3, 'description': "3: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations." },
+                                    { 'value': 2, 'description': "2: Strong Reject: For instance, a paper with major technical flaws, and/or poor evaluation, limited impact, poor reproducibility and mostly unaddressed ethical considerations." },
+                                    { 'value': 1, 'description': "1: Very Strong Reject: For instance, a paper with trivial results or unaddressed ethical considerations" }
                                 ],
                                 "input": "radio"
 
@@ -2447,13 +2447,13 @@ ICML 2023 Conference Program Chairs'''
                         "description": "Please provide a \"confidence score\" for your assessment of this submission to indicate how confident you are in your evaluation.",
                         "value": {
                             "param": {
-                                "type": "string",
+                                "type": 'integer',
                                 "enum": [
-                                    "5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.",
-                                    "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work.",
-                                    "3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
-                                    "2: You are willing to defend your assessment, but it is quite likely that you did not understand the central parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
-                                    "1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked."
+                                   { 'value': 5, 'description': "5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully." },
+                                   { 'value': 4, 'description': "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work." },
+                                   { 'value': 3, 'description': "3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked." },
+                                   { 'value': 2, 'description': "2: You are willing to defend your assessment, but it is quite likely that you did not understand the central parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked." },
+                                   { 'value': 1, 'description': "1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked." }
                                 ],
                                 "input": "radio"
                             }
@@ -2512,8 +2512,8 @@ ICML 2023 Conference Program Chairs'''
                     'soundness': { 'value': '3 good'},
                     'presentation': { 'value': '3 good'},
                     'contribution': { 'value': '3 good'},
-                    'rating': { 'value': '10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.'},
-                    'confidence': { 'value': '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.'},
+                    'rating': { 'value': 10 },
+                    'confidence': { 'value': 5 },
                     'code_of_conduct': { 'value': 'Yes'},
                 }
             )
@@ -2526,6 +2526,20 @@ ICML 2023 Conference Program Chairs'''
 
         messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your official review has been received on your assigned Paper number: 1, Paper title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
+
+        ## check how the description is rendered
+        note = review_edit['note']
+        review_id = note['id']
+        request_page(selenium, "http://localhost:3030/forum?id=" + review_edit['note']['forum'], openreview_client.token, by=By.ID, wait_for_element='forum-replies')
+        note_panel = selenium.find_element(By.XPATH, f'//div[@data-id="{review_id}"]')
+        fields = note_panel.find_elements(By.CLASS_NAME, 'note-content-field')
+        assert len(fields) == 11
+        assert fields[8].text == 'Rating:'
+        assert fields[9].text == 'Confidence:'        
+        values = note_panel.find_elements(By.CLASS_NAME, 'note-content-value')
+        assert len(values) == 11
+        assert values[8].text == '10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.'
+        assert values[9].text == '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.'        
 
         review_edit = reviewer_client.post_note_edit(
             invitation='ICML.cc/2023/Conference/Submission1/-/Official_Review',
@@ -2541,8 +2555,8 @@ ICML 2023 Conference Program Chairs'''
                     'soundness': { 'value': '3 good'},
                     'presentation': { 'value': '3 good'},
                     'contribution': { 'value': '3 good'},
-                    'rating': { 'value': '10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.'},
-                    'confidence': { 'value': '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.'},
+                    'rating': { 'value': 10 },
+                    'confidence': { 'value': 5 },
                     'code_of_conduct': { 'value': 'Yes'},
                 }
             )
@@ -2576,8 +2590,8 @@ ICML 2023 Conference Program Chairs'''
                     'soundness': { 'value': '1 poor'},
                     'presentation': { 'value': '1 poor'},
                     'contribution': { 'value': '1 poor'},
-                    'rating': { 'value': '1: Very Strong Reject: For instance, a paper with trivial results or unaddressed ethical considerations'},
-                    'confidence': { 'value': '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.'},
+                    'rating': { 'value': 1 },
+                    'confidence': { 'value': 5 },
                     'code_of_conduct': { 'value': 'Yes'},
                 }
             )
@@ -2601,8 +2615,8 @@ ICML 2023 Conference Program Chairs'''
                     'soundness': { 'value': '3 good'},
                     'presentation': { 'value': '3 good'},
                     'contribution': { 'value': '3 good'},
-                    'rating': { 'value': '10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.'},
-                    'confidence': { 'value': '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.'},
+                    'rating': { 'value': 10 },
+                    'confidence': { 'value': 5 },
                     'code_of_conduct': { 'value': 'Yes'},
                 }
             )
@@ -2627,13 +2641,13 @@ ICML 2023 Conference Program Chairs'''
                         'soundness': { 'value': '1 poor'},
                         'presentation': { 'value': '1 poor'},
                         'contribution': { 'value': '1 poor'},
-                        'rating': { 'value': '10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.'},
-                        'confidence': { 'value': '1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked.'},
+                        'rating': { 'value': 10 },
+                        'confidence': { 'value': 1 },
                         'code_of_conduct': { 'value': 'Yes'},
                     }
                 )
             )
-        assert openReviewError.value.args[0].get('name') == 'ValidationError'
+        assert openReviewError.value.args[0].get('name') == 'ItemsError'
 
         ## Extend deadline
         start_date = now - datetime.timedelta(days=20)
@@ -2784,18 +2798,18 @@ ICML 2023 Conference Program Chairs'''
                         "description": "Please provide an \"overall score\" for this submission.",
                         "value": {
                             "param": {
-                                "type": "string",
+                                "type": 'integer',
                                 "enum": [
-                                    "10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.",
-                                    "9: Very Strong Accept: Technically flawless paper with groundbreaking impact on at least one area of AI/ML and excellent impact on multiple areas of AI/ML, with flawless evaluation, resources, and reproducibility, and no unaddressed ethical considerations.",
-                                    "8: Strong Accept: Technically strong paper, with novel ideas, excellent impact on at least one area, or high-to-excellent impact on multiple areas, with excellent evaluation, resources, and reproducibility, and no unaddressed ethical considerations.",
-                                    "7: Accept: Technically solid paper, with high impact on at least one sub-area, or moderate-to-high impact on more than one areas, with good-to-excellent evaluation, resources, reproducibility, and no unaddressed ethical considerations.",
-                                    "6: Weak Accept: Technically solid, moderate-to-high impact paper, with no major concerns with respect to evaluation, resources, reproducibility, ethical considerations.",
-                                    "5: Borderline accept: Technically solid paper where reasons to accept outweigh reasons to reject, e.g., limited evaluation. Please use sparingly.",
-                                    "4: Borderline reject: Technically solid paper where reasons to reject, e.g., limited evaluation, outweigh reasons to accept, e.g., good evaluation. Please use sparingly.",
-                                    "3: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations.",
-                                    "2: Strong Reject: For instance, a paper with major technical flaws, and/or poor evaluation, limited impact, poor reproducibility and mostly unaddressed ethical considerations.",
-                                    "1: Very Strong Reject: For instance, a paper with trivial results or unaddressed ethical considerations"
+                                    { 'value': 10, 'description': "10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations." },
+                                    { 'value': 9, 'description': "9: Very Strong Accept: Technically flawless paper with groundbreaking impact on at least one area of AI/ML and excellent impact on multiple areas of AI/ML, with flawless evaluation, resources, and reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 8, 'description': "8: Strong Accept: Technically strong paper, with novel ideas, excellent impact on at least one area, or high-to-excellent impact on multiple areas, with excellent evaluation, resources, and reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 7, 'description': "7: Accept: Technically solid paper, with high impact on at least one sub-area, or moderate-to-high impact on more than one areas, with good-to-excellent evaluation, resources, reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 6, 'description': "6: Weak Accept: Technically solid, moderate-to-high impact paper, with no major concerns with respect to evaluation, resources, reproducibility, ethical considerations." },
+                                    { 'value': 5, 'description': "5: Borderline accept: Technically solid paper where reasons to accept outweigh reasons to reject, e.g., limited evaluation. Please use sparingly." },
+                                    { 'value': 4, 'description': "4: Borderline reject: Technically solid paper where reasons to reject, e.g., limited evaluation, outweigh reasons to accept, e.g., good evaluation. Please use sparingly." },
+                                    { 'value': 3, 'description': "3: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations." },
+                                    { 'value': 2, 'description': "2: Strong Reject: For instance, a paper with major technical flaws, and/or poor evaluation, limited impact, poor reproducibility and mostly unaddressed ethical considerations." },
+                                    { 'value': 1, 'description': "1: Very Strong Reject: For instance, a paper with trivial results or unaddressed ethical considerations" }
                                 ],
                                 "input": "radio"
 
@@ -2807,13 +2821,13 @@ ICML 2023 Conference Program Chairs'''
                         "description": "Please provide a \"confidence score\" for your assessment of this submission to indicate how confident you are in your evaluation.",
                         "value": {
                             "param": {
-                                "type": "string",
+                                "type": 'integer',
                                 "enum": [
-                                    "5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.",
-                                    "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work.",
-                                    "3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
-                                    "2: You are willing to defend your assessment, but it is quite likely that you did not understand the central parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
-                                    "1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked."
+                                   { 'value': 5, 'description': "5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully." },
+                                   { 'value': 4, 'description': "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work." },
+                                   { 'value': 3, 'description': "3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked." },
+                                   { 'value': 2, 'description': "2: You are willing to defend your assessment, but it is quite likely that you did not understand the central parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked." },
+                                   { 'value': 1, 'description': "1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked." }
                                 ],
                                 "input": "radio"
                             }
@@ -3051,8 +3065,8 @@ ICML 2023 Conference Program Chairs'''
                     'soundness': { 'value': '3 good'},
                     'presentation': { 'value': '3 good'},
                     'contribution': { 'value': '3 good'},
-                    'rating': { 'value': '10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.'},
-                    'confidence': { 'value': '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.'},
+                    'rating': { 'value': 10 },
+                    'confidence': { 'value': 5 },
                     'code_of_conduct': { 'value': 'Yes'},
                 }
             )
@@ -3457,8 +3471,32 @@ ICML 2023 Conference Program Chairs'''
         assert invitation
         assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers' in invitation.invitees
         assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers' in invitation.edit['note']['readers']['param']['enum']
-        assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewer_.*' in invitation.edit['signatures']['param']['regex']
-        assert 'ICML.cc/2023/Conference/Ethics_Chairs' in invitation.edit['signatures']['param']['regex']
+        assert invitation.edit['signatures']['param']['items'] == [
+            {
+            "value": "ICML.cc/2023/Conference/Program_Chairs",
+            "optional": True
+            },
+            {
+            "value": "ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission1/Area_Chair_.*",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission1/Reviewer_.*",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission1/Ethics_Reviewer_.*",
+            "optional": True
+            },
+            {
+            "value": "ICML.cc/2023/Conference/Ethics_Chairs",
+            "optional": True
+            }
+        ]
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Official_Comment')
         assert invitation
         assert 'ICML.cc/2023/Conference/Submission2/Ethics_Reviewers' not in invitation.edit['note']['readers']['param']['enum']
@@ -3468,9 +3506,34 @@ ICML 2023 Conference Program Chairs'''
         assert invitation        
         assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers' in invitation.invitees
         assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers' in invitation.edit['note']['readers']['param']['enum']
-        assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewer_.*' in invitation.edit['signatures']['param']['regex']
-        assert 'ICML.cc/2023/Conference/Ethics_Chairs' in invitation.edit['signatures']['param']['regex']
-
+        
+        assert invitation.edit['signatures']['param']['items'] == [
+            {
+            "value": "ICML.cc/2023/Conference/Program_Chairs",
+            "optional": True
+            },
+            {
+            "value": "ICML.cc/2023/Conference/Submission5/Senior_Area_Chairs",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission5/Area_Chair_.*",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission5/Reviewer_.*",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission5/Ethics_Reviewer_.*",
+            "optional": True
+            },
+            {
+            "value": "ICML.cc/2023/Conference/Ethics_Chairs",
+            "optional": True
+            }
+        ]
+        
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
         # unflag a paper
         note = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', number=[5])[0]
@@ -3492,8 +3555,32 @@ ICML 2023 Conference Program Chairs'''
         assert invitation        
         assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers' not in invitation.invitees
         assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers' in invitation.edit['note']['readers']['param']['enum']
-        assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewer_.*' in invitation.edit['signatures']['param']['regex']
-
+        assert invitation.edit['signatures']['param']['items'] == [
+            {
+            "value": "ICML.cc/2023/Conference/Program_Chairs",
+            "optional": True
+            },
+            {
+            "value": "ICML.cc/2023/Conference/Submission5/Senior_Area_Chairs",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission5/Area_Chair_.*",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission5/Reviewer_.*",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission5/Ethics_Reviewer_.*",
+            "optional": True
+            },
+            {
+            "value": "ICML.cc/2023/Conference/Ethics_Chairs",
+            "optional": True
+            }
+        ]
         submissions = openreview_client.get_notes(content= { 'venueid': 'ICML.cc/2023/Conference/Submission'}, sort='number:asc')
         assert submissions and len(submissions) == 100
         assert 'flagged_for_ethics_review' in submissions[4].content and not submissions[4].content['flagged_for_ethics_review']['value']
@@ -3747,18 +3834,18 @@ ICML 2023 Conference Program Chairs'''
                         "description": "Please provide an \"overall score\" for this submission.",
                         "value": {
                             "param": {
-                                "type": "string",
+                                "type": 'integer',
                                 "enum": [
-                                    "10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.",
-                                    "9: Very Strong Accept: Technically flawless paper with groundbreaking impact on at least one area of AI/ML and excellent impact on multiple areas of AI/ML, with flawless evaluation, resources, and reproducibility, and no unaddressed ethical considerations.",
-                                    "8: Strong Accept: Technically strong paper, with novel ideas, excellent impact on at least one area, or high-to-excellent impact on multiple areas, with excellent evaluation, resources, and reproducibility, and no unaddressed ethical considerations.",
-                                    "7: Accept: Technically solid paper, with high impact on at least one sub-area, or moderate-to-high impact on more than one areas, with good-to-excellent evaluation, resources, reproducibility, and no unaddressed ethical considerations.",
-                                    "6: Weak Accept: Technically solid, moderate-to-high impact paper, with no major concerns with respect to evaluation, resources, reproducibility, ethical considerations.",
-                                    "5: Borderline accept: Technically solid paper where reasons to accept outweigh reasons to reject, e.g., limited evaluation. Please use sparingly.",
-                                    "4: Borderline reject: Technically solid paper where reasons to reject, e.g., limited evaluation, outweigh reasons to accept, e.g., good evaluation. Please use sparingly.",
-                                    "3: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations.",
-                                    "2: Strong Reject: For instance, a paper with major technical flaws, and/or poor evaluation, limited impact, poor reproducibility and mostly unaddressed ethical considerations.",
-                                    "1: Very Strong Reject: For instance, a paper with trivial results or unaddressed ethical considerations"
+                                    { 'value': 10, 'description': "10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations." },
+                                    { 'value': 9, 'description': "9: Very Strong Accept: Technically flawless paper with groundbreaking impact on at least one area of AI/ML and excellent impact on multiple areas of AI/ML, with flawless evaluation, resources, and reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 8, 'description': "8: Strong Accept: Technically strong paper, with novel ideas, excellent impact on at least one area, or high-to-excellent impact on multiple areas, with excellent evaluation, resources, and reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 7, 'description': "7: Accept: Technically solid paper, with high impact on at least one sub-area, or moderate-to-high impact on more than one areas, with good-to-excellent evaluation, resources, reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 6, 'description': "6: Weak Accept: Technically solid, moderate-to-high impact paper, with no major concerns with respect to evaluation, resources, reproducibility, ethical considerations." },
+                                    { 'value': 5, 'description': "5: Borderline accept: Technically solid paper where reasons to accept outweigh reasons to reject, e.g., limited evaluation. Please use sparingly." },
+                                    { 'value': 4, 'description': "4: Borderline reject: Technically solid paper where reasons to reject, e.g., limited evaluation, outweigh reasons to accept, e.g., good evaluation. Please use sparingly." },
+                                    { 'value': 3, 'description': "3: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations." },
+                                    { 'value': 2, 'description': "2: Strong Reject: For instance, a paper with major technical flaws, and/or poor evaluation, limited impact, poor reproducibility and mostly unaddressed ethical considerations." },
+                                    { 'value': 1, 'description': "1: Very Strong Reject: For instance, a paper with trivial results or unaddressed ethical considerations" }
                                 ],
                                 "input": "radio"
 
@@ -3770,13 +3857,13 @@ ICML 2023 Conference Program Chairs'''
                         "description": "Please provide a \"confidence score\" for your assessment of this submission to indicate how confident you are in your evaluation.",
                         "value": {
                             "param": {
-                                "type": "string",
+                                "type": 'integer',
                                 "enum": [
-                                    "5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.",
-                                    "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work.",
-                                    "3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
-                                    "2: You are willing to defend your assessment, but it is quite likely that you did not understand the central parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
-                                    "1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked."
+                                   { 'value': 5, 'description': "5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully." },
+                                   { 'value': 4, 'description': "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work." },
+                                   { 'value': 3, 'description': "3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked." },
+                                   { 'value': 2, 'description': "2: You are willing to defend your assessment, but it is quite likely that you did not understand the central parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked." },
+                                   { 'value': 1, 'description': "1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked." }
                                 ],
                                 "input": "radio"
                             }
@@ -4070,7 +4157,8 @@ ICML 2023 Conference Program Chairs'''
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -4308,7 +4396,8 @@ ICML 2023 Conference Program Chairs'''
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -4373,7 +4462,8 @@ ICML 2023 Conference Program Chairs'''
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -4422,7 +4512,8 @@ ICML 2023 Conference Program Chairs'''
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
