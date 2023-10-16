@@ -137,7 +137,6 @@ class InvitationBuilder(object):
                 'signatures': { 'param': { 'regex': f'~.*|{self.venue.get_program_chairs_id()}' } },
                 'readers': edit_readers,
                 'writers': [venue_id, '${2/note/content/authorids/value}'],
-                'license': submission_license,
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
@@ -162,12 +161,15 @@ class InvitationBuilder(object):
                     'signatures': [ '${3/signatures}' ],
                     'readers': note_readers,
                     'writers': [venue_id, '${2/content/authorids/value}'],
-                    'license': submission_license,
                     'content': content
                 }
             },
             process=self.get_process_content('process/submission_process.py')
         )
+
+        if submission_license:
+            submission_invitation.edit['license'] = submission_license
+            submission_invitation.edit['note']['license'] = submission_license
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=False)
 
