@@ -648,6 +648,43 @@ class TestVenueRequest():
         assert '0 users' in last_comment.content['invited']
         assert 'No recruitment invitation was sent to the users listed under \'Already Invited\' because they have already been invited.' in last_comment.content['comment']
 
+        ## Test invitee details with comma only and empty line
+        reviewer_details = ''',\nreviewer_candidate3_v2@mail.com, Reviewer Three\n\n'''
+        recruitment_note = test_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'Reviewers',
+                'invitee_reduced_load': ['1', '2', '3'],
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert recruitment_note
+
+        helpers.await_queue()
+
+        # No error in posting note
+        process_logs = client.get_process_logs(id=recruitment_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[0]['invitation'] == '{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
+
+        # Emails get sent correctly
+        messages = client.get_messages(to='reviewer_candidate3_v2@mail.com')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
+        assert messages[0]['content']['text'].startswith('Dear Reviewer Three,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
+
+        last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
+        assert '1 users' in last_comment.content['invited']
+
     def test_venue_recruitment_tilde_IDs(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Reviewer Recruitment
@@ -811,7 +848,7 @@ class TestVenueRequest():
         remind_recruitment_status_invitation = '{}/-/Request{}/Remind_Recruitment_Status'.format(venue['support_group_id'],
                                                                                    venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=remind_recruitment_status_invitation, sort='tmdate')[0]
-        assert '3 users' in last_comment.content['reminded']
+        assert '4 users' in last_comment.content['reminded']
 
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Remind Recruitment Status' not in last_message['content']['text']
@@ -2827,6 +2864,22 @@ Best,
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for accepted submissions only',
                 'submission_author_edition': 'Allow reorder of existing authors only',
+                'submission_revision_additional_options': {
+                    "submission_type": {
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "Regular Long Paper",
+                                    "Regular Short Paper"
+                                ],
+                                "input": "select"
+                            }
+                        },
+                        "description": "Please enter the category under which the submission should be reviewed. This cannot be changed after the abstract submission deadline.",
+                        "order": 20
+                    }
+                },
                 'submission_revision_remove_options': ['keywords']
             },
             forum=venue['request_form_note'].forum,
@@ -2884,7 +2937,10 @@ Best,
         assert submissions[2].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
         assert submissions[2].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
 
-        assert openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission1/-/Camera_Ready_Revision')
+        invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission1/-/Camera_Ready_Revision')
+        assert invitation
+        assert 'submission_type' in invitation.edit['note']['content']
+        assert 20 == invitation.edit['note']['content']['submission_type']['order']
         assert not openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission2/-/Camera_Ready_Revision')
         assert not openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission3/-/Camera_Ready_Revision')
 

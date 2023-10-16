@@ -271,9 +271,7 @@ class SubmissionStage(object):
                 else:
                     print('Field {} not found in content: {}'.format(field, content))
 
-            for order, key in enumerate(self.additional_fields, start=10):
-                value = self.additional_fields[key]
-                value['order'] = order
+            for key, value in self.additional_fields.items():
                 content[key] = value
 
             if self.second_due_date and 'pdf' in content:
@@ -482,9 +480,7 @@ class SubmissionRevisionStage():
             else:
                 print('Field {} not found in content: {}'.format(field, content))
 
-        for order, key in enumerate(self.additional_fields, start=10):
-            value = self.additional_fields[key]
-            value['order'] = order
+        for key, value in self.additional_fields.items():
             content[key] = value
 
         if self.allow_author_reorder:
@@ -625,9 +621,7 @@ class ReviewStage(object):
             else:
                 print('Field {} not found in content: {}'.format(field, content))
 
-        for order, key in enumerate(self.additional_fields, start=10):
-            value = self.additional_fields[key]
-            value['order'] = order
+        for key, value in self.additional_fields.items():
             content[key] = value
 
         if conference:
@@ -761,9 +755,7 @@ class EthicsReviewStage(object):
             else:
                 print('Field {} not found in content: {}'.format(field, content))
         
-        for order, key in enumerate(self.additional_fields, start=10):
-            value = self.additional_fields[key]
-            value['order'] = order
+        for key, value in self.additional_fields.items():
             content[key] = value
 
         if conference:
@@ -846,9 +838,7 @@ class ReviewRebuttalStage(object):
             else:
                 print('Field {} not found in content: {}'.format(field, content))
 
-        for order, key in enumerate(self.additional_fields, start=10):
-            value = self.additional_fields[key]
-            value['order'] = order
+        for key, value in self.additional_fields.items():
             content[key] = value
 
         if conference:
@@ -1143,9 +1133,7 @@ class MetaReviewStage(object):
             else:
                 print('Field {} not found in content: {}'.format(field, content))
 
-        for order, key in enumerate(self.additional_fields, start=10):
-            value = self.additional_fields[key]
-            value['order'] = order
+        for key, value in self.additional_fields.items():
             content[key] = value
 
         if conference:
@@ -1226,9 +1214,7 @@ class DecisionStage(object):
             else:
                 print('Field {} not found in content: {}'.format(field, content))
 
-        for order, key in enumerate(self.additional_fields, start=10):
-            value = self.additional_fields[key]
-            value['order'] = order
+        for key, value in self.additional_fields.items():
             content[key] = value
 
         if conference:
@@ -1290,9 +1276,7 @@ class RegistrationStage(object):
             else:
                 print('Field {} not found in content: {}'.format(field, content))
 
-        for order, key in enumerate(self.additional_fields, start=10):
-            value = self.additional_fields[key]
-            value['order'] = order
+        for key, value in self.additional_fields.items():
             content[key] = value
 
         if conference:
