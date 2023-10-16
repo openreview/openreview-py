@@ -2213,7 +2213,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': { 
                         'items': [
                             { 'value': editors_in_chief_id, 'optional': True },
-                            { 'value': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True }
+                            { 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True }
                         ]
                     }
                 },
@@ -3463,7 +3463,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': { 
                         'items': [
                             { 'prefix': self.journal.get_reviewers_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True },
-                            { 'value': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True } 
+                            { 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True } 
                         ]
                     }
                 },
@@ -3695,7 +3695,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': { 
                         'items': [
                             { 'prefix': self.journal.get_reviewers_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True },
-                            { 'value': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True } 
+                            { 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True } 
                         ]
                     }
                 },
@@ -4392,7 +4392,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': { 
                         'items': [ 
                             { 'value': editors_in_chief_id, 'optional': True },
-                            { 'value': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True },
+                            { 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True },
                             { 'prefix': self.journal.get_reviewers_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True }, 
                             { 'value': self.journal.get_authors_id(number='${7/content/noteNumber/value}'), 'optional': True } ]
                     }
@@ -4472,7 +4472,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': { 
                         'items': [
                             { 'value': editors_in_chief_id, 'optional': True },
-                            { 'value': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True },
+                            { 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True },
                         ] 
                     }
                 },
