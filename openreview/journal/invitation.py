@@ -469,6 +469,9 @@ class InvitationBuilder(object):
         )
         self.save_invitation(invitation)
 
+        if self.journal.should_skip_reviewer_responsibility_acknowledgement():
+            return        
+
         forum_note_id = self.journal.get_acknowledgement_responsibility_form()
         if not forum_note_id:
             forum_edit = self.client.post_note_edit(invitation=self.journal.get_form_id(),
@@ -1011,6 +1014,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'order': 6                
             }
 
+        if self.journal.get_submission_additional_fields():
+            for key, value in self.journal.get_submission_additional_fields().items():
+                invitation.edit['note']['content'][key] = value             
+
+        print(invitation.edit['note']['content'])
         self.save_invitation(invitation)
 
     def set_ae_assignment(self, assignment_delay):
@@ -1869,7 +1877,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}')],
                 'signatures': {
                     'param': {
-                        'regex': venue_id + '|' + editor_in_chief_id + '|' + self.journal.get_action_editors_id(number='.*')
+                        'regex': venue_id + '|' + editor_in_chief_id + '|' + self.journal.get_action_editors_id(number='.*', anon=True)
                     }
                 },
                 'head': {
@@ -2205,7 +2213,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': { 
                         'items': [
                             { 'value': editors_in_chief_id, 'optional': True },
-                            { 'value': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), 'optional': True }
+                            { 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True }
                         ]
                     }
                 },
@@ -3455,7 +3463,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': { 
                         'items': [
                             { 'prefix': self.journal.get_reviewers_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True },
-                            { 'value': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), 'optional': True } 
+                            { 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True } 
                         ]
                     }
                 },
@@ -3555,6 +3563,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 }
             }
         }
+
+        if self.journal.get_review_additional_fields():
+            for key, value in self.journal.get_review_additional_fields().items():
+                invitation['edit']['note']['content'][key] = value         
 
         self.save_super_invitation(self.journal.get_review_id(), invitation_content, edit_content, invitation)
 
@@ -3683,7 +3695,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': { 
                         'items': [
                             { 'prefix': self.journal.get_reviewers_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True },
-                            { 'value': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), 'optional': True } 
+                            { 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True } 
                         ]
                     }
                 },
@@ -3781,7 +3793,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'input': 'checkbox'
                     }
                 }
-            }        
+            }
+
+        if self.journal.get_official_recommendation_additional_fields():
+            for key, value in self.journal.get_official_recommendation_additional_fields().items():
+                invitation['edit']['note']['content'][key] = value                       
 
         self.save_super_invitation(self.journal.get_reviewer_recommendation_id(), invitation_content, edit_content, invitation)
 
@@ -3974,14 +3990,18 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'preprocess': self.preprocess_script,
             'dateprocesses': [self.ae_reminder_process],
             'edit': {
-                'signatures': [ self.journal.get_action_editors_id(number='${4/content/noteNumber/value}') ],
+                'signatures': { 
+                    'param': { 
+                        'items': [{ 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True) }] 
+                    }
+                },
                 'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}') ],
                 'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
                 'writers': [ venue_id ],
                 'note': {
                     'forum': '${4/content/noteId/value}',
                     'replyto': '${4/content/replytoId/value}',
-                    'signatures': [ self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') ],
+                    'signatures': ['${3/signatures}'],
                     'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${5/content/soliciter/value}' ],
                     'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                     'writers': [ venue_id ],
@@ -4372,7 +4392,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': { 
                         'items': [ 
                             { 'value': editors_in_chief_id, 'optional': True },
-                            { 'value': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), 'optional': True },
+                            { 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True },
                             { 'prefix': self.journal.get_reviewers_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True }, 
                             { 'value': self.journal.get_authors_id(number='${7/content/noteNumber/value}'), 'optional': True } ]
                     }
@@ -4452,7 +4472,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'param': { 
                         'items': [
                             { 'value': editors_in_chief_id, 'optional': True },
-                            { 'value': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), 'optional': True },
+                            { 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True },
                         ] 
                     }
                 },
@@ -4632,7 +4652,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'maxReplies': 1,
             'minReplies': 1,
             'edit': {
-                'signatures': [self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                'signatures': { 
+                    'param': { 
+                        'items': [{ 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True) }] 
+                    }
+                },
                 'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                 'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
                 'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
@@ -4652,7 +4676,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             'deletable': True
                         }
                     },
-                    'signatures': [self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
+                    'signatures': ['${3/signatures}'],
                     'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') ],
                     'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                     'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
@@ -4744,6 +4768,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 }
             }
+
+        if self.journal.get_decision_additional_fields():
+            for key, value in self.journal.get_decision_additional_fields().items():
+                invitation['edit']['note']['content'][key] = value             
 
         self.save_super_invitation(self.journal.get_ae_decision_id(), invitation_content, edit_content, invitation)
 
@@ -4978,7 +5006,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'signatures': [editors_in_chief_id],
             'maxReplies': 1,
             'edit': {
-                    'signatures': [self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                    'signatures': { 
+                        'param': { 
+                            'items': [{ 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True) }] 
+                        }
+                    },
                     'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                     'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
                     'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
@@ -4991,7 +5023,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         },            
                         'forum': '${4/content/noteId/value}',
                         'replyto': '${4/content/replytoId/value}',
-                        'signatures': [self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
+                        'signatures': ['${3/signatures}'],
                         'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') ],
                         'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                         'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
@@ -5308,6 +5340,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'process': self.process_script
         }
 
+        if self.journal.get_submission_additional_fields():
+            for key, value in self.journal.get_submission_additional_fields().items():
+                invitation['edit']['note']['content'][key] = value         
+
         self.save_super_invitation(self.journal.get_camera_ready_revision_id(), invitation_content, edit_content, invitation)
 
     def set_note_camera_ready_revision_invitation(self, note, duedate):
@@ -5363,11 +5399,15 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'writers': [venue_id],
             'signatures': [venue_id],
             'edit': {
-                'signatures': [self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                'signatures': { 
+                    'param': { 
+                        'items': [{ 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True) }] 
+                    }
+                },
                 'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                 'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                 'note': {
-                    'signatures': [self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
+                    'signatures': ['${3/signatures}'],
                     'forum': '${4/content/noteId/value}',
                     'replyto': '${4/content/noteId/value}',
                     'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
@@ -5611,7 +5651,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         "input": "select"
                     }
                 }
-            }            
+            }
+
+        if self.journal.get_submission_additional_fields():
+            for key, value in self.journal.get_submission_additional_fields().items():
+                invitation['edit']['note']['content'][key] = value                        
 
         self.save_super_invitation(self.journal.get_eic_revision_id(), invitation_content, edit_content, invitation)
 
