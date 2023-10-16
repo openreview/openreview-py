@@ -616,9 +616,13 @@ url={https://openreview.net/forum?id='''
                             ],
                         'edit': {
                             'signatures': {
-                                'param': {
-                                    'regex': 'EMNLP/2023/Conference/Submission${5/content/noteNumber/value}/Senior_Area_Chairs|EMNLP/2023/Conference/Submission${5/content/noteNumber/value}/Area_Chair_.*|EMNLP/2023/Conference/Program_Chairs'
-                                }
+                                'param': { 
+                                    'items': [
+                                        { 'value': 'EMNLP/2023/Conference/Submission${7/content/noteNumber/value}/Senior_Area_Chairs', 'optional': True }, 
+                                        { 'prefix': 'EMNLP/2023/Conference/Submission${7/content/noteNumber/value}/Area_Chair_.*', 'optional': True }, 
+                                        { 'value': 'EMNLP/2023/Conference/Program_Chairs', 'optional': True }
+                                    ] 
+                                }                                
                             },
                             'note': {
                                 'content': {
@@ -638,7 +642,11 @@ url={https://openreview.net/forum?id='''
             'EMNLP/2023/Conference/Submission1/Senior_Area_Chairs',
             'EMNLP/2023/Conference/Submission1/Area_Chairs'
         ]
-        assert invitation.edit['signatures']['param']['regex'] == 'EMNLP/2023/Conference/Submission1/Senior_Area_Chairs|EMNLP/2023/Conference/Submission1/Area_Chair_.*|EMNLP/2023/Conference/Program_Chairs'
+        assert invitation.edit['signatures']['param']['items'] == [
+            { 'value': 'EMNLP/2023/Conference/Submission1/Senior_Area_Chairs', 'optional': True }, 
+            { 'prefix': 'EMNLP/2023/Conference/Submission1/Area_Chair_.*', 'optional': True }, 
+            { 'value': 'EMNLP/2023/Conference/Program_Chairs', 'optional': True }
+        ]
 
         pc_client=openreview.Client(username='pc@emnlp.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@emnlp.org', password=helpers.strong_password)

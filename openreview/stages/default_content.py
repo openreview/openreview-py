@@ -38,7 +38,8 @@ comment_v2 = {
             'param': {
                 'type': 'string',
                 'maxLength': 500,
-                'optional': True
+                'optional': True,
+                'deletable': True
             }
         }
     },
@@ -131,6 +132,7 @@ desk_reject_reversion_v2 = {
                 'maxLength': 200000,
                 'input': 'textarea',
                 'optional': True,
+                'deletable': True,
                 'markdown': True
             }
         }
@@ -221,19 +223,20 @@ review_v2 = {
         'order': 3,
         'value': {
             'param': {
-                'type': 'string',
+                'type': 'integer',
                 'enum': [
-                    '10: Top 5% of accepted papers, seminal paper',
-                    '9: Top 15% of accepted papers, strong accept',
-                    '8: Top 50% of accepted papers, clear accept',
-                    '7: Good paper, accept',
-                    '6: Marginally above acceptance threshold',
-                    '5: Marginally below acceptance threshold',
-                    '4: Ok but not good enough - rejection',
-                    '3: Clear rejection',
-                    '2: Strong rejection',
-                    '1: Trivial or wrong'
-                ]
+                    { 'value': 10, 'description': '10: Top 5% of accepted papers, seminal paper' },
+                    { 'value': 9, 'description': '9: Top 15% of accepted papers, strong accept' },
+                    { 'value': 8, 'description': '8: Top 50% of accepted papers, clear accept' },
+                    { 'value': 7, 'description': '7: Good paper, accept' },
+                    { 'value': 6, 'description': '6: Marginally above acceptance threshold' },
+                    { 'value': 5, 'description': '5: Marginally below acceptance threshold' },
+                    { 'value': 4, 'description': '4: Ok but not good enough - rejection' },
+                    { 'value': 3, 'description': '3: Clear rejection' },
+                    { 'value': 2, 'description': '2: Strong rejection' },
+                    { 'value': 1, 'description': '1: Trivial or wrong' }
+                ],
+                'input': 'radio'
             }
         }
     },
@@ -241,14 +244,15 @@ review_v2 = {
         'order': 4,
         'value': {
             'param': {
-                'type': 'string',
+                'type': 'integer',
                 'enum': [
-                    '5: The reviewer is absolutely certain that the evaluation is correct and very familiar with the relevant literature',
-                    '4: The reviewer is confident but not absolutely certain that the evaluation is correct',
-                    '3: The reviewer is fairly confident that the evaluation is correct',
-                    '2: The reviewer is willing to defend the evaluation, but it is quite likely that the reviewer did not understand central parts of the paper',
-                    '1: The reviewer\'s evaluation is an educated guess'
-                ]
+                    { 'value': 5, 'description': '5: The reviewer is absolutely certain that the evaluation is correct and very familiar with the relevant literature' },
+                    { 'value': 4, 'description': '4: The reviewer is confident but not absolutely certain that the evaluation is correct' },
+                    { 'value': 3, 'description': '3: The reviewer is fairly confident that the evaluation is correct' },
+                    { 'value': 2, 'description': '2: The reviewer is willing to defend the evaluation, but it is quite likely that the reviewer did not understand central parts of the paper' },
+                    { 'value': 1, 'description': '1: The reviewer\'s evaluation is an educated guess' }
+                ],
+                'input': 'radio'
             }
         }
     }
@@ -298,7 +302,8 @@ ethics_review_v2 = {
                 'maxLength': 200000,
                 'markdown': True,
                 'input': 'textarea',
-                'optional': True
+                'optional': True,
+                'deletable': True
             }
         }
     }
@@ -356,7 +361,8 @@ meta_review_v2 = {
                     'Accept (Oral)',
                     'Accept (Poster)',
                     'Reject'
-                ]
+                ],
+                'input': 'radio'
             }
         }
     },
@@ -477,7 +483,8 @@ submission_v2 = {
                 'fieldName': 'TL;DR',
                 'type': 'string',
                 'maxLength': 250,
-                'optional': True
+                'optional': True,
+                'deletable': True
             }
         }        
     },
@@ -590,6 +597,7 @@ recruitment_v2 = {
                 'type': 'string',
                 'maxLength': 5000,
                 'optional': True,
+                'deletable': True,
                 'input': 'textarea'
             }
         }
@@ -692,6 +700,7 @@ paper_recruitment_v2 = {
                 'type': 'string',
                 'maxLength': 5000,
                 'optional': True,
+                'deletable': True,
                 'input': 'textarea'
             }
         }
@@ -733,7 +742,8 @@ decision_v2 = {
                     'Accept (Oral)',
                     'Accept (Poster)',
                     'Reject'
-                ]
+                ],
+                'input': 'radio'
             }
         }
     },
@@ -744,7 +754,8 @@ decision_v2 = {
                 'type': 'string',
                 'markdown': True,
                 'input': 'textarea',
-                'optional': True
+                'optional': True,
+                'deletable': True
             }
         }
     }

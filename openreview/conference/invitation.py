@@ -870,7 +870,7 @@ class OfficialCommentInvitation(openreview.Invitation):
                     ]
                 },
                 'signatures': {
-                    'values-regex': comment_stage.get_signatures_regex(conference, note.number),
+                    'values-regex': '|'.join(comment_stage.get_signatures(conference, note.number)),
                     'description': 'How your identity will be displayed.'
                 }
             }
@@ -931,7 +931,7 @@ class PaperReviewInvitation(openreview.Invitation):
     def __init__(self, conference, note):
 
         review_stage = conference.review_stage
-        signature_regex = review_stage.get_signatures(conference, note.number)
+        signature_regex = '|'.join(review_stage.get_signatures(conference, note.number))
         readers = review_stage.get_readers(conference, note.number)
         nonreaders = review_stage.get_nonreaders(conference, note.number)
 
@@ -1013,7 +1013,7 @@ class PaperEthicsReviewInvitation(openreview.Invitation):
     def __init__(self, conference, note):
 
         ethics_review_stage = conference.ethics_review_stage
-        signature_regex = ethics_review_stage.get_signatures(conference, note.number)
+        signature_regex = '|'.join(ethics_review_stage.get_signatures(conference, note.number))
         readers = ethics_review_stage.get_readers(conference, note.number)
         nonreaders = ethics_review_stage.get_nonreaders(conference, note.number)
 
@@ -1370,7 +1370,7 @@ class PaperMetaReviewInvitation(openreview.Invitation):
                     'description': 'Who can edit this meta-review.'
                 },
                 'signatures': {
-                    'values-regex': meta_review_stage.get_signatures_regex(conference, note.number),
+                    'values-regex': '|'.join(meta_review_stage.get_signatures(conference, note.number)),
                     'description': 'How your identity will be displayed.'
                 }
             }
