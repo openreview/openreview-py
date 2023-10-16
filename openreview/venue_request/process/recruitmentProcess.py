@@ -35,14 +35,15 @@ def process(client, note, invitation):
         for invitee in invitee_details:
             if invitee:
                 details = [i.strip() for i in invitee.split(',') if i]
-                if len(details) == 1:
-                    email = details[0][1:] if details[0].startswith('(') else details[0]
-                    name = None
-                else:
-                    email = details[0][1:] if details[0].startswith('(') else details[0]
-                    name = details[1][:-1] if details[1].endswith(')') else details[1]
-                invitee_emails.append(email)
-                invitee_names.append(name)
+                if details:
+                    if len(details) == 1:
+                        email = details[0][1:] if details[0].startswith('(') else details[0]
+                        name = None
+                    else:
+                        email = details[0][1:] if details[0].startswith('(') else details[0]
+                        name = details[1][:-1] if details[1].endswith(')') else details[1]
+                    invitee_emails.append(email)
+                    invitee_names.append(name)
 
 
     # Fetch contact info
