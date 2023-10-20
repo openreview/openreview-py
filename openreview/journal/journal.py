@@ -685,7 +685,7 @@ class Journal(object):
                     profile = self.client.get_profile(signature)
                     signature_members.append(profile.id)
                 else:
-                    signature_members = signature_members + signature['members']
+                    signature_members = signature_members  + self.client.get_group(signature['id']).members
             for signature in reply.signatures:
                 if signature.startswith('~'):
                     profile = self.client.get_profile(signature)
