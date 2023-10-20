@@ -2278,6 +2278,9 @@ OpenReview Team
 
         helpers.await_queue_edit(openreview_client, edit_id=verification_note['id'])
 
+        ## check late invitees again
+        assert journal.get_late_invitees('TMLR/Paper1/-/Camera_Ready_Verification') == []
+
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Camera ready version accepted for your TMLR submission 1: Paper title VERSION 2')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
