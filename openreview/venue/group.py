@@ -332,10 +332,10 @@ class GroupBuilder(object):
 
         authors_accepted_id = self.venue.get_authors_accepted_id()
         authors_accepted_group = openreview.tools.get_group(self.client, authors_accepted_id)
-        if not authors_accepted_group or self.venue.use_publication_chairs and self.venue.get_publication_chairs_id() not in authors_accepted_group.readers:
+        if not authors_accepted_group:
             authors_accepted_group = self.post_group(Group(id=authors_accepted_id,
-                            readers=[venue_id, authors_accepted_id, self.venue.get_publication_chairs_id()] if self.venue.use_publication_chairs else [venue_id, authors_accepted_id],
-                            writers=[venue_id, self.venue.get_publication_chairs_id()] if self.venue.use_publication_chairs else [venue_id],
+                            readers=[venue_id, authors_accepted_id, self.venue.get_publication_chairs_id()],
+                            writers=[venue_id, self.venue.get_publication_chairs_id()],
                             signatures=[venue_id],
                             signatories=[venue_id]
                             ))
@@ -459,7 +459,7 @@ class GroupBuilder(object):
                 publication_chairs_group.web = content
                 self.post_group(publication_chairs_group)
 
-        elif publication_chairs_group.members != publication_chairs_ids:
+        elif publication_chairs_ids and publication_chairs_group.members != publication_chairs_ids:
             members_to_add = list(set(publication_chairs_ids) - set(publication_chairs_group.members))
             members_to_remove = list(set(publication_chairs_group.members) - set(publication_chairs_ids))
             if members_to_add:

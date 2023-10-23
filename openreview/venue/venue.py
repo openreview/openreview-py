@@ -69,7 +69,6 @@ class Venue(object):
         self.senior_area_chair_identity_readers = []
         self.automatic_reviewer_assignment = False
         self.decision_heading_map = {}
-        self.use_publication_chairs = False
         self.allow_gurobi_solver = False
         self.submission_license = None
 
@@ -391,8 +390,7 @@ class Venue(object):
         if self.use_ethics_chairs:
             self.group_builder.create_ethics_chairs_group()
 
-        if self.use_publication_chairs:
-            self.group_builder.create_publication_chairs_group(publication_chairs_ids)
+        self.group_builder.create_publication_chairs_group(publication_chairs_ids)
 
     def set_impersonators(self, impersonators):
         self.group_builder.set_impersonators(impersonators)
