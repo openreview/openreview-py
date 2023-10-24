@@ -727,7 +727,7 @@ Total Errors: {len(errors)}
             for field, value in submission.content.items():
                 if field in final_hide_fields:
                     content[field] = {
-                        'readers': [venue_id, self.get_authors_id(submission.number), self.get_publication_chairs_id()] if field in ['authors', 'authorids'] else [venue_id, self.get_authors_id(submission.number)]
+                        'readers': [venue_id, self.get_authors_id(submission.number), self.get_publication_chairs_id()] if field in ['authors', 'authorids'] and note_accepted else [venue_id, self.get_authors_id(submission.number)]
                     }
                 if field not in final_hide_fields and 'readers' in value:
                     content[field] = {
