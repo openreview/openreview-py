@@ -332,10 +332,10 @@ class GroupBuilder(object):
 
         authors_accepted_id = self.venue.get_authors_accepted_id()
         authors_accepted_group = openreview.tools.get_group(self.client, authors_accepted_id)
-        if not authors_accepted_group:
+        if not authors_accepted_group or self.venue.use_publication_chairs and self.venue.get_publication_chairs_id() not in authors_accepted_group.readers:
             authors_accepted_group = self.post_group(Group(id=authors_accepted_id,
-                            readers=[venue_id, authors_accepted_id, self.venue.get_publication_chairs_id()],
-                            writers=[venue_id, self.venue.get_publication_chairs_id()],
+                            readers=[venue_id, authors_accepted_id, self.venue.get_publication_chairs_id()] if self.venue.use_publication_chairs else [venue_id, authors_accepted_id],
+                            writers=[venue_id, self.venue.get_publication_chairs_id()] if self.venue.use_publication_chairs else [venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id]
                             ))

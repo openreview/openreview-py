@@ -4728,6 +4728,7 @@ url={https://openreview.net/forum?id='''
                 'Official Website URL': 'https://icml.cc',
                 'program_chair_emails': ['pc@icml.cc', 'pc3@icml.cc'],
                 'contact_email': 'pc@icml.cc',
+                'publication_chairs': 'Yes, our venue has Publication Chairs',
                 'publication_chairs_emails': ['publicationchair@icml.com'],
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': request_form.content['Submission Deadline'],

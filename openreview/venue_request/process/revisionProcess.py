@@ -201,7 +201,7 @@ def process(client, note, invitation):
                         hide_fields=forum_note.content.get('hide_fields', [])
                     )
 
-                if forum_note.content.get('api_version') == '2' and 'publication_chairs_emails' in forum_note.content and forum_note.content['publication_chairs_emails']:
+                if forum_note.content.get('api_version') == '2' and forum_note.content.get('publication_chairs', 'No') == 'Yes, our venue has Publication Chairs':
                     submission_revision_inv = client.get_invitation(f'{SUPPORT_GROUP}/-/Request{forum_note.number}/Submission_Revision_Stage')
                     if conference.get_publication_chairs_id() not in submission_revision_inv.invitees:
                         invitees = submission_revision_inv.invitees

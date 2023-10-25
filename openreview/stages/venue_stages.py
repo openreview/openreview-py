@@ -155,7 +155,7 @@ class SubmissionStage(object):
             if conference.use_ethics_reviewers:
                 submission_readers.append(conference.get_ethics_reviewers_id(number=number))
 
-        if decision and 'Accept' in decision:
+        if conference.use_publication_chairs and decision and 'Accept' in decision:
             submission_readers.append(conference.get_publication_chairs_id())
 
         submission_readers.append(conference.get_authors_id(number=number))

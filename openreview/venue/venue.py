@@ -71,6 +71,7 @@ class Venue(object):
         self.decision_heading_map = {}
         self.allow_gurobi_solver = False
         self.submission_license = None
+        self.use_publication_chairs = False
 
     def get_id(self):
         return self.venue_id
@@ -390,7 +391,8 @@ class Venue(object):
         if self.use_ethics_chairs:
             self.group_builder.create_ethics_chairs_group()
 
-        self.group_builder.create_publication_chairs_group(publication_chairs_ids)
+        if self.use_publication_chairs:
+            self.group_builder.create_publication_chairs_group(publication_chairs_ids)
 
     def set_impersonators(self, impersonators):
         self.group_builder.set_impersonators(impersonators)
@@ -726,9 +728,14 @@ Total Errors: {len(errors)}
 
             for field, value in submission.content.items():
                 if field in final_hide_fields:
-                    content[field] = {
-                        'readers': [venue_id, self.get_authors_id(submission.number), self.get_publication_chairs_id()] if field in ['authors', 'authorids'] and note_accepted else [venue_id, self.get_authors_id(submission.number)]
-                    }
+                    if self.use_publication_chairs and field in ['authors', 'authorids'] and note_accepted:
+                        content[field] = {
+                            'readers': [venue_id, self.get_authors_id(submission.number), self.get_publication_chairs_id()]
+                        }
+                    else:
+                        content[field] = {
+                            'readers': [venue_id, self.get_authors_id(submission.number)]
+                        }
                 if field not in final_hide_fields and 'readers' in value:
                     content[field] = {
                         'readers': { 'delete': True }

@@ -308,6 +308,7 @@ class TestWorkshopV2():
                 'Abbreviated Venue Name': 'PRL ICAPS 2023',
                 'Official Website URL': 'https://prl-theworkshop.github.io/',
                 'program_chair_emails': ['pc@icaps.cc'],
+                'publication_chairs': 'Yes, our venue has Publication Chairs',
                 'publication_chairs_emails': ['publicationchair@mail.com', 'publicationchair2@mail.com'],
                 'contact_email': 'pc@icaps.cc',
                 'Venue Start Date': '2023/07/01',
