@@ -401,7 +401,7 @@ class TestMatching():
         conference.open_recommendations(assignment_title='', due_date = now + datetime.timedelta(minutes = 40))
 
         ## Recommend reviewers
-        ac1_client = helpers.get_user('ac2@cmu.edu')
+        ac1_client = openreview.Client(username='ac2@cmu.edu', password=helpers.strong_password)
         ac1_client.post_edge(openreview.Edge(invitation = conference.get_recommendation_id(),
             readers = ['auai.org/UAI/2021/Conference', '~AreaChair_CMUOne1'],
             signatures = ['~AreaChair_CMUOne1'],
@@ -552,7 +552,7 @@ class TestMatching():
         registration_forum = registration_notes[0].forum
 
         ## Recommend reviewers
-        ac1_client = helpers.get_user('ac2@cmu.edu')
+        ac1_client = openreview.Client(username='ac2@cmu.edu', password=helpers.strong_password)
         ac1_client.post_note(
             openreview.Note(
                 invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Registration',
