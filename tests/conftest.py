@@ -190,13 +190,13 @@ def journal_request():
 
 @pytest.fixture(scope="session")
 def test_client():
-    client = Helpers.create_user('test@mail.com', 'SomeFirstName', 'User')
-    yield client
+    Helpers.create_user('test@mail.com', 'SomeFirstName', 'User')
+    yield openreview.Client(baseurl = 'http://localhost:3000', username='test@mail.com', password=Helpers.strong_password)
 
 @pytest.fixture(scope="session")
 def peter_client():
-    client = Helpers.create_user('peter@mail.com', 'Peter', 'SomeLastName')
-    yield client
+    Helpers.create_user('peter@mail.com', 'Peter', 'SomeLastName')
+    yield openreview.Client(baseurl = 'http://localhost:3000', username='peter@mail.com', password=Helpers.strong_password)
 
 @pytest.fixture
 def firefox_options(firefox_options):

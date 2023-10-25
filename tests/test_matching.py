@@ -21,7 +21,7 @@ class TestMatching():
 
     @pytest.fixture(scope="class")
     def conference(self, client, helpers):
-        pc_client = helpers.create_user('pc1@uai.com', 'PCFirstName', 'UAI')
+        helpers.create_user('pc1@uai.com', 'PCFirstName', 'UAI')
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         builder.set_conference_id('auai.org/UAI/2021/Conference')
         builder.set_conference_name('Conference on Uncertainty in Artificial Intelligence')
@@ -85,8 +85,11 @@ class TestMatching():
         ## Set committee
         conference.set_area_chairs(['ac2@cmu.edu', 'ac2@umass.edu'])
         conference.set_reviewers(['r3@mit.edu', 'r3@google.com', 'r3@fb.com'])
-        r1_client = helpers.create_user('r3@mit.edu', 'Reviewer', 'MITOne')
-        ac1_client = helpers.create_user('ac2@cmu.edu', 'AreaChair', 'CMUOne')
+        helpers.create_user('r3@mit.edu', 'Reviewer', 'MITOne')
+        r1_client = openreview.Client(username='r3@mit.edu', password=helpers.strong_password)
+
+        helpers.create_user('ac2@cmu.edu', 'AreaChair', 'CMUOne')
+        ac1_client = openreview.Client(username='ac2@cmu.edu', password=helpers.strong_password)
 
         ## Paper 1
         note_1 = openreview.Note(invitation = conference.get_submission_id(),
@@ -1142,7 +1145,9 @@ class TestMatching():
 
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='r3@google.com')
 
-        reviewer_client = helpers.create_user('r3@google.com', 'Reviewer', 'Two')
+        helpers.create_user('r3@google.com', 'Reviewer', 'Two')
+        reviewer_client = openreview.Client(username='r3@google.com', password=helpers.strong_password)
+
 
         review_note = reviewer_client.post_note(openreview.Note(
             invitation='auai.org/UAI/2021/Conference/Paper1/-/Official_Review',
@@ -1194,7 +1199,8 @@ class TestMatching():
     @pytest.mark.skip("proposed invitation is expired after first deploy")
     def test_set_reviewers_assignments_as_author(self, conference, pc_client, helpers):
 
-        pc2_client = helpers.create_user('pc4@mail.com', 'PC', 'Four')
+        helpers.create_user('pc4@mail.com', 'PC', 'Four')
+        pc2_client = openreview.Client(username='pc4@mail.com', password=helpers.strong_password)
         pc2_client.impersonate(conference.id)
 
         conference.client = pc2_client

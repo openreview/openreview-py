@@ -37,7 +37,8 @@ class TestAgora():
 
     def test_post_submission(self, client, helpers):
 
-        author_client = helpers.create_user(email = 'author@agora.net', first = 'Author', last = 'One')
+        helpers.create_user(email = 'author@agora.net', first = 'Author', last = 'One')
+        author_client = openreview.Client(username='author@agora.net', password=helpers.strong_password)
 
         note = openreview.Note(invitation = '-Agora/COVID-19/-/Submission',
             readers = ['openreview.net/Support', '-Agora/COVID-19/Editors', '~Author_One1'],
@@ -76,7 +77,8 @@ class TestAgora():
 
     def test_moderate_submission(self, client, helpers):
 
-        editor_client = helpers.create_user(email = 'editor@agora.net', first = 'Editor', last = 'One')
+        helpers.create_user(email = 'editor@agora.net', first = 'Editor', last = 'One')
+        editor_client = openreview.Client(username='editor@agora.net', password=helpers.strong_password)
 
         submissions = editor_client.get_notes(invitation='-Agora/COVID-19/-/Submission')
         assert submissions
@@ -155,7 +157,8 @@ class TestAgora():
 
     def test_assign_reviewer(self, client, helpers):
 
-        article_editor_client = helpers.create_user(email = 'article_editor@agora.net', first = 'ArticleEditor', last = 'One')
+        helpers.create_user(email = 'article_editor@agora.net', first = 'ArticleEditor', last = 'One')
+        article_editor_client = openreview.Client(username='article_editor@agora.net', password=helpers.strong_password)
 
         articles = article_editor_client.get_notes(invitation='-Agora/COVID-19/-/Article')
         assert articles
@@ -224,7 +227,8 @@ class TestAgora():
 
     def test_post_review(self, client, helpers):
 
-        reviewer_client = helpers.create_user(email = 'reviewer@agora.net', first = 'ArticleReviewer', last = 'One')
+        helpers.create_user(email = 'reviewer@agora.net', first = 'ArticleReviewer', last = 'One')
+        reviewer_client = openreview.Client(username='reviewer@agora.net', password=helpers.strong_password)
 
         articles = reviewer_client.get_notes(invitation='-Agora/COVID-19/-/Article')
         assert articles
@@ -344,7 +348,8 @@ class TestAgora():
 
     def test_suggest_reviewer(self, client, helpers):
 
-        melisa_client = helpers.create_user(email = 'melisa_agora@mail.com', first = 'Melissa', last = 'Agora')
+        helpers.create_user(email = 'melisa_agora@mail.com', first = 'Melissa', last = 'Agora')
+        melisa_client = openreview.Client(username='melisa_agora@mail.com', password=helpers.strong_password)
 
         articles = melisa_client.get_notes(invitation='-Agora/COVID-19/-/Article')
         assert articles

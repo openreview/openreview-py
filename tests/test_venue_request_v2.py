@@ -974,7 +974,7 @@ class TestVenueRequest():
 
     def test_venue_bid_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
-        reviewer_client = helpers.create_user('venue_reviewer_v2@mail.com', 'VenueTwo', 'Reviewer')
+        helpers.create_user('venue_reviewer_v2@mail.com', 'VenueTwo', 'Reviewer')
 
         reviewer_group_id = '{}/Reviewers'.format(venue['venue_id'])
         reviewer_group = openreview_client.get_group(reviewer_group_id)
@@ -1023,7 +1023,7 @@ class TestVenueRequest():
 
         helpers.create_user('venue_author_v2@mail.com', 'VenueTwo', 'Author')
         author_client = OpenReviewClient(username='venue_author_v2@mail.com', password=helpers.strong_password)
-        reviewer_client = helpers.create_user('venue_reviewer_v2_@mail.com', 'VenueThree', 'Reviewer')
+        helpers.create_user('venue_reviewer_v2_@mail.com', 'VenueThree', 'Reviewer')
 
         venue_id = venue['venue_id']
 

@@ -26,7 +26,8 @@ class TestWorkshopV2():
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@icaps.cc', 'Program', 'ICAPSChair')
+        helpers.create_user('pc@icaps.cc', 'Program', 'ICAPSChair')
+        pc_client = openreview.Client(username='pc@icaps.cc', password=helpers.strong_password)
 
         helpers.create_user('reviewer1@icaps.cc', 'Reviewer', 'ICAPSOne')
         helpers.create_user('reviewer2@icaps.cc', 'Reviewer', 'ICAPSTwo')
