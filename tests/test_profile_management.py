@@ -938,8 +938,12 @@ The OpenReview Team.
 
         carlos_client = openreview.api.OpenReviewClient(username='carlos@cabj.org', password=helpers.strong_password)
 
+        carlos_paper2_anon_groups = carlos_client.get_groups(prefix=f'CABJ/Paper2/Action_Editor_.*', signatory='~Carlos_Tevez1')
+        assert len(carlos_paper2_anon_groups) == 1
+        carlos_paper2_anon_group = carlos_paper2_anon_groups[0]
+
         under_review_note = carlos_client.post_note_edit(invitation= 'CABJ/Paper2/-/Review_Approval',
-                                    signatures=['CABJ/Paper2/Action_Editors'],
+                                    signatures=[carlos_paper2_anon_group.id],
                                     note=Note(content={
                                         'under_review': { 'value': 'Appropriate for Review' }
                                     }))

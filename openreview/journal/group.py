@@ -383,7 +383,8 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
                 writers=[venue_id],
                 signatures=[venue_id],
                 signatories=[venue_id, action_editors_group_id],
-                members=[]
+                members=[],
+                anonids=True
             ))
 
         reviewers_group=openreview.tools.get_group(self.client, reviewers_group_id)

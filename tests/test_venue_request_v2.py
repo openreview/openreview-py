@@ -303,7 +303,8 @@ class TestVenueRequest():
             client.post_note(venue_revision_note)
 
         venue_revision_note.content['desk_rejected_submissions_author_anonymity'] = 'Yes, author identities of desk rejected submissions should be revealed.'
-        venue_revision_note.content['Submission Deadline'] = request_form_note.content['Submission Deadline'] + ' '
+        venue_revision_note.content['abstract_registration_deadline'] = (now - datetime.timedelta(days=1)).strftime('%Y/%m/%d %H:%M')
+        venue_revision_note.content['Submission Deadline'] = (now - datetime.timedelta(days=1)).strftime('%Y/%m/%d %H:%M')
         venue_revision_note=client.post_note(venue_revision_note)
 
         helpers.await_queue()
@@ -647,6 +648,43 @@ class TestVenueRequest():
         assert '0 users' in last_comment.content['invited']
         assert 'No recruitment invitation was sent to the users listed under \'Already Invited\' because they have already been invited.' in last_comment.content['comment']
 
+        ## Test invitee details with comma only and empty line
+        reviewer_details = ''',\nreviewer_candidate3_v2@mail.com, Reviewer Three\n\n'''
+        recruitment_note = test_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'Reviewers',
+                'invitee_reduced_load': ['1', '2', '3'],
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert recruitment_note
+
+        helpers.await_queue()
+
+        # No error in posting note
+        process_logs = client.get_process_logs(id=recruitment_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[0]['invitation'] == '{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
+
+        # Emails get sent correctly
+        messages = client.get_messages(to='reviewer_candidate3_v2@mail.com')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
+        assert messages[0]['content']['text'].startswith('Dear Reviewer Three,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
+
+        last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
+        assert '1 users' in last_comment.content['invited']
+
     def test_venue_recruitment_tilde_IDs(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Reviewer Recruitment
@@ -810,7 +848,7 @@ class TestVenueRequest():
         remind_recruitment_status_invitation = '{}/-/Request{}/Remind_Recruitment_Status'.format(venue['support_group_id'],
                                                                                    venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=remind_recruitment_status_invitation, sort='tmdate')[0]
-        assert '3 users' in last_comment.content['reminded']
+        assert '4 users' in last_comment.content['reminded']
 
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Remind Recruitment Status' not in last_message['content']['text']
@@ -1466,9 +1504,32 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'make_reviews_public': 'Yes, reviews should be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
-                'remove_review_form_options': 'title',
+                'remove_review_form_options': 'rating,title',
                 'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received',
-                'review_rating_field_name': 'review_rating'
+                'review_rating_field_name': 'review_rating',
+                'additional_review_form_options': {
+                    'review_rating': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'integer',
+                                'enum': [
+                                    { 'value': 10, 'description': '10: Top 5% of accepted papers, seminal paper' },
+                                    { 'value': 9, 'description': '9: Top 15% of accepted papers, strong accept' },
+                                    { 'value': 8, 'description': '8: Top 50% of accepted papers, clear accept' },
+                                    { 'value': 7, 'description': '7: Good paper, accept' },
+                                    { 'value': 6, 'description': '6: Marginally above acceptance threshold' },
+                                    { 'value': 5, 'description': '5: Marginally below acceptance threshold' },
+                                    { 'value': 4, 'description': '4: Ok but not good enough - rejection' },
+                                    { 'value': 3, 'description': '3: Clear rejection' },
+                                    { 'value': 2, 'description': '2: Strong rejection' },
+                                    { 'value': 1, 'description': '1: Trivial or wrong' }
+                                ],
+                                'input': 'radio'
+                            }
+                        }
+                    }
+                },                
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1540,8 +1601,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             note=Note(
                 content={
                     'review': { 'value': 'great paper!' },
-                    'rating': { 'value': '10: Top 5% of accepted papers, seminal paper' },
-                    'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' }
+                    'review_rating': { 'value': 10 },
+                    'confidence': { 'value': 3 }
                 }
             )
         )
@@ -1572,8 +1633,32 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'Yes, reviews should be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers',
-                'remove_review_form_options': 'title',
-                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received'
+                'remove_review_form_options': 'rating,title',
+                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received',
+                'review_rating_field_name': 'review_rating',
+                'additional_review_form_options': {
+                    'review_rating': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'integer',
+                                'enum': [
+                                    { 'value': 10, 'description': '10: Top 5% of accepted papers, seminal paper' },
+                                    { 'value': 9, 'description': '9: Top 15% of accepted papers, strong accept' },
+                                    { 'value': 8, 'description': '8: Top 50% of accepted papers, clear accept' },
+                                    { 'value': 7, 'description': '7: Good paper, accept' },
+                                    { 'value': 6, 'description': '6: Marginally above acceptance threshold' },
+                                    { 'value': 5, 'description': '5: Marginally below acceptance threshold' },
+                                    { 'value': 4, 'description': '4: Ok but not good enough - rejection' },
+                                    { 'value': 3, 'description': '3: Clear rejection' },
+                                    { 'value': 2, 'description': '2: Strong rejection' },
+                                    { 'value': 1, 'description': '1: Trivial or wrong' }
+                                ],
+                                'input': 'radio'
+                            }
+                        }
+                    }
+                }, 
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1599,7 +1684,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert 'V2.cc/2030/Conference/Submission1/Reviewers' in reviews[0].readers
         assert 'V2.cc/2030/Conference/Submission1/Authors' in reviews[0].readers
         assert len(reviews[0].nonreaders) == 0
-        assert 'readers' not in reviews[0].content['rating']
+        assert 'readers' not in reviews[0].content['review_rating']
 
         #hide ratings from authors without changing readers of reviews
         now = datetime.datetime.utcnow()
@@ -1614,24 +1699,28 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'Yes, reviews should be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers',
+                'remove_review_form_options': 'rating,title',
+                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received',
+                'review_rating_field_name': 'review_rating',
                 'additional_review_form_options': {
-                    'rating': {
+                    'review_rating': {
                         'order': 3,
                         'value': {
                             'param': {
-                                'type': 'string',
+                                'type': 'integer',
                                 'enum': [
-                                    '10: Top 5% of accepted papers, seminal paper',
-                                    '9: Top 15% of accepted papers, strong accept',
-                                    '8: Top 50% of accepted papers, clear accept',
-                                    '7: Good paper, accept',
-                                    '6: Marginally above acceptance threshold',
-                                    '5: Marginally below acceptance threshold',
-                                    '4: Ok but not good enough - rejection',
-                                    '3: Clear rejection',
-                                    '2: Strong rejection',
-                                    '1: Trivial or wrong'
-                                ]
+                                    { 'value': 10, 'description': '10: Top 5% of accepted papers, seminal paper' },
+                                    { 'value': 9, 'description': '9: Top 15% of accepted papers, strong accept' },
+                                    { 'value': 8, 'description': '8: Top 50% of accepted papers, clear accept' },
+                                    { 'value': 7, 'description': '7: Good paper, accept' },
+                                    { 'value': 6, 'description': '6: Marginally above acceptance threshold' },
+                                    { 'value': 5, 'description': '5: Marginally below acceptance threshold' },
+                                    { 'value': 4, 'description': '4: Ok but not good enough - rejection' },
+                                    { 'value': 3, 'description': '3: Clear rejection' },
+                                    { 'value': 2, 'description': '2: Strong rejection' },
+                                    { 'value': 1, 'description': '1: Trivial or wrong' }
+                                ],
+                                'input': 'radio'
                             }
                         },
                         'readers': [
@@ -1640,9 +1729,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                             "${5/signatures}"
                         ]
                     }
-                },
-                'remove_review_form_options': 'title',
-                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received'
+                }, 
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1663,8 +1750,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert 'V2.cc/2030/Conference/Submission1/Reviewers' in reviews[0].readers
         assert 'V2.cc/2030/Conference/Submission1/Authors' in reviews[0].readers
         assert len(reviews[0].nonreaders) == 0
-        assert 'readers' in reviews[0].content['rating']
-        assert reviews[0].content['rating']['readers'] == [
+        assert 'readers' in reviews[0].content['review_rating']
+        assert reviews[0].content['review_rating']['readers'] == [
             "V2.cc/2030/Conference",
             "V2.cc/2030/Conference/Submission1/Area_Chairs",
             reviews[0].signatures[0]
@@ -1734,8 +1821,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             note=Note(
                 content={
                     'review': { 'value': 'very good paper' },
-                    'rating': { 'value': '7: Good paper, accept' },
-                    'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' }
+                    'review_rating': { 'value': 7 },
+                    'confidence': { 'value': 3 }
                 }
             )
         )
@@ -1744,8 +1831,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         reviews = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Submission2/-/Official_Review')
         assert len(reviews) == 1
-        assert 'readers' in reviews[0].content['rating']
-        assert reviews[0].content['rating']['readers'] == [
+        assert 'readers' in reviews[0].content['review_rating']
+        assert reviews[0].content['review_rating']['readers'] == [
             "V2.cc/2030/Conference",
             "V2.cc/2030/Conference/Submission2/Area_Chairs",
             reviews[0].signatures[0]
@@ -1818,7 +1905,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -1928,7 +2016,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -2003,12 +2092,13 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         paper_official_comment_invitation = openreview.tools.get_invitation(openreview_client, '{}/Submission1/-/Official_Comment'.format(venue['venue_id']))
         assert paper_official_comment_invitation
-        assert 'V2.cc/2030/Conference/Program_Chairs' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
-        assert 'V2.cc/2030/Conference/Submission1/Reviewer_.*' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
-        assert 'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
-        assert 'V2.cc/2030/Conference/Submission1/Area_Chairs' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
-        assert 'V2.cc/2030/Conference/Submission1/Reviewers' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
-        assert 'V2.cc/2030/Conference/Submission1/Authors' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
+        readers = [item.get('value', item.get('prefix')) for item in paper_official_comment_invitation.edit['note']['readers']['param']['items']]
+        assert 'V2.cc/2030/Conference/Program_Chairs' in readers
+        assert 'V2.cc/2030/Conference/Submission1/Reviewer_.*' in readers
+        assert 'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs' in readers
+        assert 'V2.cc/2030/Conference/Submission1/Area_Chairs' in readers
+        assert 'V2.cc/2030/Conference/Submission1/Reviewers' in readers
+        assert 'V2.cc/2030/Conference/Submission1/Authors' in readers
 
         author_client = OpenReviewClient(username='venue_author_v2@mail.com', password=helpers.strong_password)
         # Assert that an official comment can be posted by the paper author
@@ -2070,7 +2160,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -2183,7 +2274,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -2237,7 +2329,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -2291,7 +2384,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -2346,7 +2440,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -2400,7 +2495,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -2465,7 +2561,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -2748,10 +2845,8 @@ Best,
         assert "Dear VenueTwo Author,\n\nThank you for submitting your paper, test submission, to TestVenue@OR'2030V2." in last_message['content']['text']
         assert f"https://openreview.net/forum?id={submissions[0].id}" in last_message['content']['text']
 
-        request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token, wait_for_element='header')
-        notes_panel = selenium.find_element(By.ID, 'notes')
-        assert notes_panel
-        tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
+        request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token, by=By.CLASS_NAME, wait_for_element='tabs-container')
+        tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.LINK_TEXT, "Your Consoles")
         assert tabs.find_element(By.LINK_TEXT, "Accept")

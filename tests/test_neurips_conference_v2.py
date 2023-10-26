@@ -774,7 +774,8 @@ If you would like to change your decision, please follow the link in the previou
                         'param': {
                             'type': 'string',
                             'regex': '~.*|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})',
-                            'optional': True
+                            'optional': True,
+                            'deletable': True
                         }
                         },
                         'description': 'Select which author should be the primary corresponding author for this submission. Please enter an email address or an OpenReview ID that exactly matches one of the authors.',
@@ -894,7 +895,9 @@ If you would like to change your decision, please follow the link in the previou
 
         assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Withdrawal')
         assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Desk_Rejection')
-        assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Revision')
+        revision_inv =  test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Revision')
+        assert revision_inv
+        assert ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Submission5/Authors'] == revision_inv.readers
 
         post_submission =  openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Post_Submission')
         assert 'authors' in post_submission.edit['note']['content']

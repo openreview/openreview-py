@@ -292,4 +292,9 @@ class TestWorkshopV2():
         helpers.await_queue()
 
         invitation = openreview_client.get_invitation('PRL/2024/ICAPS/Submission1/-/Official_Review')
-        assert invitation.edit['signatures']['param']['regex'] == '~.*'
+        assert invitation.edit['signatures']['param']['items'] == [
+            {
+            "prefix": "~.*",
+            "optional": True
+            }
+        ]
