@@ -313,7 +313,6 @@ class TestWorkshopV2():
                 'publication_chairs': 'Yes, our venue has Publication Chairs',
                 'publication_chairs_emails': ['publicationchair@mail.com', 'publicationchair2@mail.com'],
                 'contact_email': 'pc@icaps.cc',
-                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': request_form.content['Submission Deadline'],
                 'Location': 'Virtual',
