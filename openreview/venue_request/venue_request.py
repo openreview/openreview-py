@@ -1141,7 +1141,6 @@ class VenueRequest():
                     'No, our venue does not have Publication Chairs'
                 ],
                 'required': True,
-                'default': 'No, our venue does not have Publication Chairs',
                 'order': 7
             },
             'publication_chairs_emails': {
