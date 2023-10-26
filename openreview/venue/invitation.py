@@ -3179,11 +3179,12 @@ class InvitationBuilder(object):
             invitees=[venue_id],
             readers=[venue_id],
             writers=[venue_id],
-            signatures=['~Super_User1'],
+            signatures=[venue_id],
             process=self.get_process_content('process/group_recruitment_process.py'),
             content={
                 'committee_name': { 'value': committee_name },
-                'official_committee_roles': { 'value': venue.get_committee_names()}
+                'official_committee_roles': { 'value': venue.get_committee_names()},
+                'hash_seed': { 'value': '1234', 'readers': [ venue_id ]},
             },
             edit={
                 'signatures': [venue_id],
@@ -3205,7 +3206,8 @@ class InvitationBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'string[]',
-                                'optional': True
+                                'optional': True,
+                                'hidden': True
                             }
                         }
                     },
@@ -3213,7 +3215,8 @@ class InvitationBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'json',
-                                'optional': True
+                                'optional': True,
+                                'hidden': True
                             }
                         }
                     },
@@ -3221,7 +3224,8 @@ class InvitationBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'json',
-                                'optional': True
+                                'optional': True,
+                                'hidden': True
                             }
                         }
                     },
@@ -3229,7 +3233,8 @@ class InvitationBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'json',
-                                'optional': True
+                                'optional': True,
+                                'hidden': True
                             }
                         }
                     }
@@ -3244,7 +3249,7 @@ class InvitationBuilder(object):
         pretty_role = committee_name.replace('_', ' ')
         pretty_role = pretty_role[:-1] if pretty_role.endswith('s') else pretty_role
 
-        invitation = Invitation(id=venue.get_committee_id_invited(committee_name)+'/-/Edit',
+        invitation = Invitation(id=venue.get_committee_id_invited(committee_name)+'/-/Recruitment_Settings',
             invitees=[venue_id],
             readers=[venue_id],
             writers=[venue_id],

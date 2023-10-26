@@ -5,9 +5,9 @@ def process(client, edit, invitation):
     invited_group = client.get_group(invitation.edit['group']['id'])
     recruitment_subject = invited_group.content['recruitment_subject']['value']
     recruitment_template = invited_group.content['recruitment_template']['value']
-    reduced_load = invited_group.content.get('reduced_load', {}).get('value')
     allow_overlap = invited_group.content.get('allow_overlap', {}).get('value')
     contact_email = domain.content['contact']['value']
+    hash_seed = invitation.content['hash_seed']['value']
 
     committee_name = invitation.content['committee_name']['value']
     official_committee_roles = invitation.content['official_committee_roles']['value']
@@ -57,8 +57,10 @@ def process(client, edit, invitation):
             if not profile:
                 no_profile_found = True
             profile_emails = profile.content['emails'] if profile else []
-
-        memberships = [g.id for g in client.get_groups(member=email, prefix=venue_id)] if openreview.tools.get_group(client, email) else []
+        try:
+            memberships = [g.id for g in client.get_groups(member=email, prefix=venue_id)]
+        except:
+            memberships = []
         invited_roles = [f'{venue_id}/{role}/Invited' for role in committee_roles]
         member_roles = [f'{venue_id}/{role}' for role in committee_roles]
 
@@ -93,11 +95,11 @@ def process(client, edit, invitation):
                 name = 'invitee'
             try:
                 openreview.tools.recruit_reviewer(client, email, name,
-                    '1234',
+                    hash_seed,
                     f'{venue_id}/{committee_name}/-/Recruitment',
                     recruitment_template,
                     recruitment_subject,
-                    f'{venue_id}/{committee_name}/Invited',
+                    invited_group.id,
                     contact_email,
                     verbose=False)
                 recruitment_status['invited'].append(email)

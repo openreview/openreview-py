@@ -58,13 +58,13 @@ class TestGroupRecruitment():
         assert openreview_client.get_group('Venue.cc/Reviewers/Invited')
         assert openreview_client.get_group('Venue.cc/Reviewers/Declined')
         assert openreview_client.get_invitation('Venue.cc/Reviewers/Invited/-/Recruitment')
-        assert openreview_client.get_invitation('Venue.cc/Reviewers/Invited/-/Edit')
+        assert openreview_client.get_invitation('Venue.cc/Reviewers/Invited/-/Recruitment_Settings')
 
         helpers.create_user('reviewer3@venue.cc', 'Reviewer', 'VenueThree')
         
         # use invitation to edit group content
         openreview_client.post_group_edit(
-                invitation='Venue.cc/Reviewers/Invited/-/Edit',
+                invitation='Venue.cc/Reviewers/Invited/-/Recruitment_Settings',
                 group=openreview.api.Group(
                     content = {
                         'reduced_load': { 'value': [1,2,3] },
@@ -96,7 +96,7 @@ Program Chairs
                 )
             )
         
-        invitee_details = '''reviewer1@venue.cc, Reviewer VenueOne\nreviewer2@venue.cc, Reviewer VenueTwo\n~Reviewer_VenueThree1'''
+        invitee_details = '''~Reviewer_VenueThree1\nreviewer1@venue.cc, Reviewer VenueOne\nreviewer2@venue.cc, Reviewer VenueTwo'''
 
         # use invitation to recruit reviewers
         edit = openreview_client.post_group_edit(
