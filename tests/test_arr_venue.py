@@ -55,6 +55,7 @@ class TestARRVenue():
                 'Official Website URL': 'http://aclrollingreview.org',
                 'program_chair_emails': ['pc@aclrollingreview.org'],
                 'contact_email': 'pc@aclrollingreview.org',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',

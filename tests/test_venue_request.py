@@ -51,6 +51,7 @@ class TestVenueRequest():
                     'test@mail.com',
                     'tom@mail.com'],
                 'contact_email': 'test@mail.com',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'Venue Start Date': now.strftime('%Y/%m/%d'),
@@ -168,6 +169,7 @@ class TestVenueRequest():
                     'new_test_user@mail.com',
                     'tom@mail.com'],
                 'contact_email': 'new_test_user@mail.com',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': abstract_due_date.strftime('%Y/%m/%d %H:%M'),
@@ -334,6 +336,7 @@ class TestVenueRequest():
             'Submission Deadline': request_form_note.content['Submission Deadline'],
             'Venue Start Date': request_form_note.content['Venue Start Date'],
             'contact_email': request_form_note.content['contact_email'],
+            'publication_chairs':'No, our venue does not have Publication Chairs',
             'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
             'desk_rejected_submissions_author_anonymity': 'No, author identities of desk rejected submissions should not be revealed.',
 
@@ -389,6 +392,7 @@ class TestVenueRequest():
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'remove_submission_options': ['pdf'],
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
                 'Additional Submission Options': {
@@ -456,6 +460,7 @@ class TestVenueRequest():
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'remove_submission_options': ['pdf'],
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
                 'Additional Submission Options': {
@@ -750,7 +755,8 @@ class TestVenueRequest():
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline':  venue['request_form_note'].content['Submission Deadline'],
                 'Venue Start Date':  venue['request_form_note'].content['Venue Start Date'],
-                'contact_email': venue['request_form_note'].content['contact_email']
+                'contact_email': venue['request_form_note'].content['contact_email'],
+                'publication_chairs':'No, our venue does not have Publication Chairs'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -860,7 +866,8 @@ class TestVenueRequest():
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline':  venue['request_form_note'].content['Submission Deadline'],
                 'Venue Start Date':  venue['request_form_note'].content['Venue Start Date'],
-                'contact_email': venue['request_form_note'].content['contact_email']
+                'contact_email': venue['request_form_note'].content['contact_email'],
+                'publication_chairs':'No, our venue does not have Publication Chairs'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1297,6 +1304,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'withdraw_submission_expiration': withdraw_exp_date,
             },
             forum=venue['request_form_note'].forum,
@@ -2076,6 +2084,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
+                'publication_chairs':'No, our venue does not have Publication Chairs'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -2131,6 +2140,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
+                'publication_chairs':'No, our venue does not have Publication Chairs'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
