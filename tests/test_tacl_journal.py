@@ -67,12 +67,12 @@ class TestTACLJournal():
         openreview_client.add_members_to_group('TACL/Action_Editors', '~Graham_Neubig1')
 
         ## Reviewers
-        david_client=helpers.create_user('david@taclone.com', 'David', 'Bensusan')
-        javier_client=helpers.create_user('javier@tacltwo.com', 'Javier', 'Barden')
-        carlos_client=helpers.create_user('carlos@taclthree.com', 'Carlos', 'Gardel')
+        helpers.create_user('david@taclone.com', 'David', 'Bensusan')
+        helpers.create_user('javier@tacltwo.com', 'Javier', 'Barden')
+        helpers.create_user('carlos@taclthree.com', 'Carlos', 'Gardel')
 
         ## Authors
-        melisa_client=helpers.create_user('melisa@taclfour.com', 'Melisa', 'Andersen')
+        helpers.create_user('melisa@taclfour.com', 'Melisa', 'Andersen')
 
         openreview_client.add_members_to_group('TACL/Reviewers', ['~David_Bensusan1', '~Carlos_Gardel1', '~Javier_Barden1'])
 

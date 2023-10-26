@@ -26,9 +26,13 @@ class TestICMLConference():
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@icml.cc', 'Program', 'ICMLChair')
+        helpers.create_user('pc@icml.cc', 'Program', 'ICMLChair')
+        pc_client = openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
 
-        sac_client = helpers.create_user('sac1@gmail.com', 'SAC', 'ICMLOne')
+
+        helpers.create_user('sac1@gmail.com', 'SAC', 'ICMLOne')
+        sac_client = openreview.Client(username='sac1@gmail.com', password=helpers.strong_password)
+
         helpers.create_user('sac2@icml.cc', 'SAC', 'ICMLTwo')
         helpers.create_user('ac1@icml.cc', 'AC', 'ICMLOne')
         helpers.create_user('ac2@icml.cc', 'AC', 'ICMLTwo')
@@ -1545,7 +1549,7 @@ OpenReview Team'''
         openreview.venue.Venue.check_new_profiles(openreview_client)
 
         ## External reviewer creates a profile and accepts the invitation again
-        external_reviewer=helpers.create_user('melisa@icml.cc', 'Melisa', 'ICML')
+        helpers.create_user('melisa@icml.cc', 'Melisa', 'ICML')
 
         ## Run Job
         openreview.venue.Venue.check_new_profiles(openreview_client)
@@ -1757,7 +1761,7 @@ Confirmation of the assignment is pending until the invited reviewer creates a p
 OpenReview Team'''
 
         ## External reviewer creates a profile and accepts the invitation again
-        external_reviewer=helpers.create_user('carlos@icml.cc', 'Carlos', 'ICML', institution='amazon.com')
+        helpers.create_user('carlos@icml.cc', 'Carlos', 'ICML', institution='amazon.com')
 
         ## Run Job
         openreview.venue.Venue.check_new_profiles(openreview_client)
@@ -1818,7 +1822,7 @@ OpenReview Team'''
         helpers.await_queue(openreview_client)
 
         ## External reviewer creates a profile and accepts the invitation again
-        external_reviewer=helpers.create_user('celeste@icml.cc', 'Celeste', 'ICML')
+        helpers.create_user('celeste@icml.cc', 'Celeste', 'ICML')
 
         ## Run Job
         openreview.venue.Venue.check_new_profiles(openreview_client)

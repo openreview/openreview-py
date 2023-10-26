@@ -84,7 +84,9 @@ class TestSubmissionReaders():
 
     def test_submission_stage(self, client, venue, helpers):
 
-        author_client = helpers.create_user('workshop_author1@mail.com', 'Workshop', 'Author')
+        helpers.create_user('workshop_author1@mail.com', 'Workshop', 'Author')
+        author_client = openreview.Client(username='workshop_author1@mail.com', password=helpers.strong_password)
+
 
         submission_one = author_client.post_note(openreview.Note(
             invitation='{}/-/Submission'.format(venue['venue_id']),

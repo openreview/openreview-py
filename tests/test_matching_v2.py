@@ -24,7 +24,7 @@ class TestMatching():
 
     @pytest.fixture(scope="class")
     def venue(self, openreview_client, helpers):
-        pc_client = helpers.create_user('pc1_venue@mail.com', 'PCFirstName', 'UAI')
+        helpers.create_user('pc1_venue@mail.com', 'PCFirstName', 'UAI')
         venue_id = 'VenueV2.cc'
         venue = Venue(openreview_client, venue_id, 'openreview.net/Support')
         venue.invitation_builder.update_wait_time = 2000

@@ -69,7 +69,9 @@ class TestCommentNotification():
         reviewers_group_id = '{conference_id}/Paper{number}/Reviewers'.format(conference_id = conference.id, number = note.number)
         acs_group_id = '{conference_id}/Paper{number}/Area_Chairs'.format(conference_id = conference.id, number = note.number)
 
-        reviewer_client = helpers.create_user('reviewer@midl.io', 'Reviewer', 'MIDL')
+        helpers.create_user('reviewer@midl.io', 'Reviewer', 'MIDL')
+        reviewer_client = openreview.Client(username='reviewer@midl.io', password=helpers.strong_password)
+
         client.add_members_to_group(f'{conference.id}/Paper{note.number}/Reviewers', 'reviewer@midl.io')
         client.add_members_to_group(f'{conference.id}/Paper{note.number}/Area_Chairs', 'areachair@midl.io')
         anon_reviewers_group_id = reviewer_client.get_groups(regex=f'{conference.id}/Paper{note.number}/Reviewer_', signatory='reviewer@midl.io')[0].id
@@ -388,7 +390,9 @@ class TestCommentNotification():
         conference.set_assignment('areachair@auai.org', 1, True)
         conference.create_review_stage()
 
-        reviewer_client = helpers.create_user('reviewer@auai.org', 'Reviewer', 'UAI')
+        helpers.create_user('reviewer@auai.org', 'Reviewer', 'UAI')
+        reviewer_client = openreview.Client(username='reviewer@auai.org', password=helpers.strong_password)
+
         anon_reviewers_group_id = reviewer_client.get_groups(regex=f'{conference.id}/Paper1/Reviewer_', signatory='reviewer@auai.org')[0].id
 
         note = openreview.Note(invitation = 'auai.org/UAI/2020/Conference/Paper1/-/Official_Review',
@@ -490,7 +494,9 @@ class TestCommentNotification():
         assert 'author@mail.com' in recipients
         assert 'test@mail.com' in recipients
 
-        reviewer2_client = helpers.create_user('reviewer2@auai.org', 'Reviewer', 'UAITwo')
+        helpers.create_user('reviewer2@auai.org', 'Reviewer', 'UAITwo')
+        reviewer2_client = openreview.Client(username='reviewer2@auai.org', password=helpers.strong_password)
+
         anon_reviewers_group_id_2 = reviewer2_client.get_groups(regex=f'{conference.id}/Paper1/Reviewer_', signatory='reviewer2@auai.org')[0].id
         
         note = openreview.Note(invitation = 'auai.org/UAI/2020/Conference/Paper1/-/Official_Review',
@@ -582,7 +588,9 @@ class TestCommentNotification():
 
     def test_remind_reviewers(self, client, helpers):
 
-        ac_client = helpers.create_user('areachair@auai.org', 'Area', 'ChairUAI')
+        helpers.create_user('areachair@auai.org', 'Area', 'ChairUAI')
+        ac_client = openreview.Client(username='areachair@auai.org', password=helpers.strong_password)
+
         subject = 'Remind to reviewers'
         recipients = ['reviewer@auai.org']
         message = 'This is a reminder'
@@ -668,7 +676,8 @@ class TestCommentNotification():
         reviewers_group_id = '{conference_id}/Paper{number}/Reviewers'.format(conference_id = conference.id, number = note.number)
         acs_group_id = '{conference_id}/Paper{number}/Area_Chairs'.format(conference_id = conference.id, number = note.number)
 
-        reviewer_client = helpers.create_user('reviewer@colt.io', 'Reviewer', 'COLT')
+        helpers.create_user('reviewer@colt.io', 'Reviewer', 'COLT')
+        reviewer_client = openreview.Client(username='reviewer@colt.io', password=helpers.strong_password)
         client.add_members_to_group(f'{conference.id}/Paper{note.number}/Reviewers', 'reviewer@colt.io')
         client.add_members_to_group(f'{conference.id}/Paper{note.number}/Area_Chairs', 'areachair@colt.io')
         anon_reviewers_group_id = reviewer_client.get_groups(regex=f'{conference.id}/Paper{note.number}/Reviewer_', signatory='reviewer@colt.io')[0].id
@@ -838,7 +847,9 @@ class TestCommentNotification():
         assert messages[1]['content']['subject'] == '[COLT 2018] An author commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[2]['content']['subject'] == f'[COLT 2018] {pretty_anon_reviewer_id} commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
 
-        pc_client = helpers.create_user('programchair@colt.io', 'ProgramChair', 'COLT')
+        helpers.create_user('programchair@colt.io', 'ProgramChair', 'COLT')
+        pc_client = openreview.Client(username='programchair@colt.io', password=helpers.strong_password)
+
 
         reply3_comment_note = openreview.Note(invitation = comment_invitation_id,
             forum = note.id,
@@ -962,7 +973,9 @@ class TestCommentNotification():
         reviewers_group_id = '{conference_id}/Paper{number}/Reviewers'.format(conference_id = conference.id, number = note.number)
         acs_group_id = '{conference_id}/Paper{number}/Area_Chairs'.format(conference_id = conference.id, number = note.number)
 
-        reviewer_client = helpers.create_user('reviewer@colt17.io', 'Reviewer', 'COLTIO')
+        helpers.create_user('reviewer@colt17.io', 'Reviewer', 'COLTIO')
+        reviewer_client = openreview.Client(username='reviewer@colt17.io', password=helpers.strong_password)
+
         client.add_members_to_group(f'{conference.id}/Paper{note.number}/Reviewers', 'reviewer@colt17.io')
         client.add_members_to_group(f'{conference.id}/Paper{note.number}/Area_Chairs', 'areachair@colt17.io')
         anon_reviewers_group_id = reviewer_client.get_groups(regex=f'{conference.id}/Paper{note.number}/Reviewer_', signatory='reviewer@colt17.io')[0].id
@@ -1068,7 +1081,9 @@ class TestCommentNotification():
         messages = client.get_messages(to = 'programchair@colt17.io')
         assert len(messages) == 0
 
-        pc_client = helpers.create_user('programchair@colt17.io', 'Program', 'COLTIO')
+        helpers.create_user('programchair@colt17.io', 'Program', 'COLTIO')
+        pc_client = openreview.Client(username='programchair@colt17.io', password=helpers.strong_password)
+
 
         reply3_comment_note = openreview.Note(invitation = comment_invitation_id,
             forum = note.id,

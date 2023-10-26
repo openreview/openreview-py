@@ -469,7 +469,8 @@ class TestSingleBlindConference():
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review')
         assert len(notes) == 0
 
-        reviewer2_client = helpers.create_user('reviewer3@mail.com', 'Reviewer', 'Three')
+        helpers.create_user('reviewer3@mail.com', 'Reviewer', 'Three')
+        reviewer2_client = openreview.Client(username='reviewer3@mail.com', password=helpers.strong_password)
         notes = reviewer2_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review')
         assert len(notes) == 0
 
@@ -561,7 +562,8 @@ class TestSingleBlindConference():
         assert 'NIPS.cc/2018/Workshop/MLITS/Ethics_Chairs' in reviews[1].readers
 
         client.add_members_to_group('NIPS.cc/2018/Workshop/MLITS/Paper1/Ethics_Reviewers', 'melisa@ethics.org')
-        ethic_reviewer_client = helpers.create_user('melisa@ethics.org', 'Melisa', 'Ethics')
+        helpers.create_user('melisa@ethics.org', 'Melisa', 'Ethics')
+        ethic_reviewer_client = openreview.Client(username='melisa@ethics.org', password=helpers.strong_password)
         anon_groups = ethic_reviewer_client.get_groups(regex='NIPS.cc/2018/Workshop/MLITS/Paper1/Ethics_Reviewer_', signatory='~Melisa_Ethics1')
         assert len(anon_groups) == 1        
         ethic_reviewer_client.post_note(openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/Paper1/-/Ethics_Review',
@@ -684,7 +686,8 @@ class TestSingleBlindConference():
         assert len(tabs.find_element(By.ID, 'reviewer-tasks').find_elements(By.CLASS_NAME, 'note')) == 1
 
         # Area chair user
-        ac_client = helpers.create_user('ac2@mail.com', 'AC', 'MLITS')
+        helpers.create_user('ac2@mail.com', 'AC', 'MLITS')
+        ac_client = openreview.Client(username='ac2@mail.com', password=helpers.strong_password)
         request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", ac_client.token, wait_for_element='your-consoles')
         notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel
@@ -710,7 +713,8 @@ class TestSingleBlindConference():
         assert headers[0].text == '2 of 2 Reviews Submitted'
 
         #Program chair user
-        pc_client = helpers.create_user('pc2@mail.com', 'ProgramChair', 'SomeLastName')
+        helpers.create_user('pc2@mail.com', 'ProgramChair', 'SomeLastName')
+        pc_client = openreview.Client(username='pc2@mail.com', password=helpers.strong_password)
 
         request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", pc_client.token, wait_for_element='your-consoles')
         notes_panel = selenium.find_element(By.ID, 'notes')
