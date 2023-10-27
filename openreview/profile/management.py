@@ -5,7 +5,15 @@ class ProfileManagement():
 
     def __init__(self, client, super_user):
 
+        baseurl_v2 = 'http://localhost:3001'
+
+        if 'https://devapi' in client.baseurl:
+            baseurl_v2 = 'https://devapi2.openreview.net'
+        if 'https://api' in client.baseurl:
+            baseurl_v2 = 'https://api2.openreview.net'
+
         self.client = client
+        self.client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)        
         self.super_user = super_user
         self.support_group_id = f'{self.super_user}/Support'
         self.author_rename_invitation_id = f'{self.support_group_id}/-/Author_Rename'
@@ -267,7 +275,7 @@ class ProfileManagement():
 
     def set_archive_invitations(self):
 
-        archive_group = openreview.Group(
+        archive_group = openreview.api.Group(
             id = f'{self.super_user}/Archive',
             readers = ['everyone'],
             writers = [self.support_group_id],
@@ -279,73 +287,157 @@ class ProfileManagement():
             file_content = f.read()
             archive_group.web = file_content
 
-            self.client.post_group(archive_group)
+            self.client_v2.post_group_edit(
+                invitation = f'{self.super_user}/-/Edit',
+                signatures = [self.super_user],
+                group = archive_group)
 
-        self.client.post_invitation(openreview.Invitation(
-            id=f'{archive_group.id}/-/Direct_Upload',
-            readers=['~'],
-            writers=[self.support_group_id],
-            signatures=[self.super_user],
-            invitees=['~'],
-            reply={
-                "readers": {
-                    "description": "The users who will be allowed to read the above content.",
-                    "values": [
-                        "everyone"
-                    ]
-                },
-                "writers": {
-                    "values-regex": "~.*"
-                },
-                "signatures": {
-                    "description": "Your authorized identity to be associated with the above content.",
-                    "values-regex": "~.*"
-                },
-                "content": {
-                    "title": {
-                        "description": "Title of paper.",
-                        "order": 0,
-                        "value-regex": ".{1,250}",
-                        "required": True
+        self.client_v2.post_invitation_edit(
+            invitations = f'{self.super_user}/-/Edit',
+            signatures = [self.super_user],
+            invitation = openreview.api.Invitation(
+                id=f'{archive_group.id}/-/Direct_Upload',
+                readers=['~'],
+                writers=[self.support_group_id],
+                signatures=[self.super_user],
+                invitees=['~'],
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True } 
+                            ]
+                        } 
                     },
-                    "authors": {
-                        "description": "Comma separated list of author names.",
-                        "order": 1,
-                        "values-regex": "[^;,\\n]+(,[^,\\n]+)*",
-                        "required": True,
-                        "hidden": True
+                    'writers':  ['${2/signatures}'],
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
                     },
-                    "authorids": {
-                        "description": "Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.",
-                        "order": 2,
-                        "values-regex": "~.*|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})",
-                        "required": True
-                    },
-                    "abstract": {
-                        "value-regex": "[\\S\\s]{1,5000}",
-                        "required": True,
-                        "description": "Abstract of paper.",
-                        "order": 3
-                    },
-                    "pdf": {
-                        "description": "Choose one of the following: (1) Upload a PDF file. (2) Enter a URL to a PDF file.",
-                        "order": 4,
-                        "value-file": {
-                            "fileTypes": [
-                                "pdf"
-                            ],
-                            "size": 5,
-                            "regex": "https?://.+"
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': f'{archive_group.id}/-/Direct_Upload',
+                                'optional': True
+                            }
                         },
-                        "required": False
-                    },
-                    "html": {
-                        "required": False,
-                        "value-regex": "upload|(http|https):\\/\\/.+"
-                    }
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'signatures': [ '${3/signatures}' ],
+                        'readers': ['everyone'],
+                        'writers': [ '${2/content/authorids/value}'],
+                        'license': 'CC BY-SA 4.0',
+                        'content': {
+                            'title': {
+                                'order': 1,
+                                'description': 'Title of paper.',
+                                'value': { 
+                                    'param': { 
+                                        'type': 'string',
+                                        'regex': '^.{1,250}$'
+                                    }
+                                }
+                            },
+                            'authors': {
+                                'order': 2,
+                                'value': {
+                                    'param': {
+                                        'type': 'string[]',
+                                        'regex': '[^;,\\n]+(,[^,\\n]+)*',
+                                        'hidden': True
+                                    }
+                                }
+                            },
+                            'authorids': {
+                                'order': 3,
+                                'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
+                                'value': {
+                                    'param': {
+                                        'type': 'group[]',
+                                        'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
+                                        'mismatchError': 'must be a valid email or profile ID'
+                                    }
+                                }
+                            },                        
+                            'abstract': {
+                                'order': 4,
+                                'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 5000,
+                                        'markdown': True,
+                                        'input': 'textarea'
+                                    }
+                                }
+                            },
+                            'pdf': {
+                                'order': 5,
+                                'description': 'Upload a PDF file that ends with .pdf.',
+                                'value': {
+                                    'param': {
+                                        'type': 'file',
+                                        'maxSize': 50,
+                                        'extensions': ['pdf'],
+                                        'optional': True
+                                    }
+                                }
+                            },
+                            'html': {
+                                'order': 6,
+                                'description': 'Enter a URL to a PDF file.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'regex': '"(http|https):\\/\\/.+"',
+                                        'optional': True
+                                    }
+                                }
+                            },
+                            'venue': {
+                                'order': 7,
+                                'description': 'Enter the venue where the paper was published.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'optional': True
+                                    }
+                                }
+                            },
+                            'year': {
+                                'order': 8,
+                                'description': 'Enter the year where the paper was published.',
+                                'value': {
+                                    'param': {
+                                        'type': 'integer',
+                                        'optional': True
+                                    }
+                                }
+                            },
+                            'venueid': {
+                                'value': {
+                                    'param': {
+                                        'type': "string",
+                                        'const': archive_group.id,
+                                        'hidden': True
+                                    }
+                                }
+                            }
+                        }
+                    }                                        
                 }
-            }
-        ))
+            )
+        )
 
     def set_merge_profiles_invitations(self):
 

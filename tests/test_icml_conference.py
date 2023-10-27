@@ -30,8 +30,7 @@ class TestICMLConference():
         pc_client = openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
 
 
-        helpers.create_user('sac1@gmail.com', 'SAC', 'ICMLOne')
-        sac_client = openreview.Client(username='sac1@gmail.com', password=helpers.strong_password)
+        sac_client = helpers.create_user('sac1@gmail.com', 'SAC', 'ICMLOne')
 
         helpers.create_user('sac2@icml.cc', 'SAC', 'ICMLTwo')
         helpers.create_user('ac1@icml.cc', 'AC', 'ICMLOne')
@@ -108,30 +107,30 @@ class TestICMLConference():
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Expertise_Selection')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Senior_Area_Chairs/-/Expertise_Selection')
 
-        sac_client.post_note(openreview.Note(
+        sac_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
-            readers = ['everyone'],
-            signatures = ['~SAC_ICMLOne1'],
-            writers = ['~SAC_ICMLOne1'],
-            content = {
-                'title': 'Paper title 1',
-                'abstract': 'Paper abstract 1',
-                'authors': ['SAC ICML', 'Test2 Client'],
-                'authorids': ['~SAC_ICMLOne1', 'test2@mail.com']
-            }
+            signatures=['~SAC_ICMLOne1'],
+            note = openreview.api.Note(
+                content = {
+                    'title': { 'value': 'Paper title 1' },
+                    'abstract': { 'value': 'Paper abstract 1' },
+                    'authors': { 'value': ['SAC ICML', 'Test2 Client'] },
+                    'authorids': { 'value': ['~SAC_ICMLOne1', 'test2@mail.com'] },
+                    'venue': { 'value': 'Arxiv' },
+                    'year': { 'value': 2019 }
+                }
         ))
 
-        sac_client.post_note(openreview.Note(
+        sac_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
-            readers = ['everyone'],
-            signatures = ['~SAC_ICMLOne1'],
-            writers = ['~SAC_ICMLOne1'],
-            content = {
-                'title': 'Paper title 2',
-                'abstract': 'Paper abstract 2',
-                'authors': ['SAC ICML', 'Test2 Client'],
-                'authorids': ['~SAC_ICMLOne1', 'test2@mail.com']
-            }
+            signatures=['~SAC_ICMLOne1'],
+            note = openreview.api.Note(
+                content = {
+                    'title': { 'value': 'Paper title 2' },
+                    'abstract': { 'value': 'Paper abstract 2' },
+                    'authors': { 'value': ['SAC ICML', 'Test2 Client'] },
+                    'authorids': { 'value': ['~SAC_ICMLOne1', 'test2@mail.com'] }
+                }
         ))
 
         pc_client.post_note(openreview.Note(

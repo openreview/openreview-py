@@ -13,7 +13,7 @@ class TestProfileManagement():
 
     
     @pytest.fixture(scope="class")
-    def profile_management(self, client):
+    def profile_management(self, client, openreview_client):
         profile_management = ProfileManagement(client, 'openreview.net')
         profile_management.setup()
         return profile_management
@@ -60,9 +60,9 @@ class TestProfileManagement():
         assert datetime.datetime.fromtimestamp(note.cdate/1000).month == 2                
 
    
-    def test_remove_alternate_name(self, client, profile_management, helpers):
+    def test_remove_alternate_name(self, client, openreview_client, profile_management, helpers):
 
-        helpers.create_user('john@profile.org', 'John', 'Last', alternates=[], institution='google.com')
+        john_client_v2 = helpers.create_user('john@profile.org', 'John', 'Last', alternates=[], institution='google.com')
         john_client = openreview.Client(username='john@profile.org', password=helpers.strong_password)
 
         profile = john_client.get_profile()
@@ -130,31 +130,33 @@ class TestProfileManagement():
 
 
         ## Add publications
-        john_client.post_note(openreview.Note(
+        john_client_v2.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
-            readers = ['everyone'],
-            signatures = ['~John_Alternate_Last1'],
-            writers = ['~John_Alternate_Last1'],
-            content = {
-                'title': 'Paper title 1',
-                'abstract': 'Paper abstract 1',
-                'authors': ['John Alternate Last', 'Test Client'],
-                'authorids': ['~John_Alternate_Last1', 'test@mail.com']
-            }
-        ))
+            signatures=['~John_Alternate_Last1'],
+            note = openreview.api.Note(
+                content = {
+                    'title': { 'value': 'Paper title 1' },
+                    'abstract': { 'value': 'Paper abstract 1' },
+                    'authors': { 'value': ['John Alternate Last', 'Test Client'] },
+                    'authorids': { 'value': ['~John_Alternate_Last1', 'test@mail.com'] },
+                    'venue': { 'value': 'Arxiv' },
+                    'year': { 'value': 2019 }
+                }
+        ))            
 
-        john_client.post_note(openreview.Note(
+        john_client_v2.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
-            readers = ['everyone'],
-            signatures = ['~John_Alternate_Last1'],
-            writers = ['~John_Alternate_Last1'],
-            content = {
-                'title': 'Paper title 2',
-                'abstract': 'Paper abstract 2',
-                'authors': ['John Last', 'Test Client'],
-                'authorids': ['~John_Last1', 'test@mail.com', 'another@mail.com']
-            }
-        ))
+            signatures=['~John_Alternate_Last1'],
+            note = openreview.api.Note(
+                content = {
+                    'title': { 'value': 'Paper title 2' },
+                    'abstract': { 'value': 'Paper abstract 2' },
+                    'authors': { 'value': ['John Alternate Last', 'Test Client'] },
+                    'authorids': { 'value': ['~John_Alternate_Last1', 'test@mail.com', 'another@mail.com'] },
+                    'venue': { 'value': 'Arxiv' },
+                    'year': { 'value': 2019 }
+                }
+        )) 
 
         ## Create committee groups
         client.post_group(openreview.Group(
@@ -181,7 +183,7 @@ class TestProfileManagement():
         assert '~John_Alternate_Last1' in anon_groups[0].members
         first_anon_group_id = anon_groups[0].id                
 
-        publications = client.get_notes(content={ 'authorids': '~John_Last1'})
+        publications = john_client_v2.get_notes(content={ 'authorids': '~John_Last1'})
         assert len(publications) == 2
 
         request_note = john_client.post_note(openreview.Note(
@@ -231,12 +233,12 @@ The OpenReview Team.
         note = john_client.get_note(request_note.id)
         assert note.content['status'] == 'Accepted'
 
-        publications = client.get_notes(content={ 'authorids': '~John_Last1'})
+        publications = john_client_v2.get_notes(content={ 'authorids': '~John_Last1'})
         assert len(publications) == 2
         assert '~John_Last1' in publications[0].writers
         assert '~John_Last1' in publications[0].signatures
-        assert ['John Last', 'Test Client'] == publications[0].content['authors']
-        assert ['~John_Last1', 'test@mail.com', 'another@mail.com'] == publications[0].content['authorids']
+        assert ['John Last', 'Test Client'] == publications[0].content['authors']['value']
+        assert ['~John_Last1', 'test@mail.com', 'another@mail.com'] == publications[0].content['authorids']['value']
         assert '~John_Last1' in publications[1].writers
         assert '~John_Last1' in publications[1].signatures
 
@@ -280,9 +282,9 @@ Thanks,
 The OpenReview Team.
 '''
 
-    def test_remove_name_and_rename_profile_id(self, client, helpers):
+    def test_remove_name_and_rename_profile_id(self, client, openreview_client, helpers):
 
-        helpers.create_user('ana@profile.org', 'Ana', 'Last', alternates=[], institution='google.com')
+        ana_client_v2 = helpers.create_user('ana@profile.org', 'Ana', 'Last', alternates=[], institution='google.com')
         ana_client = openreview.Client(username='ana@profile.org', password=helpers.strong_password)
 
         profile = ana_client.get_profile()
@@ -323,33 +325,35 @@ The OpenReview Team.
 
 
         ## Add publications
-        ana_client.post_note(openreview.Note(
+        ana_client_v2.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
-            readers = ['everyone'],
-            signatures = ['~Ana_Last1'],
-            writers = ['~Ana_Last1'],
-            content = {
-                'title': 'Paper title 1',
-                'abstract': 'Paper abstract 1',
-                'authors': ['Ana Last', 'Test Client'],
-                'authorids': ['~Ana_Last1', 'test@mail.com']
-            }
-        ))
+            signatures=['~Ana_Last1'],
+            note = openreview.api.Note(
+                content = {
+                    'title': { 'value': 'Paper title 1' },
+                    'abstract': { 'value': 'Paper abstract 1' },
+                    'authors': { 'value': ['Ana Last', 'Test Client'] },
+                    'authorids': { 'value': ['~Ana_Last1', 'test@mail.com'] },
+                    'venue': { 'value': 'Arxiv' },
+                    'year': { 'value': 2019 }
+                }
+        ))        
 
-        ana_client.post_note(openreview.Note(
+        ana_client_v2.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
-            readers = ['everyone'],
-            signatures = ['~Ana_Last1'],
-            writers = ['~Ana_Last1'],
-            content = {
-                'title': 'Paper title 2',
-                'abstract': 'Paper abstract 2',
-                'authors': ['Ana Last', 'Test Client'],
-                'authorids': ['~Ana_Last1', 'test@mail.com']
-            }
-        ))
+            signatures=['~Ana_Last1'],
+            note = openreview.api.Note(
+                content = {
+                    'title': { 'value': 'Paper title 2' },
+                    'abstract': { 'value': 'Paper abstract 2' },
+                    'authors': { 'value': ['Ana Last', 'Test Client'] },
+                    'authorids': { 'value': ['~Ana_Last1', 'test@mail.com'] },
+                    'venue': { 'value': 'Arxiv' },
+                    'year': { 'value': 2019 }
+                }
+        ))        
 
-        publications = client.get_notes(content={ 'authorids': '~Ana_Alternate_Last1'})
+        publications = openreview_client.get_notes(content={ 'authorids': '~Ana_Alternate_Last1'})
         assert len(publications) == 2
 
         request_note = ana_client.post_note(openreview.Note(
@@ -400,7 +404,7 @@ The OpenReview Team.
         note = ana_client.get_note(request_note.id)
         assert note.content['status'] == 'Accepted'
 
-        publications = client.get_notes(content={ 'authorids': '~Ana_Alternate_Last1'})
+        publications = openreview_client.get_notes(content={ 'authorids': '~Ana_Alternate_Last1'})
         assert len(publications) == 2
         assert '~Ana_Alternate_Last1' in publications[0].writers
         assert '~Ana_Alternate_Last1' in publications[0].signatures
@@ -546,18 +550,19 @@ The OpenReview Team.
         assert client.get_group('~Ella_Alternate_Last1').members == ['ella@profile.org']        
 
         ## Add publications
-        ella_client.post_note(openreview.Note(
+        ella_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
-            readers = ['everyone'],
-            signatures = ['~Ella_Last1'],
-            writers = ['~Ella_Last1'],
-            content = {
-                'title': 'Paper title 1',
-                'abstract': 'Paper abstract 1',
-                'authors': ['Ella Last', 'Test Client'],
-                'authorids': ['~Ella_Last1', 'test@mail.com']
-            }
-        ))
+            signatures=['~Ella_Last1'],
+            note = openreview.api.Note(
+                content = {
+                    'title': { 'value': 'Paper title 2' },
+                    'abstract': { 'value': 'Paper abstract 2' },
+                    'authors': { 'value': ['Ella Last', 'Test Client'] },
+                    'authorids': { 'value': ['~Ella_Last1', 'test@mail.com'] },
+                    'venue': { 'value': 'Arxiv' },
+                    'year': { 'value': 2019 }
+                }
+        ))         
 
         publications = client.get_notes(content={ 'authorids': '~Ella_Last1'})
         assert len(publications) == 1
