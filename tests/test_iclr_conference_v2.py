@@ -265,3 +265,135 @@ class TestICLRConference():
         assert submissions[0].readers == ['everyone']
         assert '_bibtex' in submissions[0].content
         assert 'author={Anonymous}' in submissions[0].content['_bibtex']['value']
+
+    def test_comment_stage(self, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@iclr.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        # Post an official comment stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        end_date = now + datetime.timedelta(days=3)
+        comment_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'commentary_start_date': start_date.strftime('%Y/%m/%d'),
+                'commentary_end_date': end_date.strftime('%Y/%m/%d'),
+                'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
+                'additional_readers': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Assigned Submitted Reviewers'],
+                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
+            },
+            forum=request_form.forum,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment_Stage',
+            readers=['ICLR.cc/2024/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICLRChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        invitation = openreview_client.get_invitation('ICLR.cc/2024/Conference/Submission1/-/Official_Comment')
+        assert invitation.edit['signatures']['param']['items'] == [
+            {
+                "value": "ICLR.cc/2024/Conference/Program_Chairs",
+                "optional": True
+            },
+            {
+                "value": "ICLR.cc/2024/Conference/Submission1/Senior_Area_Chairs",
+                "optional": True
+            },
+            {
+                "prefix": "ICLR.cc/2024/Conference/Submission1/Area_Chair_.*",
+                "optional": True
+            },
+            {
+                "prefix": "ICLR.cc/2024/Conference/Submission1/Reviewer_.*",
+                "optional": True
+            }
+        ]
+
+        assert invitation.edit['note']['readers']['param']['items'] == [
+            {
+                "value": "ICLR.cc/2024/Conference/Program_Chairs",
+                "optional": False
+            },
+            {
+                "value": "ICLR.cc/2024/Conference/Submission1/Senior_Area_Chairs",
+                "optional": False
+            },
+            {
+                "value": "ICLR.cc/2024/Conference/Submission1/Area_Chairs",
+                "optional": True
+            },
+            {
+                "value": "ICLR.cc/2024/Conference/Submission1/Reviewers",
+                "optional": True
+            },
+            {
+                "value": "ICLR.cc/2024/Conference/Submission1/Reviewers/Submitted",
+                "optional": True
+            },
+            {
+                "prefix": "ICLR.cc/2024/Conference/Submission1/Reviewer_.*",
+                "optional": True
+            }
+        ]
+
+        ## allow public comments
+        comment_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'commentary_start_date': start_date.strftime('%Y/%m/%d'),
+                'commentary_end_date': end_date.strftime('%Y/%m/%d'),
+                'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
+                'additional_readers': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Assigned Submitted Reviewers', 'Authors', 'Public'],
+                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
+            },
+            forum=request_form.forum,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment_Stage',
+            readers=['ICLR.cc/2024/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICLRChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        invitation = openreview_client.get_invitation('ICLR.cc/2024/Conference/Submission1/-/Official_Comment')
+
+        assert invitation.edit['note']['readers']['param']['items'] == [
+            {
+                'value': 'everyone',
+                'optional': True
+            },
+            {
+                "value": "ICLR.cc/2024/Conference/Program_Chairs",
+                "optional": True
+            },
+            {
+                "value": "ICLR.cc/2024/Conference/Submission1/Senior_Area_Chairs",
+                "optional": True
+            },
+            {
+                "value": "ICLR.cc/2024/Conference/Submission1/Area_Chairs",
+                "optional": True
+            },
+            {
+                "value": "ICLR.cc/2024/Conference/Submission1/Reviewers",
+                "optional": True
+            },
+            {
+                "value": "ICLR.cc/2024/Conference/Submission1/Reviewers/Submitted",
+                "optional": True
+            },
+            {
+                "prefix": "ICLR.cc/2024/Conference/Submission1/Reviewer_.*",
+                "optional": True
+            },
+            {
+                "value": "ICLR.cc/2024/Conference/Submission1/Authors",
+                "optional": True
+            }
+        ]                             
