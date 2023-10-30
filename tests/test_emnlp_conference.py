@@ -13,9 +13,10 @@ class TestEMNLPConference():
         first_date = now + datetime.timedelta(days=1)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@emnlp.org', 'Program', 'EMNLPChair')
+        helpers.create_user('pc@emnlp.org', 'Program', 'EMNLPChair')
+        pc_client = openreview.Client(username='pc@emnlp.org', password=helpers.strong_password)
 
-        sac_client = helpers.create_user('sac@emnlp.com', 'SAC', 'EMNLPOne')
+        helpers.create_user('sac@emnlp.com', 'SAC', 'EMNLPOne')
         helpers.create_user('sac2@emnlp.org', 'SAC', 'EMNLPTwo')
         helpers.create_user('ac1@emnlp.org', 'AC', 'EMNLPOne')
         helpers.create_user('ac2@emnlp.org', 'AC', 'EMNLPTwo')

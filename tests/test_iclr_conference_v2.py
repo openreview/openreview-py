@@ -27,9 +27,11 @@ class TestICLRConference():
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@iclr.cc', 'Program', 'ICLRChair')
+        helpers.create_user('pc@iclr.cc', 'Program', 'ICLRChair')
+        pc_client = openreview.Client(username='pc@iclr.cc', password=helpers.strong_password)
 
-        sac_client = helpers.create_user('sac10@gmail.com', 'SAC', 'ICLROne')
+
+        helpers.create_user('sac10@gmail.com', 'SAC', 'ICLROne')
         helpers.create_user('sac2@iclr.cc', 'SAC', 'ICLRTwo')
         helpers.create_user('ac1@iclr.cc', 'AC', 'ICLROne')
         helpers.create_user('ac2@iclr.cc', 'AC', 'ICLRTwo')

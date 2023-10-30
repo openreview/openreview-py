@@ -32,7 +32,9 @@ class TestMultipleRoles():
         first_date = now + datetime.timedelta(days=1)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@lifelong-ml.cc', 'Program', 'CoLLAsChair')
+        helpers.create_user('pc@lifelong-ml.cc', 'Program', 'CoLLAsChair')
+        pc_client = openreview.Client(username='pc@lifelong-ml.cc', password=helpers.strong_password)
+
 
         helpers.create_user('reviewer1@lifelong-ml.cc', 'Reviewer', 'CoLLAsUMass', institution='umass.edu')
         helpers.create_user('reviewer2@lifelong-ml.cc', 'Reviewer', 'CoLLAsMIT', institution='mit.edu')

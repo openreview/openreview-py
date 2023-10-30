@@ -32,7 +32,9 @@ class TestNeurIPSConference():
         first_date = now + datetime.timedelta(days=1)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@neurips.cc', 'Program', 'NeurIPSChair')
+        helpers.create_user('pc@neurips.cc', 'Program', 'NeurIPSChair')
+        pc_client = openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
+
 
         helpers.create_user('another_andrew@mit.edu', 'Another', 'Andrew')
         helpers.create_user('sac1@google.com', 'SeniorArea', 'GoogleChair', institution='google.com')
@@ -1770,7 +1772,7 @@ OpenReview Team'''
         assert not client.get_groups('NeurIPS.cc/2021/Conference/Reviewers', member='external_reviewer4@gmail.com')
 
         ## External reviewer creates a profile and accepts the invitation again
-        external_reviewer=helpers.create_user('external_reviewer4@gmail.com', 'Reviewer', 'External')
+        helpers.create_user('external_reviewer4@gmail.com', 'Reviewer', 'External')
 
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
         notes = selenium.find_element(By.CLASS_NAME, "note_editor")

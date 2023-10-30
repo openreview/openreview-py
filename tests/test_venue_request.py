@@ -136,7 +136,9 @@ class TestVenueRequest():
         assert title_tag
         assert title_tag.text == 'Host a Venue'
 
-        pc_client = helpers.create_user('new_test_user@mail.com', 'NewFirstName', 'User')
+        helpers.create_user('new_test_user@mail.com', 'NewFirstName', 'User')
+        pc_client = openreview.Client(username='new_test_user@mail.com', password=helpers.strong_password)
+
 
         support_group = client.get_group(support_group_id)
         client.add_members_to_group(group=support_group, members=['~Support_User1'])
@@ -982,7 +984,9 @@ class TestVenueRequest():
 
     def test_venue_bid_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
-        reviewer_client = helpers.create_user('venue_reviewer1@mail.com', 'Venue', 'Reviewer')
+        helpers.create_user('venue_reviewer1@mail.com', 'Venue', 'Reviewer')
+        reviewer_client = openreview.Client(username='venue_reviewer1@mail.com', password=helpers.strong_password)
+
 
         reviewer_group_id = '{}/Reviewers'.format(venue['venue_id'])
         reviewer_group = client.get_group(reviewer_group_id)
@@ -1026,8 +1030,9 @@ class TestVenueRequest():
         pc_group = client.get_group('{}/Program_Chairs'.format(venue['venue_id']))
         client.add_members_to_group(group=pc_group, members=['pc@test.com'])
 
-        author_client = helpers.create_user('venue_author1@mail.com', 'Venue', 'Author')
-        reviewer_client = helpers.create_user('venue_reviewer2@mail.com', 'Venue', 'Reviewer')
+        helpers.create_user('venue_author1@mail.com', 'Venue', 'Author')
+        author_client = openreview.Client(username='venue_author1@mail.com', password=helpers.strong_password)
+        helpers.create_user('venue_reviewer2@mail.com', 'Venue', 'Reviewer')
 
         submission = author_client.post_note(openreview.Note(
             invitation='{}/-/Submission'.format(venue['venue_id']),
@@ -1063,7 +1068,8 @@ class TestVenueRequest():
         assert 'tom@mail.com' in recipients
         assert 'pc@test.com' in recipients
 
-        author_client = helpers.create_user('venue_author2@mail.com', 'Venue', 'Author')
+        helpers.create_user('venue_author2@mail.com', 'Venue', 'Author')
+        author_client = openreview.Client(username='venue_author2@mail.com', password=helpers.strong_password)
 
         submission = author_client.post_note(openreview.Note(
             invitation='{}/-/Submission'.format(venue['venue_id']),
@@ -1447,7 +1453,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
-        meta_reviewer_client = helpers.create_user('venue_ac1@mail.com', 'Venue', 'Ac')
+        helpers.create_user('venue_ac1@mail.com', 'Venue', 'Ac')
+        meta_reviewer_client = openreview.Client(username='venue_ac1@mail.com', password=helpers.strong_password)
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
         conference.setup_post_submission_stage(force=True)
@@ -2044,7 +2051,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
     def test_post_submission_deadline_edit(self, client, test_client, selenium, request_page, helpers, venue):
-        author_client = helpers.create_user('venue_author3@mail.com', 'Venue', 'Author')
+        helpers.create_user('venue_author3@mail.com', 'Venue', 'Author')
+        author_client = openreview.Client(username='venue_author3@mail.com', password=helpers.strong_password)
         submission = author_client.post_note(openreview.Note(
             invitation='{}/-/Submission'.format(venue['venue_id']),
             readers=[

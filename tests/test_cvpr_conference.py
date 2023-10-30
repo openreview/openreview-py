@@ -32,7 +32,9 @@ class TestCVPRSConference():
         first_date = now + datetime.timedelta(days=1)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@cvpr.cc', 'Program', 'CVPRChair')
+        helpers.create_user('pc@cvpr.cc', 'Program', 'CVPRChair')
+        pc_client = openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
+
 
         helpers.create_user('sac1@cvpr.cc', 'SAC', 'CVPROne')
         helpers.create_user('ac1@cvpr.cc', 'AC', 'CVPROne')
