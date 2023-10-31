@@ -344,7 +344,7 @@ def process(client, note, invitation):
                 decision_options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
 
             content['send_decision_notifications'] = {
-                'description': 'Would you like to notify the authors regarding the decision? If yes, please carefully review the template below for each decision option before you click submit to send out the emails.',
+                'description': 'Would you like to notify the authors regarding the decision? If yes, please carefully review the template below for each decision option before you click submit to send out the emails. Note that you can only send email notifications from the OpenReview UI once. If you need to send additional emails, you can do so by using the python client.',
                 'value-radio': [
                     'Yes, send an email notification to the authors',
                     'No, I will send the emails to the authors'
@@ -479,6 +479,30 @@ Best,
                     for decision in decision_options
                 }
                 conference.send_decision_notifications(decision_options, email_messages)
+
+                if forum_note.content.get('api_version', '1') == '2':
+
+                    notes = client.get_notes(invitation=SUPPORT_GROUP+'/-/Request'+str(forum_note.number)+'/Comment')
+                    posted_status = False
+                    for note in notes:
+                        if note.content.get('title', '') == 'Decision Notification Status':
+                            posted_status = True
+                            break
+
+                    if not posted_status:
+                        comment_note = openreview.Note(
+                            invitation = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Comment',
+                            forum = forum_note.id,
+                            replyto = forum_note.id,
+                            readers = comment_readers,
+                            writers = [SUPPORT_GROUP],
+                            signatures = [SUPPORT_GROUP],
+                            content = {
+                                'title': 'Decision Notification Status',
+                                'comment': f'Decision notifications have been sent to the authors. You can check the status of the emails by clicking on this link: https://openreview.net/messages?parentGroup={conference.id}/Authors',
+                            }
+                        )
+                        client.post_note(comment_note)
 
         submission_content = conference.submission_stage.get_content(forum_note.content.get('api_version', '1'))
         submission_revision_invitation = client.get_invitation(SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Submission_Revision_Stage')
