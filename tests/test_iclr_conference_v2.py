@@ -280,6 +280,7 @@ class TestICLRConference():
                 'Official Website URL': 'https://iclr.cc',
                 'program_chair_emails': ['pc@iclr.cc', 'pc3@iclr.cc'],
                 'contact_email': 'pc@iclr.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2024/07/01',
                 'abstract_registration_deadline': abstract_date.strftime('%Y/%m/%d'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
