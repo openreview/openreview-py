@@ -8,6 +8,15 @@ tabs.push({
     details: 'presentation',
     sort: 'pdate:desc'    
   }
+},
+{
+  name: 'Previous Publications',
+  query: {
+    'content.authorids': user.profile.id,
+    details: 'invitation',
+    sort: 'pdate:desc'
+  },
+  apiVersion: 1
 })
 
 return {
