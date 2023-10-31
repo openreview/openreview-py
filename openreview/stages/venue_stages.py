@@ -942,16 +942,18 @@ class CommentStage(object):
 
     def get_readers(self, conference, number, api_version='1'):
 
-        readers = [{ 'value': conference.get_program_chairs_id(), 'optional': False }]
         if api_version == '2' and self.reader_selection:
-            if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.readers:
-                readers.append({ 'value': conference.get_senior_area_chairs_id(number), 'optional': False })
 
-            if self.allow_public_comments or self.Readers.EVERYONE in self.readers:
+            readers  = []
+            is_everyone_included = self.allow_public_comments or self.Readers.EVERYONE in self.readers
+
+            if is_everyone_included:
                 readers.append({ 'value': 'everyone', 'optional': True })
 
-            if self.reader_selection:
-                readers.append({ 'prefix': conference.get_anon_reviewer_id(number=number, anon_id='.*'), 'optional': True })
+            readers.append({ 'value': conference.get_program_chairs_id(), 'optional': is_everyone_included })
+
+            if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.readers:
+                readers.append({ 'value': conference.get_senior_area_chairs_id(number), 'optional': is_everyone_included })
 
             if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.readers:
                 readers.append({ 'value': conference.get_area_chairs_id(number), 'optional': True })
@@ -961,6 +963,8 @@ class CommentStage(object):
 
             if self.Readers.REVIEWERS_SUBMITTED in self.readers:
                 readers.append({ 'value': conference.get_reviewers_id(number) + '/Submitted', 'optional': True })
+
+            readers.append({ 'prefix': conference.get_anon_reviewer_id(number=number, anon_id='.*'), 'optional': True })
 
             if self.Readers.AUTHORS in self.readers:
                 readers.append({ 'value': conference.get_authors_id(number), 'optional': True })                
