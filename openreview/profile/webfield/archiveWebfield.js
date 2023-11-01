@@ -49,6 +49,7 @@ Please contact the OpenReview support team at [info@openreview.net](info@openrev
 `  
     },
     submissionId: `${entity.id}/-/Direct_Upload`,
+    submissionConfirmationMessage: 'Your publication has been uploaded.',
     parentGroupId: entity.parent,
     apiVersion: 2,
     tabs: tabs

@@ -675,14 +675,14 @@ class TestTools():
             openreview.api.Note(
                 id = '5',
                 content = {
-                    'year': { 'value': '2017' }
+                    'year': { 'value': 2017 }
                 }
             ),
             openreview.api.Note(
                 id = '6',
                 pdate = 111111111111111111111,
                 content = {
-                    'year': { 'value': '2018' }
+                    'year': { 'value': 2018 }
                 }
             )
         ]
