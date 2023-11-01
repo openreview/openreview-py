@@ -56,6 +56,7 @@ class TestMultipleRoles():
                 'Official Website URL': 'https://lifelong-ml.cc/',
                 'program_chair_emails': ['pc@lifelong-ml.cc'],
                 'contact_email': 'pc@lifelong-ml.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'No, our venue does not have Senior Area Chairs',
                 'Venue Start Date': '2021/12/01',

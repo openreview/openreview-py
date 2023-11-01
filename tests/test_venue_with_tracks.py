@@ -102,6 +102,7 @@ class TestVenueWithTracks():
                 'Official Website URL': 'https://www2024.thewebconf.org/',
                 'program_chair_emails': ['pc@webconf.org'],
                 'contact_email': 'pc@webconf.org',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chair_roles': [
                     "Senior_Area_Chairs",
@@ -226,6 +227,7 @@ class TestVenueWithTracks():
                 'Official Website URL': 'https://www2024.thewebconf.org/',
                 'program_chair_emails': ['pc@webconf.org'],
                 'contact_email': 'pc@webconf.org',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
@@ -421,6 +423,7 @@ class TestVenueWithTracks():
                 'Official Website URL': 'https://www2024.thewebconf.org/',
                 'program_chair_emails': ['pc@webconf.org'],
                 'contact_email': 'pc@webconf.org',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
