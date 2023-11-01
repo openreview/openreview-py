@@ -736,6 +736,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
         ## close the submissions
         now = datetime.datetime.utcnow()
         due_date = now - datetime.timedelta(days=1)
+        exp_date = now + datetime.timedelta(days=10)
         pc_client.post_note(openreview.Note(
             content={
                 'title': 'Thirty-ninth International Conference on Machine Learning',
@@ -805,8 +806,8 @@ reviewer6@gmail.com, Reviewer ICMLSix
                             }
                         }
                     }
-                }
-
+                },
+                'withdraw_submission_expiration': exp_date.strftime('%Y/%m/%d')
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
@@ -824,7 +825,12 @@ reviewer6@gmail.com, Reviewer ICMLSix
         assert submission_invitation.expdate < openreview.tools.datetime_millis(now)
 
         assert len(pc_client_v2.get_all_invitations(invitation='ICML.cc/2023/Conference/-/Withdrawal')) == 101
+        withdrawal_inv = pc_client_v2.get_invitation('ICML.cc/2023/Conference/Submission1/-/Withdrawal')
+        assert withdrawal_inv.expdate == openreview.tools.datetime_millis(exp_date.replace(hour=0, minute=0, second=0, microsecond=0))
         assert len(pc_client_v2.get_all_invitations(invitation='ICML.cc/2023/Conference/-/Desk_Rejection')) == 101
+        desk_reject_inv = pc_client_v2.get_invitation('ICML.cc/2023/Conference/Submission1/-/Desk_Rejection')
+        desk_reject_due_date = due_date + datetime.timedelta(days=90)
+        assert desk_reject_inv.expdate == openreview.tools.datetime_millis(desk_reject_due_date.replace(hour=0, minute=0, second=0, microsecond=0))
         assert pc_client_v2.get_invitation('ICML.cc/2023/Conference/-/PC_Revision')
 
         ## make submissions visible to ACs only

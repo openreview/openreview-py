@@ -416,6 +416,15 @@ def get_submission_stage(request_forum, venue):
 
     second_deadline_remove_fields = request_forum.content.get('second_deadline_remove_options', [])
 
+    withdraw_submission_exp_date = request_forum.content.get('withdraw_submission_expiration', '').strip()
+    if withdraw_submission_exp_date:
+        try:
+            withdraw_submission_exp_date = datetime.datetime.strptime(withdraw_submission_exp_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            withdraw_submission_exp_date = datetime.datetime.strptime(withdraw_submission_exp_date, '%Y/%m/%d')
+    else:
+        withdraw_submission_exp_date = None
+
     return openreview.stages.SubmissionStage(name = name,
         double_blind=double_blind,
         start_date=submission_start_date,
@@ -426,6 +435,7 @@ def get_submission_stage(request_forum, venue):
         hide_fields=hide_fields,
         subject_areas=subject_areas,
         create_groups=create_groups,
+        withdraw_submission_exp_date=withdraw_submission_exp_date,
         author_names_revealed=author_names_revealed,
         papers_released=papers_released,
         readers=readers,
