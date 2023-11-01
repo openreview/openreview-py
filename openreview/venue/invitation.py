@@ -2094,7 +2094,7 @@ class InvitationBuilder(object):
                                 'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in custom_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')] 
                             }
                         },
-                        'readers': custom_stage.get_readers(self.venue, '${4/content/noteNumber/value}'),
+                        'readers': ['$2/note/readers'],
                         'writers': [venue_id],
                         'note': {
                             'id': {
@@ -2113,7 +2113,7 @@ class InvitationBuilder(object):
                                 }
                             },
                             'signatures': ['${3/signatures}'],
-                            'readers': ['${3/readers}'],
+                            'readers': custom_stage.get_readers(self.venue, '${5/content/noteNumber/value}'),
                             'writers': [venue_id, '${3/signatures}'],
                             'content': content
                         }
