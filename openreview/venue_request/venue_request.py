@@ -871,7 +871,7 @@ class VenueStages():
                 'required': True
             },
             'send_decision_notifications': {
-                'description': 'Would you like to notify the authors regarding the decision? If yes, please carefully review the template below for each decision option before you click submit to send out the emails.',
+                'description': 'Would you like to notify the authors regarding the decision? If yes, please carefully review the template below for each decision option before you click submit to send out the emails. Note that you can only send email notifications from the OpenReview UI once. If you need to send additional emails, you can do so by using the python client.',
                 'value-radio': [
                     'Yes, send an email notification to the authors',
                     'No, I will send the emails to the authors'
