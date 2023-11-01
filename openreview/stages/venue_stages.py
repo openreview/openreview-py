@@ -1323,7 +1323,7 @@ class CustomStage(object):
         REVIEWS = 2
         METAREVIEWS = 3
 
-    def __init__(self, name, reply_to, source, start_date=None, due_date=None, exp_date=None, invitees=[], readers=[], content={}, multi_reply = False, email_pcs = False, email_sacs = False, notify_readers=False, email_template=None):
+    def __init__(self, name, reply_to, source, start_date=None, due_date=None, exp_date=None, invitees=[], readers=[], content={}, multi_reply = False, email_pcs = False, email_sacs = False, notify_readers=False, email_template=None, allow_de_anonymization=False):
         self.name = name
         self.reply_to = reply_to
         self.source = source
@@ -1338,6 +1338,7 @@ class CustomStage(object):
         self.email_sacs = email_sacs
         self.notify_readers = notify_readers
         self.email_template = email_template
+        self.allow_de_anonymization = allow_de_anonymization
 
     def get_invitees(self, conference, number):
         invitees = [conference.get_program_chairs_id()]
@@ -1392,9 +1393,15 @@ class CustomStage(object):
         if conference.use_ethics_reviewers and self.Participants.ETHICS_REVIEWERS_ASSIGNED in self.readers:
             readers.append(conference.get_ethics_reviewers_id(number))
 
+        if self.allow_de_anonymization:
+            readers.append('${3/signatures}')
+
         return readers
 
     def get_signatures(self, conference, number):
+        if self.allow_de_anonymization:
+            return ['~.*', conference.get_program_chairs_id()]
+
         committee = [conference.get_program_chairs_id()]
 
         if conference.use_senior_area_chairs and self.Participants.SENIOR_AREA_CHAIRS_ASSIGNED in self.invitees:
