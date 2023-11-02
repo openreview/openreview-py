@@ -18,7 +18,7 @@ class TestProfileManagement():
         profile_management.setup()
         return profile_management
     
-    def test_import_dblp_notes(self, client, profile_management, test_client, helpers):
+    def test_import_dblp_notes(self, client, openreview_client, profile_management, test_client, helpers):
 
         note = test_client.post_note(
             openreview.Note(
@@ -27,7 +27,7 @@ class TestProfileManagement():
                 writers=['dblp.org'],
                 signatures=['~SomeFirstName_User1'],
                 content={
-                    'dblp': '<article key=\"journals/iotj/WangJWSGZ23\" mdate=\"2023-04-16\">\n<author orcid=\"0000-0003-4015-0348\" pid=\"188/7759-93\">Chao Wang 0093</author>\n<author orcid=\"0000-0002-3703-121X\" pid=\"00/8334\">Chunxiao Jiang</author>\n<author orcid=\"0000-0003-3170-8952\" pid=\"62/2631-1\">Jingjing Wang 0001</author>\n<author orcid=\"0000-0002-7558-5379\" pid=\"66/800\">Shigen Shen</author>\n<author orcid=\"0000-0001-9831-2202\" pid=\"01/267-1\">Song Guo 0001</author>\n<author orcid=\"0000-0002-0990-5581\" pid=\"24/9047\">Peiying Zhang</author>\n<title>Blockchain-Aided Network Resource Orchestration in Intelligent Internet of Things.</title>\n<pages>6151-6163</pages>\n<year>2023</year>\n<month>April 1</month>\n<volume>10</volume>\n<journal>IEEE Internet Things J.</journal>\n<number>7</number>\n<ee>https://doi.org/10.1109/JIOT.2022.3222911</ee>\n<url>db/journals/iotj/iotj10.html#WangJWSGZ23</url>\n</article>'
+                    'dblp': '<article key=\"journals/iotj/WangJWSGZ23\" mdate=\"2023-04-16\">\n<author orcid=\"0000-0003-4015-0348\" pid=\"188/7759-93\">Chao Wang 0093</author>\n              <author orcid=\"0000-0002-3703-121X\" pid=\"00/8334\">Chunxiao Jiang</author>\n<author orcid=\"0000-0003-3170-8952\" pid=\"62/2631-1\">Jingjing Wang 0001</author>\n<author orcid=\"0000-0002-7558-5379\" pid=\"66/800\">Shigen Shen</author>\n<author orcid=\"0000-0001-9831-2202\" pid=\"01/267-1\">Song Guo 0001</author>\n<author orcid=\"0000-0002-0990-5581\" pid=\"24/9047\">Peiying Zhang</author>\n<title>Blockchain-Aided Network Resource Orchestration in Intelligent Internet of Things.</title>\n<pages>6151-6163</pages>\n<year>2023</year>\n<month>April 1</month>\n<volume>10</volume>\n<journal>IEEE Internet Things J.</journal>\n<number>7</number>\n<ee>https://doi.org/10.1109/JIOT.2022.3222911</ee>\n<url>db/journals/iotj/iotj10.html#WangJWSGZ23</url>\n</article>'
                 }
             )
         )
@@ -57,8 +57,147 @@ class TestProfileManagement():
         note = test_client.get_note(note.id)
         assert note.content['title'] == 'Decentral and Incentivized Federated Learning Frameworks: A Systematic Literature Review'
         assert datetime.datetime.fromtimestamp(note.cdate/1000).year == 2023
-        assert datetime.datetime.fromtimestamp(note.cdate/1000).month == 2                
+        assert datetime.datetime.fromtimestamp(note.cdate/1000).month == 2 
 
+        ## test API2
+        test_client_v2 = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+
+        edit = test_client_v2.post_note_edit(
+            invitation = 'DBLP.org/-/Record',
+            signatures = ['~SomeFirstName_User1'],
+            content = {
+                'xml': {
+                    'value': '<article key=\"journals/iotj/WangJWSGZ23\" mdate=\"2023-04-16\">\n<author orcid=\"0000-0003-4015-0348\" pid=\"188/7759-93\">Chao Wang 0093</author>\n              <author orcid=\"0000-0002-3703-121X\" pid=\"00/8334\">Chunxiao Jiang</author>\n<author orcid=\"0000-0003-3170-8952\" pid=\"62/2631-1\">Jingjing Wang 0001</author>\n<author orcid=\"0000-0002-7558-5379\" pid=\"66/800\">Shigen Shen</author>\n<author orcid=\"0000-0001-9831-2202\" pid=\"01/267-1\">Song Guo 0001</author>\n<author orcid=\"0000-0002-0990-5581\" pid=\"24/9047\">Peiying Zhang</author>\n<title>Blockchain-Aided Network Resource Orchestration in Intelligent Internet of Things.</title>\n<pages>6151-6163</pages>\n<year>2023</year>\n<month>April 1</month>\n<volume>10</volume>\n<journal>IEEE Internet Things J.</journal>\n<number>7</number>\n<ee>https://doi.org/10.1109/JIOT.2022.3222911</ee>\n<url>db/journals/iotj/iotj10.html#WangJWSGZ23</url>\n</article>'
+
+                }
+            },
+            note = openreview.api.Note(
+                content={
+                    'title': {
+                        'value': 'Blockchain-Aided Network Resource Orchestration in Intelligent Internet of Things',
+                    },
+                    'authors': {
+                        'value': ['Chao Wang 0093', 'Chunxiao Jiang', 'Jingjing Wang 0001', 'Shigen Shen', 'Song Guo 0001', 'Peiying Zhang'],
+                    },
+                    'venue': {
+                        'value': 'WangJWSGZ23',
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        note = test_client_v2.get_note(edit['note']['id'])
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit']
+        assert note.cdate
+        assert note.pdate
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
+
+        andrew_client_v2 = helpers.create_user('mccallum@profile.org', 'Andrew', 'McCallum', alternates=[], institution='google.com')
+
+        xml = '''<inproceedings key="conf/acl/ChangSRM23" mdate="2023-08-10">
+<author pid="130/1022">Haw-Shiuan Chang</author>
+<author pid="301/6251">Ruei-Yao Sun</author>
+<author pid="331/1034">Kathryn Ricci</author>
+<author pid="m/AndrewMcCallum">Andrew McCallum</author>
+<title>Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling.</title>
+<pages>821-854</pages>
+<year>2023</year>
+<booktitle>ACL (1)</booktitle>
+<ee type="oa">https://doi.org/10.18653/v1/2023.acl-long.48</ee>
+<ee type="oa">https://aclanthology.org/2023.acl-long.48</ee>
+<crossref>conf/acl/2023-1</crossref>
+<url>db/conf/acl/acl2023-1.html#ChangSRM23</url>
+</inproceedings>
+'''
+
+        edit = andrew_client_v2.post_note_edit(
+            invitation = 'DBLP.org/-/Record',
+            signatures = ['~Andrew_McCallum1'],
+            content = {
+                'xml': {
+                    'value': xml
+                }
+            },
+            note = openreview.api.Note(
+                content={
+                    'title': {
+                        'value': 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling.',
+                    },
+                    'authors': {
+                        'value': ['Haw-Shiuan Chang', 'Ruei-Yao Sun', 'Kathryn Ricci', 'Andrew McCallum'],
+                    },
+                    'authorids': {
+                        'value': ['', '', '', '~Andrew_McCallum1'],
+                    },
+                    'venue': {
+                        'value': 'ACL (1)',
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        note = andrew_client_v2.get_note(edit['note']['id'])
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit']
+        assert note.cdate
+        assert note.pdate
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
+        assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+        assert note.content['authorids']['value'] == [
+            "https://dblp.org/search/pid/api?q=author:Haw-Shiuan_Chang:",
+            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
+            "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
+            "~Andrew_McCallum1"
+        ]
+
+        haw_shiuan_client_v2 = helpers.create_user('haw@profile.org', 'Haw-Shiuan', 'Chang', alternates=[], institution='umass.edu')
+
+        edit = haw_shiuan_client_v2.post_note_edit(
+            invitation = 'DBLP.org/-/Author_Coreference',
+            signatures = ['~Haw-Shiuan_Chang1'],
+            note = openreview.api.Note(
+                id = note.id,
+                content={
+                    'authorids': {
+                        'value': [
+                            "~Haw-Shiuan_Chang1",
+                            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
+                            "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
+                            "~Andrew_McCallum1"
+                        ]
+                    }
+                }
+            )
+        )
+
+        note = haw_shiuan_client_v2.get_note(edit['note']['id'])
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference']
+        assert note.cdate
+        assert note.mdate
+        assert note.pdate
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
+        assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+        assert note.content['authorids']['value'] == [
+            "~Haw-Shiuan_Chang1",
+            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
+            "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
+            "~Andrew_McCallum1"
+        ]
    
     def test_remove_alternate_name(self, client, openreview_client, profile_management, helpers):
 

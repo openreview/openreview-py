@@ -42,6 +42,22 @@ class ProfileManagement():
                 )
             )
 
+        dblp_upload_group = openreview.tools.get_group(self.client, 'dblp.org/upload')
+        if dblp_upload_group is None:
+            self.client.post_group(
+                openreview.Group(
+                    id = 'dblp.org/upload',
+                    readers = ['dblp.org/upload'],
+                    writers = ['dblp.org'],
+                    nonreaders = [],
+                    signatures = ['dblp.org'],
+                    signatories = ['dblp.org'],
+                    members = [
+                        self.support_group_id
+                    ]
+                )
+            )            
+
         content = {
             "dblp": {
                 "value-regex": "(.*\\n)+.*"
@@ -96,7 +112,246 @@ class ProfileManagement():
                     }
                 }
             }
-        ))                           
+        ))
+
+        self.client.post_invitation(openreview.Invitation(
+            id='dblp.org/-/abstract',
+            readers=['everyone'],
+            writers=['dblp.org'],
+            signatures=['dblp.org'],
+            invitees=['~'],
+            reply={
+                'referentInvitation': 'dblp.org/-/record',
+                'readers': {
+                    'values': ['everyone']
+                },
+                'writers': {
+                    'values':[],
+                },
+                'signatures': {
+                    'values': ["dblp.org"]
+                },
+                "content": {
+                    "abstract": {
+                        "value-regex": "[\\S\\s]{1,5000000}"
+                    }
+                }
+            }
+        ))
+
+        self.client.post_invitation(openreview.Invitation(
+            id='dblp.org/-/pdf',
+            readers=['everyone'],
+            writers=['dblp.org'],
+            signatures=['dblp.org'],
+            invitees=['~'],
+            reply={
+                'referentInvitation': 'dblp.org/-/record',
+                'readers': {
+                    'values': ['everyone']
+                },
+                'writers': {
+                    'values':[],
+                },
+                'signatures': {
+                    'values': ["dblp.org"]
+                },
+                "content": {
+                    "pdf": {
+                        "value-regex": "^https?://.+$"
+                    }
+                }
+            }
+        ))                
+
+        ## set API 2 groups and invitations
+        dblp_group_id = 'DBLP.org'
+        dblp_uploader_group_id = f'{dblp_group_id}/Uploader'
+
+        dblp_group = openreview.tools.get_group(self.client, dblp_group_id)
+        if dblp_group is None:
+            self.client_v2.post_group_edit(
+                invitation = f'{self.super_user}/-/Edit',
+                signatures = [self.super_user],
+                group = openreview.api.Group(
+                    id = dblp_group_id,
+                    readers = ['everyone'],
+                    writers = [dblp_group_id],
+                    nonreaders = [],
+                    signatures = ['~Super_User1'],
+                    signatories = [dblp_group_id],
+                    members = []
+                )
+            )
+
+        meta_invitation_id = f'{dblp_group_id}/-/Edit'
+        self.client_v2.post_invitation_edit(
+            invitations = None,
+            signatures = [self.super_user],
+            invitation = openreview.api.Invitation(
+                id=meta_invitation_id,
+                invitees=[dblp_uploader_group_id],
+                readers=[dblp_group_id, dblp_uploader_group_id],
+                signatures=[dblp_group_id],                
+                edit=True
+            )
+        )
+
+        dblp_uploader_group = openreview.tools.get_group(self.client, dblp_uploader_group_id)
+        if dblp_uploader_group is None:
+            self.client_v2.post_group_edit(
+                invitation = meta_invitation_id,
+                signatures = [dblp_group_id],
+                group = openreview.api.Group(
+                    id = dblp_uploader_group_id,
+                    readers = [dblp_uploader_group_id],
+                    writers = [dblp_group_id],
+                    nonreaders = [],
+                    signatures = [dblp_group_id],
+                    signatories = [dblp_group_id],
+                    members = []
+                )
+            )
+
+        record_invitation_id = f'{dblp_group_id}/-/Record'
+        with open(os.path.join(os.path.dirname(__file__), 'process/dblp_record_process.js'), 'r') as f:
+            file_content = f.read()
+
+        self.client_v2.post_invitation_edit(
+            invitations = meta_invitation_id,
+            signatures = [dblp_group_id],
+            invitation = openreview.api.Invitation(
+                id=record_invitation_id,
+                readers=['everyone'],
+                writers=[dblp_group_id],
+                signatures=[dblp_group_id],
+                invitees=['~'],
+                process=file_content,
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True },
+                                { 'value': dblp_uploader_group_id, 'optional': True } 
+                            ]
+                        } 
+                    },
+                    'writers':  [dblp_uploader_group_id, '${2/signatures}'],
+                    'content': {
+                        'xml': {
+                            'value': {
+                                'param': {
+                                    'type': 'string'
+                                }
+                            }
+                        }
+                    },
+                    'note': {
+                        'signatures': [ '${3/signatures}' ],
+                        'readers': ['everyone'],
+                        'writers': [ '~'],
+                        'license': 'CC BY-SA 4.0',
+                        'content': {
+                            'title': {
+                                'order': 1,
+                                'description': 'Title of paper.',
+                                'value': { 
+                                    'param': { 
+                                        'type': 'string',
+                                        'regex': '^.{1,250}$'
+                                    }
+                                }
+                            },
+                            'authors': {
+                                'order': 2,
+                                'value': {
+                                    'param': {
+                                        'type': 'string[]',
+                                        'regex': '[^;,\\n]+(,[^,\\n]+)*'
+                                    }
+                                }
+                            },
+                            'authorids': {
+                                'order': 2,
+                                'value': {
+                                    'param': {
+                                        'type': 'string[]',
+                                        'optional': True
+                                    }
+                                }
+                            },                        
+                            'venue': {
+                                'order': 3,
+                                'description': 'Enter the venue where the paper was published.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            },
+                            'venueid': {
+                                'order': 4,
+                                'value': {
+                                    'param': {
+                                        'type': "string",
+                                        'const': dblp_group_id,
+                                    }
+                                }
+                            }
+                        }
+                    }                                        
+                }
+            )
+        )
+
+        author_coreference_invitation_id = f'{dblp_group_id}/-/Author_Coreference'
+        
+        self.client_v2.post_invitation_edit(
+            invitations = meta_invitation_id,
+            signatures = [dblp_group_id],
+            invitation = openreview.api.Invitation(
+                id=author_coreference_invitation_id,
+                readers=['everyone'],
+                writers=[dblp_group_id],
+                signatures=[dblp_group_id],
+                invitees=['~'],
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True },
+                                { 'value': dblp_uploader_group_id, 'optional': True } 
+                            ]
+                        } 
+                    },
+                    'writers':  [dblp_group_id, '${2/signatures}'],
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': record_invitation_id
+                            }
+                        },
+                        'content': {
+                            'authorids': {
+                                'order': 2,
+                                'value': {
+                                    'param': {
+                                        'type': 'string[]'
+                                    }
+                                }
+                            }
+                        }
+                    }                                        
+                }
+            )
+        )
+
+                                          
+
 
     def set_remove_name_invitations(self):
 
