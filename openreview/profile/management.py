@@ -350,7 +350,41 @@ class ProfileManagement():
             )
         )
 
-                                          
+        abstract_invitation_id = f'{dblp_group_id}/-/Abstract'
+        
+        self.client_v2.post_invitation_edit(
+            invitations = meta_invitation_id,
+            signatures = [dblp_group_id],
+            invitation = openreview.api.Invitation(
+                id=abstract_invitation_id,
+                readers=['everyone'],
+                writers=[dblp_group_id],
+                signatures=[dblp_group_id],
+                invitees=[dblp_uploader_group_id],
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': [dblp_uploader_group_id],
+                    'writers':  [dblp_group_id, dblp_uploader_group_id],
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': record_invitation_id
+                            }
+                        },
+                        'content': {
+                            'abstract': {
+                                'order': 1,
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            }
+                        }
+                    }                                        
+                }
+            )
+        )                                          
 
 
     def set_remove_name_invitations(self):

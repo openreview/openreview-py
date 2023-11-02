@@ -198,6 +198,23 @@ class TestProfileManagement():
             "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
             "~Andrew_McCallum1"
         ]
+
+        edit = openreview_client.post_note_edit(
+            invitation = 'DBLP.org/-/Abstract',
+            signatures = ['DBLP.org/Uploader'],
+            note = openreview.api.Note(
+                id = note.id,
+                content={
+                    'abstract': {
+                        'value': 'this is an abstract'
+                    }
+                }
+            )
+        )
+
+        note = haw_shiuan_client_v2.get_note(edit['note']['id'])
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference', 'DBLP.org/-/Abstract']
+        assert note.content['abstract']['value'] == 'this is an abstract'
    
     def test_remove_alternate_name(self, client, openreview_client, profile_management, helpers):
 
