@@ -69,6 +69,8 @@ class Venue(object):
         self.senior_area_chair_identity_readers = []
         self.automatic_reviewer_assignment = False
         self.decision_heading_map = {}
+        self.allow_gurobi_solver = False
+        self.submission_license = None
         self.use_publication_chairs = False
 
     def get_id(self):
@@ -145,6 +147,9 @@ class Venue(object):
 
     def get_custom_max_papers_id(self, committee_id):
         return self.get_invitation_id('Custom_Max_Papers', prefix=committee_id)
+    
+    def get_constraint_label_id(self, committee_id):
+        return self.get_invitation_id('Constraint_Label', prefix=committee_id)
 
     def get_recommendation_id(self, committee_id=None):
         if not committee_id:
@@ -723,9 +728,14 @@ Total Errors: {len(errors)}
 
             for field, value in submission.content.items():
                 if field in final_hide_fields:
-                    content[field] = {
-                        'readers': [venue_id, self.get_authors_id(submission.number)]
-                    }
+                    if self.use_publication_chairs and field in ['authors', 'authorids'] and note_accepted:
+                        content[field] = {
+                            'readers': [venue_id, self.get_authors_id(submission.number), self.get_publication_chairs_id()]
+                        }
+                    else:
+                        content[field] = {
+                            'readers': [venue_id, self.get_authors_id(submission.number)]
+                        }
                 if field not in final_hide_fields and 'readers' in value:
                     content[field] = {
                         'readers': { 'delete': True }
@@ -773,7 +783,7 @@ Total Errors: {len(errors)}
                 message = messages[decision_note['content']['decision']['value']]
                 final_message = message.replace("{{submission_title}}", note.content['title']['value'])
                 final_message = final_message.replace("{{forum_url}}", f'https://openreview.net/forum?id={note.id}')
-                self.client.post_message(subject, recipients=note.content['authorids']['value'], message=final_message)
+                self.client.post_message(subject, recipients=[self.get_authors_id(note.number)], message=final_message, parentGroup=self.get_authors_id())
 
         tools.concurrent_requests(send_notification, paper_notes)
 
@@ -1038,9 +1048,11 @@ OpenReview Team'''
             if hasattr(venue_group, 'domain') and venue_group.content:
                 
                 print(f'Check active venue {venue_group.id}')
-                invite_assignment_invitation_id = venue_group.content.get('reviewers_invite_assignment_id', {}).get('value')
 
-                if invite_assignment_invitation_id:
+                edge_invitations = client.get_all_invitations(prefix=venue_id, type='edge')
+                invite_assignment_invitations = [inv.id for inv in edge_invitations if inv.id.endswith('Invite_Assignment')]
+
+                for invite_assignment_invitation_id in invite_assignment_invitations:
                     
                     ## check if it is expired?
                     invite_assignment_invitation = openreview.tools.get_invitation(client, invite_assignment_invitation_id)

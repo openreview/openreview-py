@@ -175,7 +175,8 @@ class Matching(object):
         edge_label = {
             'param': {
                 'regex': '.*',
-                'optional': True
+                'optional': True,
+                'deletable': True
             }
         }
 
@@ -193,6 +194,26 @@ class Matching(object):
                 }
             }
             edge_label = None
+
+        if venue.get_constraint_label_id(self.match_group.id) == edge_id:
+            edge_head = {
+                'param': {
+                    'type': 'group',
+                    'const': self.match_group.id
+                }
+            }
+
+            edge_weight = {
+                'param': {
+                    'minimum': -1,
+                    'optional': True
+                }
+            }
+            edge_label = {
+                "param": {
+                    "regex": ".*",
+                }                
+            }            
 
         if self.alternate_matching_group:
             edge_head = {
@@ -295,7 +316,7 @@ class Matching(object):
         ## for AC conflicts, check SAC conflicts too
         sac_user_info_by_id = {}
         if self.is_area_chair:
-            sacs_by_ac =  { g['id']['head']: [v['tail'] for v in g['values']] for g in self.client.get_grouped_edges(invitation=self.venue.get_assignment_id(self.senior_area_chairs_id), groupby='head', select=None)}
+            sacs_by_ac =  { g['id']['head']: [v['tail'] for v in g['values']] for g in self.client.get_grouped_edges(invitation=self.venue.get_assignment_id(self.senior_area_chairs_id, deployed=True), groupby='head', select=None)}
             if sacs_by_ac:
                 sac_user_profiles = openreview.tools.get_profiles(self.client, self.client.get_group(self.senior_area_chairs_id).members, with_publications=True)
                 if self.sac_profile_info:
@@ -303,6 +324,12 @@ class Matching(object):
                     sac_user_info_by_id = { p.id: info_funcion(p, self.sac_n_years, self.venue.get_submission_venue_id()) for p in sac_user_profiles }
                 else:
                     sac_user_info_by_id = { p.id: info_function(p, compute_conflicts_n_years) for p in sac_user_profiles }
+
+            pcs_by_sac = { g['id']['head']: g['values'][0]['tail'] for g in self.client.get_grouped_edges(invitation=self.venue.get_assignment_id(self.venue.get_program_chairs_id(), deployed=True), groupby='head', select=None)}
+            if pcs_by_sac:
+                pc_user_profiles = openreview.tools.get_profiles(self.client, self.client.get_group(self.venue.get_program_chairs_id()).members, with_publications=True)
+                pc_user_info_by_id = { p.id: info_function(p, compute_conflicts_n_years) for p in pc_user_profiles }
+
         edges = []
 
         for submission in tqdm(submissions, total=len(submissions), desc='_build_conflicts'):
@@ -343,7 +370,19 @@ class Matching(object):
                             conflicts.update(author_relations.intersection(sac_info['emails']))
                             conflicts.update(author_emails.intersection(sac_info['relations']))
                             conflicts.update(author_emails.intersection(sac_info['emails']))
-                            conflicts.update(author_publications.intersection(sac_info['publications']))        
+                            conflicts.update(author_publications.intersection(sac_info['publications']))
+
+                ## Transfer PC conflicts
+                if len(conflicts) == 0 and self.is_area_chair and pcs_by_sac:
+                    assigned_pcs = [pcs_by_sac.get(sac) for sac in assigned_sacs]
+                    for pc in assigned_pcs:
+                        pc_info = pc_user_info_by_id.get(pc)
+                        if pc_info:
+                            conflicts.update(author_domains.intersection(pc_info['domains']))
+                            conflicts.update(author_relations.intersection(pc_info['emails']))
+                            conflicts.update(author_emails.intersection(pc_info['relations']))
+                            conflicts.update(author_emails.intersection(pc_info['emails']))
+                            conflicts.update(author_publications.intersection(pc_info['publications']))
 
                 if conflicts:
                     edges.append(Edge(
@@ -780,7 +819,8 @@ class Matching(object):
                                     'type': 'string',
                                     'regex': '{}/.*/-/Custom_User_Demands$'.format(venue.id),
                                     'default': '{}/-/Custom_User_Demands'.format(self.match_group.id),
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             }
                         },
@@ -792,7 +832,8 @@ class Matching(object):
                                     'type': 'string',
                                     'regex':  '{}/.*/-/Custom_Max_Papers$'.format(venue.id),
                                     'default': venue.get_custom_max_papers_id(self.match_group.id),
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             }
                         },
@@ -845,6 +886,7 @@ class Matching(object):
                                     'type': 'string',
                                     'regex':  '.*',
                                     'optional': True,
+                                    'deletable': True,
                                     'hidden': True
                                 }
                             }
@@ -858,6 +900,7 @@ class Matching(object):
                                     'enum':  ['Yes', 'No'],
                                     'input': 'radio',
                                     'optional': True,
+                                    'deletable': True,
                                     'default': 'Yes'
                                 }
                             }
@@ -870,6 +913,7 @@ class Matching(object):
                                     'type': 'string',
                                     'regex':  r'[-+]?[0-9]*\.?[0-9]*',
                                     'optional': True,
+                                    'deletable': True,
                                     'default': '1'
                                 }
                             }
@@ -882,6 +926,7 @@ class Matching(object):
                                     'type': 'string',
                                     'regex':  r'[-+]?[0-9]*\.?[0-9]*',
                                     'optional': True,
+                                    'deletable': True,
                                     'default': '',
                                     'hidden': True
                                 }
@@ -891,6 +936,19 @@ class Matching(object):
                 }
             }
         )
+
+        if venue.allow_gurobi_solver:
+            config_inv.edit['note']['content']['solver']['value']['param']['enum'].append('FairIR')
+            config_inv.edit['note']['content']["constraints_specification"] = {
+                "order": 8,
+                "description": "Manually entered JSON constraints specification",
+                "value": {
+                "param": {
+                    "type": "json",
+                    "optional": True
+                }
+                }
+            }
 
         invitation = venue.invitation_builder.save_invitation(config_inv)
 
@@ -992,6 +1050,9 @@ class Matching(object):
                     'default': 0
                 }
 
+            if venue.allow_gurobi_solver:
+                self._create_edge_invitation(self.venue.get_constraint_label_id(self.match_group.id))
+
             self._build_config_invitation(score_spec)            
         else:
             venue.invitation_builder.set_assignment_invitation(self.match_group.id, self.submission_content)
@@ -1044,6 +1105,7 @@ class Matching(object):
                     'Conflict Detected'
                 ],
                 'optional': True,
+                'deletable': True,
                 'default': invited_label
             }
         }

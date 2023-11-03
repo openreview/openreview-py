@@ -2,7 +2,7 @@ def process(client, edit, invitation):
 
     journal = openreview.journal.Journal()
 
-    note = edit.note
+    note = client.get_note(edit.note.id)
 
     ## On update or delete return
     if note.tcdate != note.tmdate:

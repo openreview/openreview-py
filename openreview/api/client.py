@@ -153,18 +153,14 @@ class OpenReviewClient(object):
         self.__handle_token(json_response)
         return json_response
 
-    def register_user(self, email = None, first = None, last = None, middle = '', password = None):
+    def register_user(self, email = None, fullname = None, password = None):
         """
         Registers a new user
 
         :param email: email that will be used as id to log in after the user is registered
         :type email: str, optional
-        :param first: First name of the user
-        :type first: str, optional
-        :param last: Last name of the user
-        :type last: str, optional
-        :param middle: Middle name of the user
-        :type middle: str, optional
+        :param fullname: Full name of the user
+        :type fullname: str, optional
         :param password: Password used to log into OpenReview
         :type password: str, optional
 
@@ -173,7 +169,7 @@ class OpenReviewClient(object):
         """
         register_payload = {
             'email': email,
-            'name': {   'first': first, 'last': last, 'middle': middle},
+            'fullname': fullname,
             'password': password
         }
         response = self.session.post(self.register_url, json = register_payload, headers = self.headers)
@@ -2211,7 +2207,8 @@ class Note(object):
         replyto=None,
         nonreaders=None,
         domain=None,
-        details = None):
+        details = None,
+        license=None):
 
         self.id = id
         self.number = number
@@ -2233,6 +2230,7 @@ class Note(object):
         self.details = details
         self.invitations = invitations
         self.domain = domain
+        self.license = license
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -2279,6 +2277,8 @@ class Note(object):
             body['writers'] = self.writers
         if self.readers:
             body['readers'] = self.readers
+        if self.license:
+            body['license'] = self.license
         return body
 
     @classmethod
@@ -2311,7 +2311,8 @@ class Note(object):
         signatures=n.get('signatures'),
         writers=n.get('writers'),
         details=n.get('details'),
-        domain=n.get('domain')
+        domain=n.get('domain'),
+        license=n.get('license')
         )
         return note
 

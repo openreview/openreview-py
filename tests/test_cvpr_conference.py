@@ -32,7 +32,9 @@ class TestCVPRSConference():
         first_date = now + datetime.timedelta(days=1)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@cvpr.cc', 'Program', 'CVPRChair')
+        helpers.create_user('pc@cvpr.cc', 'Program', 'CVPRChair')
+        pc_client = openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
+
 
         helpers.create_user('sac1@cvpr.cc', 'SAC', 'CVPROne')
         helpers.create_user('ac1@cvpr.cc', 'AC', 'CVPROne')
@@ -59,6 +61,7 @@ class TestCVPRSConference():
                 'Official Website URL': 'https://cvpr.cc',
                 'program_chair_emails': ['pc@cvpr.cc'],
                 'contact_email': 'pc@cvpr.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'secondary_area_chairs': 'Yes, our venue has Secondary Area Chairs',
@@ -258,6 +261,7 @@ class TestCVPRSConference():
                 'Official Website URL': 'https://cvpr.cc',
                 'program_chair_emails': ['pc@cvpr.cc'],
                 'contact_email': 'pc@cvpr.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),

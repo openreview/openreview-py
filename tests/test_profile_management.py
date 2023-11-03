@@ -62,7 +62,9 @@ class TestProfileManagement():
    
     def test_remove_alternate_name(self, client, profile_management, helpers):
 
-        john_client = helpers.create_user('john@profile.org', 'John', 'Last', alternates=[], institution='google.com')
+        helpers.create_user('john@profile.org', 'John', 'Last', alternates=[], institution='google.com')
+        john_client = openreview.Client(username='john@profile.org', password=helpers.strong_password)
+
         profile = john_client.get_profile()
 
         profile.content['homepage'] = 'https://google.com'
@@ -280,7 +282,9 @@ The OpenReview Team.
 
     def test_remove_name_and_rename_profile_id(self, client, helpers):
 
-        ana_client = helpers.create_user('ana@profile.org', 'Ana', 'Last', alternates=[], institution='google.com')
+        helpers.create_user('ana@profile.org', 'Ana', 'Last', alternates=[], institution='google.com')
+        ana_client = openreview.Client(username='ana@profile.org', password=helpers.strong_password)
+
         profile = ana_client.get_profile()
 
         profile.content['homepage'] = 'https://google.com'
@@ -436,7 +440,9 @@ The OpenReview Team.
 
     def test_request_remove_name_and_decline(self, client, helpers):
 
-        peter_client = helpers.create_user('peter@profile.org', 'Peter', 'Last', alternates=[], institution='google.com')
+        helpers.create_user('peter@profile.org', 'Peter', 'Last', alternates=[], institution='google.com')
+        peter_client = openreview.Client(username='peter@profile.org', password=helpers.strong_password)
+
         profile = peter_client.get_profile()
 
         profile.content['homepage'] = 'https://google.com'
@@ -518,7 +524,9 @@ The OpenReview Team.
 
     def test_remove_name_from_merged_profile(self, client, profile_management, helpers):
 
-        ella_client = helpers.create_user('ella@profile.org', 'Ella', 'Last', alternates=[], institution='google.com')
+        helpers.create_user('ella@profile.org', 'Ella', 'Last', alternates=[], institution='google.com')
+        ella_client = openreview.Client(username='ella@profile.org', password=helpers.strong_password)
+
         profile = ella_client.get_profile()
 
         profile.content['homepage'] = 'https://google.com'
@@ -555,7 +563,9 @@ The OpenReview Team.
         assert len(publications) == 1
 
 
-        ella_client_2 = helpers.create_user('ella_two@profile.org', 'Ella', 'Last', alternates=[], institution='deepmind.com')
+        helpers.create_user('ella_two@profile.org', 'Ella', 'Last', alternates=[], institution='deepmind.com')
+        ella_client_2 = openreview.Client(username='ella_two@profile.org', password=helpers.strong_password)
+
         profile = ella_client_2.get_profile()
         assert '~Ella_Last2' == profile.id
 
@@ -685,7 +695,9 @@ The OpenReview Team.
 
     def test_remove_duplicated_name(self, client, profile_management, helpers):
 
-        javier_client = helpers.create_user('javier@profile.org', 'Javier', 'Last', alternates=[], institution='google.com')
+        helpers.create_user('javier@profile.org', 'Javier', 'Last', alternates=[], institution='google.com')
+        javier_client = openreview.Client(username='javier@profile.org', password=helpers.strong_password)
+
         profile = javier_client.get_profile()
 
         profile.content['homepage'] = 'https://google.com'
@@ -720,7 +732,8 @@ The OpenReview Team.
         assert len(publications) == 1
 
 
-        javier_client_2 = helpers.create_user('javier_two@profile.org', 'Javier', 'Last', alternates=[], institution='deepmind.com')
+        helpers.create_user('javier_two@profile.org', 'Javier', 'Last', alternates=[], institution='deepmind.com')
+        javier_client_2 = openreview.Client(username='javier_two@profile.org', password=helpers.strong_password)
         profile = javier_client_2.get_profile()
         assert '~Javier_Last2' == profile.id
 
@@ -841,7 +854,8 @@ The OpenReview Team.
         venue.setup(program_chair_ids=['venue_pc@mail.com'])
         venue.create_submission_stage()        
         
-        paul_client = helpers.create_user('paul@profile.org', 'Paul', 'Last', alternates=[], institution='google.com')
+        helpers.create_user('paul@profile.org', 'Paul', 'Last', alternates=[], institution='google.com')
+        paul_client = openreview.Client(username='paul@profile.org', password=helpers.strong_password)
         profile = paul_client.get_profile()
 
         profile.content['homepage'] = 'https://google.com'
@@ -938,8 +952,12 @@ The OpenReview Team.
 
         carlos_client = openreview.api.OpenReviewClient(username='carlos@cabj.org', password=helpers.strong_password)
 
+        carlos_paper2_anon_groups = carlos_client.get_groups(prefix=f'CABJ/Paper2/Action_Editor_.*', signatory='~Carlos_Tevez1')
+        assert len(carlos_paper2_anon_groups) == 1
+        carlos_paper2_anon_group = carlos_paper2_anon_groups[0]
+
         under_review_note = carlos_client.post_note_edit(invitation= 'CABJ/Paper2/-/Review_Approval',
-                                    signatures=['CABJ/Paper2/Action_Editors'],
+                                    signatures=[carlos_paper2_anon_group.id],
                                     note=Note(content={
                                         'under_review': { 'value': 'Appropriate for Review' }
                                     }))
@@ -1116,7 +1134,8 @@ The OpenReview Team.
 
     def test_merge_profiles(self, client, profile_management, helpers):
 
-        rachel_client = helpers.create_user('rachel@profile.org', 'Rachel', 'Last', alternates=[], institution='google.com')
+        helpers.create_user('rachel@profile.org', 'Rachel', 'Last', alternates=[], institution='google.com')
+        rachel_client = openreview.Client(username='rachel@profile.org', password=helpers.strong_password)
         profile = rachel_client.get_profile()
 
         profile.content['homepage'] = 'https://google.com'
@@ -1260,7 +1279,8 @@ The OpenReview Team.
 
     def test_merge_profiles_ignore_request(self, client, profile_management, helpers):
 
-        melisa_client = helpers.create_user('melisa@profile.org', 'Melisa', 'Last', alternates=[], institution='google.com')
+        helpers.create_user('melisa@profile.org', 'Melisa', 'Last', alternates=[], institution='google.com')
+        melisa_client = openreview.Client(username='melisa@profile.org', password=helpers.strong_password)
         profile = melisa_client.get_profile()
 
         profile.content['homepage'] = 'https://google.com'
@@ -1326,7 +1346,8 @@ The OpenReview Team.
 
     def test_remove_email_address(self, client, profile_management, openreview_client, helpers):
 
-        harold_client = helpers.create_user('harold@profile.org', 'Harold', 'Last', alternates=[], institution='google.com')
+        helpers.create_user('harold@profile.org', 'Harold', 'Last', alternates=[], institution='google.com')
+        harold_client = openreview.Client(username='harold@profile.org', password=helpers.strong_password)
         profile = harold_client.get_profile()
 
         profile.content['homepage'] = 'https://google.com'

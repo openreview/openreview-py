@@ -23,7 +23,9 @@ class TestNeurIPSConference():
         first_date = now + datetime.timedelta(days=1)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@neurips.cc', 'Program', 'NeurIPSChair')
+        helpers.create_user('pc@neurips.cc', 'Program', 'NeurIPSChair')
+        pc_client = openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
+
 
         helpers.create_user('another_andrew@mit.edu', 'Another', 'Andrew')
         helpers.create_user('sac1@google.com', 'SeniorArea', 'GoogleChair', institution='google.com')
@@ -60,6 +62,7 @@ class TestNeurIPSConference():
                 'Official Website URL': 'https://neurips.cc',
                 'program_chair_emails': ['pc@neurips.cc'],
                 'contact_email': 'pc@neurips.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'Venue Start Date': '2023/12/01',
@@ -136,6 +139,7 @@ class TestNeurIPSConference():
                 'Official Website URL': 'https://neurips.cc',
                 'program_chair_emails': ['pc@neurips.cc'],
                 'contact_email': 'pc@neurips.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
@@ -659,6 +663,7 @@ If you would like to change your decision, please follow the link in the previou
                 'Official Website URL': 'https://neurips.cc',
                 'program_chair_emails': ['pc@neurips.cc'],
                 'contact_email': 'pc@neurips.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
                 'Venue Start Date': '2023/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
@@ -760,6 +765,7 @@ If you would like to change your decision, please follow the link in the previou
                 'Official Website URL': 'https://neurips.cc',
                 'program_chair_emails': ['pc@neurips.cc'],
                 'contact_email': 'pc@neurips.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'submission_reviewer_assignment': 'Automatic',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
                 'Venue Start Date': '2023/12/12',
@@ -774,7 +780,8 @@ If you would like to change your decision, please follow the link in the previou
                         'param': {
                             'type': 'string',
                             'regex': '~.*|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})',
-                            'optional': True
+                            'optional': True,
+                            'deletable': True
                         }
                         },
                         'description': 'Select which author should be the primary corresponding author for this submission. Please enter an email address or an OpenReview ID that exactly matches one of the authors.',
@@ -855,6 +862,7 @@ If you would like to change your decision, please follow the link in the previou
                 'Official Website URL': 'https://neurips.cc',
                 'program_chair_emails': ['pc@neurips.cc'],
                 'contact_email': 'pc@neurips.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
                 'Venue Start Date': '2023/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
@@ -894,7 +902,9 @@ If you would like to change your decision, please follow the link in the previou
 
         assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Withdrawal')
         assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Desk_Rejection')
-        assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Revision')
+        revision_inv =  test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Revision')
+        assert revision_inv
+        assert ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Submission5/Authors'] == revision_inv.readers
 
         post_submission =  openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Post_Submission')
         assert 'authors' in post_submission.edit['note']['content']
@@ -1015,6 +1025,7 @@ If you would like to change your decision, please follow the link in the previou
                 'Official Website URL': 'https://neurips.cc',
                 'program_chair_emails': ['pc@neurips.cc'],
                 'contact_email': 'pc@neurips.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
                 'Venue Start Date': '2023/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),

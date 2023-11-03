@@ -28,7 +28,9 @@ class TestARRVenue():
         first_date = now + datetime.timedelta(days=1)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@aclrollingreview.org', 'Program', 'ARRChair')
+        helpers.create_user('pc@aclrollingreview.org', 'Program', 'ARRChair')
+        pc_client = openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+
 
         helpers.create_user('ac1@gmail.com', 'Area', 'CMUChair', institution='cmu.edu')
         helpers.create_user('ac3@gmail.com', 'Area', 'MITChair', institution='mit.edu')
@@ -55,6 +57,7 @@ class TestARRVenue():
                 'Official Website URL': 'http://aclrollingreview.org',
                 'program_chair_emails': ['pc@aclrollingreview.org'],
                 'contact_email': 'pc@aclrollingreview.org',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
@@ -1023,7 +1026,9 @@ OpenReview Team'''
         submissions=venue.get_submissions(number=5)
 
         ## Assign ethics reviewer
-        ethics_reviewer_client = helpers.create_user('ethic_reviewer@arr.org', 'Ethics', 'Reviewer')
+        helpers.create_user('ethic_reviewer@arr.org', 'Ethics', 'Reviewer')
+        ethics_reviewer_client = openreview.Client(username='ethic_reviewer@arr.org', password=helpers.strong_password)
+
 
         ethics_chair_client.post_edge(openreview.Edge(
             invitation='aclweb.org/ACL/ARR/2021/September/Ethics_Reviewers/-/Assignment',

@@ -947,7 +947,8 @@ var renderTable = function(container, rows) {
       numRecommendationsDone: ['reviewProgressData.numSubmittedRecommendations'],
       decision: ['actionEditorProgressData.recommendation'],
       status: ['status'],
-      default: ['submissionNumber.number', 'submission.content.title']
+      default: ['submissionNumber.number', 'submission.content.title'],
+      certifications: ['submission.content.certifications'],
     },
     reminderOptions: {
       container: 'a.send-reminder-link',

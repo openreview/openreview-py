@@ -62,7 +62,9 @@ class TestBuilder():
         conference.set_program_chairs()
         conference.set_reviewers(emails = ['reviewer_test1@mail.com'])
 
-        author_client = helpers.create_user('author_test1@mail.com', 'SomeFirstName', 'Author')
+        helpers.create_user('author_test1@mail.com', 'SomeFirstName', 'Author')
+        author_client = openreview.Client(username='author_test1@mail.com', password=helpers.strong_password)
+
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['~SomeFirstName_Author1', 'drew@mail.com', 'test.org/2019/Conference'],
             writers = [conference.id, '~SomeFirstName_Author1', 'drew@mail.com'],
@@ -89,7 +91,8 @@ class TestBuilder():
 
         conference.create_review_stage()
 
-        reviewer_client = helpers.create_user('reviewer_test1@mail.com', 'SomeFirstName', 'ReviewerOne')
+        helpers.create_user('reviewer_test1@mail.com', 'SomeFirstName', 'ReviewerOne')
+        reviewer_client = openreview.Client(username='reviewer_test1@mail.com', password=helpers.strong_password)
 
         conference.set_assignment('reviewer_test1@mail.com', blind_submissions[0].number)
 
@@ -189,7 +192,9 @@ class TestBuilder():
 
         conference.create_blind_submissions()
 
-        pc_client = helpers.create_user('pc_testconsole1@mail.com', 'SomeFirstName', 'PCConsole')
+        helpers.create_user('pc_testconsole1@mail.com', 'SomeFirstName', 'PCConsole')
+        pc_client = openreview.Client(username='pc_testconsole1@mail.com', password=helpers.strong_password)
+
         request_page(selenium, 'http://localhost:3030/group?id=' + conference.get_program_chairs_id() + '#paper-status', pc_client.token, wait_for_element='venue-configuration')
 
         assert selenium.find_element(By.XPATH, '//a[@href="#paper-status"]')

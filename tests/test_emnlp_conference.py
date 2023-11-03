@@ -13,9 +13,10 @@ class TestEMNLPConference():
         first_date = now + datetime.timedelta(days=1)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@emnlp.org', 'Program', 'EMNLPChair')
+        helpers.create_user('pc@emnlp.org', 'Program', 'EMNLPChair')
+        pc_client = openreview.Client(username='pc@emnlp.org', password=helpers.strong_password)
 
-        sac_client = helpers.create_user('sac@emnlp.com', 'SAC', 'EMNLPOne')
+        helpers.create_user('sac@emnlp.com', 'SAC', 'EMNLPOne')
         helpers.create_user('sac2@emnlp.org', 'SAC', 'EMNLPTwo')
         helpers.create_user('ac1@emnlp.org', 'AC', 'EMNLPOne')
         helpers.create_user('ac2@emnlp.org', 'AC', 'EMNLPTwo')
@@ -45,6 +46,7 @@ class TestEMNLPConference():
                 'Official Website URL': 'https://2023.emnlp.org/',
                 'program_chair_emails': ['pc@emnlp.org'],
                 'contact_email': 'pc@emnlp.org',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'Venue Start Date': '2023/07/01',
@@ -113,6 +115,7 @@ class TestEMNLPConference():
                 'Official Website URL': 'https://2023.emnlp.org/',
                 'program_chair_emails': ['pc@emnlp.org'],
                 'contact_email': 'pc@emnlp.org',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d %H:%M'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
@@ -239,6 +242,7 @@ class TestEMNLPConference():
                 'Official Website URL': 'https://2023.emnlp.org/',
                 'program_chair_emails': ['pc@emnlp.org'],
                 'contact_email': 'pc@emnlp.org',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d %H:%M'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
@@ -479,6 +483,7 @@ url={https://openreview.net/forum?id='''
                 'Official Website URL': 'https://2023.emnlp.org/',
                 'program_chair_emails': ['pc@emnlp.org'],
                 'contact_email': 'pc@emnlp.org',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d %H:%M'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
@@ -616,9 +621,13 @@ url={https://openreview.net/forum?id='''
                             ],
                         'edit': {
                             'signatures': {
-                                'param': {
-                                    'regex': 'EMNLP/2023/Conference/Submission${5/content/noteNumber/value}/Senior_Area_Chairs|EMNLP/2023/Conference/Submission${5/content/noteNumber/value}/Area_Chair_.*|EMNLP/2023/Conference/Program_Chairs'
-                                }
+                                'param': { 
+                                    'items': [
+                                        { 'value': 'EMNLP/2023/Conference/Submission${7/content/noteNumber/value}/Senior_Area_Chairs', 'optional': True }, 
+                                        { 'prefix': 'EMNLP/2023/Conference/Submission${7/content/noteNumber/value}/Area_Chair_.*', 'optional': True }, 
+                                        { 'value': 'EMNLP/2023/Conference/Program_Chairs', 'optional': True }
+                                    ] 
+                                }                                
                             },
                             'note': {
                                 'content': {
@@ -638,7 +647,11 @@ url={https://openreview.net/forum?id='''
             'EMNLP/2023/Conference/Submission1/Senior_Area_Chairs',
             'EMNLP/2023/Conference/Submission1/Area_Chairs'
         ]
-        assert invitation.edit['signatures']['param']['regex'] == 'EMNLP/2023/Conference/Submission1/Senior_Area_Chairs|EMNLP/2023/Conference/Submission1/Area_Chair_.*|EMNLP/2023/Conference/Program_Chairs'
+        assert invitation.edit['signatures']['param']['items'] == [
+            { 'value': 'EMNLP/2023/Conference/Submission1/Senior_Area_Chairs', 'optional': True }, 
+            { 'prefix': 'EMNLP/2023/Conference/Submission1/Area_Chair_.*', 'optional': True }, 
+            { 'value': 'EMNLP/2023/Conference/Program_Chairs', 'optional': True }
+        ]
 
         pc_client=openreview.Client(username='pc@emnlp.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@emnlp.org', password=helpers.strong_password)

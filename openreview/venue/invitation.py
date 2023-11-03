@@ -114,6 +114,7 @@ class InvitationBuilder(object):
     def set_submission_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
+        submission_license = self.venue.submission_license
 
         content = submission_stage.get_content(api_version='2', conference=self.venue, venue_id=self.venue.get_submission_venue_id())
 
@@ -133,7 +134,14 @@ class InvitationBuilder(object):
             duedate=tools.datetime_millis(submission_stage.due_date) if submission_stage.due_date else None,
             expdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None,
             edit = {
-                'signatures': { 'param': { 'regex': f'~.*|{self.venue.get_program_chairs_id()}' } },
+                'signatures': { 
+                    'param': { 
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': self.venue.get_program_chairs_id(), 'optional': True } 
+                        ]
+                    } 
+                },
                 'readers': edit_readers,
                 'writers': [venue_id, '${2/note/content/authorids/value}'],
                 'ddate': {
@@ -165,6 +173,10 @@ class InvitationBuilder(object):
             },
             process=self.get_process_content('process/submission_process.py')
         )
+
+        if submission_license:
+            submission_invitation.edit['license'] = submission_license
+            submission_invitation.edit['note']['license'] = submission_license
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=False)
 
@@ -230,7 +242,8 @@ class InvitationBuilder(object):
                     'type': 'string',
                     'maxLength': 200000,
                     'input': 'textarea',
-                    'optional': True
+                    'optional': True,
+                    'deletable': True
                 }
             }
         }
@@ -350,7 +363,11 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 ''',
                     'edit': {
-                        'signatures': { 'param': { 'regex': review_stage.get_signatures(self.venue, '${5/content/noteNumber/value}') }},
+                        'signatures': { 
+                            'param': { 
+                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in review_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')] 
+                            }
+                        },
                         'readers': ['${2/note/readers}'],
                         'nonreaders': review_stage.get_nonreaders(self.venue, '${4/content/noteNumber/value}'),
                         'writers': [venue_id],
@@ -505,7 +522,11 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 ''',
                     'edit': {
-                        'signatures': { 'param': { 'regex': self.venue.get_authors_id(number='${5/content/noteNumber/value}') }},
+                        'signatures': { 
+                            'param': { 
+                                'items': [{ 'value': self.venue.get_authors_id(number='${7/content/noteNumber/value}') }]
+                            }
+                        },
                         'readers': review_rebuttal_stage.get_invitation_readers(self.venue, '${4/content/noteNumber/value}'),
                         'writers': [venue_id],
                         'note': {
@@ -613,7 +634,11 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 ''',
                     'edit': {
-                        'signatures': { 'param': { 'regex': meta_review_stage.get_signatures_regex(self.venue, '${5/content/noteNumber/value}') }},
+                        'signatures': { 
+                            'param': { 
+                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in meta_review_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')] 
+                            }
+                        },
                         'readers': meta_review_stage.get_readers(self.venue, '${4/content/noteNumber/value}'),
                         'nonreaders': meta_review_stage.get_nonreaders(self.venue, '${4/content/noteNumber/value}'),
                         'writers': [venue_id],
@@ -697,7 +722,13 @@ class InvitationBuilder(object):
                         'maxReplies': 1,
                         'cdate': meta_review_cdate,
                         'edit': {
-                            'signatures': { 'param': { 'regex': self.venue.get_senior_area_chairs_id(number='${5/content/noteNumber/value}') }},
+                            'signatures': { 
+                                'param': { 
+                                    'items': [
+                                        { 'value': self.venue.get_senior_area_chairs_id(number='${7/content/noteNumber/value}') } 
+                                    ]
+                                }
+                            },
                             'readers': meta_review_stage.get_readers(self.venue, '${4/content/noteNumber/value}'),
                             'nonreaders': meta_review_stage.get_nonreaders(self.venue, '${4/content/noteNumber/value}'),
                             'writers': [venue_id],
@@ -759,7 +790,8 @@ class InvitationBuilder(object):
                         'type': 'string',
                         'enum': reduced_load,
                         'input': 'select',
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 }
             }
@@ -938,7 +970,7 @@ class InvitationBuilder(object):
         if comment_stage.reader_selection:
             comment_readers = {
                 'param': {
-                    'enum': comment_stage.get_readers(self.venue, '${7/content/noteNumber/value}')
+                    'items': comment_stage.get_readers(self.venue, '${8/content/noteNumber/value}', api_version='2'),
                 }
             }
 
@@ -1006,7 +1038,11 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 ''',
                     'edit': {
-                        'signatures': { 'param': { 'regex': comment_stage.get_signatures_regex(self.venue, '${5/content/noteNumber/value}') }},
+                        'signatures': { 
+                            'param': { 
+                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in comment_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')] 
+                            }
+                        },
                         'readers': ['${2/note/readers}'],
                         # 'nonreaders': [],
                         'writers': [venue_id],
@@ -1069,8 +1105,8 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['edit']['note']['readers'] = comment_readers
 
             invitation.edit['invitation']['invitees'].append(self.venue.get_ethics_reviewers_id('${3/content/noteNumber/value}'))
-            invitation.edit['invitation']['edit']['signatures']['param']['regex'] += '|' + self.venue.get_ethics_reviewers_id('${5/content/noteNumber/value}', anon=True)
-            invitation.edit['invitation']['edit']['signatures']['param']['regex'] += '|' + self.venue.get_ethics_chairs_id()
+            invitation.edit['invitation']['edit']['signatures']['param']['items'].append({ 'prefix': self.venue.get_ethics_reviewers_id('${7/content/noteNumber/value}', anon=True), 'optional': True })
+            invitation.edit['invitation']['edit']['signatures']['param']['items'].append({ 'value': self.venue.get_ethics_chairs_id(), 'optional': True })
 
         self.save_invitation(invitation, replacement=False)
         return invitation
@@ -1141,7 +1177,11 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 ''',
                     'edit': {
-                        'signatures': { 'param': { 'regex': '~.*' }},
+                        'signatures': { 
+                            'param': { 
+                                'items': [{ 'prefix': '~.*' }] 
+                            }
+                        },
                         'readers': ['${2/note/readers}'],
                         'writers': [venue_id],
                         'note': {
@@ -1345,7 +1385,11 @@ class InvitationBuilder(object):
     exec(script, funcs)
     funcs['process'](client, edit, invitation)''',
                     'edit': {
-                        'signatures': { 'param': { 'regex': self.venue.get_authors_id(number='${5/content/noteNumber/value}')  }},
+                        'signatures': { 
+                            'param': { 
+                                'items': [{ 'value': self.venue.get_authors_id(number='${7/content/noteNumber/value}') }] 
+                            }
+                        },
                         'readers': submission_stage.get_withdrawal_readers(self.venue, '${4/content/noteNumber/value}'),
                         'writers': [ venue_id, self.venue.get_authors_id(number='${4/content/noteNumber/value}')],
                         'note': {
@@ -1377,6 +1421,7 @@ class InvitationBuilder(object):
                                             'maxLength': 200000,
                                             'input': 'textarea',
                                             'optional': True,
+                                            'deletable': True,
                                             'markdown': True
                                         }
                                     }
@@ -1414,7 +1459,8 @@ class InvitationBuilder(object):
                         'type': 'string',
                         'maxLength': 200000,
                         'input': 'textarea',
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 }
             }
@@ -1578,6 +1624,7 @@ class InvitationBuilder(object):
                                             'maxLength': 200000,
                                             'input': 'textarea',
                                             'optional': True,
+                                            'deletable': True,
                                             'markdown': True
                                         }
                                     }
@@ -1695,7 +1742,8 @@ class InvitationBuilder(object):
                         'type': 'string',
                         'maxLength': 200000,
                         'input': 'textarea',
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 }
             }
@@ -1901,7 +1949,7 @@ class InvitationBuilder(object):
                 'invitation': {
                     'id': self.venue.get_invitation_id(revision_stage.name, '${2/content/noteNumber/value}'),
                     'signatures': [venue_id],
-                    'readers': ['everyone'],
+                    'readers': [venue_id, self.venue.get_authors_id(number='${3/content/noteNumber/value}')],
                     'writers': [venue_id],
                     'invitees': [venue_id, self.venue.get_authors_id(number='${3/content/noteNumber/value}')],
                     'cdate': revision_cdate,
@@ -1922,7 +1970,14 @@ class InvitationBuilder(object):
                             }
                         }
                         ,
-                        'signatures': { 'param': { 'regex': f"{self.venue.get_authors_id(number='${5/content/noteNumber/value}')}|{self.venue.get_program_chairs_id()}" }},
+                        'signatures': { 
+                            'param': { 
+                                'items': [
+                                    { 'value': self.venue.get_authors_id(number='${7/content/noteNumber/value}'), 'optional': True }, 
+                                    { 'value': self.venue.get_program_chairs_id(), 'optional': True }
+                                ] 
+                            }
+                        },
                         'readers': [ venue_id, self.venue.get_authors_id(number='${4/content/noteNumber/value}')],
                         'writers': [ venue_id, self.venue.get_authors_id(number='${4/content/noteNumber/value}')],
                         'note': {
@@ -2034,8 +2089,12 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 ''',
                     'edit': {
-                        'signatures': { 'param': { 'regex': custom_stage.get_signatures_regex(self.venue, '${5/content/noteNumber/value}') }},
-                        'readers': custom_stage.get_readers(self.venue, '${4/content/noteNumber/value}'),
+                        'signatures': { 
+                            'param': { 
+                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in custom_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')] 
+                            }
+                        },
+                        'readers': ['$2/note/readers'],
                         'writers': [venue_id],
                         'note': {
                             'id': {
@@ -2054,7 +2113,7 @@ class InvitationBuilder(object):
                                 }
                             },
                             'signatures': ['${3/signatures}'],
-                            'readers': ['${3/readers}'],
+                            'readers': custom_stage.get_readers(self.venue, '${5/content/noteNumber/value}'),
                             'writers': [venue_id, '${3/signatures}'],
                             'content': content
                         }
@@ -2465,7 +2524,7 @@ class InvitationBuilder(object):
                 maxReplies = 1,
                 minReplies = 1,       
                 edit={
-                    'signatures': { 'param': { 'regex': '~.*' }},
+                    'signatures': { 'param': { 'items': [ { 'prefix': '~.*' } ] }},
                     'readers': [venue_id, '${2/signatures}'],
                     'note': {
                         'id': {
@@ -2847,7 +2906,11 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 ''',
                     'edit': {
-                        'signatures': { 'param': { 'regex': ethics_review_stage.get_signatures(self.venue, '${5/content/noteNumber/value}') }},
+                        'signatures': { 
+                            'param': { 
+                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in ethics_review_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')] 
+                            }
+                        },
                         'readers': ethics_review_stage.get_readers(self.venue, '${4/content/noteNumber/value}', '${2/signatures}'),
                         'nonreaders': ethics_review_stage.get_nonreaders(self.venue, '${4/content/noteNumber/value}'),
                         'writers': [venue_id],
@@ -2932,7 +2995,8 @@ class InvitationBuilder(object):
                             'value': {
                                 'param': {
                                     'type': 'boolean',
-                                    'enum': [True, False]
+                                    'enum': [True, False],
+                                    'input': 'radio'
                                 }
                             },
                             'readers': flag_readers
@@ -2944,7 +3008,8 @@ class InvitationBuilder(object):
                                     'maxLength': 5000,
                                     'markdown': True,
                                     'input': 'textarea',
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             },
                             'readers': [venue_id, self.venue.get_ethics_chairs_id(), self.venue.get_ethics_reviewers_id('${{4/id}/number}')]
@@ -3039,7 +3104,14 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 ''',
                             'edit': {
-                                'signatures': { 'param': { 'regex': f"{venue.get_senior_area_chairs_id(number='${5/content/noteNumber/value}')}|{venue.get_program_chairs_id()}" }},
+                                'signatures': { 
+                                    'param': { 
+                                        'items': [
+                                            { 'value': venue.get_senior_area_chairs_id(number='${7/content/noteNumber/value}'), 'optional': True }, 
+                                            { 'value': venue.get_program_chairs_id(), 'optional': True }
+                                        ] 
+                                    }
+                                },                                
                                 'readers': ['${2/note/readers}'],
                                 'nonreaders': ['${2/note/nonreaders}'],
                                 'writers': [venue_id],
@@ -3080,7 +3152,8 @@ class InvitationBuilder(object):
                                                     'maxLength': 5000,
                                                     'markdown': True,
                                                     'input': 'textarea',
-                                                    'optional': True
+                                                    'optional': True,
+                                                    'deletable': True
                                                 }
                                             },
                                             'description': 'Optional comment to Program Chairs.'

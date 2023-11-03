@@ -35,6 +35,7 @@ return {
     paperReviewsCompleteThreshold: 3,
     bidName: domain.content.bid_name?.value,
     recommendationName: domain.content.recommendation_id?.value || 'Recommendation',
+    metaReviewRecommendationName: domain.content.meta_review_recommendation?.value || 'recommendation',
     submissionId: domain.content.submission_id?.value,
     submissionVenueId: domain.content.submission_venue_id?.value,
     withdrawnVenueId: domain.content.withdrawn_venue_id?.value,

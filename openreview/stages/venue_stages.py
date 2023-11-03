@@ -271,9 +271,7 @@ class SubmissionStage(object):
                 else:
                     print('Field {} not found in content: {}'.format(field, content))
 
-            for order, key in enumerate(self.additional_fields, start=10):
-                value = self.additional_fields[key]
-                value['order'] = order
+            for key, value in self.additional_fields.items():
                 content[key] = value
 
             if self.second_due_date and 'pdf' in content:
@@ -315,7 +313,7 @@ class SubmissionStage(object):
                                 'hidden': True
                             }
                         }
-                    }                                            
+                    }
 
         return content
     
@@ -482,9 +480,7 @@ class SubmissionRevisionStage():
             else:
                 print('Field {} not found in content: {}'.format(field, content))
 
-        for order, key in enumerate(self.additional_fields, start=10):
-            value = self.additional_fields[key]
-            value['order'] = order
+        for key, value in self.additional_fields.items():
             content[key] = value
 
         if self.allow_author_reorder:
@@ -611,9 +607,9 @@ class ReviewStage(object):
 
     def get_signatures(self, conference, number):
         if self.allow_de_anonymization:
-            return '~.*'
+            return ['~.*']
 
-        return conference.get_anon_reviewer_id(number=number, anon_id='.*')
+        return [conference.get_anon_reviewer_id(number=number, anon_id='.*')]
     
     def get_content(self, api_version='2', conference=None):
 
@@ -625,9 +621,7 @@ class ReviewStage(object):
             else:
                 print('Field {} not found in content: {}'.format(field, content))
 
-        for order, key in enumerate(self.additional_fields, start=10):
-            value = self.additional_fields[key]
-            value['order'] = order
+        for key, value in self.additional_fields.items():
             content[key] = value
 
         if conference:
@@ -749,7 +743,7 @@ class EthicsReviewStage(object):
         return [conference.get_authors_id(number = number)]
 
     def get_signatures(self, conference, number):
-        return conference.get_anon_reviewer_id(number=number, anon_id='.*', name=conference.ethics_reviewers_name) + '|' +  conference.get_program_chairs_id()
+        return [conference.get_anon_reviewer_id(number=number, anon_id='.*', name=conference.ethics_reviewers_name), conference.get_program_chairs_id()]
 
     def get_content(self, api_version='2', conference=None):
 
@@ -761,9 +755,7 @@ class EthicsReviewStage(object):
             else:
                 print('Field {} not found in content: {}'.format(field, content))
         
-        for order, key in enumerate(self.additional_fields, start=10):
-            value = self.additional_fields[key]
-            value['order'] = order
+        for key, value in self.additional_fields.items():
             content[key] = value
 
         if conference:
@@ -846,9 +838,7 @@ class ReviewRebuttalStage(object):
             else:
                 print('Field {} not found in content: {}'.format(field, content))
 
-        for order, key in enumerate(self.additional_fields, start=10):
-            value = self.additional_fields[key]
-            value['order'] = order
+        for key, value in self.additional_fields.items():
             content[key] = value
 
         if conference:
@@ -950,7 +940,37 @@ class CommentStage(object):
         self.readers = readers
         self.invitees = invitees
 
-    def get_readers(self, conference, number):
+    def get_readers(self, conference, number, api_version='1'):
+
+        if api_version == '2' and self.reader_selection:
+
+            readers  = []
+            is_everyone_included = self.allow_public_comments or self.Readers.EVERYONE in self.readers
+
+            if is_everyone_included:
+                readers.append({ 'value': 'everyone', 'optional': True })
+
+            readers.append({ 'value': conference.get_program_chairs_id(), 'optional': is_everyone_included })
+
+            if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.readers:
+                readers.append({ 'value': conference.get_senior_area_chairs_id(number), 'optional': is_everyone_included })
+
+            if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.readers:
+                readers.append({ 'value': conference.get_area_chairs_id(number), 'optional': True })
+
+            if self.Readers.REVIEWERS_ASSIGNED in self.readers:
+                readers.append({ 'value': conference.get_reviewers_id(number), 'optional': True })
+
+            if self.Readers.REVIEWERS_SUBMITTED in self.readers:
+                readers.append({ 'value': conference.get_reviewers_id(number) + '/Submitted', 'optional': True })
+
+            readers.append({ 'prefix': conference.get_anon_reviewer_id(number=number, anon_id='.*'), 'optional': True })
+
+            if self.Readers.AUTHORS in self.readers:
+                readers.append({ 'value': conference.get_authors_id(number), 'optional': True })                
+
+            return readers
+
         readers = [conference.get_program_chairs_id()]
 
         if self.allow_public_comments or self.Readers.EVERYONE in self.readers:
@@ -976,7 +996,7 @@ class CommentStage(object):
 
         return readers
 
-    def get_signatures_regex(self, conference, number):
+    def get_signatures(self, conference, number):
 
         committee = [conference.get_program_chairs_id()]
 
@@ -995,7 +1015,7 @@ class CommentStage(object):
         if self.Readers.AUTHORS in self.invitees:
             committee.append(conference.get_authors_id(number))
 
-        return '|'.join(committee)
+        return committee
 
     def get_invitees(self, conference, number):
         invitees = [conference.get_id(), conference.support_user]
@@ -1098,14 +1118,14 @@ class MetaReviewStage(object):
 
         return [conference.get_authors_id(number = number)]
 
-    def get_signatures_regex(self, conference, number):
+    def get_signatures(self, conference, number):
 
         committee = [conference.get_program_chairs_id()]
 
         if conference.use_area_chairs:
             committee.append(conference.get_anon_area_chair_id(number=number, anon_id='.*'))
 
-        return '|'.join(committee)
+        return committee
 
     def get_content(self, api_version='2', conference=None):
         
@@ -1117,9 +1137,7 @@ class MetaReviewStage(object):
             else:
                 print('Field {} not found in content: {}'.format(field, content))
 
-        for order, key in enumerate(self.additional_fields, start=10):
-            value = self.additional_fields[key]
-            value['order'] = order
+        for key, value in self.additional_fields.items():
             content[key] = value
 
         if conference:
@@ -1200,9 +1218,7 @@ class DecisionStage(object):
             else:
                 print('Field {} not found in content: {}'.format(field, content))
 
-        for order, key in enumerate(self.additional_fields, start=10):
-            value = self.additional_fields[key]
-            value['order'] = order
+        for key, value in self.additional_fields.items():
             content[key] = value
 
         if conference:
@@ -1264,9 +1280,7 @@ class RegistrationStage(object):
             else:
                 print('Field {} not found in content: {}'.format(field, content))
 
-        for order, key in enumerate(self.additional_fields, start=10):
-            value = self.additional_fields[key]
-            value['order'] = order
+        for key, value in self.additional_fields.items():
             content[key] = value
 
         if conference:
@@ -1309,7 +1323,7 @@ class CustomStage(object):
         REVIEWS = 2
         METAREVIEWS = 3
 
-    def __init__(self, name, reply_to, source, start_date=None, due_date=None, exp_date=None, invitees=[], readers=[], content={}, multi_reply = False, email_pcs = False, email_sacs = False, notify_readers=False, email_template=None):
+    def __init__(self, name, reply_to, source, start_date=None, due_date=None, exp_date=None, invitees=[], readers=[], content={}, multi_reply = False, email_pcs = False, email_sacs = False, notify_readers=False, email_template=None, allow_de_anonymization=False):
         self.name = name
         self.reply_to = reply_to
         self.source = source
@@ -1324,6 +1338,7 @@ class CustomStage(object):
         self.email_sacs = email_sacs
         self.notify_readers = notify_readers
         self.email_template = email_template
+        self.allow_de_anonymization = allow_de_anonymization
 
     def get_invitees(self, conference, number):
         invitees = [conference.get_program_chairs_id()]
@@ -1378,9 +1393,15 @@ class CustomStage(object):
         if conference.use_ethics_reviewers and self.Participants.ETHICS_REVIEWERS_ASSIGNED in self.readers:
             readers.append(conference.get_ethics_reviewers_id(number))
 
+        if self.allow_de_anonymization:
+            readers.append('${3/signatures}')
+
         return readers
 
-    def get_signatures_regex(self, conference, number):
+    def get_signatures(self, conference, number):
+        if self.allow_de_anonymization:
+            return ['~.*', conference.get_program_chairs_id()]
+
         committee = [conference.get_program_chairs_id()]
 
         if conference.use_senior_area_chairs and self.Participants.SENIOR_AREA_CHAIRS_ASSIGNED in self.invitees:
@@ -1401,7 +1422,7 @@ class CustomStage(object):
         if conference.use_ethics_reviewers and self.Participants.ETHICS_REVIEWERS_ASSIGNED in self.invitees:
             committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*', name=conference.ethics_reviewers_name))
 
-        return '|'.join(committee)
+        return committee
 
     def get_source_submissions(self):
 

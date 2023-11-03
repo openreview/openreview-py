@@ -140,8 +140,8 @@ class TestClient():
 
     def test_search_profiles(self, client, helpers):
         guest = openreview.Client()
-        guest.register_user(email = 'mbok@mail.com', first = 'Melisa', last = 'Bok', password = helpers.strong_password)
-        guest.register_user(email = 'andrew@mail.com', first = 'Andrew', last = 'McCallum', password = helpers.strong_password)
+        guest.register_user(email = 'mbok@mail.com', fullname= 'Melisa Bok', password = helpers.strong_password)
+        guest.register_user(email = 'andrew@mail.com', fullname = 'Andrew McCallum', password = helpers.strong_password)
 
         profiles = client.search_profiles(confirmedEmails=['mbok@mail.com'])
         assert profiles, "Could not get the profile by email"
@@ -169,8 +169,8 @@ class TestClient():
         assert len(client.search_profiles(emails = ['mail@mail.com'])) == 0
         assert len(client.search_profiles(first = 'Anna')) == 0
 
-        user_a = helpers.create_user('user_a@mail.com', 'User', 'A', alternates=['users@alternate.com'])
-        user_b = helpers.create_user('user_b@mail.com', 'User', 'B', alternates=['users@alternate.com'])
+        helpers.create_user('user_a@mail.com', 'User', 'A', alternates=['users@alternate.com'])
+        helpers.create_user('user_b@mail.com', 'User', 'B', alternates=['users@alternate.com'])
         profiles = client.search_profiles(emails = ['users@alternate.com'])
         assert profiles
         assert 'users@alternate.com' in profiles
@@ -263,9 +263,9 @@ class TestClient():
 
     def test_merge_profile(self, client, helpers):
         guest = openreview.Client()
-        from_profile = guest.register_user(email = 'celeste@mail.com', first = 'Celeste', last = 'Bok', password = helpers.strong_password)
+        from_profile = guest.register_user(email = 'celeste@mail.com', fullname = 'Celeste Bok', password = helpers.strong_password)
         assert from_profile
-        to_profile = guest.register_user(email = 'melisab@mail.com', first = 'Melissa', last = 'Bok', password = helpers.strong_password)
+        to_profile = guest.register_user(email = 'melisab@mail.com', fullname = 'Melissa Bok', password = helpers.strong_password)
         assert to_profile
 
         assert from_profile['id'] == '~Celeste_Bok1'
@@ -284,9 +284,9 @@ class TestClient():
 
     def test_rename_profile(self, client, helpers):
         guest = openreview.Client()
-        from_profile = guest.register_user(email = 'lbahy@mail.com', first = 'Nadia', last = 'LBahy', password = helpers.strong_password)
+        from_profile = guest.register_user(email = 'lbahy@mail.com', fullname = 'Nadia LBahy', password = helpers.strong_password)
         assert from_profile
-        to_profile = guest.register_user(email = 'steph@mail.com', first = 'David', last = 'Steph', password = helpers.strong_password)
+        to_profile = guest.register_user(email = 'steph@mail.com', fullname = 'David Steph', password = helpers.strong_password)
         assert to_profile
 
         assert from_profile['id'] == '~Nadia_LBahy1'

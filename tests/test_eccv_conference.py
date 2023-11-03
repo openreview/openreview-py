@@ -299,7 +299,9 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert conference, 'conference is None'
         conference.set_program_chairs(['pc@eccv.org'])
 
-        pc_client = helpers.create_user('pc@eccv.org', 'Program', 'ECCVChair')
+        helpers.create_user('pc@eccv.org', 'Program', 'ECCVChair')
+        pc_client = openreview.Client(username='pc@eccv.org', password=helpers.strong_password)
+
 
         group = pc_client.get_group('thecvf.com/ECCV/2020/Conference')
         assert group
@@ -403,7 +405,9 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
     def test_expertise_selection(self, conference, helpers, selenium, request_page):
 
-        reviewer_client = helpers.create_user('test_reviewer_eccv@mail.com', 'ReviewerFirstName', 'Eccv')
+        helpers.create_user('test_reviewer_eccv@mail.com', 'ReviewerFirstName', 'Eccv')
+        reviewer_client = openreview.Client(username='test_reviewer_eccv@mail.com', password=helpers.strong_password)
+
         reviewer_tasks_url = 'http://localhost:3030/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
         request_page(selenium, reviewer_tasks_url, reviewer_client.token)
 
@@ -474,7 +478,9 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert len(notes) == 1
         assert notes[0].text == 'This page provides information and status updates for the ECCV 2020. It will be regularly updated as the conference progresses, so please check back frequently.\nYou have agreed to review up to 7 papers.'
 
-        reviewer2_client = helpers.create_user('mohit+1@mail.com', 'Mohit', 'EccvReviewer')
+        helpers.create_user('mohit+1@mail.com', 'Mohit', 'EccvReviewer')
+        reviewer2_client = openreview.Client(username='mohit+1@mail.com', password=helpers.strong_password)
+
         request_page(selenium, 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Reviewers', reviewer2_client.token, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert header
@@ -485,7 +491,9 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         #Area Chairs
         conference.set_area_chairs(['test_ac_eccv@mail.com'])
-        ac_client = helpers.create_user('test_ac_eccv@mail.com', 'AreachairFirstName', 'Eccv')
+        helpers.create_user('test_ac_eccv@mail.com', 'AreachairFirstName', 'Eccv')
+        ac_client = openreview.Client(username='test_ac_eccv@mail.com', password=helpers.strong_password)
+
         reviewer_tasks_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs#areachair-tasks'
         request_page(selenium, reviewer_tasks_url, ac_client.token, by=By.LINK_TEXT, wait_for_element='Area Chair Profile Confirmation')
 
@@ -664,12 +672,23 @@ Please contact info@openreview.net with any questions or concerns about this int
 
     def test_recommend_reviewers(self, conference, test_client, helpers, selenium, request_page):
 
-        r1_client = helpers.create_user('reviewer1@fb.com', 'Reviewer', 'ECCV One')
-        r2_client = helpers.create_user('reviewer2@google.com', 'Reviewer', 'ECCV Two')
-        r3_client = helpers.create_user('reviewer3@umass.edu', 'Reviewer', 'ECCV Three')
-        r4_client = helpers.create_user('reviewer4@mit.edu', 'Reviewer', 'ECCV Four')
-        ac1_client = helpers.create_user('ac1@eccv.org', 'AreaChair', 'ECCV One')
-        ac2_client = helpers.create_user('ac2@eccv.org', 'AreaChair', 'ECCV Two')
+        helpers.create_user('reviewer1@fb.com', 'Reviewer', 'ECCV One')
+        r1_client = openreview.Client(username='reviewer1@fb.com', password=helpers.strong_password)
+
+        helpers.create_user('reviewer2@google.com', 'Reviewer', 'ECCV Two')
+        r2_client = openreview.Client(username='reviewer2@google.com', password=helpers.strong_password)
+
+        helpers.create_user('reviewer3@umass.edu', 'Reviewer', 'ECCV Three')
+        r3_client = openreview.Client(username='reviewer3@umass.edu', password=helpers.strong_password)
+
+        helpers.create_user('reviewer4@mit.edu', 'Reviewer', 'ECCV Four')
+        r4_client = openreview.Client(username='reviewer4@mit.edu', password=helpers.strong_password)
+
+        helpers.create_user('ac1@eccv.org', 'AreaChair', 'ECCV One')
+        ac1_client = openreview.Client(username='ac1@eccv.org', password=helpers.strong_password)
+
+        helpers.create_user('ac2@eccv.org', 'AreaChair', 'ECCV Two')
+        ac2_client = openreview.Client(username='ac2@eccv.org', password=helpers.strong_password)
 
         conference.set_reviewers(['~Reviewer_ECCV_One1', '~Reviewer_ECCV_Two1', '~Reviewer_ECCV_Three1', '~Reviewer_ECCV_Four1'])
         conference.set_area_chairs(['~AreaChair_ECCV_One1', '~AreaChair_ECCV_Two1'])
@@ -700,7 +719,9 @@ Please contact info@openreview.net with any questions or concerns about this int
         )
 
         # Test adding reviewer after conflicts are built
-        r5_client = helpers.create_user('reviewer5@fb.com', 'Reviewer', 'ECCV Five')
+        helpers.create_user('reviewer5@fb.com', 'Reviewer', 'ECCV Five')
+        r5_client = openreview.Client(username='reviewer5@fb.com', password=helpers.strong_password)
+
         conference.set_reviewers(['~Reviewer_ECCV_One1', '~Reviewer_ECCV_Two1', '~Reviewer_ECCV_Three1', '~Reviewer_ECCV_Four1', '~Reviewer_ECCV_Five1'])
         assert r5_client.get_edges_count(invitation='thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict') == 0
         conference.set_matching_conflicts(r5_client.profile.id)

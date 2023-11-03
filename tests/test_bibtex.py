@@ -26,7 +26,9 @@ class TestBibtex():
                 'authors': ['Bibtex User', 'Peter Teët', 'Andrew McC']
             }
         )
-        test_client = helpers.create_user('bibtex@mail.com', 'Bibtex', 'User')
+        helpers.create_user('bibtex@mail.com', 'Bibtex', 'User')
+        test_client = openreview.Client(username='bibtex@mail.com', password=helpers.strong_password)
+
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
         posted_note = test_client.post_note(note)
