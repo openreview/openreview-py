@@ -459,7 +459,7 @@ class GroupBuilder(object):
                 publication_chairs_group.web = content
                 self.post_group(publication_chairs_group)
 
-        elif publication_chairs_group.members != publication_chairs_ids:
+        elif publication_chairs_ids and publication_chairs_group.members != publication_chairs_ids:
             members_to_add = list(set(publication_chairs_ids) - set(publication_chairs_group.members))
             members_to_remove = list(set(publication_chairs_group.members) - set(publication_chairs_ids))
             if members_to_add:

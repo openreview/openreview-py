@@ -46,26 +46,26 @@ class TestJournal():
 
         ## Action Editors
         helpers.create_user('joelle@mailseven.com', 'Joelle', 'Pineau')
-        ryan_client = helpers.create_user('yan@mail.com', 'Ryan', 'Adams')
-        samy_client = helpers.create_user('samy@bengio.com', 'Samy', 'Bengio')
-        yoshua_client = helpers.create_user('yoshua@mail.com', 'Yoshua', 'Bengio')
-        corinna_client = helpers.create_user('corinna@mail.com', 'Corinna', 'Cortes')
-        ivan_client = helpers.create_user('ivan@mail.com', 'Ivan', 'Titov')
-        shakir_client = helpers.create_user('shakir@mail.com', 'Shakir', 'Mohamed')
-        silvia_client = helpers.create_user('silvia@apple.com', 'Silvia', 'Villa')
+        helpers.create_user('yan@mail.com', 'Ryan', 'Adams')
+        helpers.create_user('samy@bengio.com', 'Samy', 'Bengio')
+        helpers.create_user('yoshua@mail.com', 'Yoshua', 'Bengio')
+        helpers.create_user('corinna@mail.com', 'Corinna', 'Cortes')
+        helpers.create_user('ivan@mail.com', 'Ivan', 'Titov')
+        helpers.create_user('shakir@mail.com', 'Shakir', 'Mohamed')
+        helpers.create_user('silvia@apple.com', 'Silvia', 'Villa')
 
         ## Reviewers
-        david_client=helpers.create_user('david@mailone.com', 'David', 'Belanger')
-        javier_client=helpers.create_user('javier@mailtwo.com', 'Javier', 'Burroni')
-        carlos_client=helpers.create_user('carlos@mailthree.com', 'Carlos', 'Mondragon')
-        andrew_client = helpers.create_user('andrewmc@mailfour.com', 'Andrew', 'McCallum')
-        hugo_client = helpers.create_user('hugo@mailsix.com', 'Hugo', 'Larochelle')
-        david2_client=helpers.create_user('david_2@mailone.com', 'David K', 'Belanger')
+        helpers.create_user('david@mailone.com', 'David', 'Belanger')
+        helpers.create_user('javier@mailtwo.com', 'Javier', 'Burroni')
+        helpers.create_user('carlos@mailthree.com', 'Carlos', 'Mondragon')
+        helpers.create_user('andrewmc@mailfour.com', 'Andrew', 'McCallum')
+        helpers.create_user('hugo@mailsix.com', 'Hugo', 'Larochelle')
+        helpers.create_user('david_2@mailone.com', 'David K', 'Belanger')
         openreview_client.merge_profiles('~David_Belanger1', '~David_K_Belanger1')
 
         ## Authors
-        melisa_client = helpers.create_user('melissa@maileight.com', 'Melissa', 'Eight')
-        celeste_client = helpers.create_user('celeste@mailnine.com', 'Celeste Ana', 'Martinez')
+        helpers.create_user('melissa@maileight.com', 'Melissa', 'Eight')
+        helpers.create_user('celeste@mailnine.com', 'Celeste Ana', 'Martinez')
 
         #post journal request form
         request_form = openreview_client.post_note_edit(invitation= 'openreview.net/Support/-/Journal_Request',
@@ -323,7 +323,6 @@ class TestJournal():
         ))
 
         peter_client=helpers.create_user('petersnow@yahoo.com', 'Peter', 'Snow')
-        peter_client=OpenReviewClient(username='petersnow@yahoo.com', password=helpers.strong_password)
 
         guest_client=OpenReviewClient()
         now = datetime.datetime.utcnow()
@@ -2474,7 +2473,6 @@ note={Retracted after acceptance}
         joelle_client = OpenReviewClient(username='joelle@mailseven.com', password=helpers.strong_password)
         peter_client = OpenReviewClient(username='petersnow@yahoo.com', password=helpers.strong_password)
         tom_client=helpers.create_user('tom@mail.com', 'Tom', 'Rain')
-        tom_client = OpenReviewClient(username='tom@mail.com', password=helpers.strong_password)
 
 
 
@@ -4244,7 +4242,7 @@ The TMLR Editors-in-Chief
         authorids = ['~SomeFirstName_User1']
         for i in alc:
             for j in alc[:5]:
-                profile_client = helpers.create_user(f'author_{i}{j}@mail.com', 'Author', f'TMLR {i}{j}')
+                helpers.create_user(f'author_{i}{j}@mail.com', 'Author', f'TMLR {i}{j}')
                 authors.append(f'Author TMLR {i}{j}')
                 authorids.append(f'~Author_TMLR_{i}{j}1')
         

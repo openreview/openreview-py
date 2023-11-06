@@ -54,6 +54,7 @@ class TestVenueRequest():
                     'test@mail.com',
                     'tom_venue@mail.com'],
                 'contact_email': 'test@mail.com',
+                'publication_chairs': 'Yes, our venue has Publication Chairs',
                 'publication_chairs_emails': ['publicationchair@testvenue.com'],
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
@@ -185,6 +186,7 @@ class TestVenueRequest():
                     'pc_venue_v2@mail.com',
                     'tom_venue@mail.com'],
                 'contact_email': 'pc_venue_v2@mail.com',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': abstract_due_date.strftime('%Y/%m/%d %H:%M'),
@@ -286,6 +288,7 @@ class TestVenueRequest():
             'Submission Deadline': request_form_note.content['Submission Deadline'],
             'Venue Start Date': request_form_note.content['Venue Start Date'],
             'contact_email': request_form_note.content['contact_email'],
+            'publication_chairs':'No, our venue does not have Publication Chairs',
             'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
             'desk_rejected_submissions_author_anonymity': 'No, author identities of desk rejected submissions should not be revealed.',
 
@@ -413,6 +416,7 @@ class TestVenueRequest():
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
                 'submission_email': 'Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}} \n\nIf you have any questions, please contact the PCs at test@mail.com',
                 'hide_fields': ['pdf']
@@ -974,7 +978,7 @@ class TestVenueRequest():
 
     def test_venue_bid_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
-        reviewer_client = helpers.create_user('venue_reviewer_v2@mail.com', 'VenueTwo', 'Reviewer')
+        helpers.create_user('venue_reviewer_v2@mail.com', 'VenueTwo', 'Reviewer')
 
         reviewer_group_id = '{}/Reviewers'.format(venue['venue_id'])
         reviewer_group = openreview_client.get_group(reviewer_group_id)
@@ -1023,7 +1027,7 @@ class TestVenueRequest():
 
         helpers.create_user('venue_author_v2@mail.com', 'VenueTwo', 'Author')
         author_client = OpenReviewClient(username='venue_author_v2@mail.com', password=helpers.strong_password)
-        reviewer_client = helpers.create_user('venue_reviewer_v2_@mail.com', 'VenueThree', 'Reviewer')
+        helpers.create_user('venue_reviewer_v2_@mail.com', 'VenueThree', 'Reviewer')
 
         venue_id = venue['venue_id']
 
@@ -1460,6 +1464,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
                 'submission_email': 'Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}} \n\nIf you have any questions, please contact the PCs at test@mail.com'
             },
@@ -1843,6 +1848,83 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert invitation.edit['note']['id']['param']['withInvitation'] == invitation.id
         assert invitation.edit['note']['forum'] == review_note['note']['forum']
         assert invitation.edit['note']['replyto'] == review_note['note']['id']
+
+    def test_custom_stage(self, client, test_client, helpers, venue, openreview_client):
+
+        venue = openreview.get_conference(client, venue['request_form_note'].id, support_user='openreview.net/Support')
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        venue.custom_stage = openreview.stages.CustomStage(name='Author_Review_Rating',
+            reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            due_date=due_date,
+            exp_date=due_date + datetime.timedelta(days=1),
+            invitees=[openreview.stages.CustomStage.Participants.AUTHORS],
+            content={
+                'review_quality': {
+                    'order': 1,
+                    'description': 'How helpful is this review:',
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'input': 'radio',
+                            'enum': [
+                                'Poor - not very helpful',
+                                'Good',
+                                'Outstanding'
+                            ]
+                        }
+                    }
+                }
+            },
+            allow_de_anonymization=True)
+
+        venue.create_custom_stage()
+
+        submissions = venue.get_submissions(sort='number:asc', details='directReplies')
+        first_submission = submissions[0]
+        reviews = [reply for reply in first_submission.details['directReplies'] if f'V2.cc/2030/Conference/Submission{first_submission.number}/-/Official_Review']
+
+        assert len(openreview_client.get_invitations(invitation='V2.cc/2030/Conference/-/Author_Review_Rating')) == 2
+
+        reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2_@mail.com', password=helpers.strong_password)
+        anon_groups = reviewer_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Reviewer_', signatory='~VenueThree_Reviewer1')
+        anon_group_id = anon_groups[0].id
+
+        invitation = openreview_client.get_invitation(f'{anon_group_id}/-/Author_Review_Rating')
+        assert invitation.invitees == ['V2.cc/2030/Conference/Program_Chairs', 'V2.cc/2030/Conference/Submission1/Authors']
+        assert 'review_quality' in invitation.edit['note']['content']
+        assert invitation.edit['note']['forum'] == submissions[0].id
+        assert invitation.edit['note']['replyto'] == reviews[0]['id']
+        assert invitation.edit['note']['readers'] == [
+            'V2.cc/2030/Conference/Program_Chairs',
+            '${3/signatures}'
+        ]
+        assert invitation.edit['signatures']['param']['items'] == [
+            { "prefix": "~.*","optional": True },
+            { "value": "V2.cc/2030/Conference/Program_Chairs", "optional": True }
+        ]
+
+        author_client = OpenReviewClient(username='venue_author_v2@mail.com', password=helpers.strong_password)
+
+        review_rating_note = author_client.post_note_edit(invitation=invitation.id,
+            signatures=['~VenueTwo_Author1'],
+            note=Note(
+                content={
+                    'review_quality': { 'value': 'Outstanding' }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=review_rating_note['id'])
+
+        review_rating = openreview_client.get_notes(invitation=invitation.id)[0]
+        assert 'Outstanding' in review_rating.content['review_quality']['value']
+        assert review_rating.readers == [
+        "V2.cc/2030/Conference/Program_Chairs",
+        "~VenueTwo_Author1"
+        ]
+        assert review_rating.signatures == ['~VenueTwo_Author1']
 
     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 

@@ -415,7 +415,9 @@ class TestDoubleBlindConference():
         builder.has_area_chairs(True)
         conference = builder.get_result()
 
-        pc_client = helpers.create_user(email = 'akbc_pc_1@akbc.ws', first = 'AKBC', last = 'PCOne')
+        helpers.create_user(email = 'akbc_pc_1@akbc.ws', first = 'AKBC', last = 'PCOne')
+        pc_client = openreview.Client(username='akbc_pc_1@akbc.ws', password=helpers.strong_password)
+
         conference.set_program_chairs(emails = ['akbc_pc_1@akbc.ws'])
 
         result = conference.recruit_reviewers(['mbok@mail.com', 'Mohit@mail.com'])
@@ -976,9 +978,14 @@ class TestDoubleBlindConference():
 
     def test_open_bids(self, client, test_client, selenium, request_page, helpers):
 
-        reviewer_client = helpers.create_user('reviewer2@mail.com', 'Reviewer', 'DoubleBlind')
-        reviewer2_client = helpers.create_user('reviewer@domain.com', 'Reviewer', 'Domain')
-        ac_client = helpers.create_user('ac@mail.com', 'AreaChair', 'DoubleBlind')
+        helpers.create_user('reviewer2@mail.com', 'Reviewer', 'DoubleBlind')
+        reviewer_client = openreview.Client(username='reviewer2@mail.com', password=helpers.strong_password)
+
+        helpers.create_user('reviewer@domain.com', 'Reviewer', 'Domain')
+        reviewer2_client = openreview.Client(username='reviewer@domain.com', password=helpers.strong_password)
+
+        helpers.create_user('ac@mail.com', 'AreaChair', 'DoubleBlind')
+        ac_client = openreview.Client(username='ac@mail.com', password=helpers.strong_password)
 
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
@@ -1270,7 +1277,9 @@ class TestDoubleBlindConference():
     def test_open_meta_reviews_additional_options(self, client, test_client, selenium, request_page, helpers):
 
         now = datetime.datetime.utcnow()
-        ac_client = helpers.create_user('meta_additional@mail.com', 'MetaAdditionalFirstName', 'User')
+        helpers.create_user('meta_additional@mail.com', 'MetaAdditionalFirstName', 'User')
+        ac_client = openreview.Client(username='meta_additional@mail.com', password=helpers.strong_password)
+
         assert ac_client is not None, "Client is none"
 
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
@@ -1385,7 +1394,9 @@ class TestDoubleBlindConference():
 
         conference.set_program_chairs(emails = ['akbc_pc@mail.com'])
 
-        pc_client = helpers.create_user('akbc_pc@mail.com', 'AKBC', 'Pc')
+        helpers.create_user('akbc_pc@mail.com', 'AKBC', 'Pc')
+        pc_client = openreview.Client(username='akbc_pc@mail.com', password=helpers.strong_password)
+
 
         accepted_author_group = client.get_group(conference.get_accepted_authors_id())
         assert accepted_author_group

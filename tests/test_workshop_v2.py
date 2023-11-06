@@ -26,7 +26,8 @@ class TestWorkshopV2():
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@icaps.cc', 'Program', 'ICAPSChair')
+        helpers.create_user('pc@icaps.cc', 'Program', 'ICAPSChair')
+        pc_client = openreview.Client(username='pc@icaps.cc', password=helpers.strong_password)
 
         helpers.create_user('reviewer1@icaps.cc', 'Reviewer', 'ICAPSOne')
         helpers.create_user('reviewer2@icaps.cc', 'Reviewer', 'ICAPSTwo')
@@ -50,6 +51,7 @@ class TestWorkshopV2():
                 'Official Website URL': 'https://prl-theworkshop.github.io/',
                 'program_chair_emails': ['pc@icaps.cc'],
                 'contact_email': 'pc@icaps.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
                 'senior_area_chairs': 'No, our venue does not have Senior Area Chairs',
                 'Venue Start Date': '2023/07/01',
@@ -209,6 +211,7 @@ class TestWorkshopV2():
                 'Official Website URL': 'https://prl-theworkshop.github.io/',
                 'program_chair_emails': ['pc@icaps.cc'],
                 'contact_email': 'pc@icaps.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',
@@ -308,6 +311,7 @@ class TestWorkshopV2():
                 'Abbreviated Venue Name': 'PRL ICAPS 2023',
                 'Official Website URL': 'https://prl-theworkshop.github.io/',
                 'program_chair_emails': ['pc@icaps.cc'],
+                'publication_chairs': 'Yes, our venue has Publication Chairs',
                 'publication_chairs_emails': ['publicationchair@mail.com', 'publicationchair2@mail.com'],
                 'contact_email': 'pc@icaps.cc',
                 'Venue Start Date': '2023/07/01',
@@ -344,7 +348,7 @@ class TestWorkshopV2():
         short_name = 'PRL ICAPS 2023'
         post_decision_stage_note = pc_client.post_note(openreview.Note(
             content={
-                'reveal_authors': 'Reveal author identities of only accepted submissions to the public',
+                'reveal_authors': 'No, I don\'t want to reveal any author identities.',
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'home_page_tab_names': {
                     'Accept': 'Accept',
@@ -385,17 +389,26 @@ Best,
         for idx in range(len(submissions)):
             if idx % 2 == 0:
                 submissions[idx].readers = [
-                'PRL/2023/ICAPS',
-                'PRL/2023/ICAPS/Reviewers',
-                'PRL/2023/ICAPS/Publication_Chairs',
-                f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors'
-            ]
+                    'PRL/2023/ICAPS',
+                    'PRL/2023/ICAPS/Reviewers',
+                    'PRL/2023/ICAPS/Publication_Chairs',
+                    f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors'
+                ]
+                submissions[idx].content['authors']['readers'] = [
+                    'PRL/2023/ICAPS',
+                    f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors',
+                    'PRL/2023/ICAPS/Publication_Chairs'
+                ]
             else:
                 submissions[idx].readers = [
-                'PRL/2023/ICAPS',
-                'PRL/2023/ICAPS/Reviewers',
-                f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors'
-            ]
+                    'PRL/2023/ICAPS',
+                    'PRL/2023/ICAPS/Reviewers',
+                    f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors'
+                ]
+                submissions[idx].content['authors']['readers'] = [
+                    'PRL/2023/ICAPS',
+                    f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors'
+                ]
                 
         helpers.create_user('publicationchair@mail.com', 'Publication', 'ICAPSChair')
         publication_chair_client_v2=openreview.api.OpenReviewClient(username='publicationchair@mail.com', password=helpers.strong_password)

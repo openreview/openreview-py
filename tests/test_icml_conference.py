@@ -26,9 +26,13 @@ class TestICMLConference():
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@icml.cc', 'Program', 'ICMLChair')
+        helpers.create_user('pc@icml.cc', 'Program', 'ICMLChair')
+        pc_client = openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
 
-        sac_client = helpers.create_user('sac1@gmail.com', 'SAC', 'ICMLOne')
+
+        helpers.create_user('sac1@gmail.com', 'SAC', 'ICMLOne')
+        sac_client = openreview.Client(username='sac1@gmail.com', password=helpers.strong_password)
+
         helpers.create_user('sac2@icml.cc', 'SAC', 'ICMLTwo')
         helpers.create_user('ac1@icml.cc', 'AC', 'ICMLOne')
         helpers.create_user('ac2@icml.cc', 'AC', 'ICMLTwo')
@@ -55,6 +59,7 @@ class TestICMLConference():
                 'Official Website URL': 'https://icml.cc',
                 'program_chair_emails': ['pc@icml.cc'],
                 'contact_email': 'pc@icml.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
@@ -145,6 +150,7 @@ class TestICMLConference():
                 'Official Website URL': 'https://icml.cc',
                 'program_chair_emails': ['pc@icml.cc'],
                 'contact_email': 'pc@icml.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
@@ -242,6 +248,7 @@ class TestICMLConference():
                 'Official Website URL': 'https://icml.cc',
                 'program_chair_emails': ['pc@icml.cc', 'pc2@icml.cc'],
                 'contact_email': 'pc@icml.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Start Date': now.strftime('%Y/%m/%d'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
@@ -304,6 +311,7 @@ class TestICMLConference():
                 'Official Website URL': 'https://icml.cc',
                 'program_chair_emails': ['pc@icml.cc', 'pc3@icml.cc'],
                 'contact_email': 'pc@icml.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
@@ -728,6 +736,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
         ## close the submissions
         now = datetime.datetime.utcnow()
         due_date = now - datetime.timedelta(days=1)
+        exp_date = now + datetime.timedelta(days=10)
         pc_client.post_note(openreview.Note(
             content={
                 'title': 'Thirty-ninth International Conference on Machine Learning',
@@ -736,6 +745,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
                 'Official Website URL': 'https://icml.cc',
                 'program_chair_emails': ['pc@icml.cc', 'pc3@icml.cc'],
                 'contact_email': 'pc@icml.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
@@ -796,8 +806,8 @@ reviewer6@gmail.com, Reviewer ICMLSix
                             }
                         }
                     }
-                }
-
+                },
+                'withdraw_submission_expiration': exp_date.strftime('%Y/%m/%d')
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
@@ -815,7 +825,12 @@ reviewer6@gmail.com, Reviewer ICMLSix
         assert submission_invitation.expdate < openreview.tools.datetime_millis(now)
 
         assert len(pc_client_v2.get_all_invitations(invitation='ICML.cc/2023/Conference/-/Withdrawal')) == 101
+        withdrawal_inv = pc_client_v2.get_invitation('ICML.cc/2023/Conference/Submission1/-/Withdrawal')
+        assert withdrawal_inv.expdate == openreview.tools.datetime_millis(exp_date.replace(hour=0, minute=0, second=0, microsecond=0))
         assert len(pc_client_v2.get_all_invitations(invitation='ICML.cc/2023/Conference/-/Desk_Rejection')) == 101
+        desk_reject_inv = pc_client_v2.get_invitation('ICML.cc/2023/Conference/Submission1/-/Desk_Rejection')
+        desk_reject_due_date = due_date + datetime.timedelta(days=90)
+        assert desk_reject_inv.expdate == openreview.tools.datetime_millis(desk_reject_due_date.replace(hour=0, minute=0, second=0, microsecond=0))
         assert pc_client_v2.get_invitation('ICML.cc/2023/Conference/-/PC_Revision')
 
         ## make submissions visible to ACs only
@@ -1545,7 +1560,7 @@ OpenReview Team'''
         openreview.venue.Venue.check_new_profiles(openreview_client)
 
         ## External reviewer creates a profile and accepts the invitation again
-        external_reviewer=helpers.create_user('melisa@icml.cc', 'Melisa', 'ICML')
+        helpers.create_user('melisa@icml.cc', 'Melisa', 'ICML')
 
         ## Run Job
         openreview.venue.Venue.check_new_profiles(openreview_client)
@@ -1757,7 +1772,7 @@ Confirmation of the assignment is pending until the invited reviewer creates a p
 OpenReview Team'''
 
         ## External reviewer creates a profile and accepts the invitation again
-        external_reviewer=helpers.create_user('carlos@icml.cc', 'Carlos', 'ICML', institution='amazon.com')
+        helpers.create_user('carlos@icml.cc', 'Carlos', 'ICML', institution='amazon.com')
 
         ## Run Job
         openreview.venue.Venue.check_new_profiles(openreview_client)
@@ -1818,7 +1833,7 @@ OpenReview Team'''
         helpers.await_queue(openreview_client)
 
         ## External reviewer creates a profile and accepts the invitation again
-        external_reviewer=helpers.create_user('celeste@icml.cc', 'Celeste', 'ICML')
+        helpers.create_user('celeste@icml.cc', 'Celeste', 'ICML')
 
         ## Run Job
         openreview.venue.Venue.check_new_profiles(openreview_client)
@@ -4656,6 +4671,11 @@ Best,
         assert 'andrew@amazon.com' in recipients
         assert 'We are delighted to inform you that your submission has been accepted.' in messages[0]['content']['text']
 
+        replies = pc_client.get_notes(forum=request_form.id, invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment')
+        assert len(replies) == 2
+        assert replies[0].content['title'] == 'Decision Notification Status'
+        assert 'Decision notifications have been sent to the authors. You can check the status of the emails by clicking on this link: https://openreview.net/messages?parentGroup=ICML.cc/2023/Conference/Authors' in replies[0].content['comment']
+
         for submission in accepted_submissions:
             assert submission.readers == ['everyone']
             assert 'readers' not in submission.content['authors']
@@ -4728,6 +4748,7 @@ url={https://openreview.net/forum?id='''
                 'Official Website URL': 'https://icml.cc',
                 'program_chair_emails': ['pc@icml.cc', 'pc3@icml.cc'],
                 'contact_email': 'pc@icml.cc',
+                'publication_chairs': 'Yes, our venue has Publication Chairs',
                 'publication_chairs_emails': ['publicationchair@icml.com'],
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': request_form.content['Submission Deadline'],
@@ -4754,6 +4775,67 @@ url={https://openreview.net/forum?id='''
         # check members have not changed
         authors_accepted_group = openreview_client.get_group('ICML.cc/2023/Conference/Authors/Accepted')
         assert len(authors_accepted_group.members) == num_accepted_papers
+
+        #Post another post decision note
+        now = datetime.datetime.utcnow()
+        short_name = 'ICML 2023'
+        post_decision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'reveal_authors': 'Reveal author identities of only accepted submissions to the public',
+                'submission_readers': 'Make accepted submissions public and hide rejected submissions',
+                'hide_fields': ['supplementary_material', 'pdf'],
+                'home_page_tab_names': {
+                    'Accept': 'Accept',
+                    'Revision Needed': 'Revision Needed',
+                    'Reject': 'Submitted'
+                },
+                'send_decision_notifications': 'Yes, send an email notification to the authors',
+                'accept_email_content': f'''Dear {{{{fullname}}}},
+
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+
+Best,
+{short_name} Program Chairs
+''',
+                'reject_email_content': f'''Dear {{{{fullname}}}},
+
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted.
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+
+Best,
+{short_name} Program Chairs
+''',
+                'revision_needed_email_content': f'''Dear {{{{fullname}}}},
+
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}.
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+
+Best,
+{short_name} Program Chairs
+'''
+            },
+            forum=request_form.forum,
+            invitation=invitation.id,
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+        assert post_decision_stage_note
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id = post_decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        # check emails were not resent and decision emails status comment was not re-posted
+        messages = client.get_messages(subject='[ICML 2023] Decision notification for your submission 1: Paper title 1 Version 2')
+        assert len(messages) == 5
+
+        replies = pc_client.get_notes(forum=request_form.id, invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment')
+        assert len(replies) == 2
 
     def test_forum_chat(self, openreview_client, helpers):
 

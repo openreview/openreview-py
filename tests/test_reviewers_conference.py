@@ -143,7 +143,8 @@ class TestReviewersConference():
                 'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
             }
         )
-        reviewer_client = helpers.create_user('reviewer_kgb2@mail.com', 'Reviewer', 'KGBTwo')
+        helpers.create_user('reviewer_kgb2@mail.com', 'Reviewer', 'KGBTwo')
+        reviewer_client = openreview.Client(username='reviewer_kgb2@mail.com', password=helpers.strong_password)
         review_note = reviewer_client.post_note(note)
         assert review_note
 

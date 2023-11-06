@@ -26,7 +26,8 @@ class TestWorkshopV2():
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@icaps.cc', 'Program', 'ICAPSChair')
+        helpers.create_user('pc@icaps.cc', 'Program', 'ICAPSChair')
+        pc_client = openreview.Client(username='pc@icaps.cc', password=helpers.strong_password)
 
         helpers.create_user('reviewer1@icaps.cc', 'Reviewer', 'ICAPSOne')
         helpers.create_user('reviewer2@icaps.cc', 'Reviewer', 'ICAPSTwo')
@@ -50,6 +51,7 @@ class TestWorkshopV2():
                 'Official Website URL': 'https://prl-theworkshop.github.io/',
                 'program_chair_emails': ['pc@icaps.cc'],
                 'contact_email': 'pc@icaps.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
                 'senior_area_chairs': 'No, our venue does not have Senior Area Chairs',
                 'Venue Start Date': '2023/07/01',
@@ -214,6 +216,7 @@ class TestWorkshopV2():
                 'Official Website URL': 'https://prl-theworkshop.github.io/',
                 'program_chair_emails': ['pc@icaps.cc'],
                 'contact_email': 'pc@icaps.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',

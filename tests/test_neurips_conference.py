@@ -32,7 +32,9 @@ class TestNeurIPSConference():
         first_date = now + datetime.timedelta(days=1)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@neurips.cc', 'Program', 'NeurIPSChair')
+        helpers.create_user('pc@neurips.cc', 'Program', 'NeurIPSChair')
+        pc_client = openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
+
 
         helpers.create_user('another_andrew@mit.edu', 'Another', 'Andrew')
         helpers.create_user('sac1@google.com', 'SeniorArea', 'GoogleChair', institution='google.com')
@@ -65,6 +67,7 @@ class TestNeurIPSConference():
                 'Official Website URL': 'https://neurips.cc',
                 'program_chair_emails': ['pc@neurips.cc'],
                 'contact_email': 'pc@neurips.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'Venue Start Date': '2021/12/01',
@@ -611,6 +614,7 @@ If you would like to change your decision, please follow the link in the previou
                 'Official Website URL': 'https://neurips.cc',
                 'program_chair_emails': ['pc@neurips.cc'],
                 'contact_email': 'pc@neurips.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
                 'Venue Start Date': '2021/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
@@ -747,6 +751,7 @@ If you would like to change your decision, please follow the link in the previou
                 'Official Website URL': 'https://neurips.cc',
                 'program_chair_emails': ['pc@neurips.cc'],
                 'contact_email': 'pc@neurips.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
                 'Venue Start Date': '2021/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
@@ -979,6 +984,7 @@ If you would like to change your decision, please follow the link in the previou
                 'Official Website URL': 'https://neurips.cc',
                 'program_chair_emails': ['pc@neurips.cc'],
                 'contact_email': 'pc@neurips.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
                 'Venue Start Date': '2021/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
@@ -1020,6 +1026,7 @@ If you would like to change your decision, please follow the link in the previou
                 'Official Website URL': 'https://neurips.cc',
                 'program_chair_emails': ['pc@neurips.cc'],
                 'contact_email': 'pc@neurips.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
                 'Venue Start Date': '2021/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
@@ -1765,7 +1772,7 @@ OpenReview Team'''
         assert not client.get_groups('NeurIPS.cc/2021/Conference/Reviewers', member='external_reviewer4@gmail.com')
 
         ## External reviewer creates a profile and accepts the invitation again
-        external_reviewer=helpers.create_user('external_reviewer4@gmail.com', 'Reviewer', 'External')
+        helpers.create_user('external_reviewer4@gmail.com', 'Reviewer', 'External')
 
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
         notes = selenium.find_element(By.CLASS_NAME, "note_editor")
@@ -2899,6 +2906,7 @@ NeurIPS 2021 Conference Program Chairs'''
                 'Official Website URL': 'https://neurips.cc',
                 'program_chair_emails': ['pc@neurips.cc'],
                 'contact_email': 'pc@neurips.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
                 'Venue Start Date': '2021/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),

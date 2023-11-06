@@ -153,18 +153,14 @@ class OpenReviewClient(object):
         self.__handle_token(json_response)
         return json_response
 
-    def register_user(self, email = None, first = None, last = None, middle = '', password = None):
+    def register_user(self, email = None, fullname = None, password = None):
         """
         Registers a new user
 
         :param email: email that will be used as id to log in after the user is registered
         :type email: str, optional
-        :param first: First name of the user
-        :type first: str, optional
-        :param last: Last name of the user
-        :type last: str, optional
-        :param middle: Middle name of the user
-        :type middle: str, optional
+        :param fullname: Full name of the user
+        :type fullname: str, optional
         :param password: Password used to log into OpenReview
         :type password: str, optional
 
@@ -173,7 +169,7 @@ class OpenReviewClient(object):
         """
         register_payload = {
             'email': email,
-            'name': {   'first': first, 'last': last, 'middle': middle},
+            'fullname': fullname,
             'password': password
         }
         response = self.session.post(self.register_url, json = register_payload, headers = self.headers)

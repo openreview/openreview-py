@@ -41,6 +41,7 @@ class TestSubmissionReaders():
                     'test@mail.com',
                     'tom@mail.com'],
                 'contact_email': 'test@mail.com',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'No, our venue does not have Senior Area Chairs',
                 'Venue Start Date': now.strftime('%Y/%m/%d'),
@@ -84,7 +85,9 @@ class TestSubmissionReaders():
 
     def test_submission_stage(self, client, venue, helpers):
 
-        author_client = helpers.create_user('workshop_author1@mail.com', 'Workshop', 'Author')
+        helpers.create_user('workshop_author1@mail.com', 'Workshop', 'Author')
+        author_client = openreview.Client(username='workshop_author1@mail.com', password=helpers.strong_password)
+
 
         submission_one = author_client.post_note(openreview.Note(
             invitation='{}/-/Submission'.format(venue['venue_id']),

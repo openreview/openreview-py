@@ -69,9 +69,9 @@ class Venue(object):
         self.senior_area_chair_identity_readers = []
         self.automatic_reviewer_assignment = False
         self.decision_heading_map = {}
-        self.use_publication_chairs = False
         self.allow_gurobi_solver = False
         self.submission_license = None
+        self.use_publication_chairs = False
 
     def get_id(self):
         return self.venue_id
@@ -728,9 +728,14 @@ Total Errors: {len(errors)}
 
             for field, value in submission.content.items():
                 if field in final_hide_fields:
-                    content[field] = {
-                        'readers': [venue_id, self.get_authors_id(submission.number)]
-                    }
+                    if self.use_publication_chairs and field in ['authors', 'authorids'] and note_accepted:
+                        content[field] = {
+                            'readers': [venue_id, self.get_authors_id(submission.number), self.get_publication_chairs_id()]
+                        }
+                    else:
+                        content[field] = {
+                            'readers': [venue_id, self.get_authors_id(submission.number)]
+                        }
                 if field not in final_hide_fields and 'readers' in value:
                     content[field] = {
                         'readers': { 'delete': True }
@@ -778,7 +783,7 @@ Total Errors: {len(errors)}
                 message = messages[decision_note['content']['decision']['value']]
                 final_message = message.replace("{{submission_title}}", note.content['title']['value'])
                 final_message = final_message.replace("{{forum_url}}", f'https://openreview.net/forum?id={note.id}')
-                self.client.post_message(subject, recipients=note.content['authorids']['value'], message=final_message)
+                self.client.post_message(subject, recipients=[self.get_authors_id(note.number)], message=final_message, parentGroup=self.get_authors_id())
 
         tools.concurrent_requests(send_notification, paper_notes)
 
