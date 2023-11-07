@@ -28,9 +28,11 @@ class TestARRVenueV2():
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@aclrollingreview.org', 'Program', 'ARRChair')
+        helpers.create_user('pc@aclrollingreview.org', 'Program', 'ARRChair')
+        pc_client = openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
 
-        sac_client = helpers.create_user('sac1@aclrollingreview.com', 'SAC', 'ARROne')
+        helpers.create_user('sac1@aclrollingreview.com', 'SAC', 'ARROne')
+        sac_client = openreview.Client(username='sac1@aclrollingreview.com', password=helpers.strong_password)
         helpers.create_user('sac2@aclrollingreview.com', 'SAC', 'ARRTwo')
         helpers.create_user('ac1@aclrollingreview.com', 'AC', 'ARROne')
         helpers.create_user('ac2@aclrollingreview.com', 'AC', 'ARRTwo')
@@ -60,6 +62,7 @@ class TestARRVenueV2():
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/08/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
@@ -147,6 +150,7 @@ class TestARRVenueV2():
                 'contact_email': 'editors@aclrollingreview.org',
                 'Venue Start Date': '2023/08/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'publication_chairs':'No, our venue does not have Publication Chairs',  
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
@@ -174,13 +178,137 @@ class TestARRVenueV2():
         venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
         invitation_builder = openreview.arr.InvitationBuilder(venue)
         invitation_builder.set_preprint_release_submission_invitation()
+        invitation_builder.set_copy_groups_invitation()
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Copy')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Copy')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Copy')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Ethics_Reviewers/-/Copy')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Ethics_Chairs/-/Copy')
 
     def test_copy_members(self, client, openreview_client, helpers):
         # Create a previous cycle (2023/June) and test the script that copies all roles
         # (reviewers/ACs/SACs/ethics reviewers/ethics chairs) into the current cycle (2023/August)
-        pass
+
+        # Create groups for previous cycle
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
+
+        openreview_client.post_group_edit(
+            invitation='openreview.net/-/Edit',
+            readers=['openreview.net'],
+            writers=['openreview.net'],
+            signatures=['openreview.net'],
+            group = openreview.api.Group(
+                id='aclweb.org/ACL/ARR/2023/June/Reviewers',
+                readers=['openreview.net', 'aclweb.org/ACL/ARR/2023/August'], ## Add next cycle's conference as readers
+                writers=['openreview.net'],
+                signatures=['openreview.net'],
+                signatories=['openreview.net'],
+                members=[
+                    '~Reviewer_ARROne1',
+                    '~Reviewer_ARRTwo1',
+                    '~Reviewer_ARRThree1',
+                    '~Reviewer_ARRFour1',
+                    '~Reviewer_ARRFive1',
+                    '~Reviewer_ARRSix1',
+                ]
+            )
+        )
+
+        openreview_client.post_group_edit(
+            invitation='openreview.net/-/Edit',
+            readers=['openreview.net'],
+            writers=['openreview.net'],
+            signatures=['openreview.net'],
+            group = openreview.api.Group(
+                id='aclweb.org/ACL/ARR/2023/June/Area_Chairs',
+                readers=['openreview.net', 'aclweb.org/ACL/ARR/2023/August'], ## Add next cycle's conference as readers
+                writers=['openreview.net'],
+                signatures=['openreview.net'],
+                signatories=['openreview.net'],
+                members=['~AC_ARROne1', '~AC_ARRTwo1']
+            )
+        )
+
+        openreview_client.post_group_edit(
+            invitation='openreview.net/-/Edit',
+            readers=['openreview.net'],
+            writers=['openreview.net'],
+            signatures=['openreview.net'],
+            group = openreview.api.Group(
+                id='aclweb.org/ACL/ARR/2023/June/Senior_Area_Chairs',
+                readers=['openreview.net', 'aclweb.org/ACL/ARR/2023/August'], ## Add next cycle's conference as readers
+                writers=['openreview.net'],
+                signatures=['openreview.net'],
+                signatories=['openreview.net'],
+                members=['~SAC_ARROne1', '~SAC_ARRTwo1']
+            )
+        )
+
+        openreview_client.post_group_edit(
+            invitation='openreview.net/-/Edit',
+            readers=['openreview.net'],
+            writers=['openreview.net'],
+            signatures=['openreview.net'],
+            group = openreview.api.Group(
+                id='aclweb.org/ACL/ARR/2023/June/Ethics_Reviewers',
+                readers=['openreview.net', 'aclweb.org/ACL/ARR/2023/August'], ## Add next cycle's conference as readers
+                writers=['openreview.net'],
+                signatures=['openreview.net'],
+                signatories=['openreview.net'],
+                members=['~Reviewer_ARROne1']
+            )
+        )
+
+        openreview_client.post_group_edit(
+            invitation='openreview.net/-/Edit',
+            readers=['openreview.net'],
+            writers=['openreview.net'],
+            signatures=['openreview.net'],
+            group = openreview.api.Group(
+                id='aclweb.org/ACL/ARR/2023/June/Ethics_Chairs',
+                readers=['openreview.net', 'aclweb.org/ACL/ARR/2023/August'], ## Add next cycle's conference as readers
+                writers=['openreview.net'],
+                signatures=['openreview.net'],
+                signatories=['openreview.net'],
+                members=['~SAC_ARRTwo1']
+            )
+        )
+        
+        # Post edit to copy groups
+        groups = [g.split('/')[-1] for g in [
+            venue.get_reviewers_id(),
+            venue.get_area_chairs_id(),
+            venue.get_senior_area_chairs_id(),
+            venue.get_ethics_reviewers_id(),
+            venue.get_ethics_chairs_id()
+        ]]
+
+        for group_name in groups:
+            pc_client_v2.post_group_edit(
+                invitation=f'aclweb.org/ACL/ARR/2023/August/{group_name}/-/Copy',
+                signatures = ['aclweb.org/ACL/ARR/2023/August'],
+                readers = ['aclweb.org/ACL/ARR/2023/August'],
+                writers = ['aclweb.org/ACL/ARR/2023/August'],
+                group=openreview.api.Invitation(
+                    id=f'aclweb.org/ACL/ARR/2023/August/{group_name}',
+                    signatures=['aclweb.org/ACL/ARR/2023/August'],
+                    content = {
+                        'original_group': {
+                            'value': f'aclweb.org/ACL/ARR/2023/June/{group_name}'
+                        }
+                    }
+                )
+            )
+            helpers.await_queue_edit(openreview_client, invitation=f'aclweb.org/ACL/ARR/2023/August/{group_name}/-/Copy')    
+            previous_cycle = pc_client_v2.get_group(f'aclweb.org/ACL/ARR/2023/June/{group_name}') 
+            current_cycle = pc_client_v2.get_group(f'aclweb.org/ACL/ARR/2023/August/{group_name}')
+            for member in previous_cycle.members:
+                assert member in current_cycle.members
 
     def test_unavailability_and_registration_tasks(self, client, openreview_client, helpers):
         # Set up the forms for max load and tracks for reviewers/ACs/SACs
@@ -278,6 +406,7 @@ class TestARRVenueV2():
                 'contact_email': 'editors@aclrollingreview.org',
                 'Venue Start Date': '2023/08/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'publication_chairs':'No, our venue does not have Publication Chairs',  
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
