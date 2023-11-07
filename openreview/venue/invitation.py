@@ -2016,7 +2016,7 @@ class InvitationBuilder(object):
 
         paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, number='${2/content/noteNumber/value}')
         with_invitation = self.venue.get_invitation_id(name=custom_stage.name, number='${6/content/noteNumber/value}')
-        edit_readers = ['$2/note/readers']
+        edit_readers = ['${2/note/readers}']
         note_readers = custom_stage.get_readers(self.venue, '${5/content/noteNumber/value}')
         invitees = custom_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}')
         if custom_stage_replyto == 'forum':
