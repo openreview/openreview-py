@@ -551,3 +551,142 @@ arr_official_review_content = {
         }
     }
 }
+
+arr_reviewer_ac_recognition_task_forum = {
+    "title": "Requesting a Letter of Recognition",
+    "instructions": "Please add a letter of recognition request to this forum if you want one for this month."
+}
+
+arr_reviewer_ac_recognition_task = {
+    "request_a_letter_of_recognition":{
+        "order": 1,
+        "description": "If you want to receive a letter of recognition for your reviewing activities at ARR, please select 'Yes' below",
+        "value": {
+            "param": {
+                "type": "string",
+                "enum": ["Yes, please send me a letter of recognition for my service as a reviewer / AE", "No, I do not need a letter of recognition for my service as a reviewer / AE"],
+                "input": "radio",
+                "required": True,
+            }
+        }
+    }
+}
+
+arr_registration_task_forum = {
+    "title": "Complete Profile",
+    "instructions": "Please check below points and verify that you provided the required pieces of information in your OpenReview profile.\nView and edit your profile at https://openreview.net/profile\n\nSelect papers for your expertise by going to this cycle's console, clicking on the tasks tab and clicking \"Expertise Selection\"",
+}
+
+arr_registration_task = {
+    "domains": {
+        "order": 1,
+        "description": "I confirm that I have specified the history of domains I am and previously was affiliated with.",
+        "value": {
+            "param": {
+                "type": "string",
+                "enum": ["Yes"],
+                "input": "checkbox",
+                "required": True
+            }
+        }
+    },
+    "emails": {
+        "order": 2,
+        "description": "I confirm that I have specified all (professional) email addresses I use and used beforehand.",
+        "value": {
+            "param": {
+                "type": "string",
+                "enum": ["Yes"],
+                "input": "checkbox",
+                "required": True
+            }
+        }
+    },
+    "DBLP": {
+        "order": 3,
+        "description": "I confirm that I specified the URL to my DBLP profile (if existent).",
+        "value": {
+            "param": {
+                "type": "string",
+                "enum": ["Yes"],
+                "input": "checkbox",
+                "required": True
+            }
+        }
+    },
+    "semantic_scholar": {
+        "order": 4,
+        "description": "I confirm that I specified the URL to my Semantic Scholar profile (if existent).",
+        "value": {
+            "param": {
+                "type": "string",
+                "enum": ["Yes"],
+                "input": "checkbox",
+                "required": True
+            }
+        }
+    },
+    "research_area": {
+        "order": 5,
+        "description": "Research Areas / Tracks. Select all relevant research areas / tracks that are the best fit for your expertise. These will be used to inform the reviewer and action editor assignment",
+        "values-checkbox": [
+            "Computational Social Science and Cultural Analytics",
+            "Dialogue and Interactive Systems",
+            "Discourse and Pragmatics",
+            "Efficient/Low-Resource Methods for NLP",
+            "Ethics, Bias, and Fairness",
+            "Generation",
+            "Information Extraction",
+            "Information Retrieval and Text Mining",
+            "Interpretability and Analysis of Models for NLP",
+            "Linguistic theories, Cognitive Modeling and Psycholinguistics",
+            "Machine Learning for NLP",
+            "Machine Translation",
+        "Multilinguality and Language Diversity",
+            "Multimodality and Language Grounding to Vision, Robotics and Beyond",
+            "Phonology, Morphology and Word Segmentation",
+            "Question Answering",
+            "Resources and Evaluation",
+            "Semantics: Lexical",
+            "Semantics: Sentence-level Semantics, Textual Inference and Other areas",
+            "Sentiment Analysis, Stylistic Analysis, and Argument Mining",
+            "Speech recognition, text-to-speech and spoken language understanding",
+            "Summarization",
+            "Syntax: Tagging, Chunking and Parsing / ML",
+            "NLP Applications"
+        ],
+        "value": {
+            "param": {
+                "type": "string",
+                "enum": [
+                    "Computational Social Science and Cultural Analytics",
+                    "Dialogue and Interactive Systems",
+                    "Discourse and Pragmatics",
+                    "Efficient/Low-Resource Methods for NLP",
+                    "Ethics, Bias, and Fairness",
+                    "Generation",
+                    "Information Extraction",
+                    "Information Retrieval and Text Mining",
+                    "Interpretability and Analysis of Models for NLP",
+                    "Linguistic theories, Cognitive Modeling and Psycholinguistics",
+                    "Machine Learning for NLP",
+                    "Machine Translation",
+                    "Multilinguality and Language Diversity",
+                    "Multimodality and Language Grounding to Vision, Robotics and Beyond",
+                    "Phonology, Morphology and Word Segmentation",
+                    "Question Answering",
+                    "Resources and Evaluation",
+                    "Semantics: Lexical",
+                    "Semantics: Sentence-level Semantics, Textual Inference and Other areas",
+                    "Sentiment Analysis, Stylistic Analysis, and Argument Mining",
+                    "Speech recognition, text-to-speech and spoken language understanding",
+                    "Summarization",
+                    "Syntax: Tagging, Chunking and Parsing / ML",
+                    "NLP Applications"
+                ],
+                "input": "checkbox",
+                "required": True
+            }
+        }
+    }
+}
