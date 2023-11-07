@@ -1849,6 +1849,90 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert invitation.edit['note']['forum'] == review_note['note']['forum']
         assert invitation.edit['note']['replyto'] == review_note['note']['id']
 
+    def test_review_rating(self, client, helpers, venue, openreview_client):
+
+        venue = openreview.get_conference(client, venue['request_form_note'].id, support_user='openreview.net/Support')
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=2)
+        venue.custom_stage = openreview.stages.CustomStage(name='Review_Revision',
+            reply_to=openreview.stages.CustomStage.ReplyTo.REVIEW_REVISIONS,
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            due_date=due_date,
+            exp_date=due_date + datetime.timedelta(days=1),
+            invitees=[openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED],
+            content={
+                'final_review_rating': {
+                        'order': 1,
+                        'value': {
+                            'param': {
+                                'type': 'integer',
+                                'enum': [
+                                    { 'value': 10, 'description': '10: Top 5% of accepted papers, seminal paper' },
+                                    { 'value': 9, 'description': '9: Top 15% of accepted papers, strong accept' },
+                                    { 'value': 8, 'description': '8: Top 50% of accepted papers, clear accept' },
+                                    { 'value': 7, 'description': '7: Good paper, accept' },
+                                    { 'value': 6, 'description': '6: Marginally above acceptance threshold' },
+                                    { 'value': 5, 'description': '5: Marginally below acceptance threshold' },
+                                    { 'value': 4, 'description': '4: Ok but not good enough - rejection' },
+                                    { 'value': 3, 'description': '3: Clear rejection' },
+                                    { 'value': 2, 'description': '2: Strong rejection' },
+                                    { 'value': 1, 'description': '1: Trivial or wrong' }
+                                ],
+                                'input': 'radio'
+                            }
+                        },
+                        'readers': [
+                            "V2.cc/2030/Conference",
+                            "V2.cc/2030/Conference/Submission${7/content/noteNumber/value}/Area_Chairs",
+                            "${5/signatures}"
+                        ]
+                    }
+            },
+            allow_de_anonymization=False)
+
+        venue.create_custom_stage()
+
+        invitations = openreview_client.get_all_invitations(invitation='V2.cc/2030/Conference/-/Review_Revision')
+        assert len(invitations) == 2
+
+        reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2_@mail.com', password=helpers.strong_password)
+        anon_groups = reviewer_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Reviewer_', signatory='~VenueThree_Reviewer1')
+        anon_group_id = anon_groups[0].id
+
+        invitation = openreview_client.get_invitation(f'{anon_group_id}/-/Review_Revision')
+        assert invitation and anon_group_id in invitation.invitees
+
+        review = reviewer_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review')[0]
+        assert review.readers == ['V2.cc/2030/Conference/Program_Chairs',
+                                  'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs',
+                                  'V2.cc/2030/Conference/Submission1/Area_Chairs',
+                                  'V2.cc/2030/Conference/Submission1/Reviewers',
+                                  'V2.cc/2030/Conference/Submission1/Authors']
+        assert 'readers' in review.content['review_rating']
+
+        review_revision = reviewer_client.post_note_edit(
+            invitation=f'{anon_group_id}/-/Review_Revision',
+            signatures=[anon_group_id],
+            note=Note(
+                id=review.id,
+                content={
+                    'final_review_rating': { 'value': 10 }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=review_revision['id'])
+
+        review = reviewer_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review')[0]
+        assert review.readers == ['V2.cc/2030/Conference/Program_Chairs',
+                                  'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs',
+                                  'V2.cc/2030/Conference/Submission1/Area_Chairs',
+                                  'V2.cc/2030/Conference/Submission1/Reviewers',
+                                  'V2.cc/2030/Conference/Submission1/Authors']
+        assert 'final_review_rating' in review.content
+        assert 'readers' in review.content['review_rating']
+        assert 'readers' in review.content['final_review_rating']
+
     def test_custom_stage(self, client, test_client, helpers, venue, openreview_client):
 
         venue = openreview.get_conference(client, venue['request_form_note'].id, support_user='openreview.net/Support')

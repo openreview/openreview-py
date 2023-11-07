@@ -2016,6 +2016,9 @@ class InvitationBuilder(object):
 
         paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, number='${2/content/noteNumber/value}')
         with_invitation = self.venue.get_invitation_id(name=custom_stage.name, number='${6/content/noteNumber/value}')
+        edit_readers = ['$2/note/readers']
+        note_readers = custom_stage.get_readers(self.venue, '${5/content/noteNumber/value}')
+        invitees = custom_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}')
         if custom_stage_replyto == 'forum':
             reply_to = '${4/content/noteId/value}'
         elif custom_stage_replyto == 'withForum':
@@ -2024,6 +2027,13 @@ class InvitationBuilder(object):
                     'withForum': '${6/content/noteId/value}'
                 }
             }
+        elif custom_stage_replyto == 'review_revisions':
+            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix='${2/content/replytoSignatures/value}')
+            with_invitation = self.venue.get_invitation_id(name=self.venue.review_stage.name, number='${6/content/noteNumber/value}')
+            reply_to = None
+            edit_readers = [venue_id]
+            note_readers = None
+            invitees = ['${3/content/replytoSignatures/value}']
         else:
             paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix='${2/content/replytoSignatures/value}')
             with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix='${6/content/replytoSignatures/value}')
@@ -2077,7 +2087,7 @@ class InvitationBuilder(object):
                     'readers': ['everyone'],
                     'writers': [venue_id],
                     'minReplies': 1,
-                    'invitees': custom_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}'),
+                    'invitees': invitees,
                     'cdate': custom_stage_cdate,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -2094,7 +2104,7 @@ class InvitationBuilder(object):
                                 'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in custom_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')] 
                             }
                         },
-                        'readers': ['$2/note/readers'],
+                        'readers': edit_readers,
                         'writers': [venue_id],
                         'note': {
                             'id': {
@@ -2104,7 +2114,6 @@ class InvitationBuilder(object):
                                 }
                             },
                             'forum': '${4/content/noteId/value}',
-                            'replyto': reply_to,
                             'ddate': {
                                 'param': {
                                     'range': [ 0, 9999999999999 ],
@@ -2113,7 +2122,6 @@ class InvitationBuilder(object):
                                 }
                             },
                             'signatures': ['${3/signatures}'],
-                            'readers': custom_stage.get_readers(self.venue, '${5/content/noteNumber/value}'),
                             'writers': [venue_id, '${3/signatures}'],
                             'content': content
                         }
@@ -2122,7 +2130,10 @@ class InvitationBuilder(object):
             }
         )
 
-        if custom_stage_replyto in ['reviews', 'metareviews']:
+        if reply_to:
+            invitation.edit['invitation']['edit']['note']['replyto'] = reply_to
+
+        if custom_stage_replyto in ['reviews', 'metareviews', 'review_revisions']:
             invitation.edit['content']['replytoSignatures'] = {
                 'value': {
                     'param': {
@@ -2139,6 +2150,9 @@ class InvitationBuilder(object):
                     }
                 }
             }
+
+        if note_readers:
+            invitation.edit['invitation']['edit']['note']['readers'] = note_readers
 
         if custom_stage_duedate:
             invitation.edit['invitation']['duedate'] = custom_stage_duedate

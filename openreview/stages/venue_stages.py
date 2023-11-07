@@ -1322,6 +1322,7 @@ class CustomStage(object):
         WITHFORUM = 1
         REVIEWS = 2
         METAREVIEWS = 3
+        REVIEW_REVISIONS = 4
 
     def __init__(self, name, reply_to, source, start_date=None, due_date=None, exp_date=None, invitees=[], readers=[], content={}, multi_reply = False, email_pcs = False, email_sacs = False, notify_readers=False, email_template=None, allow_de_anonymization=False):
         self.name = name
@@ -1447,6 +1448,8 @@ class CustomStage(object):
             reply_to = 'reviews'
         elif self.reply_to == self.ReplyTo.METAREVIEWS:
             reply_to = 'metareviews'
+        elif self.reply_to == self.ReplyTo.REVIEW_REVISIONS:
+            reply_to = 'review_revisions'
         
         return reply_to
 
