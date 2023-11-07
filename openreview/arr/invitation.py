@@ -150,4 +150,79 @@ class InvitationBuilder(object):
         if note_content:
             submission_invitation.edit['note']['content'] = note_content
 
-        submission_invitation = self.save_invitation(submission_invitation, replacement=False) 
+        submission_invitation = self.save_invitation(submission_invitation, replacement=False)
+
+    def set_copy_groups_invitation(self):
+        def translate_readers(readers):
+            true_readers = []
+            for r in readers:
+                if r == IdentityReaders.PROGRAM_CHAIRS:
+                    true_readers.append(self.venue.get_program_chairs_id())
+                elif r == IdentityReaders.AREA_CHAIRS:
+                    true_readers.append(self.venue.get_area_chairs_id())
+                elif r == IdentityReaders.REVIEWERS:
+                    true_readers.append(self.venue.get_reviewers_id())
+            return true_readers
+        
+        venue_id = self.venue_id
+
+        groups = [
+            self.venue.get_reviewers_id(),
+            self.venue.get_area_chairs_id(),
+            self.venue.get_senior_area_chairs_id(),
+            self.venue.get_ethics_reviewers_id(),
+            self.venue.get_ethics_chairs_id()
+        ]
+
+        for group_id in groups:
+
+            # Identity readers
+            group_readers = []
+            if group_id == self.venue.get_reviewers_id():
+                group_readers = translate_readers(self.venue.reviewer_identity_readers)
+            elif group_id == self.venue.get_area_chairs_id():
+                group_readers = translate_readers(self.venue.area_chair_identity_readers)
+            elif group_id == self.venue.get_senior_area_chairs_id():
+                group_readers = translate_readers(self.venue.senior_area_chair_identity_readers)
+            elif group_id == self.venue.get_ethics_reviewers_id():
+                group_readers = [self.venue_id, self.venue.get_ethics_reviewers_id(), self.venue.get_ethics_chairs_id()]
+            elif group_id == self.venue.get_ethics_chairs_id():
+                group_readers = [self.venue_id, self.venue.get_ethics_chairs_id()]
+
+            copy_groups_id = f"{venue_id}/{group_id.split('/')[-1]}/-/Copy"
+            copy_groups_cdate= tools.datetime_millis(datetime.datetime.utcnow())
+                
+            copy_invitation = Invitation(
+                id=copy_groups_id,
+                invitees=[venue_id],
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                cdate=copy_groups_cdate,
+                process=self.get_process_content('process/copy_group.py'),
+                edit={
+                    'signatures': [venue_id],
+                    'readers': [venue_id],
+                    'writers': [venue_id],
+                    'group': {
+                        'content': {
+                            'original_group': {
+                                'value': {
+                                    'param': {
+                                        'regex': '.*', 'type': 'string'
+                                    }
+                                }
+                            }
+                        },
+                        'id': group_id,
+                        'readers': group_readers,
+                        'nonreaders': [],
+                        'writers': [self.venue.id, group_id],
+                        'signatures': [self.venue.id],
+                        'signatories': [self.venue.id, group_id],
+                    }
+
+                }
+            )
+
+            copy_invitation = self.save_invitation(copy_invitation, replacement=False) 
