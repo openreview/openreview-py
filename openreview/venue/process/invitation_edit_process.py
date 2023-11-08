@@ -65,7 +65,7 @@ def process(client, invitation):
             if source == 'flagged_for_ethics_review':
                 source_submissions = [s for s in source_submissions if s.content.get('flagged_for_ethics_review', {}).get('value', False)]
 
-        if reply_to in ['reviews','review_revisions']:
+        if reply_to == 'reviews':
             children_notes = [openreview.api.Note.from_json(reply) for s in source_submissions for reply in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{review_name}' in reply['invitations']]
         elif reply_to == 'metareviews':
             children_notes = [openreview.api.Note.from_json(reply) for s in source_submissions for reply in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{meta_review_name}' in reply['invitations']]

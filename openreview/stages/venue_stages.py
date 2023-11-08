@@ -1322,12 +1322,16 @@ class CustomStage(object):
         WITHFORUM = 1
         REVIEWS = 2
         METAREVIEWS = 3
-        REVIEW_REVISIONS = 4
 
-    def __init__(self, name, reply_to, source, start_date=None, due_date=None, exp_date=None, invitees=[], readers=[], content={}, multi_reply = False, email_pcs = False, email_sacs = False, notify_readers=False, email_template=None, allow_de_anonymization=False):
+    class ReplyType(Enum):
+        REPLY = 0
+        REVISION = 1
+
+    def __init__(self, name, reply_to, source, reply_type=ReplyType.REPLY, start_date=None, due_date=None, exp_date=None, invitees=[], readers=[], content={}, multi_reply = False, email_pcs = False, email_sacs = False, notify_readers=False, email_template=None, allow_de_anonymization=False):
         self.name = name
         self.reply_to = reply_to
         self.source = source
+        self.reply_type = reply_type
         self.start_date = start_date
         self.due_date = due_date
         self.exp_date = exp_date
@@ -1448,10 +1452,17 @@ class CustomStage(object):
             reply_to = 'reviews'
         elif self.reply_to == self.ReplyTo.METAREVIEWS:
             reply_to = 'metareviews'
-        elif self.reply_to == self.ReplyTo.REVIEW_REVISIONS:
-            reply_to = 'review_revisions'
-        
+
         return reply_to
+
+    def get_reply_type(self):
+
+        if self.reply_type == self.ReplyType.REPLY:
+            reply_type = 'reply'
+        elif self.reply_type == self.ReplyType.REVISION:
+            reply_type = 'revision'
+
+        return reply_type
 
     def get_content(self, api_version='2', conference=None):
         

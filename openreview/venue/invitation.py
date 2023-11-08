@@ -2013,31 +2013,36 @@ class InvitationBuilder(object):
 
         custom_stage_replyto = custom_stage.get_reply_to()
         custom_stage_source = custom_stage.get_source_submissions()
+        custom_stage_reply_type = custom_stage.get_reply_type()
 
-        paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, number='${2/content/noteNumber/value}')
-        with_invitation = self.venue.get_invitation_id(name=custom_stage.name, number='${6/content/noteNumber/value}')
-        edit_readers = ['${2/note/readers}']
-        note_readers = custom_stage.get_readers(self.venue, '${5/content/noteNumber/value}')
-        invitees = custom_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}')
-        if custom_stage_replyto == 'forum':
-            reply_to = '${4/content/noteId/value}'
-        elif custom_stage_replyto == 'withForum':
-            reply_to = {
-                'param': {
-                    'withForum': '${6/content/noteId/value}'
+        if custom_stage_reply_type == 'reply':
+            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, number='${2/content/noteNumber/value}')
+            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, number='${6/content/noteNumber/value}')
+            edit_readers = ['${2/note/readers}']
+            note_readers = custom_stage.get_readers(self.venue, '${5/content/noteNumber/value}')
+            invitees = custom_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}')
+            if custom_stage_replyto == 'forum':
+                reply_to = '${4/content/noteId/value}'
+            elif custom_stage_replyto == 'withForum':
+                reply_to = {
+                    'param': {
+                        'withForum': '${6/content/noteId/value}'
+                    }
                 }
-            }
-        elif custom_stage_replyto == 'review_revisions':
+            else:
+                paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix='${2/content/replytoSignatures/value}')
+                with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix='${6/content/replytoSignatures/value}')
+                reply_to = '${4/content/replyto/value}'
+
+        elif custom_stage_reply_type == 'revision':
+            if custom_stage_reply_type in ['forum', 'withForum']:
+                raise openreview.OpenReviewException('Custom stage cannot be used for revisions to submissions. Use the Submission Revision Stage instead.')
             paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix='${2/content/replytoSignatures/value}')
             with_invitation = self.venue.get_invitation_id(name=self.venue.review_stage.name, number='${6/content/noteNumber/value}')
             reply_to = None
-            edit_readers = [venue_id]
+            edit_readers = [venue_id, '${2/signatures}']
             note_readers = None
             invitees = ['${3/content/replytoSignatures/value}']
-        else:
-            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix='${2/content/replytoSignatures/value}')
-            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix='${6/content/replytoSignatures/value}')
-            reply_to = '${4/content/replyto/value}'
 
         invitation_content = {
             'source': { 'value': custom_stage_source },

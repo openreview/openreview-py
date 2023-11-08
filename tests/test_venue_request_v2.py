@@ -1856,8 +1856,9 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=2)
         venue.custom_stage = openreview.stages.CustomStage(name='Review_Revision',
-            reply_to=openreview.stages.CustomStage.ReplyTo.REVIEW_REVISIONS,
+            reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            reply_type=openreview.stages.CustomStage.ReplyType.REVISION,
             due_date=due_date,
             exp_date=due_date + datetime.timedelta(days=1),
             invitees=[openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED],
@@ -1922,6 +1923,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             )
         )
         helpers.await_queue_edit(openreview_client, edit_id=review_revision['id'])
+
+        assert review_revision['readers'] == ['V2.cc/2030/Conference', anon_group_id]
 
         review = reviewer_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review')[0]
         assert review.readers == ['V2.cc/2030/Conference/Program_Chairs',
