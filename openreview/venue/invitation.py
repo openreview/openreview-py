@@ -2037,8 +2037,12 @@ class InvitationBuilder(object):
         elif custom_stage_reply_type == 'revision':
             if custom_stage_reply_type in ['forum', 'withForum']:
                 raise openreview.OpenReviewException('Custom stage cannot be used for revisions to submissions. Use the Submission Revision Stage instead.')
+            if custom_stage_replyto == 'reviews':
+                invitation_name = self.venue.review_stage.name
+            elif custom_stage_replyto == 'metareviews':
+                invitation_name = self.venue.meta_review_stage.name
             paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix='${2/content/replytoSignatures/value}')
-            with_invitation = self.venue.get_invitation_id(name=self.venue.review_stage.name, number='${6/content/noteNumber/value}')
+            with_invitation = self.venue.get_invitation_id(name=invitation_name, number='${6/content/noteNumber/value}')
             reply_to = None
             edit_readers = [venue_id, '${2/signatures}']
             note_readers = None

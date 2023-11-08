@@ -1080,7 +1080,7 @@ class MetaReviewStage(object):
         if self.public:
             return ['everyone']
 
-        readers = []
+        readers = [conference.get_program_chairs_id()]
 
         if conference.use_senior_area_chairs:
             readers.append(conference.get_senior_area_chairs_id(number = number))
@@ -1093,7 +1093,6 @@ class MetaReviewStage(object):
 
         if self.release_to_reviewers is not MetaReviewStage.Readers.NO_REVIEWERS:
             readers.append(self._get_reviewer_readers(conference, number))
-        readers.append(conference.get_program_chairs_id())
 
         return readers
     
