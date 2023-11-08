@@ -175,7 +175,6 @@ class InvitationBuilder(object):
         )
 
         if submission_license:
-            submission_invitation.edit['license'] = submission_license
             submission_invitation.edit['note']['license'] = submission_license
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=False)
