@@ -3168,3 +3168,94 @@ class InvitationBuilder(object):
                 invitation.edit['invitation']['expdate'] = tools.datetime_millis(sac_ethics_flag_duedate)
 
             self.save_invitation(invitation, replacement=True)
+
+    def set_reviewer_recommendation_invitation(self, start_date, due_date, total_recommendations):
+
+        venue_id = self.venue_id
+        venue = self.venue
+
+        recommendation_invitation_id = venue.get_recommendation_id()
+
+        score_ids = []
+        invitation_ids = [
+            venue.get_invitation_id('Affinity_Score', prefix=venue.get_reviewers_id()),
+            venue.get_bid_id(venue.get_reviewers_id())
+        ]
+
+        for invitation_id in invitation_ids:
+            if tools.get_invitation(self.client, invitation_id):
+                score_ids.append(invitation_id)
+
+        start_param = venue.get_assignment_id(venue.get_area_chairs_id(), deployed=True) + ',tail:{userId}'
+        edit_param = recommendation_invitation_id
+        browse_param = ';'.join(score_ids)
+        conflict_id = venue.get_conflict_score_id(venue.get_reviewers_id())
+        params = f'start={start_param}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&maxColumns=2&version=2&referrer=[Return Instructions](/invitation?id={edit_param})'
+        template_name = 'recommendationWebfield.js'
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/' + template_name)) as webfield_reader:
+            webfield_content = webfield_reader.read()
+            webfield_content = webfield_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue.get_id() + "';")
+            webfield_content = webfield_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + venue.short_name + "';")
+            webfield_content = webfield_content.replace("var TOTAL_RECOMMENDATIONS = '';", "var TOTAL_RECOMMENDATIONS = '" + str(total_recommendations) + "';")
+            webfield_content = webfield_content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
+
+        recommendation_invitation = Invitation(
+            id=recommendation_invitation_id,
+            cdate=tools.datetime_millis(start_date) if start_date else None,
+            duedate=tools.datetime_millis(due_date) if due_date else None,
+            expdate=tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if due_date else None,
+            invitees=[venue.get_area_chairs_id()],
+            signatures = [venue_id],
+            readers = [venue_id, venue.get_area_chairs_id()],
+            writers = [venue_id],
+            minReplies = total_recommendations,
+            web = webfield_content,
+            edge = {
+                'id': {
+                    'param': {
+                        'withInvitation': recommendation_invitation_id,
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers':  [venue_id, '${2/signatures}', venue.get_senior_area_chairs_id(number='${{2/head}/number}')] if venue.use_senior_area_chairs else [venue_id, '${2/signatures}'],
+                'writers': [ venue_id, '${2/signatures}' ],
+                'signatures': {
+                    'param': {
+                        'regex': f'~.*|{venue_id}' 
+                    }
+                },
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': venue.submission_stage.get_submission_id(venue)
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'inGroup': venue.get_reviewers_id()
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'enum': [1,2,3,4,5,6,7,8,9,10]
+                    }
+                }
+            }
+        )
+
+        recommendation_invitation = self.save_invitation(recommendation_invitation, replacement=True)
