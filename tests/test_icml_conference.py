@@ -1014,7 +1014,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
 
 Title: Paper title 1 Version 2
 
-Abstract This is an abstract 1
+Abstract: This is an abstract 1
 
 To view your submission, click here: https://openreview.net/forum?id={submission.id}'''
 
@@ -1450,6 +1450,17 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
         anon_group_id = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLOne1')[0].id
 
+        ## add a reviewer with max quota an get an error
+        with pytest.raises(openreview.OpenReviewException, match=r'Max Papers allowed reached for Reviewer ICMLFive'):
+            ac_client.post_edge(
+                openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment',
+                    signatures=[anon_group_id],
+                    head=submissions[0].id,
+                    tail='~Reviewer_ICMLFive1',
+                    label='reviewer-matching',
+                    weight=1
+            ))        
+        
         ## recruit external reviewer
         with pytest.raises(openreview.OpenReviewException, match=r'the user has a conflict'):
             ac_client.post_edge(
