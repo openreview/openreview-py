@@ -1014,7 +1014,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
 
 Title: Paper title 1 Version 2
 
-Abstract This is an abstract 1
+Abstract: This is an abstract 1
 
 To view your submission, click here: https://openreview.net/forum?id={submission.id}'''
 
