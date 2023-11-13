@@ -214,6 +214,26 @@ The OpenReview Team.
             if group.id not in processed_group_ids:
                 replace_group_members(group, username, profile.id)
 
+        print('Replace all the profile relations that contain the name to remove')
+        related_profiles = client.search_profiles(relation=username)
+
+        for related_profile in related_profiles:
+            print('Related profile', related_profile.id)
+            relations = [{ **r, "username": preferred_id, "name": preferred_name } for r in related_profile.content['relations'] if username == r.get('username')]
+            print('Relations', relations)
+            client.post_profile(openreview.Profile(
+                referent = related_profile.id, 
+                invitation = '~/-/invitation',
+                signatures = ['~Super_User1'],
+                content = {},
+                metaContent = {
+                    'relations': { 
+                        'values': relations,
+                        'weights': [1] * len(relations) 
+                    }
+                })
+            )
+
         print('Post a profile reference to remove the name')
         requested_name = {}
         for name in profile.content['names']:

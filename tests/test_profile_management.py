@@ -60,7 +60,7 @@ class TestProfileManagement():
         assert datetime.datetime.fromtimestamp(note.cdate/1000).month == 2                
 
    
-    def test_remove_alternate_name(self, client, profile_management, helpers):
+    def test_remove_alternate_name(self, client, profile_management, test_client, helpers):
 
         helpers.create_user('john@profile.org', 'John', 'Last', alternates=[], institution='google.com')
         john_client = openreview.Client(username='john@profile.org', password=helpers.strong_password)
@@ -73,12 +73,20 @@ class TestProfileManagement():
             'middle': 'Alternate',
             'last': 'Last'
             })
+        profile.content['relations'].append({
+            'relation': 'Advisor',
+            'name': 'SomeFirstName User',
+            'username': '~SomeFirstName_User1',
+            'start': 2015,
+            'end': None
+        })
         john_client.post_profile(profile)
         profile = john_client.get_profile(email_or_id='~John_Last1')
         assert len(profile.content['names']) == 2
         assert 'username' in profile.content['names'][1]
         assert profile.content['names'][1]['username'] == '~John_Alternate_Last1'
-
+        assert profile.content['relations'][0]['username'] == '~SomeFirstName_User1'
+        
         assert client.get_group('~John_Last1').members == ['john@profile.org']
         assert client.get_group('john@profile.org').members == ['~John_Last1', '~John_Alternate_Last1']
         assert client.get_group('~John_Alternate_Last1').members == ['john@profile.org']
@@ -1132,6 +1140,88 @@ Thanks,
 The OpenReview Team.
 '''
 
+    def test_remove_name_and_update_relations(self, client, profile_management, helpers):
+
+        helpers.create_user('juan@profile.org', 'Juan', 'Last', alternates=[], institution='google.com')
+        juan_client = openreview.Client(username='juan@profile.org', password=helpers.strong_password)
+
+        profile = juan_client.get_profile()
+
+        profile.content['homepage'] = 'https://google.com'
+        profile.content['names'].append({
+            'first': 'Juan',
+            'middle': 'Alternate',
+            'last': 'Last',
+            'preferred': True
+            })
+        juan_client.post_profile(profile)
+        profile = juan_client.get_profile(email_or_id='~Juan_Last1')
+        assert len(profile.content['names']) == 2
+        assert 'username' in profile.content['names'][1]
+        assert profile.content['names'][1]['username'] == '~Juan_Alternate_Last1'
+        assert profile.content['names'][1]['preferred'] == True
+
+        john_client = openreview.Client(username='john@profile.org', password=helpers.strong_password)
+
+        profile = john_client.get_profile()
+
+        profile.content['relations'].append({
+            'relation': 'Advisor',
+            'name': 'Juan Last',
+            'username': '~Juan_Last1',
+            'start': 2015,
+            'end': None
+        }) 
+        john_client.post_profile(profile)
+
+        profile = john_client.get_profile(email_or_id='john@profile.org')
+        assert len(profile.content['relations']) == 2
+
+        request_note = juan_client.post_note(openreview.Note(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            readers=['openreview.net/Support', '~Juan_Alternate_Last1'],
+            writers=['openreview.net/Support'],
+            signatures=['~Juan_Alternate_Last1'],
+            content={
+                'name': 'Juan Last',
+                'usernames': ['~Juan_Last1'],
+                'comment': 'typo in my name',
+                'status': 'Pending'
+            }
+
+        ))
+
+        helpers.await_queue()
+
+        decision_note = client.post_note(openreview.Note(
+            referent=request_note.id,
+            invitation='openreview.net/Support/-/Profile_Name_Removal_Decision',
+            readers=['openreview.net/Support'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            content={
+                'status': 'Accepted'
+            }
+
+        ))
+
+        helpers.await_queue()
+
+        juan_client = openreview.Client(username='juan@profile.org', password=helpers.strong_password)
+        note = juan_client.get_note(request_note.id)
+        assert note.content['status'] == 'Accepted' 
+
+        profile = juan_client.get_profile(email_or_id='juan@profile.org')
+        assert len(profile.content['names']) == 1
+        assert 'username' in profile.content['names'][0]
+        assert profile.content['names'][0]['username'] == '~Juan_Alternate_Last1' 
+
+        profile = john_client.get_profile(email_or_id='john@profile.org')
+        assert len(profile.content['relations']) == 2
+        assert profile.content['relations'][1]['username'] == '~Juan_Alternate_Last1'                                             
+        assert profile.content['relations'][1]['name'] == 'Juan Alternate Last'                                             
+
+    
     def test_merge_profiles(self, client, profile_management, helpers):
 
         helpers.create_user('rachel@profile.org', 'Rachel', 'Last', alternates=[], institution='google.com')

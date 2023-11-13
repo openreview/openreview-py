@@ -337,6 +337,7 @@ class Matching(object):
             authorids = submission.content['authorids']['value']
 
             # Extract domains from each authorprofile
+            author_ids = set()
             author_domains = set()
             author_emails = set()
             author_relations = set()
@@ -344,6 +345,7 @@ class Matching(object):
             for authorid in authorids:
                 if author_profile_by_id.get(authorid):
                     author_info = info_function(author_profile_by_id[authorid], compute_conflicts_n_years)
+                    author_ids.add(author_info['id'])
                     author_domains.update(author_info['domains'])
                     author_emails.update(author_info['emails'])
                     author_relations.update(author_info['relations'])
@@ -355,8 +357,10 @@ class Matching(object):
             for user_info in user_profiles_info:
                 conflicts = set()
                 conflicts.update(author_domains.intersection(user_info['domains']))
-                conflicts.update(author_relations.intersection(user_info['emails']))
-                conflicts.update(author_emails.intersection(user_info['relations']))
+                conflicts.update(author_relations.intersection(user_info['emails'])) ## keep this until all the relations are updated
+                conflicts.update(author_relations.intersection([user_info['id']]))
+                conflicts.update(author_emails.intersection(user_info['relations'])) ## keep this until all the relations are updated
+                conflicts.update(author_ids.intersection(user_info['relations']))
                 conflicts.update(author_emails.intersection(user_info['emails']))
                 conflicts.update(author_publications.intersection(user_info['publications']))
 
@@ -367,8 +371,10 @@ class Matching(object):
                         sac_info = sac_user_info_by_id.get(sac)
                         if sac_info:
                             conflicts.update(author_domains.intersection(sac_info['domains']))
-                            conflicts.update(author_relations.intersection(sac_info['emails']))
-                            conflicts.update(author_emails.intersection(sac_info['relations']))
+                            conflicts.update(author_relations.intersection(sac_info['emails'])) ## keep this until all the relations are updated
+                            conflicts.update(author_relations.intersection([sac_info['id']]))
+                            conflicts.update(author_emails.intersection(sac_info['relations'])) ## keep this until all the relations are updated
+                            conflicts.update(author_ids.intersection(sac_info['relations']))
                             conflicts.update(author_emails.intersection(sac_info['emails']))
                             conflicts.update(author_publications.intersection(sac_info['publications']))
 
@@ -379,8 +385,10 @@ class Matching(object):
                         pc_info = pc_user_info_by_id.get(pc)
                         if pc_info:
                             conflicts.update(author_domains.intersection(pc_info['domains']))
-                            conflicts.update(author_relations.intersection(pc_info['emails']))
-                            conflicts.update(author_emails.intersection(pc_info['relations']))
+                            conflicts.update(author_relations.intersection(pc_info['emails'])) ## keep this until all the relations are updated
+                            conflicts.update(author_relations.intersection([pc_info['id']]))
+                            conflicts.update(author_emails.intersection(pc_info['relations'])) ## keep this until all the relations are updated
+                            conflicts.update(author_ids.intersection(pc_info['relations']))
                             conflicts.update(author_emails.intersection(pc_info['emails']))
                             conflicts.update(author_publications.intersection(pc_info['publications']))
 
