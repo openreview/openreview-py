@@ -2171,10 +2171,10 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert invitation and ac_anon_group_id in invitation.invitees
 
         meta_review = meta_reviewer_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Meta_Review')[0]
-        assert meta_review.readers == ['V2.cc/2030/Conference/Program_Chairs',
-                                  'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs',
+        assert meta_review.readers == ['V2.cc/2030/Conference/Submission1/Senior_Area_Chairs',
                                   'V2.cc/2030/Conference/Submission1/Area_Chairs',
-                                  'V2.cc/2030/Conference/Submission1/Reviewers/Submitted']
+                                  'V2.cc/2030/Conference/Submission1/Reviewers/Submitted',
+                                  'V2.cc/2030/Conference/Program_Chairs']
 
         meta_review_revision = meta_reviewer_client.post_note_edit(
             invitation=f'{ac_anon_group_id}/-/Meta_Review_Revision',
@@ -2191,10 +2191,10 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert meta_review_revision['readers'] == ['V2.cc/2030/Conference', ac_anon_group_id]
 
         meta_review = meta_reviewer_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Meta_Review')[0]
-        assert meta_review.readers == ['V2.cc/2030/Conference/Program_Chairs',
-                                  'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs',
+        assert meta_review.readers == ['V2.cc/2030/Conference/Submission1/Senior_Area_Chairs',
                                   'V2.cc/2030/Conference/Submission1/Area_Chairs',
-                                  'V2.cc/2030/Conference/Submission1/Reviewers/Submitted']
+                                  'V2.cc/2030/Conference/Submission1/Reviewers/Submitted',
+                                  'V2.cc/2030/Conference/Program_Chairs']
         assert 'final_recommendation' in meta_review.content
         assert 'readers' in meta_review.content['final_recommendation']
 
