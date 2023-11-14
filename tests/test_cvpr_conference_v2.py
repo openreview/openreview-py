@@ -291,14 +291,18 @@ class TestCVPRConference():
         edit = 'thecvf.com/CVPR/2024/Conference/Reviewers/-/Recommendation'
         browse = 'thecvf.com/CVPR/2024/Conference/Reviewers/-/Affinity_Score'
         hide = 'thecvf.com/CVPR/2024/Conference/Reviewers/-/Conflict'
-        referrer = '[Return%20Instructions](/invitation?id=thecvf.com/CVPR/2024/Conference/Reviewers/-/Recommendation)'
+        referrer = '[Recommendation%20Instructions](/invitation?id=thecvf.com/CVPR/2024/Conference/Reviewers/-/Recommendation)'
 
-        url = 'http://localhost:3030/edges/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}&hide={hide}&maxColumns=2&version=2&referrer={referrer}'.format(start=start, edit=edit, browse=browse, hide=hide, referrer=referrer)
+        url = f'http://localhost:3030/edges/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}&hide={hide}&maxColumns=2&version=2&referrer={referrer}'
 
-        request_page(selenium, 'http://localhost:3030/invitation?id=thecvf.com/CVPR/2024/Conference/Reviewers/-/Recommendation', ac_client.token, wait_for_element='notes')
-        panel = selenium.find_element(By.ID, 'notes')
-        assert panel
-        links = panel.find_elements(By.TAG_NAME, 'a')
+        request_page(selenium, 'http://localhost:3030/invitation?id=thecvf.com/CVPR/2024/Conference/Reviewers/-/Recommendation', ac_client.token, by=By.CLASS_NAME, wait_for_element='text-center')
+        recommendation_div = selenium.find_element(By.ID, 'notes')
+        assert recommendation_div
+        button_row = recommendation_div.find_element(By.CLASS_NAME, 'text-center')
+        assert button_row
+        button = button_row.find_element(By.CLASS_NAME, 'btn-lg')
+        assert button.text == 'Recommend Reviewers'
+        links = recommendation_div.find_elements(By.TAG_NAME, 'a')
         assert links
         assert len(links) == 1
         assert url == links[0].get_attribute("href")

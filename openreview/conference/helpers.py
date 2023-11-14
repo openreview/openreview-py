@@ -38,7 +38,8 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
 
         venue.submission_stage = get_submission_stage(note, venue)
         venue.review_stage = get_review_stage(note)
-        venue.bid_stages = get_bid_stages(note)
+        if 'bid_due_date' in note.content:
+            venue.bid_stages = get_bid_stages(note)
         venue.meta_review_stage = get_meta_review_stage(note)
         venue.comment_stage = get_comment_stage(note)
         venue.decision_stage = get_decision_stage(note)

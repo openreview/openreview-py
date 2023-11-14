@@ -3186,18 +3186,14 @@ class InvitationBuilder(object):
             if tools.get_invitation(self.client, invitation_id):
                 score_ids.append(invitation_id)
 
-        start_param = venue.get_assignment_id(venue.get_area_chairs_id(), deployed=True) + ',tail:{userId}'
+        start_param = venue.get_assignment_id(venue.get_area_chairs_id(), deployed=True) + ',tail:${user.profile.id}'
         edit_param = recommendation_invitation_id
         browse_param = ';'.join(score_ids)
         conflict_id = venue.get_conflict_score_id(venue.get_reviewers_id())
         params = f'start={start_param}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&maxColumns=2&version=2&referrer=[Return Instructions](/invitation?id={edit_param})'
-        template_name = 'recommendationWebfield.js'
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/' + template_name)) as webfield_reader:
+
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/recommendationWebfield.js')) as webfield_reader:
             webfield_content = webfield_reader.read()
-            webfield_content = webfield_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue.get_id() + "';")
-            webfield_content = webfield_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + venue.short_name + "';")
-            webfield_content = webfield_content.replace("var TOTAL_RECOMMENDATIONS = '';", "var TOTAL_RECOMMENDATIONS = '" + str(total_recommendations) + "';")
-            webfield_content = webfield_content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
 
         recommendation_invitation = Invitation(
             id=recommendation_invitation_id,
@@ -3210,6 +3206,11 @@ class InvitationBuilder(object):
             writers = [venue_id],
             minReplies = total_recommendations,
             web = webfield_content,
+            content = {
+                'total_recommendations': {
+                    'value': total_recommendations
+                }
+            },
             edge = {
                 'id': {
                     'param': {
