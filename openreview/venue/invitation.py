@@ -3199,22 +3199,6 @@ class InvitationBuilder(object):
 
         recommendation_invitation_id = venue.get_recommendation_id()
 
-        score_ids = []
-        invitation_ids = [
-            venue.get_invitation_id('Affinity_Score', prefix=venue.get_reviewers_id()),
-            venue.get_bid_id(venue.get_reviewers_id())
-        ]
-
-        for invitation_id in invitation_ids:
-            if tools.get_invitation(self.client, invitation_id):
-                score_ids.append(invitation_id)
-
-        start_param = venue.get_assignment_id(venue.get_area_chairs_id(), deployed=True) + ',tail:${user.profile.id}'
-        edit_param = recommendation_invitation_id
-        browse_param = ';'.join(score_ids)
-        conflict_id = venue.get_conflict_score_id(venue.get_reviewers_id())
-        params = f'start={start_param}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&maxColumns=2&version=2&referrer=[Return Instructions](/invitation?id={edit_param})'
-
         with open(os.path.join(os.path.dirname(__file__), 'webfield/recommendationWebfield.js')) as webfield_reader:
             webfield_content = webfield_reader.read()
 

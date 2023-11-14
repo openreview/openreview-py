@@ -295,9 +295,11 @@ class TestCVPRConference():
 
         url = f'http://localhost:3030/edges/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}&hide={hide}&maxColumns=2&version=2&referrer={referrer}'
 
-        request_page(selenium, 'http://localhost:3030/invitation?id=thecvf.com/CVPR/2024/Conference/Reviewers/-/Recommendation', ac_client.token, by=By.CLASS_NAME, wait_for_element='text-center')
-        recommendation_div = selenium.find_element(By.ID, 'notes')
-        assert recommendation_div
+        request_page(selenium, 'http://localhost:3030/invitation?id=thecvf.com/CVPR/2024/Conference/Reviewers/-/Recommendation', ac_client.token, by=By.CLASS_NAME, wait_for_element='description')
+        instructions = selenium.find_element(By.CLASS_NAME, 'description')
+        assert instructions
+        assert 'CVPR 2023 Reviewer Recommendation' in instructions.text
+        recommendation_div =  selenium.find_element(By.ID, 'notes')
         button_row = recommendation_div.find_element(By.CLASS_NAME, 'text-center')
         assert button_row
         button = button_row.find_element(By.CLASS_NAME, 'btn-lg')

@@ -24,22 +24,20 @@ return {
       subtitle: domain.content.subtitle?.value,
       website: domain.content.website?.value,
       contact: domain.content.contact?.value,
-      instructions: '  '
+      instructions: `## ${domain.content.subtitle?.value} Reviewer Recommendation
+**Instructions:**
+
+- For each of your assigned papers, please select **${entity.content.total_recommendations.value}** reviewers to recommend.
+- Recommendations should each be assigned a number from 10 to 1, with 10 being the strongest recommendation and 1 the weakest.
+- Reviewers who have conflicts with the selected paper are not shown.
+- The list of reviewers for a given paper can be sorted by different parameters such as affinity score or bid, if available. In addition, the search box can be used to search for a specific reviewer by name or institution.
+- To get started click the button below.`
     },
     BodyComponent: {
       component: 'MarkdownContent'
     },
     content: `
 <div>
-  <h2>${domain.content.subtitle?.value} Reviewer Recommendation</h2>
-  <p class="dark"><strong>Instructions:</strong></p>\
-  <ul>\
-    <li>For each of your assigned papers, please select ${entity.content.total_recommendations.value} reviewers to recommend.</li>\
-    <li>Recommendations should each be assigned a number from 10 to 1, with 10 being the strongest recommendation and 1 the weakest.</li>\
-    <li>Reviewers who have conflicts with the selected paper are not shown.</li>\
-      <li>The list of reviewers for a given paper can be sorted by different parameters such as affinity score or bid. In addition, the search box can be used to search for a specific reviewer by name or institution.</li>\
-    <li>To get started click the button below.</li>\
-  </ul>\
   <p class="text-center">
     <a class="btn btn-primary btn-lg" href="/edges/browse?start=${startParam}&traverse=${traverseParam}&edit=${traverseParam}&browse=${browseInvitations.join(';')}${otherParams}">Recommend Reviewers</a>
   </p>
