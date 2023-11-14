@@ -121,6 +121,43 @@ The OpenReview Team.
                         writers=writers,
                         signatures=signatures
                 ))
+                ## check invitations must be updated
+                invitations = client_v2.get_invitations(replyForum=publication.id, expired=True)
+                for invitation in invitations:
+                    invitation_content = invitation.edit['note'].get('content', {})
+                    if invitation.edit['note'].get('id') == publication.id and 'authorids' in invitation_content and username in invitation_content['authorids'].get('value', []):
+                        
+                        authors = []
+                        authorids = []
+                        needs_change = False
+                        for index, author in enumerate(invitation_content['authorids']['value']):
+                            if username == author:
+                                authors.append(preferred_name)
+                                authorids.append(preferred_id)
+                                needs_change = True
+                            else:
+                                if invitation_content['authors'].get('value') and len(invitation_content['authors']['value']) > index:
+                                    authors.append(invitation_content['authors']['value'][index])
+                                authorids.append(invitation_content['authorids']['value'][index])                        
+                        
+                        if needs_change:
+                            print('Updating invitation', invitation.id)
+                            client_v2.post_invitation_edit(
+                                invitations = publication.domain + '/-/Edit',
+                                readers = [publication.domain],
+                                signatures = [SUPPORT_USER_ID],
+                                invitation = openreview.api.Invitation(
+                                    id=invitation.id,
+                                    edit={
+                                        'note': {
+                                            'content': {
+                                                'authors': { 'value': authors },
+                                                'authorids': { 'value': authorids }
+                                            }
+                                        }
+                                    }
+                                )
+                            )
         
         print('Change all the notes that contain the name to remove as signatures')
         signed_notes = client.get_all_notes(signature=username)

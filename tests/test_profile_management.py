@@ -997,6 +997,12 @@ url={https://openreview.net/forum?id=''' + note_id_2 + '''},
 note={}
 }'''
 
+        ## Invitations
+        journal.invitation_builder.set_note_camera_ready_revision_invitation(submission, journal.get_due_date(weeks = journal.get_camera_ready_period_length()))
+        invitation = openreview_client.get_invitation('CABJ/Paper2/-/Camera_Ready_Revision')
+        assert invitation.edit['note']['content']['authorids']['value'] == ['~SomeFirstName_User1', '~Paul_Alternate_Last1']
+        
+        
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
         submission_note_1 = test_client.post_note_edit(invitation='ACMM.org/2023/Conference/-/Submission',
             signatures=['~SomeFirstName_User1'],
@@ -1115,6 +1121,25 @@ note={}
         group = client.get_group('CABJ/Paper1/Authors')
         assert '~Paul_Alternate_Last1' not in group.members
         assert '~Paul_Last1' in group.members
+
+        invitation = openreview_client.get_invitation('CABJ/Paper2/-/Camera_Ready_Revision')
+        assert invitation.edit['note']['content']['authorids']['value'] == ['~SomeFirstName_User1', '~Paul_Last1']
+
+        openreview_client.post_note_edit(
+            invitation='CABJ/Paper2/-/Camera_Ready_Revision',
+            signatures=['CABJ/Paper2/Authors'],
+            note=openreview.api.Note(
+                content= {
+                    'title': {'value': 'Paper title 2 Updated'},
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['SomeFirstName User', 'Paul Last']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Paul_Last1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'}                        
+                }
+            )
+        )
 
         profile = paul_client.get_profile(email_or_id='~Paul_Last1')
         assert len(profile.content['names']) == 1
