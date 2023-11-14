@@ -74,6 +74,7 @@ class TestVenueRequest():
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
+                'submission_license': 'CC BY-NC 4.0',
                 'api_version': '2'
             })
 
@@ -1108,6 +1109,10 @@ class TestVenueRequest():
                     'keywords': {'value': ['aa'] }
                 }
             ))
+        
+        assert 'license' not in submission_note_1
+        assert 'license' in submission_note_1['note']
+        assert submission_note_1['note']['license'] == 'CC BY-NC 4.0' 
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
 
