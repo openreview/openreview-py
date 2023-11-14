@@ -1854,6 +1854,93 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert invitation.edit['note']['forum'] == review_note['note']['forum']
         assert invitation.edit['note']['replyto'] == review_note['note']['id']
 
+    def test_review_rating(self, client, helpers, venue, openreview_client):
+
+        venue = openreview.get_conference(client, venue['request_form_note'].id, support_user='openreview.net/Support')
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=2)
+        venue.custom_stage = openreview.stages.CustomStage(name='Review_Revision',
+            reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            reply_type=openreview.stages.CustomStage.ReplyType.REVISION,
+            due_date=due_date,
+            exp_date=due_date + datetime.timedelta(days=1),
+            invitees=[openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED],
+            content={
+                'final_review_rating': {
+                        'order': 1,
+                        'value': {
+                            'param': {
+                                'type': 'integer',
+                                'enum': [
+                                    { 'value': 10, 'description': '10: Top 5% of accepted papers, seminal paper' },
+                                    { 'value': 9, 'description': '9: Top 15% of accepted papers, strong accept' },
+                                    { 'value': 8, 'description': '8: Top 50% of accepted papers, clear accept' },
+                                    { 'value': 7, 'description': '7: Good paper, accept' },
+                                    { 'value': 6, 'description': '6: Marginally above acceptance threshold' },
+                                    { 'value': 5, 'description': '5: Marginally below acceptance threshold' },
+                                    { 'value': 4, 'description': '4: Ok but not good enough - rejection' },
+                                    { 'value': 3, 'description': '3: Clear rejection' },
+                                    { 'value': 2, 'description': '2: Strong rejection' },
+                                    { 'value': 1, 'description': '1: Trivial or wrong' }
+                                ],
+                                'input': 'radio'
+                            }
+                        },
+                        'readers': [
+                            "V2.cc/2030/Conference",
+                            "V2.cc/2030/Conference/Submission${7/content/noteNumber/value}/Area_Chairs",
+                            "${5/signatures}"
+                        ]
+                    }
+            },
+            allow_de_anonymization=False)
+
+        venue.create_custom_stage()
+
+        invitations = openreview_client.get_all_invitations(invitation='V2.cc/2030/Conference/-/Review_Revision')
+        assert len(invitations) == 2
+
+        reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2_@mail.com', password=helpers.strong_password)
+        anon_groups = reviewer_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Reviewer_', signatory='~VenueThree_Reviewer1')
+        anon_group_id = anon_groups[0].id
+
+        invitation = openreview_client.get_invitation(f'{anon_group_id}/-/Review_Revision')
+        assert invitation and anon_group_id in invitation.invitees
+
+        review = reviewer_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review')[0]
+        assert review.readers == ['V2.cc/2030/Conference/Program_Chairs',
+                                  'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs',
+                                  'V2.cc/2030/Conference/Submission1/Area_Chairs',
+                                  'V2.cc/2030/Conference/Submission1/Reviewers',
+                                  'V2.cc/2030/Conference/Submission1/Authors']
+        assert 'readers' in review.content['review_rating']
+
+        review_revision = reviewer_client.post_note_edit(
+            invitation=f'{anon_group_id}/-/Review_Revision',
+            signatures=[anon_group_id],
+            note=Note(
+                id=review.id,
+                content={
+                    'final_review_rating': { 'value': 10 }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=review_revision['id'])
+
+        assert review_revision['readers'] == ['V2.cc/2030/Conference', anon_group_id]
+
+        review = reviewer_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review')[0]
+        assert review.readers == ['V2.cc/2030/Conference/Program_Chairs',
+                                  'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs',
+                                  'V2.cc/2030/Conference/Submission1/Area_Chairs',
+                                  'V2.cc/2030/Conference/Submission1/Reviewers',
+                                  'V2.cc/2030/Conference/Submission1/Authors']
+        assert 'final_review_rating' in review.content
+        assert 'readers' in review.content['review_rating']
+        assert 'readers' in review.content['final_review_rating']
+
     def test_custom_stage(self, client, test_client, helpers, venue, openreview_client):
 
         venue = openreview.get_conference(client, venue['request_form_note'].id, support_user='openreview.net/Support')
@@ -1949,18 +2036,6 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         ac_group = openreview_client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
         assert ac_group and len(ac_group.members) == 2
 
-        # no AC console yet
-        # ac_page_url = 'http://localhost:3030/group?id={}/Area_Chairs'.format(venue['venue_id'])
-        # request_page(selenium, ac_page_url, token=meta_reviewer_client.token, wait_for_element='1-metareview-status')
-
-        # submit_div_1 = selenium.find_element(By.ID, '1-metareview-status')
-        # with pytest.raises(NoSuchElementException):
-        #     assert submit_div_1.find_element(By.LINK_TEXT, 'Submit')
-
-        # submit_div_2 = selenium.find_element(By.ID, '2-metareview-status')
-        # with pytest.raises(NoSuchElementException):
-        #     assert submit_div_2.find_element(By.LINK_TEXT, 'Submit')
-
         # Post a meta review stage note
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
@@ -1970,7 +2045,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'make_meta_reviews_public': 'Yes, meta reviews should be revealed publicly when they are posted',
                 'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
                 'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
-                'recommendation_options': 'Accept, Reject',
+                'recommendation_options': 'Accept, Reject, Conditional Accept',
                 'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
                 'additional_meta_review_form_options': {
@@ -1979,7 +2054,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                         'value': {
                             'param': {
                                 'type': 'string',
-                                'enum': ['Accept', 'Reject'],
+                                'enum': ['Accept', 'Reject', 'Conditional Accept'],
                                 'input': 'radio'
                             }
                         },
@@ -2022,23 +2097,6 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        # add AC console
-        # # Assert that AC now see the Submit button for assigned papers
-        # request_page(selenium, ac_page_url, token=meta_reviewer_client.token, wait_for_element='note-summary-2')
-
-        # note_div_1 = selenium.find_element(By.ID, 'note-summary-1')
-        # assert note_div_1
-        # note_div_2 = selenium.find_element(By.ID, 'note-summary-2')
-        # assert note_div_2
-        # assert 'test submission' == note_div_1.find_element(By.LINK_TEXT, 'test submission').text
-        # assert 'test submission 2' == note_div_2.find_element(By.LINK_TEXT, 'test submission 2').text
-
-        # submit_div_1 = selenium.find_element(By.ID, '1-metareview-status')
-        # assert submit_div_1.find_element(By.LINK_TEXT, 'Submit')
-
-        # submit_div_2 = selenium.find_element(By.ID, '2-metareview-status')
-        # assert submit_div_2.find_element(By.LINK_TEXT, 'Submit')
-
         meta_review_invitation = openreview_client.get_invitation(id='{}/Submission1/-/Meta_Review'.format(venue['venue_id']))
         assert meta_review_invitation
         meta_review_invitation = openreview_client.get_invitation(id='{}/Submission2/-/Meta_Review'.format(venue['venue_id']))
@@ -2057,8 +2115,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             signatures=[ac_anon_groups[0].id],
             note=Note(
                 content={
-                    'metareview': { 'value': 'This is a metarview' },
-                    'recommendation': { 'value': 'Accept' }
+                    'metareview': { 'value': 'This is a metareview' },
+                    'recommendation': { 'value': 'Conditional Accept' }
                 }
             )
         )
@@ -2070,6 +2128,75 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert 'V2.cc/2030/Conference/Submission1/Area_Chairs' in meta_reviews[0].readers
         assert 'V2.cc/2030/Conference/Submission1/Reviewers/Submitted' in meta_reviews[0].readers
         assert 'V2.cc/2030/Conference/Submission1/Authors' not in meta_reviews[0].readers
+
+    def test_meta_review_revision_stage(self, client, test_client, helpers, venue, openreview_client):
+
+        venue = openreview.get_conference(client, venue['request_form_note'].id, support_user='openreview.net/Support')
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=2)
+        venue.custom_stage = openreview.stages.CustomStage(name='Meta_Review_Revision',
+            reply_to=openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            reply_type=openreview.stages.CustomStage.ReplyType.REVISION,
+            invitees=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
+            due_date=due_date,
+            exp_date=due_date + datetime.timedelta(days=1),
+            content={
+                'final_recommendation': {
+                        'description': 'Please select a recommendation for the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': ['Accept', 'Reject'],
+                                'input': 'radio'
+                            }
+                        },
+                        'order': 2,
+                        'readers': ['V2.cc/2030/Conference', 'V2.cc/2030/Conference/Submission${7/content/noteNumber/value}/Area_Chairs']
+                    }   
+            })
+
+        venue.create_custom_stage()
+
+        invitations = openreview_client.get_all_invitations(invitation='V2.cc/2030/Conference/-/Meta_Review_Revision')
+        assert len(invitations) == 1
+
+        meta_reviewer_client = openreview.api.OpenReviewClient(username='venue_ac_v2@mail.com', password=helpers.strong_password)
+        ac_anon_groups=meta_reviewer_client.get_groups(prefix=f'V2.cc/2030/Conference/Submission1/Area_Chair_.*', signatory='~VenueTwo_Ac1')
+        assert len(ac_anon_groups) == 1
+        ac_anon_group_id = ac_anon_groups[0].id
+
+        invitation = openreview_client.get_invitation(f'{ac_anon_group_id}/-/Meta_Review_Revision')
+        assert invitation and ac_anon_group_id in invitation.invitees
+
+        meta_review = meta_reviewer_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Meta_Review')[0]
+        assert meta_review.readers == ['V2.cc/2030/Conference/Submission1/Senior_Area_Chairs',
+                                  'V2.cc/2030/Conference/Submission1/Area_Chairs',
+                                  'V2.cc/2030/Conference/Submission1/Reviewers/Submitted',
+                                  'V2.cc/2030/Conference/Program_Chairs']
+
+        meta_review_revision = meta_reviewer_client.post_note_edit(
+            invitation=f'{ac_anon_group_id}/-/Meta_Review_Revision',
+            signatures=[ac_anon_group_id],
+            note=Note(
+                id=meta_review.id,
+                content={
+                    'final_recommendation': { 'value': 'Accept' }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=meta_review_revision['id'])
+
+        assert meta_review_revision['readers'] == ['V2.cc/2030/Conference', ac_anon_group_id]
+
+        meta_review = meta_reviewer_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Meta_Review')[0]
+        assert meta_review.readers == ['V2.cc/2030/Conference/Submission1/Senior_Area_Chairs',
+                                  'V2.cc/2030/Conference/Submission1/Area_Chairs',
+                                  'V2.cc/2030/Conference/Submission1/Reviewers/Submitted',
+                                  'V2.cc/2030/Conference/Program_Chairs']
+        assert 'final_recommendation' in meta_review.content
+        assert 'readers' in meta_review.content['final_recommendation']
 
     def test_release_meta_reviews_to_authors_and_reviewers(self, test_client, helpers, venue, openreview_client):
 
@@ -2135,6 +2262,9 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert 'V2.cc/2030/Conference/Submission1/Reviewers' in meta_reviews[0].readers
         assert 'V2.cc/2030/Conference/Submission1/Authors' in meta_reviews[0].readers
         assert len(meta_reviews[0].nonreaders) == 0
+
+        assert 'final_recommendation' in meta_reviews[0].content
+        assert 'readers' in meta_reviews[0].content['final_recommendation']
 
     def test_venue_comment_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
