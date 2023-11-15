@@ -950,10 +950,10 @@ class CommentStage(object):
             if is_everyone_included:
                 readers.append({ 'value': 'everyone', 'optional': True })
 
-            readers.append({ 'value': conference.get_program_chairs_id(), 'optional': is_everyone_included })
+            readers.append({ 'value': conference.get_program_chairs_id(), 'optional': False })
 
             if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.readers:
-                readers.append({ 'value': conference.get_senior_area_chairs_id(number), 'optional': is_everyone_included })
+                readers.append({ 'value': conference.get_senior_area_chairs_id(number), 'optional': False })
 
             if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.readers:
                 readers.append({ 'value': conference.get_area_chairs_id(number), 'optional': True })
