@@ -41,6 +41,7 @@ class Venue(object):
         self.ethics_chairs_name = 'Ethics_Chairs'
         self.ethics_reviewers_name = 'Ethics_Reviewers'
         self.authors_name = 'Authors'
+        self.recommendation_name = 'Recommendation'
         self.use_ethics_chairs = False
         self.use_ethics_reviewers = False 
         self.expertise_selection_stage = None       
@@ -154,7 +155,7 @@ class Venue(object):
     def get_recommendation_id(self, committee_id=None):
         if not committee_id:
             committee_id = self.get_reviewers_id()
-        return self.get_invitation_id('Recommendation', prefix=committee_id)
+        return self.get_invitation_id(self.recommendation_name, prefix=committee_id)
 
     def get_paper_group_prefix(self, number=None):
         prefix = f'{self.venue_id}/{self.submission_stage.name}'
@@ -937,6 +938,9 @@ Total Errors: {len(errors)}
 
     def set_SAC_ethics_review_process(self, sac_ethics_flag_duedate=None):
         self.invitation_builder.set_SAC_ethics_flag_invitation(sac_ethics_flag_duedate)
+
+    def open_reviewer_recommendation_stage(self, start_date=None, due_date=None, total_recommendations=7):
+        self.invitation_builder.set_reviewer_recommendation_invitation(start_date, due_date, total_recommendations)
 
     @classmethod
     def check_new_profiles(Venue, client):
