@@ -121,6 +121,9 @@ class ProfileManagement():
 
         with open(os.path.join(os.path.dirname(__file__), 'process/request_remove_name_process.py'), 'r') as f:
             file_content = f.read()
+            file_content = file_content.replace("SUPPORT_USER_ID = ''", "SUPPORT_USER_ID = '" + self.support_group_id + "'")
+            file_content = file_content.replace("REMOVAL_DECISION_INVITATION_ID = ''", "REMOVAL_DECISION_INVITATION_ID = '" + f'{self.support_group_id}/-/Profile_Name_Removal_Decision' + "'")
+                
             with open(os.path.join(os.path.dirname(__file__), 'process/request_remove_name_pre_process.py'), 'r') as pre:
                 pre_file_content = pre.read()
                 self.client.post_invitation(openreview.Invitation(
@@ -165,6 +168,10 @@ class ProfileManagement():
             file_content = f.read()
             file_content = file_content.replace("SUPPORT_USER_ID = ''", "SUPPORT_USER_ID = '" + self.support_group_id + "'")
             file_content = file_content.replace("AUTHOR_RENAME_INVITATION_ID = ''", "AUTHOR_RENAME_INVITATION_ID = '" + self.author_rename_invitation_id + "'")
+
+            with open(os.path.join(os.path.dirname(__file__), 'process/request_remove_name_decision_pre_process.py'), 'r') as pre:
+                pre_file_content = pre.read()
+
             self.client.post_invitation(openreview.Invitation(
                 id=f'{self.support_group_id}/-/Profile_Name_Removal_Decision',
                 readers=['everyone'],
@@ -172,6 +179,7 @@ class ProfileManagement():
                 signatures=[self.super_user],
                 invitees=[self.support_group_id],
                 process_string=file_content,
+                preprocess=pre_file_content,
                 reply={
                     'referentInvitation': f'{self.support_group_id}/-/Profile_Name_Removal',
                     'readers': {
