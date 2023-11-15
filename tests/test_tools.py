@@ -442,6 +442,48 @@ class TestTools():
         conflicts = openreview.tools.get_conflicts([user2_profile], user_profile)
         assert len(conflicts) == 0
 
+        user2_profile.content['relations'] = [{
+            'relation': 'Advisor',
+            'name': 'First Last',
+            'username': '~First_Last2',
+            'start': 2015,
+            'end': None
+        },
+        {
+            'relation': 'Coauthor',
+            'name': 'Some NAme',
+            'email': 'test@mail.com',
+            'start': 2015,
+            'end': None
+        }]
+        user2_profile.content['dblp'] = 'https://dblp.org/pid/l/Last:First'
+        user2_profile.content['history'] = [{
+            'position': 'Professor',
+            'institution': {
+                'domain': 'cmu.edu'
+            },
+            'start': 2015,
+            'end': None
+        }]
+        user2_profile = client.post_profile(user2_profile)
+
+        conflicts = openreview.tools.get_conflicts([user2_profile], user_profile)
+        
+        assert len(conflicts) == 1
+        assert conflicts[0] == '~First_Last2'
+
+        conflicts = openreview.tools.get_conflicts([user_profile], user2_profile)
+
+        assert len(conflicts) == 1
+        assert conflicts[0] == '~First_Last2'
+
+        test_profile = openreview.tools.get_profiles(client, ['test@mail.com'], with_relations=True)[0]
+        user_profiles = openreview.tools.get_profiles(client, ['user2@qq.com'], with_relations=True)
+        conflicts = openreview.tools.get_conflicts(user_profiles, test_profile, policy='NeurIPS')
+
+        assert len(conflicts) == 1
+        assert conflicts[0] == '~SomeFirstName_User1'
+
         guest_client = openreview.Client()
         user_profile = guest_client.get_profile(email_or_id='user@qq.com')
         user2_profile = guest_client.get_profile(email_or_id='user2@qq.com')
