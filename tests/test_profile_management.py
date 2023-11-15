@@ -465,7 +465,20 @@ The OpenReview Team.
         assert 'username' in profile.content['names'][1]
         assert profile.content['names'][1]['username'] == '~Peter_Alternate_Last1'
         assert profile.content['names'][1]['preferred'] == False
-        assert profile.content['names'][0]['preferred'] == True       
+        assert profile.content['names'][0]['preferred'] == True
+
+        peter_client.post_note(openreview.Note(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            readers = ['everyone'],
+            signatures = ['~Peter_Alternate_Last1'],
+            writers = ['~Peter_Alternate_Last1'],
+            content = {
+                'title': 'Paper title 1',
+                'abstract': 'Paper abstract 1',
+                'authors': ['Peter Alternate Last', 'Test Client'],
+                'authorids': ['~Peter_Alternate_Last1', 'test@mail.com']
+            }
+        ))              
 
         request_note = peter_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Profile_Name_Removal',
@@ -1186,6 +1199,19 @@ The OpenReview Team.
         assert profile.content['names'][1]['username'] == '~Juan_Alternate_Last1'
         assert profile.content['names'][1]['preferred'] == True
 
+        juan_client.post_note(openreview.Note(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            readers = ['everyone'],
+            signatures = ['~Juan_Alternate_Last1'],
+            writers = ['~Juan_Alternate_Last1'],
+            content = {
+                'title': 'Paper title 1',
+                'abstract': 'Paper abstract 1',
+                'authors': ['Juan Last', 'Test Client'],
+                'authorids': ['~Juan_Last1', 'test@mail.com']
+            }
+        ))         
+
         john_client = openreview.Client(username='john@profile.org', password=helpers.strong_password)
 
         profile = john_client.get_profile()
@@ -1246,7 +1272,49 @@ The OpenReview Team.
         assert profile.content['relations'][1]['username'] == '~Juan_Alternate_Last1'                                             
         assert profile.content['relations'][1]['name'] == 'Juan Alternate Last'                                             
 
-    
+
+    def test_remove_name_and_accept_automatically(self, client, profile_management, helpers):
+
+        helpers.create_user('nara@profile.org', 'Nara', 'Last', alternates=[], institution='google.com')
+        nara_client = openreview.Client(username='nara@profile.org', password=helpers.strong_password)
+
+        profile = nara_client.get_profile()
+
+        profile.content['homepage'] = 'https://google.com'
+        profile.content['names'].append({
+            'first': 'Nara',
+            'middle': 'Alternate',
+            'last': 'Last',
+            'preferred': True
+            })
+        nara_client.post_profile(profile)
+        profile = nara_client.get_profile(email_or_id='~Nara_Last1')
+        assert len(profile.content['names']) == 2
+        assert 'username' in profile.content['names'][1]
+        assert profile.content['names'][1]['username'] == '~Nara_Alternate_Last1'
+        assert profile.content['names'][1]['preferred'] == True
+
+        request_note = nara_client.post_note(openreview.Note(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            readers=['openreview.net/Support', '~Nara_Alternate_Last1'],
+            writers=['openreview.net/Support'],
+            signatures=['~Nara_Alternate_Last1'],
+            content={
+                'name': 'Nara Last',
+                'usernames': ['~Nara_Last1'],
+                'comment': 'typo in my name',
+                'status': 'Pending'
+            }
+
+        ))
+
+        helpers.await_queue()       
+
+        nara_client = openreview.Client(username='nara@profile.org', password=helpers.strong_password)
+        note = nara_client.get_note(request_note.id)
+        assert note.content['status'] == 'Accepted'
+
+
     def test_merge_profiles(self, client, profile_management, helpers):
 
         helpers.create_user('rachel@profile.org', 'Rachel', 'Last', alternates=[], institution='google.com')
