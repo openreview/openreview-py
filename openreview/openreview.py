@@ -354,7 +354,7 @@ class Client(object):
         else:
             raise OpenReviewException(['Profile Not Found'])
 
-    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None, fullname=None, use_ES = False):
+    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None, fullname=None, relation=None, use_ES = False):
         """
         Gets a list of profiles using either their ids or corresponding emails
 
@@ -443,6 +443,10 @@ class Client(object):
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
 
+        if relation:
+            response = self.session.get(self.profiles_url, params = {'relation': relation }, headers = self.headers)
+            response = self.__handle_response(response)
+            return [Profile.from_json(p) for p in response.json()['profiles']]
 
         return []
 

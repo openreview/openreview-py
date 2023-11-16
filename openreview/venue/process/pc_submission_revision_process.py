@@ -11,12 +11,14 @@ def process(client, edit, invitation):
 
     subject = f'''{short_name} has received a new revision of your submission titled {submission.content['title']['value']}'''
 
+    abstract_string = f'''
+Abstract: {submission.content['abstract']['value']}
+''' if 'abstract' in submission.content else ''
+
     message = f'''Your new revision of the submission to {short_name} has been posted.
 
 Title: {submission.content['title']['value']}
-
-Abstract {submission.content['abstract']['value']}
-
+{abstract_string}
 To view your submission, click here: https://openreview.net/forum?id={submission.forum}'''
 
     client.post_message(

@@ -175,7 +175,6 @@ class InvitationBuilder(object):
         )
 
         if submission_license:
-            submission_invitation.edit['license'] = submission_license
             submission_invitation.edit['note']['license'] = submission_license
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=False)
@@ -2013,21 +2012,40 @@ class InvitationBuilder(object):
 
         custom_stage_replyto = custom_stage.get_reply_to()
         custom_stage_source = custom_stage.get_source_submissions()
+        custom_stage_reply_type = custom_stage.get_reply_type()
 
-        paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, number='${2/content/noteNumber/value}')
-        with_invitation = self.venue.get_invitation_id(name=custom_stage.name, number='${6/content/noteNumber/value}')
-        if custom_stage_replyto == 'forum':
-            reply_to = '${4/content/noteId/value}'
-        elif custom_stage_replyto == 'withForum':
-            reply_to = {
-                'param': {
-                    'withForum': '${6/content/noteId/value}'
+        if custom_stage_reply_type == 'reply':
+            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, number='${2/content/noteNumber/value}')
+            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, number='${6/content/noteNumber/value}')
+            edit_readers = ['${2/note/readers}']
+            note_readers = custom_stage.get_readers(self.venue, '${5/content/noteNumber/value}')
+            invitees = custom_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}')
+            if custom_stage_replyto == 'forum':
+                reply_to = '${4/content/noteId/value}'
+            elif custom_stage_replyto == 'withForum':
+                reply_to = {
+                    'param': {
+                        'withForum': '${6/content/noteId/value}'
+                    }
                 }
-            }
-        else:
+            else:
+                paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix='${2/content/replytoSignatures/value}')
+                with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix='${6/content/replytoSignatures/value}')
+                reply_to = '${4/content/replyto/value}'
+
+        elif custom_stage_reply_type == 'revision':
+            if custom_stage_reply_type in ['forum', 'withForum']:
+                raise openreview.OpenReviewException('Custom stage cannot be used for revisions to submissions. Use the Submission Revision Stage instead.')
+            if custom_stage_replyto == 'reviews':
+                invitation_name = self.venue.review_stage.name
+            elif custom_stage_replyto == 'metareviews':
+                invitation_name = self.venue.meta_review_stage.name
             paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix='${2/content/replytoSignatures/value}')
-            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix='${6/content/replytoSignatures/value}')
-            reply_to = '${4/content/replyto/value}'
+            with_invitation = self.venue.get_invitation_id(name=invitation_name, number='${6/content/noteNumber/value}')
+            reply_to = None
+            edit_readers = [venue_id, '${2/signatures}']
+            note_readers = None
+            invitees = ['${3/content/replytoSignatures/value}']
 
         invitation_content = {
             'source': { 'value': custom_stage_source },
@@ -2077,7 +2095,7 @@ class InvitationBuilder(object):
                     'readers': ['everyone'],
                     'writers': [venue_id],
                     'minReplies': 1,
-                    'invitees': custom_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}'),
+                    'invitees': invitees,
                     'cdate': custom_stage_cdate,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -2094,7 +2112,7 @@ class InvitationBuilder(object):
                                 'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in custom_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')] 
                             }
                         },
-                        'readers': custom_stage.get_readers(self.venue, '${4/content/noteNumber/value}'),
+                        'readers': edit_readers,
                         'writers': [venue_id],
                         'note': {
                             'id': {
@@ -2104,7 +2122,6 @@ class InvitationBuilder(object):
                                 }
                             },
                             'forum': '${4/content/noteId/value}',
-                            'replyto': reply_to,
                             'ddate': {
                                 'param': {
                                     'range': [ 0, 9999999999999 ],
@@ -2113,7 +2130,6 @@ class InvitationBuilder(object):
                                 }
                             },
                             'signatures': ['${3/signatures}'],
-                            'readers': ['${3/readers}'],
                             'writers': [venue_id, '${3/signatures}'],
                             'content': content
                         }
@@ -2122,7 +2138,10 @@ class InvitationBuilder(object):
             }
         )
 
-        if custom_stage_replyto in ['reviews', 'metareviews']:
+        if reply_to:
+            invitation.edit['invitation']['edit']['note']['replyto'] = reply_to
+
+        if custom_stage_replyto in ['reviews', 'metareviews', 'review_revisions']:
             invitation.edit['content']['replytoSignatures'] = {
                 'value': {
                     'param': {
@@ -2139,6 +2158,9 @@ class InvitationBuilder(object):
                     }
                 }
             }
+
+        if note_readers:
+            invitation.edit['invitation']['edit']['note']['readers'] = note_readers
 
         if custom_stage_duedate:
             invitation.edit['invitation']['duedate'] = custom_stage_duedate
@@ -3169,3 +3191,79 @@ class InvitationBuilder(object):
                 invitation.edit['invitation']['expdate'] = tools.datetime_millis(sac_ethics_flag_duedate)
 
             self.save_invitation(invitation, replacement=True)
+
+    def set_reviewer_recommendation_invitation(self, start_date, due_date, total_recommendations):
+
+        venue_id = self.venue_id
+        venue = self.venue
+
+        recommendation_invitation_id = venue.get_recommendation_id()
+
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/recommendationWebfield.js')) as webfield_reader:
+            webfield_content = webfield_reader.read()
+
+        recommendation_invitation = Invitation(
+            id=recommendation_invitation_id,
+            cdate=tools.datetime_millis(start_date) if start_date else None,
+            duedate=tools.datetime_millis(due_date) if due_date else None,
+            expdate=tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if due_date else None,
+            invitees=[venue.get_area_chairs_id()],
+            signatures = [venue_id],
+            readers = [venue_id, venue.get_area_chairs_id()],
+            writers = [venue_id],
+            minReplies = total_recommendations,
+            web = webfield_content,
+            content = {
+                'total_recommendations': {
+                    'value': total_recommendations
+                }
+            },
+            edge = {
+                'id': {
+                    'param': {
+                        'withInvitation': recommendation_invitation_id,
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers':  [venue_id, '${2/signatures}', venue.get_senior_area_chairs_id(number='${{2/head}/number}')] if venue.use_senior_area_chairs else [venue_id, '${2/signatures}'],
+                'writers': [ venue_id, '${2/signatures}' ],
+                'signatures': {
+                    'param': {
+                        'regex': f'~.*|{venue_id}' 
+                    }
+                },
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': venue.submission_stage.get_submission_id(venue)
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'inGroup': venue.get_reviewers_id()
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'enum': [1,2,3,4,5,6,7,8,9,10]
+                    }
+                }
+            }
+        )
+
+        recommendation_invitation = self.save_invitation(recommendation_invitation, replacement=True)

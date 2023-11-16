@@ -365,7 +365,7 @@ class OpenReviewClient(object):
         else:
             raise OpenReviewException(['Profile Not Found'])
 
-    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None, fullname=None, use_ES = False):
+    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None, fullname=None, relation=None, use_ES = False):
         """
         Gets a list of profiles using either their ids or corresponding emails
 
@@ -438,8 +438,6 @@ class OpenReviewClient(object):
                     profiles_by_email[p['email']] = profile
             return profiles_by_email
 
-
-
         if ids:
             full_response = []
             for id_batch in batches(ids):
@@ -454,7 +452,11 @@ class OpenReviewClient(object):
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
 
-
+        if relation:
+            response = self.session.get(self.profiles_url, params = {'relation': relation }, headers = self.headers)
+            response = self.__handle_response(response)
+            return [Profile.from_json(p) for p in response.json()['profiles']]
+        
         return []
 
     def get_pdf(self, id, is_reference=False):

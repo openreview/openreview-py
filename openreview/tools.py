@@ -138,7 +138,7 @@ def get_profile(client, value, with_publications=False):
     return profile
 
 
-def get_profiles(client, ids_or_emails, with_publications=False, as_dict=False):
+def get_profiles(client, ids_or_emails, with_publications=False, with_relations=False, as_dict=False):
     '''
     Helper function that repeatedly queries for profiles, given IDs and emails.
     Useful for getting more Profiles than the server will return by default (1000)
@@ -218,7 +218,23 @@ def get_profiles(client, ids_or_emails, with_publications=False, as_dict=False):
             else:
                 profiles[idx].content['publications'] = publications
 
+    if with_relations:
 
+        relation_profile_ids = set()
+        for profile in profiles:
+            usernames = [relation.get('username') for relation in profile.content.get('relations', []) if relation.get('username')]
+            emails = [relation.get('email') for relation in profile.content.get('relations', []) if relation.get('email')]
+            relation_profile_ids.update(usernames)
+            relation_profile_ids.update(emails)
+
+        relation_profiles_by_id = get_profiles(client, list(relation_profile_ids), as_dict=True)
+
+        for profile in profiles:
+            for relation in profile.content.get('relations', []):
+                relation_profile = relation_profiles_by_id.get(relation.get('username')) or relation_profiles_by_id.get(relation.get('email'))
+                if relation_profile:
+                    relation['profile_id'] = relation_profile.id
+    
     if as_dict:
         profiles_as_dict = {}
         for id in ids:
@@ -1313,6 +1329,7 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=None)
     :rtype: list[str]
     """
 
+    author_ids = set()
     author_domains = set()
     author_emails = set()
     author_relations = set()
@@ -1327,6 +1344,7 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=None)
 
     for profile in author_profiles:
         author_info = info_function(profile, n_years)
+        author_ids.add(author_info['id'])
         author_domains.update(author_info['domains'])
         author_emails.update(author_info['emails'])
         author_relations.update(author_info['relations'])
@@ -1336,8 +1354,10 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=None)
 
     conflicts = set()
     conflicts.update(author_domains.intersection(user_info['domains']))
-    conflicts.update(author_relations.intersection(user_info['emails']))
-    conflicts.update(author_emails.intersection(user_info['relations']))
+    conflicts.update(author_relations.intersection(user_info['emails'])) ## keep this one until all relations have a profile
+    conflicts.update(author_relations.intersection([user_info['id']]))
+    conflicts.update(author_ids.intersection(user_info['relations']))
+    conflicts.update(author_emails.intersection(user_info['relations'])) ## keep this one until all relations have a profile
     conflicts.update(author_emails.intersection(user_info['emails']))
     conflicts.update(author_publications.intersection(user_info['publications']))
 
@@ -1390,13 +1410,7 @@ def get_profile_info(profile, n_years=None):
             domains.add(domain)
 
     ## Relations section
-    for relation in profile.content.get('relations', []):
-        try:
-            end = int(relation.get('end'))
-        except:
-            end = None
-        if end is None or end > cut_off_year:
-            relations.add(relation['email'])
+    relations = filter_relations_by_year(profile.content.get('relations', []), cut_off_year)
 
     ## Publications section: get publications within last n years, default is all publications from previous years
     publications = filter_publications_by_year(profile.content.get('publications', []), cut_off_year)
@@ -1446,16 +1460,7 @@ def get_neurips_profile_info(profile, n_years=None):
                 domains.add(domain)
 
     ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
-    for r in profile.content.get('relations', []):
-        if (r.get('relation', '') or '') in ['Coauthor','Coworker']:
-            try:
-                end = int(r.get('end'))
-            except:
-                end = None
-            if end is None or end > cut_off_year:
-                relations.add(r['email'])
-        else:
-            relations.add(r['email'])
+    relations = filter_relations_by_year(profile.content.get('relations', []), cut_off_year, ['Coauthor','Coworker'])
 
     ## Emails section
     for email in profile.content['emails']:
@@ -1522,12 +1527,7 @@ def get_current_submissions_profile_info(profile, n_years=None, submission_venue
                 domains.add(domain)
 
     ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
-    for r in profile.content.get('relations', []):
-        if (r.get('relation', '') or '') in ['Coauthor','Coworker']:
-            if r.get('end') is None or int(r.get('end')) > cut_off_year:
-                relations.add(r['email'])
-        else:
-            relations.add(r['email'])
+    relations = filter_relations_by_year(profile.content.get('relations', []), cut_off_year, ['Coauthor','Coworker'])
 
     ## Get publications
     for publication in profile.content.get('publications', []):
@@ -1584,6 +1584,25 @@ def filter_publications_by_year(publications, cut_off_year):
             filtered_publications.add(publication.id)
 
     return filtered_publications    
+
+def filter_relations_by_year(relations, cut_off_year, only_relations=None):
+
+    filtered_relations = set()
+    for r in relations:
+        relation_id = r.get('profile_id', r.get('username', r.get('email')))
+        if relation_id:
+            end = None
+            try:
+                end = int(r.get('end'))
+            except:
+                end = None            
+            if only_relations is None or r.get('relation', '') in only_relations:
+                if end is None or end > cut_off_year:
+                    filtered_relations.add(relation_id)
+            else:
+                filtered_relations.add(relation_id)
+
+    return filtered_relations
 
 def post_bulk_edges (client, edges, batch_size = 50000):
     num_edges = len(edges)

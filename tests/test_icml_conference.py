@@ -58,6 +58,7 @@ class TestICMLConference():
                 'Official Website URL': 'https://icml.cc',
                 'program_chair_emails': ['pc@icml.cc'],
                 'contact_email': 'pc@icml.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
@@ -148,6 +149,7 @@ class TestICMLConference():
                 'Official Website URL': 'https://icml.cc',
                 'program_chair_emails': ['pc@icml.cc'],
                 'contact_email': 'pc@icml.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
@@ -245,6 +247,7 @@ class TestICMLConference():
                 'Official Website URL': 'https://icml.cc',
                 'program_chair_emails': ['pc@icml.cc', 'pc2@icml.cc'],
                 'contact_email': 'pc@icml.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Start Date': now.strftime('%Y/%m/%d'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
@@ -307,6 +310,7 @@ class TestICMLConference():
                 'Official Website URL': 'https://icml.cc',
                 'program_chair_emails': ['pc@icml.cc', 'pc3@icml.cc'],
                 'contact_email': 'pc@icml.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
@@ -731,6 +735,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
         ## close the submissions
         now = datetime.datetime.utcnow()
         due_date = now - datetime.timedelta(days=1)
+        exp_date = now + datetime.timedelta(days=10)
         pc_client.post_note(openreview.Note(
             content={
                 'title': 'Thirty-ninth International Conference on Machine Learning',
@@ -739,6 +744,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
                 'Official Website URL': 'https://icml.cc',
                 'program_chair_emails': ['pc@icml.cc', 'pc3@icml.cc'],
                 'contact_email': 'pc@icml.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
@@ -799,8 +805,8 @@ reviewer6@gmail.com, Reviewer ICMLSix
                             }
                         }
                     }
-                }
-
+                },
+                'withdraw_submission_expiration': exp_date.strftime('%Y/%m/%d')
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
@@ -818,7 +824,12 @@ reviewer6@gmail.com, Reviewer ICMLSix
         assert submission_invitation.expdate < openreview.tools.datetime_millis(now)
 
         assert len(pc_client_v2.get_all_invitations(invitation='ICML.cc/2023/Conference/-/Withdrawal')) == 101
+        withdrawal_inv = pc_client_v2.get_invitation('ICML.cc/2023/Conference/Submission1/-/Withdrawal')
+        assert withdrawal_inv.expdate == openreview.tools.datetime_millis(exp_date.replace(hour=0, minute=0, second=0, microsecond=0))
         assert len(pc_client_v2.get_all_invitations(invitation='ICML.cc/2023/Conference/-/Desk_Rejection')) == 101
+        desk_reject_inv = pc_client_v2.get_invitation('ICML.cc/2023/Conference/Submission1/-/Desk_Rejection')
+        desk_reject_due_date = due_date + datetime.timedelta(days=90)
+        assert desk_reject_inv.expdate == openreview.tools.datetime_millis(desk_reject_due_date.replace(hour=0, minute=0, second=0, microsecond=0))
         assert pc_client_v2.get_invitation('ICML.cc/2023/Conference/-/PC_Revision')
 
         ## make submissions visible to ACs only
@@ -1002,7 +1013,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
 
 Title: Paper title 1 Version 2
 
-Abstract This is an abstract 1
+Abstract: This is an abstract 1
 
 To view your submission, click here: https://openreview.net/forum?id={submission.id}'''
 
@@ -1438,6 +1449,17 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
         anon_group_id = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLOne1')[0].id
 
+        ## add a reviewer with max quota an get an error
+        with pytest.raises(openreview.OpenReviewException, match=r'Max Papers allowed reached for Reviewer ICMLFive'):
+            ac_client.post_edge(
+                openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment',
+                    signatures=[anon_group_id],
+                    head=submissions[0].id,
+                    tail='~Reviewer_ICMLFive1',
+                    label='reviewer-matching',
+                    weight=1
+            ))        
+        
         ## recruit external reviewer
         with pytest.raises(openreview.OpenReviewException, match=r'the user has a conflict'):
             ac_client.post_edge(
@@ -4736,6 +4758,7 @@ url={https://openreview.net/forum?id='''
                 'Official Website URL': 'https://icml.cc',
                 'program_chair_emails': ['pc@icml.cc', 'pc3@icml.cc'],
                 'contact_email': 'pc@icml.cc',
+                'publication_chairs': 'Yes, our venue has Publication Chairs',
                 'publication_chairs_emails': ['publicationchair@icml.com'],
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': request_form.content['Submission Deadline'],

@@ -41,6 +41,7 @@ class TestSubmissionReaders():
                     'test@mail.com',
                     'tom@mail.com'],
                 'contact_email': 'test@mail.com',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'No, our venue does not have Senior Area Chairs',
                 'Venue Start Date': now.strftime('%Y/%m/%d'),

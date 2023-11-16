@@ -35,6 +35,7 @@ class TestWorkshopV2():
         helpers.create_user('reviewer4@icaps.cc', 'Reviewer', 'ICAPSFour')
         helpers.create_user('reviewer5@icaps.cc', 'Reviewer', 'ICAPSFive')
         helpers.create_user('reviewer6@icaps.cc', 'Reviewer', 'ICAPSSix')
+        helpers.create_user('external_reviewer1@adobe.com', 'External Reviewer', 'Adobe', institution='adobe.com')
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
@@ -51,6 +52,7 @@ class TestWorkshopV2():
                 'Official Website URL': 'https://prl-theworkshop.github.io/',
                 'program_chair_emails': ['pc@icaps.cc'],
                 'contact_email': 'pc@icaps.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
                 'senior_area_chairs': 'No, our venue does not have Senior Area Chairs',
                 'Venue Start Date': '2023/07/01',
@@ -109,6 +111,9 @@ class TestWorkshopV2():
     def test_submissions(self, client, openreview_client, helpers, test_client):
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
+        pc_client=openreview.Client(username='pc@icaps.cc', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icaps.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu', 'deepmind.com', 'co.ux', 'apple.com', 'nvidia.com']
         for i in range(1,12):
@@ -127,17 +132,88 @@ class TestWorkshopV2():
                 signatures=['~SomeFirstName_User1'],
                 note=note)
 
-        helpers.await_queue_edit(openreview_client, invitation='PRL/2023/ICAPS/-/Submission', count=11)
+        # Post revision to remove abstract from submission form
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
+        pc_client.post_note(openreview.Note(
+            content={
+                'title': 'PRL Workshop Series Bridging the Gap Between AI Planning and Reinforcement Learning',
+                'Official Venue Name': 'PRL Workshop Series Bridging the Gap Between AI Planning and Reinforcement Learning',
+                'Abbreviated Venue Name': 'PRL ICAPS 2023',
+                'Official Website URL': 'https://prl-theworkshop.github.io/',
+                'program_chair_emails': ['pc@icaps.cc'],
+                'contact_email': 'pc@icaps.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
+                'Venue Start Date': '2023/07/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Manual',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'use_recruitment_template': 'Yes',
+                'remove_submission_options': ['abstract']
+
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['PRL/2023/ICAPS/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_ICAPSChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+        
+        # Post submission with no abstract
+        note = openreview.api.Note(
+            content = {
+                'title': { 'value': 'Paper title No Abstract' },
+                'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + 'umass.edu'] },
+                'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
+                'keywords': { 'value': ['machine learning', 'nlp'] },
+                'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+            }
+        )
+        
+        test_client.post_note_edit(invitation='PRL/2023/ICAPS/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=note)
+
+        helpers.await_queue_edit(openreview_client, invitation='PRL/2023/ICAPS/-/Submission', count=12)
 
         submissions = openreview_client.get_notes(invitation='PRL/2023/ICAPS/-/Submission', sort='number:asc')
-        assert len(submissions) == 11
+        assert len(submissions) == 12
         assert ['PRL/2023/ICAPS', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com'] == submissions[0].readers
         assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com'] == submissions[0].content['authorids']['value']
 
         authors_group = openreview_client.get_group(id='PRL/2023/ICAPS/Authors')
 
-        for i in range(1,12):
+        for i in range(1,13):
             assert f'PRL/2023/ICAPS/Submission{i}/Authors' in authors_group.members
+
+        # PC Revision of submission with no abstract
+        submission = submissions[11]
+        edit_note = pc_client_v2.post_note_edit(invitation='PRL/2023/ICAPS/-/PC_Revision',
+            signatures=['PRL/2023/ICAPS/Program_Chairs'],
+            note=openreview.api.Note(
+                id = submission.id,
+                content = {
+                    'title': { 'value': submission.content['title']['value'] + ' Version 2' },
+                    'authorids': { 'value': submission.content['authorids']['value']},
+                    'authors': { 'value': submission.content['authors']['value']},
+                    'keywords': submission.content['keywords'],
+                    'pdf': submission.content['pdf'],
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit_note['id'])
+                                                                                    
+        messages = client.get_messages(to='peter@mail.com', subject='PRL ICAPS 2023 has received a new revision of your submission titled Paper title No Abstract Version 2')
+        assert messages and len(messages) == 1
+        # Test that abstract doesn't appear in PC Revision email
+        assert messages[0]['content']['text'].startswith('Your new revision of the submission to PRL ICAPS 2023 has been posted.\n\nTitle: Paper title No Abstract Version 2\n\nTo view your submission, click here:')
 
     def test_setup_matching(self, client, openreview_client, helpers):
 
@@ -177,7 +253,7 @@ class TestWorkshopV2():
         ))
         helpers.await_queue()
 
-        assert pc_client_v2.get_edges_count(invitation='PRL/2023/ICAPS/Reviewers/-/Affinity_Score') == 66
+        assert pc_client_v2.get_edges_count(invitation='PRL/2023/ICAPS/Reviewers/-/Affinity_Score') == 72
 
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation PRL/2023/ICAPS/Reviewers/-/Proposed_Assignment was not found'):
             assert openreview_client.get_invitation('PRL/2023/ICAPS/Reviewers/-/Proposed_Assignment')
@@ -210,6 +286,7 @@ class TestWorkshopV2():
                 'Official Website URL': 'https://prl-theworkshop.github.io/',
                 'program_chair_emails': ['pc@icaps.cc'],
                 'contact_email': 'pc@icaps.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',
@@ -241,6 +318,30 @@ class TestWorkshopV2():
         helpers.await_queue_edit(openreview_client, edit_id=edge.id)
 
         assert openreview_client.get_group('PRL/2023/ICAPS/Submission1/Reviewers').members == ['~Reviewer_ICAPSOne1']
+
+        # Invite external reviewer to submission with no abstract
+        conference = openreview.helpers.get_conference(client, request_form.id)
+        conference.setup_assignment_recruitment(conference.get_reviewers_id(), '12345678', now + datetime.timedelta(days=3), invitation_labels={ 'Invite': 'Invitation Sent', 'Invited': 'Invitation Sent' })
+        
+        submission = submissions[11]
+        edge = pc_client_v2.post_edge(openreview.api.Edge(
+            invitation='PRL/2023/ICAPS/Reviewers/-/Invite_Assignment',
+            readers = ['PRL/2023/ICAPS', 'external_reviewer1@adobe.com'],
+            nonreaders = ['PRL/2023/ICAPS/Submission12/Authors'],
+            writers = [conference.id],
+            signatures = ['PRL/2023/ICAPS/Program_Chairs'],
+            head = submission.id,
+            tail = 'external_reviewer1@adobe.com',
+            label = 'Invitation Sent',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=edge.id)
+
+        messages = client.get_messages(to='external_reviewer1@adobe.com', subject='[PRL ICAPS 2023] Invitation to review paper titled "Paper title No Abstract Version 2"')
+        assert messages and len(messages) == 1
+        # Test that abstract doesn't appear in Invite Assignment email
+        assert messages[0]['content']['text'].startswith('Hi External Reviewer Adobe,\n\nYou were invited to review the paper number: 12, title: "Paper title No Abstract Version 2".\n\nPlease respond the invitation clicking the following link:')
 
     def test_publication_chair(self, client, openreview_client, helpers):
 
@@ -280,7 +381,7 @@ class TestWorkshopV2():
         assert process_logs[0]['status'] == 'ok'    
 
         submissions = openreview_client.get_notes(invitation='PRL/2023/ICAPS/-/Submission', sort='number:asc')
-        assert len(submissions) == 11
+        assert len(submissions) == 12
 
         decisions = ['Accept', 'Reject']
         for idx in range(len(submissions)):
@@ -309,6 +410,7 @@ class TestWorkshopV2():
                 'Abbreviated Venue Name': 'PRL ICAPS 2023',
                 'Official Website URL': 'https://prl-theworkshop.github.io/',
                 'program_chair_emails': ['pc@icaps.cc'],
+                'publication_chairs': 'Yes, our venue has Publication Chairs',
                 'publication_chairs_emails': ['publicationchair@mail.com', 'publicationchair2@mail.com'],
                 'contact_email': 'pc@icaps.cc',
                 'Venue Start Date': '2023/07/01',
@@ -345,7 +447,7 @@ class TestWorkshopV2():
         short_name = 'PRL ICAPS 2023'
         post_decision_stage_note = pc_client.post_note(openreview.Note(
             content={
-                'reveal_authors': 'Reveal author identities of only accepted submissions to the public',
+                'reveal_authors': 'No, I don\'t want to reveal any author identities.',
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'home_page_tab_names': {
                     'Accept': 'Accept',
@@ -381,22 +483,31 @@ Best,
         helpers.await_queue()
 
         submissions = openreview_client.get_notes(invitation='PRL/2023/ICAPS/-/Submission', sort='number:asc')
-        assert len(submissions) == 11
+        assert len(submissions) == 12
 
         for idx in range(len(submissions)):
             if idx % 2 == 0:
                 submissions[idx].readers = [
-                'PRL/2023/ICAPS',
-                'PRL/2023/ICAPS/Reviewers',
-                'PRL/2023/ICAPS/Publication_Chairs',
-                f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors'
-            ]
+                    'PRL/2023/ICAPS',
+                    'PRL/2023/ICAPS/Reviewers',
+                    'PRL/2023/ICAPS/Publication_Chairs',
+                    f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors'
+                ]
+                submissions[idx].content['authors']['readers'] = [
+                    'PRL/2023/ICAPS',
+                    f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors',
+                    'PRL/2023/ICAPS/Publication_Chairs'
+                ]
             else:
                 submissions[idx].readers = [
-                'PRL/2023/ICAPS',
-                'PRL/2023/ICAPS/Reviewers',
-                f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors'
-            ]
+                    'PRL/2023/ICAPS',
+                    'PRL/2023/ICAPS/Reviewers',
+                    f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors'
+                ]
+                submissions[idx].content['authors']['readers'] = [
+                    'PRL/2023/ICAPS',
+                    f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors'
+                ]
                 
         helpers.create_user('publicationchair@mail.com', 'Publication', 'ICAPSChair')
         publication_chair_client_v2=openreview.api.OpenReviewClient(username='publicationchair@mail.com', password=helpers.strong_password)
@@ -438,7 +549,7 @@ Best,
                         "order": 1
                     },
                 },
-                'submission_revision_remove_options': ['title', 'authors', 'authorids', 'abstract', 'pdf', 'keywords']
+                'submission_revision_remove_options': ['title', 'authors', 'authorids', 'pdf', 'keywords']
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Submission_Revision_Stage'.format(request_form.number),
