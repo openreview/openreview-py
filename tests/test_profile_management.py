@@ -1331,6 +1331,64 @@ The OpenReview Team.
         note = nara_client.get_note(request_note.id)
         assert note.content['status'] == 'Accepted'
 
+    def test_remove_name_and_do_not_accept_automatically(self, client, openreview_client, profile_management, helpers):
+
+        helpers.create_user('mara@profile.org', 'Mara', 'Last', alternates=[], institution='google.com')
+        mara_client = openreview.Client(username='mara@profile.org', password=helpers.strong_password)
+
+        profile = mara_client.get_profile()
+
+        profile.content['homepage'] = 'https://google.com'
+        profile.content['names'].append({
+            'first': 'Mara',
+            'middle': 'Alternate',
+            'last': 'Last',
+            'preferred': True
+            })
+        mara_client.post_profile(profile)
+        profile = mara_client.get_profile(email_or_id='~Mara_Last1')
+        assert len(profile.content['names']) == 2
+        assert 'username' in profile.content['names'][1]
+        assert profile.content['names'][1]['username'] == '~Mara_Alternate_Last1'
+        assert profile.content['names'][1]['preferred'] == True
+
+        mara_client_v2 = openreview.api.OpenReviewClient(username='mara@profile.org', password=helpers.strong_password)
+        submission_note_1 = mara_client_v2.post_note_edit(invitation='CABJ/-/Submission',
+            signatures=['~Mara_Last1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['SomeFirstName User', 'Mara Last']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Mara_Last1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                }
+            ))
+        
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])        
+
+        request_note = mara_client.post_note(openreview.Note(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            readers=['openreview.net/Support', '~Mara_Alternate_Last1'],
+            writers=['openreview.net/Support'],
+            signatures=['~Mara_Alternate_Last1'],
+            content={
+                'name': 'Mara Last',
+                'usernames': ['~Mara_Last1'],
+                'comment': 'typo in my name',
+                'status': 'Pending'
+            }
+
+        ))
+
+        helpers.await_queue()       
+
+        nara_client = openreview.Client(username='mara@profile.org', password=helpers.strong_password)
+        note = nara_client.get_note(request_note.id)
+        assert note.content['status'] == 'Pending'        
+
 
     def test_merge_profiles(self, client, profile_management, helpers):
 
