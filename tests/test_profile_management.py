@@ -452,7 +452,7 @@ The OpenReview Team.
 
     def test_request_remove_name_and_decline(self, client, helpers):
 
-        helpers.create_user('peter@profile.org', 'Peter', 'Last', alternates=[], institution='google.com')
+        peter_client_v2 = helpers.create_user('peter@profile.org', 'Peter', 'Last', alternates=[], institution='google.com')
         peter_client = openreview.Client(username='peter@profile.org', password=helpers.strong_password)
 
         profile = peter_client.get_profile()
@@ -471,18 +471,19 @@ The OpenReview Team.
         assert profile.content['names'][1]['preferred'] == False
         assert profile.content['names'][0]['preferred'] == True
 
-        peter_client.post_note(openreview.Note(
+        peter_client_v2.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
-            readers = ['everyone'],
-            signatures = ['~Peter_Alternate_Last1'],
-            writers = ['~Peter_Alternate_Last1'],
-            content = {
-                'title': 'Paper title 1',
-                'abstract': 'Paper abstract 1',
-                'authors': ['Peter Alternate Last', 'Test Client'],
-                'authorids': ['~Peter_Alternate_Last1', 'test@mail.com']
-            }
-        ))              
+            signatures=['~Peter_Alternate_Last1'],
+            note = openreview.api.Note(
+                content = {
+                    'title': { 'value': 'Paper title 1' },
+                    'abstract': { 'value': 'Paper abstract 1' },
+                    'authors': { 'value': ['Peter Alternate Last', 'Test Client'] },
+                    'authorids': { 'value': ['~Peter_Alternate_Last1', 'test@mail.com'] },
+                    'venue': { 'value': 'Arxiv' },
+                    'year': { 'value': 2019 }
+                }
+        ))                      
 
         request_note = peter_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Profile_Name_Removal',
@@ -1182,7 +1183,7 @@ The OpenReview Team.
 
     def test_remove_name_and_update_relations(self, client, profile_management, helpers):
 
-        helpers.create_user('juan@profile.org', 'Juan', 'Last', alternates=[], institution='google.com')
+        juan_client_v2 = helpers.create_user('juan@profile.org', 'Juan', 'Last', alternates=[], institution='google.com')
         juan_client = openreview.Client(username='juan@profile.org', password=helpers.strong_password)
 
         profile = juan_client.get_profile()
@@ -1201,18 +1202,19 @@ The OpenReview Team.
         assert profile.content['names'][1]['username'] == '~Juan_Alternate_Last1'
         assert profile.content['names'][1]['preferred'] == True
 
-        juan_client.post_note(openreview.Note(
+        juan_client_v2.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
-            readers = ['everyone'],
-            signatures = ['~Juan_Alternate_Last1'],
-            writers = ['~Juan_Alternate_Last1'],
-            content = {
-                'title': 'Paper title 1',
-                'abstract': 'Paper abstract 1',
-                'authors': ['Juan Last', 'Test Client'],
-                'authorids': ['~Juan_Last1', 'test@mail.com']
-            }
-        ))         
+            signatures=['~Juan_Alternate_Last1'],
+            note = openreview.api.Note(
+                content = {
+                    'title': { 'value': 'Paper title 1' },
+                    'abstract': { 'value': 'Paper abstract 1' },
+                    'authors': { 'value': ['Juan Last', 'Test Client'] },
+                    'authorids': { 'value': ['~Juan_Last1', 'test@mail.com'] },
+                    'venue': { 'value': 'Arxiv' },
+                    'year': { 'value': 2019 }
+                }
+        ))                      
 
         john_client = openreview.Client(username='john@profile.org', password=helpers.strong_password)
 
