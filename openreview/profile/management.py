@@ -138,7 +138,7 @@ class ProfileManagement():
                     id=f'{self.support_group_id}/-/Profile_Name_Removal',
                     readers=['everyone'],
                     writers=[self.support_group_id],
-                    signatures=[self.support_group_id],
+                    signatures=[self.super_user],
                     invitees=['~'],
                     process_string=file_content,
                     preprocess=pre_file_content,
