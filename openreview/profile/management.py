@@ -453,71 +453,113 @@ class ProfileManagement():
             'email': {
                 'order': 1,
                 'description': 'email of the user making the request.',
-                'value-regex': '([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
-                'required': False                
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'regex': r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
+                        'mismatchError': 'must be a valid email',
+                        'optional': True
+                    }
+                }
             },
             'left': {
                 'order': 2,
                 'description': 'Username or email that want to be merged.',
-                'value-regex': '^~[^\d\s]+[1-9][0-9]*$|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
-                'required': True
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'regex': '^~[^\d\s]+[1-9][0-9]*$|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                        'mismatchError': 'must be a valid email or profile ID'
+                    }
+                }
             },
             'right': {
                 'order': 3,
                 'description': 'Username or email that want to be merged.',
-                'value-regex': '^~[^\d\s]+[1-9][0-9]*$|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
-                'required': True
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'regex': '^~[^\d\s]+[1-9][0-9]*$|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                        'mismatchError': 'must be a valid email or profile ID'
+                    }
+                }
             },
             'comment': {
                 'order': 4,
-                'value-regex': '[\\S\\s]{1,5000}',
                 'description': 'Reason why you want to delete your name.',
-                'required': False
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 5000,
+                        'markdown': True,
+                        'input': 'textarea',
+                        'optional': True
+                    }
+                }
             },
             'status': {
-                'order': 5,
-                'value-dropdown': ['Pending', 'Accepted', 'Rejected', 'Ignored'],
-                'description': 'Request status.',
-                'required': True
+                'value': 'Pending'
             }
         }
 
         with open(os.path.join(os.path.dirname(__file__), 'process/request_merge_profiles_process.py'), 'r') as f:
             file_content = f.read()
-            self.client.post_invitation(openreview.Invitation(
-                id=f'{self.support_group_id}/-/Profile_Merge',
-                readers=['everyone'],
-                writers=[self.support_group_id],
-                signatures=[self.support_group_id],
-                invitees=['~', '(guest)'],
-                process_string=file_content,
-                reply={
-                    'readers': {
-                        'values-copied': [self.support_group_id, '{content.right}', '{content.left}']
-                    },
-                    'writers': {
-                        'values':[self.support_group_id],
-                    },
-                    'signatures': {
-                        'values-regex': f'~.*|{self.support_group_id}|\(guest\)'
-                    },
-                    'content': content
-                }
-            ))        
+            self.client_v2.post_invitation_edit(
+                invitations = f'{self.super_user}/-/Edit',
+                signatures = [self.super_user],
+                invitation = openreview.api.Invitation(
+                    id=f'{self.support_group_id}/-/Profile_Merge',
+                    readers=['everyone'],
+                    writers=[self.support_group_id],
+                    signatures=[self.support_group_id],
+                    invitees=['~', '(guest)'],
+                    process=file_content,
+                    edit={
+                        'readers': [self.support_group_id, '${2/note/content/right/value}', '${2/note/content/left/value}'],
+                        'writers': [self.support_group_id],
+                        'signatures': {
+                            'param': {
+                                'items': [
+                                    { 'prefix': '~.*', 'optional': True },
+                                    { 'value': self.support_group_id, 'optional': True },
+                                    { 'value': '(guest)', 'optional': True } 
+                                ]
+                            }
+                        },
+                        'note': {
+                            'readers': ['${3/readers}'],
+                            'writers': ['${3/writers}'],
+                            'signatures': ['${3/signatures}'],
+                            'content': content
+                        }
+                    }
+                )
+            )        
     
 
         content = {
             'status': {
                 'order': 1,
-                'value-dropdown': ['Accepted', 'Rejected', 'Ignored'],
                 'description': 'Decision status.',
-                'required': True
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': ['Accepted', 'Rejected', 'Ignored']
+                    }
+                }
             },
             'support_comment': {
                 'order': 2,
-                'value-regex': '[\\S\\s]{1,5000}',
                 'description': 'Justify the decision.',
-                'required': False
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 5000,
+                        'markdown': True,
+                        'input': 'textarea',
+                        'optional': True
+                    }
+                }
             }            
         }
 
@@ -525,25 +567,29 @@ class ProfileManagement():
             file_content = f.read()
             file_content = file_content.replace("SUPPORT_USER_ID = ''", "SUPPORT_USER_ID = '" + self.support_group_id + "'")
             file_content = file_content.replace("AUTHOR_RENAME_INVITATION_ID = ''", "AUTHOR_RENAME_INVITATION_ID = '" + self.author_rename_invitation_id + "'")
-            self.client.post_invitation(openreview.Invitation(
-                id=f'{self.support_group_id}/-/Profile_Merge_Decision',
-                readers=['everyone'],
-                writers=[self.support_group_id],
-                signatures=[self.super_user],
-                invitees=[self.support_group_id],
-                process_string=file_content,
-                reply={
-                    'referentInvitation': f'{self.support_group_id}/-/Profile_Merge',
-                    'readers': {
-                        'values': [self.support_group_id]
-                    },
-                    'writers': {
-                        'values':[self.support_group_id],
-                    },
-                    'signatures': {
-                        'values': [self.support_group_id]
-                    },
-                    'content': content
-                }
-            ))           
+            self.client_v2.post_invitation_edit(
+                invitations = f'{self.super_user}/-/Edit',
+                signatures = [self.super_user],
+                invitation = openreview.api.Invitation(
+                    id=f'{self.support_group_id}/-/Profile_Merge_Decision',
+                    readers=['everyone'],
+                    writers=[self.support_group_id],
+                    signatures=[self.super_user],
+                    invitees=[self.support_group_id],
+                    process=file_content,
+                    edit={
+                        'readers': [self.support_group_id],
+                        'writers': [self.support_group_id],
+                        'signatures': [self.support_group_id],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': f'{self.support_group_id}/-/Profile_Merge'
+                                }
+                            },
+                            'content': content
+                        }
+                    }
+                )
+            )           
 

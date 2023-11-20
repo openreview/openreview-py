@@ -2825,8 +2825,6 @@ class Profile(object):
             'id': self.id,
             'tcdate': self.tcdate,
             'tmdate': self.tmdate,
-            'referent': self.referent,
-            'packaging': self.packaging,
             'invitation': self.invitation,
             'readers': self.readers,
             'nonreaders': self.nonreaders,
@@ -2837,6 +2835,10 @@ class Profile(object):
             'active': self.active,
             'password': self.password
         }
+        if self.referent:
+            body['referent'] = self.referent
+        if self.packaging:
+            body['packaging'] = self.packaging
         if hasattr(self, 'tauthor'):
             body['tauthor'] = self.tauthor
         return body
