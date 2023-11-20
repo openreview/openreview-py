@@ -135,15 +135,6 @@ def process(client, edit, invitation):
 
     print('Post a profile reference to remove the email')
     
-    # client.post_group_edit(
-    #     invitation = group.id + '/-/edit',
-    #     signatures = ['~Super_User1'],
-    #     group = openreview.api.Group(
-    #         id=email,
-    #         members=[]
-    #     )
-    # )
-    
     client.post_profile(openreview.Profile(
         referent = profile.id, 
         invitation = '~/-/invitation',
