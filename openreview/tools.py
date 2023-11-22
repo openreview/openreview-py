@@ -222,10 +222,10 @@ def get_profiles(client, ids_or_emails, with_publications=False, with_relations=
 
         relation_profile_ids = set()
         for profile in profiles:
-            usernames = [relation.get('username') for relation in profile.content.get('relations', []) if relation.get('username')]
-            emails = [relation.get('email') for relation in profile.content.get('relations', []) if relation.get('email')]
-            relation_profile_ids.update(usernames)
-            relation_profile_ids.update(emails)
+            relation_usernames = [relation.get('username') for relation in profile.content.get('relations', []) if relation.get('username')]
+            relation_emails = [relation.get('email') for relation in profile.content.get('relations', []) if relation.get('email')]
+            relation_profile_ids.update(relation_usernames)
+            relation_profile_ids.update(relation_emails)
 
         relation_profiles_by_id = get_profiles(client, list(relation_profile_ids), as_dict=True)
 
