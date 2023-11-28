@@ -17,12 +17,12 @@ async function process(client, edit, invitation) {
   const commentMandatoryReaders =
     domain.content?.comment_mandatory_readers?.value || []
   for (const m of commentMandatoryReaders) {
-    const mandatoryReader = m.replace("{number}", forum.number)
-    if (!note.readers.includes(mandatoryReader)) {
+    const reader = m.replace("{number}", forum.number)
+    if (!note.readers.includes(reader)) {
       return Promise.reject(
         new OpenReviewError({
           name: "Error",
-          message: `${mandatoryReader}must be readers of the comment`,
+          message: reader + " must be readers of the comment",
         })
       )
     }
