@@ -23,7 +23,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.use_senior_area_chairs = note.content.get('senior_area_chairs') == 'Yes, our venue has Senior Area Chairs'
         venue.use_ethics_chairs = note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers'
         venue.use_ethics_reviewers = note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers'
-        venue.use_publication_chairs = note.content.get('publication_chairs_emails', []) != []
+        venue.use_publication_chairs = note.content.get('publication_chairs', 'No, our venue does not have Publication Chairs') == 'Yes, our venue has Publication Chairs'
         venue.automatic_reviewer_assignment = note.content.get('submission_reviewer_assignment', '') == 'Automatic'
         venue.senior_area_chair_roles = note.content.get('senior_area_chair_roles', ['Senior_Area_Chairs'])
         venue.area_chair_roles = note.content.get('area_chair_roles', ['Area_Chairs'])
@@ -38,7 +38,8 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
 
         venue.submission_stage = get_submission_stage(note, venue)
         venue.review_stage = get_review_stage(note)
-        venue.bid_stages = get_bid_stages(note)
+        if 'bid_due_date' in note.content:
+            venue.bid_stages = get_bid_stages(note)
         venue.meta_review_stage = get_meta_review_stage(note)
         venue.comment_stage = get_comment_stage(note)
         venue.decision_stage = get_decision_stage(note)
@@ -416,6 +417,15 @@ def get_submission_stage(request_forum, venue):
 
     second_deadline_remove_fields = request_forum.content.get('second_deadline_remove_options', [])
 
+    withdraw_submission_exp_date = request_forum.content.get('withdraw_submission_expiration', '').strip()
+    if withdraw_submission_exp_date:
+        try:
+            withdraw_submission_exp_date = datetime.datetime.strptime(withdraw_submission_exp_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            withdraw_submission_exp_date = datetime.datetime.strptime(withdraw_submission_exp_date, '%Y/%m/%d')
+    else:
+        withdraw_submission_exp_date = None
+
     return openreview.stages.SubmissionStage(name = name,
         double_blind=double_blind,
         start_date=submission_start_date,
@@ -426,6 +436,7 @@ def get_submission_stage(request_forum, venue):
         hide_fields=hide_fields,
         subject_areas=subject_areas,
         create_groups=create_groups,
+        withdraw_submission_exp_date=withdraw_submission_exp_date,
         author_names_revealed=author_names_revealed,
         papers_released=papers_released,
         readers=readers,
