@@ -41,7 +41,7 @@ class TestCVPRConference():
             content={
                 'title': 'Conference on Computer Vision and Pattern Recognition 2024',
                 'Official Venue Name': 'Conference on Computer Vision and Pattern Recognition 2024',
-                'Abbreviated Venue Name': 'CVPR 2023',
+                'Abbreviated Venue Name': 'CVPR 2024',
                 'Official Website URL': 'https://cvpr.cc',
                 'program_chair_emails': ['pc@cvpr.cc'],
                 'contact_email': 'pc@cvpr.cc',
@@ -49,7 +49,7 @@ class TestCVPRConference():
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'secondary_area_chairs': 'Yes, our venue has Secondary Area Chairs',
-                'Venue Start Date': '2023/12/01',
+                'Venue Start Date': '2024/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': abstract_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
@@ -153,12 +153,12 @@ class TestCVPRConference():
             content={
                 'title': 'Conference on Computer Vision and Pattern Recognition 2024',
                 'Official Venue Name': 'Conference on Computer Vision and Pattern Recognition 2024',
-                'Abbreviated Venue Name': 'CVPR 2023',
+                'Abbreviated Venue Name': 'CVPR 2024',
                 'Official Website URL': 'https://cvpr.cc',
                 'program_chair_emails': ['pc@cvpr.cc'],
                 'contact_email': 'pc@cvpr.cc',
                 'publication_chairs':'No, our venue does not have Publication Chairs',
-                'Venue Start Date': '2023/12/01',
+                'Venue Start Date': '2024/12/01',
                 'abstract_registration_deadline': abstract_date.strftime('%Y/%m/%d'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
@@ -193,6 +193,26 @@ class TestCVPRConference():
         ))
 
         helpers.await_queue()
+
+    def test_desk_rejection_emails(self, client, openreview_client, helpers, test_client):
+
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@cvpr.cc', password=helpers.strong_password)
+
+        desk_reject_note = pc_client_v2.post_note_edit(invitation='thecvf.com/CVPR/2024/Conference/Submission50/-/Desk_Rejection',
+                                    signatures=['thecvf.com/CVPR/2024/Conference/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'desk_reject_comments': { 'value': 'No PDF' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='thecvf.com/CVPR/2024/Conference/-/Desk_Rejected_Submission', count=1)
+
+        messages = client.get_messages(subject='[CVPR 2024]: Paper #50 desk-rejected by Program Chairs')
+        assert messages and len(messages) == 3
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'pc@cvpr.cc' not in recipients
 
     def test_reviewer_recommendation(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
@@ -253,7 +273,7 @@ class TestCVPRConference():
 
         #assign ACs to papers
         acs = ['~AC_CVPROne1', '~AC_CVPRTwo1']
-        for idx in range(0,50):
+        for idx in range(0,49):
             edge = pc_client_v2.post_edge(openreview.api.Edge(
                 invitation = 'thecvf.com/CVPR/2024/Conference/Area_Chairs/-/Proposed_Assignment',
                 head = submissions[idx].id,
@@ -298,7 +318,7 @@ class TestCVPRConference():
         request_page(selenium, 'http://localhost:3030/invitation?id=thecvf.com/CVPR/2024/Conference/Reviewers/-/Recommendation', ac_client.token, by=By.CLASS_NAME, wait_for_element='description')
         instructions = selenium.find_element(By.CLASS_NAME, 'description')
         assert instructions
-        assert 'CVPR 2023 Reviewer Recommendation' in instructions.text
+        assert 'CVPR 2024 Reviewer Recommendation' in instructions.text
         recommendation_div =  selenium.find_element(By.ID, 'notes')
         button_row = recommendation_div.find_element(By.CLASS_NAME, 'text-center')
         assert button_row
