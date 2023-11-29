@@ -78,6 +78,8 @@ Hi Program Chairs,
 
 Thank you for choosing OpenReview to host your upcoming venue.
 
+Users of new profiles that sign up with non institutional emails will go through a moderation process that **can take up to two weeks**. Users that signup for a profile with their institutional email will be activated automatically. 
+
 We have set up the venue based on the information that you provided here: {baseurl}/forum?id={noteId}
 
 You can use the following links to access the venue:
