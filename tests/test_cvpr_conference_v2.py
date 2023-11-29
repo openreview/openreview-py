@@ -285,6 +285,20 @@ class TestCVPRConference():
             head = submissions[0].id,
             tail = '~Reviewer_CVPROne1',
             weight = 1))
+
+        ## edit recommendation edge
+        recommendation_edge = ac_client.get_edges(invitation=venue.get_recommendation_id(), tail='~Reviewer_CVPROne1')[0]
+        assert recommendation_edge.nonreaders == ['thecvf.com/CVPR/2024/Conference/Submission1/Authors']
+        recommendation_edge.weight = 5
+        ac_client.post_edge(recommendation_edge)
+
+        recommendation_edge = ac_client.get_edges(invitation=venue.get_recommendation_id(), tail='~Reviewer_CVPROne1')[0]
+        assert recommendation_edge.weight == 5
+
+        ## delete recommendation edge
+        recommendation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        ac_client.post_edge(recommendation_edge)
+        assert not ac_client.get_edges(invitation=venue.get_recommendation_id(), tail='~Reviewer_CVPROne1')
         
         ## Go to edge browser to recommend reviewers
         start = 'thecvf.com/CVPR/2024/Conference/Area_Chairs/-/Assignment,tail:~AC_CVPROne1'
