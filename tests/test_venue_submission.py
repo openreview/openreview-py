@@ -42,7 +42,8 @@ class TestVenueSubmission():
             withdrawn_submission_reveal_authors=True, 
             desk_rejected_submission_public=True,
             force_profiles=True,
-            remove_fields=['abstract']
+            remove_fields=['abstract'],
+            email_pcs_on_desk_reject=True
         )
 
         venue.bid_stages = [
