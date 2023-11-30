@@ -3240,6 +3240,7 @@ class InvitationBuilder(object):
                     }
                 },
                 'readers':  [venue_id, '${2/signatures}', venue.get_senior_area_chairs_id(number='${{2/head}/number}')] if venue.use_senior_area_chairs else [venue_id, '${2/signatures}'],
+                'nonreaders': [venue.get_authors_id(number='${{2/head}/number}')],
                 'writers': [ venue_id, '${2/signatures}' ],
                 'signatures': {
                     'param': {
