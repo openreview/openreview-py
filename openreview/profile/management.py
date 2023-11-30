@@ -307,7 +307,10 @@ class ProfileManagement():
         )
 
         author_coreference_invitation_id = f'{dblp_group_id}/-/Author_Coreference'
-        
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/dblp_author_coreference_pre_process.js'), 'r') as f:
+            file_content = f.read()
+
         self.client_v2.post_invitation_edit(
             invitations = meta_invitation_id,
             signatures = [dblp_group_id],
@@ -317,6 +320,7 @@ class ProfileManagement():
                 writers=[dblp_group_id],
                 signatures=[dblp_group_id],
                 invitees=['~'],
+                preprocess=file_content,
                 edit={
                     'readers': ['everyone'],
                     'signatures': { 

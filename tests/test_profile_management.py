@@ -154,6 +154,12 @@ class TestProfileManagement():
         assert 'venueid' in note.content
         assert 'html' in note.content
         assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+        assert note.content['authors']['value'] == [
+            "Haw-Shiuan Chang",
+            "Ruei-Yao Sun",
+            "Kathryn Ricci",
+            "Andrew McCallum"
+        ]
         assert note.content['authorids']['value'] == [
             "https://dblp.org/search/pid/api?q=author:Haw-Shiuan_Chang:",
             "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
@@ -170,12 +176,9 @@ class TestProfileManagement():
                 id = note.id,
                 content={
                     'authorids': {
-                        'value': [
-                            "~Haw-Shiuan_Chang1",
-                            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
-                            "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
-                            "~Andrew_McCallum1"
-                        ]
+                        'value': {
+                            'replace': { 'index': 0, 'value': '~Haw-Shiuan_Chang1' }
+                        }
                     }
                 }
             )
@@ -198,6 +201,74 @@ class TestProfileManagement():
             "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
             "~Andrew_McCallum1"
         ]
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Only author replacement is allowed'):
+            edit = haw_shiuan_client_v2.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~Haw-Shiuan_Chang1'],
+                note = openreview.api.Note(
+                    id = note.id,
+                    content={
+                        'authorids': {
+                            'value': [
+                                "~Haw-Shiuan_Chang1",
+                                "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
+                                "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
+                                "~Andrew_McCallum1"
+                            ]
+                        }
+                    }
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The author name to replace doesn\'t match with the names listed in your profile'):
+            edit = haw_shiuan_client_v2.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~Haw-Shiuan_Chang1'],
+                note = openreview.api.Note(
+                    id = note.id,
+                    content={
+                        'authorids': {
+                            'value': {
+                                'replace': { 'index': 3, 'value': '~Andrew_McCallum1' }
+                            }
+                        }
+                    }
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Your name doesn\'t match with the author name in the paper'):
+            edit = haw_shiuan_client_v2.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~Haw-Shiuan_Chang1'],
+                note = openreview.api.Note(
+                    id = note.id,
+                    content={
+                        'authorids': {
+                            'value': {
+                                'replace': { 'index': 3, 'value': '~Haw-Shiuan_Chang1' }
+                            }
+                        }
+                    }
+                )
+            )            
+
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Your name doesn\'t match with the author name in the paper'):
+            edit = test_client_v2.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~SomeFirstName_User1'],
+                note = openreview.api.Note(
+                    id = note.id,
+                    content={
+                        'authorids': {
+                            'value': {
+                                'replace': { 'index': 1, 'value': '~SomeFirstName_User1' }
+                            }
+                        }
+                    }
+                )
+            )        
 
         edit = openreview_client.post_note_edit(
             invitation = 'DBLP.org/-/Abstract',
