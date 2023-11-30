@@ -326,7 +326,7 @@ class ProfileManagement():
                             'optional': True,
                             'deletable': True
                         }
-                    },
+                    },                    
                     'note': {
                         'id': {
                             'param': {
@@ -339,6 +339,11 @@ class ProfileManagement():
                                 'range': [ 0, 9999999999999 ],
                                 'optional': True,
                                 'deletable': True
+                            }
+                        },
+                        'pdate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ]
                             }
                         },
                         'signatures': [ '${3/signatures}' ],
@@ -418,16 +423,6 @@ class ProfileManagement():
                                 'value': {
                                     'param': {
                                         'type': 'string',
-                                        'optional': True
-                                    }
-                                }
-                            },
-                            'year': {
-                                'order': 8,
-                                'description': 'Enter the year where the paper was published.',
-                                'value': {
-                                    'param': {
-                                        'type': 'integer',
                                         'optional': True
                                     }
                                 }

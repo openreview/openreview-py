@@ -142,13 +142,13 @@ class TestProfileManagement():
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~John_Alternate_Last1'],
             note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
                 content = {
                     'title': { 'value': 'Paper title 1' },
                     'abstract': { 'value': 'Paper abstract 1' },
                     'authors': { 'value': ['John Alternate Last', 'Test Client'] },
                     'authorids': { 'value': ['~John_Alternate_Last1', 'test@mail.com'] },
-                    'venue': { 'value': 'Arxiv' },
-                    'year': { 'value': 2019 }
+                    'venue': { 'value': 'Arxiv' }
                 }
         ))            
 
@@ -156,13 +156,13 @@ class TestProfileManagement():
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~John_Alternate_Last1'],
             note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
                 content = {
                     'title': { 'value': 'Paper title 2' },
                     'abstract': { 'value': 'Paper abstract 2' },
                     'authors': { 'value': ['John Alternate Last', 'Test Client'] },
                     'authorids': { 'value': ['~John_Alternate_Last1', 'test@mail.com', 'another@mail.com'] },
-                    'venue': { 'value': 'Arxiv' },
-                    'year': { 'value': 2019 }
+                    'venue': { 'value': 'Arxiv' }
                 }
         )) 
 
@@ -337,13 +337,13 @@ The OpenReview Team.
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~Ana_Last1'],
             note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
                 content = {
                     'title': { 'value': 'Paper title 1' },
                     'abstract': { 'value': 'Paper abstract 1' },
                     'authors': { 'value': ['Ana Last', 'Test Client'] },
                     'authorids': { 'value': ['~Ana_Last1', 'test@mail.com'] },
-                    'venue': { 'value': 'Arxiv' },
-                    'year': { 'value': 2019 }
+                    'venue': { 'value': 'Arxiv' }
                 }
         ))        
 
@@ -351,13 +351,13 @@ The OpenReview Team.
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~Ana_Last1'],
             note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
                 content = {
                     'title': { 'value': 'Paper title 2' },
                     'abstract': { 'value': 'Paper abstract 2' },
                     'authors': { 'value': ['Ana Last', 'Test Client'] },
                     'authorids': { 'value': ['~Ana_Last1', 'test@mail.com'] },
-                    'venue': { 'value': 'Arxiv' },
-                    'year': { 'value': 2019 }
+                    'venue': { 'value': 'Arxiv' }
                 }
         ))        
 
@@ -475,13 +475,13 @@ The OpenReview Team.
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~Peter_Alternate_Last1'],
             note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
                 content = {
                     'title': { 'value': 'Paper title 1' },
                     'abstract': { 'value': 'Paper abstract 1' },
                     'authors': { 'value': ['Peter Alternate Last', 'Test Client'] },
                     'authorids': { 'value': ['~Peter_Alternate_Last1', 'test@mail.com'] },
-                    'venue': { 'value': 'Arxiv' },
-                    'year': { 'value': 2019 }
+                    'venue': { 'value': 'Arxiv' }
                 }
         ))                      
 
@@ -576,13 +576,13 @@ The OpenReview Team.
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~Ella_Last1'],
             note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
                 content = {
                     'title': { 'value': 'Paper title 2' },
                     'abstract': { 'value': 'Paper abstract 2' },
                     'authors': { 'value': ['Ella Last', 'Test Client'] },
                     'authorids': { 'value': ['~Ella_Last1', 'test@mail.com'] },
-                    'venue': { 'value': 'Arxiv' },
-                    'year': { 'value': 2019 }
+                    'venue': { 'value': 'Arxiv' }
                 }
         ))         
 
@@ -603,13 +603,13 @@ The OpenReview Team.
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~Ella_Last2'],
             note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
                 content = {
                     'title': { 'value': 'Paper title 2' },
                     'abstract': { 'value': 'Paper abstract 2' },
                     'authors': { 'value': ['Ella Last', 'Test Client'] },
                     'authorids': { 'value': ['~Ella_Last2', 'test@mail.com'] },
-                    'venue': { 'value': 'Arxiv' },
-                    'year': { 'value': 2019 }
+                    'venue': { 'value': 'Arxiv' }
                 }
         ))
 
@@ -747,13 +747,13 @@ The OpenReview Team.
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~Javier_Last1'],
             note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
                 content = {
                     'title': { 'value': 'Paper title 2' },
                     'abstract': { 'value': 'Paper abstract 2' },
                     'authors': { 'value': ['Javier Last', 'Test Client'] },
                     'authorids': { 'value': ['~Javier_Last1', 'test@mail.com'] },
-                    'venue': { 'value': 'Arxiv' },
-                    'year': { 'value': 2019 }
+                    'venue': { 'value': 'Arxiv' }
                 }
         ))      
 
@@ -769,13 +769,13 @@ The OpenReview Team.
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~Javier_Last2'],
             note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
                 content = {
                     'title': { 'value': 'Paper title 2' },
                     'abstract': { 'value': 'Paper abstract 2' },
                     'authors': { 'value': ['Javier Last', 'Test Client'] },
                     'authorids': { 'value': ['~Javier_Last2', 'test@mail.com'] },
-                    'venue': { 'value': 'Arxiv' },
-                    'year': { 'value': 2019 }
+                    'venue': { 'value': 'Arxiv' }
                 }
         ))        
 
@@ -908,13 +908,13 @@ The OpenReview Team.
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~Paul_Alternate_Last1'],
             note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
                 content = {
                     'title': { 'value': 'Paper title 1' },
                     'abstract': { 'value': 'Paper abstract 1' },
                     'authors': { 'value': ['Paul Alternate Last', 'Test Client'] },
                     'authorids': { 'value': ['~Paul_Alternate_Last1', 'test@mail.com'] },
-                    'venue': { 'value': 'Arxiv' },
-                    'year': { 'value': 2019 }
+                    'venue': { 'value': 'Arxiv' }
                 }
         ))         
         
@@ -923,13 +923,13 @@ The OpenReview Team.
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~Paul_Alternate_Last1'],
             note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
                 content = {
                     'title': { 'value': 'Paper title 2' },
                     'abstract': { 'value': 'Paper abstract 2' },
                     'authors': { 'value': ['Paul Alternate Last', 'Test Client'] },
                     'authorids': { 'value': ['~Paul_Alternate_Last1', 'test@mail.com'] },
-                    'venue': { 'value': 'Arxiv' },
-                    'year': { 'value': 2019 }
+                    'venue': { 'value': 'Arxiv' }
                 }
         ))         
 
@@ -1206,13 +1206,13 @@ The OpenReview Team.
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~Juan_Alternate_Last1'],
             note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
                 content = {
                     'title': { 'value': 'Paper title 1' },
                     'abstract': { 'value': 'Paper abstract 1' },
                     'authors': { 'value': ['Juan Last', 'Test Client'] },
                     'authorids': { 'value': ['~Juan_Last1', 'test@mail.com'] },
-                    'venue': { 'value': 'Arxiv' },
-                    'year': { 'value': 2019 }
+                    'venue': { 'value': 'Arxiv' }
                 }
         ))                      
 
@@ -1658,13 +1658,13 @@ The OpenReview Team.
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~Harold_Last1'],
             note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
                 content = {
                     'title': { 'value': 'Paper title 1' },
                     'abstract': { 'value': 'Paper abstract 1' },
                     'authors': { 'value': ['Harold Last', 'Test Client'] },
                     'authorids': { 'value': ['alternate_harold@profile.org', 'test@mail.com'] },
-                    'venue': { 'value': 'Arxiv' },
-                    'year': { 'value': 2019 }
+                    'venue': { 'value': 'Arxiv' }
                 }
         ))        
 
@@ -1672,13 +1672,13 @@ The OpenReview Team.
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~Harold_Last1'],
             note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
                 content = {
                     'title': { 'value': 'Paper title 2' },
                     'abstract': { 'value': 'Paper abstract 2' },
                     'authors': { 'value': ['Harold Last', 'Test Client'] },
                     'authorids': { 'value': ['alternate_harold@profile.org', 'test@mail.com', 'another@mail.com'] },
-                    'venue': { 'value': 'Arxiv' },
-                    'year': { 'value': 2019 }
+                    'venue': { 'value': 'Arxiv' }
                 }
         )) 
 

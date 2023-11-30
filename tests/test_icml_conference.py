@@ -112,13 +112,13 @@ class TestICMLConference():
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~SAC_ICMLOne1'],
             note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
                 content = {
                     'title': { 'value': 'Paper title 1' },
                     'abstract': { 'value': 'Paper abstract 1' },
                     'authors': { 'value': ['SAC ICML', 'Test2 Client'] },
                     'authorids': { 'value': ['~SAC_ICMLOne1', 'test2@mail.com'] },
-                    'venue': { 'value': 'Arxiv' },
-                    'year': { 'value': 2019 }
+                    'venue': { 'value': 'Arxiv' }
                 }
         ))
 
@@ -126,6 +126,7 @@ class TestICMLConference():
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~SAC_ICMLOne1'],
             note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
                 content = {
                     'title': { 'value': 'Paper title 2' },
                     'abstract': { 'value': 'Paper abstract 2' },
