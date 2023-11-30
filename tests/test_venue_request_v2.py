@@ -2855,7 +2855,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         # post revision for a submission
         author_client = OpenReviewClient(username='venue_author3_v2@mail.com', password=helpers.strong_password)
-        updated_submission = author_client.post_note_edit(invitation='V2.cc/2030/Conference/Submission3/-/Revision',
+        revision_edit = author_client.post_note_edit(invitation='V2.cc/2030/Conference/Submission3/-/Revision',
             signatures=['V2.cc/2030/Conference/Submission3/Authors'],
             note=Note(
                 content={
@@ -2866,7 +2866,13 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                     'pdf': { 'value': '/pdf/' + 'p' * 40 +'.pdf' }
                 }
             ))
-        helpers.await_queue_edit(openreview_client, edit_id=updated_submission['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=revision_edit['id'])
+
+        assert revision_edit['readers'] == ['V2.cc/2030/Conference',
+            'V2.cc/2030/Conference/Senior_Area_Chairs',
+            'V2.cc/2030/Conference/Area_Chairs',
+            'V2.cc/2030/Conference/Reviewers',
+            'V2.cc/2030/Conference/Submission3/Authors']
 
         updated_note = author_client.get_note(id=submissions[2].forum)
         assert updated_note
@@ -3264,27 +3270,20 @@ Best,
 
         revision_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission1/-/Supplementary_Material')
         assert revision_invitation
+        assert revision_invitation.edit['readers'] == ['everyone']
         revision_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission2/-/Supplementary_Material')
-        assert revision_invitation
+        assert revision_invitation.edit['readers'] == ['V2.cc/2030/Conference',
+            'V2.cc/2030/Conference/Submission2/Senior_Area_Chairs',
+            'V2.cc/2030/Conference/Submission2/Area_Chairs',
+            'V2.cc/2030/Conference/Submission2/Reviewers',
+            'V2.cc/2030/Conference/Submission2/Authors']
         revision_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission3/-/Supplementary_Material')
         assert revision_invitation
+        assert revision_invitation.edit['readers'] == ['V2.cc/2030/Conference',
+            'V2.cc/2030/Conference/Submission3/Senior_Area_Chairs',
+            'V2.cc/2030/Conference/Submission3/Area_Chairs',
+            'V2.cc/2030/Conference/Submission3/Reviewers',
+            'V2.cc/2030/Conference/Submission3/Authors']
 
         assert all(x not in revision_invitation.edit['note']['content'] for x in ['title','authors', 'authorids','abstract','keywords', 'TLDR'])
         assert 'supplementary_material' in revision_invitation.edit['note']['content']
-
-#         #make sure homepage webfield was not overwritten after doing get_conference()
-#         request_page(selenium, "http://localhost:3030/group?id=TEST.cc/2030/Conference", wait_for_element='reject')
-#         notes_panel = selenium.find_element(By.ID, 'notes')
-#         assert notes_panel
-#         tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
-#         assert tabs
-#         accepted_panel = selenium.find_element(By.ID, 'accept')
-#         assert accepted_panel
-#         accepted_notes = accepted_panel.find_element(By.CLASS_NAME, 'note')
-#         assert accepted_notes
-#         assert len(accepted_notes) == 1
-#         rejected_panel = selenium.find_element(By.ID, 'reject')
-#         assert rejected_panel
-#         rejected_notes = rejected_panel.find_elements(By.CLASS_NAME, 'note')
-#         assert rejected_notes
-#         assert len(rejected_notes) == 2
