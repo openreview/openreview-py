@@ -2,7 +2,6 @@ def process(client, edit, invitation):
 
     request_note = client.get_note(edit.note.id)
     recipients = [request_note.content.get('email', {}).get('value')] if '(guest)' in request_note.signatures else request_note.signatures
-    print('request_note', request_note)
     
     if 'Rejected' == request_note.content['status']['value']:
         client.post_message(subject='Profile merge request has been rejected', 
