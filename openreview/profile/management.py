@@ -104,26 +104,38 @@ class ProfileManagement():
             'name': {
                 'order': 1,
                 'description': 'Name that want to be removed.',
-                'value-regex': '.*',
-                'required': True                
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'regex': '.*'
+                    }
+                }
             },
             'usernames': {
                 'order': 2,
                 'description': 'Usernames that want to be removed.',
-                'values-regex': '~.*',
-                'required': True
+                'value': {
+                    'param': {
+                        'type': 'string[]',
+                        'regex': '~.*'
+                    }
+                }
             },
             'comment': {
                 'order': 3,
-                'value-regex': '[\\S\\s]{1,5000}',
                 'description': 'Reason why you want to delete your name.',
-                'required': False
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 5000,
+                        'markdown': True,
+                        'input': 'textarea',
+                        'optional': True
+                    }
+                }
             },
             'status': {
-                'order': 4,
-                'value-dropdown': ['Pending', 'Accepted', 'Rejected'],
-                'description': 'Request status.',
-                'required': True
+                'value': 'Pending'
             }
         }
 
@@ -134,41 +146,62 @@ class ProfileManagement():
                 
             with open(os.path.join(os.path.dirname(__file__), 'process/request_remove_name_pre_process.py'), 'r') as pre:
                 pre_file_content = pre.read()
-                self.client.post_invitation(openreview.Invitation(
-                    id=f'{self.support_group_id}/-/Profile_Name_Removal',
-                    readers=['everyone'],
-                    writers=[self.support_group_id],
+                self.client_v2.post_invitation_edit(
+                    invitations=f'{self.super_user}/-/Edit',
                     signatures=[self.super_user],
-                    invitees=['~'],
-                    process_string=file_content,
-                    preprocess=pre_file_content,
-                    reply={
-                        'readers': {
-                            'values-copied': [self.support_group_id, '{signatures}']
-                        },
-                        'writers': {
-                            'values':[self.support_group_id],
-                        },
-                        'signatures': {
-                            'values-regex': f'~.*|{self.support_group_id}'
-                        },
-                        'content': content
-                    }
-                ))        
+                    invitation=openreview.api.Invitation(                    
+                        id=f'{self.support_group_id}/-/Profile_Name_Removal',
+                        readers=['everyone'],
+                        writers=[self.support_group_id],
+                        signatures=[self.super_user],
+                        invitees=['~'],
+                        process=file_content,
+                        preprocess=pre_file_content,
+                        edit={
+                            'readers': [self.support_group_id],
+                            'writers': [self.support_group_id],
+                            'signatures': {
+                                'param': {
+                                    'items': [
+                                        { 'prefix': '~.*', 'optional': True },
+                                        { 'value': self.support_group_id, 'optional': True } 
+                                    ]
+                                }
+                            },
+                            'note': {
+                                'readers': [self.support_group_id, '${3/signatures}'],
+                                'writers': [self.support_group_id],
+                                'signatures': ['${3/signatures}'],
+                                'content': content
+                            }
+                        }
+                    )
+                )        
     
 
         content = {
             'status': {
                 'order': 1,
-                'value-dropdown': ['Accepted', 'Rejected'],
                 'description': 'Decision status.',
-                'required': True
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': ['Accepted', 'Rejected']
+                    }
+                }
             },
             'support_comment': {
                 'order': 2,
-                'value-regex': '[\\S\\s]{1,5000}',
                 'description': 'Justify the decision.',
-                'required': False
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 5000,
+                        'markdown': True,
+                        'input': 'textarea',
+                        'optional': True
+                    }
+                }
             }            
         }
 
@@ -180,28 +213,32 @@ class ProfileManagement():
             with open(os.path.join(os.path.dirname(__file__), 'process/request_remove_name_decision_pre_process.py'), 'r') as pre:
                 pre_file_content = pre.read()
 
-            self.client.post_invitation(openreview.Invitation(
+        self.client_v2.post_invitation_edit(
+            invitations=f'{self.super_user}/-/Edit',
+            signatures=[self.super_user],
+            invitation=openreview.api.Invitation(
                 id=f'{self.support_group_id}/-/Profile_Name_Removal_Decision',
                 readers=['everyone'],
                 writers=[self.support_group_id],
                 signatures=[self.super_user],
                 invitees=[self.support_group_id],
-                process_string=file_content,
+                process=file_content,
                 preprocess=pre_file_content,
-                reply={
-                    'referentInvitation': f'{self.support_group_id}/-/Profile_Name_Removal',
-                    'readers': {
-                        'values': [self.support_group_id]
-                    },
-                    'writers': {
-                        'values':[self.support_group_id],
-                    },
-                    'signatures': {
-                        'values': [self.support_group_id]
-                    },
-                    'content': content
+                edit={
+                    'readers': [self.support_group_id],
+                    'writers': [self.support_group_id],
+                    'signatures': [self.support_group_id],
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': f'{self.support_group_id}/-/Profile_Name_Removal'
+                            }
+                        },
+                        'content': content
+                    }
                 }
-            ))
+            )
+        )
 
         self.client.post_invitation(openreview.Invitation(
             id=self.author_rename_invitation_id,
