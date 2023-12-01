@@ -1563,20 +1563,18 @@ def filter_publications_by_year(publications, cut_off_year):
             year = extract_year(publication.id, publication.pdate)
 
         if not year and 'year' in publication.content:
-            if isinstance(publication.content['year'], str):
-                try:
-                    converted_year = int(publication.content['year'])
-                    if converted_year <= current_year:
-                        year = converted_year
-                except Exception as e:
-                    year = None
+            unformatted_year = None
             if isinstance(publication.content['year'], dict) and 'value' in publication.content['year']:
-                try:
-                    converted_year = int(publication.content['year']['value'])
-                    if converted_year <= current_year:
-                        year = converted_year
-                except Exception as e:
-                    year = None
+                unformatted_year = publication.content['year']['value']
+            elif isinstance(publication.content['year'], str):
+                unformatted_year = publication.content['year']
+
+            try:
+                converted_year = int(unformatted_year)
+                if converted_year <= current_year:
+                    year = converted_year
+            except Exception as e:
+                year = None
         if not year:
             year = extract_year(publication.id, publication.cdate if publication.cdate else publication.tcdate)
 

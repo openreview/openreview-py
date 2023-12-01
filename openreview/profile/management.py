@@ -634,6 +634,11 @@ class ProfileManagement():
                                 'deletable': True
                             }
                         },
+                        'pdate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ]
+                            }
+                        },
                         'signatures': [ '${3/signatures}' ],
                         'readers': ['everyone'],
                         'writers': [ '${2/content/authorids/value}'],
@@ -711,16 +716,6 @@ class ProfileManagement():
                                 'value': {
                                     'param': {
                                         'type': 'string',
-                                        'optional': True
-                                    }
-                                }
-                            },
-                            'year': {
-                                'order': 8,
-                                'description': 'Enter the year where the paper was published.',
-                                'value': {
-                                    'param': {
-                                        'type': 'integer',
                                         'optional': True
                                     }
                                 }
