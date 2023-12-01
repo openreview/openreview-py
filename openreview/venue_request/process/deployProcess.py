@@ -616,3 +616,7 @@ If you would like to change your decision, please follow the link in the previou
             },
             signatures=['~Super_User1']
         ))
+
+        # Add API 2 venues to active venues group
+        active_venues = client.get_group('active_venues')
+        client.add_members_to_group(active_venues, conference.id)
