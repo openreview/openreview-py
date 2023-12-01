@@ -278,15 +278,6 @@ The OpenReview Team.
             if username == name.get('username'):
                 requested_name = name
         
-        # client.post_group_edit(
-        #     invitation = publication.domain + '/-/Edit',
-        #     signatures = ['~Super_User1'],
-        #     group = openreview.api.Group(
-        #         id = username,
-        #         members = []
-        #     )
-        # )
-        
         client.post_profile(openreview.Profile(
             referent = profile.id, 
             invitation = '~/-/invitation',
