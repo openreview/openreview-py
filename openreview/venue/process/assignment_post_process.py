@@ -16,6 +16,9 @@ def process_update(client, edge, invitation, existing_edge):
     note=client.get_note(edge.head)
     group=client.get_group(f'{venue_id}/{submission_name}{note.number}/{reviewers_name}')
     if edge.ddate and edge.tail in group.members:
+        assignment_edges = client.get_edges(invitation=edge.invitation, head=edge.head, tail=edge.tail)
+        if assignment_edges:
+            return
         print(f'Remove member {edge.tail} from {group.id}')
         client.remove_members_from_group(group.id, edge.tail)
 
