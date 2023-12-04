@@ -60,6 +60,8 @@ class TestEMNLPConference():
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'How did you hear about us?': 'ML conferences',
+                'email_pcs_for_withdrawn_submissions': 'Yes, email PCs.',
+                'email_pcs_for_desk_rejected_submissions': 'Yes, email PCs.',
                 'Expected Submissions': '1000',
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
@@ -364,6 +366,11 @@ url={https://openreview.net/forum?id='''
 }'''
 
         assert '_bibtex' in withdrawn_submission[0].content and withdrawn_submission[0].content['_bibtex']['value'] == valid_bibtex
+
+        messages = client.get_messages(subject='[EMNLP 2023]: Paper #5 withdrawn by paper authors')
+        assert messages and len(messages) == 3
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'pc@emnlp.org' in recipients
 
         pc_openreview_client = openreview.api.OpenReviewClient(username='pc@emnlp.org', password=helpers.strong_password)
 
@@ -774,6 +781,8 @@ url={https://openreview.net/forum?id='''
 
         messages = client.get_messages(subject='[EMNLP 2023]: Paper #1 desk-rejected by Senior Area Chairs')
         assert messages and len(messages) == 5
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'pc@emnlp.org' in recipients
 
         ac_client = openreview.api.OpenReviewClient(username = 'ac2@emnlp.org', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='EMNLP/2023/Conference/-/Submission', sort='number:asc')

@@ -410,6 +410,8 @@ def get_submission_stage(request_forum, venue):
     hide_fields = request_forum.content.get('hide_fields', [])
     force_profiles = 'Yes' in request_forum.content.get('force_profiles_only', '')
     author_reorder_after_first_deadline = request_forum.content.get('submission_deadline_author_reorder', 'No') == 'Yes'
+    email_pcs_on_withdraw = 'Yes' in request_forum.content.get('email_pcs_for_withdrawn_submissions', '')
+    email_pcs_on_desk_reject = 'Yes' in request_forum.content.get('email_pcs_for_desk_rejected_submissions', '')
 
     second_deadline_additional_fields = request_forum.content.get('second_deadline_additional_options', {})
     if isinstance(second_deadline_additional_fields, str):
@@ -441,6 +443,8 @@ def get_submission_stage(request_forum, venue):
         papers_released=papers_released,
         readers=readers,
         email_pcs=email_pcs,
+        email_pcs_on_withdraw=email_pcs_on_withdraw,
+        email_pcs_on_desk_reject=email_pcs_on_desk_reject,
         author_reorder_after_first_deadline = author_reorder_after_first_deadline,
         submission_email=submission_email,
         force_profiles=force_profiles,

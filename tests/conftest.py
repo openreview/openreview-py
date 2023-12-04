@@ -168,17 +168,6 @@ def client():
 @pytest.fixture(scope="session")
 def openreview_client():
     client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', username='openreview.net', password=Helpers.strong_password)
-    client.post_invitation_edit(invitations=None,
-        readers=['openreview.net'],
-        writers=['openreview.net'],
-        signatures=['~Super_User1'],
-        invitation=openreview.api.Invitation(id='openreview.net/-/Edit',
-            invitees=['openreview.net'],
-            readers=['openreview.net'],
-            signatures=['~Super_User1'],
-            edit=True
-        )
-    )
     yield client
 
 @pytest.fixture(scope="session")
