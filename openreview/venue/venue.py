@@ -79,6 +79,17 @@ class Venue(object):
 
     def get_short_name(self):
         return self.short_name
+    
+    def get_edges_archive_date(self):
+        archive_date = datetime.datetime.utcnow()
+        if self.date:
+            try:
+                archive_date = datetime.datetime.strptime(self.date, '%Y/%m/%d')
+            except ValueError:
+                print(f'Error parsing venue date {self.date}')
+
+        return openreview.tools.datetime_millis(archive_date + datetime.timedelta(weeks=52)) ## archive edges after 1 year
+        
 
     def get_committee_name(self, committee_id, pretty=False):
         name = committee_id.split('/')[-1]
