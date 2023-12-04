@@ -54,7 +54,7 @@ jobs:
       - run:
           name: Clone openreview-web
           command: |
-            git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
+            git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git --branch fix/api-client-default-new-api ~/openreview-web
       - run:
           name: Create API directories
           command: |
