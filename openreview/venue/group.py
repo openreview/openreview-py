@@ -469,9 +469,9 @@ class GroupBuilder(object):
                 self.client.remove_members_from_group(publication_chairs_group_id, members_to_remove)
 
     def add_to_active_venues(self):
-        active_venues = self.client_v1.get_group('active_venues')
+        active_venues = self.client.get_group('active_venues')
         if self.venue_id not in active_venues.members:
-            self.client_v1.add_members_to_group(active_venues, self.venue_id)
+            self.client.add_members_to_group(active_venues, self.venue_id)
     
     def create_recruitment_committee_groups(self, committee_name):
 

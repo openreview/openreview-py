@@ -28,6 +28,7 @@ class Conference(object):
 
     def __init__(self, client):
         self.client = client
+        self.client_v2 = openreview.Client(baseurl=openreview.tools.get_base_urls(client)[1], token=client.token)
         self.request_form_id = None
         self.support_user = 'OpenReview.net/Support'
         self.venue_revision_name = 'Venue_Revision'
@@ -931,8 +932,8 @@ class Conference(object):
             self.__create_group(self.get_authors_id(), self.id, author_group_ids, additional_readers=['everyone'])
 
         # Add this group to active_venues
-        active_venues = self.client.get_group('active_venues')
-        self.client.add_members_to_group(active_venues, self.id)
+        active_venues = self.client_v2.get_group('active_venues')
+        self.client_v2.add_members_to_group(active_venues, self.id)
 
     def create_blind_submissions(self, hide_fields=[], number=None):
 
