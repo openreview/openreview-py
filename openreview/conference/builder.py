@@ -1696,7 +1696,7 @@ Program Chairs
 
         if venue_heading_map:
             self.set_homepage_decisions(decision_heading_map=venue_heading_map)
-        self.client.remove_members_from_group('active_venues', self.id)
+        self.client_v2.remove_members_from_group('active_venues', self.id)
 
         # expire recruitment invitations
         self.expire_recruitment_invitations()
