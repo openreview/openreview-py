@@ -1092,3 +1092,59 @@ url={https://openreview.net/forum?id='''
 
         assert result.get('token') is not None
         assert result.get('user', {}).get('id') == area_chairs[0]
+
+    def test_release_reviews(self, client, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@emnlp.org', password=helpers.strong_password)
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
+
+        ## make submissions visible to everyone
+        pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'submission_readers': 'Everyone (submissions are public)'
+            },
+            forum=request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['EMNLP/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_EMNLPChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
+
+        submissions = openreview_client.get_notes(content={'venueid':'EMNLP/2023/Conference/Submission'}, sort='number:asc')
+        assert len(submissions) == 3
+
+        for submission in submissions:
+            submission.readers = [
+                "everyone"
+            ]
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
+        ## run review stage
+        review_stage_note=pc_client.post_note(openreview.Note(
+            content={
+                'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'Yes, reviews should be revealed publicly when they are posted',
+                'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Review should not be revealed to any reviewer, except to the author of the review',
+                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews',
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Review_Stage'.format(request_form.number),
+            readers=['EMNLP/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_EMNLPChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
+
+        assert len(openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Official_Review')) == 3
+        invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission3/-/Official_Review')
+        assert invitation.edit['note']['readers'] == ['everyone']
