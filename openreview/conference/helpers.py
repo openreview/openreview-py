@@ -584,7 +584,7 @@ def get_rebuttal_stage(request_forum):
         readers.append(openreview.stages.ReviewRebuttalStage.Readers.REVIEWERS_SUBMITTED)
 
     if 'Everyone' in rebuttal_readers:
-        readers = [openreview.stages.CommentStage.Readers.EVERYONE]
+        readers = [openreview.stages.ReviewRebuttalStage.Readers.EVERYONE]
 
     email_pcs = 'Yes' in request_forum.content.get('email_program_chairs_about_rebuttals', '')
 

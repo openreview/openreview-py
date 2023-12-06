@@ -4549,6 +4549,24 @@ ICML 2023 Conference Program Chairs'''
             'ICML.cc/2023/Conference/Submission1/Authors'
         ]
 
+        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission3/-/Decision')[0]
+        assert 'Revision Needed' == decision.content['decision']['value']
+
+        # manually change a decision
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
+        decision_note = pc_client_v2.post_note_edit(invitation='ICML.cc/2023/Conference/Submission3/-/Decision',
+            signatures=['ICML.cc/2023/Conference/Program_Chairs'],
+            note=openreview.api.Note(
+                id=decision.id,
+                content={
+                    'decision': {'value': 'Accept'},
+                    'comment': {'value': 'This is a comment.'}
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
+
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
         #release decisions to authors and reviewers
         decision_stage_note = pc_client.post_note(openreview.Note(
             content={
@@ -4573,7 +4591,8 @@ ICML 2023 Conference Program Chairs'''
                             }
                         }
                     }
-                }
+                },
+                'decisions_file': request_form.content['decisions_file']
             },
             forum=request_form.forum,
             invitation=decision_stage_invitation,
@@ -4595,6 +4614,10 @@ ICML 2023 Conference Program Chairs'''
             'ICML.cc/2023/Conference/Submission1/Authors'
         ]
         assert not decision.nonreaders
+
+        # assert decisions were not overwritten
+        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission3/-/Decision')[0]
+        assert 'Accept' == decision.content['decision']['value']
 
     def test_post_decision_stage(self, client, openreview_client, helpers):
 

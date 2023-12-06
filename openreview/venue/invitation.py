@@ -416,7 +416,7 @@ class InvitationBuilder(object):
                 'value': review_stage.get_readers(self.venue, '{number}')
             }
             note_readers = ['${5/content/noteReaders/value}']
-            if review_stage.release_to_reviewers in [openreview.stages.ReviewStage.Readers.REVIEWER_SIGNATURE, openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED]:
+            if review_stage.release_to_reviewers in [openreview.stages.ReviewStage.Readers.REVIEWER_SIGNATURE, openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED] and not review_stage.public:
                 note_readers.append('${3/signatures}')
             invitation.edit['invitation']['edit']['note']['readers'] = note_readers
 
