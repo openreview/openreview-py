@@ -121,11 +121,11 @@ class GroupBuilder(object):
 
         if venue_group.web is None:
 
-            self.client_v1.add_members_to_group('venues', venue_id)
+            self.client.add_members_to_group('venues', venue_id)
             root_id = groups[0].id
             if root_id == root_id.lower():
                 root_id = groups[1].id        
-            self.client_v1.add_members_to_group('host', root_id)
+            self.client.add_members_to_group('host', root_id)
 
             with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
                 content = f.read()

@@ -5,6 +5,7 @@ import json
 class Agora(object):
 
     def __init__(self, client, support_group_id, superuser, editor_id):
+        self.client_v2 = openreview.Client(baseurl=openreview.tools.get_base_urls(client)[1], token=client.token)
 
         venue_group = openreview.Group(
             id='-Agora',
@@ -83,7 +84,7 @@ class Agora(object):
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             covid_group.web = content
             client.post_group(covid_group)
-            client.add_members_to_group('venues', covid_group.id)
+            self.client_v2.add_members_to_group('venues', covid_group.id)
 
 
 

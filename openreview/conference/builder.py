@@ -2110,7 +2110,7 @@ class ConferenceBuilder(object):
 
         venues = self.client.get_group(id = 'venues', details='writable')
         if venues.details.get('writable'):
-            self.client.add_members_to_group('venues', home_group.id)
+            self.client_v2.add_members_to_group('venues', home_group.id)
 
         if self.submission_stage:
             self.conference.set_submission_stage(self.submission_stage)

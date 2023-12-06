@@ -61,8 +61,8 @@ class GroupBuilder(object):
                             ))
             venue_group.content = {}
 
-            self.client_v1.add_members_to_group('host', venue_id)
-            self.client_v1.add_members_to_group('venues', venue_id)
+            self.client.add_members_to_group('host', venue_id)
+            self.client.add_members_to_group('venues', venue_id)
             self.client.add_members_to_group('active_venues', venue_id)
 
         ## Update settings
