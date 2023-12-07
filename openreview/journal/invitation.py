@@ -2162,7 +2162,175 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 }
             ]
         )
-        self.save_invitation(invitation)        
+        self.save_invitation(invitation)
+
+        invitation = Invitation(
+            id=self.journal.get_reviewer_invite_assignment_id(),
+            invitees=[venue_id, action_editors_id] + additional_committee,
+            readers=[venue_id, action_editors_id] + additional_committee,
+            writers=[venue_id],
+            signatures=[self.journal.get_editors_in_chief_id()],
+            minReplies=1,
+            maxReplies=1,
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_reviewer_invite_assignment_id(),
+                        'optional': True
+                    }
+                },                 
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },                
+                'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}'), '${2/tail}'],
+                'nonreaders': [self.journal.get_authors_id(number='${{2/head}/number}')],
+                'writers': [venue_id],
+                'signatures': {
+                    'param': {
+                        'regex': venue_id + '|' + editor_in_chief_id + '|' + self.journal.get_action_editors_id(number='.*', anon=True)
+                    }
+                },
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': author_submission_id
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'regex': '~.*|.+@.+'
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': -1
+                    }
+                },
+                'label': {
+                    'param': {
+                        'enum': [
+                            'Invitation Sent',
+                            'Accepted',
+                            'Declined.*',
+                            'Pending Sign Up',
+                            'Conflict Detected'
+                        ],
+                        'optional': True,
+                        'default': 'Invitation Sent'
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)
+
+        invitation = Invitation(id=self.journal.get_reviewer_assignment_recruitment_id(),
+            invitees=['everyone'],
+            readers=['everyone'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': ['(anonymous)'],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'note': {
+                    'content': {
+                        'title': {
+                            'order': 1,
+                            'description': "Title",
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'const': 'Recruit response'
+                                }
+                            }
+                        },
+                        'user': {
+                            'order': 2,
+                            'description': "email address",
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '.*'
+                                }
+                            }
+                        },
+                        'key': {
+                            'order': 3,
+                            'description': 'Email key hash',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '.{0,100}'
+                                }
+                            }
+                        },
+                        'response': {
+                            'order': 4,
+                            'description': "Invitation response",
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'Yes',
+                                        'No'
+                                    ],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'comment': {
+                            'order': 5,
+                            'description': '(Optionally) Leave a comment to the organizers of the venue.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'optional': True,
+                                    'input': 'textarea'
+                                }
+                            }
+                        },
+                        'submission_id': {
+                            'order': 6,
+                            'description': 'submission id',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '.*'
+                                }
+                            }
+                        },
+                        'inviter': {
+                            'order': 7,
+                            'description': 'inviter id',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '.*'
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            process=self.get_process_content('process/reviewer_assignment_recruitment_process.py')
+        )
+
+        self.save_invitation(invitation)                       
 
     def set_review_approval_invitation(self):
         venue_id = self.journal.venue_id
@@ -3404,7 +3572,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         edit_param = self.journal.get_reviewer_assignment_id()
         score_ids = [self.journal.get_reviewer_affinity_score_id(), self.journal.get_reviewer_conflict_id(), self.journal.get_reviewer_custom_max_papers_id() + ',head:ignore', self.journal.get_reviewer_pending_review_id() + ',head:ignore', self.journal.get_reviewer_availability_id() + ',head:ignore']
         browse_param = ';'.join(score_ids)
-        params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&maxColumns=2&version=2&referrer=[Return Instructions](/invitation?id={invitation.id})'
+        filter_param = f'{self.journal.get_reviewer_pending_review_id()} == 0 AND {self.journal.get_reviewer_availability_id()} == Available'
+        params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&filter={filter_param}&maxColumns=2&version=2&referrer=[Return Instructions](/invitation?id={invitation.id})'
         with open(os.path.join(os.path.dirname(__file__), 'webfield/assignReviewerWebfield.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")

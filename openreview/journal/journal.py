@@ -250,6 +250,12 @@ class Journal(object):
         if archived:
             name = 'Archived_Assignment'
         return self.__get_invitation_id(name=name, prefix=self.get_reviewers_id(number))
+    
+    def get_reviewer_invite_assignment_id(self):
+        return self.__get_invitation_id(name='Invite_Assignment', prefix=self.get_reviewers_id())
+
+    def get_reviewer_assignment_recruitment_id(self):
+        return self.__get_invitation_id(name='Assignment_Recruitment', prefix=self.get_reviewers_id())        
 
     def get_reviewer_assignment_acknowledgement_id(self, number=None, reviewer_id=None):
         if reviewer_id:
