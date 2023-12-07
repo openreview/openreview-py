@@ -8,7 +8,6 @@ class GroupBuilder(object):
 
     def __init__(self, journal):
         self.client = journal.client
-        self.client_v1 = openreview.Client(token=self.client.token, baseurl=openreview.tools.get_base_urls(self.client)[0])
         self.journal = journal
 
     def post_group(self, group):
