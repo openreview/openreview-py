@@ -1117,6 +1117,72 @@ OpenReview Team'''
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper4/-/Ethics_Review')
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper5/-/Ethics_Review')
 
+        ## expire stage
+        stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'ethics_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'ethics_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'ethics_review_expiration_date': start_date.strftime('%Y/%m/%d'),
+                'make_ethics_reviews_public': 'No, ethics reviews should NOT be revealed publicly when they are posted',
+                'release_ethics_reviews_to_authors': "No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors",
+                'release_ethics_reviews_to_reviewers': 'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review',
+                'remove_ethics_review_form_options': 'ethics_review',
+                'additional_ethics_review_form_options': {
+                    "ethics_concerns": {
+                        "order": 1,
+                        "value-regex": "[\\S\\s]{1,200000}",
+                        "description": "Briefly summarize the ethics concerns.",
+                        "required": True
+                    }
+                },
+                'ethics_review_submissions': '4,3',
+                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
+            },
+            forum=request_form.forum,
+            referent=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number),
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        ## Assign a second ethics reviewer
+        helpers.create_user('ethic_reviewer2@arr.org', 'Ethics', 'ReviewerTwo')
+        ethics_reviewer_client = openreview.Client(username='ethic_reviewer2@arr.org', password=helpers.strong_password)
+
+        ethics_chair_client.post_edge(openreview.Edge(
+            invitation='aclweb.org/ACL/ARR/2021/September/Ethics_Reviewers/-/Assignment',
+            readers=['aclweb.org/ACL/ARR/2021/September', 'aclweb.org/ACL/ARR/2021/September/Ethics_Chairs', '~Ethics_ReviewerTwo1'],
+            nonreaders=['aclweb.org/ACL/ARR/2021/September/Paper5/Authors'],
+            writers=['aclweb.org/ACL/ARR/2021/September', 'aclweb.org/ACL/ARR/2021/September/Ethics_Chairs'],
+            head=submissions[0].id,
+            tail='~Ethics_ReviewerTwo1',
+            signatures=['aclweb.org/ACL/ARR/2021/September/Ethics_Chairs']
+        ))
+
+        helpers.await_queue()
+
+        assert '~Ethics_ReviewerTwo1' in client.get_group('aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewers').members
+        signatory_groups=client.get_groups(regex='aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewer_', signatory='ethic_reviewer2@arr.org')
+        assert len(signatory_groups) == 1
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2021/September/Paper5/-/Ethics_Review has expired'):
+            ethics_reviewer_client.post_note(openreview.Note(
+                invitation='aclweb.org/ACL/ARR/2021/September/Paper5/-/Ethics_Review',
+                forum=submissions[0].id,
+                replyto=submissions[0].id,
+                readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'aclweb.org/ACL/ARR/2021/September/Ethics_Chairs', signatory_groups[0].id],
+                nonreaders=['aclweb.org/ACL/ARR/2021/September/Paper5/Authors'],
+                writers=['aclweb.org/ACL/ARR/2021/September', signatory_groups[0].id],
+                signatures=[signatory_groups[0].id],
+                content={
+                    'ethics_concerns': 'This paper is ok',
+                    'recommendation': '1: No serious ethical issues'
+                }
+            ))
+
     def test_comment_email_pcs(self, venue, client, helpers, test_client):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
