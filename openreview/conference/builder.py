@@ -1843,6 +1843,7 @@ class ConferenceBuilder(object):
 
     def __init__(self, client, support_user=None):
         self.client = client
+        self.client_v2 = openreview.Client(baseurl=openreview.tools.get_base_urls(client)[1], token=client.token)
         self.conference = Conference(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
         self.submission_stage = None
@@ -2104,7 +2105,7 @@ class ConferenceBuilder(object):
         if root_id == root_id.lower():
             root_id = groups[1].id
         if host.details.get('writable'):
-            self.client.add_members_to_group(host, root_id)
+            self.client_v2.add_members_to_group(host, root_id)
             home_group.host = root_id
             self.client.post_group(home_group)
 
