@@ -8,7 +8,6 @@ return {
       title: `${committee_name} Console`,
       instructions: `<p class="dark">This page provides information and status updates for ${domain.content.subtitle?.value}. It will be regularly updated as the conference progresses, so please check back frequently.</p>`
     },
-    apiVersion: 2,
     venueId: domain.id,
     reviewerName: domain.content.reviewers_name?.value,
     officialReviewName: domain.content.review_name?.value,
