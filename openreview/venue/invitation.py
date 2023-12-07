@@ -154,7 +154,7 @@ class InvitationBuilder(object):
                 'note': {
                     'id': {
                         'param': {
-                            'withInvitation': submission_id,
+                            'withVenueid': self.venue.get_submission_venue_id(),
                             'optional': True
                         }
                     },

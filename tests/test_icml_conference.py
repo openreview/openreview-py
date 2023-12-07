@@ -632,7 +632,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
         assert 'profile_confirmed' not in invitation.edit['note']['content']
         assert 'expertise_confirmed' not in invitation.edit['note']['content']
 
-    def test_submissions(self, client, openreview_client, helpers, test_client):
+    def test_submissions(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
@@ -727,7 +727,38 @@ reviewer6@gmail.com, Reviewer ICMLSix
         for i in range(1,101):
             assert f'ICML.cc/2023/Conference/Submission{i}/Authors' in authors_group.members
 
-    def test_post_submission(self, client, openreview_client, helpers):
+        # assert authors see Submission button to edit their submissions
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), test_client.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+        note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
+        assert note_div
+        button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
+        assert button_row
+        buttons = button_row.find_elements(By.CLASS_NAME, 'btn-xs')
+        assert buttons[0].text == 'Edit  '
+        buttons[0].click()
+        time.sleep(0.5)
+        dropdown = button_row.find_element(By.CLASS_NAME, 'dropdown-menu')
+        dropdown_values = dropdown.find_elements_by_tag_name("a")
+        values = [value.text for value in dropdown_values]
+        assert ['Submission'] == values
+
+        # assert PCs can also see Submission button to edit submissions
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), pc_client_v2.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+        note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
+        assert note_div
+        button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
+        assert button_row
+        buttons = button_row.find_elements(By.CLASS_NAME, 'btn-xs')
+        assert buttons[0].text == 'Edit  '
+        buttons[0].click()
+        time.sleep(0.5)
+        dropdown = button_row.find_element(By.CLASS_NAME, 'dropdown-menu')
+        dropdown_values = dropdown.find_elements_by_tag_name("a")
+        values = [value.text for value in dropdown_values]
+        assert ['Submission', 'Post Submission', 'PC Revision'] == values
+
+    def test_post_submission(self, client, openreview_client, test_client, helpers, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -819,6 +850,18 @@ reviewer6@gmail.com, Reviewer ICMLSix
         ))
 
         helpers.await_queue()
+
+        submissions = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
+        submission = submissions[0]
+
+        # assert authors don't see Submission button anymore
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), test_client.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+        note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
+        assert note_div
+        button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
+        assert button_row
+        buttons = button_row.find_elements(By.CLASS_NAME, 'btn-xs')
+        assert len(buttons) == 0
 
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
         submission_invitation = pc_client_v2.get_invitation('ICML.cc/2023/Conference/-/Submission')
@@ -4619,7 +4662,7 @@ ICML 2023 Conference Program Chairs'''
         decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission3/-/Decision')[0]
         assert 'Accept' == decision.content['decision']['value']
 
-    def test_post_decision_stage(self, client, openreview_client, helpers):
+    def test_post_decision_stage(self, client, openreview_client, helpers, selenium, request_page):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -4839,6 +4882,25 @@ url={https://openreview.net/forum?id='''
         # check members have not changed
         authors_accepted_group = openreview_client.get_group('ICML.cc/2023/Conference/Authors/Accepted')
         assert len(authors_accepted_group.members) == num_accepted_papers
+
+        submissions = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
+        submission = submissions[0]
+
+        # assert PCs can't use Submission invitation after post decision is run
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), pc_client_v2.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+        note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
+        assert note_div
+        button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
+        assert button_row
+        buttons = button_row.find_elements(By.CLASS_NAME, 'btn-xs')
+        assert buttons[0].text == 'Edit  '
+        buttons[0].click()
+        time.sleep(0.5)
+        dropdown = button_row.find_element(By.CLASS_NAME, 'dropdown-menu')
+        dropdown_values = dropdown.find_elements_by_tag_name("a")
+        values = [value.text for value in dropdown_values]
+        assert ['Post Submission', 'PC Revision', 'Ethics Review Flag'] == values
 
         #Post another post decision note
         now = datetime.datetime.utcnow()
