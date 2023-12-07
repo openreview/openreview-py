@@ -579,6 +579,8 @@ Please contact info@openreview.net with any questions or concerns about this int
         # check if conference is added in active_venues
         active_venues = client.get_group('active_venues')
         assert conference.id in active_venues.members
+        assert conference.id in client.get_group('venues').members
+        assert 'thecvf.com/ECCV' in client.get_group('host').members        
 
         for submission in submissions:
             id = conference.get_invitation_id('Supplementary_Material', submission.number)

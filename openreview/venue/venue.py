@@ -374,6 +374,8 @@ class Venue(object):
 
         self.group_builder.create_venue_group()
 
+        self.group_builder.add_to_active_venues()
+
         self.group_builder.create_program_chairs_group(program_chair_ids)
 
         self.group_builder.create_authors_group()
@@ -457,8 +459,6 @@ class Venue(object):
     def create_post_submission_stage(self):
 
         self.invitation_builder.set_post_submission_invitation()
-        
-        self.group_builder.add_to_active_venues()        
     
     def create_submission_revision_stage(self):
         return self.invitation_builder.set_submission_revision_invitation()

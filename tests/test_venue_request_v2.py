@@ -114,6 +114,12 @@ class TestVenueRequest():
         submission_revision = client.get_invitation(f'{support_group_id}/-/Request{request_form_note.number}/Submission_Revision_Stage')
         assert 'V2.cc/2030/Conference/Publication_Chairs' in submission_revision.invitees
 
+        # API 2 venues get added to active_venues after deployment
+        active_venues = client.get_group('active_venues')
+        assert 'V2.cc/2030/Conference' in active_venues.members
+        assert 'V2.cc/2030/Conference' in client.get_group('venues').members
+        assert 'V2.cc' in client.get_group('host').members
+
         # Return venue details as a dict
         venue_details = {
             'request_form_note': request_form_note,
