@@ -1413,13 +1413,7 @@ def get_profile_info(profile, n_years=None):
     relations = filter_relations_by_year(profile.content.get('relations', []), cut_off_year)
 
     ## Publications section: get publications within last n years, default is all publications from previous years
-    for publication in profile.content.get('publications', []):
-        publication_date = publication.pdate or publication.cdate or publication.tcdate or 0
-        try:
-            if datetime.datetime.fromtimestamp(publication_date/1000).year > cut_off_year:
-                publications.add(publication.id)
-        except:
-            print('Error extracting the date for publication: ', publication.id)
+    publications = filter_publications_by_year(profile.content.get('publications', []), cut_off_year)
 
     return {
         'id': profile.id,
@@ -1487,25 +1481,7 @@ def get_neurips_profile_info(profile, n_years=None):
                 print('Profile with invalid email:', profile.id, email)
 
     ## Publications section: get publications within last n years
-    curr_year = datetime.datetime.now().year
-    for pub in profile.content.get('publications', []):
-        year = None
-        if 'year' in pub.content and isinstance(pub.content['year'], str):
-            try:
-                converted_year = int(pub.content['year'])
-                if converted_year <= curr_year:
-                    year = converted_year
-            except Exception as e:
-                year = None
-        if not year:
-            timtestamp = pub.cdate if pub.cdate else pub.tcdate
-            try:
-                year = int(datetime.datetime.fromtimestamp(timtestamp/1000).year)
-            except:
-                year = -1
-                print('Error extracting the date for publication: ', pub.id)            
-        if year > cut_off_year:
-            publications.add(pub.id)
+    publications = filter_publications_by_year(profile.content.get('publications', []), cut_off_year)
 
     return {
         'id': profile.id,
@@ -1565,6 +1541,47 @@ def get_current_submissions_profile_info(profile, n_years=None, submission_venue
         'relations': relations,
         'publications': publications
     }
+
+def filter_publications_by_year(publications, cut_off_year):
+    
+    def extract_year(publication_id, timestamp):
+        try:
+            return int(datetime.datetime.fromtimestamp(timestamp/1000).year)
+        except:
+            print('Error extracting the date for publication: ', publication_id)       
+            return None
+    
+    ## Publications section: get publications within last n years
+    ## 1. try to get the year from the publication date
+    ## 2. if not available, try to get the year from the content year field
+    ## 3. if not available, try to get the year from the creation date
+    filtered_publications = set()
+    current_year = datetime.datetime.now().year
+    for publication in publications:
+        year = None
+        if publication.pdate:
+            year = extract_year(publication.id, publication.pdate)
+
+        if not year and 'year' in publication.content:
+            unformatted_year = None
+            if isinstance(publication.content['year'], dict) and 'value' in publication.content['year']:
+                unformatted_year = publication.content['year']['value']
+            elif isinstance(publication.content['year'], str):
+                unformatted_year = publication.content['year']
+
+            try:
+                converted_year = int(unformatted_year)
+                if converted_year <= current_year:
+                    year = converted_year
+            except Exception as e:
+                year = None
+        if not year:
+            year = extract_year(publication.id, publication.cdate if publication.cdate else publication.tcdate)
+
+        if year and year > cut_off_year:
+            filtered_publications.add(publication.id)
+
+    return filtered_publications    
 
 def filter_relations_by_year(relations, cut_off_year, only_relations=None):
 

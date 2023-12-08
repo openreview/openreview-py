@@ -18,6 +18,7 @@ def process(client, note, invitation):
         api1_publications = [p for p in client.get_all_notes(content={ 'authorids': username}) if username in p.content['authorids']]
         api2_publications = [p for p in client_v2.get_all_notes(content={ 'authorids': username}) if username in p.content.get('authorids', {}).get('value', [])]
 
+        print(f'Publications for {username}: {len(api1_publications) + len(api2_publications)}')
         if api1_publications or api2_publications:
             client.post_message(subject='Profile name removal request has been received', 
             recipients=note.signatures, 
@@ -33,6 +34,7 @@ The OpenReview Team.
 ''')
             return
         
+    print('Accepting the name removal request')
     client.post_note(openreview.Note(
         referent=note.id,
         invitation=REMOVAL_DECISION_INVITATION_ID,

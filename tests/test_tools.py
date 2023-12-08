@@ -1,5 +1,6 @@
 import openreview
 import pytest
+import datetime
 import random
 import types
 import sys
@@ -665,3 +666,83 @@ class TestTools():
         assert profiles['alternate@mail.com'].id == '~SomeFirstName_User1'
         assert profiles['test_user@mail.com'].id == 'test_user@mail.com'
         assert profiles['~Test_Name1'] is None
+
+
+    def test_filter_by_publications(self, client, test_client):
+        
+        publications = [
+            openreview.Note(
+                id = '1',
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2014, 4, 30)),
+                content = {
+                    'year': '2017'
+                },
+                invitation = 'test/-/Submission',
+                readers=[],
+                writers=[],
+                signatures=[]
+            ),
+            openreview.Note(
+                id = '2',
+                tcdate = openreview.tools.datetime_millis(datetime.datetime(2015, 4, 30)),
+                content = {
+
+                },
+                invitation = 'test/-/Submission',
+                readers=[],
+                writers=[],
+                signatures=[]
+            ),
+            openreview.Note(
+                id = '3',
+                cdate = openreview.tools.datetime_millis(datetime.datetime(2016, 4, 30)),
+                content = {
+
+                },
+                invitation = 'test/-/Submission',
+                readers=[],
+                writers=[],
+                signatures=[]
+            ),
+            openreview.Note(
+                id = '4',
+                content = {
+                    'year': '2017'
+                },
+                invitation = 'test/-/Submission',
+                readers=[],
+                writers=[],
+                signatures=[]
+            ),
+            openreview.api.Note(
+                id = '5',
+                content = {
+                    'year': { 'value': 2017 }
+                }
+            ),
+            openreview.api.Note(
+                id = '6',
+                pdate = 111111111111111111111,
+                content = {
+                    'year': { 'value': 2018 }
+                }
+            )
+        ]
+
+        filtered_publications = openreview.tools.filter_publications_by_year(publications, 2013)
+        assert len(filtered_publications) == 6
+        
+        filtered_publications = openreview.tools.filter_publications_by_year(publications, 2014)
+        assert len(filtered_publications) == 5
+        
+        filtered_publications = openreview.tools.filter_publications_by_year(publications, 2015)
+        assert len(filtered_publications) == 4
+
+        filtered_publications = openreview.tools.filter_publications_by_year(publications, 2016)
+        assert len(filtered_publications) == 3
+
+        filtered_publications = openreview.tools.filter_publications_by_year(publications, 2017)
+        assert len(filtered_publications) == 1
+
+        filtered_publications = openreview.tools.filter_publications_by_year(publications, 2018)
+        assert len(filtered_publications) == 0
