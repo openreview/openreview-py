@@ -1302,6 +1302,16 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                 label = 'ac-matching'
             ))
 
+        # post duplicate AC Proposed_Assignment edge
+        openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'ICML.cc/2023/Conference/Area_Chairs/-/Proposed_Assignment',
+                head = submissions[0].id,
+                tail = '~AC_ICMLOne1',
+                signatures = ['ICML.cc/2023/Conference/Program_Chairs'],
+                weight = 1,
+                label = 'ac-matching'
+            ))
+
         for i in range(20,40):
             for r in ['~Reviewer_ICMLTwo1', '~Reviewer_ICMLThree1', '~Reviewer_ICMLFour1']:
                 reviewers_proposed_edges.append(openreview.api.Edge(
@@ -1410,6 +1420,26 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
         sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission100/Senior_Area_Chairs')
         assert ['~SAC_ICMLOne1'] == sac_group.members
+
+        assignment_edges = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Assignment', head=submissions[0].id, tail='~AC_ICMLOne1')
+        assert assignment_edges and len(assignment_edges) == 2
+
+        # remove duplicate edge and make sure assignment still remains
+        assignment_edge = assignment_edges[0]
+        assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assignment_edge.cdate = None
+        edge = pc_client_v2.post_edge(assignment_edge)
+
+        helpers.await_queue_edit(openreview_client, edit_id=edge.id)
+
+        ac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Area_Chairs')
+        assert ['~AC_ICMLOne1'] == ac_group.members
+
+        sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs')
+        assert ['~SAC_ICMLOne1'] == sac_group.members
+
+        assignment_edges = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Assignment', head=submissions[0].id, tail='~AC_ICMLOne1')
+        assert assignment_edges and len(assignment_edges) == 1
 
         ### Reviewers reassignment of proposed assignments
 
@@ -1667,20 +1697,7 @@ OpenReview Team'''
         sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission100/Senior_Area_Chairs')
         assert ['~SAC_ICMLTwo1'] == sac_group.members
 
-        ## Change assigned AC
-        assignment_edge = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Assignment', head=submissions[0].id, tail='~AC_ICMLOne1')[0]
-        assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        assignment_edge.cdate = None
-        edge = pc_client_v2.post_edge(assignment_edge)
-
-        helpers.await_queue_edit(openreview_client, edit_id=edge.id)
-
-        ac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Area_Chairs')
-        assert [] == ac_group.members
-
-        sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs')
-        assert [] == sac_group.members
-
+        ## Change assigned AC, add new AC first and then remove old AC
         edge = pc_client_v2.post_edge(openreview.api.Edge(
             invitation = 'ICML.cc/2023/Conference/Area_Chairs/-/Assignment',
             head = submissions[0].id,
@@ -1688,6 +1705,19 @@ OpenReview Team'''
             signatures = ['ICML.cc/2023/Conference/Program_Chairs'],
             weight = 1
         ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=edge.id)
+
+        ac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Area_Chairs')
+        assert ['~AC_ICMLOne1', '~AC_ICMLTwo1'] == ac_group.members
+
+        sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs')
+        assert ['~SAC_ICMLOne1','~SAC_ICMLTwo1'] == sac_group.members
+
+        assignment_edge = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Assignment', head=submissions[0].id, tail='~AC_ICMLOne1')[0]
+        assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assignment_edge.cdate = None
+        edge = pc_client_v2.post_edge(assignment_edge)
 
         helpers.await_queue_edit(openreview_client, edit_id=edge.id)
 
@@ -4519,6 +4549,24 @@ ICML 2023 Conference Program Chairs'''
             'ICML.cc/2023/Conference/Submission1/Authors'
         ]
 
+        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission3/-/Decision')[0]
+        assert 'Revision Needed' == decision.content['decision']['value']
+
+        # manually change a decision
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
+        decision_note = pc_client_v2.post_note_edit(invitation='ICML.cc/2023/Conference/Submission3/-/Decision',
+            signatures=['ICML.cc/2023/Conference/Program_Chairs'],
+            note=openreview.api.Note(
+                id=decision.id,
+                content={
+                    'decision': {'value': 'Accept'},
+                    'comment': {'value': 'This is a comment.'}
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
+
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
         #release decisions to authors and reviewers
         decision_stage_note = pc_client.post_note(openreview.Note(
             content={
@@ -4543,7 +4591,8 @@ ICML 2023 Conference Program Chairs'''
                             }
                         }
                     }
-                }
+                },
+                'decisions_file': request_form.content['decisions_file']
             },
             forum=request_form.forum,
             invitation=decision_stage_invitation,
@@ -4565,6 +4614,10 @@ ICML 2023 Conference Program Chairs'''
             'ICML.cc/2023/Conference/Submission1/Authors'
         ]
         assert not decision.nonreaders
+
+        # assert decisions were not overwritten
+        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission3/-/Decision')[0]
+        assert 'Accept' == decision.content['decision']['value']
 
     def test_post_decision_stage(self, client, openreview_client, helpers):
 
