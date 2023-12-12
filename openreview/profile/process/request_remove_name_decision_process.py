@@ -257,20 +257,25 @@ The OpenReview Team.
 
         for related_profile in related_profiles:
             print('Related profile', related_profile.id)
-            relations = [{ **r, "username": preferred_id, "name": preferred_name } for r in related_profile.content['relations'] if username == r.get('username')]
-            print('Relations', relations)
-            client.post_profile(openreview.Profile(
-                referent = related_profile.id, 
-                invitation = '~/-/invitation',
-                signatures = ['~Super_User1'],
-                content = {},
-                metaContent = {
-                    'relations': { 
-                        'values': relations,
-                        'weights': [1] * len(relations) 
-                    }
-                })
-            )
+            new_relations = []
+            old_relations = []
+            for relation in related_profile.content['relations']:
+                if username == relation.get('username'):
+                    old_relations.append(relation)
+                    new_relations.append({ **relation, "username": preferred_id, "name": preferred_name })
+                if old_relations or new_relations:
+                    client.post_profile(openreview.Profile(
+                        referent = related_profile.id, 
+                        invitation = '~/-/invitation',
+                        signatures = ['~Super_User1'],
+                        content = {},
+                        metaContent = {
+                            'relations': { 
+                                'values': new_relations + old_relations,
+                                'weights': ([1] * len(new_relations)) + ([-1] * len(old_relations))
+                            }
+                        })
+                    )
 
         print('Post a profile reference to remove the name')
         requested_name = {}
