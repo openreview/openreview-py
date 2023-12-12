@@ -9,8 +9,15 @@ import re
 import csv
 import random
 from selenium.webdriver.common.by import By
+from openreview import ProfileManagement
 
 class TestARRVenue():
+
+    @pytest.fixture(scope="class")
+    def profile_management(self, client):
+        profile_management = ProfileManagement(client, 'openreview.net')
+        profile_management.setup()
+        return profile_management    
 
     @pytest.fixture(scope="class")
     def venue(self, client, helpers):
@@ -21,7 +28,7 @@ class TestARRVenue():
         return conference
 
 
-    def test_create_venue(self, client, helpers):
+    def test_create_venue(self, client, helpers, profile_management):
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
