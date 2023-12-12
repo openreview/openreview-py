@@ -1356,6 +1356,13 @@ class Matching(object):
         assignment_edges = []
         assignment_invitation_id = self.conference.get_paper_assignment_id(self.match_group.id, deployed=True)
 
+        # Info for SAC-paper assignments
+        paper_id_to_number = {p.id : p.number for p in papers}
+        current_assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None)}
+        reviewer_name = self.conference.senior_area_chairs_name
+        assignment_invitation = self.client.get_invitation(assignment_invitation_id)
+        are_paper_assignments = 'Profile' not in assignment_invitation.reply.get('content', {}).get('head', {}).get('type', 'Profile')
+
         ac_groups = {g.id:g for g in self.client.get_all_groups(regex=f'{self.conference.id}/Paper.*') if g.id.endswith(self.conference.area_chairs_name)}
 
         if not papers:
