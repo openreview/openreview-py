@@ -300,6 +300,16 @@ def process(client, note, invitation):
             conference.create_meta_review_stage()
 
         elif invitation_type == 'Decision_Stage':
+            # check if decisions file has changed from previous revision
+            decision_stage_notes = client.get_references(
+                referent=forum_note.id,
+                invitation=f'{SUPPORT_GROUP}/-/Request{forum_note.number}/Decision_Stage',
+                limit=2
+            )
+            if len(decision_stage_notes) > 1:
+                previous_decisions_file = decision_stage_notes[-1].content.get('decisions_file', '')
+                if previous_decisions_file == forum_note.content.get('decisions_file', ''):
+                    conference.decision_stage.decisions_file = None
             conference.create_decision_stage()
 
             content = {

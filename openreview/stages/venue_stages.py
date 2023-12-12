@@ -645,6 +645,7 @@ class EthicsReviewStage(object):
     def __init__(self,
         start_date = None,
         due_date = None,
+        exp_date = None,
         name = None,
         release_to_public = False,
         release_to_authors = False,
@@ -657,6 +658,7 @@ class EthicsReviewStage(object):
 
         self.start_date = start_date
         self.due_date = due_date
+        self.exp_date = exp_date
         self.name = name if name else 'Ethics_Review'
         self.release_to_public = release_to_public
         self.release_to_authors = release_to_authors
