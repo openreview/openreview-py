@@ -67,6 +67,9 @@ class GroupBuilder(object):
         ## Update settings
         content = {
             'title': { 'value': self.journal.full_name },
+            'subtitle': { 'value': self.journal.short_name },
+            'website': { 'value': self.journal.website },
+            'contact': { 'value': self.journal.contact_info },
             'submission_id': { 'value': self.journal.get_author_submission_id() },
             'under_review_venue_id': { 'value': self.journal.under_review_venue_id },
             'decision_pending_venue_id': { 'value': self.journal.decision_pending_venue_id },

@@ -63,6 +63,9 @@ class TestJournal():
         helpers.create_user('david_2@mailone.com', 'David K', 'Belanger')
         openreview_client.merge_profiles('~David_Belanger1', '~David_K_Belanger1')
 
+        ## External Reviewers
+        helpers.create_user('melisa@mailten.com', 'Melisa', 'Bok')
+
         ## Authors
         helpers.create_user('melissa@maileight.com', 'Melissa', 'Eight')
         helpers.create_user('celeste@mailnine.com', 'Celeste Ana', 'Martinez')
@@ -4823,3 +4826,115 @@ note={Expert Certification}
                     'event_certifications': { 'value': ['lifelong-ml.cc/CoLLAs/2023/Journal_Track'] }
                 }
             ))        
+
+    def test_invite_reviewers(self, journal, openreview_client, test_client, helpers, selenium, request_page):
+
+        venue_id = journal.venue_id
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        raia_client = OpenReviewClient(username='raia@mail.com', password=helpers.strong_password)
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password=helpers.strong_password)
+
+
+        ## Post the submission 14
+        submission_note_14 = test_client.post_note_edit(invitation='TMLR/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title 14' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight', 'Hugo Larochelle']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Eight1', '~Hugo_Larochelle1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    #'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_14['id'])
+        note_id_13=submission_note_14['note']['id']
+        submission = openreview_client.get_note(note_id_13)
+
+        Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
+
+        assert openreview_client.get_invitation(f'TMLR/Paper{submission.number}/Action_Editors/-/Recommendation')
+        assert openreview_client.get_invitation(f"{venue_id}/Paper{submission.number}/-/Official_Comment")
+
+        editor_in_chief_group_id = f"{venue_id}/Editors_In_Chief"
+
+        # Assign Action Editor and immediately remove  assignment
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_13,
+            tail='~Joelle_Pineau1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        ae_group = raia_client.get_group(f'{venue_id}/Paper{submission.number}/Action_Editors')
+        assert ae_group.members == ['~Joelle_Pineau1']
+
+        joelle_paper13_anon_groups = joelle_client.get_groups(prefix=f'{venue_id}/Paper{submission.number}/Action_Editor_.*', signatory='~Joelle_Pineau1')
+        assert len(joelle_paper13_anon_groups) == 1
+        joelle_paper13_anon_group = joelle_paper13_anon_groups[0]         
+
+        ## Accept the submission 1
+        under_review_note = joelle_client.post_note_edit(invitation= f'TMLR/Paper{submission.number}/-/Review_Approval',
+                                    signatures=[joelle_paper13_anon_group.id],
+                                    note=Note(content={
+                                        'under_review': { 'value': 'Appropriate for Review' }
+                                    }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
+
+        edits = openreview_client.get_note_edits(note_id_13, invitation='TMLR/-/Under_Review')
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+
+        helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Under_Review')
+
+        ## Invite external reviewer
+        paper_assignment_edge = joelle_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
+            signatures=[joelle_paper13_anon_group.id],
+            head=note_id_13,
+            tail='~Melisa_Bok1',
+            weight=1,
+            label='Invitation Sent'
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        messages = openreview_client.get_messages(to = 'melisa@mailten.com', subject = '[TMLR] Invitation to review paper titled "Paper title 14"')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi Melisa Bok,\n\nYou were invited to review the paper number: 1, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=~Melisa_Bok1&key=da9c8e30376e445b0d18011af6a8ca7863e5037e3f9aebc6aa4294e5aaa5c216&submission_id={submission.id}&inviter=~Joelle_Pineau1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nJoelle Pineau'''
+
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+        helpers.await_queue_edit(openreview_client, invitation='TMLR/Reviewers/-/Assignment_Recruitment', count=1)
+
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_13, tail='~Melisa_Bok1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Accepted'         
+
+        assignment_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', head=note_id_13, tail='~Melisa_Bok1')
+        assert len(assignment_edges) == 1
+
+        helpers.await_queue_edit(openreview_client, edit_id=assignment_edges[0].id)
+
+        messages = openreview_client.get_messages(to = 'melisa@mailten.com', subject = '[TMLR] Reviewers Invitation accepted for paper 1: Paper title 14')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi Melisa Bok,\nThank you for accepting the invitation to review the paper number: 1, title: Paper title 14.\n\nPlease go to the Tasks page and check your TMLR pending tasks: https://openreview.net/tasks\n\nIf you would like to change your decision, please follow the link in the previous invitation email and click on the \"Decline\" button.\n\nOpenReview Team'''
+
+        messages = openreview_client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Reviewers Melisa Bok accepted to review paper 1: Paper title 14')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,\nThe Reviewers Melisa Bok(melisa@mailten.com) that you invited to review paper 1 has accepted the invitation and is now assigned to the paper 1.\n\nOpenReview Team'''
+
+        messages = openreview_client.get_messages(to = 'melisa@mailten.com', subject = '[TMLR] Assignment to review new TMLR submission 1: Paper title 14')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to = 'melisa@mailten.com', subject = '[TMLR] Acknowledgement of Reviewer Responsibility')
+        assert len(messages) == 0

@@ -1,150 +1,226 @@
-def process_update(client, edge, invitation, existing_edge):
-    latest_edge = client.get_edge(edge.id,True)
-    if latest_edge.ddate and not edge.ddate:
-        # edge has been removed
-        return
+def process(client, edit, invitation):
+    from Crypto.Hash import HMAC, SHA256
+    import urllib.parse
+    from datetime import datetime
+
 
     journal = openreview.journal.Journal()
 
     venue_id = journal.venue_id
-    note = client.get_note(edge.head)
-    assigned_action_editor = client.search_profiles(ids=[note.content['assigned_action_editor']['value']])[0]
-    group = client.get_group(journal.get_reviewers_id(number=note.number))
-    tail_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), tail=edge.tail)
-    head_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), head=edge.head)
-    submission_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(number=note.number), head=note.id)
-    responsiblity_invitation_edit = None
-    number_of_reviewers = journal.get_number_of_reviewers()
-    review_visibility = 'publicly visible' if journal.is_submission_public() else 'visible to all the reviewers'
-    submission_length = ' If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.' if journal.get_submission_length() else ''
+    short_phrase = journal.short_name
+    submission_name = journal.submission_name
+    committee_name = journal.reviewers_name
+    hash_seed = journal.secret_key
+    committee_id = journal.get_reviewers_id()
+    invite_assignment_invitation_id = journal.get_reviewer_invite_assignment_id()
+    assignment_invitation_id = journal.get_reviewer_assignment_id()
+    invited_label = 'Invitation Sent'
+    accepted_label = 'Accepted'
+    declined_label = 'Declined'
+    conflict_policy = 'NeurIPS'
+    conflict_n_years = 3
+    note = edit.note
 
-    ## Check task completion
-    if len(head_assignment_edges) >= number_of_reviewers:
-        if not submission_edges:
-            print('Mark task a complete')
-            client.post_edge(openreview.api.Edge(invitation=journal.get_reviewer_assignment_id(number=note.number),
-                signatures = [journal.get_action_editors_id(number=note.number)],
-                head = note.id,
-                tail = journal.get_reviewers_id(),
-                weight = 1
-            ))
+    user = urllib.parse.unquote(note.content['user']['value'])
+    hashkey = HMAC.new(hash_seed.encode(), digestmod=SHA256).update(user.encode()).hexdigest()
+
+    if hashkey != note.content['key']['value']:
+        raise openreview.OpenReviewException('Invalid key or user for {user}')
+
+    user_profile=None
+    if '@' in user:
+        profiles=client.search_profiles(confirmedEmails=[user])
+        user_profile=profiles.get(user)
     else:
-        if submission_edges:
-            print('Mark task as uncomplete')
-            submission_edge = submission_edges[0]
-            submission_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
-            client.post_edge(submission_edge)
+        profiles=client.search_profiles(ids=[user])
+        if profiles:
+            user_profile=profiles[0]
 
-    ## Enable reviewer responsibility task
-    if not journal.should_skip_reviewer_responsibility_acknowledgement() and len(tail_assignment_edges) == 1 and not edge.ddate and not client.get_groups(member=edge.tail, id=journal.get_solicit_reviewers_id(number=note.number)):
-        print('Enable reviewer responsibility task for', edge.tail)
-        responsiblity_invitation_edit = journal.invitation_builder.set_single_reviewer_responsibility_invitation(edge.tail, journal.get_due_date(weeks = 1))
+    submission = client.get_notes(note.content['submission_id']['value'])[0]
+    invitation_edges = client.get_edges(invitation=invite_assignment_invitation_id, head=submission.id, tail=user)
 
-    pending_review_edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=edge.tail)
-    pending_review_edge = None
-    if pending_review_edges:
-        pending_review_edge = pending_review_edges[0]
+    if not invitation_edges and user_profile:
+        invitation_edges = client.get_edges(invitation=invite_assignment_invitation_id, head=submission.id, tail=user_profile.id)
 
-    ## Unassignment action
-    if edge.ddate and edge.tail in group.members:
-        print(f'Remove member {edge.tail} from {group.id}')
-        client.remove_members_from_group(group.id, edge.tail)
+        if not invitation_edges:
+            raise openreview.OpenReviewException(f'user {user} not invited')
 
-        recipients=[edge.tail]
-        subject=f'[{journal.short_name}] You have been unassigned from {journal.short_name} submission {note.number}: {note.content["title"]["value"]}'
+    edge=invitation_edges[0]
 
-        message=f'''Hi {{{{fullname}}}},
+    if edge.label not in [invited_label, accepted_label, 'Pending Sign Up'] and not edge.label.startswith(declined_label):
+        raise openreview.OpenReviewException(f'user {user} can not reply to this invitation, invalid status {edge.label}')
 
-We recently informed you that your help was requested to review a {journal.short_name} submission "{note.number}: {note.content['title']['value']}".
+    preferred_name=user_profile.get_preferred_name(pretty=True) if user_profile else edge.tail
+    preferred_email=user_profile.get_preferred_email() if user_profile else edge.tail
 
-However, it was just determined that your help is no longer needed for this submission and you have been unassigned as a reviewer for it.
+    assignment_edges = client.get_edges(invitation=assignment_invitation_id, head=submission.id, tail=edge.tail)
 
-If you have any questions, don't hesitate to reach out directly to the Action Editor (AE) for the submission, for example by leaving a comment readable by the AE only, on the OpenReview page for the submission: https://openreview.net/forum?id={note.id}
+    if (note.content['response']['value'] == 'Yes'):
 
-Apologies for the change and thank you for your continued involvement with {journal.short_name}!
+        print('Invitation accepted', edge.tail, submission.number)
 
-The {journal.short_name} Editors-in-Chief
-note: replies to this email will go to the AE, {assigned_action_editor.get_preferred_name(pretty=True)}.
-'''
+        decline_instructions = 'If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'
 
-        client.post_message(subject, recipients, message, replyTo=assigned_action_editor.get_preferred_email())
+        if not user_profile or user_profile.active == False:
+            edge.label='Pending Sign Up'
+            edge.cdate=None
+            client.post_edge(edge)
 
-        if pending_review_edge and pending_review_edge.weight > 0:
-            pending_review_edge.weight -= 1
-            client.post_edge(pending_review_edge)
+            ## Send email to reviewer
+            subject=f'[{short_phrase}] {committee_name} Invitation accepted for paper {submission.number}, assignment pending'
+            message =f'''Hi {preferred_name},
+Thank you for accepting the invitation to review the paper number: {submission.number}, title: {submission.content['title']['value']}.
 
+Please signup in OpenReview using the email address {edge.tail} and complete your profile.
+Confirmation of the assignment is pending until your profile is active and no conflicts of interest are detected.
 
-        print('Disable assignment acknowledgement task for', edge.tail)
-        journal.invitation_builder.expire_invitation(journal.get_reviewer_assignment_acknowledgement_id(number=note.number, reviewer_id=edge.tail))
+{decline_instructions}
 
-        return
+OpenReview Team'''
+            response = client.post_message(subject, [edge.tail], message)
 
-    ## Assignment action
-    if not edge.ddate and edge.tail not in group.members:
-        print(f'Add member {edge.tail} to {group.id}')
-        client.add_members_to_group(group.id, edge.tail)
+            ## Send email to inviter
+            subject=f'[{short_phrase}] {committee_name} {preferred_name} accepted to review paper {submission.number}, assignment pending'
+            message =f'''Hi {{{{fullname}}}},
+The {committee_name} {preferred_name} that you invited to review paper {submission.number} has accepted the invitation.
 
-        if pending_review_edge:
-            pending_review_edge.weight += 1
-            client.post_edge(pending_review_edge)
-        else:
-            client.post_edge(openreview.api.Edge(invitation = journal.get_reviewer_pending_review_id(),
-                signatures = [venue_id],
-                head = journal.get_reviewers_id(),
-                tail = edge.tail,
-                weight = 1
+Confirmation of the assignment is pending until the invited reviewer creates a profile in OpenReview and no conflicts of interest are detected.
+
+OpenReview Team'''
+
+            ## - Send email
+            response = client.post_message(subject, edge.signatures, message)
+            return
+
+        ## Check if there is already an accepted edge for that profile id
+        accepted_edges = client.get_edges(invitation=invite_assignment_invitation_id, label='Accepted', head=submission.id, tail=user_profile.id)
+        if accepted_edges:
+            print("User already accepted with another invitation edge", submission.id, user_profile.id)
+            return
+
+        ## - Check conflicts
+        authorids = submission.content['authorids']['value']
+        author_profiles = openreview.tools.get_profiles(client, authorids, with_publications=True)
+        profiles=openreview.tools.get_profiles(client, [edge.tail], with_publications=True)
+        conflicts=openreview.tools.get_conflicts(author_profiles, profiles[0], policy=conflict_policy, n_years=conflict_n_years)
+        if conflicts:
+            print('Conflicts detected', conflicts)
+            edge.label='Conflict Detected'
+            edge.readers=[r if r != edge.tail else user_profile.id for r in edge.readers]
+            edge.tail=user_profile.id
+            edge.cdate=None
+            client.post_edge(edge)
+
+            ## Send email to reviewer
+            subject=f'[{short_phrase}] Conflict detected for paper {submission.number}: {submission.content["title"]["value"]}'
+            message =f'''Hi {{{{fullname}}}},
+You have accepted the invitation to review the paper number: {submission.number}, title: {submission.content['title']['value']}.
+
+A conflict was detected between you and the submission authors and the assignment can not be done.
+
+If you have any questions, please contact us as info@openreview.net.
+
+OpenReview Team'''
+            response = client.post_message(subject, [edge.tail], message)
+
+            ## Send email to inviter
+            subject=f'[{short_phrase}] Conflict detected between {committee_name} {preferred_name} and paper {submission.number}: {submission.content["title"]["value"]}'
+            message =f'''Hi {{{{fullname}}}},
+A conflict was detected between {preferred_name}({user_profile.get_preferred_email()}) and the paper {submission.number} and the assignment can not be done.
+
+If you have any questions, please contact us as info@openreview.net.
+
+OpenReview Team'''
+
+            ## - Send email
+            response = client.post_message(subject, edge.signatures, message)
+            return
+
+        edge.label=accepted_label
+        edge.readers=[r if r != edge.tail else user_profile.id for r in edge.readers]
+        edge.tail=user_profile.id
+        edge.cdate=None
+        client.post_edge(edge)
+
+        if not assignment_edges:
+            print('post assignment edge')
+            client.post_edge(openreview.api.Edge(
+                invitation=assignment_invitation_id,
+                head=edge.head,
+                tail=edge.tail,
+                weight = 1,
+                signatures=[venue_id]
             ))
 
-        review_period_length = journal.get_review_period_length(note)
-        duedate = journal.get_due_date(weeks = review_period_length)
+            instructions=f'Please go to the Tasks page and check your {short_phrase} pending tasks: https://openreview.net/tasks'
 
-        ## Update review invitation duedate
-        invitation = journal.invitation_builder.post_invitation_edit(invitation=openreview.api.Invitation(id=journal.get_review_id(number=note.number),
-                signatures=[journal.get_editors_in_chief_id()],
-                duedate=openreview.tools.datetime_millis(duedate)
-        ))
+            print('send confirmation email')
+            ## Send email to reviewer
+            subject=f'[{short_phrase}] {committee_name} Invitation accepted for paper {submission.number}: {submission.content["title"]["value"]}'
+            message =f'''Hi {preferred_name},
+Thank you for accepting the invitation to review the paper number: {submission.number}, title: {submission.content['title']['value']}.
 
-        print('Enable assignment acknowledgement task for', edge.tail)
-        ack_invitation_edit = journal.invitation_builder.set_note_reviewer_assignment_acknowledgement_invitation(note, edge.tail, journal.get_due_date(days = 2), duedate.strftime("%b %d, %Y"))
-        
-        recipients = [edge.tail]
-        ignoreRecipients = [journal.get_solicit_reviewers_id(number=note.number)]
-        subject=f'''[{journal.short_name}] Assignment to review new {journal.short_name} submission {note.number}: {note.content['title']['value']}'''
-        message=f'''Hi {{{{fullname}}}},
+{instructions}
 
-With this email, we request that you submit, within {review_period_length} weeks ({duedate.strftime("%b %d")}) a review for your newly assigned {journal.short_name} submission "{note.number}: {note.content['title']['value']}".{submission_length}
+{decline_instructions}
 
-Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note.id}&invitationId={ack_invitation_edit['invitation']['id']}
+OpenReview Team'''
 
-As a reminder, reviewers are **expected to accept all assignments** for submissions that fall within their expertise and annual quota ({journal.get_reviewers_max_papers()} papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another {journal.short_name} submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).
+            ## - Send email
+            response = client.post_message(subject, [edge.tail], message)
 
-To submit your review, please follow this link: https://openreview.net/forum?id={note.id}&invitationId={journal.get_review_id(number=note.number)} or check your tasks in the Reviewers Console: https://openreview.net/group?id={journal.venue_id}/Reviewers#reviewer-tasks
+            ## Send email to inviter
+            subject=f'[{short_phrase}] {committee_name} {preferred_name} accepted to review paper {submission.number}: {submission.content["title"]["value"]}'
+            message =f'''Hi {{{{fullname}}}},
+The {committee_name} {preferred_name}({preferred_email}) that you invited to review paper {submission.number} has accepted the invitation and is now assigned to the paper {submission.number}.
 
-Once submitted, your review will become privately visible to the authors and AE. Then, as soon as {number_of_reviewers} reviews have been submitted, all reviews will become {review_visibility}. For more details and guidelines on performing your review, visit {journal.website}.
+OpenReview Team'''
 
-We thank you for your essential contribution to {journal.short_name}!
+            ## - Send email
+            response = client.post_message(subject, edge.signatures, message)
 
-The {journal.short_name} Editors-in-Chief
-note: replies to this email will go to the AE, {assigned_action_editor.get_preferred_name(pretty=True)}.
-'''
 
-        client.post_message(subject, recipients, message, ignoreRecipients=ignoreRecipients, parentGroup=group.id, replyTo=assigned_action_editor.get_preferred_email())
+    elif (note.content['response']['value'] == 'No'):
 
-    if responsiblity_invitation_edit is not None:
+        print('Invitation declined', edge.tail, submission.number)
+        accept_instructions = 'If you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'
 
-        print('Send email to the reviewer')
-        recipients = [edge.tail]
-        ignoreRecipients = []
-        subject=f'''[{journal.short_name}] Acknowledgement of Reviewer Responsibility'''
-        message=f'''Hi {{{{fullname}}}},
+        if assignment_edges:
+            print('Delete current assignment')
+            assignment_edge=assignment_edges[0]
+            assignment_edge.ddate=openreview.tools.datetime_millis(datetime.utcnow())
+            client.post_edge(assignment_edge)
 
-{journal.short_name} operates somewhat differently to other journals and conferences. As a new reviewer, we'd like you to read and acknowledge some critical points of {journal.short_name} that might differ from your previous reviewing experience.
 
-To perform this quick task, simply visit the following link: https://openreview.net/forum?id={responsiblity_invitation_edit['invitation']['edit']['note']['forum']}&invitationId={responsiblity_invitation_edit['invitation']['id']}
+        edge.label=declined_label
+        if 'comment' in note.content:
+            edge.label=edge.label + ': ' + note.content['comment']['value']
+        edge.cdate=None
+        client.post_edge(edge)
 
-We thank you for your essential contribution to {journal.short_name}!
+        ## Send email to reviewer
+        subject=f'[{short_phrase}] {committee_name} Invitation declined for paper {submission.number}: {submission.content["title"]["value"]}'
+        message =f'''Hi {preferred_name},
+You have declined the invitation to review the paper number: {submission.number}, title: {submission.content['title']['value']}.
 
-The {journal.short_name} Editors-in-Chief
-'''
-        client.post_message(subject, recipients, message, ignoreRecipients=ignoreRecipients, parentGroup=group.id, replyTo=journal.contact_info)
+{accept_instructions}
 
+OpenReview Team'''
+
+        ## - Send email
+        response = client.post_message(subject, [edge.tail], message)
+
+        ## Send email to inviter
+        subject=f'[{short_phrase}] {committee_name} {preferred_name} declined to review paper {submission.number}: {submission.content["title"]["value"]}'
+        message =f'''Hi {{{{fullname}}}},
+The {committee_name} {preferred_name}({preferred_email}) that you invited to review paper {submission.number} has declined the invitation.
+
+To read their response, please click here: https://openreview.net/forum?id={note.id}
+
+OpenReview Team'''
+
+        ## - Send email
+        response = client.post_message(subject, edge.signatures, message)
+
+    else:
+        raise openreview.OpenReviewException(f"Invalid response: {note.content['response']['value']}")

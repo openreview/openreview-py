@@ -2173,6 +2173,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             minReplies=1,
             maxReplies=1,
             type='Edge',
+            process=self.get_process_content('process/reviewer_invitation_assignment_process.py'),
             edit={
                 'id': {
                     'param': {
@@ -2193,7 +2194,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'optional': True,
                         'deletable': True
                     }
-                },                
+                },         
                 'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}'), '${2/tail}'],
                 'nonreaders': [self.journal.get_authors_id(number='${{2/head}/number}')],
                 'writers': [venue_id],
@@ -2228,7 +2229,6 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             'Pending Sign Up',
                             'Conflict Detected'
                         ],
-                        'optional': True,
                         'default': 'Invitation Sent'
                     }
                 }
@@ -2236,6 +2236,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         )
 
         self.save_invitation(invitation)
+
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/paperRecruitResponseWebfield.js')) as f:
+            content = f.read()
+            web = content
 
         invitation = Invitation(id=self.journal.get_reviewer_assignment_recruitment_id(),
             invitees=['everyone'],
@@ -2247,6 +2251,17 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'note': {
+                    'signatures': [
+                        '${3/signatures}'
+                    ],
+                    'readers': [
+                        venue_id,
+                        '${2/content/user/value}',
+                        '${2/content/inviter/value}'
+                    ],
+                    'writers': [
+                        venue_id
+                    ],                    
                     'content': {
                         'title': {
                             'order': 1,
@@ -2327,7 +2342,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 }
             },
-            process=self.get_process_content('process/reviewer_assignment_recruitment_process.py')
+            process=self.get_process_content('process/reviewer_assignment_recruitment_process.py'),
+            web = web
         )
 
         self.save_invitation(invitation)                       
