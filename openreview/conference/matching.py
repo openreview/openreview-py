@@ -1375,7 +1375,7 @@ class Matching(object):
             ac_group=ac_groups.get(ac_group_id)
 
             if ac_group:
-                if len(ac_group.members) == 0:
+                if len(ac_group.members) == 0 and not are_paper_assignments:
                     raise openreview.OpenReviewException('AC assignments must be deployed first')
 
                 for ac in ac_group.members:
