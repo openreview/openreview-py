@@ -1401,6 +1401,9 @@ class Matching(object):
 
         for head, sac_assignments in proposed_assignment_edges.items():
             for sac_assignment in sac_assignments:
+                if are_paper_assignments:
+                    paper_committee_id = self.conference.get_committee_id(name=reviewer_name, number=paper_id_to_number[head])
+                    self.client.add_members_to_group(paper_committee_id, sac_assignment['tail'])
                 assignment_edges.append(openreview.Edge(
                     invitation=assignment_invitation_id,
                     head=head,
