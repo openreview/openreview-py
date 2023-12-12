@@ -414,20 +414,18 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert selenium.find_element(By.LINK_TEXT, 'Expertise Selection')
 
         request_page(selenium, 'http://localhost:3030/invitation?id=thecvf.com/ECCV/2020/Conference/-/Expertise_Selection', reviewer_client.token, wait_for_element='header')
-        header = selenium.find_element(By.ID, 'header')
+        content = selenium.find_element(By.ID, 'content')
+        assert content
+        header = content.find_elements(By.TAG_NAME, "header")
         assert header
-        notes = header.find_elements(By.CLASS_NAME, "description")
+        notes = content.find_element(By.CLASS_NAME, "description").find_elements(By.TAG_NAME, "p")
         assert notes
-        assert len(notes) == 1
-        assert notes[0].text == '''Listed below are all the papers you have authored that exist in the OpenReview database.
-
-By default, we consider all of these papers to formulate your expertise. Please click on "Exclude" for papers that you do NOT want to be used to represent your expertise.
-
-Your previously authored papers from selected conferences were imported automatically from DBLP.org. The keywords in these papers will be used to rank submissions for you during the bidding process, and to assign submissions to you during the review process. If there are DBLP papers missing, you can add them by editing your OpenReview profile and then clicking on 'Add DBLP Papers to Profile'.
-
-Papers not automatically included as part of this import process can be uploaded by using the Upload button. Make sure that your email is part of the "authorids" field of the upload form. Otherwise the paper will not appear in the list, though it will be included in the recommendations process. Only upload papers co-authored by you.
-
-Please contact info@openreview.net with any questions or concerns about this interface, or about the expertise scoring process.'''
+        assert len(notes) == 5
+        assert notes[0].text == 'Listed below are all the papers you have authored that exist in the OpenReview database.'
+        assert notes[1].text == 'By default, we consider all of these papers to formulate your expertise. Please click "Exclude" for papers that you do NOT want to be used to represent your expertise.'
+        assert notes[2].text == "Your previously authored papers from selected conferences were automatically imported from DBLP.org. The keywords in these papers will be used to rank submissions for you during the bidding process, and to assign submissions to you during the review process. If there are DBLP papers missing, you can add them by going to your OpenReview profile and clicking \"Add DBLP Papers to Profile\"."
+        assert notes[3].text == 'Papers not automatically included as part of this import process can be uploaded with the Upload button below. Make sure that your email is part of the "authorids" field of the upload form, otherwise the paper will not appear in the list, though it will be included in the recommendations process. Only upload papers you are an author of.'
+        assert notes[4].text == 'Please contact info@openreview.net with any questions or concerns about this interface, or about the expertise scoring process.'
 
     def test_open_registration(self, conference, helpers, selenium, request_page):
 
@@ -579,6 +577,8 @@ Please contact info@openreview.net with any questions or concerns about this int
         # check if conference is added in active_venues
         active_venues = client.get_group('active_venues')
         assert conference.id in active_venues.members
+        assert conference.id in client.get_group('venues').members
+        assert 'thecvf.com/ECCV' in client.get_group('host').members        
 
         for submission in submissions:
             id = conference.get_invitation_id('Supplementary_Material', submission.number)

@@ -28,6 +28,7 @@ class Conference(object):
 
     def __init__(self, client):
         self.client = client
+        self.client_v2 = openreview.Client(baseurl=openreview.tools.get_base_urls(client)[1], token=client.token)
         self.request_form_id = None
         self.support_user = 'OpenReview.net/Support'
         self.venue_revision_name = 'Venue_Revision'
@@ -931,8 +932,8 @@ class Conference(object):
             self.__create_group(self.get_authors_id(), self.id, author_group_ids, additional_readers=['everyone'])
 
         # Add this group to active_venues
-        active_venues = self.client.get_group('active_venues')
-        self.client.add_members_to_group(active_venues, self.id)
+        active_venues = self.client_v2.get_group('active_venues')
+        self.client_v2.add_members_to_group(active_venues, self.id)
 
     def create_blind_submissions(self, hide_fields=[], number=None):
 
@@ -1695,7 +1696,7 @@ Program Chairs
 
         if venue_heading_map:
             self.set_homepage_decisions(decision_heading_map=venue_heading_map)
-        self.client.remove_members_from_group('active_venues', self.id)
+        self.client_v2.remove_members_from_group('active_venues', self.id)
 
         # expire recruitment invitations
         self.expire_recruitment_invitations()
@@ -1842,6 +1843,7 @@ class ConferenceBuilder(object):
 
     def __init__(self, client, support_user=None):
         self.client = client
+        self.client_v2 = openreview.Client(baseurl=openreview.tools.get_base_urls(client)[1], token=client.token)
         self.conference = Conference(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
         self.submission_stage = None
@@ -2103,13 +2105,13 @@ class ConferenceBuilder(object):
         if root_id == root_id.lower():
             root_id = groups[1].id
         if host.details.get('writable'):
-            self.client.add_members_to_group(host, root_id)
+            self.client_v2.add_members_to_group(host, root_id)
             home_group.host = root_id
             self.client.post_group(home_group)
 
         venues = self.client.get_group(id = 'venues', details='writable')
         if venues.details.get('writable'):
-            self.client.add_members_to_group('venues', home_group.id)
+            self.client_v2.add_members_to_group('venues', home_group.id)
 
         if self.submission_stage:
             self.conference.set_submission_stage(self.submission_stage)
