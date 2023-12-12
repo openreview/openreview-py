@@ -251,6 +251,7 @@ class Matching(object):
             readers = invitation_readers,
             writers = [venue_id],
             signatures = [venue_id],
+            responseArchiveDate = venue.get_edges_archive_date(),
             edge = {
                 'id': {
                     'param': {

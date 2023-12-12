@@ -900,6 +900,7 @@ class InvitationBuilder(object):
                 cdate = tools.datetime_millis(bid_stage.start_date),
                 duedate = tools.datetime_millis(bid_stage.due_date) if bid_stage.due_date else None,
                 expdate = tools.datetime_millis(bid_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if bid_stage.due_date else None,
+                responseArchiveDate = venue.get_edges_archive_date(),
                 invitees = [match_group_id],
                 signatures = [venue_id],
                 readers = invitation_readers,
@@ -2313,6 +2314,7 @@ class InvitationBuilder(object):
             process=process,
             preprocess=preprocess,
             content=content,
+            responseArchiveDate = venue.get_edges_archive_date(),
             edge = {
                 'id': {
                     'param': {
@@ -2375,6 +2377,7 @@ class InvitationBuilder(object):
                 cdate = tools.datetime_millis(expertise_selection_stage.start_date),
                 duedate = tools.datetime_millis(expertise_selection_stage.due_date),
                 expdate = tools.datetime_millis(expertise_selection_stage.due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if expertise_selection_stage.due_date else None,
+                responseArchiveDate = self.venue.get_edges_archive_date(),
                 invitees = [committee_id],
                 signatures = [venue_id],
                 readers = [venue_id, committee_id],
