@@ -1390,6 +1390,15 @@ class Matching(object):
                         sac_group.members.append(sac)
                         self.client.post_group(sac_group)
 
+            if overwrite and are_paper_assignments:
+                if paper.id in current_assignment_edges:
+                    paper_committee_id = self.conference.get_committee_id(name=reviewer_name, number=paper.number)
+                    current_edges=current_assignment_edges[paper.id]
+                    for current_edge in current_edges:
+                        self.client.remove_members_from_group(paper_committee_id, current_edge['tail'])
+                else:
+                    print('assignment not found', paper.id)
+
         for head, sac_assignments in proposed_assignment_edges.items():
             for sac_assignment in sac_assignments:
                 assignment_edges.append(openreview.Edge(
