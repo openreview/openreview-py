@@ -617,6 +617,15 @@ def get_ethics_review_stage(request_forum):
     else:
         review_due_date = None
 
+    review_exp_date = request_forum.content.get('ethics_review_expiration_date', '').strip()
+    if review_exp_date:
+        try:
+            review_exp_date = datetime.datetime.strptime(review_exp_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            review_exp_date = datetime.datetime.strptime(review_exp_date, '%Y/%m/%d')
+    else:
+        review_exp_date = None
+
     review_form_additional_options = request_forum.content.get('additional_ethics_review_form_options', {})
 
     review_form_remove_options = request_forum.content.get('remove_ethics_review_form_options', '').replace(',', ' ').split()
@@ -637,6 +646,7 @@ def get_ethics_review_stage(request_forum):
     return openreview.stages.EthicsReviewStage(
         start_date = review_start_date,
         due_date = review_due_date,
+        exp_date = review_exp_date,
         release_to_public = (request_forum.content.get('make_ethics_reviews_public', None) == 'Yes, ethics reviews should be revealed publicly when they are posted'),
         release_to_authors = (request_forum.content.get('release_ethics_reviews_to_authors', '').startswith('Yes')),
         release_to_reviewers = release_to_reviewers,

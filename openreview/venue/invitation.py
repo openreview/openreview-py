@@ -900,6 +900,7 @@ class InvitationBuilder(object):
                 cdate = tools.datetime_millis(bid_stage.start_date),
                 duedate = tools.datetime_millis(bid_stage.due_date) if bid_stage.due_date else None,
                 expdate = tools.datetime_millis(bid_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if bid_stage.due_date else None,
+                responseArchiveDate = venue.get_edges_archive_date(),
                 invitees = [match_group_id],
                 signatures = [venue_id],
                 readers = invitation_readers,
@@ -1977,7 +1978,7 @@ class InvitationBuilder(object):
                                 ] 
                             }
                         },
-                        'readers': ['${{2/note/id}/readers}'],
+                        'readers': [ venue_id, self.venue.get_authors_id(number='${4/content/noteNumber/value}')],
                         'writers': [ venue_id, self.venue.get_authors_id(number='${4/content/noteNumber/value}')],
                         'note': {
                             'id': '${4/content/noteId/value}',
@@ -2313,6 +2314,7 @@ class InvitationBuilder(object):
             process=process,
             preprocess=preprocess,
             content=content,
+            responseArchiveDate = venue.get_edges_archive_date(),
             edge = {
                 'id': {
                     'param': {
@@ -2375,6 +2377,7 @@ class InvitationBuilder(object):
                 cdate = tools.datetime_millis(expertise_selection_stage.start_date),
                 duedate = tools.datetime_millis(expertise_selection_stage.due_date),
                 expdate = tools.datetime_millis(expertise_selection_stage.due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if expertise_selection_stage.due_date else None,
+                responseArchiveDate = self.venue.get_edges_archive_date(),
                 invitees = [committee_id],
                 signatures = [venue_id],
                 readers = [venue_id, committee_id],
@@ -2867,7 +2870,9 @@ class InvitationBuilder(object):
         ethics_review_invitation_id = self.venue.get_invitation_id(ethics_review_stage.name)
         ethics_review_cdate = tools.datetime_millis(ethics_review_stage.start_date if ethics_review_stage.start_date else datetime.datetime.utcnow())
         ethics_review_duedate = tools.datetime_millis(ethics_review_stage.due_date) if ethics_review_stage.due_date else None
-        ethics_review_expdate = tools.datetime_millis(ethics_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN))  if ethics_review_stage.due_date else None
+        ethics_review_expdate = tools.datetime_millis(ethics_review_stage.exp_date) if ethics_review_stage.exp_date else None
+        if not ethics_review_expdate:
+            ethics_review_expdate = tools.datetime_millis(ethics_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if ethics_review_stage.due_date else None
         
         content = ethics_review_stage.get_content(api_version='2', conference=self.venue)
 
