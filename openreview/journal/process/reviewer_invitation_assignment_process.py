@@ -32,8 +32,6 @@ def process(client, edge, invitation):
                     'preferredEmail': user
                 })
 
-        preferred_name=user_profile.get_preferred_name(pretty=True)
-
         ## - Build invitation link
         print(f'Send invitation to {user_profile.id}')
         from Crypto.Hash import HMAC, SHA256
@@ -50,7 +48,7 @@ def process(client, edge, invitation):
 
         # format the message defined above
         subject=f'[{short_phrase}] Invitation to review paper titled "{submission.content["title"]["value"]}"'
-        message=f'''Hi {preferred_name},
+        message=f'''Hi {{{{fullname}}}},
 
 You were invited to review the paper number: {submission.number}, title: "{submission.content['title']['value']}".
 

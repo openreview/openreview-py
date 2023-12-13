@@ -2173,6 +2173,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             minReplies=1,
             maxReplies=1,
             type='Edge',
+            preprocess=self.get_process_content('process/reviewer_invitation_assignment_pre_process.py'),
             process=self.get_process_content('process/reviewer_invitation_assignment_process.py'),
             edit={
                 'id': {

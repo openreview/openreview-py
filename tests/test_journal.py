@@ -4827,7 +4827,7 @@ note={Expert Certification}
                 }
             ))        
 
-    def test_invite_reviewers(self, journal, openreview_client, test_client, helpers, selenium, request_page):
+    def test_invite_external_reviewers(self, journal, openreview_client, test_client, helpers, selenium, request_page):
 
         venue_id = journal.venue_id
         test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
@@ -4909,7 +4909,7 @@ note={Expert Certification}
 
         messages = openreview_client.get_messages(to = 'melisa@mailten.com', subject = '[TMLR] Invitation to review paper titled "Paper title 14"')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Melisa Bok,\n\nYou were invited to review the paper number: 1, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=~Melisa_Bok1&key=da9c8e30376e445b0d18011af6a8ca7863e5037e3f9aebc6aa4294e5aaa5c216&submission_id={submission.id}&inviter=~Joelle_Pineau1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nJoelle Pineau'''
+        assert messages[0]['content']['text'] == f'''Hi Melisa Bok,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=~Melisa_Bok1&key=da9c8e30376e445b0d18011af6a8ca7863e5037e3f9aebc6aa4294e5aaa5c216&submission_id={submission.id}&inviter=~Joelle_Pineau1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nJoelle Pineau'''
 
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
@@ -4925,16 +4925,107 @@ note={Expert Certification}
 
         helpers.await_queue_edit(openreview_client, edit_id=assignment_edges[0].id)
 
-        messages = openreview_client.get_messages(to = 'melisa@mailten.com', subject = '[TMLR] Reviewers Invitation accepted for paper 1: Paper title 14')
+        messages = openreview_client.get_messages(to = 'melisa@mailten.com', subject = f'[TMLR] Reviewers Invitation accepted for paper {submission.number}: Paper title 14')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Melisa Bok,\nThank you for accepting the invitation to review the paper number: 1, title: Paper title 14.\n\nPlease go to the Tasks page and check your TMLR pending tasks: https://openreview.net/tasks\n\nIf you would like to change your decision, please follow the link in the previous invitation email and click on the \"Decline\" button.\n\nOpenReview Team'''
+        assert messages[0]['content']['text'] == f'''Hi Melisa Bok,\nThank you for accepting the invitation to review the paper number: {submission.number}, title: Paper title 14.\n\nPlease go to the Tasks page and check your TMLR pending tasks: https://openreview.net/tasks\n\nIf you would like to change your decision, please follow the link in the previous invitation email and click on the \"Decline\" button.\n\nOpenReview Team'''
 
-        messages = openreview_client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Reviewers Melisa Bok accepted to review paper 1: Paper title 14')
+        messages = openreview_client.get_messages(to = 'joelle@mailseven.com', subject = f'[TMLR] Reviewers Melisa Bok accepted to review paper {submission.number}: Paper title 14')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,\nThe Reviewers Melisa Bok(melisa@mailten.com) that you invited to review paper 1 has accepted the invitation and is now assigned to the paper 1.\n\nOpenReview Team'''
+        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,\nThe Reviewers Melisa Bok(melisa@mailten.com) that you invited to review paper {submission.number} has accepted the invitation and is now assigned to the paper {submission.number}.\n\nOpenReview Team'''
 
-        messages = openreview_client.get_messages(to = 'melisa@mailten.com', subject = '[TMLR] Assignment to review new TMLR submission 1: Paper title 14')
+        messages = openreview_client.get_messages(to = 'melisa@mailten.com', subject = f'[TMLR] Assignment to review new TMLR submission {submission.number}: Paper title 14')
         assert len(messages) == 0
 
         messages = openreview_client.get_messages(to = 'melisa@mailten.com', subject = '[TMLR] Acknowledgement of Reviewer Responsibility')
         assert len(messages) == 0
+
+        ## Invite external reviewer with no profile
+        paper_assignment_edge = joelle_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
+            signatures=[joelle_paper13_anon_group.id],
+            head=note_id_13,
+            tail='harold@hotmail.com',
+            weight=1,
+            label='Invitation Sent'
+        ))        
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        messages = openreview_client.get_messages(to = 'harold@hotmail.com', subject = '[TMLR] Invitation to review paper titled "Paper title 14"')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi harold@hotmail.com,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=harold@hotmail.com&key=5702b25b819d98308e99b9784e37d7327e511efbd618e44df194ccefc6dcc96c&submission_id={submission.id}&inviter=~Joelle_Pineau1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nJoelle Pineau'''
+
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+        helpers.await_queue_edit(openreview_client, invitation='TMLR/Reviewers/-/Assignment_Recruitment', count=1)
+
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_13, tail='harold@hotmail.com')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Pending Sign Up'         
+
+        assignment_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', head=note_id_13, tail='harold@hotmail.com')
+        assert len(assignment_edges) == 0
+
+        messages = openreview_client.get_messages(to = 'harold@hotmail.com', subject = f'[TMLR] Reviewers Invitation accepted for paper {submission.number}: Paper title 14, assignment pending')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi harold@hotmail.com,\nThank you for accepting the invitation to review the paper number: {submission.number}, title: Paper title 14.\n\nPlease signup in OpenReview using the email address harold@hotmail.com and complete your profile.\nConfirmation of the assignment is pending until your profile is active and no conflicts of interest are detected.\n\nIf you would like to change your decision, please follow the link in the previous invitation email and click on the \"Decline\" button.\n\nOpenReview Team'''
+
+        messages = openreview_client.get_messages(to = 'joelle@mailseven.com', subject = f'[TMLR] Reviewers harold@hotmail.com accepted to review paper {submission.number}: Paper title 14, assignment pending')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,\nThe Reviewers harold@hotmail.com that you invited to review paper {submission.number} has accepted the invitation.\n\nConfirmation of the assignment is pending until the invited reviewer creates a profile in OpenReview and no conflicts of interest are detected.\n\nOpenReview Team'''
+
+        ## Invite external reviewer with a conflict of interest
+        with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for harold@mail'):
+            paper_assignment_edge = joelle_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
+                signatures=[joelle_paper13_anon_group.id],
+                head=note_id_13,
+                tail='harold@mail.com',
+                weight=1,
+                label='Invitation Sent'
+            ))
+
+        ## Invite reviewer that is already in the pool
+        with pytest.raises(openreview.OpenReviewException, match=r'Reviewer David Belanger is an official reviewer, please use the "Assign" button to make the assignment.'):
+            paper_assignment_edge = joelle_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
+                signatures=[joelle_paper13_anon_group.id],
+                head=note_id_13,
+                tail='david@mailone.com',
+                weight=1,
+                label='Invitation Sent'
+            ))
+
+        ## Invite reviewer that is already has an assignment
+        with pytest.raises(openreview.OpenReviewException, match=r'Already invited as ~Melisa_Bok1'):
+            paper_assignment_edge = joelle_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
+                signatures=[joelle_paper13_anon_group.id],
+                head=note_id_13,
+                tail='melisa@mailten.com',
+                weight=1,
+                label='Invitation Sent'
+            ))
+
+        ## Run Job
+        openreview.journal.Journal.check_new_profiles(openreview_client, support_group_id = 'openreview.net/Support')                        
+
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_13, tail='harold@hotmail.com')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Pending Sign Up'
+
+        helpers.create_user('harold@hotmail.com', 'Harold', 'Red')
+
+        ## Run Job
+        openreview.journal.Journal.check_new_profiles(openreview_client, support_group_id = 'openreview.net/Support')                        
+
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_13, tail='harold@hotmail.com')
+        assert len(invite_edges) == 0
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_13, tail='~Harold_Red1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Accepted'
+
+        messages = openreview_client.get_messages(to = 'harold@hotmail.com', subject = f'[TMLR] Reviewer Assignment confirmed for paper {submission.number}: Paper title 14')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi Harold Red,\nThank you for accepting the invitation to review the paper number: {submission.number}, title: Paper title 14.\n\nPlease go to the Tasks page and check your TMLR pending tasks: https://openreview.net/tasks\n\nIf you would like to change your decision, please click the Decline link in the previous invitation email.\n\nOpenReview Team'''
+
+        messages = openreview_client.get_messages(to = 'joelle@mailseven.com', subject = f'[TMLR] Reviewer Harold Red signed up and is assigned to paper {submission.number}: Paper title 14')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,\nThe Reviewer Harold Red(harold@hotmail.com) that you invited to review paper {submission.number} has accepted the invitation, signed up and is now assigned to the paper 1.\n\nOpenReview Team'''

@@ -67,7 +67,7 @@ def process(client, edit, invitation):
             client.post_edge(edge)
 
             ## Send email to reviewer
-            subject=f'[{short_phrase}] {committee_name} Invitation accepted for paper {submission.number}, assignment pending'
+            subject=f'[{short_phrase}] {committee_name} Invitation accepted for paper {submission.number}: {submission.content["title"]["value"]}, assignment pending'
             message =f'''Hi {preferred_name},
 Thank you for accepting the invitation to review the paper number: {submission.number}, title: {submission.content['title']['value']}.
 
@@ -80,7 +80,7 @@ OpenReview Team'''
             response = client.post_message(subject, [edge.tail], message)
 
             ## Send email to inviter
-            subject=f'[{short_phrase}] {committee_name} {preferred_name} accepted to review paper {submission.number}, assignment pending'
+            subject=f'[{short_phrase}] {committee_name} {preferred_name} accepted to review paper {submission.number}: {submission.content["title"]["value"]}, assignment pending'
             message =f'''Hi {{{{fullname}}}},
 The {committee_name} {preferred_name} that you invited to review paper {submission.number} has accepted the invitation.
 

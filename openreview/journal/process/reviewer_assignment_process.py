@@ -17,6 +17,7 @@ def process_update(client, edge, invitation, existing_edge):
     number_of_reviewers = journal.get_number_of_reviewers()
     review_visibility = 'publicly visible' if journal.is_submission_public() else 'visible to all the reviewers'
     submission_length = ' If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.' if journal.get_submission_length() else ''
+    official_reviewer = client.get_groups(member=edge.tail, id=journal.get_reviewers_id())
 
     ## Check task completion
     if len(head_assignment_edges) >= number_of_reviewers:
@@ -36,7 +37,7 @@ def process_update(client, edge, invitation, existing_edge):
             client.post_edge(submission_edge)
 
     ## Enable reviewer responsibility task
-    if not journal.should_skip_reviewer_responsibility_acknowledgement() and len(tail_assignment_edges) == 1 and not edge.ddate and not client.get_groups(member=edge.tail, id=journal.get_solicit_reviewers_id(number=note.number)):
+    if not journal.should_skip_reviewer_responsibility_acknowledgement() and len(tail_assignment_edges) == 1 and not edge.ddate and official_reviewer:
         print('Enable reviewer responsibility task for', edge.tail)
         responsiblity_invitation_edit = journal.invitation_builder.set_single_reviewer_responsibility_invitation(edge.tail, journal.get_due_date(weeks = 1))
 
@@ -108,7 +109,6 @@ note: replies to this email will go to the AE, {assigned_action_editor.get_prefe
         ack_invitation_edit = journal.invitation_builder.set_note_reviewer_assignment_acknowledgement_invitation(note, edge.tail, journal.get_due_date(days = 2), duedate.strftime("%b %d, %Y"))
         
         recipients = [edge.tail]
-        ignoreRecipients = [journal.get_solicit_reviewers_id(number=note.number)]
         subject=f'''[{journal.short_name}] Assignment to review new {journal.short_name} submission {note.number}: {note.content['title']['value']}'''
         message=f'''Hi {{{{fullname}}}},
 
@@ -128,7 +128,8 @@ The {journal.short_name} Editors-in-Chief
 note: replies to this email will go to the AE, {assigned_action_editor.get_preferred_name(pretty=True)}.
 '''
 
-        client.post_message(subject, recipients, message, ignoreRecipients=ignoreRecipients, parentGroup=group.id, replyTo=assigned_action_editor.get_preferred_email())
+        if official_reviewer:
+            client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=assigned_action_editor.get_preferred_email())
 
     if responsiblity_invitation_edit is not None:
 
