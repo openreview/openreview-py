@@ -1498,10 +1498,27 @@ The OpenReview Team.
         assert 'username' in profile.content['names'][0]
         assert profile.content['names'][0]['username'] == '~Juan_Alternate_Last1' 
 
-        profile = john_client.get_profile(email_or_id='john@profile.org')
+        john_client = openreview.Client(username='john@profile.org', password=helpers.strong_password)
+        profile = john_client.get_profile()
         assert len(profile.content['relations']) == 2
         assert profile.content['relations'][1]['username'] == '~Juan_Alternate_Last1'                                             
-        assert profile.content['relations'][1]['name'] == 'Juan Alternate Last'                                             
+        assert profile.content['relations'][1]['name'] == 'Juan Alternate Last'
+
+        ## update profile with no changes and make sure the relations are all the same
+        profile.content['history'][0] = {
+            "position": "PhD Student",
+            "start": 2017,
+            "end": None,
+            "institution": {
+                "domain": "google.com",
+                "name": "Google"
+            }
+        }
+        john_client.post_profile(profile) 
+        profile = john_client.get_profile()                                      
+        assert len(profile.content['relations']) == 2
+        assert profile.content['relations'][1]['username'] == '~Juan_Alternate_Last1'                                             
+        assert profile.content['relations'][1]['name'] == 'Juan Alternate Last'
 
 
     def test_remove_name_and_accept_automatically(self, client, profile_management, helpers):

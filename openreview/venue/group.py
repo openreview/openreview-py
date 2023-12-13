@@ -121,11 +121,11 @@ class GroupBuilder(object):
 
         if venue_group.web is None:
 
-            self.client_v1.add_members_to_group('venues', venue_id)
+            self.client.add_members_to_group('venues', venue_id)
             root_id = groups[0].id
             if root_id == root_id.lower():
                 root_id = groups[1].id        
-            self.client_v1.add_members_to_group('host', root_id)
+            self.client.add_members_to_group('host', root_id)
 
             with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
                 content = f.read()
@@ -469,9 +469,9 @@ class GroupBuilder(object):
                 self.client.remove_members_from_group(publication_chairs_group_id, members_to_remove)
 
     def add_to_active_venues(self):
-        active_venues = self.client_v1.get_group('active_venues')
+        active_venues = self.client.get_group('active_venues')
         if self.venue_id not in active_venues.members:
-            self.client_v1.add_members_to_group(active_venues, self.venue_id)
+            self.client.add_members_to_group(active_venues, self.venue_id)
     
     def create_recruitment_committee_groups(self, committee_name):
 

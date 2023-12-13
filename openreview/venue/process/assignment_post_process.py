@@ -8,7 +8,7 @@ def process_update(client, edge, invitation, existing_edge):
     reviewers_name = invitation.content['reviewers_name']['value']
     reviewers_id = invitation.content['reviewers_id']['value']
     sync_sac_id = invitation.content['sync_sac_id']['value']
-    sac_assingment_id = invitation.content['sac_assignment_id']['value']
+    sac_assignment_id = invitation.content['sac_assignment_id']['value']
     pretty_name = openreview.tools.pretty_id(reviewers_name)
     pretty_name = pretty_name[:-1] if pretty_name.endswith('s') else pretty_name
 
@@ -16,22 +16,19 @@ def process_update(client, edge, invitation, existing_edge):
     note=client.get_note(edge.head)
     group=client.get_group(f'{venue_id}/{submission_name}{note.number}/{reviewers_name}')
     if edge.ddate and edge.tail in group.members:
+        assignment_edges = client.get_edges(invitation=edge.invitation, head=edge.head, tail=edge.tail)
+        if assignment_edges:
+            return
         print(f'Remove member {edge.tail} from {group.id}')
         client.remove_members_from_group(group.id, edge.tail)
 
         if sync_sac_id and sync_sac_id.format(number=note.number) not in edge.signatures:
             print(f'Remove member from SAC group')
-            group = client.get_group(sync_sac_id.format(number=note.number))
-            client.post_group_edit(
-                invitation=f'{venue_id}/-/Edit',
-                readers = [venue_id],
-                writers = [venue_id],
-                signatures = [venue_id],
-                group = openreview.api.Group(
-                    id = group.id,
-                    members = []
-                )
-            )
+            assignments = client.get_edges(invitation=sac_assignment_id, head=edge.tail)
+            if assignments:
+                client.remove_members_from_group(sync_sac_id.format(number=note.number), assignments[0].tail)
+            else:
+                print('No SAC assignments found')
 
     if not edge.ddate and edge.tail not in group.members:
         print(f'Add member {edge.tail} to {group.id}')
@@ -40,7 +37,7 @@ def process_update(client, edge, invitation, existing_edge):
 
         if sync_sac_id:
             print('Add the SAC to the paper group')
-            assignments = client.get_edges(invitation=sac_assingment_id, head=edge.tail)
+            assignments = client.get_edges(invitation=sac_assignment_id, head=edge.tail)
             if assignments:
                 client.add_members_to_group(sync_sac_id.format(number=note.number), assignments[0].tail)
             else:
