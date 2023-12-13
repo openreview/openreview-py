@@ -128,6 +128,7 @@ class TestJournal():
                             'camera_ready_verification_period': 1,
                             'archived_action_editors': True,
                             'expert_reviewers': True,
+                            'external_reviewers': True,
                             'official_recommendation_additional_fields': {
                                 'pilot_recommendation_to_iclr_track': {
                                     'order': 98,
@@ -5028,4 +5029,4 @@ note={Expert Certification}
 
         messages = openreview_client.get_messages(to = 'joelle@mailseven.com', subject = f'[TMLR] Reviewer Harold Red signed up and is assigned to paper {submission.number}: Paper title 14')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,\nThe Reviewer Harold Red(harold@hotmail.com) that you invited to review paper {submission.number} has accepted the invitation, signed up and is now assigned to the paper 1.\n\nOpenReview Team'''
+        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,\nThe Reviewer Harold Red(harold@hotmail.com) that you invited to review paper {submission.number} has accepted the invitation, signed up and is now assigned to the paper {submission.number}.\n\nOpenReview Team'''

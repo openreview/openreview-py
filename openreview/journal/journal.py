@@ -462,7 +462,10 @@ class Journal(object):
         return self.settings.get('archived_action_editors', False)
 
     def has_expert_reviewers(self):
-        return self.settings.get('expert_reviewers', False)        
+        return self.settings.get('expert_reviewers', False) 
+
+    def has_external_reviewers(self):
+        return self.settings.get('external_reviewers', True)            
 
     def get_number_of_reviewers(self):
         return self.settings.get('number_of_reviewers', 3)

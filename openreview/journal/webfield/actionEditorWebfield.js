@@ -18,6 +18,7 @@ var REVIEWER_REPORT_ID = '';
 
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var REVIEWERS_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Assignment';
+var REVIEWERS_INVITE_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Invite_Assignment';
 var REVIEWERS_CONFLICT_ID = REVIEWERS_ID + '/-/Conflict';
 var REVIEWERS_AFFINITY_SCORE_ID = REVIEWERS_ID + '/-/Affinity_Score';
 var REVIEWERS_CUSTOM_MAX_PAPERS_ID = REVIEWERS_ID + '/-/Custom_Max_Papers';
@@ -47,7 +48,8 @@ var ASSIGNMENT_ACKNOWLEDGEMENT_NAME = 'Assignment/Acknowledgement';
 var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + ')');
 var reviewersUrl = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',tail:' + user.profile.id +
   '&traverse=' + REVIEWERS_ASSIGNMENT_ID +
-  '&edit=' + REVIEWERS_ASSIGNMENT_ID +
+  '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' +
+    REVIEWERS_INVITE_ASSIGNMENT_ID + 
   '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + 
     REVIEWERS_CONFLICT_ID + ';' + 
     REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
@@ -403,7 +405,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
           {
             name: 'Edit Assignments',
             url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=' + REVIEWERS_ASSIGNMENT_ID +
-            '&edit=' + REVIEWERS_ASSIGNMENT_ID +
+            '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_INVITE_ASSIGNMENT_ID +
             '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
             '&maxColumns=2&version=2' +
             '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available'

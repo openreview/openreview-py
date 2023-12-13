@@ -2164,6 +2164,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         )
         self.save_invitation(invitation)
 
+        if not self.journal.has_external_reviewers():
+            return
+        
+        ## external reviewers
         invitation = Invitation(
             id=self.journal.get_reviewer_invite_assignment_id(),
             invitees=[venue_id, action_editors_id] + additional_committee,
