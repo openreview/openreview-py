@@ -11,7 +11,7 @@ def process(client, edit, invitation):
     ## send email to action editors
     print('Send email to AEs')
     ae_group = client.get_group(journal.get_action_editors_id())
-    message=ae_group.content['ae_official_recommendation_ends_email_template']['value'].format(
+    message=ae_group.content['official_recommendation_ends_email_template_script']['value'].format(
         short_name=journal.short_name,
         submission_number=submission.number,
         submission_title=submission.content['title']['value'],

@@ -100,7 +100,7 @@ For more details and guidelines on the {short_name} review process, visit {websi
 We thank you for your essential contribution to {short_name}!
 
 The {short_name} Editors-in-Chief
-''',
+'''
 
 ae_discussion_too_many_reviewers_email_template = '''Hi {{{{fullname}}}},
 
