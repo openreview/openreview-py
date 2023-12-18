@@ -3,7 +3,6 @@ def process(client, edit, invitation):
     SUPPORT_USER_ID = ''
     REMOVAL_DECISION_INVITATION_ID = ''
     baseurl_v1 = 'http://localhost:3000'
-    print(edit.note)
 
     if 'https://devapi' in client.baseurl:
         baseurl_v1 = 'https://devapi.openreview.net'
