@@ -591,10 +591,12 @@ class OpenReviewClient(object):
 
     def rename_profile(self, current_id, new_id):
         """
-        Updates a Profile
+        Updates a the profile id of a Profile
 
-        :param profile: Profile object
-        :type profile: Profile
+        :param current_id: Current profile id
+        :type profile: str
+        :param new_id: New profile id
+        :type profile: str
 
         :return: The new updated Profile
         :rtype: Profile
