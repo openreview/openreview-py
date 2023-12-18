@@ -1978,7 +1978,7 @@ class InvitationBuilder(object):
                                 ] 
                             }
                         },
-                        'readers': ['${{2/note/id}/readers}'],
+                        'readers': [ venue_id, self.venue.get_authors_id(number='${4/content/noteNumber/value}')],
                         'writers': [ venue_id, self.venue.get_authors_id(number='${4/content/noteNumber/value}')],
                         'note': {
                             'id': '${4/content/noteId/value}',
