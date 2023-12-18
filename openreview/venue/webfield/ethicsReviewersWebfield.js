@@ -7,7 +7,6 @@ return {
       title: 'Ethics Reviewer Console',
       instructions: `<p class="dark">This page provides information and status updates for ${domain.content.subtitle?.value}. It will be regularly updated as the conference progresses, so please check back frequently.</p>`
     },
-    apiVersion: 2,
     venueId: domain.id,
     reviewerName: domain.content.ethics_reviewers_name?.value,
     officialReviewName: domain.content.ethics_review_name?.value,

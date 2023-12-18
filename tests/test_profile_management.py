@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import openreview
 import datetime
+import time
 from openreview import ProfileManagement
 from openreview.api import OpenReviewClient
 from openreview.api import Note
@@ -1271,10 +1272,27 @@ The OpenReview Team.
         assert 'username' in profile.content['names'][0]
         assert profile.content['names'][0]['username'] == '~Juan_Alternate_Last1' 
 
-        profile = john_client.get_profile(email_or_id='john@profile.org')
+        john_client = openreview.Client(username='john@profile.org', password=helpers.strong_password)
+        profile = john_client.get_profile()
         assert len(profile.content['relations']) == 2
         assert profile.content['relations'][1]['username'] == '~Juan_Alternate_Last1'                                             
-        assert profile.content['relations'][1]['name'] == 'Juan Alternate Last'                                             
+        assert profile.content['relations'][1]['name'] == 'Juan Alternate Last'
+
+        ## update profile with no changes and make sure the relations are all the same
+        profile.content['history'][0] = {
+            "position": "PhD Student",
+            "start": 2017,
+            "end": None,
+            "institution": {
+                "domain": "google.com",
+                "name": "Google"
+            }
+        }
+        john_client.post_profile(profile) 
+        profile = john_client.get_profile()                                      
+        assert len(profile.content['relations']) == 2
+        assert profile.content['relations'][1]['username'] == '~Juan_Alternate_Last1'                                             
+        assert profile.content['relations'][1]['name'] == 'Juan Alternate Last'
 
 
     def test_remove_name_and_accept_automatically(self, client, profile_management, helpers):
@@ -1776,4 +1794,58 @@ The OpenReview Team.
             client.get_group('alternate_harold@profile.org')
 
         assert client.get_group('~Harold_Last1').members == ['harold@profile.org']
-        assert client.get_group('harold@profile.org').members == ['~Harold_Last1']       
+        assert client.get_group('harold@profile.org').members == ['~Harold_Last1']
+
+
+    def test_update_relation_after_signup(self, client, openreview_client, profile_management, test_client, helpers):
+
+        carlos_client_v2 = helpers.create_user('carlos@profile.org', 'Carlos', 'Last', alternates=[], institution='google.com')
+        #carlos_client = openreview.Client(username='carlos@profile.org', password=helpers.strong_password)
+
+        profile = carlos_client_v2.get_profile()
+
+        profile.content['homepage'] = 'https://google.com'
+        profile.content['relations'].append({
+            'relation': 'Advisor',
+            'name': 'Zoey User',
+            'email': 'zoey@mail.com',
+            'start': 2015,
+            'end': None
+        })
+        carlos_client_v2.post_profile(profile)
+        profile = carlos_client_v2.get_profile(email_or_id='~Carlos_Last1')
+        assert len(profile.content['names']) == 1
+        assert 'username' in profile.content['names'][0]
+        assert 'username' not in profile.content['relations'][0]
+        assert profile.content['relations'][0]['email'] == 'zoey@mail.com'
+        
+        client = openreview.Client(baseurl = 'http://localhost:3001')
+        client.register_user(email = 'zoey@mail.com', fullname = 'Zoey User', password = helpers.strong_password)
+
+        profile = carlos_client_v2.get_profile(email_or_id='~Carlos_Last1')
+        assert len(profile.content['names']) == 1
+        assert 'username' in profile.content['names'][0]
+        assert 'username' not in profile.content['relations'][0]
+        assert profile.content['relations'][0]['email'] == 'zoey@mail.com'
+
+        profile_content={
+            'names': [
+                    {
+                        'fullname': 'Zoey User',
+                        'username': '~Zoey_User1',
+                        'preferred': True
+                    }
+                ],
+            'emails': ['zoey@mail.com'],
+            'preferredEmail': 'zoey@mail.com'
+        }
+        client.activate_user('zoey@mail.com', profile_content)
+
+        time.sleep(2)
+
+        profile = carlos_client_v2.get_profile(email_or_id='~Carlos_Last1')
+        assert len(profile.content['names']) == 1
+        assert 'username' in profile.content['names'][0]
+        assert 'username' in profile.content['relations'][0]
+        assert profile.content['relations'][0]['username'] == '~Zoey_User1'
+        assert 'email' not in profile.content['relations'][0]

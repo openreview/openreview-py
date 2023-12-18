@@ -79,6 +79,17 @@ class Venue(object):
 
     def get_short_name(self):
         return self.short_name
+    
+    def get_edges_archive_date(self):
+        archive_date = datetime.datetime.utcnow()
+        if self.date:
+            try:
+                archive_date = datetime.datetime.strptime(self.date, '%Y/%m/%d')
+            except ValueError:
+                print(f'Error parsing venue date {self.date}')
+
+        return openreview.tools.datetime_millis(archive_date + datetime.timedelta(weeks=52)) ## archive edges after 1 year
+        
 
     def get_committee_name(self, committee_id, pretty=False):
         name = committee_id.split('/')[-1]
@@ -374,6 +385,8 @@ class Venue(object):
 
         self.group_builder.create_venue_group()
 
+        self.group_builder.add_to_active_venues()
+
         self.group_builder.create_program_chairs_group(program_chair_ids)
 
         self.group_builder.create_authors_group()
@@ -457,8 +470,6 @@ class Venue(object):
     def create_post_submission_stage(self):
 
         self.invitation_builder.set_post_submission_invitation()
-        
-        self.group_builder.add_to_active_venues()        
     
     def create_submission_revision_stage(self):
         return self.invitation_builder.set_submission_revision_invitation()

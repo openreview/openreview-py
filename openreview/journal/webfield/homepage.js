@@ -84,7 +84,6 @@ return {
     },
     submissionId: submissionInvitationId,
     parentGroupId: domain.parent,
-    apiVersion: 2,
     tabs: tabs
   }
 }
