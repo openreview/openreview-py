@@ -127,3 +127,78 @@ We thank you for your essential contribution to {short_name}!
 
 The {short_name} Editors-in-Chief
 '''
+
+author_discussion_starts_email_template = '''Hi {{{{fullname}}}},
+
+Now that {number_of_reviewers} reviews have been submitted for your submission  {submission_number}: {submission_title}, all reviews have been made {review_visibility}. If you haven't already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
+
+You will have {discussion_period_length} weeks to respond to the reviewers. To maximise the period of interaction and discussion, please respond as soon as possible. The reviewers will be using this time period to hear from you and gather all the information they need. In about {discussion_period_length} weeks ({discussion_cdate}), and no later than {recommendation_period_length} weeks ({recommendation_duedate}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
+
+Visit the following link to respond to the reviews: https://openreview.net/forum?id={submission_id}
+
+For more details and guidelines on the {short_name} review process, visit {website}.
+
+The {short_name} Editors-in-Chief
+note: replies to this email will go to the AE, {assigned_action_editor}.
+'''
+
+author_decision_accept_as_is_email_template = '''Hi {{{{fullname}}}},
+
+We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your {short_name} submission "{submission_number}: {submission_title}" is accepted as is.
+
+To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={submission_id}. Please submit the final version of your paper within {camera_ready_period_length} weeks ({camera_ready_duedate}).
+
+In addition to your final manuscript, we strongly encourage you to submit a link to 1) code associated with your and 2) a short video presentation of your work. You can provide these links to the corresponding entries on the revision page.
+
+For more details and guidelines on the {short_name} review process, visit {website}.
+
+We thank you for your contribution to {short_name} and congratulate you for your successful submission!
+
+The {short_name} Editors-in-Chief
+'''
+
+
+author_decision_accept_revision_email_template = '''Hi {{{{fullname}}}},
+
+We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your {short_name} submission "{submission_number}: {submission_title}" is accepted with minor revision.
+
+To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={submission_id}. Please submit the final version of your paper, including the minor revisions requested by the Action Editor, within {camera_ready_period_length} weeks ({camera_ready_duedate}).
+
+The Action Editor responsible for your submission will have provided a description of the revision expected for accepting your final manuscript.
+
+In addition to your final manuscript, we strongly encourage you to submit a link to 1) code associated with your and 2) a short video presentation of your work. You can provide these links to the corresponding entries on the revision page.
+
+For more details and guidelines on the {short_name} review process, visit {website}.
+
+We thank you for your contribution to {short_name} and congratulate you for your successful submission!
+
+The {short_name} Editors-in-Chief
+'''
+
+author_decision_reject_email_template = '''Hi {{{{fullname}}}},
+
+We are sorry to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your {short_name} submission "{submission_number}: {submission_title}" is rejected.
+
+To know more about the decision, please follow this link: https://openreview.net/forum?id={submission_id}
+
+The action editor might have indicated that they would be willing to consider a significantly revised version of the manuscript. If so, a revised submission will need to be entered as a new submission, that must also provide a link to this previously rejected submission as well as a description of the changes made since.
+
+In any case, your submission will remain publicly available on OpenReview. You may decide to reveal your identity and deanonymize your submission on the OpenReview page. Doing so will however preclude you from submitting any revised version of the manuscript to {short_name}.
+
+For more details and guidelines on the {short_name} review process, visit {website}.
+
+The {short_name} Editors-in-Chief
+'''
+
+author_desk_reject_email_template = '''Hi {{{{fullname}}}},
+
+We are sorry to inform you that, after consideration by the {role}, your {short_name} submission "{submission_number}: {submission_title}" has been rejected without further review.
+
+Cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified {short_name} stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication).
+
+To know more about the decision, please follow this link: https://openreview.net/forum?id={submission_id}
+
+For more details and guidelines on the {short_name} review process, visit {website}.
+
+The {short_name} Editors-in-Chief
+'''

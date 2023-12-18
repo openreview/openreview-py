@@ -52,22 +52,26 @@ def process(client, edit, invitation):
 
         ## Send email notifications to authors
         print('Send emails to authors')
+        author_group = client.get_group(journal.get_authors_id())
+        message=author_group.content['discussion_starts_email_template_script']['value'].format(
+            short_name=journal.short_name,
+            submission_id=submission.id,
+            submission_number=submission.number,
+            submission_title=submission.content['title']['value'],
+            website=journal.website,
+            number_of_reviewers=number_of_reviewers,
+            review_visibility=review_visibility,
+            discussion_period_length=journal.get_discussion_period_length(),
+            discussion_cdate=cdate.strftime("%b %d"),
+            recommendation_period_length=journal.get_discussion_period_length() + journal.get_recommendation_period_length(),
+            recommendation_duedate=duedate.strftime("%b %d"),
+            contact_info=journal.contact_info,
+            assigned_action_editor=assigned_action_editor.get_preferred_name(pretty=True)
+        )        
         client.post_message(
             recipients=[journal.get_authors_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Reviewer responses and discussion for your {journal.short_name} submission''',
-            message=f'''Hi {{{{fullname}}}},
-
-Now that {number_of_reviewers} reviews have been submitted for your submission  {submission.number}: {submission.content['title']['value']}, all reviews have been made {review_visibility}. If you haven't already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
-
-You will have {journal.get_discussion_period_length()} weeks to respond to the reviewers. To maximise the period of interaction and discussion, please respond as soon as possible. The reviewers will be using this time period to hear from you and gather all the information they need. In about {journal.get_discussion_period_length()} weeks ({cdate.strftime("%b %d")}), and no later than {journal.get_discussion_period_length() + journal.get_recommendation_period_length()} weeks ({duedate.strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
-
-Visit the following link to respond to the reviews: https://openreview.net/forum?id={submission.id}
-
-For more details and guidelines on the {journal.short_name} review process, visit {journal.website}.
-
-The {journal.short_name} Editors-in-Chief
-note: replies to this email will go to the AE, {assigned_action_editor.get_preferred_name(pretty=True)}.
-''',
+            message=message,
             replyTo=assigned_action_editor.get_preferred_email()
         )
 

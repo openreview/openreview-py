@@ -346,12 +346,19 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
         authors_id = self.journal.get_authors_id()
         authors_group = openreview.tools.get_group(self.client, authors_id)
         if not authors_group:
+            content = {}
+            content['discussion_starts_email_template_script'] = { 'value': author_discussion_starts_email_template }            
+            content['decision_accept_as_is_email_template_script'] = { 'value': author_decision_accept_as_is_email_template }
+            content['decision_accept_revision_email_template_script'] = { 'value': author_decision_accept_revision_email_template }
+            content['decision_reject_email_template_script'] = { 'value': author_decision_reject_email_template }
+            content['desk_reject_email_template_script'] = { 'value': author_desk_reject_email_template }
             authors_group = Group(id=authors_id,
                             readers=[venue_id, authors_id],
                             writers=[venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id],
-                            members=[])
+                            members=[],
+                            content=content)
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/authorsWebfield.js')) as f:
             content = f.read()
