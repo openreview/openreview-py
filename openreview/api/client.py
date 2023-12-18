@@ -51,6 +51,7 @@ class OpenReviewClient(object):
         self.profiles_url = self.baseurl + '/profiles'
         self.profiles_search_url = self.baseurl + '/profiles/search'
         self.profiles_merge_url = self.baseurl + '/profiles/merge'
+        self.profiles_rename = self.baseurl + '/profiles/rename'
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
@@ -587,6 +588,29 @@ class OpenReviewClient(object):
 
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
+
+    def rename_profile(self, current_id, new_id):
+        """
+        Updates a the profile id of a Profile
+
+        :param current_id: Current profile id
+        :type profile: str
+        :param new_id: New profile id
+        :type profile: str
+
+        :return: The new updated Profile
+        :rtype: Profile
+        """
+        response = self.session.post(
+            self.profiles_rename,
+            json = {
+                'currentId': current_id,
+                'newId': new_id
+            },
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        return Profile.from_json(response.json())        
 
     def merge_profiles(self, profileTo, profileFrom):
         """

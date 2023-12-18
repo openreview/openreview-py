@@ -1,14 +1,22 @@
-def process(client, note, invitation):
+def process(client, edit, invitation):
 
     AUTHOR_RENAME_INVITATION_ID = ''
     SUPPORT_USER_ID = ''
-    request_note = client.get_note(note.id)
-    email = request_note.content['email']
-    profile_id = request_note.content['profile_id']
+    request_note = client.get_note(edit.note.id)
+    email = request_note.content['email']['value']
+    profile_id = request_note.content['profile_id']['value']
 
     profile = client.get_profile(profile_id)
     preferred_id = profile.get_preferred_name()
     preferred_name = profile.get_preferred_name(pretty=True)
+
+    baseurl_v1 = 'http://localhost:3000'
+
+    if 'https://devapi' in client.baseurl:
+        baseurl_v1 = 'https://devapi.openreview.net'
+    if 'https://api' in client.baseurl:
+        baseurl_v1 = 'https://api.openreview.net' 
+    client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
     
     def replace_group_members(group, current_member, new_member):
         existing_group = openreview.tools.get_group(client, group.id)
@@ -17,18 +25,18 @@ def process(client, note, invitation):
             return
 
         if group.domain is not None:
-            client_v2.remove_members_from_group(group.id, current_member)
-            if not group.id.startswith('~'):
-                client_v2.add_members_to_group(group.id, new_member)
-        else:
             client.remove_members_from_group(group.id, current_member)
             if not group.id.startswith('~'):
                 client.add_members_to_group(group.id, new_member)
+        else:
+            client_v1.remove_members_from_group(group.id, current_member)
+            if not group.id.startswith('~'):
+                client_v1.add_members_to_group(group.id, new_member)
 
 
     
     print('Replace all the publications that contain the email to remove')
-    publications = client.get_all_notes(content={ 'authorids': email})
+    publications = client_v1.get_all_notes(content={ 'authorids': email})
     for publication in publications:
         authors = []
         authorids = []
@@ -47,24 +55,16 @@ def process(client, note, invitation):
                 'authors': authors,
                 'authorids': authorids
             }
-            client.post_note(openreview.Note(
+            client_v1.post_note(openreview.Note(
                 invitation=AUTHOR_RENAME_INVITATION_ID,
                 referent=publication.id, 
                 readers=publication.readers,
                 writers=[SUPPORT_USER_ID],
                 signatures=[SUPPORT_USER_ID],
                 content=content
-            ))
+            ))              
 
-    baseurl_v2 = 'http://localhost:3001'
-
-    if 'https://devapi' in client.baseurl:
-        baseurl_v2 = 'https://devapi2.openreview.net'
-    if 'https://api' in client.baseurl:
-        baseurl_v2 = 'https://api2.openreview.net'                
-
-    client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
-    publications = client_v2.get_all_notes(content={ 'authorids': email})
+    publications = client.get_all_notes(content={ 'authorids': email})
     for publication in publications:
         authors = []
         authorids = []
@@ -94,7 +94,7 @@ def process(client, note, invitation):
                 'authors': { 'value': authors },
                 'authorids': { 'value': authorids }
             }
-            client_v2.post_note_edit(
+            client.post_note_edit(
                 invitation = publication.domain + '/-/Edit',
                 readers = [publication.domain],
                 signatures = [SUPPORT_USER_ID],
@@ -134,11 +134,6 @@ def process(client, note, invitation):
             replace_group_members(group, email, profile.id)
 
     print('Post a profile reference to remove the email')
-    
-    group = client.get_group(email)
-    group.members = []
-    group.signatures = ['~Super_User1']
-    client.post_group(group)
     
     client.post_profile(openreview.Profile(
         referent = profile.id, 
