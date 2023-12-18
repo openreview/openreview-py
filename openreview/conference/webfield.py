@@ -95,35 +95,10 @@ class WebfieldBuilder(object):
 
     def set_expertise_selection_page(self, conference, invitation):
 
-        instructions = 'Please click on \"Include\" for papers that you do want to be used to represent your expertise' if conference.expertise_selection_stage.include_option else 'Please click on \"Exclude\" for papers that you do NOT want to be used to represent your expertise'
-        default_header = {
-            'title': conference.get_short_name() + ' Expertise Selection',
-            'instructions': '''
-                <p class=\"dark\">Listed below are all the papers you have authored that exist in the OpenReview database.
-                        <br>
-                        <br>
-                        <b>By default, we consider all of these papers to formulate your expertise. ''' + instructions + '''.</b>
-                        <br>
-                        <br>
-                        Your previously authored papers from selected conferences were imported automatically from <a href="https://dblp.org">DBLP.org</a>. The keywords in these papers will be used to rank submissions for you during the bidding process, and to assign submissions to you during the review process. If there are DBLP papers missing, you can add them by editing your <a href="/profile/edit">OpenReview profile</a> and then clicking on 'Add DBLP Papers to Profile'.
-                </p>
-                <br>
-                    Papers not automatically included as part of this import process can be uploaded by using the <b>Upload</b> button. Make sure that your email is part of the "authorids" field of the upload form. Otherwise the paper will not appear in the list, though it will be included in the recommendations process. Only upload papers co-authored by you.
-                <br>
-                <br>
-                <p class=\"dark\"> Please contact <a href=mailto:info@openreview.net>info@openreview.net</a> with any questions or concerns about this interface, or about the expertise scoring process.
-                </p>'''
-        }
-
-        header = self.__build_options(default_header, conference.get_expertise_selection_page_header())
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/expertiseBidWebfield.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
-            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
-            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
-            content = content.replace("var EXPERTISE_BID_ID = '';", "var EXPERTISE_BID_ID = '" + conference.get_expertise_selection_id() + "';")
 
             return self.__update_invitation(invitation, content)
 

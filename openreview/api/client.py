@@ -2371,6 +2371,7 @@ class Invitation(object):
         bulk = None,
         content = None,
         reply_forum_views = [],
+        responseArchiveDate = None,
         details = None):
 
         self.id = id
@@ -2396,6 +2397,7 @@ class Invitation(object):
         self.bulk = bulk
         self.details = details
         self.reply_forum_views = reply_forum_views
+        self.responseArchiveDate = responseArchiveDate
         self.web = web
         self.process = process
         self.preprocess = preprocess
@@ -2476,6 +2478,9 @@ class Invitation(object):
         if self.content:
             body['content'] = self.content
 
+        if self.responseArchiveDate:
+            body['responseArchiveDate'] = self.responseArchiveDate
+
         if  self.minReplies:
             body['minReplies']=self.minReplies
         if  self.maxReplies:
@@ -2530,6 +2535,7 @@ class Invitation(object):
             maxReplies = i.get('maxReplies'),
             details = i.get('details'),
             reply_forum_views = i.get('replyForumViews'),
+            responseArchiveDate = i.get('responseArchiveDate'),
             bulk = i.get('bulk')
             )
         if 'content' in i:
