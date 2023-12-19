@@ -1,5 +1,6 @@
 from .. import openreview
 from openreview.api import Group
+from openreview.journal.templates import *
 
 import os
 import json
@@ -176,12 +177,24 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
         action_editors_id = self.journal.get_action_editors_id()
         action_editor_group = openreview.tools.get_group(self.client, action_editors_id)
         if not action_editor_group:
+            content = {}
+            content['assignment_email_template_script'] = { 'value': ae_assignment_email_template }            
+            content['unassignment_email_template_script'] = { 'value': ae_unassignment_email_template }
+            content['eic_as_author_email_template_script'] = { 'value': ae_assignment_eic_as_author_email_template }
+            content['camera_ready_verification_email_template_script'] = { 'value': ae_camera_ready_verification_email_template }       
+            content['official_recommendation_starts_email_template_script'] = { 'value': ae_official_recommendation_starts_email_template }
+            content['official_recommendation_ends_email_template_script'] = { 'value': ae_official_recommendation_ends_email_template } 
+            content['discussion_starts_email_template_script'] = { 'value': ae_discussion_starts_email_template }
+            content['discussion_too_many_reviewers_email_template_script'] = { 'value': ae_discussion_too_many_reviewers_email_template }
+            content['reviewwer_assignment_starts_email_template_script'] = { 'value': ae_reviewer_assignment_starts_email_template }
             action_editor_group=self.post_group(Group(id=action_editors_id,
                             readers=['everyone'],
                             writers=[venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id],
-                            members=[]))
+                            members=[],
+                            content=content))
+
         with open(os.path.join(os.path.dirname(__file__), 'webfield/actionEditorWebfield.js')) as f:
             content = f.read()
             content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
@@ -263,12 +276,18 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
         reviewers_id = self.journal.get_reviewers_id()
         reviewer_group = openreview.tools.get_group(self.client, reviewers_id)
         if not reviewer_group:
+            content = {}
+            content['assignment_email_template_script'] = { 'value': reviewer_assignment_email_template }            
+            content['unassignment_email_template_script'] = { 'value': reviewer_unassignment_email_template }
+            content['discussion_starts_email_template_script'] = { 'value': reviewer_discussion_starts_email_template }
+            content['official_recommendation_starts_email_template_script'] = { 'value': reviewer_official_recommendation_starts_email_template }
             reviewer_group = Group(id=reviewers_id,
                             readers=[venue_id, action_editors_id, reviewers_id] + additional_committee,
                             writers=[venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id],
-                            members=[]
+                            members=[],
+                            content=content
                             )
         with open(os.path.join(os.path.dirname(__file__), 'webfield/reviewersWebfield.js')) as f:
             content = f.read()
@@ -356,12 +375,19 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
         authors_id = self.journal.get_authors_id()
         authors_group = openreview.tools.get_group(self.client, authors_id)
         if not authors_group:
+            content = {}
+            content['discussion_starts_email_template_script'] = { 'value': author_discussion_starts_email_template }            
+            content['decision_accept_as_is_email_template_script'] = { 'value': author_decision_accept_as_is_email_template }
+            content['decision_accept_revision_email_template_script'] = { 'value': author_decision_accept_revision_email_template }
+            content['decision_reject_email_template_script'] = { 'value': author_decision_reject_email_template }
+            content['desk_reject_email_template_script'] = { 'value': author_desk_reject_email_template }
             authors_group = Group(id=authors_id,
                             readers=[venue_id, authors_id],
                             writers=[venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id],
-                            members=[])
+                            members=[],
+                            content=content)
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/authorsWebfield.js')) as f:
             content = f.read()

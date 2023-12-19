@@ -46,47 +46,40 @@ def process(client, edit, invitation):
 
     ## Send email to authors
     print('Send email to authors')
+    author_group = client.get_group(journal.get_authors_id())
     if decision.content['recommendation']['value'] == 'Accept as is':
+        message=author_group.content['decision_accept_as_is_email_template_script']['value'].format(
+            short_name=journal.short_name,
+            submission_id=submission.id,
+            submission_number=submission.number,
+            submission_title=submission.content['title']['value'],
+            website=journal.website,
+            camera_ready_period_length=journal.get_camera_ready_period_length(),
+            camera_ready_duedate=duedate.strftime("%b %d"),
+            contact_info=journal.contact_info
+        )
         client.post_message(
             recipients=[journal.get_authors_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
-            message=f'''Hi {{{{fullname}}}},
-
-We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your {journal.short_name} submission "{submission.number}: {submission.content['title']['value']}" is accepted as is.
-
-To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={submission.id}. Please submit the final version of your paper within {journal.get_camera_ready_period_length()} weeks ({duedate.strftime("%b %d")}).
-
-In addition to your final manuscript, we strongly encourage you to submit a link to 1) code associated with your and 2) a short video presentation of your work. You can provide these links to the corresponding entries on the revision page.
-
-For more details and guidelines on the {journal.short_name} review process, visit {journal.website}.
-
-We thank you for your contribution to {journal.short_name} and congratulate you for your successful submission!
-
-The {journal.short_name} Editors-in-Chief
-''',
+            message=message,
             replyTo=journal.contact_info
         )
         return
 
     if decision.content['recommendation']['value'] == 'Accept with minor revision':
+        message=author_group.content['decision_accept_revision_email_template_script']['value'].format(
+            short_name=journal.short_name,
+            submission_id=submission.id,
+            submission_number=submission.number,
+            submission_title=submission.content['title']['value'],
+            website=journal.website,
+            camera_ready_period_length=journal.get_camera_ready_period_length(),
+            camera_ready_duedate=duedate.strftime("%b %d"),
+            contact_info=journal.contact_info
+        )        
         client.post_message(
             recipients=[journal.get_authors_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
-            message=f'''Hi {{{{fullname}}}},
-
-We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your {journal.short_name} submission "{submission.number}: {submission.content['title']['value']}" is accepted with minor revision.
-
-To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={submission.id}. Please submit the final version of your paper, including the minor revisions requested by the Action Editor, within {journal.get_camera_ready_period_length()} weeks ({duedate.strftime("%b %d")}).
-
-The Action Editor responsible for your submission will have provided a description of the revision expected for accepting your final manuscript.
-
-In addition to your final manuscript, we strongly encourage you to submit a link to 1) code associated with your and 2) a short video presentation of your work. You can provide these links to the corresponding entries on the revision page.
-
-For more details and guidelines on the {journal.short_name} review process, visit {journal.website}.
-
-We thank you for your contribution to {journal.short_name} and congratulate you for your successful submission!
-
-The {journal.short_name} Editors-in-Chief
-''',
+            message=message,
             replyTo=journal.contact_info
         )
