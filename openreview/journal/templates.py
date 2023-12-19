@@ -264,3 +264,10 @@ We thank you for your essential contribution to {short_name}!
 The {short_name} Editors-in-Chief
 note: replies to this email will go to the AE, {assigned_action_editor}.
 '''
+
+eic_new_submission_template = '''Hi {{{{fullname}}}},
+
+A new submission has been received for {short_name}.
+
+To view the submission, click here: https://openreview.net/forum?id={submission_id}
+'''
