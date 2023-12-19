@@ -77,22 +77,23 @@ def process(client, edit, invitation):
 
         ## Send email notifications to reviewers
         print('Send emails to reviewers')
+        reviewer_group = client.get_group(journal.get_reviewers_id())
+        message=reviewer_group.content['discussion_starts_email_template_script']['value'].format(
+            short_name=journal.short_name,
+            submission_id=submission.id,
+            submission_number=submission.number,
+            submission_title=submission.content['title']['value'],
+            website=journal.website,
+            number_of_reviewers=number_of_reviewers,
+            review_visibility=review_visibility,
+            discussion_period_length=journal.get_discussion_period_length(),
+            contact_info=journal.contact_info,
+            assigned_action_editor=assigned_action_editor.get_preferred_name(pretty=True)
+        )
         client.post_message(
             recipients=[journal.get_reviewers_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Start of author discussion for {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
-            message=f'''Hi {{{{fullname}}}},
-
-There are now {number_of_reviewers} reviews that have been submitted for your assigned submission "{submission.number}: {submission.content['title']['value']}" and all reviews have been made {review_visibility}. Please read the other reviews and start engaging with the authors (and possibly the other reviewers and AE) in order to address any concern you may have about the submission. Your goal should be to gather all the information you need **within the next {journal.get_discussion_period_length()} weeks** to be comfortable submitting a decision recommendation for this paper. You will receive an upcoming notification on how to enter your recommendation in OpenReview.
-
-You will find the OpenReview page for this submission at this link: https://openreview.net/forum?id={submission.id}
-
-For more details and guidelines on the {journal.short_name} review process, visit {journal.website}.
-
-We thank you for your essential contribution to {journal.short_name}!
-
-The {journal.short_name} Editors-in-Chief
-note: replies to this email will go to the AE, {assigned_action_editor.get_preferred_name(pretty=True)}.
-''',
+            message=message,
             replyTo=assigned_action_editor.get_preferred_email()
         )
 

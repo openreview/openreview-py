@@ -202,3 +202,65 @@ For more details and guidelines on the {short_name} review process, visit {websi
 
 The {short_name} Editors-in-Chief
 '''
+
+reviewer_assignment_email_template = '''Hi {{{{fullname}}}},
+
+With this email, we request that you submit, within {review_period_length} weeks ({review_duedate}) a review for your newly assigned {short_name} submission "{submission_number}: {submission_title}".{submission_length}
+
+Please acknowledge on OpenReview that you have received this review assignment by following this link: {ack_invitation_url}
+
+As a reminder, reviewers are **expected to accept all assignments** for submissions that fall within their expertise and annual quota ({reviewers_max_papers} papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another {short_name} submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).
+
+To submit your review, please follow this link: {invitation_url} or check your tasks in the Reviewers Console: https://openreview.net/group?id={venue_id}/Reviewers#reviewer-tasks
+
+Once submitted, your review will become privately visible to the authors and AE. Then, as soon as {number_of_reviewers} reviews have been submitted, all reviews will become {review_visibility}. For more details and guidelines on performing your review, visit {website}.
+
+We thank you for your essential contribution to {short_name}!
+
+The {short_name} Editors-in-Chief
+note: replies to this email will go to the AE, {assigned_action_editor}.
+'''
+
+reviewer_unassignment_email_template = '''Hi {{{{fullname}}}},
+
+We recently informed you that your help was requested to review a {short_name} submission "{submission_number}: {submission_title}".
+
+However, it was just determined that your help is no longer needed for this submission and you have been unassigned as a reviewer for it.
+
+If you have any questions, don't hesitate to reach out directly to the Action Editor (AE) for the submission, for example by leaving a comment readable by the AE only, on the OpenReview page for the submission: https://openreview.net/forum?id={submission_id}
+
+Apologies for the change and thank you for your continued involvement with {short_name}!
+
+The {short_name} Editors-in-Chief
+note: replies to this email will go to the AE, {assigned_action_editor}.
+'''
+
+reviewer_discussion_starts_email_template = '''Hi {{{{fullname}}}},
+
+There are now {number_of_reviewers} reviews that have been submitted for your assigned submission "{submission_number}: {submission_title}" and all reviews have been made {review_visibility}. Please read the other reviews and start engaging with the authors (and possibly the other reviewers and AE) in order to address any concern you may have about the submission. Your goal should be to gather all the information you need **within the next {discussion_period_length} weeks** to be comfortable submitting a decision recommendation for this paper. You will receive an upcoming notification on how to enter your recommendation in OpenReview.
+
+You will find the OpenReview page for this submission at this link: https://openreview.net/forum?id={submission_id}
+
+For more details and guidelines on the {short_name} review process, visit {website}.
+
+We thank you for your essential contribution to {short_name}!
+
+The {short_name} Editors-in-Chief
+note: replies to this email will go to the AE, {assigned_action_editor}.
+'''
+
+reviewer_official_recommendation_starts_email_template = '''Hi {{{{fullname}}}},
+
+Thank you for submitting your review and engaging with the authors of {short_name} submission "{submission_number}: {submission_title}".
+
+You may now submit your official recommendation for the submission. Before doing so, make sure you have sufficiently discussed with the authors (and possibly the other reviewers and AE) any concerns you may have about the submission.
+
+We ask that you submit your recommendation within {recommendation_period_length} weeks ({recommendation_duedate}). To do so, please follow this link: {invitation_url}
+
+For more details and guidelines on performing your review, visit {website}.
+
+We thank you for your essential contribution to {short_name}!
+
+The {short_name} Editors-in-Chief
+note: replies to this email will go to the AE, {assigned_action_editor}.
+'''

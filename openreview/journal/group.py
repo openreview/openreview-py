@@ -276,12 +276,18 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
         reviewers_id = self.journal.get_reviewers_id()
         reviewer_group = openreview.tools.get_group(self.client, reviewers_id)
         if not reviewer_group:
+            content = {}
+            content['assignment_email_template_script'] = { 'value': reviewer_assignment_email_template }            
+            content['unassignment_email_template_script'] = { 'value': reviewer_unassignment_email_template }
+            content['discussion_starts_email_template_script'] = { 'value': reviewer_discussion_starts_email_template }
+            content['official_recommendation_starts_email_template_script'] = { 'value': reviewer_official_recommendation_starts_email_template }
             reviewer_group = Group(id=reviewers_id,
                             readers=[venue_id, action_editors_id, reviewers_id] + additional_committee,
                             writers=[venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id],
-                            members=[]
+                            members=[],
+                            content=content
                             )
         with open(os.path.join(os.path.dirname(__file__), 'webfield/reviewersWebfield.js')) as f:
             content = f.read()
