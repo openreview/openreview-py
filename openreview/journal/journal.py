@@ -425,6 +425,9 @@ class Journal(object):
     def are_authors_anonymous(self):
         return self.settings.get('author_anonymity', True)
     
+    def should_eic_submission_notification(self):
+        return self.settings.get('eic_submission_notification', False)
+    
     def should_skip_ac_recommendation(self):
         return self.settings.get('skip_ac_recommendation', False)
     

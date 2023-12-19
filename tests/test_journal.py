@@ -86,6 +86,7 @@ class TestJournal():
                             'submission_public': True,
                             'assignment_delay': 5,
                             'submission_name': 'Submission',
+                            'eic_submission_notification': False,
                             'certifications': [
                                 'Featured Certification',
                                 'Reproducibility Certification',
