@@ -1,23 +1,23 @@
-def process(client, note, invitation):
+def process(client, edit, invitation):
 
     SUPPORT_USER_ID = ''
     AUTHOR_RENAME_INVITATION_ID = ''
-    request_note = client.get_note(note.referent)
-    usernames = request_note.content['usernames']
+    request_note = client.get_note(edit.note.id)
+    usernames = request_note.content['usernames']['value']
     profile = client.get_profile(usernames[0])
     preferred_id = profile.get_preferred_name()
     preferred_name = profile.get_preferred_name(pretty=True)
     
-    if 'Rejected' == request_note.content['status']:
+    if 'Rejected' == request_note.content['status']['value']:
         client.post_message(subject='Profile name removal request has been rejected', 
         recipients=[profile.id], 
         message=f'''Hi {{{{fullname}}}},
 
-We have received your request to remove the name "{request_note.content['name']}" from your profile: https://openreview.net/profile?id={profile.id}.
+We have received your request to remove the name "{request_note.content['name']['value']}" from your profile: https://openreview.net/profile?id={profile.id}.
 
 We can not remove the name from the profile for the following reason:
 
-{request_note.content['support_comment']}
+{request_note.content['support_comment']['value']}
 
 Regards,
 
@@ -25,14 +25,22 @@ The OpenReview Team.
 ''')
         return       
 
+    baseurl_v1 = 'http://localhost:3000'
+
+    if 'https://devapi' in client.baseurl:
+        baseurl_v1 = 'https://devapi.openreview.net'
+    if 'https://api' in client.baseurl:
+        baseurl_v1 = 'https://api.openreview.net'                
+
+    client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
+
     def replace_group_members(group, current_member, new_member):
         if group.domain is not None:
-            client_v2.remove_members_from_group(group.id, current_member)
-            client_v2.add_members_to_group(group.id, new_member)
-        else:
             client.remove_members_from_group(group.id, current_member)
             client.add_members_to_group(group.id, new_member)
-
+        else:
+            client_v1.remove_members_from_group(group.id, current_member)
+            client_v1.add_members_to_group(group.id, new_member)
 
     for username in usernames:
         print('Check if we need to rename the profile')
@@ -40,7 +48,7 @@ The OpenReview Team.
             profile = client.rename_profile(profile.id, profile.get_preferred_name())
         
         print('Replace all the publications that contain the name to remove')
-        publications = client.get_all_notes(content={ 'authorids': username})
+        publications = client_v1.get_all_notes(content={ 'authorids': username})
         for publication in publications:
             authors = []
             authorids = []
@@ -61,7 +69,7 @@ The OpenReview Team.
                 }
                 if '_bibtex' in publication.content:
                     content['_bibtex'] = publication.content['_bibtex'].replace(openreview.tools.pretty_id(username), preferred_name)                
-                client.post_note(openreview.Note(
+                client_v1.post_note(openreview.Note(
                     invitation=AUTHOR_RENAME_INVITATION_ID,
                     referent=publication.id, 
                     readers=publication.readers,
@@ -70,15 +78,8 @@ The OpenReview Team.
                     content=content
                 ))
 
-        baseurl_v2 = 'http://localhost:3001'
 
-        if 'https://devapi' in client.baseurl:
-            baseurl_v2 = 'https://devapi2.openreview.net'
-        if 'https://api' in client.baseurl:
-            baseurl_v2 = 'https://api2.openreview.net'                
-
-        client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
-        publications = client_v2.get_all_notes(content={ 'authorids': username})
+        publications = client.get_all_notes(content={ 'authorids': username})
         for publication in publications:
             authors = []
             authorids = []
@@ -110,7 +111,7 @@ The OpenReview Team.
                 }
                 if '_bibtex' in publication.content:
                     content['_bibtex'] = { 'value': publication.content['_bibtex']['value'].replace(openreview.tools.pretty_id(username), preferred_name) }
-                client_v2.post_note_edit(
+                client.post_note_edit(
                     invitation = publication.domain + '/-/Edit',
                     readers = [publication.domain],
                     signatures = [SUPPORT_USER_ID],
@@ -122,7 +123,7 @@ The OpenReview Team.
                         signatures=signatures
                 ))
                 ## check invitations must be updated
-                invitations = client_v2.get_invitations(replyForum=publication.id, expired=True)
+                invitations = client.get_invitations(replyForum=publication.id, expired=True)
                 for invitation in invitations:
                     invitation_content = invitation.edit['note'].get('content', {})
                     if invitation.edit['note'].get('id') == publication.id and 'authorids' in invitation_content and username in invitation_content['authorids'].get('value', []):
@@ -142,7 +143,7 @@ The OpenReview Team.
                         
                         if needs_change:
                             print('Updating invitation', invitation.id)
-                            client_v2.post_invitation_edit(
+                            client.post_invitation_edit(
                                 invitations = publication.domain + '/-/Edit',
                                 readers = [publication.domain],
                                 signatures = [SUPPORT_USER_ID],
@@ -160,7 +161,7 @@ The OpenReview Team.
                             )
         
         print('Change all the notes that contain the name to remove as signatures')
-        signed_notes = client.get_all_notes(signature=username)
+        signed_notes = client_v1.get_all_notes(signature=username)
         for note in signed_notes:
             signatures = []
             for signature in note.signatures:
@@ -186,11 +187,11 @@ The OpenReview Team.
             note.writers = writers
             ## catch the error, some notes may not match with the invitation
             try:
-                client.post_note(note)
+                client_v1.post_note(note)
             except Exception as e:
                 print(f'note id {note.id} not updated: {e}')
 
-        signed_notes = client_v2.get_all_notes(signature=username)
+        signed_notes = client.get_all_notes(signature=username)
         for note in signed_notes:
             signatures = []
             for signature in note.signatures:
@@ -213,7 +214,7 @@ The OpenReview Team.
                     writers.append(writer)
             ## catch the error, some notes may not match with the invitation
             try:
-                client_v2.post_note_edit(
+                client.post_note_edit(
                     invitation = note.domain + '/-/Edit',
                     readers = [note.domain],
                     signatures = [SUPPORT_USER_ID],
@@ -282,11 +283,6 @@ The OpenReview Team.
             if username == name.get('username'):
                 requested_name = name
         
-        group = client.get_group(username)
-        group.members = []
-        group.signatures = ['~Super_User1']
-        client.post_group(group)
-        
         client.post_profile(openreview.Profile(
             referent = profile.id, 
             invitation = '~/-/invitation',
@@ -308,7 +304,7 @@ The OpenReview Team.
     recipients=[profile.id], 
     message=f'''Hi {{{{fullname}}}},
 
-We have received your request to remove the name "{request_note.content['name']}" from your profile: https://openreview.net/profile?id={profile.id}.
+We have received your request to remove the name "{request_note.content['name']['value']}" from your profile: https://openreview.net/profile?id={profile.id}.
 
 The name has been removed from your profile. Please check that the information listed in your profile is correct.
 
