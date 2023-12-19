@@ -1907,6 +1907,11 @@ class InvitationBuilder(object):
         only_accepted = revision_stage.only_accepted
         content = revision_stage.get_content(api_version='2', conference=self.venue)
 
+        hidden_field_names = self.venue.submission_stage.get_hidden_field_names()
+        for field in content:
+            if field in hidden_field_names:
+                content[field]['readers'] = [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
+
         invitation = Invitation(id=revision_invitation_id,
             invitees=[venue_id],
             readers=[venue_id],

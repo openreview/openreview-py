@@ -115,6 +115,18 @@ class TestNeurIPSConference():
         assert 'authors' in post_submission.edit['note']['content']
         assert 'authorids' in post_submission.edit['note']['content']
 
+        revision =  openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Revision')
+        assert 'readers' in revision.edit['note']['content']['authors']
+        assert  revision.edit['note']['content']['authors']['readers'] == [
+            "thecvf.com/CVPR/2024/Conference",
+            "thecvf.com/CVPR/2024/Conference/Submission1/Authors"
+        ]
+        assert 'readers' in revision.edit['note']['content']['authorids']
+        assert  revision.edit['note']['content']['authorids']['readers'] == [
+            "thecvf.com/CVPR/2024/Conference",
+            "thecvf.com/CVPR/2024/Conference/Submission1/Authors"
+        ]
+
     def test_revision(self, client, openreview_client, selenium, request_page, helpers):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
