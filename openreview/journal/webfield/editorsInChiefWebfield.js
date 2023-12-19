@@ -188,6 +188,7 @@ var loadData = function() {
     Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME, { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME + '/Archived', { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true}),
+    Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Archived', { withProfiles: true}),
     Webfield2.api.getAll('/invitations', {
       prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
       type: 'all',
@@ -228,6 +229,7 @@ var formatData = function(
   actionEditors,
   archivedActionEditors,
   reviewers,
+  archivedReviewers,
   invitationsById,
   superInvitationIds,
   reviewerInvitationIds,
@@ -237,13 +239,13 @@ var formatData = function(
   var referrerUrl = encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#paper-status)');
 
   var reviewerStatusById = {};
-  reviewers.members.forEach(function(reviewer, index) {
+  var getReviewerStatus = function(reviewer, index, isArchived) {
     var responsibility = responsibilityNotes.find(function(reply) {
       return reply.invitations[0] === REVIEWERS_ID + '/-/' + reviewer.id + '/' + RESPONSIBILITY_ACK_NAME;
     });
     var reviewerReports = reviewerReportByReviewerId[reviewer.id] || [];
 
-    reviewerStatusById[reviewer.id] = {
+    return {
       index: { number: index + 1 },
       summary: {
         id: reviewer.id,
@@ -253,7 +255,8 @@ var formatData = function(
           Profile: reviewer.id.startsWith('~') ? 'Yes' : 'No',
           Publications: '-',
           'Responsibility Acknowledgement': responsibility ? 'Yes' : 'No',
-          'Reviewer Report': reviewerReports.length
+          'Reviewer Report': reviewerReports.length,
+          Archived: isArchived ? 'Yes' : 'No'
         }
       },
       reviewerProgressData: {
@@ -274,6 +277,13 @@ var formatData = function(
         referrer: referrerUrl
       }
     };
+  }
+  reviewers.members.forEach(function(reviewer, index) {
+    reviewerStatusById[reviewer.id] = getReviewerStatus(reviewer, index, false);
+  });
+
+  (archivedReviewers?.members || []).forEach(function(reviewer, index) {
+    reviewerStatusById[reviewer.id] = getReviewerStatus(reviewer, index, true);
   });
 
   var actionEditorStatusById = {};
