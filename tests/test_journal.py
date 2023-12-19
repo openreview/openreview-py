@@ -124,6 +124,7 @@ class TestJournal():
                             'camera_ready_period': 4,
                             'camera_ready_verification_period': 1,
                             'archived_action_editors': True,
+                            'archived_reviewers': True,
                             'expert_reviewers': True,
                             'official_recommendation_additional_fields': {
                                 'pilot_recommendation_to_iclr_track': {
@@ -209,6 +210,7 @@ class TestJournal():
             "Expert Certification"
         ]
         assert 'expert_reviewers' in invitation.edit['note']['content']
+        assert openreview_client.get_group('TMLR/Reviewers/Archived')
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
@@ -4525,6 +4527,10 @@ note={Under review}
         ))
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        ## Archive David
+        raia_client.remove_members_from_group(raia_client.get_group('TMLR/Reviewers'), '~David_Belanger1')
+        raia_client.add_members_to_group(raia_client.get_group('TMLR/Reviewers/Archived'), '~David_Belanger1')
 
         ## Carlos Mondragon
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',

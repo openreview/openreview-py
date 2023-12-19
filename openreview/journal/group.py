@@ -300,6 +300,29 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             reviewer_group.web = content
             self.post_group(reviewer_group)
 
+        ## archived reviewers group
+        if self.journal.has_archived_reviewers:
+            archived_reviewers_id = self.journal.get_reviewers_archived_id()
+            reviewer_group = openreview.tools.get_group(self.client, archived_reviewers_id)
+            if not reviewer_group:
+                reviewer_group = Group(id=archived_reviewers_id,
+                                readers=[venue_id, action_editors_id, archived_reviewers_id] + additional_committee,
+                                writers=[venue_id],
+                                signatures=[venue_id],
+                                signatories=[venue_id],
+                                members=[]
+                                )
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/reviewersWebfield.js')) as f:
+                content = f.read()
+                content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
+                content = content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{self.journal.short_name}";')
+                content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + self.journal.get_author_submission_id() + "';")
+                content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + self.journal.action_editors_name + "';")
+                content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + self.journal.reviewers_name + "';")
+                content = content.replace("var WEBSITE = '';", "var WEBSITE = '" + self.journal.website + "';")
+                reviewer_group.web = content
+                self.post_group(reviewer_group)
+
         ## reviewers invited group
         reviewers_invited_id = f'{reviewers_id}/Invited'
         reviewers_invited_group = openreview.tools.get_group(self.client, reviewers_invited_id)
