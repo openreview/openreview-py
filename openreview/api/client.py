@@ -1222,7 +1222,7 @@ class OpenReviewClient(object):
 
         return list(tools.efficient_iterget(self.get_notes, desc='Getting V2 Notes', **params))
 
-    def get_note_edit(self, id):
+    def get_note_edit(self, id, trash=None):
         """
         Get a single edit by id if available
 
@@ -1232,12 +1232,12 @@ class OpenReviewClient(object):
         :return: edit matching the passed id
         :rtype: Note
         """
-        response = self.session.get(self.note_edits_url, params = {'id':id}, headers = self.headers)
+        response = self.session.get(self.note_edits_url, params = {'id':id, 'trash': 'true' if trash == True else 'false'}, headers = self.headers)
         response = self.__handle_response(response)
         n = response.json()['edits'][0]
         return Edit.from_json(n)
 
-    def get_note_edits(self, note_id = None, invitation = None, with_count=False, sort=None):
+    def get_note_edits(self, note_id = None, invitation = None, with_count=False, sort=None, trash=None):
         """
         Gets a list of edits for a note. The edits that will be returned match all the criteria passed in the parameters.
 
@@ -1251,6 +1251,7 @@ class OpenReviewClient(object):
             params['invitation'] = invitation
         if sort:
             params['sort'] = sort
+        params['trash'] = 'true' if trash == True else 'false'
 
         response = self.session.get(self.note_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
