@@ -115,18 +115,6 @@ class TestNeurIPSConference():
         assert 'authors' in post_submission.edit['note']['content']
         assert 'authorids' in post_submission.edit['note']['content']
 
-        revision =  openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Revision')
-        assert 'readers' in revision.edit['note']['content']['authors']
-        assert  revision.edit['note']['content']['authors']['readers'] == [
-            "thecvf.com/CVPR/2024/Conference",
-            "thecvf.com/CVPR/2024/Conference/Submission1/Authors"
-        ]
-        assert 'readers' in revision.edit['note']['content']['authorids']
-        assert  revision.edit['note']['content']['authorids']['readers'] == [
-            "thecvf.com/CVPR/2024/Conference",
-            "thecvf.com/CVPR/2024/Conference/Submission1/Authors"
-        ]
-
     def test_revision(self, client, openreview_client, selenium, request_page, helpers):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
@@ -917,6 +905,16 @@ If you would like to change your decision, please follow the link in the previou
         revision_inv =  test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Revision')
         assert revision_inv
         assert ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Submission5/Authors'] == revision_inv.readers
+        assert 'readers' in revision_inv.edit['note']['content']['authors']
+        assert  revision_inv.edit['note']['content']['authors']['readers'] == [
+            "NeurIPS.cc/2023/Conference",
+            "NeurIPS.cc/2023/Conference/Submission5/Authors"
+        ]
+        assert 'readers' in revision_inv.edit['note']['content']['authorids']
+        assert  revision_inv.edit['note']['content']['authorids']['readers'] == [
+            "NeurIPS.cc/2023/Conference",
+            "NeurIPS.cc/2023/Conference/Submission5/Authors"
+        ]
 
         post_submission =  openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Post_Submission')
         assert 'authors' in post_submission.edit['note']['content']
@@ -986,6 +984,19 @@ If you would like to change your decision, please follow the link in the previou
                 }
             ))
         helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
+
+        note_edits = openreview_client.get_note_edits(invitation='NeurIPS.cc/2023/Conference/Submission2/-/Revision')
+        assert len(note_edits) == 1
+        assert 'readers' in note_edits[0].note.content['authors']
+        assert  note_edits[0].note.content['authors']['readers'] == [
+        "NeurIPS.cc/2023/Conference",
+        "NeurIPS.cc/2023/Conference/Submission2/Authors"
+        ]
+        assert 'readers' in note_edits[0].note.content['authors']
+        assert  note_edits[0].note.content['authors']['readers'] == [
+        "NeurIPS.cc/2023/Conference",
+        "NeurIPS.cc/2023/Conference/Submission2/Authors"
+        ]
 
         ## update submission
         revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission4/-/Revision',
