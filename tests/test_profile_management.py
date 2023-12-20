@@ -14,53 +14,13 @@ class TestProfileManagement():
 
     
     @pytest.fixture(scope="class")
-    def profile_management(self, client, openreview_client):
-        profile_management = ProfileManagement(client, 'openreview.net')
+    def profile_management(self, openreview_client):
+        profile_management = ProfileManagement(openreview_client, 'openreview.net')
         profile_management.setup()
         return profile_management
     
     def test_import_dblp_notes(self, client, openreview_client, profile_management, test_client, helpers):
 
-        note = test_client.post_note(
-            openreview.Note(
-                invitation='dblp.org/-/record',
-                readers=['everyone'],
-                writers=['dblp.org'],
-                signatures=['~SomeFirstName_User1'],
-                content={
-                    'dblp': '<article key=\"journals/iotj/WangJWSGZ23\" mdate=\"2023-04-16\">\n<author orcid=\"0000-0003-4015-0348\" pid=\"188/7759-93\">Chao Wang 0093</author>\n              <author orcid=\"0000-0002-3703-121X\" pid=\"00/8334\">Chunxiao Jiang</author>\n<author orcid=\"0000-0003-3170-8952\" pid=\"62/2631-1\">Jingjing Wang 0001</author>\n<author orcid=\"0000-0002-7558-5379\" pid=\"66/800\">Shigen Shen</author>\n<author orcid=\"0000-0001-9831-2202\" pid=\"01/267-1\">Song Guo 0001</author>\n<author orcid=\"0000-0002-0990-5581\" pid=\"24/9047\">Peiying Zhang</author>\n<title>Blockchain-Aided Network Resource Orchestration in Intelligent Internet of Things.</title>\n<pages>6151-6163</pages>\n<year>2023</year>\n<month>April 1</month>\n<volume>10</volume>\n<journal>IEEE Internet Things J.</journal>\n<number>7</number>\n<ee>https://doi.org/10.1109/JIOT.2022.3222911</ee>\n<url>db/journals/iotj/iotj10.html#WangJWSGZ23</url>\n</article>'
-                }
-            )
-        )
-
-        helpers.await_queue()
-
-        note = test_client.get_note(note.id)
-        assert note.content['title'] == 'Blockchain-Aided Network Resource Orchestration in Intelligent Internet of Things'
-        assert datetime.datetime.fromtimestamp(note.cdate/1000).year == 2023
-        assert datetime.datetime.fromtimestamp(note.cdate/1000).month == 4
-
-        note = test_client.post_note(
-            openreview.Note(
-                invitation='dblp.org/-/record',
-                readers=['everyone'],
-                writers=['dblp.org'],
-                signatures=['~SomeFirstName_User1'],
-                content={
-                    'dblp': '<article key=\"journals/iotj/WittHTSL23\" mdate=\"2023-02-25\">\n<author orcid=\"0000-0002-9984-3213\" pid=\"295/9513\">Leon Witt</author>\n<author pid=\"320/8197\">Mathis Heyer</author>\n<author orcid=\"0000-0002-6233-3121\" pid=\"45/10835\">Kentaroh Toyoda</author>\n<author orcid=\"0000-0002-6283-3265\" pid=\"79/9736\">Wojciech Samek</author>\n<author orcid=\"0000-0002-7581-8865\" pid=\"48/4185-1\">Dan Li 0001</author>\n<title>Decentral and Incentivized Federated Learning Frameworks: A Systematic Literature Review.</title>\n<pages>3642-3663</pages>\n<year>2023</year>\n<month>February 15</month>\n<volume>10</volume>\n<journal>IEEE Internet Things J.</journal>\n<number>4</number>\n<ee>https://doi.org/10.1109/JIOT.2022.3231363</ee>\n<url>db/journals/iotj/iotj10.html#WittHTSL23</url>\n</article>'
-                }
-            )
-        )
-
-
-        helpers.await_queue()
-
-        note = test_client.get_note(note.id)
-        assert note.content['title'] == 'Decentral and Incentivized Federated Learning Frameworks: A Systematic Literature Review'
-        assert datetime.datetime.fromtimestamp(note.cdate/1000).year == 2023
-        assert datetime.datetime.fromtimestamp(note.cdate/1000).month == 2 
-
-        ## test API2
         test_client_v2 = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
         edit = test_client_v2.post_note_edit(
@@ -99,7 +59,7 @@ class TestProfileManagement():
         assert 'venueid' in note.content
         assert 'html' in note.content
 
-        andrew_client_v2 = helpers.create_user('mccallum@profile.org', 'Andrew', 'McCallum', alternates=[], institution='google.com')
+        andrew_client = helpers.create_user('mccallum@profile.org', 'Andrew', 'McCallum', alternates=[], institution='google.com')
 
         xml = '''<inproceedings key="conf/acl/ChangSRM23" mdate="2023-08-10">
 <author pid="130/1022">Haw-Shiuan Chang</author>
@@ -117,7 +77,7 @@ class TestProfileManagement():
 </inproceedings>
 '''
 
-        edit = andrew_client_v2.post_note_edit(
+        edit = andrew_client.post_note_edit(
             invitation = 'DBLP.org/-/Record',
             signatures = ['~Andrew_McCallum1'],
             content = {
@@ -145,7 +105,7 @@ class TestProfileManagement():
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
-        note = andrew_client_v2.get_note(edit['note']['id'])
+        note = andrew_client.get_note(edit['note']['id'])
         assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit']
         assert note.cdate
         assert note.pdate
@@ -168,9 +128,9 @@ class TestProfileManagement():
             "~Andrew_McCallum1"
         ]
 
-        haw_shiuan_client_v2 = helpers.create_user('haw@profile.org', 'Haw-Shiuan', 'Chang', alternates=[], institution='umass.edu')
+        haw_shiuan_client = helpers.create_user('haw@profile.org', 'Haw-Shiuan', 'Chang', alternates=[], institution='umass.edu')
 
-        edit = haw_shiuan_client_v2.post_note_edit(
+        edit = haw_shiuan_client.post_note_edit(
             invitation = 'DBLP.org/-/Author_Coreference',
             signatures = ['~Haw-Shiuan_Chang1'],
             note = openreview.api.Note(
@@ -185,7 +145,7 @@ class TestProfileManagement():
             )
         )
 
-        note = haw_shiuan_client_v2.get_note(edit['note']['id'])
+        note = haw_shiuan_client.get_note(edit['note']['id'])
         assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference']
         assert note.cdate
         assert note.mdate
@@ -204,7 +164,7 @@ class TestProfileManagement():
         ]
 
         with pytest.raises(openreview.OpenReviewException, match=r'Only author replacement is allowed'):
-            edit = haw_shiuan_client_v2.post_note_edit(
+            edit = haw_shiuan_client.post_note_edit(
                 invitation = 'DBLP.org/-/Author_Coreference',
                 signatures = ['~Haw-Shiuan_Chang1'],
                 note = openreview.api.Note(
@@ -223,7 +183,7 @@ class TestProfileManagement():
             )
 
         with pytest.raises(openreview.OpenReviewException, match=r'The author name to replace doesn\'t match with the names listed in your profile'):
-            edit = haw_shiuan_client_v2.post_note_edit(
+            edit = haw_shiuan_client.post_note_edit(
                 invitation = 'DBLP.org/-/Author_Coreference',
                 signatures = ['~Haw-Shiuan_Chang1'],
                 note = openreview.api.Note(
@@ -239,7 +199,7 @@ class TestProfileManagement():
             )
 
         with pytest.raises(openreview.OpenReviewException, match=r'Your name doesn\'t match with the author name in the paper'):
-            edit = haw_shiuan_client_v2.post_note_edit(
+            edit = haw_shiuan_client.post_note_edit(
                 invitation = 'DBLP.org/-/Author_Coreference',
                 signatures = ['~Haw-Shiuan_Chang1'],
                 note = openreview.api.Note(
@@ -272,7 +232,7 @@ class TestProfileManagement():
             )
 
         with pytest.raises(openreview.OpenReviewException, match=r'index must be <= 3'):
-            edit = haw_shiuan_client_v2.post_note_edit(
+            edit = haw_shiuan_client.post_note_edit(
                 invitation = 'DBLP.org/-/Author_Coreference',
                 signatures = ['~Haw-Shiuan_Chang1'],
                 note = openreview.api.Note(
@@ -287,7 +247,7 @@ class TestProfileManagement():
                 )
             )             
 
-        edit = haw_shiuan_client_v2.post_note_edit(
+        edit = haw_shiuan_client.post_note_edit(
             invitation = 'DBLP.org/-/Author_Coreference',
             signatures = ['~Haw-Shiuan_Chang1'],
             note = openreview.api.Note(
@@ -303,7 +263,7 @@ class TestProfileManagement():
         )
 
         with pytest.raises(openreview.OpenReviewException, match=r'The author name to remove doesn\'t match with the names listed in your profile'):
-            edit = andrew_client_v2.post_note_edit(
+            edit = andrew_client.post_note_edit(
                 invitation = 'DBLP.org/-/Author_Coreference',
                 signatures = ['~Andrew_McCallum1'],
                 note = openreview.api.Note(
@@ -319,7 +279,7 @@ class TestProfileManagement():
             )
 
         with pytest.raises(openreview.OpenReviewException, match=r'index must be <= 3'):
-            edit = andrew_client_v2.post_note_edit(
+            edit = andrew_client.post_note_edit(
                 invitation = 'DBLP.org/-/Author_Coreference',
                 signatures = ['~Andrew_McCallum1'],
                 note = openreview.api.Note(
@@ -334,7 +294,7 @@ class TestProfileManagement():
                 )
             )                        
 
-        note = haw_shiuan_client_v2.get_note(edit['note']['id'])
+        note = haw_shiuan_client.get_note(edit['note']['id'])
         assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference']
         assert note.cdate
         assert note.mdate
@@ -365,7 +325,7 @@ class TestProfileManagement():
             )
         )
 
-        note = haw_shiuan_client_v2.get_note(edit['note']['id'])
+        note = haw_shiuan_client.get_note(edit['note']['id'])
         assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference', 'DBLP.org/-/Abstract']
         assert note.content['abstract']['value'] == 'this is an abstract'
    

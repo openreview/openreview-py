@@ -5,15 +5,7 @@ class ProfileManagement():
 
     def __init__(self, client, super_user):
 
-        baseurl_v2 = 'http://localhost:3001'
-
-        if 'https://devapi' in client.baseurl:
-            baseurl_v2 = 'https://devapi2.openreview.net'
-        if 'https://api' in client.baseurl:
-            baseurl_v2 = 'https://api2.openreview.net'
-
         self.client = client
-        self.client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)        
         self.super_user = super_user
         self.support_group_id = f'{self.super_user}/Support'
         self.author_rename_invitation_id = f'{self.support_group_id}/-/Author_Rename'
@@ -28,149 +20,12 @@ class ProfileManagement():
 
     def set_dblp_invitations(self):
 
-        dblp_group = openreview.tools.get_group(self.client, 'dblp.org')
-        if dblp_group is None:
-            self.client.post_group(
-                openreview.Group(
-                    id = 'dblp.org',
-                    readers = ['everyone'],
-                    writers = ['dblp.org'],
-                    nonreaders = [],
-                    signatures = ['~Super_User1'],
-                    signatories = ['dblp.org'],
-                    members = []
-                )
-            )
-
-        dblp_upload_group = openreview.tools.get_group(self.client, 'dblp.org/upload')
-        if dblp_upload_group is None:
-            self.client.post_group(
-                openreview.Group(
-                    id = 'dblp.org/upload',
-                    readers = ['dblp.org/upload'],
-                    writers = ['dblp.org'],
-                    nonreaders = [],
-                    signatures = ['dblp.org'],
-                    signatories = ['dblp.org'],
-                    members = [
-                        self.support_group_id
-                    ]
-                )
-            )            
-
-        content = {
-            "dblp": {
-                "value-regex": "(.*\\n)+.*"
-            }
-        }
-
-        self.client.post_invitation(openreview.Invitation(
-            id='dblp.org/-/record',
-            readers=['everyone'],
-            writers=['dblp.org'],
-            signatures=['dblp.org'],
-            invitees=['~'],
-            transform=os.path.join(os.path.dirname(__file__), 'process/dblp_transform.js'),
-            reply={
-                'readers': {
-                    'values': ['everyone']
-                },
-                'writers': {
-                    'values':['dblp.org'],
-                },
-                'signatures': {
-                    'values-regex': "dblp.org|~.*"
-                },
-                'content': content
-            }
-        ))
-
-        self.client.post_invitation(openreview.Invitation(
-            id='dblp.org/-/author_coreference',
-            readers=['everyone'],
-            writers=['dblp.org'],
-            signatures=['dblp.org'],
-            invitees=['~'],
-            reply={
-                'referentInvitation': 'dblp.org/-/record',
-                'readers': {
-                    'values': ['everyone']
-                },
-                'writers': {
-                    'values':[],
-                },
-                'signatures': {
-                    'values-regex': "dblp.org|~.*"
-                },
-                "content": {
-                    "authorids": {
-                        "values-regex": ".*"
-                    },
-                    "authors": {
-                        "values-regex": ".*",
-                        "required": False
-                    }
-                }
-            }
-        ))
-
-        self.client.post_invitation(openreview.Invitation(
-            id='dblp.org/-/abstract',
-            readers=['everyone'],
-            writers=['dblp.org'],
-            signatures=['dblp.org'],
-            invitees=['~'],
-            reply={
-                'referentInvitation': 'dblp.org/-/record',
-                'readers': {
-                    'values': ['everyone']
-                },
-                'writers': {
-                    'values':[],
-                },
-                'signatures': {
-                    'values': ["dblp.org"]
-                },
-                "content": {
-                    "abstract": {
-                        "value-regex": "[\\S\\s]{1,5000000}"
-                    }
-                }
-            }
-        ))
-
-        self.client.post_invitation(openreview.Invitation(
-            id='dblp.org/-/pdf',
-            readers=['everyone'],
-            writers=['dblp.org'],
-            signatures=['dblp.org'],
-            invitees=['~'],
-            reply={
-                'referentInvitation': 'dblp.org/-/record',
-                'readers': {
-                    'values': ['everyone']
-                },
-                'writers': {
-                    'values':[],
-                },
-                'signatures': {
-                    'values': ["dblp.org"]
-                },
-                "content": {
-                    "pdf": {
-                        "value-regex": "^https?://.+$"
-                    }
-                }
-            }
-        ))                
-
-        ## set API 2 groups and invitations
         dblp_group_id = 'DBLP.org'
         dblp_uploader_group_id = f'{dblp_group_id}/Uploader'
 
         dblp_group = openreview.tools.get_group(self.client, dblp_group_id)
         if dblp_group is None:
-            self.client_v2.post_group_edit(
+            self.client.post_group_edit(
                 invitation = f'{self.super_user}/-/Edit',
                 signatures = [self.super_user],
                 group = openreview.api.Group(
@@ -185,7 +40,7 @@ class ProfileManagement():
             )
 
         meta_invitation_id = f'{dblp_group_id}/-/Edit'
-        self.client_v2.post_invitation_edit(
+        self.client.post_invitation_edit(
             invitations = None,
             signatures = [self.super_user],
             invitation = openreview.api.Invitation(
@@ -199,7 +54,7 @@ class ProfileManagement():
 
         dblp_uploader_group = openreview.tools.get_group(self.client, dblp_uploader_group_id)
         if dblp_uploader_group is None:
-            self.client_v2.post_group_edit(
+            self.client.post_group_edit(
                 invitation = meta_invitation_id,
                 signatures = [dblp_group_id],
                 group = openreview.api.Group(
@@ -217,7 +72,7 @@ class ProfileManagement():
         with open(os.path.join(os.path.dirname(__file__), 'process/dblp_record_process.js'), 'r') as f:
             file_content = f.read()
 
-        self.client_v2.post_invitation_edit(
+        self.client.post_invitation_edit(
             invitations = meta_invitation_id,
             signatures = [dblp_group_id],
             invitation = openreview.api.Invitation(
@@ -311,7 +166,7 @@ class ProfileManagement():
         with open(os.path.join(os.path.dirname(__file__), 'process/dblp_author_coreference_pre_process.js'), 'r') as f:
             file_content = f.read()
 
-        self.client_v2.post_invitation_edit(
+        self.client.post_invitation_edit(
             invitations = meta_invitation_id,
             signatures = [dblp_group_id],
             invitation = openreview.api.Invitation(
@@ -356,7 +211,7 @@ class ProfileManagement():
 
         abstract_invitation_id = f'{dblp_group_id}/-/Abstract'
         
-        self.client_v2.post_invitation_edit(
+        self.client.post_invitation_edit(
             invitations = meta_invitation_id,
             signatures = [dblp_group_id],
             invitation = openreview.api.Invitation(
@@ -439,7 +294,7 @@ class ProfileManagement():
                 
             with open(os.path.join(os.path.dirname(__file__), 'process/request_remove_name_pre_process.py'), 'r') as pre:
                 pre_file_content = pre.read()
-                self.client_v2.post_invitation_edit(
+                self.client.post_invitation_edit(
                     invitations=f'{self.super_user}/-/Edit',
                     signatures=[self.super_user],
                     invitation=openreview.api.Invitation(                    
@@ -506,7 +361,7 @@ class ProfileManagement():
             with open(os.path.join(os.path.dirname(__file__), 'process/request_remove_name_decision_pre_process.py'), 'r') as pre:
                 pre_file_content = pre.read()
 
-        self.client_v2.post_invitation_edit(
+        self.client.post_invitation_edit(
             invitations=f'{self.super_user}/-/Edit',
             signatures=[self.super_user],
             invitation=openreview.api.Invitation(
@@ -533,7 +388,9 @@ class ProfileManagement():
             )
         )
 
-        self.client.post_invitation(openreview.Invitation(
+        baseurl_v1, baseurl_v2 = openreview.tools.get_base_urls(self.client)
+        client_v1 = openreview.Client(baseurl=baseurl_v1, token=self.client.token)        
+        client_v1.post_invitation(openreview.Invitation(
             id=self.author_rename_invitation_id,
             readers=[self.support_group_id],
             writers=[self.support_group_id],
@@ -604,7 +461,7 @@ class ProfileManagement():
             file_content = file_content.replace("AUTHOR_RENAME_INVITATION_ID = ''", "AUTHOR_RENAME_INVITATION_ID = '" + self.author_rename_invitation_id + "'")
             with open(os.path.join(os.path.dirname(__file__), 'process/request_remove_email_pre_process.py'), 'r') as pre:
                 pre_file_content = pre.read()
-                self.client_v2.post_invitation_edit(
+                self.client.post_invitation_edit(
                     invitations=f'{self.super_user}/-/Edit',
                     signatures=[self.super_user],
                     invitation=openreview.api.Invitation(
@@ -643,12 +500,12 @@ class ProfileManagement():
             file_content = f.read()
             archive_group.web = file_content
 
-            self.client_v2.post_group_edit(
+            self.client.post_group_edit(
                 invitation = f'{self.super_user}/-/Edit',
                 signatures = [self.super_user],
                 group = archive_group)
 
-        self.client_v2.post_invitation_edit(
+        self.client.post_invitation_edit(
             invitations = f'{self.super_user}/-/Edit',
             signatures = [self.super_user],
             invitation = openreview.api.Invitation(
@@ -847,7 +704,7 @@ class ProfileManagement():
 
         with open(os.path.join(os.path.dirname(__file__), 'process/request_merge_profiles_process.py'), 'r') as f:
             file_content = f.read()
-            self.client_v2.post_invitation_edit(
+            self.client.post_invitation_edit(
                 invitations = f'{self.super_user}/-/Edit',
                 signatures = [self.super_user],
                 invitation = openreview.api.Invitation(
@@ -910,7 +767,7 @@ class ProfileManagement():
             file_content = f.read()
             file_content = file_content.replace("SUPPORT_USER_ID = ''", "SUPPORT_USER_ID = '" + self.support_group_id + "'")
             file_content = file_content.replace("AUTHOR_RENAME_INVITATION_ID = ''", "AUTHOR_RENAME_INVITATION_ID = '" + self.author_rename_invitation_id + "'")
-            self.client_v2.post_invitation_edit(
+            self.client.post_invitation_edit(
                 invitations = f'{self.super_user}/-/Edit',
                 signatures = [self.super_user],
                 invitation = openreview.api.Invitation(
