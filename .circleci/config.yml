@@ -8,7 +8,7 @@ parameters:
     default: "master"
   openreview-api-v2-branch:
     type: string
-    default: "main"
+    default: "feature/keep-all-invitations"
 
 jobs:
   build:
@@ -49,7 +49,7 @@ jobs:
       - run:
           name: Clone OpenReview API V2 branch << pipeline.parameters.openreview-api-v2-branch >>
           command: |
-            git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api.git --branch feature/keep-all-invitations ~/openreview-v2
+            git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api.git ~/openreview-v2
             cd ~/openreview-v2 && git checkout << pipeline.parameters.openreview-api-v2-branch >>
       - run:
           name: Clone openreview-web
