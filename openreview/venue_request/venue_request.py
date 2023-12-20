@@ -336,6 +336,12 @@ class VenueStages():
                 'required': True,
                 'order': 2
             },
+            'ethics_review_expiration_date': {
+                'description': 'After this date, no more ethics reviews can be submitted. This is the hard deadline ethics reviewers will not be able to see. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59). Default is 30 minutes after the ethics review deadline.',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'required': False,
+                'order': 14
+            },
             'make_ethics_reviews_public': {
                 'description': "Should the ethics reviews be made public immediately upon posting? Note that selecting 'Yes' will automatically release any posted ethics reviews to the public if the submission is also public.",
                 'value-radio': [

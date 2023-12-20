@@ -1356,6 +1356,13 @@ class Matching(object):
         assignment_edges = []
         assignment_invitation_id = self.conference.get_paper_assignment_id(self.match_group.id, deployed=True)
 
+        # Info for SAC-paper assignments
+        paper_id_to_number = {p.id : p.number for p in papers}
+        current_assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None)}
+        reviewer_name = self.conference.senior_area_chairs_name
+        assignment_invitation = self.client.get_invitation(assignment_invitation_id)
+        are_paper_assignments = 'Profile' not in assignment_invitation.reply.get('content', {}).get('head', {}).get('type', 'Profile')
+
         ac_groups = {g.id:g for g in self.client.get_all_groups(regex=f'{self.conference.id}/Paper.*') if g.id.endswith(self.conference.area_chairs_name)}
 
         if not papers:
@@ -1368,7 +1375,7 @@ class Matching(object):
             ac_group=ac_groups.get(ac_group_id)
 
             if ac_group:
-                if len(ac_group.members) == 0:
+                if len(ac_group.members) == 0 and not are_paper_assignments:
                     raise openreview.OpenReviewException('AC assignments must be deployed first')
 
                 for ac in ac_group.members:
@@ -1383,8 +1390,20 @@ class Matching(object):
                         sac_group.members.append(sac)
                         self.client.post_group(sac_group)
 
+            if overwrite and are_paper_assignments:
+                if paper.id in current_assignment_edges:
+                    paper_committee_id = self.conference.get_committee_id(name=reviewer_name, number=paper.number)
+                    current_edges=current_assignment_edges[paper.id]
+                    for current_edge in current_edges:
+                        self.client.remove_members_from_group(paper_committee_id, current_edge['tail'])
+                else:
+                    print('assignment not found', paper.id)
+
         for head, sac_assignments in proposed_assignment_edges.items():
             for sac_assignment in sac_assignments:
+                if are_paper_assignments:
+                    paper_committee_id = self.conference.get_committee_id(name=reviewer_name, number=paper_id_to_number[head])
+                    self.client.add_members_to_group(paper_committee_id, sac_assignment['tail'])
                 assignment_edges.append(openreview.Edge(
                     invitation=assignment_invitation_id,
                     head=head,

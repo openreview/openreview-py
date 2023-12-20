@@ -22,7 +22,6 @@ return {
 - Negative bids ("Low" and "Very Low") will, in most cases, decrease the likelihood that you will be assigned that paper.
 ${affinityScoreId ? '- Papers are sorted based on keyword similarity with the papers that you provided in the Expertise Selection Interface.' : ''}`
     },
-    apiVersion: 2,
     venueId: domain.id,
     submissionVenueId: domain.content.submission_venue_id?.value,
     scoreIds: affinityScoreId ? [affinityScoreId] : [],

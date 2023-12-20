@@ -356,7 +356,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
       if (completedReview) {
         var reviewerRecommendation = recommendationByReviewer[completedReview.signatures[0]];
         if (reviewerRecommendation) {
-          status.Recommendation = reviewerRecommendation.content.decision_recommendation.value;
+          status.Recommendation = reviewerRecommendation.content.decision_recommendation?.value || 'Yes';
           status.Certifications = reviewerRecommendation.content.certification_recommendations ? reviewerRecommendation.content.certification_recommendations.value.join(', ') : '';
         }
         var reviewerRating = submission.details.replies.find(function (p) {

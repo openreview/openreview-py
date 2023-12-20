@@ -220,12 +220,16 @@ class TestMatching():
         assert invitation
         assert 'scores_specification' in invitation.edit['note']['content']
         assert f'{venue.id}/Program_Committee/-/Bid' in invitation.edit['note']['content']['scores_specification']['value']['param']['default']
-        assert pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Custom_Max_Papers')
-        assert pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Conflict')
-        assert pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Aggregate_Score')
+        invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Custom_Max_Papers')
+        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Conflict')
+        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Aggregate_Score')
+        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation VenueV2.cc/Program_Committee/-/Assignment was not found'):
             assert pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Assignment')
-        assert pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Proposed_Assignment')
+        invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Proposed_Assignment')
+        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
         # Set up AC matching
         venue.setup_committee_matching(committee_id=venue.get_area_chairs_id(), compute_conflicts=True)
@@ -401,6 +405,9 @@ class TestMatching():
         assert assignment_inv
         assert assignment_inv.process
         assert 'def process_update(client, edge, invitation, existing_edge):' in assignment_inv.process
+
+        invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Assignment')
+        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
         # venue.setup_matching(committee_id=venue.get_reviewers_id(), build_conflicts=True)
 

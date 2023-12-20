@@ -51,6 +51,7 @@ class OpenReviewClient(object):
         self.profiles_url = self.baseurl + '/profiles'
         self.profiles_search_url = self.baseurl + '/profiles/search'
         self.profiles_merge_url = self.baseurl + '/profiles/merge'
+        self.profiles_rename = self.baseurl + '/profiles/rename'
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
@@ -587,6 +588,29 @@ class OpenReviewClient(object):
 
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
+
+    def rename_profile(self, current_id, new_id):
+        """
+        Updates a the profile id of a Profile
+
+        :param current_id: Current profile id
+        :type profile: str
+        :param new_id: New profile id
+        :type profile: str
+
+        :return: The new updated Profile
+        :rtype: Profile
+        """
+        response = self.session.post(
+            self.profiles_rename,
+            json = {
+                'currentId': current_id,
+                'newId': new_id
+            },
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        return Profile.from_json(response.json())        
 
     def merge_profiles(self, profileTo, profileFrom):
         """
@@ -1198,7 +1222,7 @@ class OpenReviewClient(object):
 
         return list(tools.efficient_iterget(self.get_notes, desc='Getting V2 Notes', **params))
 
-    def get_note_edit(self, id):
+    def get_note_edit(self, id, trash=None):
         """
         Get a single edit by id if available
 
@@ -1208,12 +1232,12 @@ class OpenReviewClient(object):
         :return: edit matching the passed id
         :rtype: Note
         """
-        response = self.session.get(self.note_edits_url, params = {'id':id}, headers = self.headers)
+        response = self.session.get(self.note_edits_url, params = {'id':id, 'trash': 'true' if trash == True else 'false'}, headers = self.headers)
         response = self.__handle_response(response)
         n = response.json()['edits'][0]
         return Edit.from_json(n)
 
-    def get_note_edits(self, note_id = None, invitation = None, with_count=False, sort=None):
+    def get_note_edits(self, note_id = None, invitation = None, with_count=False, sort=None, trash=None):
         """
         Gets a list of edits for a note. The edits that will be returned match all the criteria passed in the parameters.
 
@@ -1227,6 +1251,7 @@ class OpenReviewClient(object):
             params['invitation'] = invitation
         if sort:
             params['sort'] = sort
+        params['trash'] = 'true' if trash == True else 'false'
 
         response = self.session.get(self.note_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -2349,6 +2374,7 @@ class Invitation(object):
         bulk = None,
         content = None,
         reply_forum_views = [],
+        responseArchiveDate = None,
         details = None):
 
         self.id = id
@@ -2374,6 +2400,7 @@ class Invitation(object):
         self.bulk = bulk
         self.details = details
         self.reply_forum_views = reply_forum_views
+        self.responseArchiveDate = responseArchiveDate
         self.web = web
         self.process = process
         self.preprocess = preprocess
@@ -2454,6 +2481,9 @@ class Invitation(object):
         if self.content:
             body['content'] = self.content
 
+        if self.responseArchiveDate:
+            body['responseArchiveDate'] = self.responseArchiveDate
+
         if  self.minReplies:
             body['minReplies']=self.minReplies
         if  self.maxReplies:
@@ -2508,6 +2538,7 @@ class Invitation(object):
             maxReplies = i.get('maxReplies'),
             details = i.get('details'),
             reply_forum_views = i.get('replyForumViews'),
+            responseArchiveDate = i.get('responseArchiveDate'),
             bulk = i.get('bulk')
             )
         if 'content' in i:
