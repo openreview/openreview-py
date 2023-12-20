@@ -269,7 +269,88 @@ class TestProfileManagement():
                         }
                     }
                 )
-            )        
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'index must be <= 3'):
+            edit = haw_shiuan_client_v2.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~Haw-Shiuan_Chang1'],
+                note = openreview.api.Note(
+                    id = note.id,
+                    content={
+                        'authorids': {
+                            'value': {
+                                'replace': { 'index': 13, 'value': '~Haw-Shiuan_Chang1' }
+                            }
+                        }
+                    }
+                )
+            )             
+
+        edit = haw_shiuan_client_v2.post_note_edit(
+            invitation = 'DBLP.org/-/Author_Coreference',
+            signatures = ['~Haw-Shiuan_Chang1'],
+            note = openreview.api.Note(
+                id = note.id,
+                content={
+                    'authorids': {
+                        'value': {
+                            'replace': { 'index': 0, 'value': '' }
+                        }
+                    }
+                }
+            )
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The author name to remove doesn\'t match with the names listed in your profile'):
+            edit = andrew_client_v2.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~Andrew_McCallum1'],
+                note = openreview.api.Note(
+                    id = note.id,
+                    content={
+                        'authorids': {
+                            'value': {
+                                'replace': { 'index': 0, 'value': '' }
+                            }
+                        }
+                    }
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'index must be <= 3'):
+            edit = andrew_client_v2.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~Andrew_McCallum1'],
+                note = openreview.api.Note(
+                    id = note.id,
+                    content={
+                        'authorids': {
+                            'value': {
+                                'replace': { 'index': 11, 'value': '' }
+                            }
+                        }
+                    }
+                )
+            )                        
+
+        note = haw_shiuan_client_v2.get_note(edit['note']['id'])
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference']
+        assert note.cdate
+        assert note.mdate
+        assert note.pdate
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
+        assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+        assert note.content['authorids']['value'] == [
+            '',
+            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
+            "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
+            "~Andrew_McCallum1"
+        ]                    
 
         edit = openreview_client.post_note_edit(
             invitation = 'DBLP.org/-/Abstract',
