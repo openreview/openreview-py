@@ -188,6 +188,22 @@ class ProfileManagement():
                         } 
                     },
                     'writers':  [dblp_group_id, '${2/signatures}'],
+                    'content': {
+                        'author_index': {
+                            'value': {
+                                'param': {
+                                    'type': 'integer'
+                                }
+                            }
+                        },
+                        'author_id' : {
+                            'value': {
+                                'param': {
+                                    'type': 'string'
+                                }
+                            }
+                        },
+                    },
                     'note': {
                         'id': {
                             'param': {
@@ -199,7 +215,12 @@ class ProfileManagement():
                                 'order': 2,
                                 'value': {
                                     'param': {
-                                        'type': 'string[]'
+                                        'const': {
+                                            'replace': {
+                                                'index': '${6/content/author_index/value}',
+                                                'value': '${6/content/author_id/value}'
+                                            }
+                                        }
                                     }
                                 }
                             }
