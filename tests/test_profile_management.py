@@ -133,15 +133,12 @@ class TestProfileManagement():
         edit = haw_shiuan_client.post_note_edit(
             invitation = 'DBLP.org/-/Author_Coreference',
             signatures = ['~Haw-Shiuan_Chang1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '~Haw-Shiuan_Chang1' },
+            },
             note = openreview.api.Note(
-                id = note.id,
-                content={
-                    'authorids': {
-                        'value': {
-                            'replace': { 'index': 0, 'value': '~Haw-Shiuan_Chang1' }
-                        }
-                    }
-                }
+                id = note.id
             )
         )
 
@@ -163,38 +160,16 @@ class TestProfileManagement():
             "~Andrew_McCallum1"
         ]
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Only author replacement is allowed'):
-            edit = haw_shiuan_client.post_note_edit(
-                invitation = 'DBLP.org/-/Author_Coreference',
-                signatures = ['~Haw-Shiuan_Chang1'],
-                note = openreview.api.Note(
-                    id = note.id,
-                    content={
-                        'authorids': {
-                            'value': [
-                                "~Haw-Shiuan_Chang1",
-                                "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
-                                "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
-                                "~Andrew_McCallum1"
-                            ]
-                        }
-                    }
-                )
-            )
-
         with pytest.raises(openreview.OpenReviewException, match=r'The author name to replace doesn\'t match with the names listed in your profile'):
             edit = haw_shiuan_client.post_note_edit(
                 invitation = 'DBLP.org/-/Author_Coreference',
                 signatures = ['~Haw-Shiuan_Chang1'],
+                content = {
+                    'author_index': { 'value': 3 },
+                    'author_id': { 'value': '~Andrew_McCallum1' },
+                },                
                 note = openreview.api.Note(
-                    id = note.id,
-                    content={
-                        'authorids': {
-                            'value': {
-                                'replace': { 'index': 3, 'value': '~Andrew_McCallum1' }
-                            }
-                        }
-                    }
+                    id = note.id
                 )
             )
 
@@ -202,15 +177,12 @@ class TestProfileManagement():
             edit = haw_shiuan_client.post_note_edit(
                 invitation = 'DBLP.org/-/Author_Coreference',
                 signatures = ['~Haw-Shiuan_Chang1'],
+                content = {
+                    'author_index': { 'value': 3 },
+                    'author_id': { 'value': '~Haw-Shiuan_Chang1' },
+                },                  
                 note = openreview.api.Note(
-                    id = note.id,
-                    content={
-                        'authorids': {
-                            'value': {
-                                'replace': { 'index': 3, 'value': '~Haw-Shiuan_Chang1' }
-                            }
-                        }
-                    }
+                    id = note.id
                 )
             )            
 
@@ -219,46 +191,37 @@ class TestProfileManagement():
             edit = test_client_v2.post_note_edit(
                 invitation = 'DBLP.org/-/Author_Coreference',
                 signatures = ['~SomeFirstName_User1'],
+                content = {
+                    'author_index': { 'value': 1 },
+                    'author_id': { 'value': '~SomeFirstName_User1' },
+                },                 
                 note = openreview.api.Note(
-                    id = note.id,
-                    content={
-                        'authorids': {
-                            'value': {
-                                'replace': { 'index': 1, 'value': '~SomeFirstName_User1' }
-                            }
-                        }
-                    }
+                    id = note.id
                 )
             )
 
-        with pytest.raises(openreview.OpenReviewException, match=r'index must be <= 3'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid author index'):
             edit = haw_shiuan_client.post_note_edit(
                 invitation = 'DBLP.org/-/Author_Coreference',
                 signatures = ['~Haw-Shiuan_Chang1'],
+                content = {
+                    'author_index': { 'value': 13 },
+                    'author_id': { 'value': '~Haw-Shiuan_Chang1' },
+                },                
                 note = openreview.api.Note(
-                    id = note.id,
-                    content={
-                        'authorids': {
-                            'value': {
-                                'replace': { 'index': 13, 'value': '~Haw-Shiuan_Chang1' }
-                            }
-                        }
-                    }
+                    id = note.id
                 )
             )             
 
         edit = haw_shiuan_client.post_note_edit(
             invitation = 'DBLP.org/-/Author_Coreference',
             signatures = ['~Haw-Shiuan_Chang1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '' },
+            },             
             note = openreview.api.Note(
-                id = note.id,
-                content={
-                    'authorids': {
-                        'value': {
-                            'replace': { 'index': 0, 'value': '' }
-                        }
-                    }
-                }
+                id = note.id
             )
         )
 
@@ -266,31 +229,25 @@ class TestProfileManagement():
             edit = andrew_client.post_note_edit(
                 invitation = 'DBLP.org/-/Author_Coreference',
                 signatures = ['~Andrew_McCallum1'],
+                content = {
+                    'author_index': { 'value': 0 },
+                    'author_id': { 'value': '' },
+                },                
                 note = openreview.api.Note(
-                    id = note.id,
-                    content={
-                        'authorids': {
-                            'value': {
-                                'replace': { 'index': 0, 'value': '' }
-                            }
-                        }
-                    }
+                    id = note.id
                 )
             )
 
-        with pytest.raises(openreview.OpenReviewException, match=r'index must be <= 3'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid author index'):
             edit = andrew_client.post_note_edit(
                 invitation = 'DBLP.org/-/Author_Coreference',
                 signatures = ['~Andrew_McCallum1'],
+                content = {
+                    'author_index': { 'value': 11 },
+                    'author_id': { 'value': '' },
+                },                 
                 note = openreview.api.Note(
-                    id = note.id,
-                    content={
-                        'authorids': {
-                            'value': {
-                                'replace': { 'index': 11, 'value': '' }
-                            }
-                        }
-                    }
+                    id = note.id
                 )
             )                        
 
