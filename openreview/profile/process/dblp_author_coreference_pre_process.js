@@ -1,17 +1,15 @@
 async function process(client, edit, invitation) {
   client.throwErrors = true;
   
-  const value = edit.note.content.authorids?.value;
-
-  if (!value?.replace) {
-    return Promise.reject(new OpenReviewError({ name: 'Error', message: `Only author replacement is allowed` }));
-  }
+  const index = edit.content.author_index.value;
+  const authorId = edit.content.author_id.value;
 
   const { notes } = await client.getNotes({ id: edit.note.id });
   const publication = notes[0];
 
-  const index = value.replace.index;
-  const authorId = value.replace.value;
+  if (index >= publication.content.authorids.value.length || index < 0) {
+    return Promise.reject(new OpenReviewError({ name: 'Error', message: `Invalid author index` }));
+  }
 
   const { profiles } = await client.getProfiles({ id: edit.signatures[0] });
   const userProfile = profiles[0];
