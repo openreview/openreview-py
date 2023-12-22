@@ -458,11 +458,11 @@ class TestICLRConference():
             },
             {
                 "value": "ICLR.cc/2024/Conference/Program_Chairs",
-                "optional": True
+                "optional": False
             },
             {
                 "value": "ICLR.cc/2024/Conference/Submission1/Senior_Area_Chairs",
-                "optional": True
+                "optional": False
             },
             {
                 "value": "ICLR.cc/2024/Conference/Submission1/Area_Chairs",

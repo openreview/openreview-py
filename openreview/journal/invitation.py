@@ -1016,7 +1016,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.get_submission_additional_fields():
             for key, value in self.journal.get_submission_additional_fields().items():
-                invitation.edit['note']['content'][key] = value             
+                invitation.edit['note']['content'][key] = value if value else { "delete": True }             
 
         print(invitation.edit['note']['content'])
         self.save_invitation(invitation)
@@ -3566,7 +3566,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.get_review_additional_fields():
             for key, value in self.journal.get_review_additional_fields().items():
-                invitation['edit']['note']['content'][key] = value         
+                invitation['edit']['note']['content'][key] = value if value else { "delete": True }         
 
         self.save_super_invitation(self.journal.get_review_id(), invitation_content, edit_content, invitation)
 
@@ -3797,7 +3797,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.get_official_recommendation_additional_fields():
             for key, value in self.journal.get_official_recommendation_additional_fields().items():
-                invitation['edit']['note']['content'][key] = value                       
+                invitation['edit']['note']['content'][key] = value if value else { "delete": True }                       
 
         self.save_super_invitation(self.journal.get_reviewer_recommendation_id(), invitation_content, edit_content, invitation)
 
@@ -4771,7 +4771,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.get_decision_additional_fields():
             for key, value in self.journal.get_decision_additional_fields().items():
-                invitation['edit']['note']['content'][key] = value             
+                invitation['edit']['note']['content'][key] = value if value else { "delete": True }             
 
         self.save_super_invitation(self.journal.get_ae_decision_id(), invitation_content, edit_content, invitation)
 
@@ -5342,7 +5342,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.get_submission_additional_fields():
             for key, value in self.journal.get_submission_additional_fields().items():
-                invitation['edit']['note']['content'][key] = value         
+                invitation['edit']['note']['content'][key] = value if value else { "delete": True }         
 
         self.save_super_invitation(self.journal.get_camera_ready_revision_id(), invitation_content, edit_content, invitation)
 
@@ -5655,7 +5655,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.get_submission_additional_fields():
             for key, value in self.journal.get_submission_additional_fields().items():
-                invitation['edit']['note']['content'][key] = value                        
+                invitation['edit']['note']['content'][key] = value if value else { "delete": True }                        
 
         self.save_super_invitation(self.journal.get_eic_revision_id(), invitation_content, edit_content, invitation)
 

@@ -3538,6 +3538,101 @@ ICML 2023 Conference Program Chairs'''
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Comment')
         assert invitation.invitees == ['ICML.cc/2023/Conference', 'openreview.net/Support', 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers']
 
+        # post ethics review
+        #ethics_group = openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers')
+        # 'Reviewer', 'ICMLOne')
+        openreview_client.add_members_to_group('ICML.cc/2023/Conference/Submission5/Ethics_Reviewers', '~Reviewer_ICMLOne1')
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
+
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission5/Ethics_Reviewer_', signatory='~Reviewer_ICMLOne1')
+        anon_group_id = anon_groups[0].id
+
+        review_edit = reviewer_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission5/-/Ethics_Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    "recommendation": {
+                        "value": "1: No serious ethical issues"
+                    },
+                    "ethics_concerns": {
+                        "value": "I have no concerns."
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        reviews = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/Submission5/-/Ethics_Review')
+        assert len(reviews) == 1
+        assert reviews[0].readers == [
+            'ICML.cc/2023/Conference/Program_Chairs',
+            'ICML.cc/2023/Conference/Ethics_Chairs',
+            reviews[0].signatures[0]
+        ]
+
+        # Set expiration date
+        exp_date = now
+        stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'ethics_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'ethics_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'ethics_review_expiration_date': exp_date.strftime('%Y/%m/%d'),
+                'make_ethics_reviews_public': 'No, ethics reviews should NOT be revealed publicly when they are posted',
+                'release_ethics_reviews_to_authors': "No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors",
+                'release_ethics_reviews_to_reviewers': 'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review',
+                'remove_ethics_review_form_options': 'ethics_review',
+                'additional_ethics_review_form_options': {
+                    "ethics_concerns": {
+                        'order': 1,
+                        'description': 'Briefly summarize the ethics concerns.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 200000,
+                                'markdown': True,
+                                'input': 'textarea'
+                            }
+                        }
+                    }
+                },
+                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
+            },
+            forum=request_form.forum,
+            referent=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number),
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+        helpers.await_queue(openreview_client)
+
+        # attempt to post another note
+        openreview_client.add_members_to_group('ICML.cc/2023/Conference/Submission5/Ethics_Reviewers', '~Reviewer_ICMLTwo1')
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer2@icml.cc', password=helpers.strong_password)
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission5/Ethics_Reviewer_', signatory='~Reviewer_ICMLTwo1')
+        anon_group_id = anon_groups[0].id
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation ICML.cc/2023/Conference/Submission5/-/Ethics_Review has expired'):
+            review_edit = reviewer_client.post_note_edit(
+                invitation='ICML.cc/2023/Conference/Submission5/-/Ethics_Review',
+                signatures=[anon_group_id],
+                note=openreview.api.Note(
+                    content={
+                        "recommendation": {
+                            "value": "1: No serious ethical issues"
+                        },
+                        "ethics_concerns": {
+                            "value": "I have very serious concerns."
+                        }
+                    }
+                )
+            )
+
+
     def test_comment_stage(self, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)

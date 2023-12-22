@@ -114,6 +114,12 @@ class TestVenueRequest():
         submission_revision = client.get_invitation(f'{support_group_id}/-/Request{request_form_note.number}/Submission_Revision_Stage')
         assert 'V2.cc/2030/Conference/Publication_Chairs' in submission_revision.invitees
 
+        # API 2 venues get added to active_venues after deployment
+        active_venues = client.get_group('active_venues')
+        assert 'V2.cc/2030/Conference' in active_venues.members
+        assert 'V2.cc/2030/Conference' in client.get_group('venues').members
+        assert 'V2.cc' in client.get_group('host').members
+
         # Return venue details as a dict
         venue_details = {
             'request_form_note': request_form_note,
@@ -2869,9 +2875,6 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         helpers.await_queue_edit(openreview_client, edit_id=revision_edit['id'])
 
         assert revision_edit['readers'] == ['V2.cc/2030/Conference',
-            'V2.cc/2030/Conference/Senior_Area_Chairs',
-            'V2.cc/2030/Conference/Area_Chairs',
-            'V2.cc/2030/Conference/Reviewers',
             'V2.cc/2030/Conference/Submission3/Authors']
 
         updated_note = author_client.get_note(id=submissions[2].forum)
@@ -3270,19 +3273,14 @@ Best,
 
         revision_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission1/-/Supplementary_Material')
         assert revision_invitation
-        assert revision_invitation.edit['readers'] == ['everyone']
+        assert revision_invitation.edit['readers'] == ['V2.cc/2030/Conference',
+            'V2.cc/2030/Conference/Submission1/Authors']
         revision_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission2/-/Supplementary_Material')
         assert revision_invitation.edit['readers'] == ['V2.cc/2030/Conference',
-            'V2.cc/2030/Conference/Submission2/Senior_Area_Chairs',
-            'V2.cc/2030/Conference/Submission2/Area_Chairs',
-            'V2.cc/2030/Conference/Submission2/Reviewers',
             'V2.cc/2030/Conference/Submission2/Authors']
         revision_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission3/-/Supplementary_Material')
         assert revision_invitation
         assert revision_invitation.edit['readers'] == ['V2.cc/2030/Conference',
-            'V2.cc/2030/Conference/Submission3/Senior_Area_Chairs',
-            'V2.cc/2030/Conference/Submission3/Area_Chairs',
-            'V2.cc/2030/Conference/Submission3/Reviewers',
             'V2.cc/2030/Conference/Submission3/Authors']
 
         assert all(x not in revision_invitation.edit['note']['content'] for x in ['title','authors', 'authorids','abstract','keywords', 'TLDR'])
