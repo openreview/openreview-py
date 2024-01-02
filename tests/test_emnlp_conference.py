@@ -355,11 +355,12 @@ class TestEMNLPConference():
         withdrawn_submission = openreview_client.get_notes(invitation='EMNLP/2023/Conference/-/Withdrawn_Submission')
         assert len(withdrawn_submission) == 1
 
+        year = datetime.datetime.now().year
         valid_bibtex = '''@misc{
-anonymous2023test,
+anonymous'''+str(year)+'''test,
 title={Test Paper Title 5},
 author={Anonymous},
-year={2023},
+year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''
 
         valid_bibtex = valid_bibtex + withdrawn_submission[0].forum + '''}
@@ -402,10 +403,10 @@ url={https://openreview.net/forum?id='''
         assert len(desk_rejected_submission) == 1
 
         valid_bibtex = '''@misc{
-anonymous2023test,
+anonymous'''+str(year)+'''test,
 title={Test Paper Title 5},
 author={Anonymous},
-year={2023},
+year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''
 
         valid_bibtex = valid_bibtex + desk_rejected_submission[0].forum + '''}
