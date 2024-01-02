@@ -1,7 +1,7 @@
-def process(client, note, invitation):
+def process(client, edit, invitation):
 
-    usernames = note.content.get('usernames')
-    name = note.content.get('name')
+    usernames = edit.note.content.get('usernames', {}).get('value', [])
+    name = edit.note.content.get('name', {}).get('value')
 
     for username in usernames:
         profile = openreview.tools.get_profile(client, username)

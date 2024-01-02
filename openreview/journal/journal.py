@@ -85,6 +85,9 @@ class Journal(object):
     def get_reviewers_id(self, number=None, anon=False):
         return self.__get_group_id('Reviewer_' if anon else self.reviewers_name, number)
 
+    def get_reviewers_archived_id(self):
+        return f'{self.get_reviewers_id()}/Archived' 
+    
     def get_reviewers_reported_id(self):
         return self.get_reviewers_id() + '/Reported'
     
@@ -422,6 +425,9 @@ class Journal(object):
     def are_authors_anonymous(self):
         return self.settings.get('author_anonymity', True)
     
+    def should_eic_submission_notification(self):
+        return self.settings.get('eic_submission_notification', False)
+    
     def should_skip_ac_recommendation(self):
         return self.settings.get('skip_ac_recommendation', False)
     
@@ -454,6 +460,9 @@ class Journal(object):
     
     def has_archived_action_editors(self):
         return self.settings.get('archived_action_editors', False)
+
+    def has_archived_reviewers(self):
+        return self.settings.get('archived_reviewers', False)
 
     def has_expert_reviewers(self):
         return self.settings.get('expert_reviewers', False)        

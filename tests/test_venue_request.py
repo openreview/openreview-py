@@ -2440,10 +2440,10 @@ TestVenue@OR'2030 Program Chairs
 
         note_id = submissions[0].id
         assert '_bibtex' in submissions[0].content and submissions[0].content['_bibtex'] == '''@misc{
-anonymous''' + str(datetime.datetime.today().year) + '''test,
+anonymous2023test,
 title={test submission},
 author={Anonymous},
-year={''' + str(datetime.datetime.today().year) + '''},
+year={2023},
 url={https://openreview.net/forum?id='''+ note_id + '''}
 }'''
 
@@ -2508,10 +2508,10 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
 
         note_id = submissions[0].id
         assert '_bibtex' in submissions[0].content and submissions[0].content['_bibtex'] == '''@misc{
-anonymous''' + str(datetime.datetime.today().year) + '''test,
+anonymous2023test,
 title={test submission},
 author={Anonymous},
-year={''' + str(datetime.datetime.today().year) + '''},
+year={2023},
 url={https://openreview.net/forum?id='''+ note_id + '''}
 }'''
 
