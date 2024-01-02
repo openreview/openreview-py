@@ -2217,7 +2217,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'tail': {
                     'param': {
                         'type': 'profile',
-                        'regex': '~.*|.+@.+'
+                        'notInGroup': self.journal.get_reviewers_id()
                     }
                 },
                 'weight': {
