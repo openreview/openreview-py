@@ -2830,23 +2830,33 @@ class Profile(object):
         :rtype: dict
         """
         body = {
-            'id': self.id,
-            'tcdate': self.tcdate,
-            'tmdate': self.tmdate,
-            'referent': self.referent,
-            'packaging': self.packaging,
             'invitation': self.invitation,
-            'readers': self.readers,
-            'nonreaders': self.nonreaders,
             'signatures': self.signatures,
-            'writers': self.writers,
             'content': self.content,
-            'metaContent': self.metaContent,
-            'active': self.active,
-            'password': self.password
+            'metaContent': self.metaContent
         }
+        if self.id:
+            body['id'] = self.id
+        if self.referent:
+            body['referent'] = self.referent
+        if self.packaging:
+            body['packaging'] = self.packaging
+        if self.tcdate:
+            body['tcdate'] = self.tcdate
+        if self.tmdate:
+            body['tmdate'] = self.tmdate
         if hasattr(self, 'tauthor'):
             body['tauthor'] = self.tauthor
+        if self.active:
+            body['active'] = self.active
+        if self.password:
+            body['password'] = self.password
+        if self.readers:
+            body['readers'] = self.readers
+        if self.nonreaders:
+            body['nonreaders'] = self.nonreaders
+        if self.writers:
+            body['writers'] = self.writers
         return body
 
     @classmethod

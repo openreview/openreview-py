@@ -89,6 +89,7 @@ class TestJournal():
                             'submission_public': True,
                             'assignment_delay': 5,
                             'submission_name': 'Submission',
+                            'eic_submission_notification': False,
                             'certifications': [
                                 'Featured Certification',
                                 'Reproducibility Certification',
@@ -127,6 +128,7 @@ class TestJournal():
                             'camera_ready_period': 4,
                             'camera_ready_verification_period': 1,
                             'archived_action_editors': True,
+                            'archived_reviewers': True,
                             'expert_reviewers': True,
                             'external_reviewers': True,
                             'official_recommendation_additional_fields': {
@@ -213,6 +215,7 @@ class TestJournal():
             "Expert Certification"
         ]
         assert 'expert_reviewers' in invitation.edit['note']['content']
+        assert openreview_client.get_group('TMLR/Reviewers/Archived')
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
@@ -691,7 +694,7 @@ note={Under review}
 
 With this email, we request that you assign 3 reviewers to your assigned TMLR submission "1: Paper title UPDATED". The assignments must be completed **within 1 week** ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: https://openreview.net/group?id=TMLR/Action_Editors and click on "Edit Assignment" for that paper in your "Assigned Papers" console.
 
-As a reminder, up to their annual quota of six reviews per year, reviewers are expected to review all assigned submissions that fall within their expertise. Acceptable exceptions are 1) if they have an unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render them incapable of fully performing their reviewing duties.
+As a reminder, up to their annual quota of 6 reviews per year, reviewers are expected to review all assigned submissions that fall within their expertise. Acceptable exceptions are 1) if they have an unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render them incapable of fully performing their reviewing duties.
 
 Once assigned, reviewers will be asked to acknowledge on OpenReview their responsibility to review this submission. This acknowledgement will be made visible to you on the OpenReview page of the submission. If the reviewer has not acknowledged their responsibility a couple of days after their assignment, consider reaching out to them directly to confirm.
 
@@ -4529,6 +4532,10 @@ note={Under review}
         ))
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        ## Archive David
+        raia_client.remove_members_from_group(raia_client.get_group('TMLR/Reviewers'), '~David_Belanger1')
+        raia_client.add_members_to_group(raia_client.get_group('TMLR/Reviewers/Archived'), '~David_Belanger1')
 
         ## Carlos Mondragon
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
