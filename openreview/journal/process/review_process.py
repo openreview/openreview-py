@@ -10,7 +10,8 @@ def process(client, edit, invitation):
 
     ## Decrease pending reviews counter
     signature_group = client.get_group(id=review_note.signatures[0])
-    edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=signature_group.members[0])
+    reviewer_profile = openreview.tools.get_profile(client, signature_group.members[0])
+    edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=(reviewer_profile.id if reviewer_profile else signature_group.members[0]))
     if edges and edges[0].weight > 0:
         pending_review_edge = edges[0]
         if review_note.ddate:
