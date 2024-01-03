@@ -95,7 +95,7 @@ class Matching(object):
         edge_readers = [venue_id]
         invitation_readers = [venue_id]
         edge_writers = [venue_id]
-        edge_signatures = [venue_id + '$', venue.get_program_chairs_id()]
+        edge_signatures = [venue_id, venue.get_program_chairs_id()]
         edge_nonreaders = []
 
         if edge_id.endswith('Affinity_Score'):
@@ -113,11 +113,11 @@ class Matching(object):
                 if venue.use_senior_area_chairs:
                     edge_invitees.append(self.senior_area_chairs_id)
                     edge_writers.append(venue.get_senior_area_chairs_id(number=paper_number))
-                    edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
+                    edge_signatures.append(venue.get_senior_area_chairs_id(number='${{3/head}/number}'))
                 if venue.use_area_chairs:
                     edge_invitees.append(self.area_chairs_id)
                     edge_writers.append(venue.get_area_chairs_id(number=paper_number))
-                    edge_signatures.append(venue.get_area_chairs_id(number='.*', anon=True))
+                    edge_signatures.append(venue.get_area_chairs_id(number='${{3/head}/number}', anon=True))
 
                 edge_nonreaders = [venue.get_authors_id(number=paper_number)]
 
@@ -131,7 +131,7 @@ class Matching(object):
                 if self.venue.use_senior_area_chairs:
                     edge_invitees.append(self.senior_area_chairs_id)
                     edge_writers.append(venue.get_senior_area_chairs_id(number=paper_number))
-                    edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
+                    edge_signatures.append(venue.get_senior_area_chairs_id(number='${{3/head}/number}'))
 
                 edge_nonreaders = [venue.get_authors_id(number=paper_number)]
 
@@ -278,7 +278,7 @@ class Matching(object):
                 'writers': edge_writers,
                 'signatures': {
                     'param': { 
-                        'regex': '|'.join(edge_signatures),
+                        'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in edge_signatures], 
                         'default': [venue.get_program_chairs_id()]
                     }
                 },

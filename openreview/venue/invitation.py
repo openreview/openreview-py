@@ -935,7 +935,10 @@ class InvitationBuilder(object):
                     'writers': [ venue_id, '${2/tail}' ],
                     'signatures': {
                         'param': {
-                            'regex': f'~.*|{venue_id}' 
+                            'items': [ 
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': venue_id, 'optional': True }
+                            ]
                         }
                     },
                     'head': head,
@@ -2246,7 +2249,7 @@ class InvitationBuilder(object):
         edge_invitees = [venue_id]
         edge_readers = [venue_id]
         edge_writers = [venue_id]
-        edge_signatures = [venue_id + '$', venue.get_program_chairs_id()]
+        edge_signatures = [venue_id, venue.get_program_chairs_id()]
         edge_nonreaders = []
         edge_head = {
             'param': {
@@ -2264,13 +2267,13 @@ class InvitationBuilder(object):
                 edge_invitees.append(senior_area_chairs_id)
                 edge_readers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
                 edge_writers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
-                edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
+                edge_signatures.append(venue.get_senior_area_chairs_id(number='${{3/head}/number}'))
             if venue.use_area_chairs:
                 invitation_readers.append(area_chairs_id)
                 edge_invitees.append(area_chairs_id)
                 edge_readers.append(venue.get_area_chairs_id(number='${{2/head}/number}'))
                 edge_writers.append(venue.get_area_chairs_id(number='${{2/head}/number}'))
-                edge_signatures.append(venue.get_area_chairs_id(number='.*', anon=True))
+                edge_signatures.append(venue.get_area_chairs_id(number='${{3/head}/number}', anon=True))
 
         if is_ethics_reviewer:
             invitation_readers.append(venue.get_ethics_chairs_id())
@@ -2288,7 +2291,7 @@ class InvitationBuilder(object):
                 edge_invitees.append(senior_area_chairs_id)
                 edge_readers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
                 edge_writers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
-                edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
+                edge_signatures.append(venue.get_senior_area_chairs_id(number='${{3/head}/number}'))
 
 
         if is_senior_area_chair:
@@ -2341,7 +2344,7 @@ class InvitationBuilder(object):
                 'writers': edge_writers,
                 'signatures': {
                     'param': { 
-                        'regex': '|'.join(edge_signatures),
+                        'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in edge_signatures], 
                         'default': [venue.get_program_chairs_id()]
                     }
                 },
@@ -2410,7 +2413,9 @@ class InvitationBuilder(object):
                     'writers': [ venue_id, '${2/signatures}' ],
                     'signatures': {
                         'param': {
-                            'regex': '~.*' 
+                            'items': [
+                                { 'prefix': '~.*' }
+                            ] 
                         }
                     },
                     'head': {
@@ -3249,7 +3254,10 @@ class InvitationBuilder(object):
                 'writers': [ venue_id, '${2/signatures}' ],
                 'signatures': {
                     'param': {
-                        'regex': f'~.*|{venue_id}' 
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': venue_id, 'optional': True }
+                        ] 
                     }
                 },
                 'head': {
