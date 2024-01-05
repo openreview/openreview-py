@@ -1154,6 +1154,16 @@ The OpenReview Team.
         
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])                   
 
+        openreview_client.add_members_to_group('CABJ/Reviewers', ['~Paul_Alternate_Last1'])
+
+        paul_client.post_edge(openreview.api.Edge(
+            invitation='CABJ/Reviewers/-/Assignment_Availability',
+            signatures=['~Paul_Alternate_Last1'],
+            head='CABJ/Reviewers',
+            tail='~Paul_Alternate_Last1',
+            label='Unavailable'
+        ))
+
         submission_note_2 = paul_client.post_note_edit(invitation='CABJ/-/Submission',
             signatures=['~Paul_Alternate_Last1'],
             note=Note(
@@ -1390,6 +1400,8 @@ Thanks,
 
 The OpenReview Team.
 '''
+
+        assert openreview_client.get_edges(invitation='CABJ/Reviewers/-/Assignment_Availability', tail='~Paul_Last1')[0].label == 'Unavailable'
 
     def test_remove_name_and_update_relations(self, openreview_client, profile_management, helpers):
 
