@@ -1809,3 +1809,82 @@ The OpenReview Team.
         assert 'username' in profile.content['relations'][0]
         assert profile.content['relations'][0]['username'] == '~Zoey_User1'
         assert 'email' not in profile.content['relations'][0]
+
+    def test_anonymous_preprint_server(self, profile_management, openreview_client, helpers):
+
+        clara_client = helpers.create_user('clara@profile.org', 'Clara', 'Last', alternates=[], institution='google.com')
+
+        edit = clara_client.post_note_edit(
+            invitation='openreview.net/Anonymous_Preprint/-/Submission',
+            signatures=['~Clara_Last1'],
+            note = openreview.api.Note(
+                content = {
+                    'title': { 'value': 'Paper title 1' },
+                    'authors': { 'value': ['Clara Last', 'Test Client'] },
+                    'authorids': { 'value': ['~Clara_Last1', 'test@mail.com'] },
+                    'keywords': { 'value': ['data', 'mining']},
+                    'TLDR': { 'value': 'TL;DR'},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'abstract': { 'value': 'Paper abstract' },
+                }   
+            )                         
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='clara@profile.org', subject='Anonymous Preprint Server has received your submission titled Paper title 1')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Your submission to the Anonymous Preprint Server has been posted.\n\nSubmission Number: 1\n\nTitle: Paper title 1 \n\nAbstract: Paper abstract\n\nTo view your submission, click here: https://openreview.net/forum?id={edit['note']['id']}'''        
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='Anonymous Preprint Server has received your submission titled Paper title 1')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Your submission to the Anonymous Preprint Server has been posted.\n\nSubmission Number: 1\n\nTitle: Paper title 1 \n\nAbstract: Paper abstract\n\nTo view your submission, click here: https://openreview.net/forum?id={edit['note']['id']}\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at clara@profile.org'''        
+
+        ## Enable comment invitation
+        openreview_client.post_invitation_edit(
+            invitations='openreview.net/Anonymous_Preprint/-/Comment',
+            signatures=['openreview.net/Anonymous_Preprint'],
+            content={
+                'noteNumber': { 'value': 1 },
+                'noteId': { 'value': edit['note']['id'] }
+            }
+        )
+
+        assert openreview_client.get_invitation('openreview.net/Anonymous_Preprint/Submission1/-/Comment')
+
+
+        edit = clara_client.post_note_edit(
+            invitation='openreview.net/Anonymous_Preprint/Submission1/-/Comment',
+            signatures=['openreview.net/Anonymous_Preprint/Submission1/Authors'],
+            note = openreview.api.Note(
+                replyto = edit['note']['id'],
+                content = {
+                    'comment': { 'value': 'more details about our submission' },
+                }   
+            )                         
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[Anonymous Preprint Server] An author commented on your submission. Paper Title: "Paper title 1"')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''An author commented on your submission.\n    \nPaper number: 1\n\nPaper title: Paper title 1\n\nComment: more details about our submission\n\nTo view the comment, click here: https://openreview.net/forum?id={edit['note']['forum']}&noteId={edit['note']['id']}'''        
+
+
+        carlos_client = openreview.api.OpenReviewClient(username='carlos@profile.org', password=helpers.strong_password)
+
+        edit = carlos_client.post_note_edit(
+            invitation='openreview.net/Anonymous_Preprint/Submission1/-/Comment',
+            signatures=['~Carlos_Last1'],
+            note = openreview.api.Note(
+                replyto = edit['note']['id'],
+                content = {
+                    'comment': { 'value': 'could you clarify more?' },
+                }   
+            )                         
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(subject='[Anonymous Preprint Server] Carlos Last commented on your submission. Paper Title: "Paper title 1"')
+        assert len(messages) == 2
