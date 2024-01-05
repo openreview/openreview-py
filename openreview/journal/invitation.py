@@ -3590,7 +3590,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 <br>'
         }
 
-        edit_param = self.journal.get_reviewer_assignment_id()
+        edit_param = f'{self.journal.get_reviewer_assignment_id()};{self.journal.get_reviewer_invite_assignment_id()}'
         score_ids = [self.journal.get_reviewer_affinity_score_id(), self.journal.get_reviewer_conflict_id(), self.journal.get_reviewer_custom_max_papers_id() + ',head:ignore', self.journal.get_reviewer_pending_review_id() + ',head:ignore', self.journal.get_reviewer_availability_id() + ',head:ignore']
         browse_param = ';'.join(score_ids)
         filter_param = f'{self.journal.get_reviewer_pending_review_id()} == 0 AND {self.journal.get_reviewer_availability_id()} == Available'
