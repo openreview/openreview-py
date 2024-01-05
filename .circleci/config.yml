@@ -147,7 +147,7 @@ jobs:
   deploy:
     working_directory: ~/openreview-py-repo
     docker:
-      - image: cimg/python:3.7.14-node
+      - image: cimg/python:3.11.0
     steps:
       - checkout
       - run:
