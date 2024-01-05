@@ -2349,7 +2349,9 @@ class InvitationBuilder(object):
                 'tail': {
                     'param': {
                         'type': 'profile',
-                        'inGroup': committee_id
+                        'options': {
+                            'group': committee_id
+                        }
                     }                
                 },
                 'weight': {

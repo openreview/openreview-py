@@ -229,7 +229,9 @@ class Matching(object):
         edge_tail = {
             'param': {
                 'type': 'profile',
-                'inGroup': self.match_group.id
+                'options': {
+                    'group': self.match_group.id
+                }
             }
         }
 
