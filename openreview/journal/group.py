@@ -100,12 +100,15 @@ class GroupBuilder(object):
         ## editor in chief
         editor_in_chief_group = openreview.tools.get_group(self.client, editor_in_chief_id)
         if not editor_in_chief_group:
+            content = {}
+            content['new_submission_email_template_script'] = { 'value': eic_new_submission_template }            
             editor_in_chief_group=self.post_group(Group(id=editor_in_chief_id,
                             readers=['everyone'],
                             writers=[venue_id, editor_in_chief_id],
                             signatures=[venue_id],
                             signatories=[editor_in_chief_id, venue_id],
-                            members=editors
+                            members=editors,
+                            content=content
                             ))
         with open(os.path.join(os.path.dirname(__file__), 'webfield/editorsInChiefWebfield.js')) as f:
             content = f.read()
