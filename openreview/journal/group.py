@@ -192,7 +192,7 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             content['official_recommendation_ends_email_template_script'] = { 'value': ae_official_recommendation_ends_email_template } 
             content['discussion_starts_email_template_script'] = { 'value': ae_discussion_starts_email_template }
             content['discussion_too_many_reviewers_email_template_script'] = { 'value': ae_discussion_too_many_reviewers_email_template }
-            content['reviewwer_assignment_starts_email_template_script'] = { 'value': ae_reviewer_assignment_starts_email_template }
+            content['reviewer_assignment_starts_email_template_script'] = { 'value': ae_reviewer_assignment_starts_email_template }
             action_editor_group=self.post_group(Group(id=action_editors_id,
                             readers=['everyone'],
                             writers=[venue_id],
@@ -382,6 +382,7 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
         authors_group = openreview.tools.get_group(self.client, authors_id)
         if not authors_group:
             content = {}
+            content['ae_recommendation_email_template_script'] = { 'value': author_ae_recommendation_email_template }
             content['discussion_starts_email_template_script'] = { 'value': author_discussion_starts_email_template }            
             content['decision_accept_as_is_email_template_script'] = { 'value': author_decision_accept_as_is_email_template }
             content['decision_accept_revision_email_template_script'] = { 'value': author_decision_accept_revision_email_template }

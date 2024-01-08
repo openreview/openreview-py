@@ -128,6 +128,19 @@ We thank you for your essential contribution to {short_name}!
 The {short_name} Editors-in-Chief
 '''
 
+author_ae_recommendation_email_template = '''Hi {{{{fullname}}}},
+
+Thank you for submitting your work titled "{submission_title}" to {short_name}.
+
+Before the review process starts, you need to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
+
+To do so, please follow this link: {invitation_url} or check your tasks in the Author Console: https://openreview.net/group?id={venue_id}/Authors
+
+For more details and guidelines on the {short_name} review process, visit {website}.
+
+The {short_name} Editors-in-Chief
+'''
+
 author_discussion_starts_email_template = '''Hi {{{{fullname}}}},
 
 Now that {number_of_reviewers} reviews have been submitted for your submission  {submission_number}: {submission_title}, all reviews have been made {review_visibility}. If you haven't already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
