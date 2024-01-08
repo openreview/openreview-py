@@ -173,7 +173,7 @@ class TestVenueRequest():
                 'contact_email': 'new_test_user@mail.com',
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
-                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': abstract_due_date.strftime('%Y/%m/%d %H:%M'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',
@@ -392,7 +392,7 @@ class TestVenueRequest():
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
-                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'remove_submission_options': ['pdf'],
@@ -460,7 +460,7 @@ class TestVenueRequest():
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
-                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'remove_submission_options': ['pdf'],
@@ -1308,7 +1308,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
-                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'withdraw_submission_expiration': withdraw_exp_date,
@@ -2090,7 +2090,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
-                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
                 'publication_chairs':'No, our venue does not have Publication Chairs'
             },
@@ -2146,7 +2146,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
-                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
                 'publication_chairs':'No, our venue does not have Publication Chairs'
             },
@@ -2440,10 +2440,10 @@ TestVenue@OR'2030 Program Chairs
 
         note_id = submissions[0].id
         assert '_bibtex' in submissions[0].content and submissions[0].content['_bibtex'] == '''@misc{
-anonymous2023test,
+anonymous''' + str(datetime.datetime.today().year) + '''test,
 title={test submission},
 author={Anonymous},
-year={2023},
+year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id='''+ note_id + '''}
 }'''
 
@@ -2508,10 +2508,10 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
 
         note_id = submissions[0].id
         assert '_bibtex' in submissions[0].content and submissions[0].content['_bibtex'] == '''@misc{
-anonymous2023test,
+anonymous''' + str(datetime.datetime.today().year) + '''test,
 title={test submission},
 author={Anonymous},
-year={2023},
+year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id='''+ note_id + '''}
 }'''
 
