@@ -8,7 +8,7 @@ parameters:
     default: "master"
   openreview-api-v2-branch:
     type: string
-    default: "feature/not-in-group"
+    default: "main"
 
 jobs:
   build:
