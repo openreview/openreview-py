@@ -989,6 +989,7 @@ class Matching(object):
             raise openreview.OpenReviewException(f'The match group is empty: {self.match_group.id}')
         if self.alternate_matching_group:
             other_matching_group = self.client.get_group(self.alternate_matching_group)
+            other_matching_group = openreview.tools.replace_members_with_ids(client, other_matching_group)
             if not other_matching_group.members:
                 raise openreview.OpenReviewException(f'The alternate match group is empty: {self.alternate_matching_group}')
         elif not submissions:
