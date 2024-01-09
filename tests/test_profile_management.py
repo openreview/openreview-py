@@ -959,6 +959,7 @@ The OpenReview Team.
         submission = openreview_client.get_note(note_id_2)
 
         helpers.create_user('carlos@cabj.org', 'Carlos', 'Tevez')
+        openreview_client.add_members_to_group('CABJ/Action_Editors', ['~Carlos_Tevez1'])
                        
         paper_assignment_edge = openreview_client.post_edge(openreview.Edge(invitation='CABJ/Action_Editors/-/Assignment',
             readers=['CABJ', 'CABJ/Editors_In_Chief', '~Carlos_Tevez1'],
