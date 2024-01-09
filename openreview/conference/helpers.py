@@ -409,7 +409,13 @@ def get_submission_stage(request_forum, venue):
     submission_email = request_forum.content.get('submission_email', None)
     hide_fields = request_forum.content.get('hide_fields', [])
     force_profiles = 'Yes' in request_forum.content.get('force_profiles_only', '')
-    author_reorder_after_first_deadline = request_forum.content.get('submission_deadline_author_reorder', 'No') == 'Yes'
+
+    author_reorder_map = {
+        'Yes': openreview.stages.AuthorReorder.ALLOW_REORDER,
+        'No': openreview.stages.AuthorReorder.ALLOW_EDIT,
+        'Do not allow any changes to author lists': openreview.stages.AuthorReorder.DISALLOW_EDIT
+    }
+    author_reorder_after_first_deadline = author_reorder_map[request_forum.content.get('submission_deadline_author_reorder', 'No')]
     email_pcs_on_withdraw = 'Yes' in request_forum.content.get('email_pcs_for_withdrawn_submissions', '')
     email_pcs_on_desk_reject = 'Yes' in request_forum.content.get('email_pcs_for_desk_rejected_submissions', '')
 
@@ -806,7 +812,12 @@ def get_submission_revision_stage(request_forum):
     if request_forum.content.get('accepted_submissions_only', '') == 'Enable revision for accepted submissions only':
         only_accepted = True
 
-    allow_author_reorder = request_forum.content.get('submission_author_edition', '') == 'Allow reorder of existing authors only'
+    author_reorder_map = {
+        'Allow reorder of existing authors only': openreview.stages.AuthorReorder.ALLOW_REORDER,
+        'Allow addition and removal of authors': openreview.stages.AuthorReorder.ALLOW_EDIT,
+        'Do not allow any changes to author lists': openreview.stages.AuthorReorder.DISALLOW_EDIT
+    }
+    allow_author_reorder = author_reorder_map[request_forum.content.get('submission_author_edition', 'Allow addition and removal of authors')]
 
     return openreview.stages.SubmissionRevisionStage(
         name=revision_name,
