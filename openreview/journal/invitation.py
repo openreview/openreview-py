@@ -22,9 +22,14 @@ class InvitationBuilder(object):
         self.process_script = self.get_super_process_content('process_script')
         self.preprocess_script = self.get_super_process_content('preprocess_script')
 
-        self.author_reminder_process = {
+        self.author_edge_reminder_process = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week)],
             'script': self.get_process_content('process/author_edge_reminder_process.py')
+        }
+
+        self.author_reminder_process = {
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week),  "#{4/duedate} + " + str(one_month)],
+            'script': self.get_super_dateprocess_content('author_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'one week', 3: 'one month' })
         }
 
         self.reviewer_reminder_process = {
@@ -236,6 +241,9 @@ class InvitationBuilder(object):
                     },
                     'reviewer_reminder_script': {
                         'value': self.get_process_content('process/reviewer_reminder_process.py')
+                    },
+                    'author_reminder_script': {
+                        'value': self.get_process_content('process/author_reminder_process.py')
                     }
                 },
                 edit=True
@@ -3296,7 +3304,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 }
             },
-            date_processes=[self.author_reminder_process]
+            date_processes=[self.author_edge_reminder_process]
         )
 
         header = {
@@ -5188,6 +5196,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'writers': [venue_id],
             'signatures': [venue_id],
             'duedate': '${2/content/duedate/value}',
+            'dateprocesses': [self.author_reminder_process],
             'edit': {
                 'signatures': [self.journal.get_authors_id(number='${4/content/noteNumber/value}')],
                 'readers': self.journal.get_under_review_submission_readers('${4/content/noteNumber/value}'),
