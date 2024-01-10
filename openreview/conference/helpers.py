@@ -819,6 +819,9 @@ def get_submission_revision_stage(request_forum):
     }
     allow_author_reorder = author_reorder_map[request_forum.content.get('submission_author_edition', 'Allow addition and removal of authors')]
 
+    if request_forum.content.get('api_version', '1') == '1':
+        allow_author_reorder = request_forum.content.get('submission_author_edition', '') == 'Allow reorder of existing authors only'
+
     return openreview.stages.SubmissionRevisionStage(
         name=revision_name,
         start_date=submission_revision_start_date,
