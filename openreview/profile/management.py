@@ -192,6 +192,8 @@ class ProfileManagement():
                     'writers':  [dblp_group_id, '${2/signatures}'],
                     'content': {
                         'author_index': {
+                            'order': 1,
+                            'description': 'Enter the 0 based index of the author in the author list. The author name listed in that position must match with one of your names in your profile.',
                             'value': {
                                 'param': {
                                     'type': 'integer'
@@ -199,6 +201,8 @@ class ProfileManagement():
                             }
                         },
                         'author_id' : {
+                            'order': 2,
+                            'description': 'Enter the author id that matches with the author name in the author list.',
                             'value': {
                                 'param': {
                                     'type': 'string'
