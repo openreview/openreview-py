@@ -12,7 +12,7 @@ def process(client, edit, invitation):
 
     journal.invitation_builder.set_reviewer_assignment_invitation(note, duedate)
     ae_group = client.get_group(journal.get_action_editors_id())
-    message=ae_group.content['reviewwer_assignment_starts_email_template_script']['value'].format(
+    message=ae_group.content['reviewer_assignment_starts_email_template_script']['value'].format(
         short_name=journal.short_name,
         submission_number=note.number,
         submission_title=note.content['title']['value'],

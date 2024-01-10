@@ -4889,12 +4889,13 @@ Best,
             assert submission.content['venue']['value'] == 'ICML 2023'
             assert submission.content['venueid']['value'] == 'ICML.cc/2023/Conference'
 
+        year = datetime.datetime.now().year
         valid_bibtex = '''@inproceedings{
-user2023paper,
+user'''+str(year)+'''paper,
 title={Paper title 1 Version 2},
 author={SomeFirstName User and Peter SomeLastName and Andrew Mc and SAC ICMLOne and Melisa ICML},
 booktitle={Thirty-ninth International Conference on Machine Learning},
-year={2023},
+year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''
 
         valid_bibtex = valid_bibtex + accepted_submissions[0].forum + '''}
@@ -4920,10 +4921,10 @@ url={https://openreview.net/forum?id='''
             assert 'readers' not in submission.content['financial_aid']
 
         valid_bibtex = '''@misc{
-anonymous2023paper,
+anonymous'''+str(year)+'''paper,
 title={Paper title 2},
 author={Anonymous},
-year={2023},
+year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''
 
         valid_bibtex = valid_bibtex + rejected_submissions[0].forum + '''}

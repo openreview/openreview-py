@@ -1071,6 +1071,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
             journal = openreview.journal.JournalRequest.get_journal(client, journal_request.id, setup=False)
             print('Check venue', journal.venue_id)
 
+            author_group = client.get_group(journal.get_authors_id())
+
             ## Get all the submissions that don't have a decision affinity scores
             submissions = journal.client.get_all_notes(invitation=journal.get_author_submission_id(), content = { 'venueid': journal.submitted_venue_id})
 
@@ -1091,21 +1093,20 @@ Your {lower_formatted_invitation} on a submission has been {action}
                                 journal.invitation_builder.set_ae_recommendation_invitation(submission, journal.get_due_date(weeks = journal.get_ae_recommendation_period_length()))
                                 ## send email to authors
                                 print('Send email to authors')
+                                message=author_group.content['ae_recommendation_email_template_script']['value'].format(
+                                    venue_id=journal.venue_id,
+                                    short_name=journal.short_name,
+                                    submission_id=submission.id,
+                                    submission_number=submission.number,
+                                    submission_title=submission.content['title']['value'],
+                                    website=journal.website,
+                                    contact_info=journal.contact_info,
+                                    invitation_url=f'https://openreview.net/invitation?id={journal.get_ae_recommendation_id(number=submission.number)}'
+                                )                                
                                 journal.client.post_message(
                                     recipients=submission.signatures,
                                     subject=f'[{journal.short_name}] Suggest candidate Action Editor for your new {journal.short_name} submission',
-                                    message=f'''Hi {{{{fullname}}}},
-
-Thank you for submitting your work titled "{submission.content['title']['value']}" to {journal.short_name}.
-
-Before the review process starts, you need to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
-
-To do so, please follow this link: https://openreview.net/invitation?id={journal.get_ae_recommendation_id(number=submission.number)} or check your tasks in the Author Console: https://openreview.net/group?id={journal.venue_id}/Authors
-
-For more details and guidelines on the {journal.short_name} review process, visit {journal.website}.
-
-The {journal.short_name} Editors-in-Chief
-''',
+                                    message=message,
                                     replyTo=journal.contact_info
                                 )
 

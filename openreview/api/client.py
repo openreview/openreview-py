@@ -48,6 +48,7 @@ class OpenReviewClient(object):
         self.edges_url = self.baseurl + '/edges'
         self.bulk_edges_url = self.baseurl + '/edges/bulk'
         self.edges_count_url = self.baseurl + '/edges/count'
+        self.edges_rename = self.baseurl + '/edges/rename'
         self.profiles_url = self.baseurl + '/profiles'
         self.profiles_search_url = self.baseurl + '/profiles/search'
         self.profiles_merge_url = self.baseurl + '/profiles/merge'
@@ -1469,6 +1470,30 @@ class OpenReviewClient(object):
         send_json = [edge.to_json() for edge in edges]
         response = self.session.post(self.bulk_edges_url, json = send_json, headers = self.headers)
         response = self.__handle_response(response)
+        received_json_array = response.json()
+        edge_objects = [Edge.from_json(edge) for edge in received_json_array]
+        return edge_objects
+
+    def rename_edges(self, current_id, new_id):
+        """
+        Updates an Edge
+
+        :param profile: Edge object
+        :type edge: Edge
+
+        :return: The new updated Edge
+        :rtype: Edge
+        """
+        response = self.session.post(
+            self.edges_rename,
+            json = {
+                'currentId': current_id,
+                'newId': new_id
+            },
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        #print('RESPONSE: ', response.json())
         received_json_array = response.json()
         edge_objects = [Edge.from_json(edge) for edge in received_json_array]
         return edge_objects

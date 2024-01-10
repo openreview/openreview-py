@@ -31,7 +31,7 @@ return {
 **General Information**
 
 - The OpenReview paper-reviewer matching system uses the text from your authored publications to match you with relevant papers. 
-- Your reviewing expertise for every submission is inferred from keywords extracted from text of your publications, and is represented by an affinity score.
+- Your reviewing expertise for every submission is inferred from the text in the title and abstract fields of your publications, and is represented by an affinity score.
 - For any given submission, your affinity score is based on the single publication that is most similar to the submission.
 - While more publications are always better, breadth across your areas of expertise is the most important factor.
 
