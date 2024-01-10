@@ -738,7 +738,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
         buttons[0].click()
         time.sleep(0.5)
         dropdown = button_row.find_element(By.CLASS_NAME, 'dropdown-menu')
-        dropdown_values = dropdown.find_elements_by_tag_name("a")
+        dropdown_values = dropdown.find_elements(By.TAG_NAME, "a")
         values = [value.text for value in dropdown_values]
         assert ['Submission'] == values
 
@@ -754,7 +754,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
         buttons[0].click()
         time.sleep(0.5)
         dropdown = button_row.find_element(By.CLASS_NAME, 'dropdown-menu')
-        dropdown_values = dropdown.find_elements_by_tag_name("a")
+        dropdown_values = dropdown.find_elements(By.TAG_NAME,"a")
         values = [value.text for value in dropdown_values]
         assert ['Submission', 'Post Submission', 'PC Revision'] == values
 
@@ -4994,7 +4994,7 @@ url={https://openreview.net/forum?id='''
         buttons[0].click()
         time.sleep(0.5)
         dropdown = button_row.find_element(By.CLASS_NAME, 'dropdown-menu')
-        dropdown_values = dropdown.find_elements_by_tag_name("a")
+        dropdown_values = dropdown.find_elements(By.TAG_NAME, "a")
         values = [value.text for value in dropdown_values]
         assert ['Post Submission', 'PC Revision', 'Ethics Review Flag'] == values
 
