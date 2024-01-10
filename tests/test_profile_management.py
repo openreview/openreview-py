@@ -160,7 +160,7 @@ class TestProfileManagement():
             "~Andrew_McCallum1"
         ]
 
-        with pytest.raises(openreview.OpenReviewException, match=r'The author name to replace doesn\'t match with the names listed in your profile'):
+        with pytest.raises(openreview.OpenReviewException, match=r'The author id ~Andrew_McCallum1 doesn\'t match with the names listed in your profile'):
             edit = haw_shiuan_client.post_note_edit(
                 invitation = 'DBLP.org/-/Author_Coreference',
                 signatures = ['~Haw-Shiuan_Chang1'],
@@ -173,7 +173,7 @@ class TestProfileManagement():
                 )
             )
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Your name doesn\'t match with the author name in the paper'):
+        with pytest.raises(openreview.OpenReviewException, match=r'The author name Andrew McCallum from index 3 doesn\'t match with the names listed in your profile'):
             edit = haw_shiuan_client.post_note_edit(
                 invitation = 'DBLP.org/-/Author_Coreference',
                 signatures = ['~Haw-Shiuan_Chang1'],
@@ -187,7 +187,7 @@ class TestProfileManagement():
             )            
 
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Your name doesn\'t match with the author name in the paper'):
+        with pytest.raises(openreview.OpenReviewException, match=r'The author name Ruei-Yao Sun from index 1 doesn\'t match with the names listed in your profile'):
             edit = test_client_v2.post_note_edit(
                 invitation = 'DBLP.org/-/Author_Coreference',
                 signatures = ['~SomeFirstName_User1'],
@@ -225,7 +225,7 @@ class TestProfileManagement():
             )
         )
 
-        with pytest.raises(openreview.OpenReviewException, match=r'The author name to remove doesn\'t match with the names listed in your profile'):
+        with pytest.raises(openreview.OpenReviewException, match=r'The author name  from index 0 doesn\'t match with the names listed in your profile'):
             edit = andrew_client.post_note_edit(
                 invitation = 'DBLP.org/-/Author_Coreference',
                 signatures = ['~Andrew_McCallum1'],
@@ -285,6 +285,62 @@ class TestProfileManagement():
         note = haw_shiuan_client.get_note(edit['note']['id'])
         assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference', 'DBLP.org/-/Abstract']
         assert note.content['abstract']['value'] == 'this is an abstract'
+
+        ## claim dblp paper using another tilde id
+        kate_client = helpers.create_user('kate@profile.org', 'Kate', 'Ricci', alternates=[], institution='umass.edu')
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The author name Kathryn Ricci from index 2 doesn\'t match with the names listed in your profile'):
+            edit = kate_client.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~Kate_Ricci1'],
+                content = {
+                    'author_index': { 'value': 2 },
+                    'author_id': { 'value': '~Kate_Ricci1' },
+                },                 
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            ) 
+
+        profile = kate_client.get_profile()
+
+        profile.content['homepage'] = 'https://google.com'
+        profile.content['names'].append({
+            'first': 'Kathryn',
+            'last': 'Ricci'
+            })
+        kate_client.post_profile(profile)
+
+        edit = kate_client.post_note_edit(
+            invitation = 'DBLP.org/-/Author_Coreference',
+            signatures = ['~Kate_Ricci1'],
+            content = {
+                'author_index': { 'value': 2 },
+                'author_id': { 'value': '~Kate_Ricci1' },
+            },                 
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        note = haw_shiuan_client.get_note(edit['note']['id'])
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference', 'DBLP.org/-/Abstract']
+        assert note.cdate
+        assert note.mdate
+        assert note.pdate
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
+        assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+        assert note.content['authorids']['value'] == [
+            '',
+            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
+            "~Kate_Ricci1",
+            "~Andrew_McCallum1"
+        ]                                  
+
    
     def test_remove_alternate_name(self, openreview_client, profile_management, test_client, helpers):
 
@@ -370,7 +426,8 @@ class TestProfileManagement():
                     'authors': { 'value': ['John Alternate Last', 'Test Client'] },
                     'authorids': { 'value': ['~John_Alternate_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))            
 
         john_client.post_note_edit(
@@ -384,7 +441,8 @@ class TestProfileManagement():
                     'authors': { 'value': ['John Alternate Last', 'Test Client'] },
                     'authorids': { 'value': ['~John_Alternate_Last1', 'test@mail.com', 'another@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         )) 
 
         ## Create committee groups
@@ -568,7 +626,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Ana Last', 'Test Client'] },
                     'authorids': { 'value': ['~Ana_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))        
 
         ana_client.post_note_edit(
@@ -582,7 +641,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Ana Last', 'Test Client'] },
                     'authorids': { 'value': ['~Ana_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))        
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Ana_Alternate_Last1'})
@@ -702,7 +762,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Peter Alternate Last', 'Test Client'] },
                     'authorids': { 'value': ['~Peter_Alternate_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))                      
 
         request_note = peter_client.post_note_edit(
@@ -799,7 +860,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Ella Last', 'Test Client'] },
                     'authorids': { 'value': ['~Ella_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))         
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Ella_Last1'})
@@ -825,7 +887,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Ella Last', 'Test Client'] },
                     'authorids': { 'value': ['~Ella_Last2', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Ella_Last2'})
@@ -965,7 +1028,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Javier Last', 'Test Client'] },
                     'authorids': { 'value': ['~Javier_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))      
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Javier_Last1'})
@@ -986,7 +1050,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Javier Last', 'Test Client'] },
                     'authorids': { 'value': ['~Javier_Last2', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))        
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Javier_Last2'})
@@ -1120,7 +1185,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Paul Alternate Last', 'Test Client'] },
                     'authorids': { 'value': ['~Paul_Alternate_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))         
         
 
@@ -1135,7 +1201,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Paul Alternate Last', 'Test Client'] },
                     'authorids': { 'value': ['~Paul_Alternate_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))         
 
         submission_note_1 = paul_client.post_note_edit(invitation='CABJ/-/Submission',
@@ -1435,7 +1502,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Juan Last', 'Test Client'] },
                     'authorids': { 'value': ['~Juan_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))                      
 
         john_client = openreview.api.OpenReviewClient(username='john@profile.org', password=helpers.strong_password)
@@ -1876,7 +1944,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Harold Last', 'Test Client'] },
                     'authorids': { 'value': ['alternate_harold@profile.org', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))        
 
         openreview_client.post_note_edit(
@@ -1890,7 +1959,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Harold Last', 'Test Client'] },
                     'authorids': { 'value': ['alternate_harold@profile.org', 'test@mail.com', 'another@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         )) 
 
         ## Add v2 submission
@@ -2064,7 +2134,8 @@ The OpenReview Team.
                     'TLDR': { 'value': 'TL;DR'},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'abstract': { 'value': 'Paper abstract' },
-                }   
+                },
+                license = 'CC BY-SA 4.0'   
             )                         
         )
 

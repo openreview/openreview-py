@@ -577,7 +577,19 @@ class ProfileManagement():
                         'signatures': [ '${3/signatures}' ],
                         'readers': ['everyone'],
                         'writers': [ '${2/content/authorids/value}'],
-                        'license': 'CC BY-SA 4.0',
+                        'license': {
+                            'param': {
+                                'enum': [ 
+                                    { 'value': 'CC BY 4.0', 'description': 'CC BY 4.0' },
+                                    { 'value': 'CC BY-SA 4.0', 'description': 'CC BY-SA 4.0' },
+                                    { 'value': 'CC BY-NC 4.0', 'description': 'CC BY-NC 4.0' },
+                                    { 'value': 'CC BY-ND 4.0', 'description': 'CC BY-ND 4.0' },
+                                    { 'value': 'CC BY-NC-SA 4.0', 'description': 'CC BY-NC-SA 4.0' },
+                                    { 'value': 'CC BY-NC-ND 4.0', 'description': 'CC BY-NC-ND 4.0' },
+                                    { 'value': 'CC0 1.0', 'description': 'CC0 1.0' } 
+                                ]
+                            }
+                        },
                         'content': {
                             'title': {
                                 'order': 1,
@@ -675,7 +687,7 @@ class ProfileManagement():
         anonymous_group_id = f'{self.super_user}/Anonymous_Preprint'
         author_anonymous_group_id = f'{anonymous_group_id}/Submission${{2/note/number}}/Authors'
 
-        self.client_v2.post_invitation_edit(invitations=None,
+        self.client.post_invitation_edit(invitations=None,
             readers=[anonymous_group_id],
             writers=[anonymous_group_id],
             signatures=['~Super_User1'],
@@ -699,7 +711,7 @@ class ProfileManagement():
             file_content = f.read()
             anonymous_group.web = file_content
 
-            self.client_v2.post_group_edit(
+            self.client.post_group_edit(
                 invitation = f'{anonymous_group_id}/-/Edit',
                 signatures = ['~Super_User1'],
                 group = anonymous_group)
@@ -707,7 +719,7 @@ class ProfileManagement():
         with open(os.path.join(os.path.dirname(__file__), 'process/anonymous_preprint_submission_process.py'), 'r') as f:
             process_content = f.read()
 
-        self.client_v2.post_invitation_edit(
+        self.client.post_invitation_edit(
             invitations = f'{anonymous_group_id}/-/Edit',
             signatures = [anonymous_group_id],
             invitation = openreview.api.Invitation(
@@ -752,7 +764,19 @@ class ProfileManagement():
                         'signatures': [ f'{anonymous_group_id}/Submission${{2/number}}/Authors' ],
                         'readers': ['everyone'],
                         'writers': [ anonymous_group_id, f'{anonymous_group_id}/Submission${{2/number}}/Authors'],
-                        'license': 'CC BY-SA 4.0',
+                        'license': {
+                            'param': {
+                                'enum': [ 
+                                    { 'value': 'CC BY 4.0', 'description': 'CC BY 4.0' },
+                                    { 'value': 'CC BY-SA 4.0', 'description': 'CC BY-SA 4.0' },
+                                    { 'value': 'CC BY-NC 4.0', 'description': 'CC BY-NC 4.0' },
+                                    { 'value': 'CC BY-ND 4.0', 'description': 'CC BY-ND 4.0' },
+                                    { 'value': 'CC BY-NC-SA 4.0', 'description': 'CC BY-NC-SA 4.0' },
+                                    { 'value': 'CC BY-NC-ND 4.0', 'description': 'CC BY-NC-ND 4.0' },
+                                    { 'value': 'CC0 1.0', 'description': 'CC0 1.0' } 
+                                ]
+                            }
+                        },
                         'content': {
                             'title': {
                                 'order': 1,
@@ -863,7 +887,7 @@ class ProfileManagement():
         with open(os.path.join(os.path.dirname(__file__), 'process/anonymous_preprint_comment_process.py'), 'r') as f:
             process_content = f.read()
 
-        self.client_v2.post_invitation_edit(
+        self.client.post_invitation_edit(
             invitations = f'{anonymous_group_id}/-/Edit',
             signatures = [anonymous_group_id],
             invitation = openreview.api.Invitation(id=f'{anonymous_group_id}/-/Comment',

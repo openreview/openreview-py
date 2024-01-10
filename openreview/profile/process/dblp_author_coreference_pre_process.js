@@ -1,13 +1,13 @@
 async function process(client, edit, invitation) {
   client.throwErrors = true;
   
-  const index = edit.content.author_index.value;
+  const authorIndex = edit.content.author_index.value;
   const authorId = edit.content.author_id.value;
 
   const { notes } = await client.getNotes({ id: edit.note.id });
   const publication = notes[0];
 
-  if (index >= publication.content.authorids.value.length || index < 0) {
+  if (authorIndex >= publication.content.authorids.value.length || authorIndex < 0) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Invalid author index` }));
   }
 
@@ -18,19 +18,22 @@ async function process(client, edit, invitation) {
   const names = userProfile.content.names.map(name => name.fullname);
 
   if (authorId === '') {
-    if (!usernames.some(username => username === publication.content.authorids.value[index])) {
-      return Promise.reject(new OpenReviewError({ name: 'Error', message: `The author name to remove doesn't match with the names listed in your profile` }));
+    const authorName = publication.content.authorids.value[authorIndex];
+    if (!usernames.some(username => username === authorName)) {
+      return Promise.reject(new OpenReviewError({ name: 'Error', message: `The author name ${authorName} from index ${authorIndex} doesn't match with the names listed in your profile` }));
     }
     return;
   }
 
-  const nameIndex = usernames.indexOf(authorId);
+  const usernameIndex = usernames.indexOf(authorId);
 
-  if (nameIndex === -1) {
-    return Promise.reject(new OpenReviewError({ name: 'Error', message: `The author name to replace doesn't match with the names listed in your profile` }));
+  if (usernameIndex === -1) {
+    return Promise.reject(new OpenReviewError({ name: 'Error', message: `The author id ${authorId} doesn't match with the names listed in your profile` }));
   }
   
-  if (names[nameIndex] !== publication.content.authors.value[index]) {
-    return Promise.reject(new OpenReviewError({ name: 'Error', message: `Your name doesn't match with the author name in the paper` }));
+  const authorName = publication.content.authors.value[authorIndex];
+  const nameIndex = names.indexOf(authorName);
+  if (nameIndex === -1) {
+    return Promise.reject(new OpenReviewError({ name: 'Error', message: `The author name ${authorName} from index ${authorIndex} doesn't match with the names listed in your profile` }));
   }
 }
