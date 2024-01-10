@@ -1412,49 +1412,6 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert len(assignment_config_notes) == 1
         assert assignment_config_notes[0].content['title']['value'] == 'matching-config-title'
 
-#     def test_update_withdraw_submission_due_date(self, client, test_client, selenium, request_page, helpers, venue):
-#         now = datetime.datetime.utcnow()
-#         start_date = now - datetime.timedelta(days=2)
-#         due_date = now + datetime.timedelta(days=3)
-#         withdraw_exp_date = now + datetime.timedelta(days=1)
-#         withdraw_exp_date = withdraw_exp_date.strftime('%Y/%m/%d')
-#         venue_revision_note = test_client.post_note(openreview.Note(
-#             content={
-#                 'title': '{} Updated'.format(venue['request_form_note'].content['title']),
-#                 'Official Venue Name': '{} Updated'.format(venue['request_form_note'].content['title']),
-#                 'Abbreviated Venue Name': venue['request_form_note'].content['Abbreviated Venue Name'],
-#                 'Official Website URL': venue['request_form_note'].content['Official Website URL'],
-#                 'program_chair_emails': venue['request_form_note'].content['program_chair_emails'],
-#                 'Expected Submissions': '100',
-#                 'How did you hear about us?': 'ML conferences',
-#                 'Location': 'Virtual',
-#                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
-#                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
-#                 'contact_email': venue['request_form_note'].content['contact_email'],
-#                 'withdraw_submission_expiration': withdraw_exp_date,
-#             },
-#             forum=venue['request_form_note'].forum,
-#             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
-#             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-#             referent=venue['request_form_note'].forum,
-#             replyto=venue['request_form_note'].forum,
-#             signatures=['~SomeFirstName_User1'],
-#             writers=[]
-#         ))
-#         assert venue_revision_note
-#         helpers.await_queue()
-#         process_logs = client.get_process_logs(id=venue_revision_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
-#         assert process_logs[0]['invitation'] == '{}/-/Request{}/Revision'.format(venue['support_group_id'],
-#                                                                                  venue['request_form_note'].number)
-
-#         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-#         paper_withdraw_super_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id("Withdraw"))
-#         withdraw_exp_date = datetime.datetime.strptime(withdraw_exp_date, '%Y/%m/%d')
-#         assert paper_withdraw_super_invitation.duedate is None
-#         assert openreview.tools.datetime_millis(withdraw_exp_date) == openreview.tools.datetime_millis(paper_withdraw_super_invitation.expdate)
-
     def test_venue_review_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
         now = datetime.datetime.utcnow()
@@ -1565,6 +1522,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         helpers.await_queue()
 
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Reviewers', '~VenueThree_Reviewer1')
+        openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Reviewers', '~VenueTwo_Reviewer1')
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission2/Reviewers', '~VenueTwo_Reviewer1')
 
         reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2_@mail.com', password=helpers.strong_password)
@@ -1634,6 +1592,25 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert 'V2.cc/2030/Conference/Submission1/Reviewers/Submitted' in reviews[0].readers
         assert 'V2.cc/2030/Conference/Submission1/Authors' not in reviews[0].readers
 
+        #post another review
+        reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2@mail.com', password=helpers.strong_password)
+        reviewer_anon_groups=reviewer_client.get_groups(prefix=f'V2.cc/2030/Conference/Submission1/Reviewer_.*', signatory='~VenueTwo_Reviewer1')
+        assert len(reviewer_anon_groups) == 1
+
+        ## Post a review edit
+        review_note = reviewer_client.post_note_edit(invitation=f'V2.cc/2030/Conference/Submission1/-/Official_Review',
+            signatures=[reviewer_anon_groups[0].id],
+            note=Note(
+                content={
+                    'review': { 'value': 'good paper!' },
+                    'review_rating': { 'value': 7 },
+                    'confidence': { 'value': 5 }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+
     def test_release_reviews_to_authors(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
         # Post a review stage note
@@ -1693,7 +1670,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert len(invitation.edit['note']['nonreaders']) == 0
 
         reviews = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review')
-        assert len(reviews) == 1
+        assert len(reviews) == 2
         assert 'V2.cc/2030/Conference/Program_Chairs' in reviews[0].readers
         assert 'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs' in reviews[0].readers
         assert 'V2.cc/2030/Conference/Submission1/Area_Chairs' in reviews[0].readers
@@ -1759,7 +1736,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         helpers.await_queue()
 
         reviews = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review')
-        assert len(reviews) == 1
+        assert len(reviews) == 2
         assert 'V2.cc/2030/Conference/Program_Chairs' in reviews[0].readers
         assert 'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs' in reviews[0].readers
         assert 'V2.cc/2030/Conference/Submission1/Area_Chairs' in reviews[0].readers
@@ -1798,16 +1775,16 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         helpers.await_queue()
 
         reviews = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review')
-        assert len(reviews) == 1
+        assert len(reviews) == 2
 
-        invitation = openreview_client.get_invitation(f'{reviews[0].signatures[0]}/-/Rebuttal')
-        assert invitation
-        assert invitation.edit['note']['id']['param']['withInvitation'] == invitation.id
+        invitations = openreview_client.get_invitations(invitation='V2.cc/2030/Conference/-/Rebuttal')
+        assert len(invitations) == 2
+        assert invitations[0].edit['note']['id']['param']['withInvitation'] == invitations[0].id
 
         author_client = OpenReviewClient(username='venue_author_v2@mail.com', password=helpers.strong_password)
 
         rebuttal_edit = author_client.post_note_edit(
-            invitation=f'{reviews[0].signatures[0]}/-/Rebuttal',
+            invitation='V2.cc/2030/Conference/Submission1/Official_Review1/-/Rebuttal',
             signatures=['V2.cc/2030/Conference/Submission1/Authors'],
             note=openreview.api.Note(
                 content={
@@ -1823,8 +1800,9 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert len(messages) == 1
         assert 'venue_author_v2@mail.com' in messages[0]['content']['to']
         messages = openreview_client.get_messages(subject = '[TestVenue@OR\'2030V2] An author rebuttal was posted on Submission Number: 1, Submission Title: "test submission"')
-        assert len(messages) == 1
+        assert len(messages) == 2
         assert 'venue_reviewer_v2_@mail.com' in messages[0]['content']['to']
+        assert 'venue_reviewer_v2@mail.com' in messages[1]['content']['to']
 
         reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2@mail.com', password=helpers.strong_password)
         ## Post a review
@@ -1854,7 +1832,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             reviews[0].signatures[0]
         ]
 
-        invitation = openreview_client.get_invitation(f'{reviewer_anon_groups[0].id}/-/Rebuttal')
+        invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission2/Official_Review1/-/Rebuttal')
         assert invitation
         assert invitation.edit['note']['id']['param']['withInvitation'] == invitation.id
         assert invitation.edit['note']['forum'] == review_note['note']['forum']
@@ -1906,7 +1884,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         venue.create_custom_stage()
 
         invitations = openreview_client.get_all_invitations(invitation='V2.cc/2030/Conference/-/Review_Revision')
-        assert len(invitations) == 2
+        assert len(invitations) == 3
 
         reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2_@mail.com', password=helpers.strong_password)
         anon_groups = reviewer_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Reviewer_', signatory='~VenueThree_Reviewer1')
@@ -1915,7 +1893,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         invitation = openreview_client.get_invitation(f'{anon_group_id}/-/Review_Revision')
         assert invitation and anon_group_id in invitation.invitees
 
-        review = reviewer_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review')[0]
+        review = reviewer_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review', sort='number:asc')[0]
         assert review.readers == ['V2.cc/2030/Conference/Program_Chairs',
                                   'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs',
                                   'V2.cc/2030/Conference/Submission1/Area_Chairs',
@@ -1937,7 +1915,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         assert review_revision['readers'] == ['V2.cc/2030/Conference', anon_group_id]
 
-        review = reviewer_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review')[0]
+        review = reviewer_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review', sort='number:asc')[0]
         assert review.readers == ['V2.cc/2030/Conference/Program_Chairs',
                                   'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs',
                                   'V2.cc/2030/Conference/Submission1/Area_Chairs',
@@ -1984,7 +1962,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         first_submission = submissions[0]
         reviews = [reply for reply in first_submission.details['directReplies'] if f'V2.cc/2030/Conference/Submission{first_submission.number}/-/Official_Review']
 
-        assert len(openreview_client.get_invitations(invitation='V2.cc/2030/Conference/-/Author_Review_Rating')) == 2
+        assert len(openreview_client.get_invitations(invitation='V2.cc/2030/Conference/-/Author_Review_Rating')) == 3
 
         reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2_@mail.com', password=helpers.strong_password)
         anon_groups = reviewer_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Reviewer_', signatory='~VenueThree_Reviewer1')

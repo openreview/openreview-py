@@ -439,8 +439,12 @@ class InvitationBuilder(object):
         reply_to = '${4/content/noteId/value}'
 
         if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals:
-            paper_invitation_id = self.venue.get_invitation_id(name=review_rebuttal_stage.name, prefix='${2/content/replytoSignatures/value}')
-            with_invitation = self.venue.get_invitation_id(name=review_rebuttal_stage.name, prefix='${6/content/replytoSignatures/value}')
+            submission_prefix = self.venue_id + '/' + self.venue.submission_stage.name + '${2/content/noteNumber/value}/'
+            review_prefix = self.venue.review_stage.name + '${2/content/reviewNumber/value}'
+            paper_invitation_id = self.venue.get_invitation_id(name=review_rebuttal_stage.name, prefix=submission_prefix+review_prefix)
+            submission_prefix = self.venue_id + '/' + self.venue.submission_stage.name + '${6/content/noteNumber/value}/'
+            review_prefix = self.venue.review_stage.name + '${6/content/reviewNumber/value}'
+            with_invitation = self.venue.get_invitation_id(name=review_rebuttal_stage.name, prefix=submission_prefix+review_prefix)
             reply_to = '${4/content/replyto/value}'
 
         if review_rebuttal_stage.unlimited_rebuttals:
@@ -487,10 +491,10 @@ class InvitationBuilder(object):
                             }
                         }
                     },
-                    'replytoSignatures': {
+                    'reviewNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string',
+                                'regex': '.*', 'type': 'integer',
                                 'optional': True
                             }
                         }

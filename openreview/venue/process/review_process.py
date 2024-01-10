@@ -144,14 +144,18 @@ Paper title: {submission.content['title']['value']}
         print('processing invitation: ', invitation.id)
         review_reply = invitation.content.get('reply_to', {}).get('value', False) if invitation.content else False
         content_keys = invitation.edit.get('content', {}).keys()
-        if 'reviews' == review_reply and 'replytoSignatures' in content_keys and 'replyto' in content_keys and len(content_keys) == 4:
+        if 'reviews' == review_reply and 'replyto' in content_keys and len(content_keys) == 4:
             print('create invitation: ', invitation.id)
+            content  = {
+                'noteId': { 'value': review.forum },
+                'noteNumber': { 'value': submission.number },
+                'replyto': { 'value': review.id }
+            }
+            if 'replytoSignatures' in content_keys:
+                content['replytoSignatures'] = { 'value': review.signatures[0] }
+            elif 'reviewNumber' in content_keys:
+                content['reviewNumber'] = { 'value': review.number }
             client.post_invitation_edit(invitations=invitation.id,
-                content={
-                    'noteId': { 'value': review.forum },
-                    'noteNumber': { 'value': submission.number },
-                    'replytoSignatures': { 'value': review.signatures[0] },
-                    'replyto': { 'value': review.id }
-                },
+                content=content,
                 invitation=openreview.api.Invitation()
             )

@@ -2087,18 +2087,18 @@ If you would like to change your decision, please follow the link in the previou
         helpers.await_queue()
 
         submissions = openreview_client.get_notes(invitation='NeurIPS.cc/2023/Conference/-/Submission', sort='number:asc')
-        reviews = pc_client_v2.get_notes(invitation='NeurIPS.cc/2023/Conference/Submission1/-/Official_Review')
+        reviews = pc_client_v2.get_notes(invitation='NeurIPS.cc/2023/Conference/Submission1/-/Official_Review', sort='number:asc')
         review = reviews[0]
 
         assert len(openreview_client.get_invitations(invitation='NeurIPS.cc/2023/Conference/-/Rebuttal')) == 2
-        invitation = openreview_client.get_invitation(f'{review.signatures[0]}/-/Rebuttal')
+        invitation = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/Submission1/Official_Review1/-/Rebuttal')
         assert invitation.maxReplies == 1
         assert invitation.edit['note']['replyto'] == review.id
 
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
         rebuttal_edit = test_client.post_note_edit(
-            invitation=f'{review.signatures[0]}/-/Rebuttal',
+            invitation='NeurIPS.cc/2023/Conference/Submission1/Official_Review1/-/Rebuttal',
             signatures=['NeurIPS.cc/2023/Conference/Submission1/Authors'],
             note=openreview.api.Note(
                 replyto = review.id,
@@ -2120,7 +2120,7 @@ If you would like to change your decision, please follow the link in the previou
 
         with pytest.raises(openreview.OpenReviewException, match=r'.*You have reached the maximum number \(1\) of replies for this Invitation.*'):
             rebuttal_edit = test_client.post_note_edit(
-                invitation=f'{review.signatures[0]}/-/Rebuttal',
+                invitation='NeurIPS.cc/2023/Conference/Submission1/Official_Review1/-/Rebuttal',
                 signatures=['NeurIPS.cc/2023/Conference/Submission1/Authors'],
                 note=openreview.api.Note(
                     replyto = review.id,
@@ -2265,11 +2265,7 @@ If you would like to change your decision, please follow the link in the previou
 
         helpers.await_queue()
 
-
-        reviews = pc_client_v2.get_notes(invitation='NeurIPS.cc/2023/Conference/Submission1/-/Official_Review')
-        review = reviews[0]
-
-        rebuttal = openreview_client.get_notes(invitation=f'{review.signatures[0]}/-/Rebuttal')[0]
+        rebuttal = openreview_client.get_notes(invitation='NeurIPS.cc/2023/Conference/Submission1/Official_Review1/-/Rebuttal')[0]
         assert rebuttal.readers == [
             'NeurIPS.cc/2023/Conference/Program_Chairs',
             'NeurIPS.cc/2023/Conference/Submission1/Senior_Area_Chairs',
