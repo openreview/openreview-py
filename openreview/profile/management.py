@@ -1,5 +1,6 @@
 import os
 import openreview
+from openreview.stages import *
 
 class ProfileManagement():
 
@@ -25,6 +26,7 @@ class ProfileManagement():
         self.set_archive_invitations()
         self.set_merge_profiles_invitations()
         self.set_dblp_invitations()
+        self.set_anonymous_preprint_invitations()
 
     def set_dblp_invitations(self):
 
@@ -497,6 +499,291 @@ class ProfileManagement():
             )
         )
 
+    def set_anonymous_preprint_invitations(self):
+
+        anonymous_group_id = f'{self.super_user}/Anonymous_Preprint'
+        author_anonymous_group_id = f'{anonymous_group_id}/Submission${{2/note/number}}/Authors'
+
+        self.client_v2.post_invitation_edit(invitations=None,
+            readers=[anonymous_group_id],
+            writers=[anonymous_group_id],
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(id=f'{anonymous_group_id}/-/Edit',
+                invitees=[anonymous_group_id],
+                readers=[anonymous_group_id],
+                signatures=['~Super_User1'],
+                edit=True
+            )
+        )        
+        
+        anonymous_group = openreview.api.Group(
+            id = anonymous_group_id,
+            readers = ['everyone'],
+            writers = [anonymous_group_id],
+            signatures = [self.super_user],
+            signatories = [anonymous_group_id]
+        )
+
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/anonymousWebfield.js'), 'r') as f:
+            file_content = f.read()
+            anonymous_group.web = file_content
+
+            self.client_v2.post_group_edit(
+                invitation = f'{anonymous_group_id}/-/Edit',
+                signatures = ['~Super_User1'],
+                group = anonymous_group)
+            
+        with open(os.path.join(os.path.dirname(__file__), 'process/anonymous_preprint_submission_process.py'), 'r') as f:
+            process_content = f.read()
+
+        self.client_v2.post_invitation_edit(
+            invitations = f'{anonymous_group_id}/-/Edit',
+            signatures = [anonymous_group_id],
+            invitation = openreview.api.Invitation(
+                id=f'{anonymous_group_id}/-/Submission',
+                readers=['~'],
+                writers=[anonymous_group_id],
+                signatures=[anonymous_group_id],
+                invitees=['~'],
+                edit={
+                    'readers': [ anonymous_group_id, author_anonymous_group_id],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': anonymous_group_id, 'optional': True } 
+                            ]
+                        } 
+                    },
+                    'writers': [ anonymous_group_id, author_anonymous_group_id],
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': f'{anonymous_group_id}/-/Submission',
+                                'optional': True
+                            }
+                        },
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'odate': '${2/cdate}',
+                        'signatures': [ f'{anonymous_group_id}/Submission${{2/number}}/Authors' ],
+                        'readers': ['everyone'],
+                        'writers': [ anonymous_group_id, f'{anonymous_group_id}/Submission${{2/number}}/Authors'],
+                        'license': 'CC BY-SA 4.0',
+                        'content': {
+                            'title': {
+                                'order': 1,
+                                'description': 'Title of paper.',
+                                'value': { 
+                                    'param': { 
+                                        'type': 'string',
+                                        'regex': '^.{1,250}$'
+                                    }
+                                }
+                            },
+                            'authors': {
+                                'order': 2,
+                                'value': {
+                                    'param': {
+                                        'type': 'string[]',
+                                        'regex': '[^;,\\n]+(,[^,\\n]+)*',
+                                        'hidden': True
+                                    }
+                                },
+                                'readers': [ anonymous_group_id, f'{anonymous_group_id}/Submission${{4/number}}/Authors']
+                            },
+                            'authorids': {
+                                'order': 3,
+                                'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
+                                'value': {
+                                    'param': {
+                                        'type': 'group[]',
+                                        'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
+                                        'mismatchError': 'must be a valid email or profile ID'
+                                    }
+                                },
+                                'readers': [ anonymous_group_id, f'{anonymous_group_id}/Submission${{4/number}}/Authors']
+                            },
+                            'keywords': {
+                                'description': 'Comma separated list of keywords.',
+                                'order': 4,
+                                'value': {
+                                    'param': {
+                                        'type': 'string[]',
+                                        'regex': '.+'
+                                    }
+                                }
+                            },
+                            'TLDR': {
+                                'order': 5,
+                                'description': '\"Too Long; Didn\'t Read\": a short sentence describing your paper',
+                                'value': {
+                                    'param': {
+                                        'fieldName': 'TL;DR',
+                                        'type': 'string',
+                                        'maxLength': 250,
+                                        'optional': True,
+                                        'deletable': True
+                                    }
+                                }        
+                            },                                                    
+                            'abstract': {
+                                'order': 6,
+                                'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 5000,
+                                        'markdown': True,
+                                        'input': 'textarea'
+                                    }
+                                }
+                            },
+                            'pdf': {
+                                'order': 7,
+                                'description': 'Upload a PDF file that ends with .pdf.',
+                                'value': {
+                                    'param': {
+                                        'type': 'file',
+                                        'maxSize': 50,
+                                        'extensions': ['pdf']
+                                    }
+                                }
+                            },
+                            'venue': {
+                                'order': 7,
+                                'description': 'Enter the venue where the paper was published.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'const': 'Anonymous Preprint Submission',
+                                        'hidden': True
+                                    }
+                                }
+                            },
+                            'venueid': {
+                                'value': {
+                                    'param': {
+                                        'type': "string",
+                                        'const': anonymous_group_id,
+                                        'hidden': True
+                                    }
+                                }
+                            }
+                        }
+                    }                                        
+                },
+                process=process_content
+            )
+        )
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/anonymous_preprint_comment_process.py'), 'r') as f:
+            process_content = f.read()
+
+        self.client_v2.post_invitation_edit(
+            invitations = f'{anonymous_group_id}/-/Edit',
+            signatures = [anonymous_group_id],
+            invitation = openreview.api.Invitation(id=f'{anonymous_group_id}/-/Comment',
+                invitees=[anonymous_group_id],
+                readers=[anonymous_group_id],
+                writers=[anonymous_group_id],
+                signatures=[anonymous_group_id],
+                content={
+                    'comment_process_script': {
+                        'value': process_content
+                    }
+                },
+                edit={
+                    'signatures': [anonymous_group_id],
+                    'readers': [anonymous_group_id],
+                    'writers': [anonymous_group_id],
+                    'content': {
+                        'noteNumber': {
+                            'value': {
+                                'param': {
+                                    'regex': '.*', 'type': 'integer'
+                                }
+                            }
+                        },
+                        'noteId': {
+                            'value': {
+                                'param': {
+                                    'regex': '.*', 'type': 'string'
+                                }
+                            }
+                        }
+                    },
+                    'replacement': True,
+                    'invitation': {
+                        'id': f'{anonymous_group_id}/Submission${{2/content/noteNumber/value}}/-/Comment',
+                        'signatures': [ anonymous_group_id ],
+                        'readers': ['everyone'],
+                        'writers': [anonymous_group_id],
+                        'invitees': ['everyone'],
+                        'process': '''def process(client, edit, invitation):
+        meta_invitation = client.get_invitation(invitation.invitations[0])
+        script = meta_invitation.content['comment_process_script']['value']
+        funcs = {
+            'openreview': openreview
+        }
+        exec(script, funcs)
+        funcs['process'](client, edit, invitation)
+    ''',
+                        'edit': {
+                            'signatures': { 
+                                'param': { 
+                                    'items': [
+                                        { 'prefix': '~.*', 'optional': True },
+                                        { 'value': f'{anonymous_group_id}/Submission${{7/content/noteNumber/value}}/Authors', 'optional': True },
+                                    ] 
+                                }
+                            },
+                            'readers': ['${2/note/readers}'],
+                            'writers': [anonymous_group_id],
+                            'note': {
+                                'id': {
+                                    'param': {
+                                        'withInvitation': f'{anonymous_group_id}/Submission${{6/content/noteNumber/value}}/-/Comment',
+                                        'optional': True
+                                    }
+                                },
+                                'forum': '${4/content/noteId/value}',
+                                'replyto': { 
+                                    'param': {
+                                        'withForum': '${6/content/noteId/value}', 
+                                    }
+                                },
+                                'ddate': {
+                                    'param': {
+                                        'range': [ 0, 9999999999999 ],
+                                        'optional': True,
+                                        'deletable': True
+                                    }
+                                },
+                                'signatures': ['${3/signatures}'],
+                                'readers': ['everyone'],
+                                'writers': [anonymous_group_id, '${3/signatures}'],
+                                'content': default_content.comment_v2.copy()
+                            }
+                        }
+                    }
+
+                }
+            )
+        )        
+    
     def set_merge_profiles_invitations(self):
 
         content = {
