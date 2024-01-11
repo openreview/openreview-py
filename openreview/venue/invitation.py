@@ -439,10 +439,10 @@ class InvitationBuilder(object):
         reply_to = '${4/content/noteId/value}'
 
         if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals:
-            submission_prefix = self.venue_id + '/' + self.venue.submission_stage.name + '${2/content/noteNumber/value}/'
+            submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${2/content/noteNumber/value}/'
             review_prefix = self.venue.review_stage.name + '${2/content/replyNumber/value}'
             paper_invitation_id = self.venue.get_invitation_id(name=review_rebuttal_stage.name, prefix=submission_prefix+review_prefix)
-            submission_prefix = self.venue_id + '/' + self.venue.submission_stage.name + '${6/content/noteNumber/value}/'
+            submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${6/content/noteNumber/value}/'
             review_prefix = self.venue.review_stage.name + '${6/content/replyNumber/value}'
             with_invitation = self.venue.get_invitation_id(name=review_rebuttal_stage.name, prefix=submission_prefix+review_prefix)
             reply_to = '${4/content/replyto/value}'
@@ -2040,9 +2040,21 @@ class InvitationBuilder(object):
                         'withForum': '${6/content/noteId/value}'
                     }
                 }
-            else:
-                paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix='${2/content/replytoSignatures/value}')
-                with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix='${6/content/replytoSignatures/value}')
+            elif custom_stage_replyto == 'reviews':
+                submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${2/content/noteNumber/value}/'
+                review_prefix = self.venue.review_stage.name + '${2/content/reviewNumber/value}'
+                paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix=submission_prefix+review_prefix)
+                submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${6/content/noteNumber/value}/'
+                review_prefix = self.venue.review_stage.name + '${6/content/reviewNumber/value}'
+                with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix=submission_prefix+review_prefix)
+                reply_to = '${4/content/replyto/value}'
+            elif custom_stage_replyto == 'metareviews':
+                submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${2/content/noteNumber/value}/'
+                metareview_prefix = self.venue.meta_review_stage.name + '${2/content/reviewNumber/value}'
+                paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix=submission_prefix+metareview_prefix)
+                submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${6/content/noteNumber/value}/'
+                metareview_prefix = self.venue.review_stage.name + '${6/content/reviewNumber/value}'
+                with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix=submission_prefix+metareview_prefix)
                 reply_to = '${4/content/replyto/value}'
 
         elif custom_stage_reply_type == 'revision':
