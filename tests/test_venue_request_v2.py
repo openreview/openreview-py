@@ -1890,7 +1890,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         anon_groups = reviewer_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Reviewer_', signatory='~VenueThree_Reviewer1')
         anon_group_id = anon_groups[0].id
 
-        invitation = openreview_client.get_invitation(f'{anon_group_id}/-/Review_Revision')
+        invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Official_Review1/-/Review_Revision')
         assert invitation and anon_group_id in invitation.invitees
 
         review = reviewer_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review', sort='number:asc')[0]
@@ -1902,7 +1902,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert 'readers' in review.content['review_rating']
 
         review_revision = reviewer_client.post_note_edit(
-            invitation=f'{anon_group_id}/-/Review_Revision',
+            invitation='V2.cc/2030/Conference/Submission1/Official_Review1/-/Review_Revision',
             signatures=[anon_group_id],
             note=Note(
                 id=review.id,
@@ -1968,7 +1968,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         anon_groups = reviewer_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Reviewer_', signatory='~VenueThree_Reviewer1')
         anon_group_id = anon_groups[0].id
 
-        invitation = openreview_client.get_invitation(f'{anon_group_id}/-/Author_Review_Rating')
+        invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Official_Review1/-/Author_Review_Rating')
         assert invitation.invitees == ['V2.cc/2030/Conference/Program_Chairs', 'V2.cc/2030/Conference/Submission1/Authors']
         assert 'review_quality' in invitation.edit['note']['content']
         assert invitation.edit['note']['forum'] == submissions[0].id
@@ -2151,7 +2151,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert len(ac_anon_groups) == 1
         ac_anon_group_id = ac_anon_groups[0].id
 
-        invitation = openreview_client.get_invitation(f'{ac_anon_group_id}/-/Meta_Review_Revision')
+        invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Meta_Review1/-/Meta_Review_Revision')
         assert invitation and ac_anon_group_id in invitation.invitees
 
         meta_review = meta_reviewer_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Meta_Review')[0]
@@ -2161,7 +2161,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                   'V2.cc/2030/Conference/Program_Chairs']
 
         meta_review_revision = meta_reviewer_client.post_note_edit(
-            invitation=f'{ac_anon_group_id}/-/Meta_Review_Revision',
+            invitation='V2.cc/2030/Conference/Submission1/Meta_Review1/-/Meta_Review_Revision',
             signatures=[ac_anon_group_id],
             note=Note(
                 id=meta_review.id,

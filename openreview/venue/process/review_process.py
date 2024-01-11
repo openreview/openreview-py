@@ -144,7 +144,7 @@ Paper title: {submission.content['title']['value']}
         print('processing invitation: ', invitation.id)
         review_reply = invitation.content.get('reply_to', {}).get('value', False) if invitation.content else False
         content_keys = invitation.edit.get('content', {}).keys()
-        if 'reviews' == review_reply and 'replyto' in content_keys and len(content_keys) == 4:
+        if 'reviews' == review_reply and 'replyto' in content_keys and len(content_keys) >= 4:
             print('create invitation: ', invitation.id)
             content  = {
                 'noteId': { 'value': review.forum },
