@@ -153,8 +153,8 @@ Paper title: {submission.content['title']['value']}
             }
             if 'replytoSignatures' in content_keys:
                 content['replytoSignatures'] = { 'value': review.signatures[0] }
-            elif 'reviewNumber' in content_keys:
-                content['reviewNumber'] = { 'value': review.number }
+            elif 'replyNumber' in content_keys:
+                content['replyNumber'] = { 'value': review.number }
             client.post_invitation_edit(invitations=invitation.id,
                 content=content,
                 invitation=openreview.api.Invitation()

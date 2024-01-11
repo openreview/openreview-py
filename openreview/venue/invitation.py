@@ -440,10 +440,10 @@ class InvitationBuilder(object):
 
         if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals:
             submission_prefix = self.venue_id + '/' + self.venue.submission_stage.name + '${2/content/noteNumber/value}/'
-            review_prefix = self.venue.review_stage.name + '${2/content/reviewNumber/value}'
+            review_prefix = self.venue.review_stage.name + '${2/content/replyNumber/value}'
             paper_invitation_id = self.venue.get_invitation_id(name=review_rebuttal_stage.name, prefix=submission_prefix+review_prefix)
             submission_prefix = self.venue_id + '/' + self.venue.submission_stage.name + '${6/content/noteNumber/value}/'
-            review_prefix = self.venue.review_stage.name + '${6/content/reviewNumber/value}'
+            review_prefix = self.venue.review_stage.name + '${6/content/replyNumber/value}'
             with_invitation = self.venue.get_invitation_id(name=review_rebuttal_stage.name, prefix=submission_prefix+review_prefix)
             reply_to = '${4/content/replyto/value}'
 
@@ -490,23 +490,7 @@ class InvitationBuilder(object):
                                 'regex': '.*', 'type': 'string'
                             }
                         }
-                    },
-                    'reviewNumber': {
-                        'value': {
-                            'param': {
-                                'regex': '.*', 'type': 'integer',
-                                'optional': True
-                            }
-                        }
-                    },
-                    'replyto': {
-                        'value': {
-                            'param': {
-                                'regex': '.*', 'type': 'string',
-                                'optional': True
-                            }
-                        }
-                    },
+                    }
                 },
                 'replacement': True,
                 'invitation': {
@@ -565,7 +549,25 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['duedate'] = review_rebuttal_duedate
 
         if review_rebuttal_expdate:
-            invitation.edit['invitation']['expdate'] = review_rebuttal_expdate            
+            invitation.edit['invitation']['expdate'] = review_rebuttal_expdate
+
+        if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals:
+            invitation.edit['content']['replyNumber'] = {
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'integer',
+                        'optional': True
+                    }
+                }
+            }
+            invitation.edit['content']['replyto'] = {
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'string',
+                        'optional': True
+                    }
+                }
+            }
 
         self.save_invitation(invitation, replacement=False)
         return invitation

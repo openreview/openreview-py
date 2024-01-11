@@ -135,12 +135,12 @@ def process(client, invitation):
             content['replyto'] = { 'value': note.id }
             content['replytoSignatures'] = { 'value': note.signatures[0] }
 
-        if 'replyto' in invitation.edit['content'] and 'reviewNumber' in invitation.edit['content']:
+        if 'replyto' in invitation.edit['content'] and 'replyNumber' in invitation.edit['content']:
             paper_number = note.invitations[0].split(submission_name)[-1].split('/')[0]
             content['noteId'] = { 'value': note.forum }
             content['noteNumber'] = { 'value': int(paper_number) }
             content['replyto'] = { 'value': note.id }
-            content['reviewNumber'] = { 'value': note.number }
+            content['replyNumber'] = { 'value': note.number }
 
         if 'noteReaders' in invitation.edit['content']:
             paper_readers = invitation.content.get('review_readers',{}).get('value') or invitation.content.get('comment_readers',{}).get('value')
