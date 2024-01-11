@@ -649,7 +649,8 @@ class VenueStages():
                 'description': 'Choose how authors may edit the author list',
                 'value-radio': [
                     'Allow addition and removal of authors',
-                    'Allow reorder of existing authors only'
+                    'Allow reorder of existing authors only',
+                    'Do not allow any changes to author lists'
                 ],
                 'default': 'Allow addition and removal of authors',
                 'required': True,
@@ -1225,8 +1226,8 @@ class VenueRequest():
                 'order': 18
             },
             'submission_deadline_author_reorder': {
-                'description': '(Skip this if there is no abstract registration deadline) Select "Yes" if you want authors to only be able to reorder the author list or select "No" if you would like authors to be able to edit the author list (add and remove authors) after the abstract registration deadline.',
-                'value-radio': ['Yes', 'No'],
+                'description': '(Skip this if there is no abstract registration deadline) Select "Yes" if you want authors to only be able to reorder the author list, select "No" if you would like authors to be able to edit the author list (add and remove authors) or select "Do not allow any changes to author lists" if you do not want to allow any edits to author lists after the abstract registration deadline.',
+                'value-radio': ['Yes', 'No', 'Do not allow any changes to author lists'],
                 'default': 'No',
                 'order': 19,
                 'required': False
