@@ -423,7 +423,7 @@ note={Under review}
         graham_paper1_anon_group = andrew_paper1_anon_groups[0]
 
         # add David Belanger again
-        paper_assignment_edge = andrew_client.post_edge(openreview.Edge(invitation='DMLR/Reviewers/-/Assignment',
+        paper_assignment_edge = paper_assignment_edge = andrew_client.post_edge(openreview.Edge(invitation='DMLR/Reviewers/-/Assignment',
             readers=["DMLR", "DMLR/Paper1/Action_Editors", '~David_Bo1'],
             nonreaders=["DMLR/Paper1/Authors"],
             writers=["DMLR", "DMLR/Paper1/Action_Editors"],
@@ -433,8 +433,8 @@ note={Under review}
             weight=1
         ))
 
-         # wait for process function delay (5 seconds) and check email has been sent
-        time.sleep(6)
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
         messages = journal.client.get_messages(to = 'david@dmlrone.com', subject = '[DMLR] Assignment to review new DMLR submission 1: Paper title')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi David Bo,
