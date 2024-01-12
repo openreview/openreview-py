@@ -176,7 +176,9 @@ class InvitationBuilder(object):
 
         # Set license for all submissions or allow authors to set license
         if submission_license:
-            if len(submission_license) == 1:
+            if isinstance(submission_license, str): # Existing venues have license as a string
+                submission_invitation.edit['note']['license'] = submission_license
+            elif len(submission_license) == 1:
                 submission_invitation.edit['note']['license'] = submission_license[0]
             else:
                 license_options = [ { "value": license, "description": license } for license in submission_license ]
