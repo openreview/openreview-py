@@ -191,7 +191,8 @@ class TestVenueRequest():
                 'desk_rejected_submissions_author_anonymity': 'Yes, author identities of desk rejected submissions should be revealed.',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
-                'submission_name': 'Submission_Test'
+                'submission_name': 'Submission_Test',
+                'submission_license': ['CC BY 4.0']
             }))
 
         assert request_form_note
