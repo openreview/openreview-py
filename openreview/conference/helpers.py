@@ -358,7 +358,7 @@ def get_submission_stage(request_forum, venue):
             submission_start_date = datetime.datetime.strptime(submission_start_date, '%Y/%m/%d %H:%M')
         except ValueError:
             submission_start_date = datetime.datetime.strptime(submission_start_date, '%Y/%m/%d')
-        submission_start_date_str = submission_start_date.strftime('%b %d %Y') + ' UTC-0'
+        submission_start_date_str = submission_start_date.strftime('%b %d %Y %I:%M%p') + ' UTC-0'
     else:
         submission_start_date = None
         
