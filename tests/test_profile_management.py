@@ -415,7 +415,7 @@ class TestProfileManagement():
             )
                     
         ## Add publications
-        john_client.post_note_edit(
+        edit = john_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~John_Alternate_Last1'],
             note = openreview.api.Note(
@@ -428,7 +428,38 @@ class TestProfileManagement():
                     'venue': { 'value': 'Arxiv' }
                 },
                 license = 'CC BY-SA 4.0'
-        ))            
+        ))
+
+        ## Enable comment invitation
+        openreview_client.post_invitation_edit(
+            invitations='openreview.net/Archive/-/Comment',
+            signatures=['openreview.net/Archive'],
+            content={
+                'noteNumber': { 'value': 1 },
+                'noteId': { 'value': edit['note']['id'] }
+            }
+        )
+
+        assert openreview_client.get_invitation('openreview.net/Archive/Submission1/-/Comment')
+
+
+        edit = john_client.post_note_edit(
+            invitation='openreview.net/Archive/Submission1/-/Comment',
+            signatures=['~John_Alternate_Last1'],
+            note = openreview.api.Note(
+                replyto = edit['note']['id'],
+                content = {
+                    'comment': { 'value': 'more details about our submission' },
+                }   
+            )                         
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview Archive] John Alternate Last commented on your submission. Paper Title: "Paper title 1"')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''An author commented on your submission.\n    \nPaper number: 1\n\nPaper title: Paper title 1\n\nComment: more details about our submission\n\nTo view the comment, click here: https://openreview.net/forum?id={edit['note']['forum']}&noteId={edit['note']['id']}'''        
+
 
         john_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',

@@ -515,12 +515,26 @@ class ProfileManagement():
 
     def set_archive_invitations(self):
 
+        archive_group_id = f'{self.super_user}/Archive'
+
+        self.client.post_invitation_edit(invitations=None,
+            readers=[archive_group_id],
+            writers=[archive_group_id],
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(id=f'{archive_group_id}/-/Edit',
+                invitees=[archive_group_id],
+                readers=[archive_group_id],
+                signatures=['~Super_User1'],
+                edit=True
+            )
+        )        
+
         archive_group = openreview.api.Group(
-            id = f'{self.super_user}/Archive',
+            id = archive_group_id,
             readers = ['everyone'],
-            writers = [self.support_group_id],
+            writers = [archive_group_id],
             signatures = [self.super_user],
-            signatories = []
+            signatories = [archive_group_id]
         )
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/archiveWebfield.js'), 'r') as f:
@@ -528,18 +542,18 @@ class ProfileManagement():
             archive_group.web = file_content
 
             self.client.post_group_edit(
-                invitation = f'{self.super_user}/-/Edit',
-                signatures = [self.super_user],
+                invitation = f'{archive_group_id}/-/Edit',
+                signatures = ['~Super_User1'],
                 group = archive_group)
 
         self.client.post_invitation_edit(
-            invitations = f'{self.super_user}/-/Edit',
-            signatures = [self.super_user],
+            invitations = f'{archive_group_id}/-/Edit',
+            signatures = [archive_group_id],
             invitation = openreview.api.Invitation(
                 id=f'{archive_group.id}/-/Direct_Upload',
                 readers=['~'],
                 writers=[self.support_group_id],
-                signatures=[self.super_user],
+                signatures=[archive_group_id],
                 invitees=['~'],
                 edit={
                     'readers': ['everyone'],
@@ -685,6 +699,100 @@ class ProfileManagement():
                 }
             )
         )
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/archive_comment_process.py'), 'r') as f:
+            process_content = f.read()
+
+        self.client.post_invitation_edit(
+            invitations = f'{archive_group.id}/-/Edit',
+            signatures = [archive_group.id],
+            invitation = openreview.api.Invitation(id=f'{archive_group.id}/-/Comment',
+                invitees=[archive_group.id],
+                readers=[archive_group.id],
+                writers=[archive_group.id],
+                signatures=[archive_group.id],
+                content={
+                    'comment_process_script': {
+                        'value': process_content
+                    }
+                },
+                edit={
+                    'signatures': [archive_group.id],
+                    'readers': [archive_group.id],
+                    'writers': [archive_group.id],
+                    'content': {
+                        'noteNumber': {
+                            'value': {
+                                'param': {
+                                    'regex': '.*', 'type': 'integer'
+                                }
+                            }
+                        },
+                        'noteId': {
+                            'value': {
+                                'param': {
+                                    'regex': '.*', 'type': 'string'
+                                }
+                            }
+                        }
+                    },
+                    'replacement': True,
+                    'invitation': {
+                        'id': f'{archive_group.id}/Submission${{2/content/noteNumber/value}}/-/Comment',
+                        'signatures': [ archive_group.id ],
+                        'readers': ['everyone'],
+                        'writers': [archive_group.id],
+                        'invitees': ['everyone'],
+                        'process': '''def process(client, edit, invitation):
+        meta_invitation = client.get_invitation(invitation.invitations[0])
+        script = meta_invitation.content['comment_process_script']['value']
+        funcs = {
+            'openreview': openreview
+        }
+        exec(script, funcs)
+        funcs['process'](client, edit, invitation)
+    ''',
+                        'edit': {
+                            'signatures': { 
+                                'param': { 
+                                    'items': [
+                                        { 'prefix': '~.*' }
+                                    ] 
+                                }
+                            },
+                            'readers': ['${2/note/readers}'],
+                            'writers': [archive_group.id],
+                            'note': {
+                                'id': {
+                                    'param': {
+                                        'withInvitation': f'{archive_group.id}/Submission${{6/content/noteNumber/value}}/-/Comment',
+                                        'optional': True
+                                    }
+                                },
+                                'forum': '${4/content/noteId/value}',
+                                'replyto': { 
+                                    'param': {
+                                        'withForum': '${6/content/noteId/value}', 
+                                    }
+                                },
+                                'ddate': {
+                                    'param': {
+                                        'range': [ 0, 9999999999999 ],
+                                        'optional': True,
+                                        'deletable': True
+                                    }
+                                },
+                                'signatures': ['${3/signatures}'],
+                                'readers': ['everyone'],
+                                'writers': [archive_group.id, '${3/signatures}'],
+                                'content': default_content.comment_v2.copy()
+                            }
+                        }
+                    }
+
+                }
+            )
+        )        
 
     def set_anonymous_preprint_invitations(self):
 
