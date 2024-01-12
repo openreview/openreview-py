@@ -1219,9 +1219,9 @@ class VenueRequest():
                 'order': 17
             },
             'submission_license': {
-                'value-radio': ['CC BY 4.0', 'CC BY-SA 4.0', 'CC BY-NC 4.0', 'CC BY-ND 4.0', 'CC BY-NC-SA 4.0', 'CC BY-NC-ND 4.0', 'CC0 1.0'],
-                'description': 'Which license would you like to use for each submission? If you are unsure, we recommend "CC BY 4.0". If your license is not listed, please let us know and we can add it. Please refer to https://openreview.net/legal/terms for more information.',
-                'default': 'CC BY 4.0',
+                'values-checkbox': ['CC BY 4.0', 'CC BY-SA 4.0', 'CC BY-NC 4.0', 'CC BY-ND 4.0', 'CC BY-NC-SA 4.0', 'CC BY-NC-ND 4.0', 'CC0 1.0'],
+                'description': 'Which license should be applied to each submission? We recommend "CC BY 4.0". If you select multiple licenses, you allow authors to choose their license upon submission. If your license is not listed, please contact us. Refer to https://openreview.net/legal/terms for more information.',
+                'required': True,
                 'order': 18
             },
             'submission_deadline_author_reorder': {

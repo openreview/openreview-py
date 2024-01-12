@@ -174,8 +174,16 @@ class InvitationBuilder(object):
             process=self.get_process_content('process/submission_process.py')
         )
 
-        if submission_license:
-            submission_invitation.edit['note']['license'] = submission_license
+        # Set license for all submissions or allow authors to set license
+        if len(submission_license) == 1:
+            submission_invitation.edit['note']['license'] = submission_license[0]
+        elif len(submission_license) > 1:
+            license_options = [ { "value": license, "description": license } for license in submission_license ]
+            submission_invitation.edit['note']['license'] = {
+                "param": {
+                    "enum": license_options
+                }
+            }
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=False)
 
