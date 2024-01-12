@@ -68,7 +68,8 @@ class TestWorkshopV2():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
-                'api_version': '2'
+                'api_version': '2',
+                'submission_license': ['CC BY 4.0']
             }))
 
         helpers.await_queue()

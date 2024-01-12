@@ -80,7 +80,8 @@ class TestCVPRSConference():
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
                 'include_expertise_selection': 'Yes',
-                'submission_deadline_author_reorder': 'Yes'
+                'submission_deadline_author_reorder': 'Yes',
+                'submission_license': ['CC BY 4.0']
             }))
 
         helpers.await_queue()
