@@ -423,7 +423,7 @@ note={Under review}
         graham_paper1_anon_group = andrew_paper1_anon_groups[0]
 
         # add David Belanger again
-        paper_assignment_edge = andrew_client.post_edge(openreview.Edge(invitation='DMLR/Reviewers/-/Assignment',
+        paper_assignment_edge = paper_assignment_edge = andrew_client.post_edge(openreview.Edge(invitation='DMLR/Reviewers/-/Assignment',
             readers=["DMLR", "DMLR/Paper1/Action_Editors", '~David_Bo1'],
             nonreaders=["DMLR/Paper1/Authors"],
             writers=["DMLR", "DMLR/Paper1/Action_Editors"],
@@ -433,8 +433,8 @@ note={Under review}
             weight=1
         ))
 
-         # wait for process function delay (5 seconds) and check email has been sent
-        time.sleep(6)
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
         messages = journal.client.get_messages(to = 'david@dmlrone.com', subject = '[DMLR] Assignment to review new DMLR submission 1: Paper title')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi David Bo,
@@ -569,6 +569,32 @@ note: replies to this email will go to the AE, Andrew Ng.
         assert reviews[1].signatures == [carlos_anon_groups[0].id]
         assert reviews[2].readers == ['DMLR/Editors_In_Chief', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
         assert reviews[2].signatures == [javier_anon_groups[0].id]
+
+        ## Post a review edit
+        javier_review_note = javier_client.post_note_edit(invitation='DMLR/Paper1/-/Review',
+            signatures=[javier_anon_groups[0].id],
+            note=Note(
+                id=javier_review_note['note']['id'],
+                content={
+                    'summary_of_contributions': { 'value': 'summary_of_contributions VERSION 2' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'limitations': { 'value': 'limitations' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'extended_submissions': { 'value': 'extended_submissions' },
+                    'audience': { 'value': 'Yes' },
+                    'datasets_and_benchmarks': { 'value': 'datasets_and_benchmarks' },
+                    'recommendation': { 'value': '4: Accept.' },
+                    'confidence': { 'value': '3: You are very confident in your assessment.' }
+                }
+            )
+        )
+
+        review_note = javier_client.get_note(javier_review_note['note']['id'])
+        assert review_note.content['summary_of_contributions']['value'] == 'summary_of_contributions VERSION 2'
+        assert review_note.readers == ['DMLR/Editors_In_Chief', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
+
 
         invitations = openreview_client.get_invitations(replyForum=note_id_1, prefix='DMLR/Paper1')
         assert len(invitations) == 6

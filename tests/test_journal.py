@@ -453,6 +453,46 @@ We thank you for your cooperation.
 The TMLR Editors-in-Chief
 '''
 
+        ## Post AE recommendations
+        test_client.post_edge(openreview.api.Edge(
+            invitation='TMLR/Action_Editors/-/Recommendation',
+            head=note_id_1,
+            tail='~Joelle_Pineau1',
+            weight=1
+        ))
+        
+        test_client.post_edge(openreview.api.Edge(
+            invitation='TMLR/Action_Editors/-/Recommendation',
+            head=note_id_1,
+            tail='~Samy_Bengio1',
+            weight=1
+        ))
+
+        test_client.post_edge(openreview.api.Edge(
+            invitation='TMLR/Action_Editors/-/Recommendation',
+            head=note_id_1,
+            tail='~Yoshua_Bengio1',
+            weight=1
+        ))
+
+        ## Check author reminders
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Action_Editors/-/Recommendation',
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 7)) + 2000,
+                signatures=['TMLR/Editors_In_Chief']
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/Action_Editors/-/Recommendation-0-1')
+
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for your paper 1: Paper title')
+        assert len(messages) == 3
+
+
         ## Update submission 1
         updated_submission_note_1 = test_client.post_note_edit(invitation='TMLR/Paper1/-/Revision',
             signatures=['TMLR/Paper1/Authors'],
@@ -2163,8 +2203,25 @@ The TMLR Editors-in-Chief
 '''
 
         assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Camera_Ready_Revision")
-        #assert False
+        
+        ## check camera ready reminder
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Camera_Ready_Revision',
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 1)) + 2000,
+                signatures=['TMLR/Editors_In_Chief']
+            )
+        )
 
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Camera_Ready_Revision-0-0')        
+        
+        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] You are late in performing a task for your paper 1: Paper title UPDATED')
+        assert len(messages) == 1
+        
+        
         ## post a revision
         revision_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Camera_Ready_Revision',
             signatures=[f"{venue_id}/Paper1/Authors"],
@@ -2184,6 +2241,23 @@ The TMLR Editors-in-Chief
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
+
+        ## check camera ready reminder
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Camera_Ready_Revision',
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 7)) + 2000,
+                signatures=['TMLR/Editors_In_Chief']
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Camera_Ready_Revision-0-1')        
+        
+        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] You are late in performing a task for your paper 1: Paper title UPDATED')
+        assert len(messages) == 1        
 
         note = openreview_client.get_note(note_id_1)
         assert note
