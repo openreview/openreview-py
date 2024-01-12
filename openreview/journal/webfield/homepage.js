@@ -6,8 +6,8 @@ const submissionInvitationId = domain.content.submission_id.value
 const underReviewId = domain.content.under_review_venue_id.value
 const decisionPendingId = domain.content.decision_pending_venue_id.value
 const certifications = (domain.content.certifications?.value || []).concat(domain.content.eic_certifications?.value || [])
-if (domain.content.expert_certification?.value) {
-  certifications.push(domain.content.expert_certification?.value)
+if (domain.content.expert_reviewer_certification?.value) {
+  certifications.push(domain.content.expert_reviewer_certification?.value)
 }
 
 const tabs = [{

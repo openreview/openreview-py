@@ -570,6 +570,32 @@ note: replies to this email will go to the AE, Andrew Ng.
         assert reviews[2].readers == ['DMLR/Editors_In_Chief', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
         assert reviews[2].signatures == [javier_anon_groups[0].id]
 
+        ## Post a review edit
+        javier_review_note = javier_client.post_note_edit(invitation='DMLR/Paper1/-/Review',
+            signatures=[javier_anon_groups[0].id],
+            note=Note(
+                id=javier_review_note['note']['id'],
+                content={
+                    'summary_of_contributions': { 'value': 'summary_of_contributions VERSION 2' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'limitations': { 'value': 'limitations' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'extended_submissions': { 'value': 'extended_submissions' },
+                    'audience': { 'value': 'Yes' },
+                    'datasets_and_benchmarks': { 'value': 'datasets_and_benchmarks' },
+                    'recommendation': { 'value': '4: Accept.' },
+                    'confidence': { 'value': '3: You are very confident in your assessment.' }
+                }
+            )
+        )
+
+        review_note = javier_client.get_note(javier_review_note['note']['id'])
+        assert review_note.content['summary_of_contributions']['value'] == 'summary_of_contributions VERSION 2'
+        assert review_note.readers == ['DMLR/Editors_In_Chief', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
+
+
         invitations = openreview_client.get_invitations(replyForum=note_id_1, prefix='DMLR/Paper1')
         assert len(invitations) == 6
         assert "DMLR/Paper1/-/Official_Comment" in [i.id for i in invitations]
