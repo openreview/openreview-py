@@ -3628,7 +3628,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 signatures=[self.journal.get_editors_in_chief_id()],
                 edit={
                     'note': {
-                        'readers': self.journal.get_release_review_readers(number='${{2/id}/number}')
+                        'readers': self.journal.get_release_review_readers(number=note.number)
                     }
                 }
         ))        
