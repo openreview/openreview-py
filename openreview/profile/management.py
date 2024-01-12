@@ -95,7 +95,7 @@ class ProfileManagement():
                             ]
                         } 
                     },
-                    'writers':  [dblp_uploader_group_id, '${2/signatures}'],
+                    'writers':  [dblp_uploader_group_id],
                     'content': {
                         'xml': {
                             'value': {
@@ -189,7 +189,7 @@ class ProfileManagement():
                             ]
                         } 
                     },
-                    'writers':  [dblp_group_id, '${2/signatures}'],
+                    'writers':  [dblp_group_id],
                     'content': {
                         'author_index': {
                             'order': 1,
