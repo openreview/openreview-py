@@ -23,7 +23,7 @@ def process(client, edit, invitation):
             }
             if 'replytoSignatures' in content_keys:
                 content['replytoSignatures'] = { 'value': metareview.signatures[0] }
-            elif 'replyNumber' in content_keys:
+            if 'replyNumber' in content_keys:
                 content['replyNumber'] = { 'value': metareview.number }
             client.post_invitation_edit(invitations=invitation.id,
                 content=content,

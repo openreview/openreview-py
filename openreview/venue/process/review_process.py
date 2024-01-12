@@ -153,7 +153,7 @@ Paper title: {submission.content['title']['value']}
             }
             if 'replytoSignatures' in content_keys:
                 content['replytoSignatures'] = { 'value': review.signatures[0] }
-            elif 'replyNumber' in content_keys:
+            if 'replyNumber' in content_keys:
                 content['replyNumber'] = { 'value': review.number }
             client.post_invitation_edit(invitations=invitation.id,
                 content=content,
