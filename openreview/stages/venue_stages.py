@@ -33,6 +33,10 @@ class IdentityReaders(Enum):
             readers.append(conference.get_reviewers_id(number))
         return readers
 
+class AuthorReorder(Enum):
+        ALLOW_REORDER = 0
+        ALLOW_EDIT = 1
+        DISALLOW_EDIT = 2
 
 class SubmissionStage(object):
 
@@ -71,7 +75,7 @@ class SubmissionStage(object):
             email_pcs_on_desk_reject=False,
             author_names_revealed=False,
             papers_released=False,
-            author_reorder_after_first_deadline=False,
+            author_reorder_after_first_deadline=AuthorReorder.ALLOW_EDIT,
             submission_email=None,
             force_profiles=False,
             second_deadline_additional_fields={},
@@ -483,7 +487,7 @@ class SubmissionRevisionStage():
         for key, value in self.additional_fields.items():
             content[key] = value
 
-        if self.allow_author_reorder:
+        if self.allow_author_reorder == AuthorReorder.ALLOW_REORDER:
             content['authors'] = {
                 'value': {
                     'param': {
@@ -497,7 +501,10 @@ class SubmissionRevisionStage():
             content['authorids'] = {
                 'value': ['${{4/id}/content/authorids/value}'],
                 'order':4
-            }            
+            }
+        elif self.allow_author_reorder == AuthorReorder.DISALLOW_EDIT:
+            del content['authors']
+            del content['authorids']
 
         if conference:
             invitation_id = conference.get_invitation_id(self.name)
