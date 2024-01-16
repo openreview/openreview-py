@@ -33,6 +33,8 @@ return {
     assignmentInvitation: domain.content.senior_area_chairs_assignment_id?.value,
     submissionId: domain.content.submission_id?.value,
     submissionVenueId: domain.content.submission_venue_id?.value,
+    withdrawnVenueId: domain.content.withdrawn_venue_id?.value,
+    deskRejectedVenueId: domain.content.desk_rejected_venue_id?.value,
     submissionName: domain.content.submission_name?.value,
     reviewerName: domain.content.reviewers_name?.value,
     anonReviewerName: domain.content.reviewers_anon_name?.value,
