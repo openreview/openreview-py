@@ -66,7 +66,7 @@ class TestCVPRConference():
                 'include_expertise_selection': 'Yes',
                 'submission_deadline_author_reorder': 'Yes',
                 'api_version': '2',
-                'submission_license': 'CC BY-SA 4.0'
+                'submission_license': ['CC BY-SA 4.0']
             }
         ))
 
@@ -133,7 +133,7 @@ class TestCVPRConference():
         assert ['thecvf.com/CVPR/2024/Conference', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_CVPROne1'] == submissions[0].readers
         assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_CVPROne1'] == submissions[0].content['authorids']['value']
 
-        # Check that submission license is same as request form
+        # Check that submission note has license
         assert submissions[0].license == 'CC BY-SA 4.0'
 
         authors_group = openreview_client.get_group(id='thecvf.com/CVPR/2024/Conference/Authors')

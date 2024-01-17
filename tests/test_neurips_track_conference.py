@@ -78,7 +78,8 @@ class TestNeurIPSTrackConference():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'api_version': '2',
-                'submission_deadline_author_reorder': 'No'
+                'submission_deadline_author_reorder': 'No',
+                'submission_license': ['CC BY 4.0']
             }))
 
         helpers.await_queue()

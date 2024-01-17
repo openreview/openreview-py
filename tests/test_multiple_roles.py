@@ -70,7 +70,8 @@ class TestMultipleRoles():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'reviewer_roles': ['Program_Committee', 'Senior_Program_Committee'],
-                'area_chair_roles': ['First_Group_AC', 'Second_Group_AC']
+                'area_chair_roles': ['First_Group_AC', 'Second_Group_AC'],
+                'submission_license': ['CC BY 4.0']
             }))
 
         helpers.await_queue()
