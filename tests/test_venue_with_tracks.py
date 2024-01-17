@@ -26,7 +26,8 @@ class TestVenueWithTracks():
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@webconf.org', 'Program', 'WebChair')
+        helpers.create_user('pc@webconf.org', 'Program', 'WebChair')
+        pc_client = openreview.Client(username='pc@webconf.org', password=helpers.strong_password)
         helpers.create_user('sac1@webconf.com', 'SAC', 'WebChairOne')
         helpers.create_user('sac2@webconf.com', 'SAC', 'WebChairTwo')
         helpers.create_user('sac3@webconf.com', 'SAC', 'WebChairThree')
@@ -101,6 +102,7 @@ class TestVenueWithTracks():
                 'Official Website URL': 'https://www2024.thewebconf.org/',
                 'program_chair_emails': ['pc@webconf.org'],
                 'contact_email': 'pc@webconf.org',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chair_roles': [
                     "Senior_Area_Chairs",
@@ -157,7 +159,8 @@ class TestVenueWithTracks():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '2000',
                 'use_recruitment_template': 'Yes',
-                'api_version': '2'
+                'api_version': '2',
+                'submission_license': ['CC BY 4.0']
             }))
 
         helpers.await_queue()
@@ -225,6 +228,7 @@ class TestVenueWithTracks():
                 'Official Website URL': 'https://www2024.thewebconf.org/',
                 'program_chair_emails': ['pc@webconf.org'],
                 'contact_email': 'pc@webconf.org',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
@@ -420,6 +424,7 @@ class TestVenueWithTracks():
                 'Official Website URL': 'https://www2024.thewebconf.org/',
                 'program_chair_emails': ['pc@webconf.org'],
                 'contact_email': 'pc@webconf.org',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
@@ -994,7 +999,7 @@ reviewer{reviewer_counter + 1}@{'gmail' if reviewer_counter == 21 else 'webconf'
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Pending Sign Up'
 
-        invited_reviewer=helpers.create_user('celeste@acm.org', 'Celeste', 'ACM')
+        helpers.create_user('celeste@acm.org', 'Celeste', 'ACM')
 
         ## Run Job
         openreview.venue.Venue.check_new_profiles(openreview_client)

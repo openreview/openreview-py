@@ -34,7 +34,7 @@ async function process(client, edge, invitation) {
   if (assignmentEdges.length >= customMaxPapers) {
     const { profiles } = await client.getProfiles({ id: edge.tail });
     const profile = profiles[0];
-    return Promise.reject(new OpenReviewError({ name: 'Error', message: 'Max Papers allowed reached for ' + client.tools.getPreferredName(profile) }));
+    return Promise.reject(new OpenReviewError({ name: 'Error', message: `Max Papers allowed reached for ${Tools.getPreferredName(profile)}` }));
   }
 
 }

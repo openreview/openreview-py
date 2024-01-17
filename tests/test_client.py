@@ -169,8 +169,8 @@ class TestClient():
         assert len(client.search_profiles(emails = ['mail@mail.com'])) == 0
         assert len(client.search_profiles(first = 'Anna')) == 0
 
-        user_a = helpers.create_user('user_a@mail.com', 'User', 'A', alternates=['users@alternate.com'])
-        user_b = helpers.create_user('user_b@mail.com', 'User', 'B', alternates=['users@alternate.com'])
+        helpers.create_user('user_a@mail.com', 'User', 'A', alternates=['users@alternate.com'])
+        helpers.create_user('user_b@mail.com', 'User', 'B', alternates=['users@alternate.com'])
         profiles = client.search_profiles(emails = ['users@alternate.com'])
         assert profiles
         assert 'users@alternate.com' in profiles

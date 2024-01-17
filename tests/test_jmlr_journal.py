@@ -56,7 +56,7 @@ class TestJMLRJournal():
         helpers.await_queue_edit(openreview_client, request_form['id'])
 
         ## Authors
-        celeste_client=helpers.create_user('celeste@jmlrone.com', 'Celeste', 'Azul')
+        helpers.create_user('celeste@jmlrone.com', 'Celeste', 'Azul')
 
     
     

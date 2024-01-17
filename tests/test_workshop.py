@@ -260,7 +260,8 @@ class TestWorkshop():
         submission = notes[2]
 
         # Reviewer
-        reviewer_client = helpers.create_user('reviewer4@mail.com', 'Reviewer', 'Four')
+        helpers.create_user('reviewer4@mail.com', 'Reviewer', 'Four')
+        reviewer_client = openreview.Client(username='reviewer4@mail.com', password=helpers.strong_password)
 
         conference.set_assignment('reviewer4@mail.com', submission.number)
 
@@ -373,7 +374,8 @@ class TestWorkshop():
         recipients = [m['content']['to'] for m in messages]
         assert 'program_chairs@hsdip.org' in recipients
 
-        random_user = helpers.create_user(email='random_user1@mail.co', first='Random', last='User')
+        helpers.create_user(email='random_user1@mail.co', first='Random', last='User')
+        random_user = openreview.Client(username='random_user1@mail.co', password=helpers.strong_password)
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Public_Comment',
             forum = submission.id,
             replyto = submission.id,
@@ -468,7 +470,8 @@ class TestWorkshop():
                 'confidence': '4: The area chair is confident but not absolutely certain'
             }
         )
-        pc_client = helpers.create_user('program_chairs@hsdip.org', 'Program', 'HSDIPChair')
+        helpers.create_user('program_chairs@hsdip.org', 'Program', 'HSDIPChair')
+        pc_client = openreview.Client(username='program_chairs@hsdip.org', password=helpers.strong_password)
         meta_review_note = pc_client.post_note(note)
         assert meta_review_note
 

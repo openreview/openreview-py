@@ -41,6 +41,7 @@ class Venue(object):
         self.ethics_chairs_name = 'Ethics_Chairs'
         self.ethics_reviewers_name = 'Ethics_Reviewers'
         self.authors_name = 'Authors'
+        self.recommendation_name = 'Recommendation'
         self.use_ethics_chairs = False
         self.use_ethics_reviewers = False 
         self.expertise_selection_stage = None       
@@ -69,15 +70,26 @@ class Venue(object):
         self.senior_area_chair_identity_readers = []
         self.automatic_reviewer_assignment = False
         self.decision_heading_map = {}
-        self.use_publication_chairs = False
         self.allow_gurobi_solver = False
         self.submission_license = None
+        self.use_publication_chairs = False
 
     def get_id(self):
         return self.venue_id
 
     def get_short_name(self):
         return self.short_name
+    
+    def get_edges_archive_date(self):
+        archive_date = datetime.datetime.utcnow()
+        if self.date:
+            try:
+                archive_date = datetime.datetime.strptime(self.date, '%Y/%m/%d')
+            except ValueError:
+                print(f'Error parsing venue date {self.date}')
+
+        return openreview.tools.datetime_millis(archive_date + datetime.timedelta(weeks=52)) ## archive edges after 1 year
+        
 
     def get_committee_name(self, committee_id, pretty=False):
         name = committee_id.split('/')[-1]
@@ -154,7 +166,7 @@ class Venue(object):
     def get_recommendation_id(self, committee_id=None):
         if not committee_id:
             committee_id = self.get_reviewers_id()
-        return self.get_invitation_id('Recommendation', prefix=committee_id)
+        return self.get_invitation_id(self.recommendation_name, prefix=committee_id)
 
     def get_paper_group_prefix(self, number=None):
         prefix = f'{self.venue_id}/{self.submission_stage.name}'
@@ -376,6 +388,8 @@ class Venue(object):
 
         self.group_builder.create_venue_group()
 
+        self.group_builder.add_to_active_venues()
+
         self.group_builder.create_program_chairs_group(program_chair_ids)
 
         self.group_builder.create_authors_group()
@@ -459,8 +473,6 @@ class Venue(object):
     def create_post_submission_stage(self):
 
         self.invitation_builder.set_post_submission_invitation()
-        
-        self.group_builder.add_to_active_venues()        
     
     def create_submission_revision_stage(self):
         return self.invitation_builder.set_submission_revision_invitation()
@@ -731,9 +743,14 @@ Total Errors: {len(errors)}
 
             for field, value in submission.content.items():
                 if field in final_hide_fields:
-                    content[field] = {
-                        'readers': [venue_id, self.get_authors_id(submission.number)]
-                    }
+                    if self.use_publication_chairs and field in ['authors', 'authorids'] and note_accepted:
+                        content[field] = {
+                            'readers': [venue_id, self.get_authors_id(submission.number), self.get_publication_chairs_id()]
+                        }
+                    else:
+                        content[field] = {
+                            'readers': [venue_id, self.get_authors_id(submission.number)]
+                        }
                 if field not in final_hide_fields and 'readers' in value:
                     content[field] = {
                         'readers': { 'delete': True }
@@ -781,7 +798,7 @@ Total Errors: {len(errors)}
                 message = messages[decision_note['content']['decision']['value']]
                 final_message = message.replace("{{submission_title}}", note.content['title']['value'])
                 final_message = final_message.replace("{{forum_url}}", f'https://openreview.net/forum?id={note.id}')
-                self.client.post_message(subject, recipients=note.content['authorids']['value'], message=final_message)
+                self.client.post_message(subject, recipients=[self.get_authors_id(note.number)], message=final_message, parentGroup=self.get_authors_id())
 
         tools.concurrent_requests(send_notification, paper_notes)
 
@@ -848,8 +865,8 @@ Total Errors: {len(errors)}
             authorids = submission.content['authorids']['value']
             all_authorids = all_authorids + authorids
 
-        author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, as_dict=True)
-        sac_profile_by_id = tools.get_profiles(self.client, list(set(all_sacs)), with_publications=True, as_dict=True)   
+        author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, with_relations=True, as_dict=True)
+        sac_profile_by_id = tools.get_profiles(self.client, list(set(all_sacs)), with_publications=True, with_relations=True, as_dict=True)   
 
         info_function = tools.info_function_builder(openreview.tools.get_neurips_profile_info if conflict_policy == 'NeurIPS' else openreview.tools.get_profile_info)
 
@@ -935,6 +952,9 @@ Total Errors: {len(errors)}
 
     def set_SAC_ethics_review_process(self, sac_ethics_flag_duedate=None):
         self.invitation_builder.set_SAC_ethics_flag_invitation(sac_ethics_flag_duedate)
+
+    def open_reviewer_recommendation_stage(self, start_date=None, due_date=None, total_recommendations=7):
+        self.invitation_builder.set_reviewer_recommendation_invitation(start_date, due_date, total_recommendations)
 
     @classmethod
     def check_new_profiles(Venue, client):
@@ -1062,7 +1082,7 @@ OpenReview Team'''
                         for grouped_edge in grouped_edges:
 
                             tail = grouped_edge['id']['tail']
-                            profiles=openreview.tools.get_profiles(client, [tail], with_publications=True)
+                            profiles=openreview.tools.get_profiles(client, [tail], with_publications=True, with_relations=True)
 
                             if profiles and profiles[0].active:
 
@@ -1091,7 +1111,7 @@ OpenReview Team'''
                                                 client.post_edge(invitation_edge)
 
                                             ## Check conflicts
-                                            author_profiles = openreview.tools.get_profiles(client, submission.content['authorids']['value'], with_publications=True)
+                                            author_profiles = openreview.tools.get_profiles(client, submission.content['authorids']['value'], with_publications=True, with_relations=True)
                                             conflicts=openreview.tools.get_conflicts(author_profiles, user_profile, policy=venue_group.content.get('reviewers_conflict_policy', {}).get('value'), n_years=venue_group.content.get('reviewers_conflict_n_years', {}).get('value'))
 
                                             if conflicts:

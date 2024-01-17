@@ -16,7 +16,6 @@ return {
 - You can use the search field to find Area Chairs by keywords from the position, institution or expertise to reduce false negatives.
 - Ensure that you have at least **${entity.minReplies} bids**.`
     },
-    apiVersion: 2,
     venueId: domain.id,
     scoreIds: affinityScoreId ? [affinityScoreId] : [],
     profileGroupId: domain.content.area_chairs_id?.value

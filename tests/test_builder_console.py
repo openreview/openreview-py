@@ -57,7 +57,9 @@ class TestBuilderConsoles():
         assert pc_group.web == customized_web, "Error customized PC Console overwritten"
 
         # need a paper to be able to check if reassign reviewers is activated
-        author_client=helpers.create_user('author_test2@mail.com', 'SomeFirstName', 'AuthorTwo')
+        helpers.create_user('author_test2@mail.com', 'SomeFirstName', 'AuthorTwo')
+        author_client = openreview.Client(username='author_test2@mail.com', password=helpers.strong_password)
+
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['~SomeFirstName_AuthorTwo1', 'drew@mail.com', conference.get_id()],
             writers = [conference.id, '~SomeFirstName_AuthorTwo1', 'drew@mail.com'],

@@ -1,6 +1,12 @@
 version: 2
+
+# Set the OS, Python version and other tools you might need
+build:
+  os: ubuntu-20.04
+  tools:
+    python: "3.10"
+
 python:
-    version: 3
     install:
       - method: pip
         path: .

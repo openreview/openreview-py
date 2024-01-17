@@ -202,6 +202,18 @@ class TestReactNoteEditor():
                             'deletable': True
                         }
                     }
+                },
+                'datetime_picker_field': {
+                    'description': 'this is a datetime picker widget',
+                    'order': 1,
+                    'value': {
+                        'param': {
+                            'type': 'date',
+                            'optional': True,
+                            'deletable': True,
+                            'range': [0, 9999999999999]
+                        }
+                    }
                 }
             },
             remove_fields=[],

@@ -25,6 +25,7 @@ var ASSIGNMENT_ACKNOWLEDGEMENT_NAME = 'Assignment/Acknowledgement';
 var AVAILABILITY_NAME = 'Assignment_Availability';
 
 var REVIEWERS_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Assignment';
+var REVIEWERS_INVITE_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Invite_Assignment';
 var REVIEWERS_ARCHIVED_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Archived_Assignment';
 var REVIEWERS_CONFLICT_ID = REVIEWERS_ID + '/-/Conflict';
 var REVIEWERS_AFFINITY_SCORE_ID = REVIEWERS_ID + '/-/Affinity_Score';
@@ -78,7 +79,7 @@ var ae_url = '/edges/browse?traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
   '&browse=' + ACTION_EDITORS_ARCHIVED_ASSIGNMENT_ID + ';' + ACTION_EDITORS_AFFINITY_SCORE_ID +';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID + 
   '&version=2&referrer=' + referrerUrl;
 var reviewers_url = '/edges/browse?traverse=' + REVIEWERS_ASSIGNMENT_ID +
-  '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
+  '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_INVITE_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
   '&browse=' + REVIEWERS_ARCHIVED_ASSIGNMENT_ID + ';' + REVIEWERS_AFFINITY_SCORE_ID+ ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + 
   '&version=2' +
   '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available' +
@@ -188,6 +189,7 @@ var loadData = function() {
     Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME, { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME + '/Archived', { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true}),
+    Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Archived', { withProfiles: true}),
     Webfield2.api.getAll('/invitations', {
       prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
       type: 'all',
@@ -228,6 +230,7 @@ var formatData = function(
   actionEditors,
   archivedActionEditors,
   reviewers,
+  archivedReviewers,
   invitationsById,
   superInvitationIds,
   reviewerInvitationIds,
@@ -237,13 +240,13 @@ var formatData = function(
   var referrerUrl = encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#paper-status)');
 
   var reviewerStatusById = {};
-  reviewers.members.forEach(function(reviewer, index) {
+  var getReviewerStatus = function(reviewer, index, isArchived) {
     var responsibility = responsibilityNotes.find(function(reply) {
       return reply.invitations[0] === REVIEWERS_ID + '/-/' + reviewer.id + '/' + RESPONSIBILITY_ACK_NAME;
     });
     var reviewerReports = reviewerReportByReviewerId[reviewer.id] || [];
 
-    reviewerStatusById[reviewer.id] = {
+    return {
       index: { number: index + 1 },
       summary: {
         id: reviewer.id,
@@ -253,7 +256,8 @@ var formatData = function(
           Profile: reviewer.id.startsWith('~') ? 'Yes' : 'No',
           Publications: '-',
           'Responsibility Acknowledgement': responsibility ? 'Yes' : 'No',
-          'Reviewer Report': reviewerReports.length
+          'Reviewer Report': reviewerReports.length,
+          Archived: isArchived ? 'Yes' : 'No'
         }
       },
       reviewerProgressData: {
@@ -274,6 +278,13 @@ var formatData = function(
         referrer: referrerUrl
       }
     };
+  }
+  reviewers.members.forEach(function(reviewer, index) {
+    reviewerStatusById[reviewer.id] = getReviewerStatus(reviewer, index, false);
+  });
+
+  (archivedReviewers?.members || []).forEach(function(reviewer, index) {
+    reviewerStatusById[reviewer.id] = getReviewerStatus(reviewer, index, true);
   });
 
   var actionEditorStatusById = {};
@@ -616,7 +627,7 @@ var formatData = function(
       if (completedReview) {
         reviewerRecommendation = recommendationByReviewer[completedReview.signatures[0]];
         if (reviewerRecommendation) {
-          status.Recommendation = reviewerRecommendation.content.decision_recommendation.value;
+          status.Recommendation = reviewerRecommendation.content.decision_recommendation?.value || 'Yes';
           status.Certifications = reviewerRecommendation.content.certification_recommendations ? reviewerRecommendation.content.certification_recommendations.value.join(', ') : '';
         }
         var reviewerRating = reviewerRatingReplies.find(function (p) {
@@ -749,7 +760,7 @@ var formatData = function(
             name: 'Edit Assignments',
             url: '/edges/browse?start=staticList,type:head,ids:' + submission.id +
             '&traverse='+ REVIEWERS_ASSIGNMENT_ID +
-            '&edit='+ REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
+            '&edit='+ REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_INVITE_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
             '&browse=' + REVIEWERS_ARCHIVED_ASSIGNMENT_ID + ';' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + 
             '&version=2' +
             '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available'

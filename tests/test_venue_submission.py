@@ -42,7 +42,8 @@ class TestVenueSubmission():
             withdrawn_submission_reveal_authors=True, 
             desk_rejected_submission_public=True,
             force_profiles=True,
-            remove_fields=['abstract']
+            remove_fields=['abstract'],
+            email_pcs_on_desk_reject=True
         )
 
         venue.bid_stages = [
@@ -641,7 +642,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         note = author_client.get_note(withdraw_note['note']['forum'])
         assert note
-        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Post_Submission']
+        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Post_Submission', 'TestVenue.cc/-/Withdrawn_Submission']
         assert note.content['venue']['value'] == 'TestVenue Submission'
         assert note.content['venueid']['value'] == 'TestVenue.cc/Submission'
 
@@ -669,7 +670,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         note = pc_client.get_note(desk_reject_note['note']['forum'])
         assert note
-        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Post_Submission', 'TestVenue.cc/-/Desk_Rejected_Submission']
+        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Post_Submission', 'TestVenue.cc/-/Withdrawn_Submission', 'TestVenue.cc/-/Desk_Rejected_Submission']
         assert note.readers == ['everyone']
         assert note.writers == ['TestVenue.cc', 'TestVenue.cc/Submission2/Authors']
         assert note.signatures == ['TestVenue.cc/Submission2/Authors']
@@ -728,7 +729,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         note = pc_client.get_note(desk_reject_note['note']['forum'])
         assert note
-        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Post_Submission']
+        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Post_Submission', 'TestVenue.cc/-/Withdrawn_Submission', 'TestVenue.cc/-/Desk_Rejected_Submission']
         assert note.content['venue']['value'] == 'TestVenue Submission'
         assert note.content['venueid']['value'] == 'TestVenue.cc/Submission'
 

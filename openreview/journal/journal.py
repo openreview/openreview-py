@@ -85,6 +85,9 @@ class Journal(object):
     def get_reviewers_id(self, number=None, anon=False):
         return self.__get_group_id('Reviewer_' if anon else self.reviewers_name, number)
 
+    def get_reviewers_archived_id(self):
+        return f'{self.get_reviewers_id()}/Archived' 
+    
     def get_reviewers_reported_id(self):
         return self.get_reviewers_id() + '/Reported'
     
@@ -250,6 +253,12 @@ class Journal(object):
         if archived:
             name = 'Archived_Assignment'
         return self.__get_invitation_id(name=name, prefix=self.get_reviewers_id(number))
+    
+    def get_reviewer_invite_assignment_id(self):
+        return self.__get_invitation_id(name='Invite_Assignment', prefix=self.get_reviewers_id())
+
+    def get_reviewer_assignment_recruitment_id(self):
+        return self.__get_invitation_id(name='Assignment_Recruitment', prefix=self.get_reviewers_id())        
 
     def get_reviewer_assignment_acknowledgement_id(self, number=None, reviewer_id=None):
         if reviewer_id:
@@ -422,6 +431,9 @@ class Journal(object):
     def are_authors_anonymous(self):
         return self.settings.get('author_anonymity', True)
     
+    def should_eic_submission_notification(self):
+        return self.settings.get('eic_submission_notification', False)
+    
     def should_skip_ac_recommendation(self):
         return self.settings.get('skip_ac_recommendation', False)
     
@@ -455,8 +467,14 @@ class Journal(object):
     def has_archived_action_editors(self):
         return self.settings.get('archived_action_editors', False)
 
+    def has_archived_reviewers(self):
+        return self.settings.get('archived_reviewers', False)
+
     def has_expert_reviewers(self):
-        return self.settings.get('expert_reviewers', False)        
+        return self.settings.get('expert_reviewers', False) 
+
+    def has_external_reviewers(self):
+        return self.settings.get('external_reviewers', True)            
 
     def get_number_of_reviewers(self):
         return self.settings.get('number_of_reviewers', 3)
@@ -1062,6 +1080,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
             journal = openreview.journal.JournalRequest.get_journal(client, journal_request.id, setup=False)
             print('Check venue', journal.venue_id)
 
+            author_group = client.get_group(journal.get_authors_id())
+
             ## Get all the submissions that don't have a decision affinity scores
             submissions = journal.client.get_all_notes(invitation=journal.get_author_submission_id(), content = { 'venueid': journal.submitted_venue_id})
 
@@ -1082,21 +1102,20 @@ Your {lower_formatted_invitation} on a submission has been {action}
                                 journal.invitation_builder.set_ae_recommendation_invitation(submission, journal.get_due_date(weeks = journal.get_ae_recommendation_period_length()))
                                 ## send email to authors
                                 print('Send email to authors')
+                                message=author_group.content['ae_recommendation_email_template_script']['value'].format(
+                                    venue_id=journal.venue_id,
+                                    short_name=journal.short_name,
+                                    submission_id=submission.id,
+                                    submission_number=submission.number,
+                                    submission_title=submission.content['title']['value'],
+                                    website=journal.website,
+                                    contact_info=journal.contact_info,
+                                    invitation_url=f'https://openreview.net/invitation?id={journal.get_ae_recommendation_id(number=submission.number)}'
+                                )                                
                                 journal.client.post_message(
                                     recipients=submission.signatures,
                                     subject=f'[{journal.short_name}] Suggest candidate Action Editor for your new {journal.short_name} submission',
-                                    message=f'''Hi {{{{fullname}}}},
-
-Thank you for submitting your work titled "{submission.content['title']['value']}" to {journal.short_name}.
-
-Before the review process starts, you need to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
-
-To do so, please follow this link: https://openreview.net/invitation?id={journal.get_ae_recommendation_id(number=submission.number)} or check your tasks in the Author Console: https://openreview.net/group?id={journal.venue_id}/Authors
-
-For more details and guidelines on the {journal.short_name} review process, visit {journal.website}.
-
-The {journal.short_name} Editors-in-Chief
-''',
+                                    message=message,
                                     replyTo=journal.contact_info
                                 )
 
@@ -1587,4 +1606,154 @@ The {journal.short_name} Editors-in-Chief
 
     def set_impersonators(self, impersonators):
         self.group_builder.set_impersonators(impersonators)
+
+    @classmethod
+    def check_new_profiles(Journal, client, support_group_id = 'OpenReview.net/Support'):
+
+        def mark_as_conflict(journal, edge, submission, user_profile):
+            edge.label='Conflict Detected'
+            edge.tail=user_profile.id
+            edge.readers=None
+            edge.writers=None
+            edge.cdate = None            
+            client.post_edge(edge)
+
+            ## Send email to reviewer
+            subject=f"[{journal.short_name}] Conflict detected for paper {submission.number}: {submission.content['title']['value']}"
+            message =f'''Hi {{{{fullname}}}},
+You have accepted the invitation to review the paper number: {submission.number}, title: {submission.content['title']['value']}.
+
+A conflict was detected between you and the submission authors and the assignment can not be done.
+
+If you have any questions, please contact us as info@openreview.net.
+
+OpenReview Team'''
+            response = client.post_message(subject, [edge.tail], message)
+
+            ## Send email to inviter
+            subject=f"[{journal.short_name}] Conflict detected between reviewer {user_profile.get_preferred_name(pretty=True)} and paper {submission.number}: {submission.content['title']['value']}"
+            message =f'''Hi {{{{fullname}}}},
+A conflict was detected between {user_profile.get_preferred_name(pretty=True)}({user_profile.get_preferred_email()}) and the paper {submission.number} and the assignment can not be done.
+
+If you have any questions, please contact us as info@openreview.net.
+
+OpenReview Team'''
+
+            ## - Send email
+            response = client.post_message(subject, edge.signatures, message)            
+        
+        def mark_as_accepted(journal, edge, submission, user_profile):
+
+            edge.label='Accepted'
+            edge.tail=user_profile.id
+            edge.readers=None
+            edge.writers=None
+            edge.cdate = None
+            client.post_edge(edge)
+
+            short_phrase = journal.short_name
+            reviewer_name = 'Reviewer' ## add this to the invitation?
+
+            assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), head=submission.id, tail=edge.tail)
+
+            if not assignment_edges:
+                print('post assignment edge')
+                client.post_edge(openreview.api.Edge(
+                    invitation=journal.get_reviewer_assignment_id(),
+                    head=edge.head,
+                    tail=edge.tail,
+                    signatures=[journal.venue_id],
+                    weight=1
+                ))
+
+                instructions=f'Please go to the Tasks page and check your {short_phrase} pending tasks: https://openreview.net/tasks'
+
+                print('send confirmation email')
+                ## Send email to reviewer
+                subject=f'[{short_phrase}] {reviewer_name} Assignment confirmed for paper {submission.number}: {submission.content["title"]["value"]}'
+                message =f'''Hi {{{{fullname}}}},
+Thank you for accepting the invitation to review the paper number: {submission.number}, title: {submission.content['title']['value']}.
+
+{instructions}
+
+If you would like to change your decision, please click the Decline link in the previous invitation email.
+
+OpenReview Team'''
+
+                ## - Send email
+                response = client.post_message(subject, [edge.tail], message)
+
+                ## Send email to inviter
+                subject=f'[{short_phrase}] {reviewer_name} {user_profile.get_preferred_name(pretty=True)} signed up and is assigned to paper {submission.number}: {submission.content["title"]["value"]}'
+                message =f'''Hi {{{{fullname}}}},
+The {reviewer_name} {user_profile.get_preferred_name(pretty=True)}({user_profile.get_preferred_email()}) that you invited to review paper {submission.number} has accepted the invitation, signed up and is now assigned to the paper {submission.number}.
+
+OpenReview Team'''
+
+                ## - Send email
+                response = client.post_message(subject, edge.signatures, message)            
+        
+        journal_requests = client.get_all_notes(invitation=f'{support_group_id}/-/Journal_Request')
+
+        for journal_request in tqdm(journal_requests):
+
+            journal = openreview.journal.JournalRequest.get_journal(client, journal_request.id, setup=False)
+            print('Check venue', journal.venue_id)
+
+            invite_assignment_invitation_id = journal.get_reviewer_invite_assignment_id()
+            grouped_edges = client.get_grouped_edges(invitation=invite_assignment_invitation_id, label='Pending Sign Up', groupby='tail')
+            print('Pending sign up edges found', len(grouped_edges))
+
+            for grouped_edge in grouped_edges:
+
+                tail = grouped_edge['id']['tail']
+                profiles=openreview.tools.get_profiles(client, [tail], with_publications=True, with_relations=True)
+
+                if profiles and profiles[0].active:
+
+                    user_profile=profiles[0]
+                    print('Profile found for', tail, user_profile.id)
+
+                    edges = grouped_edge['values']
+
+                    for edge in edges:
+
+                        edge = openreview.api.Edge.from_json(edge)
+                        submission=client.get_note(id=edge.head)
+
+                        if submission.content['venueid']['value'] == journal.under_review_venue_id:
+
+                            ## Check if there is already an accepted edge for that profile id
+                            accepted_edges = client.get_edges(invitation=invite_assignment_invitation_id, label='Accepted', head=submission.id, tail=user_profile.id)
+
+                            if not accepted_edges:
+                                ## Check if the user was invited again with a profile id
+                                invitation_edges = client.get_edges(invitation=invite_assignment_invitation_id, label='Invitation Sent', head=submission.id, tail=user_profile.id)
+                                if invitation_edges:
+                                    invitation_edge = invitation_edges[0]
+                                    print(f'User invited twice, remove double invitation edge {invitation_edge.id}')
+                                    invitation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+                                    client.post_edge(invitation_edge)
+
+                                ## Check conflicts
+                                author_profiles = openreview.tools.get_profiles(client, submission.content['authorids']['value'], with_publications=True, with_relations=True)
+                                conflicts=openreview.tools.get_conflicts(author_profiles, user_profile, policy='NeurIPS', n_years=3)
+
+                                if conflicts:
+                                    print(f'Conflicts detected for {edge.head} and {user_profile.id}', conflicts)
+                                    mark_as_conflict(journal, edge, submission, user_profile)
+                                else:
+                                    print(f'Mark accepted for {edge.head} and {user_profile.id}')
+                                    mark_as_accepted(journal, edge, submission, user_profile)
+                                                                                                                                                
+                            else:
+                                print("user already accepted with another invitation edge", submission.id, user_profile.id)                                
+
+                        else:
+                            print(f'submission {submission.id} is not active: {submission.content["venueid"]["value"]}')
+
+                else:
+                    print(f'no profile active for {tail}')                                             
+        
+        return True        
             

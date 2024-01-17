@@ -24,7 +24,6 @@ const tabs = [{
       },
       submissionId: domain.content.submission_id?.value,
       parentGroupId: domain.parent,
-      apiVersion: 2,
       tabs: tabs
     }
   }

@@ -994,10 +994,14 @@ class EthicsReviewInvitation(openreview.Invitation):
             file_content = file_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
             file_content = file_content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + ethics_review_stage.name + "';")
 
+            exp_date = tools.datetime_millis(ethics_review_stage.exp_date) if ethics_review_stage.exp_date else None
+            if not exp_date:
+                exp_date = tools.datetime_millis(ethics_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if ethics_review_stage.due_date else None
+
             super(EthicsReviewInvitation, self).__init__(id = conference.get_invitation_id(ethics_review_stage.name),
                 cdate = tools.datetime_millis(ethics_review_stage.start_date),
                 duedate = tools.datetime_millis(ethics_review_stage.due_date),
-                expdate = tools.datetime_millis(ethics_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if ethics_review_stage.due_date else None,
+                expdate = exp_date,
                 readers = ['everyone'],
                 writers = [conference.id],
                 signatures = [conference.id],

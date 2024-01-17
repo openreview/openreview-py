@@ -32,7 +32,9 @@ class TestMultipleRoles():
         first_date = now + datetime.timedelta(days=1)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@lifelong-ml.cc', 'Program', 'CoLLAsChair')
+        helpers.create_user('pc@lifelong-ml.cc', 'Program', 'CoLLAsChair')
+        pc_client = openreview.Client(username='pc@lifelong-ml.cc', password=helpers.strong_password)
+
 
         helpers.create_user('reviewer1@lifelong-ml.cc', 'Reviewer', 'CoLLAsUMass', institution='umass.edu')
         helpers.create_user('reviewer2@lifelong-ml.cc', 'Reviewer', 'CoLLAsMIT', institution='mit.edu')
@@ -54,6 +56,7 @@ class TestMultipleRoles():
                 'Official Website URL': 'https://lifelong-ml.cc/',
                 'program_chair_emails': ['pc@lifelong-ml.cc'],
                 'contact_email': 'pc@lifelong-ml.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'No, our venue does not have Senior Area Chairs',
                 'Venue Start Date': '2021/12/01',
@@ -67,7 +70,8 @@ class TestMultipleRoles():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'reviewer_roles': ['Program_Committee', 'Senior_Program_Committee'],
-                'area_chair_roles': ['First_Group_AC', 'Second_Group_AC']
+                'area_chair_roles': ['First_Group_AC', 'Second_Group_AC'],
+                'submission_license': ['CC BY 4.0']
             }))
 
         helpers.await_queue()

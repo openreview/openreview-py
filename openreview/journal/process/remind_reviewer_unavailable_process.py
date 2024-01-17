@@ -26,6 +26,9 @@ The {journal.short_name} Editors-in-Chief
 
     print('reminder_period', reminder_period)
     for edge in edges:
+        is_reviewer = client.get_groups(member=edge.tail, id=journal.get_reviewers_id())
+        if not is_reviewer:
+            continue        
         if edge.tmdate < reminder_period:
             print(f"remind: {edge.tail}")
             recipients=[edge.tail]

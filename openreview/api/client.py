@@ -48,9 +48,11 @@ class OpenReviewClient(object):
         self.edges_url = self.baseurl + '/edges'
         self.bulk_edges_url = self.baseurl + '/edges/bulk'
         self.edges_count_url = self.baseurl + '/edges/count'
+        self.edges_rename = self.baseurl + '/edges/rename'
         self.profiles_url = self.baseurl + '/profiles'
         self.profiles_search_url = self.baseurl + '/profiles/search'
         self.profiles_merge_url = self.baseurl + '/profiles/merge'
+        self.profiles_rename = self.baseurl + '/profiles/rename'
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
@@ -153,18 +155,14 @@ class OpenReviewClient(object):
         self.__handle_token(json_response)
         return json_response
 
-    def register_user(self, email = None, first = None, last = None, middle = '', password = None):
+    def register_user(self, email = None, fullname = None, password = None):
         """
         Registers a new user
 
         :param email: email that will be used as id to log in after the user is registered
         :type email: str, optional
-        :param first: First name of the user
-        :type first: str, optional
-        :param last: Last name of the user
-        :type last: str, optional
-        :param middle: Middle name of the user
-        :type middle: str, optional
+        :param fullname: Full name of the user
+        :type fullname: str, optional
         :param password: Password used to log into OpenReview
         :type password: str, optional
 
@@ -173,7 +171,7 @@ class OpenReviewClient(object):
         """
         register_payload = {
             'email': email,
-            'name': {   'first': first, 'last': last, 'middle': middle},
+            'fullname': fullname,
             'password': password
         }
         response = self.session.post(self.register_url, json = register_payload, headers = self.headers)
@@ -369,7 +367,7 @@ class OpenReviewClient(object):
         else:
             raise OpenReviewException(['Profile Not Found'])
 
-    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None, fullname=None, use_ES = False):
+    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None, fullname=None, relation=None, use_ES = False):
         """
         Gets a list of profiles using either their ids or corresponding emails
 
@@ -442,8 +440,6 @@ class OpenReviewClient(object):
                     profiles_by_email[p['email']] = profile
             return profiles_by_email
 
-
-
         if ids:
             full_response = []
             for id_batch in batches(ids):
@@ -458,7 +454,11 @@ class OpenReviewClient(object):
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
 
-
+        if relation:
+            response = self.session.get(self.profiles_url, params = {'relation': relation }, headers = self.headers)
+            response = self.__handle_response(response)
+            return [Profile.from_json(p) for p in response.json()['profiles']]
+        
         return []
 
     def get_pdf(self, id, is_reference=False):
@@ -589,6 +589,29 @@ class OpenReviewClient(object):
 
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
+
+    def rename_profile(self, current_id, new_id):
+        """
+        Updates a the profile id of a Profile
+
+        :param current_id: Current profile id
+        :type profile: str
+        :param new_id: New profile id
+        :type profile: str
+
+        :return: The new updated Profile
+        :rtype: Profile
+        """
+        response = self.session.post(
+            self.profiles_rename,
+            json = {
+                'currentId': current_id,
+                'newId': new_id
+            },
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        return Profile.from_json(response.json())        
 
     def merge_profiles(self, profileTo, profileFrom):
         """
@@ -1200,7 +1223,7 @@ class OpenReviewClient(object):
 
         return list(tools.efficient_iterget(self.get_notes, desc='Getting V2 Notes', **params))
 
-    def get_note_edit(self, id):
+    def get_note_edit(self, id, trash=None):
         """
         Get a single edit by id if available
 
@@ -1210,12 +1233,12 @@ class OpenReviewClient(object):
         :return: edit matching the passed id
         :rtype: Note
         """
-        response = self.session.get(self.note_edits_url, params = {'id':id}, headers = self.headers)
+        response = self.session.get(self.note_edits_url, params = {'id':id, 'trash': 'true' if trash == True else 'false'}, headers = self.headers)
         response = self.__handle_response(response)
         n = response.json()['edits'][0]
         return Edit.from_json(n)
 
-    def get_note_edits(self, note_id = None, invitation = None, with_count=False, sort=None):
+    def get_note_edits(self, note_id = None, invitation = None, with_count=False, sort=None, trash=None):
         """
         Gets a list of edits for a note. The edits that will be returned match all the criteria passed in the parameters.
 
@@ -1229,6 +1252,7 @@ class OpenReviewClient(object):
             params['invitation'] = invitation
         if sort:
             params['sort'] = sort
+        params['trash'] = 'true' if trash == True else 'false'
 
         response = self.session.get(self.note_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1446,6 +1470,30 @@ class OpenReviewClient(object):
         send_json = [edge.to_json() for edge in edges]
         response = self.session.post(self.bulk_edges_url, json = send_json, headers = self.headers)
         response = self.__handle_response(response)
+        received_json_array = response.json()
+        edge_objects = [Edge.from_json(edge) for edge in received_json_array]
+        return edge_objects
+
+    def rename_edges(self, current_id, new_id):
+        """
+        Updates an Edge
+
+        :param profile: Edge object
+        :type edge: Edge
+
+        :return: The new updated Edge
+        :rtype: Edge
+        """
+        response = self.session.post(
+            self.edges_rename,
+            json = {
+                'currentId': current_id,
+                'newId': new_id
+            },
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        #print('RESPONSE: ', response.json())
         received_json_array = response.json()
         edge_objects = [Edge.from_json(edge) for edge in received_json_array]
         return edge_objects
@@ -2356,6 +2404,7 @@ class Invitation(object):
         bulk = None,
         content = None,
         reply_forum_views = [],
+        responseArchiveDate = None,
         details = None):
 
         self.id = id
@@ -2381,6 +2430,7 @@ class Invitation(object):
         self.bulk = bulk
         self.details = details
         self.reply_forum_views = reply_forum_views
+        self.responseArchiveDate = responseArchiveDate
         self.web = web
         self.process = process
         self.preprocess = preprocess
@@ -2461,6 +2511,9 @@ class Invitation(object):
         if self.content:
             body['content'] = self.content
 
+        if self.responseArchiveDate:
+            body['responseArchiveDate'] = self.responseArchiveDate
+
         if  self.minReplies:
             body['minReplies']=self.minReplies
         if  self.maxReplies:
@@ -2515,6 +2568,7 @@ class Invitation(object):
             maxReplies = i.get('maxReplies'),
             details = i.get('details'),
             reply_forum_views = i.get('replyForumViews'),
+            responseArchiveDate = i.get('responseArchiveDate'),
             bulk = i.get('bulk')
             )
         if 'content' in i:

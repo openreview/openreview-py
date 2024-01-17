@@ -38,7 +38,6 @@ return {
       title: `${committee_name.replaceAll('_', ' ')} Console`,
       instructions: `<p class="dark">This page provides information and status updates for the ${domain.content.subtitle?.value}. It will be regularly updated as the conference progresses, so please check back frequently.</p>`,
     },
-    apiVersion: 2,
     venueId: domain.id,
     reviewerAssignment: {
       showEdgeBrowserUrl: domain.content.enable_reviewers_reassignment?.value,
