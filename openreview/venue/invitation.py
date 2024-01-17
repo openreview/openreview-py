@@ -3175,7 +3175,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         venue = self.venue
 
-        invitation = Invitation(id=venue.get_group_recruitment_id(committee_name),
+        invitation = Invitation(id=venue.get_committee_id_invited(committee_name)+'/-/Members',
             invitees=[venue_id],
             readers=[venue_id],
             writers=[venue_id],
@@ -3199,42 +3199,6 @@ class InvitationBuilder(object):
                                 'input': 'textarea',
                                 'optional': True,
                                 'markdown': True
-                            }
-                        }
-                    },
-                    'invitedStatus': {
-                        'value': {
-                            'param': {
-                                'type': 'string[]',
-                                'optional': True,
-                                'hidden': True
-                            }
-                        }
-                    },
-                    'alreadyInvitedStatus': {
-                        'value': {
-                            'param': {
-                                'type': 'json',
-                                'optional': True,
-                                'hidden': True
-                            }
-                        }
-                    },
-                    'alreadyMemberStatus': {
-                        'value': {
-                            'param': {
-                                'type': 'json',
-                                'optional': True,
-                                'hidden': True
-                            }
-                        }
-                    },
-                    'errorStatus': {
-                        'value': {
-                            'param': {
-                                'type': 'json',
-                                'optional': True,
-                                'hidden': True
                             }
                         }
                     }

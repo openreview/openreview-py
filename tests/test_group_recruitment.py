@@ -57,7 +57,7 @@ class TestGroupRecruitment():
         assert openreview_client.get_group('Venue.cc/Reviewers')
         assert openreview_client.get_group('Venue.cc/Reviewers/Invited')
         assert openreview_client.get_group('Venue.cc/Reviewers/Declined')
-        assert openreview_client.get_invitation('Venue.cc/Reviewers/Invited/-/Recruitment')
+        assert openreview_client.get_invitation('Venue.cc/Reviewers/Invited/-/Members')
         assert openreview_client.get_invitation('Venue.cc/Reviewers/Invited/-/Recruitment_Settings')
 
         helpers.create_user('reviewer3@venue.cc', 'Reviewer', 'VenueThree')
@@ -100,13 +100,13 @@ Program Chairs
 
         # use invitation to recruit reviewers
         edit = openreview_client.post_group_edit(
-                invitation='Venue.cc/Reviewers/Invited/-/Recruitment',
+                invitation='Venue.cc/Reviewers/Invited/-/Members',
                 content={
                     'inviteeDetails': { 'value':  invitee_details }
                 },
                 group=openreview.api.Group()
             )
-        helpers.await_queue_edit(openreview_client, invitation='Venue.cc/Reviewers/Invited/-/Recruitment')
+        helpers.await_queue_edit(openreview_client, invitation='Venue.cc/Reviewers/Invited/-/Members')
 
         invited_group = openreview_client.get_group('Venue.cc/Reviewers/Invited')
         assert len(invited_group.members) == 3
@@ -116,12 +116,3 @@ Program Chairs
 
         messages = openreview_client.get_messages(subject = '[V 24] Invitation to serve as Reviewer')
         assert len(messages) == 3
-
-        edit = openreview_client.get_group_edit(edit['id'])
-        assert 'invitedStatus' in edit.content
-        assert 'reviewer1@venue.cc' in edit.content['invitedStatus']['value']
-        assert 'reviewer2@venue.cc' in edit.content['invitedStatus']['value']
-        assert '~Reviewer_VenueThree1' in edit.content['invitedStatus']['value']
-        assert 'alreadyInvitedStatus' not in edit.content
-        assert 'alreadyMemberStatus' not in edit.content
-        assert 'errorStatus' not in edit.content
