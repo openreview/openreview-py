@@ -29,7 +29,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.area_chair_roles = note.content.get('area_chair_roles', ['Area_Chairs'])
         venue.reviewer_roles = note.content.get('reviewer_roles', ['Reviewers'])
         venue.allow_gurobi_solver = venue_content.get('allow_gurobi_solver', {}).get('value', False)
-        venue.submission_license = note.content.get('submission_license', 'CC BY 4.0')
+        venue.submission_license = note.content.get('submission_license', ['CC BY 4.0'])
         set_homepage_options(note, venue)
         venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')
         venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
@@ -358,7 +358,7 @@ def get_submission_stage(request_forum, venue):
             submission_start_date = datetime.datetime.strptime(submission_start_date, '%Y/%m/%d %H:%M')
         except ValueError:
             submission_start_date = datetime.datetime.strptime(submission_start_date, '%Y/%m/%d')
-        submission_start_date_str = submission_start_date.strftime('%b %d %Y') + ' UTC-0'
+        submission_start_date_str = submission_start_date.strftime('%b %d %Y %I:%M%p') + ' UTC-0'
     else:
         submission_start_date = None
         
