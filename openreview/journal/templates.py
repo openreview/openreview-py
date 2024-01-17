@@ -284,3 +284,14 @@ A new submission has been received for {short_name}.
 
 To view the submission, click here: https://openreview.net/forum?id={submission_id}
 '''
+
+author_new_submission_email_template = '''Hi {{{{fullname}}}},
+
+Your submission to {short_name} has been received.
+
+Submission Number: {submission_number}
+
+Title: {submission_title}
+
+To view the submission, click here: https://openreview.net/forum?id={submission_id}
+'''

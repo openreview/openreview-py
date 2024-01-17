@@ -379,6 +379,7 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
         authors_group = openreview.tools.get_group(self.client, authors_id)
         if not authors_group:
             content = {}
+            content['new_submission_email_template_script'] = { 'value': author_new_submission_email_template }
             content['ae_recommendation_email_template_script'] = { 'value': author_ae_recommendation_email_template }
             content['discussion_starts_email_template_script'] = { 'value': author_discussion_starts_email_template }            
             content['decision_accept_as_is_email_template_script'] = { 'value': author_decision_accept_as_is_email_template }

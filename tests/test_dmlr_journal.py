@@ -290,6 +290,14 @@ note: replies to this email will go to the AE, {assigned_action_editor}.
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
         note_id_1=submission_note_1['note']['id']
 
+        messages = openreview_client.get_messages(to = 'melisa@dmlrfour.com', subject = '[DMLR] New submission to DMLR: Paper title')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi Melisa Ane,\n\nYour submission to DMLR has been received.\n\nSubmission Number: 1\n\nTitle: Paper title\n\nTo view the submission, click here: https://openreview.net/forum?id={note_id_1}\n'''
+        
+        messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[DMLR] New submission to DMLR: Paper title')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,\n\nYour submission to DMLR has been received.\n\nSubmission Number: 1\n\nTitle: Paper title\n\nTo view the submission, click here: https://openreview.net/forum?id={note_id_1}\n'''
+
         messages = openreview_client.get_messages(to = 'ce@mailseven.com', subject = '[DMLR] New submission to DMLR: Paper title')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Ce Zhang,\n\nA new submission has been received for DMLR.\n\nTo view the submission, click here: https://openreview.net/forum?id={note_id_1}\n'''
