@@ -8,7 +8,8 @@ else:
 
 from . import tools
 import requests
-from requests.adapters import HTTPAdapter, Retry
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 import pprint
 import os
 import re
@@ -77,10 +78,11 @@ class Client(object):
             'Accept': 'application/json',
         }
 
+        retry_strategy = Retry(total=8, backoff_factor=0.1, status_forcelist=[ 500, 502, 503, 504 ], respect_retry_after_header=False)
         self.session = requests.Session()
-        retries = Retry(total=16, backoff_factor=0.2, status_forcelist=[500, 502, 503, 504])
-        self.session.mount('https://', HTTPAdapter(max_retries=retries))
-        self.session.mount('http://', HTTPAdapter(max_retries=retries))
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session.mount('https://', adapter)
+        self.session.mount('http://', adapter)
 
         if self.token:
             self.headers['Authorization'] = 'Bearer ' + self.token
@@ -111,6 +113,7 @@ class Client(object):
         return response
 
     def __handle_response(self,response):
+        print('RateLimit-Remaining', response.headers.get('RateLimit-Remaining'))
         try:
             response.raise_for_status()
             return response
