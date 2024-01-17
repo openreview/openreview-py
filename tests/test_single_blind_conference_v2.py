@@ -79,7 +79,8 @@ class TestSingleBlindVenueV2():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'submission_name': 'Submission',
-                'api_version': '2'
+                'api_version': '2',
+                'submission_license': ['CC BY 4.0']
             })
 
         request_form_note=test_client.post_note(request_form_note)

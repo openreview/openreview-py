@@ -54,7 +54,8 @@ class TestSubmissionReaders():
                 'reviewer_identity': ['Program Chairs', 'Assigned Area Chair', 'Assigned Senior Area Chair'],
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
-                'Expected Submissions': '1000'
+                'Expected Submissions': '1000',
+                'submission_license': ['CC BY 4.0']
             })
 
         request_form_note=test_client.post_note(request_form_note)
