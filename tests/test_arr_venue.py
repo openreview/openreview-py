@@ -81,7 +81,8 @@ class TestARRVenue():
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
-                'use_recruitment_template': 'Yes'
+                'use_recruitment_template': 'Yes',
+                'submission_license': ['CC BY 4.0']
             }))
 
         helpers.await_queue()

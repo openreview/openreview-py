@@ -65,7 +65,8 @@ class TestEMNLPConference():
                 'Expected Submissions': '1000',
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
-                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers'
+                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
+                'submission_license': ['CC BY 4.0']
             }))
 
         helpers.await_queue()
