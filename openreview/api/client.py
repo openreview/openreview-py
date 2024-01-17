@@ -112,7 +112,6 @@ class OpenReviewClient(object):
         return response
 
     def __handle_response(self,response):
-        print('RateLimit-Remaining', response.headers.get('RateLimit-Remaining'))
         try:
             response.raise_for_status()
             return response
