@@ -250,8 +250,8 @@ class TestICMLConference():
                 'contact_email': 'pc@icml.cc',
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
-                'Submission Start Date': now.strftime('%Y/%m/%d'),
-                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Submission Start Date': now.strftime('%Y/%m/%d %H:%M'),
+                'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
@@ -302,6 +302,12 @@ class TestICMLConference():
 
         pc_group = pc_client.get_group('ICML.cc/2023/Conference/Program_Chairs')
         assert ['pc@icml.cc', 'pc2@icml.cc'] == pc_group.members
+
+        submission_start = now.strftime('%b %d %Y %I:%M%p')
+        submission_end = due_date.strftime('%b %d %Y %I:%M%p')
+        group_content = openreview_client.get_group('ICML.cc/2023/Conference').content
+        assert 'date' in group_content
+        assert group_content['date']['value'] == f"Submission Start: {submission_start} UTC-0, Submission Deadline: {submission_end} UTC-0"
 
         pc_client.post_note(openreview.Note(
             content={
