@@ -72,7 +72,8 @@ class TestWorkshopV2():
                 'desk_rejected_submissions_author_anonymity': 'Yes, author identities of desk rejected submissions should be revealed.',
                 'email_pcs_for_withdrawn_submissions': 'No, do not email PCs.',
                 'withdrawn_submissions_visibility': 'No, withdrawn submissions should not be made public.',
-                'desk_rejected_submissions_visibility': 'No, desk rejected submissions should not be made public.'               
+                'desk_rejected_submissions_visibility': 'No, desk rejected submissions should not be made public.'               ,
+                'submission_license': ['CC BY 4.0']
             }))
 
         helpers.await_queue()

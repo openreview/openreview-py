@@ -74,7 +74,7 @@ class TestVenueRequest():
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
-                'submission_license': 'CC BY-NC 4.0',
+                'submission_license': ['CC BY-NC 4.0'],
                 'api_version': '2'
             })
 
@@ -212,7 +212,8 @@ class TestVenueRequest():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'submission_name': 'Submission_Test',
-                'api_version': '2'
+                'api_version': '2',
+                'submission_license': ['CC BY 4.0'],
             }))
 
         assert request_form_note

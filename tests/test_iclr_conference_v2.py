@@ -77,7 +77,7 @@ class TestICLRConference():
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
-                'submission_license': 'CC BY-SA 4.0'
+                'submission_license': ['CC BY 4.0', 'CC BY-SA 4.0', 'CC0 1.0'] # Allow authors to select license
             }))
 
         helpers.await_queue()
@@ -180,10 +180,12 @@ class TestICLRConference():
     def test_submissions(self, client, openreview_client, helpers, test_client):
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu', 'deepmind.com', 'co.ux', 'apple.com', 'nvidia.com']
         for i in range(1,12):
             note = openreview.api.Note(
+                license = 'CC BY-SA 4.0',
                 content = {
                     'title': { 'value': 'Paper title ' + str(i) },
                     'abstract': { 'value': 'This is an abstract ' + str(i) },
@@ -208,8 +210,9 @@ class TestICLRConference():
         assert ['ICLR.cc/2024/Conference', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICLROne1'] == submissions[0].readers
         assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICLROne1'] == submissions[0].content['authorids']['value']
 
-        # Check that submission license is same as request form
-        assert submissions[0].license == 'CC BY-SA 4.0'
+        # Check that note.license is from license list
+        licenses = request_form.content['submission_license']
+        assert submissions[0].license in licenses
 
         authors_group = openreview_client.get_group(id='ICLR.cc/2024/Conference/Authors')
 
