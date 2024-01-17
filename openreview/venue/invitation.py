@@ -3293,8 +3293,11 @@ class InvitationBuilder(object):
         recommendation_invitation = self.save_invitation(recommendation_invitation, replacement=True)
         
     def set_group_recruitment_invitations(self, committee_name):
-      
-      invitation = Invitation(id=venue.get_committee_id_invited(committee_name)+'/-/Members',
+        
+        venue_id = self.venue_id
+        venue = self.venue
+        
+        invitation = Invitation(id=venue.get_committee_id_invited(committee_name)+'/-/Members',
             invitees=[venue_id],
             readers=[venue_id],
             writers=[venue_id],
