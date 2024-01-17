@@ -645,6 +645,9 @@ note: replies to this email will go to the AE, Andrew Ng.
         assert len(messages) == 1
         assert 'You may now submit your official recommendation for the submission confirming you updated the review' in messages[0]['content']['text']
 
+        messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[DMLR] Discussion period ended for DMLR submission 1: Paper title')
+        assert len(messages) == 1
+
         david_anon_groups=david_client.get_groups(prefix='DMLR/Paper1/Reviewer_.*', signatory='~David_Bo1')
         assert len(david_anon_groups) == 1
 

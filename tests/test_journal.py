@@ -219,7 +219,8 @@ class TestJournal():
             group=openreview.api.Group(
                 id='TMLR/Authors',
                 content={
-                    'new_submission_email_template_script': { 'delete': True }
+                    'new_submission_email_template_script': { 'delete': True },
+                    'official_recommendation_starts_email_template_script': { 'delete': True }
                 }
             )
         )
@@ -1921,6 +1922,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
 '''
         messages = journal.client.get_messages(subject = '[TMLR] Reviewers must submit official recommendation for TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLR] Discussion period ended for TMLR submission 1: Paper title UPDATED')
+        assert len(messages) == 0       
 
         ## Post a review recommendation
         official_recommendation_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',

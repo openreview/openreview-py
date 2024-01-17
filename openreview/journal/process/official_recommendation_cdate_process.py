@@ -48,3 +48,25 @@ def process(client, invitation):
 
     print('Let EICs enable the review rating')
     journal.invitation_builder.set_note_review_rating_enabling_invitation(submission)
+
+    ## send email to authors
+    author_group = client.get_group(journal.get_authors_id())
+    email_template = author_group.content.get('official_recommendation_starts_email_template_script', {}).get('value')
+    if email_template:
+        print('send email to authors')
+        message=email_template.format(
+            short_name=journal.short_name,
+            submission_number=submission.number,
+            submission_title=submission.content['title']['value'],
+            website=journal.website,
+            recommendation_period_length=journal.get_recommendation_period_length(),
+            recommendation_duedate=duedate.strftime("%b %d"),
+            contact_info=journal.contact_info,
+            assigned_action_editor=assigned_action_editor.get_preferred_name(pretty=True)
+        )    
+        client.post_message(
+            recipients=[journal.get_authors_id(number=submission.number)],
+            subject=f'''[{journal.short_name}] Discussion period ended for {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
+            message=message,
+            replyTo=assigned_action_editor.get_preferred_email()
+        )
