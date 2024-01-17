@@ -14,8 +14,8 @@ class TestICMLConference():
 
 
     @pytest.fixture(scope="class")
-    def profile_management(self, client):
-        profile_management = ProfileManagement(client, 'openreview.net')
+    def profile_management(self, openreview_client):
+        profile_management = ProfileManagement(openreview_client, 'openreview.net')
         profile_management.setup()
         return profile_management
 
@@ -120,7 +120,8 @@ class TestICMLConference():
                     'authors': { 'value': ['SAC ICML', 'Test2 Client'] },
                     'authorids': { 'value': ['~SAC_ICMLOne1', 'test2@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))
 
         sac_client.post_note_edit(
@@ -133,7 +134,8 @@ class TestICMLConference():
                     'abstract': { 'value': 'Paper abstract 2' },
                     'authors': { 'value': ['SAC ICML', 'Test2 Client'] },
                     'authorids': { 'value': ['~SAC_ICMLOne1', 'test2@mail.com'] }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))
 
         pc_client.post_note(openreview.Note(
