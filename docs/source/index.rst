@@ -15,7 +15,6 @@ Contents
    how_to_setup
    api
    conference_builder
-   mental_models
    help
 
 
