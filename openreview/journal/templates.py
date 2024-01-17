@@ -298,7 +298,7 @@ To view the submission, click here: https://openreview.net/forum?id={submission_
 
 author_official_recommendation_starts_email_template = '''Hi {{{{fullname}}}},
 
-The discussion period has ended and the reviews will submit their recommendation, upon your AE then will enter their final recommendation
+The discussion period has ended and the reviewers will submit their recommendations, after which the AE will enter their final recommendation.
 
 The {short_name} Editors-in-Chief
 note: replies to this email will go to the AE, {assigned_action_editor}.
