@@ -79,7 +79,8 @@ class SubmissionStage(object):
             submission_email=None,
             force_profiles=False,
             second_deadline_additional_fields={},
-            second_deadline_remove_fields=[]
+            second_deadline_remove_fields=[],
+            commitments_venue=False
         ):
 
         self.start_date = start_date
@@ -114,6 +115,7 @@ class SubmissionStage(object):
         self.force_profiles = force_profiles
         self.second_deadline_additional_fields = second_deadline_additional_fields
         self.second_deadline_remove_fields = second_deadline_remove_fields
+        self.commitments_venue = commitments_venue
 
     def get_readers(self, conference, number, decision=None):
 
@@ -292,6 +294,20 @@ class SubmissionStage(object):
                         }
                     }
                 }
+
+            if self.commitments_venue:
+                content['paper_link'] = {
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'regex': '(http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)',
+                            'mismatchError': 'must be a valid link to an OpenrReview submission: https://openreview.net/forum?id=...'
+                        }
+                    },
+                    'description': 'Please provide the link to your ARR submission.',
+                    'order': 8
+                }
+
 
             if conference:
                 submission_id = self.get_submission_id(conference)
