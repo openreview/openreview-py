@@ -11,10 +11,9 @@ Contents
 .. toctree::
    :maxdepth: 3
 
-   about
-   how_to_setup
+   About OpenReview <https://openreview.net/about>
+   How to Setup <https://docs.openreview.net/getting-started/using-the-api/installing-and-instantiating-the-python-client>
    api
-   conference_builder
    help
 
 
