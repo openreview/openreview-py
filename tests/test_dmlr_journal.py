@@ -290,6 +290,14 @@ note: replies to this email will go to the AE, {assigned_action_editor}.
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
         note_id_1=submission_note_1['note']['id']
 
+        messages = openreview_client.get_messages(to = 'melisa@dmlrfour.com', subject = '[DMLR] New submission to DMLR: Paper title')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi Melisa Ane,\n\nYour submission to DMLR has been received.\n\nSubmission Number: 1\n\nTitle: Paper title\n\nTo view the submission, click here: https://openreview.net/forum?id={note_id_1}\n'''
+        
+        messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[DMLR] New submission to DMLR: Paper title')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,\n\nYour submission to DMLR has been received.\n\nSubmission Number: 1\n\nTitle: Paper title\n\nTo view the submission, click here: https://openreview.net/forum?id={note_id_1}\n'''
+
         messages = openreview_client.get_messages(to = 'ce@mailseven.com', subject = '[DMLR] New submission to DMLR: Paper title')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Ce Zhang,\n\nA new submission has been received for DMLR.\n\nTo view the submission, click here: https://openreview.net/forum?id={note_id_1}\n'''
@@ -636,6 +644,9 @@ note: replies to this email will go to the AE, Andrew Ng.
         messages = openreview_client.get_messages(to = 'david@dmlrone.com', subject = '[DMLR] Submit official recommendation for DMLR submission 1: Paper title')
         assert len(messages) == 1
         assert 'You may now submit your official recommendation for the submission confirming you updated the review' in messages[0]['content']['text']
+
+        messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[DMLR] Discussion period ended for DMLR submission 1: Paper title')
+        assert len(messages) == 1
 
         david_anon_groups=david_client.get_groups(prefix='DMLR/Paper1/Reviewer_.*', signatory='~David_Bo1')
         assert len(david_anon_groups) == 1

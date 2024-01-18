@@ -217,6 +217,18 @@ class TestJournal():
         assert 'expert_reviewers' in invitation.edit['note']['content']
         assert openreview_client.get_group('TMLR/Reviewers/Archived')
 
+        openreview_client.post_group_edit(
+            invitation='TMLR/-/Edit',
+            signatures=['TMLR'],
+            group=openreview.api.Group(
+                id='TMLR/Authors',
+                content={
+                    'new_submission_email_template_script': { 'delete': True },
+                    'official_recommendation_starts_email_template_script': { 'delete': True }
+                }
+            )
+        )
+
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
         venue_id = 'TMLR'
@@ -353,6 +365,9 @@ class TestJournal():
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
         note_id_1=submission_note_1['note']['id']
+
+        messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLR] New submission to TMLR: Paper title')
+        assert len(messages) == 0
 
         Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
 
@@ -1911,6 +1926,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
 '''
         messages = journal.client.get_messages(subject = '[TMLR] Reviewers must submit official recommendation for TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLR] Discussion period ended for TMLR submission 1: Paper title UPDATED')
+        assert len(messages) == 0       
 
         ## Post a review recommendation
         official_recommendation_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
