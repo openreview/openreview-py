@@ -14,8 +14,8 @@ from openreview import ProfileManagement
 class TestARRVenue():
 
     @pytest.fixture(scope="class")
-    def profile_management(self, client):
-        profile_management = ProfileManagement(client, 'openreview.net')
+    def profile_management(self, openreview_client):
+        profile_management = ProfileManagement(openreview_client, 'openreview.net')
         profile_management.setup()
         return profile_management    
 
@@ -81,7 +81,8 @@ class TestARRVenue():
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
-                'use_recruitment_template': 'Yes'
+                'use_recruitment_template': 'Yes',
+                'submission_license': ['CC BY 4.0']
             }))
 
         helpers.await_queue()
