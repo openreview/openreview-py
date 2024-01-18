@@ -450,8 +450,12 @@ class InvitationBuilder(object):
         reply_to = '${4/content/noteId/value}'
 
         if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals:
-            paper_invitation_id = self.venue.get_invitation_id(name=review_rebuttal_stage.name, prefix='${2/content/replytoSignatures/value}')
-            with_invitation = self.venue.get_invitation_id(name=review_rebuttal_stage.name, prefix='${6/content/replytoSignatures/value}')
+            submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${2/content/noteNumber/value}/'
+            review_prefix = self.venue.review_stage.name + '${2/content/replyNumber/value}'
+            paper_invitation_id = self.venue.get_invitation_id(name=review_rebuttal_stage.name, prefix=submission_prefix+review_prefix)
+            submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${6/content/noteNumber/value}/'
+            review_prefix = self.venue.review_stage.name + '${6/content/replyNumber/value}'
+            with_invitation = self.venue.get_invitation_id(name=review_rebuttal_stage.name, prefix=submission_prefix+review_prefix)
             reply_to = '${4/content/replyto/value}'
 
         if review_rebuttal_stage.unlimited_rebuttals:
@@ -497,23 +501,7 @@ class InvitationBuilder(object):
                                 'regex': '.*', 'type': 'string'
                             }
                         }
-                    },
-                    'replytoSignatures': {
-                        'value': {
-                            'param': {
-                                'regex': '.*', 'type': 'string',
-                                'optional': True
-                            }
-                        }
-                    },
-                    'replyto': {
-                        'value': {
-                            'param': {
-                                'regex': '.*', 'type': 'string',
-                                'optional': True
-                            }
-                        }
-                    },
+                    }
                 },
                 'replacement': True,
                 'invitation': {
@@ -572,7 +560,25 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['duedate'] = review_rebuttal_duedate
 
         if review_rebuttal_expdate:
-            invitation.edit['invitation']['expdate'] = review_rebuttal_expdate            
+            invitation.edit['invitation']['expdate'] = review_rebuttal_expdate
+
+        if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals:
+            invitation.edit['content']['replyNumber'] = {
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'integer',
+                        'optional': True
+                    }
+                }
+            }
+            invitation.edit['content']['replyto'] = {
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'string',
+                        'optional': True
+                    }
+                }
+            }
 
         self.save_invitation(invitation, replacement=False)
         return invitation
@@ -2045,24 +2051,27 @@ class InvitationBuilder(object):
                         'withForum': '${6/content/noteId/value}'
                     }
                 }
-            else:
-                paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix='${2/content/replytoSignatures/value}')
-                with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix='${6/content/replytoSignatures/value}')
-                reply_to = '${4/content/replyto/value}'
 
         elif custom_stage_reply_type == 'revision':
             if custom_stage_reply_type in ['forum', 'withForum']:
                 raise openreview.OpenReviewException('Custom stage cannot be used for revisions to submissions. Use the Submission Revision Stage instead.')
-            if custom_stage_replyto == 'reviews':
-                invitation_name = self.venue.review_stage.name
-            elif custom_stage_replyto == 'metareviews':
-                invitation_name = self.venue.meta_review_stage.name
-            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix='${2/content/replytoSignatures/value}')
-            with_invitation = self.venue.get_invitation_id(name=invitation_name, number='${6/content/noteNumber/value}')
-            reply_to = None
-            edit_readers = [venue_id, '${2/signatures}']
-            note_readers = None
-            invitees = ['${3/content/replytoSignatures/value}']
+
+        if custom_stage_replyto in ['reviews', 'metareviews']:
+            stage_name = self.venue.review_stage.name if custom_stage_replyto == 'reviews' else self.venue.meta_review_stage.name
+            submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${2/content/noteNumber/value}/'
+            reply_prefix = stage_name + '${2/content/replyNumber/value}'
+            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix=submission_prefix+reply_prefix)
+            submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${6/content/noteNumber/value}/'
+            reply_prefix = stage_name + '${6/content/replyNumber/value}'
+            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix=submission_prefix+reply_prefix)
+            reply_to = '${4/content/replyto/value}'
+
+            if custom_stage_reply_type == 'revision':
+                with_invitation = self.venue.get_invitation_id(name=stage_name, number='${6/content/noteNumber/value}')
+                reply_to = None
+                edit_readers = [venue_id, '${2/signatures}']
+                note_readers = None
+                invitees = ['${3/content/replytoSignatures/value}']
 
         invitation_content = {
             'source': { 'value': custom_stage_source },
@@ -2158,8 +2167,16 @@ class InvitationBuilder(object):
         if reply_to:
             invitation.edit['invitation']['edit']['note']['replyto'] = reply_to
 
-        if custom_stage_replyto in ['reviews', 'metareviews', 'review_revisions']:
-            invitation.edit['content']['replytoSignatures'] = {
+        if custom_stage_replyto in ['reviews', 'metareviews']:
+            invitation.edit['content']['replyNumber'] = {
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'integer',
+                        'optional': True
+                    }
+                }
+            }
+            invitation.edit['content']['replyto'] = {
                 'value': {
                     'param': {
                         'regex': '.*', 'type': 'string',
@@ -2167,7 +2184,9 @@ class InvitationBuilder(object):
                     }
                 }
             }
-            invitation.edit['content']['replyto'] = {
+
+        if custom_stage_reply_type == 'revision':
+            invitation.edit['content']['replytoSignatures'] = {
                 'value': {
                     'param': {
                         'regex': '.*', 'type': 'string',

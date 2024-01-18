@@ -14,8 +14,8 @@ class TestICMLConference():
 
 
     @pytest.fixture(scope="class")
-    def profile_management(self, client):
-        profile_management = ProfileManagement(client, 'openreview.net')
+    def profile_management(self, openreview_client):
+        profile_management = ProfileManagement(openreview_client, 'openreview.net')
         profile_management.setup()
         return profile_management
 
@@ -120,7 +120,8 @@ class TestICMLConference():
                     'authors': { 'value': ['SAC ICML', 'Test2 Client'] },
                     'authorids': { 'value': ['~SAC_ICMLOne1', 'test2@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))
 
         sac_client.post_note_edit(
@@ -133,7 +134,8 @@ class TestICMLConference():
                     'abstract': { 'value': 'Paper abstract 2' },
                     'authors': { 'value': ['SAC ICML', 'Test2 Client'] },
                     'authorids': { 'value': ['~SAC_ICMLOne1', 'test2@mail.com'] }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))
 
         pc_client.post_note(openreview.Note(
@@ -3053,7 +3055,7 @@ ICML 2023 Conference Program Chairs'''
 
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Review_Rating')) == 3
 
-        invitation = openreview_client.get_invitation(f'{anon_group_id}/-/Review_Rating')
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/Official_Review1/-/Review_Rating')
         assert invitation.invitees == ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission1/Area_Chairs']
         assert 'review_quality' in invitation.edit['note']['content']
         assert invitation.edit['note']['forum'] == submissions[0].id
@@ -3084,7 +3086,7 @@ ICML 2023 Conference Program Chairs'''
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer2@icml.cc', password=helpers.strong_password)
         anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLTwo1')
         anon_group_id = anon_groups[0].id
-        invitation = openreview_client.get_invitation(f'{anon_group_id}/-/Review_Rating')
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/Official_Review2/-/Review_Rating')
 
         #post another review rating to same paper
         rating_edit = ac_client.post_note_edit(
@@ -3182,7 +3184,7 @@ ICML 2023 Conference Program Chairs'''
 
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Review_Rating')) == 4
 
-        invitation = openreview_client.get_invitation(f'{anon_group_id}/-/Review_Rating')
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission3/Official_Review1/-/Review_Rating')
         assert invitation.invitees == ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission3/Area_Chairs']
         assert 'review_quality' in invitation.edit['note']['content']
         assert invitation.edit['note']['forum'] == review_edit['note']['forum']
@@ -4475,7 +4477,7 @@ ICML 2023 Conference Program Chairs'''
         anon_groups = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLTwo1')
         anon_group_id = anon_groups[0].id
 
-        invitation_id = f'{anon_group_id}/-/Meta_Review_Agreement'
+        invitation_id = 'ICML.cc/2023/Conference/Submission1/Meta_Review1/-/Meta_Review_Agreement'
 
         agreement_edit = sac_client.post_note_edit(
             invitation=invitation_id,
@@ -4520,7 +4522,7 @@ ICML 2023 Conference Program Chairs'''
 
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review_Agreement')) == 2
 
-        invitation_id = f'{anon_group_id}/-/Meta_Review_Agreement'
+        invitation_id = 'ICML.cc/2023/Conference/Submission2/Meta_Review1/-/Meta_Review_Agreement'
         sac_client = openreview.api.OpenReviewClient(username = 'sac1@gmail.com', password=helpers.strong_password)
 
         agreement_edit = sac_client.post_note_edit(
