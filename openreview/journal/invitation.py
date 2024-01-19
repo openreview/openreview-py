@@ -3345,7 +3345,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             process=self.get_process_content('process/accepted_submission_process.py')
         )
 
-        if self.journal.should_release_authors():
+        if self.journal.are_authors_anonymous():
             invitation.edit['note']['content']['authors'] = {
                 'readers': { 'param': { 'const': { 'delete': True } } }
             }
@@ -3354,7 +3354,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             }
             invitation.edit['note']['content']['supplementary_material'] = {
                 'readers': { 'param': { 'const': { 'delete': True } } }
-            }            
+            }
+
+        if not self.journal.is_submission_public():
+            invitation.edit['note']['readers'] = ['everyone']
+            invitation.edit['note']['nonreaders'] = []     
 
         if self.journal.get_certifications():
             invitation.edit['note']['content']['certifications'] = {

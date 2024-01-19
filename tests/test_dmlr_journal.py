@@ -749,3 +749,67 @@ note: replies to this email will go to the AE, Andrew Ng.
         assert decision_note.readers == ['DMLR/Editors_In_Chief', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
         assert decision_note.nonreaders == []
 
+        ## Authors enter the camera ready revision
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        revision_note = test_client.post_note_edit(invitation=f'DMLR/Paper1/-/Camera_Ready_Revision',
+            signatures=["DMLR/Paper1/Authors"],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title VERSION 2' },
+                    'authors': { 'value': ['SomeFirstName User', 'Melisa Ane']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_Ane1']},
+                    'abstract': { 'value': 'Paper abstract' },
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'video': { 'value': 'https://youtube.com/dfenxkw'}
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
+
+        ## AE verifies the camera ready revision
+        verification_note = andrew_client.post_note_edit(invitation='DMLR/Paper1/-/Camera_Ready_Verification',
+                            signatures=[andrew_paper1_anon_group.id],
+                            note=Note(
+                                signatures=[andrew_paper1_anon_group.id],
+                                content= {
+                                    'verification': { 'value': 'I confirm that camera ready manuscript complies with the DMLR stylefile and, if appropriate, includes the minor revisions that were requested.' }
+                                 }
+                            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=verification_note['id'])
+
+        note = openreview_client.get_note(note_id_1)
+        assert note
+        assert note.forum == note_id_1
+        assert note.replyto is None
+        assert note.pdate
+        assert note.invitations == ['DMLR/-/Submission', 'DMLR/-/Under_Review', 'DMLR/-/Edit', 'DMLR/Paper1/-/Camera_Ready_Revision', 'DMLR/-/Accepted']
+        assert note.readers == ['everyone']
+        assert note.writers == ['DMLR']
+        assert note.signatures == ['DMLR/Paper1/Authors']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melisa_Ane1']
+        assert note.content['authors']['value'] == ['SomeFirstName User', 'Melisa Ane']
+        # Check with cArlos
+        assert note.content['authorids'].get('readers') is None
+        assert note.content['authors'].get('readers') is None
+        assert note.content['venue']['value'] == 'Accepted by DMLR'
+        assert note.content['venueid']['value'] == 'DMLR'
+        assert note.content['title']['value'] == 'Paper title VERSION 2'
+        assert note.content['abstract']['value'] == 'Paper abstract'
+        assert note.content['certifications']['value'] == ['Featured Certification', 'Reproducibility Certification']
+        assert note.content['_bibtex']['value'] == '''@article{
+user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+title={Paper title {VERSION} 2},
+author={SomeFirstName User and Melisa Ane},
+journal={Journal of Data-centric Machine Learning Research},
+issn={XXXX-XXXX},
+year={''' + str(datetime.datetime.today().year) + '''},
+url={https://openreview.net/forum?id=''' + note_id_1 + '''},
+note={Featured Certification, Reproducibility Certification}
+}'''               
+
+
