@@ -80,6 +80,9 @@ class Venue(object):
     def get_short_name(self):
         return self.short_name
     
+    def get_contact(self):
+        return self.contact
+    
     def get_edges_archive_date(self):
         archive_date = datetime.datetime.utcnow()
         if self.date:
@@ -795,7 +798,7 @@ Total Errors: {len(errors)}
                 message = messages[decision_note['content']['decision']['value']]
                 final_message = message.replace("{{submission_title}}", note.content['title']['value'])
                 final_message = final_message.replace("{{forum_url}}", f'https://openreview.net/forum?id={note.id}')
-                self.client.post_message(subject, recipients=[self.get_authors_id(note.number)], message=final_message, parentGroup=self.get_authors_id())
+                self.client.post_message(subject, recipients=[self.get_authors_id(note.number)], message=final_message, parentGroup=self.get_authors_id(), replyTo=self.get_contact())
 
         tools.concurrent_requests(send_notification, paper_notes)
 

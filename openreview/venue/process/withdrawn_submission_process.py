@@ -3,6 +3,7 @@ def process(client, edit, invitation):
     domain = client.get_group(edit.domain)
     venue_id = domain.id
     short_name = domain.content['subtitle']['value']
+    contact = domain.content['contact']['value']
     withdraw_reversion_id = domain.content['withdraw_reversion_id']['value']
     withdraw_expiration_id = domain.content['withdraw_expiration_id']['value']
     withdraw_committee = domain.content['withdraw_committee']['value']
@@ -60,4 +61,4 @@ def process(client, edit, invitation):
 For more information, click here https://openreview.net/forum?id={submission.id}&noteId={withdrawal_notes[0].id}
 '''
 
-    client.post_message(email_subject, final_committee, email_body, ignoreRecipients=ignoreRecipients)
+    client.post_message(email_subject, final_committee, email_body, ignoreRecipients=ignoreRecipients, replyTo=contact)

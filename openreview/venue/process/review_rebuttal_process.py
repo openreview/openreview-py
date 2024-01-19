@@ -3,6 +3,7 @@ def process(client, edit, invitation):
     domain = client.get_group(edit.domain)
     venue_id = domain.id
     short_name = domain.get_content_value('subtitle')
+    contact = domain.get_content_value('contact')
     submission_name = domain.get_content_value('submission_name')
     program_chairs_id = domain.get_content_value('program_chairs_id')
     email_pcs = domain.get_content_value('rebuttal_email_pcs')
@@ -31,7 +32,8 @@ Title: {submission.content['title']['value']}
     client.post_message(
         recipients=[edit.tauthor] if edit.tauthor != 'OpenReview.net' else [],
         subject=f'''[{short_name}] Your author rebuttal was {action} on Submission Number: {submission.number}, Submission Title: "{submission.content['title']['value']}"''',
-        message=author_message
+        message=author_message,
+        replyTo=contact
     )
 
     #send email to paper authors
@@ -39,7 +41,8 @@ Title: {submission.content['title']['value']}
         recipients=submission.content['authorids']['value'],
         ignoreRecipients=ignore_groups,
         subject=f'''[{short_name}] An author rebuttal was {action} on Submission Number: {submission.number}, Submission Title: "{submission.content['title']['value']}"''',
-        message=author_message
+        message=author_message,
+        replyTo=contact
     )
 
     if email_pcs:
@@ -63,6 +66,7 @@ Title: {submission.content['title']['value']}
         client.post_message(
             recipients=[paper_area_chairs_id],
             ignoreRecipients=ignore_groups,
+            replyTo=contact,
             subject=f'''[{short_name}] An author rebuttal was {action} on Submission Number: {submission.number}, Submission Title: "{submission.content['title']['value']}"''',
             message=f'''An author rebuttal was {action} on a submission for which you are serving as Area Chair.
 
@@ -92,14 +96,16 @@ Title: {submission.content['title']['value']}
             recipients=[paper_reviewers_id],
             ignoreRecipients=ignore_groups,
             subject=reviewer_subject,
-            message=reviewer_message
+            message=reviewer_message,
+            replyTo=contact
         )
     elif paper_reviewers_submitted_id in rebuttal.readers:
         client.post_message(
             recipients=[paper_reviewers_submitted_id],
             ignoreRecipients=ignore_groups,
             subject=reviewer_subject,
-            message=reviewer_message
+            message=reviewer_message,
+            replyTo=contact
         )
 
     

@@ -2,6 +2,7 @@ def process(client, edge, invitation):
 
     domain = client.get_group(invitation.domain)
     short_phrase = domain.content['subtitle']['value']
+    contact = domain.content['contact']['value']
     recruitment_invitation_id = invitation.content['recruitment_invitation_id']['value']
     committee_invited_id = invitation.content['committee_invited_id']['value']
     invite_label = invitation.content['invite_label']['value']
@@ -12,6 +13,8 @@ def process(client, edge, invitation):
     email_template = invitation.content['email_template']['value']
     is_reviewer = 'Reviewers' in assignment_invitation_id
     action_string = 'to review' if is_reviewer else 'to serve as area chair for'
+    area_chair_identity_readers = domain.content['area_chair_identity_readers']['value']
+    reviewer_identity = domain.content['reviewers_id']['value']
     print(edge.id)
 
     if edge.ddate is None and edge.label == invite_label:
@@ -93,7 +96,7 @@ Thanks,
             client.add_members_to_group(committee_invited_id, [user_profile.id])
 
         ## - Send email
-        response = client.post_message(subject, [user_profile.id], message, parentGroup=committee_invited_id)
+        response = client.post_message(subject, [user_profile.id], message, parentGroup=committee_invited_id, replyTo=contact)
 
         ## - Update edge to INVITED_LABEL
         edge.label=invited_label
