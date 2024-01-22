@@ -115,6 +115,17 @@ class TestACLCommitment():
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
                 'Additional Submission Options': {
+                    "paper_link": {
+                        'value': {
+                        'param': {
+                            'type': 'string',
+                            'regex': '(http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)',
+                            'mismatchError': 'must be a valid link to an OpenrReview submission: https://openreview.net/forum?id=...'
+                        }
+                    },
+                        'description': 'This is a different description.',
+                        'order': 7
+                    },
                     "supplementary_material": {
                         "value": {
                             "param": {
@@ -145,4 +156,5 @@ class TestACLCommitment():
         assert 'supplementary_material' in submission_invitation.edit['note']['content']
         assert 'TLDR' not in submission_invitation.edit['note']['content']
         assert 'paper_link' in submission_invitation.edit['note']['content']
+        assert submission_invitation.edit['note']['content']['paper_link']['description'] == 'This is a different description.'
         assert submission_invitation.preprocess

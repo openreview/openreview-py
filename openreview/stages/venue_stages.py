@@ -295,7 +295,7 @@ class SubmissionStage(object):
                     }
                 }
 
-            if self.commitments_venue:
+            if self.commitments_venue and 'paper_link' not in content:
                 content['paper_link'] = {
                     'value': {
                         'param': {
@@ -304,7 +304,7 @@ class SubmissionStage(object):
                             'mismatchError': 'must be a valid link to an OpenrReview submission: https://openreview.net/forum?id=...'
                         }
                     },
-                    'description': 'Please provide the link to your ARR submission.',
+                    'description': 'Please provide the link to your ARR submission. The link should have the following format: https://openreview.net/forum?id=<PAPER_ID>" where <PAPER_ID> is the paper ID of your ARR submission.',
                     'order': 8
                 }
 

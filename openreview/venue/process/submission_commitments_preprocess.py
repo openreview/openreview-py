@@ -9,9 +9,5 @@ def process(client, edit, invitation):
     except openreview.OpenReviewException as e:
         raise openreview.OpenReviewException('Provided paper link does not correspond to a submission in OpenReview')
 
-    valid_prefixes = ['aclweb.org/ACL/ARR/2021', 'aclweb.org/ACL/ARR/2022', 'aclweb.org/ACL/ARR/2023', 'aclweb.org/ACL/ARR/2024']
-
-    for prefix in valid_prefixes:
-        if prefix in arr_submission.invitation:
-            return
-    raise openreview.OpenReviewException('Provided paper link does not correspond to an ARR submission')
+    if 'aclweb.org/ACL/ARR' not in arr_submission.invitation:
+        raise openreview.OpenReviewException('Provided paper link does not correspond to an ARR submission')
