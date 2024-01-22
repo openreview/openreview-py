@@ -36,6 +36,8 @@ def process(client, edit, invitation):
             invitee_emails.append(email)
             invitee_names.append(name)
 
+    valid_invitees = []
+
     for index, email in enumerate(invitee_emails):
         profile_emails = []
         profile = None
@@ -93,17 +95,20 @@ def process(client, edit, invitation):
             name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
             if not name and not is_profile_id:
                 name = 'invitee'
-            try:
-                openreview.tools.recruit_reviewer(client, email, name,
-                    hash_seed,
-                    f'{venue_id}/{committee_name}/-/Recruitment',
-                    recruitment_template,
-                    recruitment_subject,
-                    invited_group.id,
-                    contact_email,
-                    verbose=False)
-                recruitment_status['invited'].append(email)
-            except Exception as e:
-                error_string = repr(e)
+            valid_invitees.append((email, name))
+
+    for email, name in valid_invitees:
+        try:
+            openreview.tools.recruit_reviewer(client, email, name,
+                hash_seed,
+                f'{venue_id}/{committee_name}/-/Recruitment',
+                recruitment_template,
+                recruitment_subject,
+                invited_group.id,
+                contact_email,
+                verbose=False)
+            recruitment_status['invited'].append(email)
+        except Exception as e:
+            error_string = repr(e)
 
     print("Invited users:", len(recruitment_status['invited']))
