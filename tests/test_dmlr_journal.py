@@ -781,6 +781,7 @@ note: replies to this email will go to the AE, Andrew Ng.
                             ))
 
         helpers.await_queue_edit(openreview_client, edit_id=verification_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='DMLR/-/Accepted')
 
         note = openreview_client.get_note(note_id_1)
         assert note
@@ -810,6 +811,12 @@ issn={XXXX-XXXX},
 year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Featured Certification, Reproducibility Certification}
-}'''               
+}'''
+
+        reviews = openreview_client.get_notes(forum=note_id_1, invitation='DMLR/Paper1/-/Review', sort= 'number:asc')
+
+        for review in reviews:
+            assert review.readers == ['everyone']
+            assert review.signatures == [review.signatures[0]]
 
 
