@@ -7,7 +7,7 @@ def process(client, invitation):
 
     ## send email to reviewers
     print('send email to reviewers')
-    assigned_action_editor = client.search_profiles(ids=[submission.content['assigned_action_editor']['value']])[0]
+    assigned_action_editor = client.search_profiles(ids=[submission.content['assigned_action_editor']['value'].split(',')[0]])[0]
     reviewer_group = client.get_group(journal.get_reviewers_id())
     message=reviewer_group.content['official_recommendation_starts_email_template_script']['value'].format(
         short_name=journal.short_name,
