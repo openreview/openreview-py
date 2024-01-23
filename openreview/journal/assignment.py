@@ -200,6 +200,14 @@ class Assignment(object):
                                 tail=assignment.tail,
                                 weight=1
                             ))
+                        previous_archived_assignments = self.client.get_edges(invitation=journal.get_ae_assignment_id(archived=True), head = previous_forum_id)
+                        for assignment in previous_archived_assignments:
+                            self.client.post_edge(openreview.api.Edge(
+                                invitation=journal.get_ae_resubmission_score_id(),
+                                head=submitted_submission.id,
+                                tail=assignment.tail,
+                                weight=1
+                            ))                        
 
         ## Compute the AE quota and use invitation: TMLR/Action_Editors/-/Local_Custom_Max_Papers:
         all_submissions = { s.id: s for s in self.client.get_all_notes(invitation= journal.get_author_submission_id(), details='directReplies')}

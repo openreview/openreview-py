@@ -5969,6 +5969,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
+            content = {
+                'multiple_deployments': { 'value': True }
+            },
             edit = {
                 'signatures': [venue_id],
                 'readers': [venue_id],
