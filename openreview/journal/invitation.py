@@ -1290,7 +1290,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             invitees=[venue_id, editor_in_chief_id],
             readers=[venue_id, action_editors_id, authors_id],
             writers=[venue_id],
-            signatures=[editor_in_chief_id], ## EIC have permission to check conflicts
+            signatures=[venue_id], ## EIC have permission to check conflicts
             minReplies=1,
             maxReplies=1,
             type='Edge',
@@ -1730,7 +1730,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             invitees=[venue_id],
             readers=[venue_id, action_editors_id] + additional_committee,
             writers=[venue_id],
-            signatures=[editor_in_chief_id], ## to compute conflicts
+            signatures=[venue_id], ## to compute conflicts
             minReplies=1,
             maxReplies=1,            
             type='Edge',
