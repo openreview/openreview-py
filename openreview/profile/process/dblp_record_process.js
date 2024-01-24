@@ -1,12 +1,11 @@
 async function process(client, edit, invitation) {
   client.throwErrors = true;
-
   const note = Tools.convertDblpXmlToNote(edit.content?.xml?.value);
 
   note.id = edit.note.id;
   const authorids = edit.note.content.authorids?.value;
   if (authorids) {
-    note.content.authorids.value = note.content.authorids.value.map((authorid, index) => authorids[index] || authorid)
+    note.content.authorids.value = note.content.authorids.value.map((authorid, index) => authorids[index] || authorid);
   }
 
   const html = note.content.html?.value;
@@ -23,6 +22,7 @@ async function process(client, edit, invitation) {
     signatures: ['DBLP.org/Uploader'],
     readers: ['everyone'],
     writers: ['DBLP.org'],
-    note: note,
+    note: note
   });
 }
+
