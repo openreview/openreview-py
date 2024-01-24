@@ -1,6 +1,6 @@
 async function process(client, edit, invitation) {
   client.throwErrors = true;
-
+  
   const note = Tools.convertDblpXmlToNote(edit.content?.xml?.value);
 
   note.id = edit.note.id;
@@ -25,4 +25,4 @@ async function process(client, edit, invitation) {
     writers: ['DBLP.org'],
     note: note
   });
-} 
+}
