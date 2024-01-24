@@ -1,21 +1,30 @@
 async function process(client, edit, invitation) {
-  client.throwErrors = true;
-  
-  const note = Tools.convertDblpXmlToNote(edit.content?.xml?.value);
+  client.throwErrors = true
 
-  note.id = edit.note.id;
-  const authorids = edit.note.content.authorids?.value;
+  const note = Tools.convertDblpXmlToNote(edit.content?.xml?.value)
+
+  note.id = edit.note.id
+  const authorids = edit.note.content.authorids?.value
   if (authorids) {
-    note.content.authorids.value = note.content.authorids.value.map((authorid, index) => authorids[index] || authorid);
+    note.content.authorids.value = note.content.authorids.value.map(
+      (authorid, index) => authorids[index] || authorid
+    )
   }
-  
-  console.log('note: ' + JSON.stringify(note));
-  
+
+  const html = note.content.html?.value
+
+  if (html) {
+    const abstract = await Tools.extractAbstract(html)
+    if (abstract) {
+      note.content.abstract = { value: abstract }
+    }
+  }
+
   await client.postNoteEdit({
-    invitation: 'DBLP.org/-/Edit',
-    signatures: ['DBLP.org/Uploader'],
-    readers: ['everyone'],
-    writers: ['DBLP.org'],
-    note: note
-  });
+    invitation: "DBLP.org/-/Edit",
+    signatures: ["DBLP.org/Uploader"],
+    readers: ["everyone"],
+    writers: ["DBLP.org"],
+    note: note,
+  })
 }
