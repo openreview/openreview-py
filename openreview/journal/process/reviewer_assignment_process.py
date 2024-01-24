@@ -8,7 +8,7 @@ def process_update(client, edge, invitation, existing_edge):
 
     venue_id = journal.venue_id
     note = client.get_note(edge.head)
-    assigned_action_editor = client.search_profiles(ids=[note.content['assigned_action_editor']['value']])[0]
+    assigned_action_editor = client.search_profiles(ids=[note.content['assigned_action_editor']['value'].split(',')[0]])[0]
     group = client.get_group(journal.get_reviewers_id(number=note.number))
     tail_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), tail=edge.tail)
     head_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), head=edge.head)

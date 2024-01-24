@@ -46,6 +46,7 @@ class TestTACLJournal():
                     'settings': {
                         'value': {
                             'submission_public': False,
+                            'release_submission_after_acceptance': False,
                             'skip_ac_recommendation': True,
                             'skip_reviewer_responsibility_acknowledgement': True,
                             'assignment_delay': 0,

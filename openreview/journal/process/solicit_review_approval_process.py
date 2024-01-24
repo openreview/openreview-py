@@ -29,7 +29,7 @@ def process(client, edit, invitation):
         print('Send email to solicit reviewer')
         review_period_length = journal.get_review_period_length(submission)
         duedate = journal.get_due_date(weeks = review_period_length)
-        assigned_action_editor = client.search_profiles(ids=[submission.content['assigned_action_editor']['value']])[0]
+        assigned_action_editor = client.search_profiles(ids=[submission.content['assigned_action_editor']['value'].split(',')[0]])[0]
 
         client.post_message(
             recipients=solicit_request.signatures,
