@@ -3,6 +3,7 @@ def process(client, edit, invitation):
     domain = client.get_group(edit.domain)
     venue_id = domain.id
     short_name = domain.get_content_value('subtitle')
+    contact = domain.get_content_value('contact')
     authors_name = domain.get_content_value('authors_name')
     submission_name = domain.get_content_value('submission_name')
     reviewers_name = domain.get_content_value('reviewers_name')
@@ -51,7 +52,8 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
             recipients=[paper_senior_area_chairs_id],
             ignoreRecipients = ignore_groups,
             subject=f'''[{short_name}] {pretty_signature} commented on a paper in your area. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''{pretty_signature} commented on a paper for which you are serving as Senior Area Chair.{content}'''
+            message=f'''{pretty_signature} commented on a paper for which you are serving as Senior Area Chair.{content}''',
+            replyTo=contact
         )
 
     area_chairs_name = domain.get_content_value('area_chairs_name')
@@ -61,7 +63,8 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
             recipients=[paper_area_chairs_id],
             ignoreRecipients=ignore_groups,
             subject=f'''[{short_name}] {pretty_signature} commented on a paper in your area. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''{pretty_signature} commented on a paper for which you are serving as Area Chair.{content}'''
+            message=f'''{pretty_signature} commented on a paper for which you are serving as Area Chair.{content}''',
+            replyTo=contact
         )
 
     paper_reviewers_id = f'{paper_group_id}/{reviewers_name}'
@@ -71,14 +74,16 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
             recipients=[paper_reviewers_id],
             ignoreRecipients=ignore_groups,
             subject=f'''[{short_name}] {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''{pretty_signature} commented on a paper for which you are serving as Reviewer.{content}'''
+            message=f'''{pretty_signature} commented on a paper for which you are serving as Reviewer.{content}''',
+            replyTo=contact
         )
     elif paper_reviewers_submitted_id in comment.readers:
         client.post_message(
             recipients=[paper_reviewers_submitted_id],
             ignoreRecipients=ignore_groups,
             subject=f'''[{short_name}] {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''{pretty_signature} commented on a paper for which you are serving as Reviewer.{content}'''
+            message=f'''{pretty_signature} commented on a paper for which you are serving as Reviewer.{content}''',
+            replyTo=contact
         )
     else:
         anon_reviewers = [reader for reader in comment.readers if reader.find(reviewers_anon_name) >=0]
@@ -87,14 +92,16 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
                 recipients=anon_reviewers,
                 ignoreRecipients=ignore_groups,
                 subject=f'''[{short_name}] {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-                message=f'''{pretty_signature} commented on a paper for which you are serving as Reviewer.{content}'''
+                message=f'''{pretty_signature} commented on a paper for which you are serving as Reviewer.{content}''',
+                replyTo=contact
             )
 
     #send email to author of comment
     client.post_message(
         recipients=[edit.tauthor] if edit.tauthor != 'OpenReview.net' else [],
         subject=f'''[{short_name}] Your comment was received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-        message=f'''Your comment was received on a submission to {short_name}.{content}'''
+        message=f'''Your comment was received on a submission to {short_name}.{content}''',
+        replyTo=contact
     )
 
     #send email to paper authors
@@ -104,5 +111,6 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
             recipients=submission.content['authorids']['value'],
             ignoreRecipients=ignore_groups,
             subject=f'''[{short_name}] {pretty_signature} commented on your submission. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''{pretty_signature} commented on your submission.{content}'''
+            message=f'''{pretty_signature} commented on your submission.{content}''',
+            replyTo=contact
         )

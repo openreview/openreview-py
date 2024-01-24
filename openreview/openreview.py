@@ -20,6 +20,17 @@ import traceback
 class OpenReviewException(Exception):
     pass
 
+class LogRetry(Retry):
+     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)   
+
+    def increment(self, method=None, url=None, response=None, error=None, _pool=None, _stacktrace=None):
+        # Log retry information before calling the parent class method
+        print(f"Retrying request: {method} {url}, response: {response}, error: {error}")
+
+        # Call the parent class method to perform the actual retry increment
+        return super().increment(method=method, url=url, response=response, error=error, _pool=_pool, _stacktrace=_stacktrace)
 class Client(object):
     """
     :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
@@ -78,7 +89,7 @@ class Client(object):
             'Accept': 'application/json',
         }
 
-        retry_strategy = Retry(total=8, backoff_factor=0.1, status_forcelist=[ 500, 502, 503, 504 ], respect_retry_after_header=False)
+        retry_strategy = LogRetry(total=3, backoff_factor=0.1, status_forcelist=[ 500, 502, 503, 504 ], respect_retry_after_header=False)
         self.session = requests.Session()
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount('https://', adapter)
