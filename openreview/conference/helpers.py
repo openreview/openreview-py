@@ -434,6 +434,11 @@ def get_submission_stage(request_forum, venue):
     else:
         withdraw_submission_exp_date = None
 
+    withdrawn_submission_public = 'Yes' in request_forum.content.get('withdrawn_submissions_visibility', '')
+    desk_rejected_submission_public = 'Yes' in request_forum.content.get('desk_rejected_submissions_visibility', '')
+    withdrawn_submission_reveal_authors = 'Yes' in request_forum.content.get('withdrawn_submissions_author_anonymity', '')
+    desk_rejected_submission_reveal_authors = 'Yes' in request_forum.content.get('desk_rejected_submissions_author_anonymity', '')
+
     return openreview.stages.SubmissionStage(name = name,
         double_blind=double_blind,
         start_date=submission_start_date,
@@ -445,6 +450,10 @@ def get_submission_stage(request_forum, venue):
         subject_areas=subject_areas,
         create_groups=create_groups,
         withdraw_submission_exp_date=withdraw_submission_exp_date,
+        withdrawn_submission_public=withdrawn_submission_public,
+        withdrawn_submission_reveal_authors=withdrawn_submission_reveal_authors,
+        desk_rejected_submission_public=desk_rejected_submission_public,
+        desk_rejected_submission_reveal_authors=desk_rejected_submission_reveal_authors,
         author_names_revealed=author_names_revealed,
         papers_released=papers_released,
         readers=readers,

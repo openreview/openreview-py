@@ -1464,6 +1464,12 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
 
         content = {
+            'authors': {
+                'readers' : [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
+            },
+            'authorids': {
+                'readers' : [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
+            },
             'venue': {
                 'value': tools.pretty_id(self.venue.get_withdrawn_submission_venue_id())
             },
@@ -1522,6 +1528,9 @@ class InvitationBuilder(object):
 
         if SubmissionStage.Readers.EVERYONE not in submission_stage.readers and submission_stage.withdrawn_submission_public:
             withdrawn_invitation.edit['note']['readers'] = ['everyone']
+
+        if (SubmissionStage.Readers.EVERYONE in submission_stage.readers or SubmissionStage.Readers.EVERYONE_BUT_REJECTED in submission_stage.readers) and not submission_stage.withdrawn_submission_public:
+            withdrawn_invitation.edit['note']['readers'] = submission_stage.get_withdrawal_readers(self.venue, '${{2/id}/number}')
 
         self.save_invitation(withdrawn_invitation, replacement=True)
 
@@ -1747,6 +1756,12 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
 
         content = {
+            'authors': {
+                'readers' : [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
+            },
+            'authorids': {
+                'readers' : [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
+            },
             'venue': {
                 'value': tools.pretty_id(self.venue.get_desk_rejected_submission_venue_id())
             },
@@ -1805,6 +1820,8 @@ class InvitationBuilder(object):
 
         if SubmissionStage.Readers.EVERYONE not in submission_stage.readers and submission_stage.desk_rejected_submission_public:
             desk_rejected_invitation.edit['note']['readers'] = ['everyone']
+        if SubmissionStage.Readers.EVERYONE in submission_stage.readers and not submission_stage.desk_rejected_submission_public:
+            desk_rejected_invitation.edit['note']['readers'] = submission_stage.get_desk_rejection_readers(self.venue, '${{2/id}/number}')
 
         self.save_invitation(desk_rejected_invitation, replacement=True)
 
