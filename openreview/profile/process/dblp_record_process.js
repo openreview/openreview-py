@@ -12,9 +12,12 @@ async function process(client, edit, invitation) {
   const html = note.content.html?.value;
 
   if (html) {
-    const abstract = await Tools.extractAbstract(html);
+    const { abstract,pdf } = await Tools.extractAbstract(html);
     if (abstract) {
       note.content.abstract = { value: abstract };
+    }
+    if (pdf) {
+      note.content.pdf = { value: pdf };
     }
   }
 
