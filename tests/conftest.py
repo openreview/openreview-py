@@ -45,7 +45,7 @@ class Helpers:
             'start': 2017,
             'end': None,
             'institution': {
-                'domain': institution if institution else 'institution.org',
+                'domain': institution if institution else email.split('@')[1],
             }
         }]
         res = client.activate_user(email, profile_content)
