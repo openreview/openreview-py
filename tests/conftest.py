@@ -40,15 +40,14 @@ class Helpers:
             'emails': [email] + alternates,
             'preferredEmail': 'info@openreview.net' if email == 'openreview.net' else email
         }
-        if institution:
-            profile_content['history'] = [{
-                'position': 'PhD Student',
-                'start': 2017,
-                'end': None,
-                'institution': {
-                    'domain': institution
-                }
-            }]
+        profile_content['history'] = [{
+            'position': 'PhD Student',
+            'start': 2017,
+            'end': None,
+            'institution': {
+                'domain': institution if institution else 'institution.org',
+            }
+        }]
         res = client.activate_user(email, profile_content)
         assert res, "Res i none"
         return client
