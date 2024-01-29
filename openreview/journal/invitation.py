@@ -1709,7 +1709,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             },
             date_processes=[
                 {
-                    'cron': '* 0 * * *',
+                    'cron': '0 0 * * *',
                     'script': self.get_process_content('process/remind_ae_unavailable_process.py')
                 }
             ]
@@ -2165,7 +2165,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             },
             date_processes=[
                 {
-                    'cron': '* 0 * * *',
+                    'cron': '0 0 * * *',
                     'script': self.get_process_content('process/remind_reviewer_unavailable_process.py')
                 }
             ]
