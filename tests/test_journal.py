@@ -4996,16 +4996,20 @@ note={Expert Certification}
 
         helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Under_Review')
 
-        ## Invite external reviewer
+        ## Invite external reviewer with profile
         paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
             signatures=[joelle_paper13_anon_group.id],
             head=note_id_13,
-            tail='~Melisa_Bok1',
+            tail='melisa@mailten.com',
             weight=1,
             label='Invitation Sent'
         ))
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_13, tail='~Melisa_Bok1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Invitation Sent'         
 
         messages = openreview_client.get_messages(to = 'melisa@mailten.com', subject = '[TMLR] Invitation to review paper titled "Paper title 14"')
         assert len(messages) == 1

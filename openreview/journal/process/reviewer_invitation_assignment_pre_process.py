@@ -3,7 +3,7 @@ def process(client, edge, invitation):
     journal = openreview.journal.Journal()
     
     reviewers_id = journal.get_reviewers_id()
-    assignment_invitation_id = journal.get_reviewer_invite_assignment_id()
+    assignment_invitation_id = journal.get_reviewer_assignment_id()
     invite_label = 'Invitation Sent'
     conflict_policy = 'NeurIPS'
     conflict_n_years = 3

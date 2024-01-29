@@ -48,7 +48,7 @@ def process(client, edit, invitation):
         cdate = journal.get_due_date(weeks = journal.get_discussion_period_length())
         duedate = cdate + datetime.timedelta(weeks = journal.get_recommendation_period_length())
         journal.invitation_builder.set_note_official_recommendation_invitation(submission, cdate, duedate)
-        assigned_action_editor = client.search_profiles(ids=[submission.content['assigned_action_editor']['value']])[0]
+        assigned_action_editor = client.search_profiles(ids=[submission.content['assigned_action_editor']['value'].split(',')[0]])[0]
         review_visibility = 'public' if journal.is_submission_public() else 'visible to all the reviewers'
 
         ## Send email notifications to authors

@@ -3,6 +3,7 @@ def process(client, edit, invitation):
     domain = client.get_group(edit.domain)
     venue_id = domain.id
     short_name = domain.get_content_value('subtitle')
+    contact = domain.get_content_value('contact')
     submission_name = domain.get_content_value('submission_name')
     invitation_name = invitation.id.split('/-/')[-1].replace('_', ' ').lower()
     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -53,6 +54,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
     #email tauthor
     client.post_message(
         recipients=note.signatures,
+        replyTo=contact,
         subject=f'''[{short_name}] Your {invitation_name} has been received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
         message=f'''We have received your {invitation_name} on a submission to {short_name}.
 
@@ -68,6 +70,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
         client.post_message(
             recipients=[paper_senior_area_chairs_id],
             ignoreRecipients = ignore_groups,
+            replyTo=contact,
             subject=f'''[{short_name}] A {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''We have received a {invitation_name} on a submission to {short_name} for which you are serving as Senior Area Chair.
 
@@ -82,6 +85,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
         client.post_message(
             recipients=[paper_area_chairs_id],
             ignoreRecipients = ignore_groups,
+            replyTo=contact,
             subject=f'''[{short_name}] A {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''We have received a {invitation_name} on a submission to {short_name} for which you are an official area chair.
 
@@ -98,6 +102,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
         client.post_message(
             recipients=[paper_reviewers_id],
             ignoreRecipients=ignore_groups,
+            replyTo=contact,
             subject=f'''[{short_name}] A {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''We have received a {invitation_name} on a submission to {short_name} for which you are serving as reviewer.
 
@@ -108,6 +113,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
         client.post_message(
             recipients=[paper_reviewers_submitted_id],
             ignoreRecipients=ignore_groups,
+            replyTo=contact,
             subject=f'''[{short_name}] A {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''We have received a {invitation_name} on a submission to {short_name} for which you are serving as reviewer.
 
@@ -122,6 +128,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
         client.post_message(
             recipients=submission.content['authorids']['value'],
             ignoreRecipients=ignore_groups,
+            replyTo=contact,
             subject=f'''[{short_name}] A {invitation_name} has been received on your Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''We have recieved a {invitation_name} on your submission to {short_name}
 

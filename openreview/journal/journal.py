@@ -431,6 +431,9 @@ class Journal(object):
     def are_authors_anonymous(self):
         return self.settings.get('author_anonymity', True)
     
+    def release_submission_after_acceptance(self):
+        return self.settings.get('release_submission_after_acceptance', True)
+    
     def should_eic_submission_notification(self):
         return self.settings.get('eic_submission_notification', False)
     
@@ -520,9 +523,9 @@ class Journal(object):
         return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]        
 
     def get_release_authors_readers(self, number):
-        if self.is_submission_public():
+        if self.is_submission_public() or self.release_submission_after_acceptance():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_authors_id(number)]        
+        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_authors_id(number)]          
 
     def get_official_comment_readers(self, number):
         readers = []
