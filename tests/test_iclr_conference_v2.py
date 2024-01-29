@@ -273,15 +273,10 @@ class TestICLRConference():
         
         # Assert that activation date of paper matching setup inv == abstract deadline
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
-        abstract_deadline = request_form.content.get('abstract_registration_deadline', '').strip()
-        if abstract_deadline:
-            try:
-                abstract_deadline = datetime.datetime.strptime(abstract_deadline, '%Y/%m/%d %H:%M')
-            except ValueError:
-                abstract_deadline = datetime.datetime.strptime(abstract_deadline, '%Y/%m/%d')
-        abstract_deadline_ms = abstract_deadline.replace(tzinfo=datetime.timezone.utc).timestamp() * 1000
         matching_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup')
-        assert matching_invitation.cdate == abstract_deadline_ms
+        abstract_date_midnight = datetime.datetime.combine(abstract_date, datetime.datetime.min.time())
+        abstract_date_ms = abstract_date_midnight.replace(tzinfo=datetime.timezone.utc).timestamp() * 1000
+        assert matching_invitation.cdate == abstract_date_ms
 
         ## close full paper submission
         now = datetime.datetime.utcnow()
