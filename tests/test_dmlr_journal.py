@@ -714,6 +714,8 @@ note: replies to this email will go to the AE, Andrew Ng.
             )
             helpers.await_queue_edit(openreview_client, edit_id=rating_note['id'])
 
+            assert rating_note['note']['readers'] == ['DMLR/Editors_In_Chief', 'DMLR/Action_Editors']
+
         decision_note = andrew_client.post_note_edit(invitation='DMLR/Paper1/-/Decision',
             signatures=[andrew_paper1_anon_group.id],
             note=Note(

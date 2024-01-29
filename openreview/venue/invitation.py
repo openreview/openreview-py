@@ -958,8 +958,7 @@ class InvitationBuilder(object):
                     'head': head,
                     'tail': {
                         'param': {
-                            'type': 'profile',
-                            'inGroup': match_group_id
+                            'type': 'profile'
                         }
                     },
                     'label': {
@@ -2457,8 +2456,7 @@ class InvitationBuilder(object):
                     },
                     'tail': {
                         'param': {
-                            'type': 'profile',
-                            'inGroup': committee_id
+                            'type': 'profile'
                         }
                     },
                     'label': {
