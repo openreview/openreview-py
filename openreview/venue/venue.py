@@ -465,12 +465,12 @@ class Venue(object):
                 allow_author_reorder=stage.author_reorder_after_first_deadline
             
             )
-            self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)                        
+            self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)
 
     def create_post_submission_stage(self):
 
         self.invitation_builder.set_post_submission_invitation()
-    
+
     def create_submission_revision_stage(self):
         return self.invitation_builder.set_submission_revision_invitation()
 

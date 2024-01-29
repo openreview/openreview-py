@@ -261,7 +261,7 @@ class InvitationBuilder(object):
         if note_content:
             submission_invitation.edit['note']['content'] = note_content
 
-        submission_invitation = self.save_invitation(submission_invitation, replacement=False)        
+        submission_invitation = self.save_invitation(submission_invitation, replacement=False)
         
     def set_pc_submission_revision_invitation(self):
         venue_id = self.venue_id

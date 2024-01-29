@@ -75,8 +75,8 @@ class TestICLRConference():
                 'submission_readers': 'Everyone (submissions are public)',
                 'withdrawn_submissions_visibility': 'Yes, withdrawn submissions should be made public.',
                 'withdrawn_submissions_author_anonymity': 'Yes, author identities of withdrawn submissions should be revealed.',
-                'desk_rejected_submissions_visibility':'No, desk rejected submissions should not be made public.',
-                'desk_rejected_submissions_author_anonymity':'No, author identities of desk rejected submissions should not be revealed.',
+                'desk_rejected_submissions_visibility':'Yes, desk rejected submissions should be made public.',
+                'desk_rejected_submissions_author_anonymity':'Yes, author identities of desk rejected submissions should be revealed.',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
@@ -420,17 +420,14 @@ class TestICLRConference():
                                     'ICLR.cc/2024/Conference/-/Post_Submission', 
                                     'ICLR.cc/2024/Conference/-/Withdrawn_Submission', 
                                     'ICLR.cc/2024/Conference/-/Desk_Rejected_Submission']
-        assert note.readers == ["ICLR.cc/2024/Conference/Program_Chairs",
-                                "ICLR.cc/2024/Conference/Submission11/Senior_Area_Chairs",
-                                "ICLR.cc/2024/Conference/Submission11/Area_Chairs",
-                                "ICLR.cc/2024/Conference/Submission11/Reviewers",
-                                "ICLR.cc/2024/Conference/Submission11/Authors"]
+
+        assert note.readers == ["everyone"]
         assert note.writers == ['ICLR.cc/2024/Conference', 'ICLR.cc/2024/Conference/Submission11/Authors']
         assert note.signatures == ['ICLR.cc/2024/Conference/Submission11/Authors']
         assert note.content['venue']['value'] == 'ICLR 2024 Conference Desk Rejected Submission'
         assert note.content['venueid']['value'] == 'ICLR.cc/2024/Conference/Desk_Rejected_Submission'
-        assert 'readers' in note.content['authors']
-        assert 'readers' in note.content['authorids']
+        assert 'readers' not in note.content['authors']
+        assert 'readers' not in note.content['authorids']
 
         helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2024/Conference/-/Desk_Rejected_Submission')
 
