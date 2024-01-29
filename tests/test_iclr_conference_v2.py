@@ -270,6 +270,18 @@ class TestICLRConference():
         assert submissions[0].readers == ['everyone']
         assert '_bibtex' in submissions[0].content
         assert 'author={Anonymous}' in submissions[0].content['_bibtex']['value']
+        
+        # Assert that activation date of paper matching setup inv == abstract deadline
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        abstract_deadline = request_form.content.get('abstract_registration_deadline', '').strip()
+        if abstract_deadline:
+            try:
+                abstract_deadline = datetime.datetime.strptime(abstract_deadline, '%Y/%m/%d %H:%M')
+            except ValueError:
+                abstract_deadline = datetime.datetime.strptime(abstract_deadline, '%Y/%m/%d')
+        abstract_deadline_ms = abstract_deadline.replace(tzinfo=datetime.timezone.utc).timestamp() * 1000
+        matching_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup')
+        assert matching_invitation.cdate == abstract_deadline_ms
 
         ## close full paper submission
         now = datetime.datetime.utcnow()

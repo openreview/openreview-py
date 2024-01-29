@@ -19,6 +19,13 @@ def process(client, note, invitation):
 
         if invitation_type == 'Revision':
             conference.create_submission_stage()
+            abstract_deadline = forum_note.content.get('abstract_registration_deadline', '').strip()
+            if abstract_deadline:
+                try:
+                    abstract_deadline = datetime.datetime.strptime(abstract_deadline, '%Y/%m/%d %H:%M')
+                except ValueError:
+                    abstract_deadline = datetime.datetime.strptime(abstract_deadline, '%Y/%m/%d')
+
             submission_deadline = forum_note.content.get('Submission Deadline', '').strip()
             if submission_deadline:
                 try:
@@ -27,7 +34,8 @@ def process(client, note, invitation):
                     submission_deadline = datetime.datetime.strptime(submission_deadline, '%Y/%m/%d')
                 matching_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Paper_Matching_Setup')
                 if matching_invitation:
-                    matching_invitation.cdate = openreview.tools.datetime_millis(submission_deadline)
+                    matching_invitation_activation = abstract_deadline if abstract_deadline else submission_deadline
+                    matching_invitation.cdate = openreview.tools.datetime_millis(matching_invitation_activation)
                     client.post_invitation(matching_invitation)
                 revision_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Revision'))
                 if revision_invitation and conference.submission_stage.second_due_date and not forum_note.content.get('submission_revision_deadline'):
