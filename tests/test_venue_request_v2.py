@@ -1894,6 +1894,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Official_Review1/-/Review_Revision')
         assert invitation and anon_group_id in invitation.invitees
+        assert 'readers' in invitation.edit['note']['content']['final_review_rating']
 
         review = reviewer_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review', sort='number:asc')[0]
         assert review.readers == ['V2.cc/2030/Conference/Program_Chairs',
@@ -1926,6 +1927,52 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert 'final_review_rating' in review.content
         assert 'readers' in review.content['review_rating']
         assert 'readers' in review.content['final_review_rating']
+        assert 'V2.cc/2030/Conference/Submission1/Area_Chairs' in review.content['final_review_rating']['readers']
+
+        ## Test release of final_review_rating
+        venue.custom_stage = openreview.stages.CustomStage(name='Review_Revision',
+            reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            reply_type=openreview.stages.CustomStage.ReplyType.REVISION,
+            due_date=due_date,
+            exp_date=due_date + datetime.timedelta(days=1),
+            invitees=[openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED],
+            content={
+                'final_review_rating': {
+                        'order': 1,
+                        'value': {
+                            'param': {
+                                'type': 'integer',
+                                'enum': [
+                                    { 'value': 10, 'description': '10: Top 5% of accepted papers, seminal paper' },
+                                    { 'value': 9, 'description': '9: Top 15% of accepted papers, strong accept' },
+                                    { 'value': 8, 'description': '8: Top 50% of accepted papers, clear accept' },
+                                    { 'value': 7, 'description': '7: Good paper, accept' },
+                                    { 'value': 6, 'description': '6: Marginally above acceptance threshold' },
+                                    { 'value': 5, 'description': '5: Marginally below acceptance threshold' },
+                                    { 'value': 4, 'description': '4: Ok but not good enough - rejection' },
+                                    { 'value': 3, 'description': '3: Clear rejection' },
+                                    { 'value': 2, 'description': '2: Strong rejection' },
+                                    { 'value': 1, 'description': '1: Trivial or wrong' }
+                                ],
+                                'input': 'radio'
+                            }
+                        },
+                        'readers': {
+                            "delete": True
+                        }
+                    }
+            },
+            allow_de_anonymization=False)
+
+        venue.create_custom_stage()
+        
+        invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Official_Review1/-/Review_Revision')
+        assert 'readers' not in invitation.edit['note']['content']['final_review_rating']
+        
+        review = reviewer_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review', sort='number:asc')[0]
+        assert 'final_review_rating' in review.content
+        assert 'readers' not in review.content['final_review_rating']
 
     def test_custom_stage(self, client, test_client, helpers, venue, openreview_client):
 
