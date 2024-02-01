@@ -61,4 +61,4 @@ Thank you,
 
 {signature}'''
 
-        client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=contact)
+        client.post_message(subject, recipients, message, replyTo=contact, invitation_id=f'{reviewers_id}/-/Message')

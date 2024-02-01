@@ -47,7 +47,7 @@ def process(client, edit, invitation):
 For more information, click here https://openreview.net/forum?id={submission.id}
 '''
 
-    client.post_message(email_subject, final_committee, email_body, replyTo=contact)
+    client.post_message(email_subject, final_committee, email_body, replyTo=contact, invitation_id=f'{venue_id}/-/Message')
 
     print(f'Add {paper_group_id}/{authors_name} to {venue_id}/{authors_name}')
     client.add_members_to_group(f'{venue_id}/{authors_name}', f'{paper_group_id}/{authors_name}')

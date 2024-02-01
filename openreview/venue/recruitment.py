@@ -29,7 +29,7 @@ class Recruitment(object):
         venue_id = venue.venue_id
         committee_id = self.venue.get_committee_id(committee_name)
         committee_invited_id = self.venue.get_committee_id_invited(committee_name)
-        committee_declined_id = self.venue.get_committee_id_declined(committee_name)        
+        committee_declined_id = self.venue.get_committee_id_declined(committee_name)
 
         self.venue.group_builder.create_recruitment_committee_groups(committee_name)
 
@@ -49,6 +49,7 @@ class Recruitment(object):
             'allow_accept_with_reduced_load': allow_accept_with_reduced_load
         }
 
+        venue.invitation_builder.set_group_message_invitation(committee_invited_id)       
         invitation = venue.invitation_builder.set_recruitment_invitation(committee_name, options)
         
         role = committee_name.replace('_', ' ')
@@ -79,7 +80,8 @@ class Recruitment(object):
                             'Reminder: ' + title,
                             committee_invited_id,
                             contact_info,
-                            verbose = False)
+                            verbose = False,
+                            invitation_id=f'{committee_invited_id}/-/Message')
                         recruitment_status['reminded'].append(invited_user)
                     except Exception as e:
                         self.client.remove_members_from_group(committee_invited_id, invited_user)
@@ -151,7 +153,8 @@ class Recruitment(object):
                         title,
                         committee_invited_id,
                         contact_info,
-                        verbose=False)
+                        verbose=False,
+                        invitation_id=f'{committee_invited_id}/-/Message')
                     recruitment_status['invited'].append(email)
                 except Exception as e:
                     error_string = repr(e)

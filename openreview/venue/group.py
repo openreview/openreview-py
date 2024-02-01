@@ -364,6 +364,8 @@ class GroupBuilder(object):
                     reviewer_group.web = content
                     self.post_group(reviewer_group)
 
+                self.venue.invitation_builder.set_group_message_invitation(reviewers_id)
+
     def create_area_chairs_group(self):
 
         venue_id = self.venue.id
@@ -383,7 +385,9 @@ class GroupBuilder(object):
                 with open(os.path.join(os.path.dirname(__file__), 'webfield/areachairsWebfield.js')) as f:
                     content = f.read()
                     area_chairs_group.web = content
-                    self.post_group(area_chairs_group) 
+                    self.post_group(area_chairs_group)
+
+                self.venue.invitation_builder.set_group_message_invitation(area_chairs_id)
 
     def create_senior_area_chairs_group(self):
 
@@ -404,6 +408,8 @@ class GroupBuilder(object):
                     content = f.read()
                     senior_area_chairs_group.web = content
                     self.post_group(senior_area_chairs_group)
+
+                self.venue.invitation_builder.set_group_message_invitation(senior_area_chairs_id)
 
     def create_ethics_reviewers_group(self):
         venue_id = self.venue.id
@@ -542,6 +548,7 @@ class GroupBuilder(object):
                             signatories=[venue_id, parent_group_invited_id],
                             members=[]
                             ))
+        venue.invitation_builder.set_group_message_invitation(parent_group_invited.id)
 
         # create submission paper groups
         def create_paper_group(submission):

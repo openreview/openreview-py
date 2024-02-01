@@ -22,13 +22,6 @@ Title: {submission.content['title']['value']}
 {abstract_string}
 To view your submission, click here: https://openreview.net/forum?id={submission.forum}'''
 
-    client.post_message(
-        subject=subject,
-        recipients=submission.content['authorids']['value'],
-        message=message,
-        replyTo=contact
-    )
-
     if 'authorids' in submission.content:
         author_group = openreview.tools.get_group(client, f'{venue_id}/{submission_name}{submission.number}/{authors_name}')
         submission_authors = submission.content['authorids']['value']
@@ -43,3 +36,11 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     members = submission_authors
                 )
             )
+
+    client.post_message(
+        subject=subject,
+        recipients=[f'{venue_id}/{submission_name}{submission.number}/{authors_name}'],
+        message=message,
+        replyTo=contact,
+        invitation_id=f'{venue_id}/-/Message'
+    )

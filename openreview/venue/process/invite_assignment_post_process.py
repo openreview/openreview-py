@@ -94,7 +94,7 @@ Thanks,
             client.add_members_to_group(committee_invited_id, [user_profile.id])
 
         ## - Send email
-        response = client.post_message(subject, [user_profile.id], message, parentGroup=committee_invited_id, replyTo=contact)
+        response = client.post_message(subject, [user_profile.id], message, parentGroup=committee_invited_id, replyTo=contact, invitation_id=f'{committee_invited_id}/-/Message')
 
         ## - Update edge to INVITED_LABEL
         edge.label=invited_label

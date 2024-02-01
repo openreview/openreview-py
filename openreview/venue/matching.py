@@ -1143,6 +1143,7 @@ class Matching(object):
         ## Only for reviewers, allow ACs and SACs to review the proposed assignments
         if self.is_reviewer and not proposed:
             venue.group_builder.set_external_reviewer_recruitment_groups(name=invited_committee_name, create_paper_groups=True if assignment_title else False)
+       
             if assignment_title:
                 invitation=self.client.get_invitation(venue.get_assignment_id(self.match_group.id))
                 invitation.duedate=tools.datetime_millis(due_date)

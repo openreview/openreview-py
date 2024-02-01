@@ -384,12 +384,14 @@ class Venue(object):
         self.invitation_builder.set_meta_invitation()
 
         self.group_builder.create_venue_group()
+        self.invitation_builder.set_submission_group_message_invitation()
 
         self.group_builder.add_to_active_venues()
 
         self.group_builder.create_program_chairs_group(program_chair_ids)
 
         self.group_builder.create_authors_group()
+        self.invitation_builder.set_group_message_invitation(self.get_authors_id())
 
         self.group_builder.create_reviewers_group()
         
@@ -957,6 +959,9 @@ Total Errors: {len(errors)}
     def check_new_profiles(Venue, client):
 
         def mark_as_conflict(venue_group, edge, submission, user_profile):
+            
+            committee_invited_id = invite_assignment_invitation.content.get('committee_invited_id', {}).get('value')
+            
             edge.label='Conflict Detected'
             edge.tail=user_profile.id
             edge.readers=None
@@ -974,7 +979,8 @@ A conflict was detected between you and the submission authors and the assignmen
 If you have any questions, please contact us as info@openreview.net.
 
 OpenReview Team'''
-            response = client.post_message(subject, [edge.tail], message)
+            client.add_members_to_group(committee_invited_id, edge.tail)
+            response = client.post_message(subject, [edge.tail], message, invitation_id=f'{committee_invited_id}/-/Message')
 
             ## Send email to inviter
             subject=f"[{venue_group.content['subtitle']['value']}] Conflict detected between reviewer {user_profile.get_preferred_name(pretty=True)} and paper {submission.number}"
@@ -986,7 +992,7 @@ If you have any questions, please contact us as info@openreview.net.
 OpenReview Team'''
 
             ## - Send email
-            response = client.post_message(subject, edge.signatures, message)            
+            response = client.post_message(subject, edge.signatures, message, invitation_id=f'{venue_group.id}/-/Message')            
         
         def mark_as_accepted(venue_group, edge, submission, user_profile, invite_assignment_invitation):
 
@@ -1042,7 +1048,8 @@ If you would like to change your decision, please click the Decline link in the 
 OpenReview Team'''
 
                 ## - Send email
-                response = client.post_message(subject, [edge.tail], message)
+                client.add_members_to_group(committee_invited_id, edge.tail)
+                response = client.post_message(subject, [edge.tail], message, invitation_id=f'{committee_invited_id}/-/Message')
 
                 ## Send email to inviter
                 subject=f'[{short_phrase}] {reviewer_name} {user_profile.get_preferred_name(pretty=True)} signed up and is assigned to paper {submission.number}'
@@ -1052,7 +1059,7 @@ The {reviewer_name} {user_profile.get_preferred_name(pretty=True)}({user_profile
 OpenReview Team'''
 
                 ## - Send email
-                response = client.post_message(subject, edge.signatures, message)            
+                response = client.post_message(subject, edge.signatures, message, invitation_id=f'{venue_id}/-/Message')            
         
         active_venues = client.get_group('active_venues').members
 

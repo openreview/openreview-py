@@ -65,7 +65,8 @@ def process(client, edit, invitation):
             message=f''''We have received a review on a submission to {short_name}.
             
 {content}
-'''
+''',
+            invitation_id=f'{venue_id}/-/Message'
         )
 
     client.post_message(
@@ -79,7 +80,8 @@ Paper number: {submission.number}
 Paper title: {submission.content['title']['value']}        
         
 {content}
-''')                  
+''',
+        invitation_id=f'{venue_id}/-/Message')                  
 
     if area_chairs_name and ('everyone' in review.readers or paper_area_chairs_id in review.readers):
         client.post_message(
@@ -94,7 +96,8 @@ Paper number: {submission.number}
 Paper title: {submission.content['title']['value']}
 
 {content}
-'''
+''',
+            invitation_id=f'{venue_id}/-/Message'
         )
 
     create_group(paper_reviewers_submitted_id, [review.signatures[0]])
@@ -111,7 +114,8 @@ Paper number: {submission.number}
 Paper title: {submission.content['title']['value']}
 
 {content}
-'''
+''',
+            invitation_id=f'{venue_id}/-/Message'
         )
     elif paper_reviewers_submitted_id in review.readers:
         client.post_message(
@@ -126,7 +130,8 @@ Paper number: {submission.number}
 Paper title: {submission.content['title']['value']}
 
 {content}
-'''
+''',
+            invitation_id=f'{venue_id}/-/Message'
         )
 
     paper_authors_id = f'{paper_group_id}/{authors_name}'
@@ -139,7 +144,8 @@ Paper title: {submission.content['title']['value']}
             message=f''''Your submission to {short_name} has received a review.
 
 {content}
-'''
+''',
+            invitation_id=f'{venue_id}/-/Message'
         )        
     
 

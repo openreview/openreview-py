@@ -3308,3 +3308,54 @@ class InvitationBuilder(object):
         )
 
         recommendation_invitation = self.save_invitation(recommendation_invitation, replacement=True)
+
+
+    def set_group_message_invitation(self, group_id):
+
+        venue_id = self.venue_id
+        venue = self.venue
+
+        message_invitation_id = f'{group_id}/-/Message'
+
+        invitation = Invitation(
+            id=message_invitation_id,
+            invitees=[venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            message = {
+                'replyTo': venue.contact,
+                'sendAt': { 'param': { 'minimum': 0, 'optional': True } },
+                'subject': { 'param': { 'minLength': 1 } },
+                'message': { 'param': { 'minLength': 1 } },
+                'groups': { 'param': { 'inGroup': group_id } },
+                'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } }                
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True) 
+
+    def set_submission_group_message_invitation(self):
+
+        venue_id = self.venue_id
+        venue = self.venue
+
+        message_invitation_id = f'{venue_id}/-/Message'
+
+        invitation = Invitation(
+            id=message_invitation_id,
+            invitees=[venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            message = {
+                'replyTo': venue.contact,
+                'sendAt': { 'param': { 'minimum': 0, 'optional': True } },
+                'subject': { 'param': { 'minLength': 1 } },
+                'message': { 'param': { 'minLength': 1 } },
+                'groups': { 'param': { 'items': [ { 'prefix': f'{venue_id}/' } ] } },
+                'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})' + f'|^{venue_id}/.*', 'optional': True } }                
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)               
