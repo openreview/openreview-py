@@ -988,6 +988,13 @@ reviewer6@gmail.com, Reviewer ICMLSix
         helpers.await_queue_edit(openreview_client, edit_id=withdrawal_note['id'])
         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/-/Withdrawn_Submission')
 
+        withdrawn_submission = openreview_client.get_note(withdrawal_note['note']['forum'])
+        assert withdrawn_submission.readers == ['ICML.cc/2023/Conference/Program_Chairs',
+        'ICML.cc/2023/Conference/Submission101/Senior_Area_Chairs',
+        'ICML.cc/2023/Conference/Submission101/Area_Chairs',
+        'ICML.cc/2023/Conference/Submission101/Reviewers',
+        'ICML.cc/2023/Conference/Submission101/Authors']
+
         assert withdrawal_note['readers'] == [
             "ICML.cc/2023/Conference/Program_Chairs",
             f"ICML.cc/2023/Conference/Submission{submission.number}/Senior_Area_Chairs",
@@ -1001,7 +1008,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
 
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
-        assert len(submissions) == 101
+        assert len(submissions) == 100      #withdrawn papers are no longer visible to ACs because ACs have not been assigned yet
         assert ['ICML.cc/2023/Conference',
         'ICML.cc/2023/Conference/Senior_Area_Chairs',
         'ICML.cc/2023/Conference/Area_Chairs',
@@ -1175,7 +1182,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
-        assert len(submissions) == 101
+        assert len(submissions) == 100
         assert ['ICML.cc/2023/Conference',
         'ICML.cc/2023/Conference/Senior_Area_Chairs',
         'ICML.cc/2023/Conference/Area_Chairs',
@@ -1230,7 +1237,7 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
-        assert len(submissions) == 101
+        assert len(submissions) == 100
         assert ['ICML.cc/2023/Conference',
         'ICML.cc/2023/Conference/Senior_Area_Chairs',
         'ICML.cc/2023/Conference/Area_Chairs',
@@ -2150,7 +2157,7 @@ ICML 2023 Conference Program Chairs'''
 
         ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
-        assert len(submissions) == 59
+        assert len(submissions) == 58
         assert ['ICML.cc/2023/Conference',
         'ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs',
         'ICML.cc/2023/Conference/Submission2/Area_Chairs',

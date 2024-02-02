@@ -9,6 +9,7 @@ def process(client, edit, invitation):
     submission_name = domain.content['submission_name']['value']
 
     submission = client.get_note(edit.note.id)
+    print(edit.id)
 
     subject = f'''{short_name} has received a new revision of your submission titled {submission.content['title']['value']}'''
 

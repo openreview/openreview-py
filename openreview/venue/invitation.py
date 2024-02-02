@@ -1346,7 +1346,11 @@ class InvitationBuilder(object):
     def set_withdrawal_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
-        cdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None
+        if submission_stage.second_due_date:
+            expdate = submission_stage.second_due_date_exp_date
+        else:
+            expdate = submission_stage.exp_date
+        cdate = tools.datetime_millis(expdate) if expdate else None
         exp_date = tools.datetime_millis(self.venue.submission_stage.withdraw_submission_exp_date) if self.venue.submission_stage.withdraw_submission_exp_date else None
 
         invitation = Invitation(id=self.venue.get_invitation_id(submission_stage.withdrawal_name),
@@ -1667,7 +1671,11 @@ class InvitationBuilder(object):
     def set_desk_rejection_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
-        cdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None
+        if submission_stage.second_due_date:
+            expdate = submission_stage.second_due_date_exp_date
+        else:
+            expdate = submission_stage.exp_date
+        cdate = tools.datetime_millis(expdate) if expdate else None
         exp_date = tools.datetime_millis(self.venue.submission_stage.due_date + datetime.timedelta(days = 90)) if self.venue.submission_stage.due_date else None
 
         content = default_content.desk_reject_v2.copy()
@@ -2004,8 +2012,7 @@ class InvitationBuilder(object):
                                 'range': [ 0, 9999999999999 ],
                                 'optional': True                                   
                             }
-                        }
-                        ,
+                        },
                         'signatures': { 
                             'param': { 
                                 'items': [
@@ -2029,7 +2036,16 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['duedate'] = revision_duedate
 
         if revision_expdate:
-            invitation.edit['invitation']['expdate'] = revision_expdate        
+            invitation.edit['invitation']['expdate'] = revision_expdate
+
+        if revision_stage.allow_deletion:
+            invitation.edit['invitation']['edit']['note']['ddate'] = {
+                'param': {
+                'range': [ 0, 9999999999999 ],
+                'optional': True,
+                'deletable': True
+            }
+        }  
 
         self.save_invitation(invitation, replacement=False)
         return invitation

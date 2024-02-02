@@ -892,8 +892,8 @@ If you would like to change your decision, please follow the link in the previou
 
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Post_Submission-0-0')
-        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Withdrawal-0-0')
-        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Desk_Rejection-0-0')
+        # helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Withdrawal-0-0')
+        # helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Desk_Rejection-0-0')
         helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Revision-0-0')
 
         notes = test_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Conference/Submission' }, sort='number:desc')
@@ -902,8 +902,6 @@ If you would like to change your decision, please follow the link in the previou
         assert notes[0].readers == ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Submission5/Authors']
         assert notes[0].content['keywords']['readers'] == ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Submission5/Authors']
 
-        assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Withdrawal')
-        assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Desk_Rejection')
         revision_inv =  test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Revision')
         assert revision_inv
         assert ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Submission5/Authors'] == revision_inv.readers
@@ -1014,31 +1012,38 @@ If you would like to change your decision, please follow the link in the previou
             ))
         helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
 
-        ## withdraw submission
-        withdraw_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission5/-/Withdrawal',
-            signatures=['NeurIPS.cc/2023/Conference/Submission5/Authors'],
+       ## delete and revert submission
+        revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission4/-/Revision',
+            signatures=['NeurIPS.cc/2023/Conference/Submission4/Authors'],
             note=openreview.api.Note(
-                content={
-                    'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
+                ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                content = {
+                    'title': { 'value': 'Paper title 4 Updated' },
+                    'abstract': { 'value': 'This is an abstract 4 updated' },
+                    'keywords': { 'value': ['machine learning', 'nlp'] },
                 }
             ))
+        print(revision_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
 
-        helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
-        helpers.await_queue_edit(openreview_client, invitation='NeurIPS.cc/2023/Conference/-/Withdrawn_Submission')
+        notes = test_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Conference/Submission' }, sort='number:desc')
+        assert len(notes) == 4
 
-        note = test_client.get_note(withdraw_note['note']['forum'])
-        assert note
-        assert note.invitations == ['NeurIPS.cc/2023/Conference/-/Submission', 'NeurIPS.cc/2023/Conference/-/Post_Submission', 'NeurIPS.cc/2023/Conference/-/Withdrawn_Submission']
-        assert note.readers == ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Submission5/Authors']
-        assert note.writers == ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Submission5/Authors']
-        assert note.signatures == ['NeurIPS.cc/2023/Conference/Submission5/Authors']
-        assert note.content['venue']['value'] == 'NeurIPS 2023 Conference Withdrawn Submission'
-        assert note.content['venueid']['value'] == 'NeurIPS.cc/2023/Conference/Withdrawn_Submission'
-        assert 'readers' in note.content['authors']
-        assert 'readers' in note.content['authorids']
+        revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission4/-/Revision',
+            signatures=['NeurIPS.cc/2023/Conference/Submission4/Authors'],
+            note=openreview.api.Note(
+                ddate = {'delete': True},
+                content = {
+                    'title': { 'value': 'Paper title 4 Updated' },
+                    'abstract': { 'value': 'This is an abstract 4 updated' },
+                    'keywords': { 'value': ['machine learning', 'nlp'] },
+                }
+            ))
+        print(revision_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
 
-        messages = client.get_messages(subject='[NeurIPS 2023]: Paper #5 withdrawn by paper authors')
-        assert len(messages) == 3
+        notes = test_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Conference/Submission' }, sort='number:desc')
+        assert len(notes) == 5
 
         due_date = now - datetime.timedelta(minutes=30)
 
@@ -1074,6 +1079,35 @@ If you would like to change your decision, please follow the link in the previou
 
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation NeurIPS.cc/2023/Conference/Submission5/-/Revision has expired'):
             assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Revision')
+
+        assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Withdrawal')
+        assert test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Desk_Rejection')
+
+        ## withdraw submission
+        withdraw_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission5/-/Withdrawal',
+            signatures=['NeurIPS.cc/2023/Conference/Submission5/Authors'],
+            note=openreview.api.Note(
+                content={
+                    'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='NeurIPS.cc/2023/Conference/-/Withdrawn_Submission')
+
+        note = test_client.get_note(withdraw_note['note']['forum'])
+        assert note
+        assert note.invitations == ['NeurIPS.cc/2023/Conference/-/Submission', 'NeurIPS.cc/2023/Conference/-/Post_Submission', 'NeurIPS.cc/2023/Conference/-/Withdrawn_Submission']
+        assert note.readers == ['NeurIPS.cc/2023/Conference/Program_Chairs', 'NeurIPS.cc/2023/Conference/Submission5/Senior_Area_Chairs', 'NeurIPS.cc/2023/Conference/Submission5/Area_Chairs', 'NeurIPS.cc/2023/Conference/Submission5/Reviewers','NeurIPS.cc/2023/Conference/Submission5/Authors']
+        assert note.writers == ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Submission5/Authors']
+        assert note.signatures == ['NeurIPS.cc/2023/Conference/Submission5/Authors']
+        assert note.content['venue']['value'] == 'NeurIPS 2023 Conference Withdrawn Submission'
+        assert note.content['venueid']['value'] == 'NeurIPS.cc/2023/Conference/Withdrawn_Submission'
+        assert 'readers' in note.content['authors']
+        assert 'readers' in note.content['authorids']
+
+        messages = client.get_messages(subject='[NeurIPS 2023]: Paper #5 withdrawn by paper authors')
+        assert len(messages) == 3
 
         notes = test_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Conference/Submission' }, sort='number:desc')
         assert len(notes) == 4

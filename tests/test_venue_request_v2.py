@@ -2396,6 +2396,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert decision_stage_note
         helpers.await_queue()
 
+        print(decision_stage_note.id)
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -3171,6 +3172,7 @@ Best,
 
         assert all(x not in revision_invitation.edit['note']['content'] for x in ['title','authors', 'authorids','abstract','keywords', 'TLDR'])
         assert 'supplementary_material' in revision_invitation.edit['note']['content']
+        assert 'ddate' not in revision_invitation.edit['note']
 
     def test_submission_withdrawal(self, client, openreview_client, helpers, test_client, venue):
 
