@@ -417,7 +417,15 @@ The TMLR Editors-in-Chief
         assert note.content['venue']['value'] == 'Submitted to TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Submitted'
 
-        assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Official_Comment")
+        invitation = openreview_client.get_invitation(f"{venue_id}/Paper1/-/Official_Comment")
+        assert invitation.edit['note']['readers']['param']['enum'] == [
+            "everyone",
+            "TMLR/Editors_In_Chief",
+            "TMLR/Paper1/Action_Editors",
+            "TMLR/Paper1/Reviewers",
+            "TMLR/Paper1/Reviewer_.*",
+            "TMLR/Paper1/Authors"
+        ]
 
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
         assert len(invitations) == 10, ", ".join([i.id for i in invitations])
