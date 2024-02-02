@@ -1840,7 +1840,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert invitation.edit['note']['forum'] == review_note['note']['forum']
         assert invitation.edit['note']['replyto'] == review_note['note']['id']
 
-    def test_review_rating(self, client, helpers, venue, openreview_client):
+    def test_review_revision(self, client, helpers, venue, openreview_client):
 
         venue = openreview.get_conference(client, venue['request_form_note'].id, support_user='openreview.net/Support')
 
@@ -1903,6 +1903,9 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                   'V2.cc/2030/Conference/Submission1/Reviewers',
                                   'V2.cc/2030/Conference/Submission1/Authors']
         assert 'readers' in review.content['review_rating']
+
+        assert invitation.edit['note']['forum'] == review.forum
+        assert invitation.edit['note']['id'] == review.id
 
         review_revision = reviewer_client.post_note_edit(
             invitation='V2.cc/2030/Conference/Submission1/Official_Review1/-/Review_Revision',
@@ -2022,6 +2025,12 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert 'review_quality' in invitation.edit['note']['content']
         assert invitation.edit['note']['forum'] == submissions[0].id
         assert invitation.edit['note']['replyto'] == reviews[0]['id']
+        assert invitation.edit['note']['id'] == {
+            'param': {
+                'withInvitation': 'V2.cc/2030/Conference/Submission1/Official_Review1/-/Author_Review_Rating',
+                'optional': True
+            }
+        }
         assert invitation.edit['note']['readers'] == [
             'V2.cc/2030/Conference/Program_Chairs',
             '${3/signatures}'
