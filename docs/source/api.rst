@@ -51,15 +51,3 @@ Tools
 
 .. automodule:: openreview.tools
    :members:
-
-
-Conference Builder
--------------------
-
-.. automodule:: openreview.conference.builder
-
-.. autoclass:: Conference
-   :members:
-
-.. autoclass:: ConferenceBuilder
-   :members:
