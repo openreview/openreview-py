@@ -16,6 +16,7 @@ var REVIEWERS_NAME = '';
 var ACTION_EDITOR_NAME = '';
 var JOURNAL_REQUEST_ID = '';
 var REVIEWER_REPORT_ID = '';
+var NUMBER_OF_REVIEWERS = 3;
 var REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID = '';
 var ACTION_EDITOR_ID = VENUE_ID + '/' + ACTION_EDITOR_NAME;
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
@@ -431,7 +432,7 @@ var formatData = function(
         id: aeRecommendationInvitation.id,
         cdate: aeRecommendationInvitation.cdate,
         duedate: aeRecommendationInvitation.duedate,
-        complete: recommendationCount >= 3,
+        complete: recommendationCount >= NUMBER_OF_REVIEWERS,
         replies: Array(recommendationCount).fill(1)
       };
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
@@ -477,7 +478,7 @@ var formatData = function(
         id: reviewerAssignmentInvitation.id,
         cdate: reviewerAssignmentInvitation.cdate,
         duedate: reviewerAssignmentInvitation.duedate,
-        complete: reviewers.length >= 3,
+        complete: reviewers.length >= NUMBER_OF_REVIEWERS,
         replies: reviewers
       };
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
@@ -489,7 +490,7 @@ var formatData = function(
         id: reviewInvitation.id,
         cdate: reviewInvitation.cdate,
         duedate: reviewInvitation.duedate,
-        complete: reviewNotes.length >= 3,
+        complete: reviewNotes.length >= NUMBER_OF_REVIEWERS,
         replies: reviewNotes
       };
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
@@ -501,7 +502,7 @@ var formatData = function(
         id: officialRecommendationInvitation.id,
         cdate: officialRecommendationInvitation.cdate,
         duedate: officialRecommendationInvitation.duedate,
-        complete: officialRecommendationNotes.length >= 3,
+        complete: officialRecommendationNotes.length >= NUMBER_OF_REVIEWERS,
         replies: officialRecommendationNotes
       };
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
@@ -778,8 +779,8 @@ var formatData = function(
         actionEditor: actionEditor,
         metaReview: metaReview,
         referrer: referrerUrl,
-        reviewPending: reviewInvitation && reviewNotes.length < 3,
-        recommendationPending: officialRecommendationInvitation && officialRecommendationNotes.length < 3 && decisionNotes.length == 0,
+        reviewPending: reviewInvitation && reviewNotes.length < NUMBER_OF_REVIEWERS,
+        recommendationPending: officialRecommendationInvitation && officialRecommendationNotes.length < NUMBER_OF_REVIEWERS && decisionNotes.length == 0,
         ratingPending: reviewerRatingInvitations.length && reviewerRatingReplies.length < reviewNotes.length,
         decisionPending: decisionInvitation && decisionNotes.length == 0,
         decisionApprovalPending: metaReview && decisionApprovalNotes.length == 0,

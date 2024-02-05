@@ -15,6 +15,7 @@ var DECISION_NAME = 'Decision';
 var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
 var JOURNAL_REQUEST_ID = '';
 var REVIEWER_REPORT_ID = '';
+var NUMBER_OF_REVIEWERS = 3;
 
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var REVIEWERS_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Assignment';
@@ -265,7 +266,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         id: reviewerAssignmentInvitation.id,
         cdate: reviewerAssignmentInvitation.cdate,
         duedate: reviewerAssignmentInvitation.duedate,
-        complete: reviewers.length >= 3,
+        complete: reviewers.length >= NUMBER_OF_REVIEWERS,
         replies: reviewers
       });
     }
@@ -275,7 +276,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         id: reviewInvitation.id,
         cdate: reviewInvitation.cdate,
         duedate: reviewInvitation.duedate,
-        complete: reviewNotes.length >= 3,
+        complete: reviewNotes.length >= NUMBER_OF_REVIEWERS,
         replies: reviewNotes
       });
     }
@@ -285,7 +286,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         id: officialRecommendationInvitation.id,
         cdate: officialRecommendationInvitation.cdate,
         duedate: officialRecommendationInvitation.duedate,
-        complete: officialRecommendationNotes.length >= 3,
+        complete: officialRecommendationNotes.length >= NUMBER_OF_REVIEWERS,
         replies: officialRecommendationNotes
       });
     }
