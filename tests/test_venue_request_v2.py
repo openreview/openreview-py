@@ -314,10 +314,8 @@ class TestVenueRequest():
         writers=[]
         )
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Author identities of desk-rejected submissions can only be anonymized for double-blind submissions'):
-            client.post_note(venue_revision_note)
+        client.post_note(venue_revision_note)
 
-        venue_revision_note.content['desk_rejected_submissions_author_anonymity'] = 'Yes, author identities of desk rejected submissions should be revealed.'
         venue_revision_note.content['abstract_registration_deadline'] = (now - datetime.timedelta(days=1)).strftime('%Y/%m/%d %H:%M')
         venue_revision_note.content['Submission Deadline'] = (now - datetime.timedelta(days=1)).strftime('%Y/%m/%d %H:%M')
         venue_revision_note=client.post_note(venue_revision_note)
@@ -333,6 +331,12 @@ class TestVenueRequest():
         assert not error_comments
 
         assert openreview_client.get_invitation('V2.cc/2022/Conference/-/Submission_Test')
+
+        venue = openreview.helpers.get_conference(client, request_form_note.id, setup=False)
+        assert venue.submission_stage.withdrawn_submission_public == False
+        assert venue.submission_stage.withdrawn_submission_reveal_authors == True
+        assert venue.submission_stage.desk_rejected_submission_public == False
+        assert venue.submission_stage.desk_rejected_submission_reveal_authors == False
 
     def test_venue_revision(self, client, test_client, selenium, request_page, venue, helpers):
 
