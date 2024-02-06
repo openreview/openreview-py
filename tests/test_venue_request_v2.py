@@ -1875,7 +1875,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                             }
                         },
                         'readers': [
-                            "V2.cc/2030/Conference",
+                            "V2.cc/2030/Conference/Program_Chairs",
                             "V2.cc/2030/Conference/Submission${7/content/noteNumber/value}/Area_Chairs",
                             "${5/signatures}"
                         ]
@@ -1930,7 +1930,10 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert 'final_review_rating' in review.content
         assert 'readers' in review.content['review_rating']
         assert 'readers' in review.content['final_review_rating']
-        assert 'V2.cc/2030/Conference/Submission1/Area_Chairs' in review.content['final_review_rating']['readers']
+        assert review.content['final_review_rating']['readers'] == [
+            "V2.cc/2030/Conference/Program_Chairs",
+            "V2.cc/2030/Conference/Submission1/Area_Chairs",
+            anon_group_id]
 
         ## Test release of final_review_rating
         venue.custom_stage = openreview.stages.CustomStage(name='Review_Revision',
@@ -1973,9 +1976,16 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Official_Review1/-/Review_Revision')
         assert 'readers' not in invitation.edit['note']['content']['final_review_rating']
         
+        anon_groups = reviewer_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Reviewer_', signatory='~VenueThree_Reviewer1')
+        anon_group_id = anon_groups[0].id
+
         review = reviewer_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review', sort='number:asc')[0]
         assert 'final_review_rating' in review.content
         assert 'readers' not in review.content['final_review_rating']
+
+        edits = openreview_client.get_note_edits(review.id)
+        assert edits[0].note.content['final_review_rating']['readers'] == { 'delete': True }
+        assert edits[0].readers == ['V2.cc/2030/Conference', anon_group_id ]
 
     def test_custom_stage(self, client, test_client, helpers, venue, openreview_client):
 
