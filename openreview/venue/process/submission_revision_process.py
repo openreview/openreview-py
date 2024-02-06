@@ -9,7 +9,10 @@ def process(client, edit, invitation):
     submission_name = domain.content['submission_name']['value']
 
     submission = client.get_note(edit.note.id)
-    print(edit.id)
+
+    action = 'posted' if submission.tcdate == submission.tmdate else 'updated'
+    if submission.ddate:
+        action = 'deleted'
 
     subject = f'''{short_name} has received a new revision of your submission titled {submission.content['title']['value']}'''
 
@@ -17,11 +20,18 @@ def process(client, edit, invitation):
 Abstract {submission.content['abstract']['value']}
 ''' if 'abstract' in submission.content else ''
 
-    message = f'''Your new revision of the submission to {short_name} has been posted.
+    message = f'''Your new revision of the submission to {short_name} has been {action}.
 
 Title: {submission.content['title']['value']}
 {abstract_string}
 To view your submission, click here: https://openreview.net/forum?id={submission.forum}'''
+    
+    if action == 'deleted':
+        message = f'''Your submission to {short_name} has been deleted.
+
+Title: {submission.content['title']['value']}
+{abstract_string}
+You can restore your submission from the submission's forum: https://openreview.net/forum?id={submission.forum}'''
 
     client.post_message(
         subject=subject,

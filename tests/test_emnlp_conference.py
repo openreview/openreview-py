@@ -302,6 +302,7 @@ class TestEMNLPConference():
                         "value": {
                             "param": {
                                 "type": "file",
+                                "optional": True,
                                 "extensions": [
                                     "tgz",
                                     "zip"
@@ -339,6 +340,71 @@ class TestEMNLPConference():
             'EMNLP/2023/Conference/Reviewers',
             'EMNLP/2023/Conference/Submission5/Authors'
         ]
+
+        ## delete and revert submission
+        revision_note = test_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Revision',
+            signatures=['EMNLP/2023/Conference/Submission5/Authors'],
+            note=openreview.api.Note(
+                ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                content = {
+                    'title': { 'value': 'Test Paper Title 5' },
+                    'authors': submissions[4].content['authors'],
+                    'authorids': submissions[4].content['authorids'],
+                    'abstract': { 'value': 'This is a test abstract 5' },
+                    'keywords': { 'value': ['machine learning', 'nlp'] },
+                    'submission_type': { 'value': 'Regular Long Paper' },
+                    'pdf': { 'value': '/pdf/' + 'p' * 40 +'.pdf' } #fields not in the submission need to be added to delete submission?
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
+
+        messages = client.get_messages(subject='EMNLP 2023 has received a new revision of your submission titled Test Paper Title 5')
+        assert messages and len(messages) == 2
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'test@mail.com' in recipients
+        assert 'john@meta.com' in recipients
+        assert messages[0]['content']['text'] == f'''Your submission to EMNLP 2023 has been deleted.
+
+Title: Test Paper Title 5
+
+Abstract This is a test abstract 5
+
+You can restore your submission from the submission's forum: https://openreview.net/forum?id={submissions[4].id}'''
+
+        notes = test_client.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission' }, sort='number:desc')
+        assert len(notes) == 4
+
+        revision_note = test_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Revision',
+            signatures=['EMNLP/2023/Conference/Submission5/Authors'],
+            note=openreview.api.Note(
+                ddate = {'delete': True},
+                content = {
+                    'title': { 'value': 'Test Paper Title 5' },
+                    'authors': submissions[4].content['authors'],
+                    'authorids': submissions[4].content['authorids'],
+                    'abstract': { 'value': 'This is a test abstract 5' },
+                    'keywords': { 'value': ['machine learning', 'nlp'] },
+                    'submission_type': { 'value': 'Regular Long Paper' },
+                    'pdf': { 'value': '/pdf/' + 'p' * 40 +'.pdf' }
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
+
+        messages = client.get_messages(subject='EMNLP 2023 has received a new revision of your submission titled Test Paper Title 5')
+        assert messages and len(messages) == 4
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'test@mail.com' in recipients
+        assert 'john@meta.com' in recipients
+        assert messages[3]['content']['text'] == f'''Your new revision of the submission to EMNLP 2023 has been updated.
+
+Title: Test Paper Title 5
+
+Abstract This is a test abstract 5
+
+To view your submission, click here: https://openreview.net/forum?id={submissions[4].id}'''
+
+        notes = test_client.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission' }, sort='number:desc')
+        assert len(notes) == 5
 
         revision_due_date = now + datetime.timedelta(days=10)
 
@@ -850,8 +916,6 @@ url={https://openreview.net/forum?id='''
                 f"EMNLP/2023/Conference/Submission{submission.number}/Reviewers",
                 f"EMNLP/2023/Conference/Submission{submission.number}/Authors"
             ]
-        #     assert submission.odate
-        #     assert '_bibtex' in submission.content
 
     def test_enable_ethics_reviewers(self, client, openreview_client, helpers):
 

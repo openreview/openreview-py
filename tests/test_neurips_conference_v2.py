@@ -892,8 +892,6 @@ If you would like to change your decision, please follow the link in the previou
 
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Post_Submission-0-0')
-        # helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Withdrawal-0-0')
-        # helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Desk_Rejection-0-0')
         helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Revision-0-0')
 
         notes = test_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Conference/Submission' }, sort='number:desc')
@@ -1023,7 +1021,6 @@ If you would like to change your decision, please follow the link in the previou
                     'keywords': { 'value': ['machine learning', 'nlp'] },
                 }
             ))
-        print(revision_note['id'])
         helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
 
         notes = test_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Conference/Submission' }, sort='number:desc')
@@ -1039,7 +1036,6 @@ If you would like to change your decision, please follow the link in the previou
                     'keywords': { 'value': ['machine learning', 'nlp'] },
                 }
             ))
-        print(revision_note['id'])
         helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
 
         notes = test_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Conference/Submission' }, sort='number:desc')
