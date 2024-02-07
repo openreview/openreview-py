@@ -1123,7 +1123,7 @@ class Matching(object):
         }
         invitation.minReplies = 1
         invitation.maxReplies = 1
-        invitation.signatures = [venue.get_program_chairs_id()]
+        invitation.signatures = [venue.id]
         invite_assignment_invitation=venue.invitation_builder.save_invitation(invitation, replacement=True)
 
         # set assignment recruitment invitation

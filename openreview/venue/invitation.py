@@ -902,7 +902,9 @@ class InvitationBuilder(object):
                 head = {
                     'param': {
                         'type': 'profile',
-                        'inGroup': venue.get_area_chairs_id()
+                        'options': {
+                            'group': venue.get_area_chairs_id()
+                        }
                     }
                 }
 
@@ -958,8 +960,11 @@ class InvitationBuilder(object):
                     'head': head,
                     'tail': {
                         'param': {
-                            'type': 'profile'
-                        }
+                            'type': 'profile',
+                            'options': {
+                                'group': match_group_id
+                            }
+                        },
                     },
                     'label': {
                         'param': {
@@ -2463,7 +2468,10 @@ class InvitationBuilder(object):
                     },
                     'tail': {
                         'param': {
-                            'type': 'profile'
+                            'type': 'profile',
+                            'options': {
+                                'group': committee_id
+                            }
                         }
                     },
                     'label': {

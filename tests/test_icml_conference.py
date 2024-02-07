@@ -1207,8 +1207,10 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
         helpers.await_queue()
 
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Bid')
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Bid')
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Bid')
+        assert invitation.edit['tail']['param']['options']['group'] == 'ICML.cc/2023/Conference/Area_Chairs'
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Bid')
+        assert invitation.edit['tail']['param']['options']['group'] == 'ICML.cc/2023/Conference/Reviewers'
 
         ## Hide the pdf and supplementary material
         pc_client.post_note(openreview.Note(
