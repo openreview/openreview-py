@@ -1695,6 +1695,10 @@ OpenReview Team'''
 
         venue.set_assignments(assignment_title='reviewer-matching', committee_id='ICML.cc/2023/Conference/Reviewers', enable_reviewer_reassignment=True)
 
+        # Check that deploying assignments removes reviewers_proposed_assignment_title
+        venue_group = pc_client_v2.get_group('ICML.cc/2023/Conference')
+        assert 'reviewers_proposed_assignment_title' not in venue_group.content
+
         proposed_recruitment_inv = openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment_Recruitment')
         assert proposed_recruitment_inv.expdate and proposed_recruitment_inv.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
@@ -1794,8 +1798,7 @@ OpenReview Team'''
             group = openreview.api.Group(
                 id = 'ICML.cc/2023/Conference',
                 content = {
-                    'enable_reviewers_reassignment': { 'value': True },
-                    'reviewers_proposed_assignment_title': { 'value': { 'delete': True } }
+                    'enable_reviewers_reassignment': { 'value': True }
                 }
             )
         )
