@@ -1165,6 +1165,23 @@ class Matching(object):
             reviewer_name = venue.area_chairs_name
             review_name = 'Meta_Review'
 
+        # Remove reviewers_proposed_assignment_title if deploying reviewer assignments
+        if reviewer_name == venue.reviewers_name:
+            venue_group = client.get_group(venue.id)
+            if 'reviewers_proposed_assignment_title' in venue_group.content:
+                self.client.post_group_edit(
+                    invitation = venue.get_meta_invitation_id(),
+                    readers = [venue.venue_id],
+                    writers = [venue.venue_id],
+                    signatures = [venue.venue_id],
+                    group = openreview.api.Group(
+                        id = venue.venue_id,
+                        content = {
+                            'reviewers_proposed_assignment_title': { 'value': { 'delete': True } }
+                        }
+                    )
+                )
+            
         papers = self._get_submissions()
         reviews = client.get_notes(invitation=venue.get_invitation_id(review_name, number='.*'), limit=1)
         proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id),
