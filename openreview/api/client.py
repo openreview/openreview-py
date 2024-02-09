@@ -28,7 +28,15 @@ class LogRetry(Retry):
 
     def increment(self, method=None, url=None, response=None, error=None, _pool=None, _stacktrace=None):
         # Log retry information before calling the parent class method
-        print(f"Retrying request: {method} {url}, response: {response}, error: {error}")
+        response_string = 'no response'
+        if response:
+            if 'application/json' in response.headers.get('Content-Type'):
+                response_string = response.json()
+            if response.text:
+                response_string = response.text
+            else:
+                response_string = response.reason
+        print(f"Retrying request: {method} {url}, response: {response_string}, error: {error}")
 
         # Call the parent class method to perform the actual retry increment
         return super().increment(method=method, url=url, response=response, error=error, _pool=_pool, _stacktrace=_stacktrace)
@@ -90,7 +98,7 @@ class OpenReviewClient(object):
             'Accept': 'application/json'
         }
 
-        retry_strategy = LogRetry(total=3, backoff_factor=0.1, status_forcelist=[ 500, 502, 503, 504 ], respect_retry_after_header=False)
+        retry_strategy = LogRetry(total=3, backoff_factor=1, status_forcelist=[ 500, 502, 503, 504 ], respect_retry_after_header=False)
         self.session = requests.Session()
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount('https://', adapter)
@@ -1639,6 +1647,9 @@ class OpenReviewClient(object):
         """
         if parentGroup:
             recipients = self.get_group(parentGroup).transform_to_anon_ids(recipients)
+
+        if replyTo:
+            message = message + '\n\n*Replying to this email will automatically redirect your response to the following address: [' + replyTo + '].*'
         
         response = self.session.post(self.messages_url, json = {
             'groups': recipients,
@@ -1706,7 +1717,7 @@ class OpenReviewClient(object):
                 return self.get_group(group.id)
             else:
                 if members:
-                    response = requests.put(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
+                    response = self.session.put(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
                     response = self.__handle_response(response)
                     return Group.from_json(response.json())
 
@@ -1749,7 +1760,7 @@ class OpenReviewClient(object):
                 )
                 return self.get_group(group.id)
             else:
-                response = requests.delete(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
+                response = self.session.delete(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
                 response = self.__handle_response(response)
                 return Group.from_json(response.json())                           
 
@@ -1956,7 +1967,7 @@ class OpenReviewClient(object):
         if replacement is not None:
             edit_json['replacement'] = replacement            
 
-        response = requests.post(self.group_edits_url, json = edit_json, headers = self.headers)
+        response = self.session.post(self.group_edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()        
