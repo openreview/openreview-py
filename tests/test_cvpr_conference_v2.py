@@ -560,7 +560,7 @@ class TestCVPRConference():
                     'signatures': [ venue_id ],
                     'readers': [venue_id, 'thecvf.com/CVPR/2024/Conference/Submission${3/content/noteNumber/value}/Secondary_Area_Chairs'],
                     'writers': [venue_id],
-                    'invitees': [venue_id],
+                    'invitees': [venue_id, 'thecvf.com/CVPR/2024/Conference/Submission${3/content/noteNumber/value}/Secondary_Area_Chairs'],
                     'maxReplies': 1,
                     'cdate': start_date,
                     'duedate': due_date,
@@ -659,15 +659,15 @@ class TestCVPRConference():
             }
         )
 
-        helpers.await_queue_edit(openreview_client, 'Ithecvf.com/CVPR/2024/Conference/-/Meta_Review_Confirmation-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'thecvf.com/CVPR/2024/Conference/-/Meta_Review_Confirmation-0-1', count=1)
 
         ac1_client.post_note_edit(
             invitation='thecvf.com/CVPR/2024/Conference/Submission4/-/Meta_Review_Confirmation',
             signatures=[anon_reviewers_group_id],
             note=openreview.api.Note(
                 content = {
-                    'title': { 'value': 'Comment title' },
-                    'comment': { 'value': 'Paper is very good!' }
+                    'decision': { 'value': 'Accept' },
+                    'meta_review_confirmation': { 'value': 'yes' }
                 }                
             )
         )        
