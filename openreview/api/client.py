@@ -1648,9 +1648,6 @@ class OpenReviewClient(object):
         if parentGroup:
             recipients = self.get_group(parentGroup).transform_to_anon_ids(recipients)
 
-        if replyTo:
-            message = message + '\n\n*Replying to this email will automatically redirect your response to the following address: [' + replyTo + '].*'
-        
         response = self.session.post(self.messages_url, json = {
             'groups': recipients,
             'subject': subject ,
