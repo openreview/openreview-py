@@ -370,15 +370,15 @@ meta_review_v2 = {
         'order': 3,
         'value': {
             'param': {
-                'type': 'string',
-                'input': 'radio',
+                'type': 'integer',
                 'enum': [
-                    '5: The area chair is absolutely certain',
-                    '4: The area chair is confident but not absolutely certain',
-                    '3: The area chair is somewhat confident',
-                    '2: The area chair is not sure',
-                    '1: The area chair\'s evaluation is an educated guess'
-                ]
+                    { 'value': 5, 'description': '5: The area chair is absolutely certain' },
+                    { 'value': 4, 'description': '4: The area chair is confident but not absolutely certain' },
+                    { 'value': 3, 'description': '3: The area chair is somewhat confident' },
+                    { 'value': 2, 'description': '2: The area chair is not sure' },
+                    { 'value': 1, 'description': '1: The area chair\'s evaluation is an educated guess' }
+                ],
+                'input': 'radio'                
             }
         }
     }
