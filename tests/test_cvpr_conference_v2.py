@@ -485,9 +485,37 @@ class TestCVPRConference():
                 'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
                 'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
                 'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
-                'recommendation_options': 'Accept, Reject',
                 'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_meta_reviews_to_reviewers': 'Meta review should not be revealed to any reviewer',
+                'remove_meta_review_form_options': ['recommendation', 'confidence'],
+                'additional_meta_review_form_options': {
+                    "metareview": {
+                        "order": 1,
+                        "description": "Draft due date: 2024/02/14, 23:59 PT. Final due date: 2024/02/22, 23:59 PT. (Formatting with Markdown and formulas with LaTeX are possible; see https://openreview.net/faq for more information.)",
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "maxLength": 5000,
+                                "markdown": True,
+                                "input": "textarea"
+                            }
+                        }
+                    },
+                    "preliminary_recommendation": {
+                        "order": 2,
+                        "description": "Due date: 2024/02/14, 23:59 PT.",
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "Clear accept",
+                                    "Needs discussion",
+                                    "Clear reject"
+                                ]
+                            }
+                        }
+                    }
+                }
             },
             forum= request_form.id,
             invitation= f'openreview.net/Support/-/Request{request_form.number}/Meta_Review_Stage',
@@ -522,8 +550,7 @@ class TestCVPRConference():
             note=openreview.api.Note(
                 content = {
                     'metareview': { 'value': 'Comment title' },
-                    'confidence': { 'value': 5 },
-                    'recommendation': { 'value': 'Accept' }
+                    'preliminary_recommendation': { 'value': 'Clear accept' }
                 }                
             )
         )
@@ -745,8 +772,59 @@ class TestCVPRConference():
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
         
-        # Open meta review revision for final recommendation
+        # Close meta review stage
         now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now - datetime.timedelta(days=1)
+        pc_client.post_note(openreview.Note(
+            content= {
+                'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
+                'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_meta_reviews_to_reviewers': 'Meta review should not be revealed to any reviewer',
+                'remove_meta_review_form_options': ['recommendation', 'confidence'],
+                'additional_meta_review_form_options': {
+                    "preliminary_recommendation": {
+                        "order": 2,
+                        "description": "Due date: 2024/02/14, 23:59 PT.",
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "Clear accept",
+                                    "Needs discussion",
+                                    "Clear reject"
+                                ]
+                            }
+                        }
+                    },
+                    "metareview": {
+                        "order": 1,
+                        "description": "Draft due date: 2024/02/14, 23:59 PT. Final due date: 2024/02/22, 23:59 PT. (Formatting with Markdown and formulas with LaTeX are possible; see https://openreview.net/faq for more information.)",
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "maxLength": 5000,
+                                "markdown": True,
+                                "input": "textarea"
+                            }
+                        }
+                    }
+                }
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Meta_Review_Stage',
+            readers= ['thecvf.com/CVPR/2024/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_CVPRChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue() 
+
+        # Open meta review revision for final recommendation, allow metareview to be modified
         due_date = now + datetime.timedelta(days=2)
         
         venue.custom_stage = openreview.stages.CustomStage(name='Meta_Review_Revision',
@@ -757,6 +835,19 @@ class TestCVPRConference():
             due_date=due_date,
             exp_date=due_date + datetime.timedelta(minutes=30),
             content={
+                "metareview": {
+                    "order": 1,
+                    "description": "Draft due date: 2024/02/14, 23:59 PT. Final due date: 2024/02/22, 23:59 PT. (Formatting with Markdown and formulas with LaTeX are possible; see https://openreview.net/faq for more information.)",
+                    "value": {
+                        "param": {
+                            "type": "string",
+                            "maxLength": 5000,
+                            "markdown": True,
+                            "input": "textarea",
+                            'optional': True,
+                        }
+                    }
+                },
                 "final_recommendation": {
                     "order": 4,
                     "description": "Due date: 2024/02/22, 23:59 PT.",
@@ -816,6 +907,7 @@ class TestCVPRConference():
             note=openreview.api.Note(
                 id=meta_review.id,
                 content={
+                    'metareview': { 'value': 'Revised comment title' },
                     'final_recommendation': { 'value': 'Accept' },
                     'select_as_highlight_or_oral': { 'value': 'Highlight: Top 10% of the accepted papers' },
                     'award_candidate': { 'value': 'Yes' }
@@ -824,11 +916,14 @@ class TestCVPRConference():
         )
         helpers.await_queue_edit(openreview_client, edit_id=meta_review_revision['id'])
 
-        # Meta review should be updated with new fields
+        # Check that meta review was updated with new fields
         meta_review = ac2_client.get_notes(invitation='thecvf.com/CVPR/2024/Conference/Submission4/-/Meta_Review')[0]
         assert meta_review.readers == [ 'thecvf.com/CVPR/2024/Conference/Submission4/Senior_Area_Chairs', 
                                        'thecvf.com/CVPR/2024/Conference/Submission4/Area_Chairs',
                                        'thecvf.com/CVPR/2024/Conference/Program_Chairs' ]
+        assert 'metareview' in meta_review.content
         assert 'final_recommendation' in meta_review.content
         assert 'select_as_highlight_or_oral' in meta_review.content
         assert 'award_candidate' in meta_review.content
+
+        assert meta_review.content['metareview']['value'] == 'Revised comment title'
