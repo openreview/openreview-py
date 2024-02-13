@@ -427,6 +427,12 @@ class Journal(object):
 
     def get_issn(self):
         return self.settings.get('issn', None)
+    
+    def get_submission_license(self):
+        return self.settings.get('submission_license', 'CC BY-SA 4.0')
+    
+    def get_expertise_model(self):
+        return self.settings.get('expertise_model', 'specter+mfr')
 
     def are_authors_anonymous(self):
         return self.settings.get('author_anonymity', True)
