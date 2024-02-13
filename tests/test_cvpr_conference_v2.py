@@ -740,4 +740,95 @@ class TestCVPRConference():
             )
         )        
 
-    
+    def test_metareview_revision_stage(self, client, openreview_client, helpers, test_client):
+        pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+        
+        # Open meta review revision for final recommendation
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=2)
+        
+        venue.custom_stage = openreview.stages.CustomStage(name='Meta_Review_Revision',
+            reply_to=openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            reply_type=openreview.stages.CustomStage.ReplyType.REVISION,
+            invitees=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
+            due_date=due_date,
+            exp_date=due_date + datetime.timedelta(minutes=30),
+            content={
+                "final_recommendation": {
+                    "order": 4,
+                    "description": "Due date: 2024/02/22, 23:59 PT.",
+                    "value": {
+                        "param": {
+                            "type": "string",
+                            "enum": [
+                                "Accept",
+                                "Reject"
+                            ]
+                        }
+                    }
+                },
+                "select_as_highlight_or_oral": {
+                    "order": 5,
+                    "description": "Due date: 2024/02/22, 23:59 PT. (Top 10% of accepted papers.)",
+                    "value": {
+                        "param": {
+                            "type": "string",
+                            "enum": [
+                                "No",
+                                "Highlight: Top 10% of the accepted papers",
+                                "Oral: Top 3-5% of the accepted papers"
+                            ]
+                        }
+                    }
+                },
+                "award_candidate": {
+                    "order": 6,
+                    "description": "Due date: 2024/02/22, 23:59 PT.",
+                    "value": {
+                        "param": {
+                            "type": "string",
+                            "enum": [
+                                "Yes",
+                                "No"
+                            ]
+                        }
+                    }
+                }
+            })
+
+        venue.create_custom_stage()
+
+        invitation = openreview_client.get_all_invitations(invitation='thecvf.com/CVPR/2024/Conference/-/Meta_Review_Revision')
+        assert invitation and len(invitation) == 1
+        
+        # Post a meta review revision
+        ac2_client = openreview.api.OpenReviewClient(username='ac2@cvpr.cc', password=helpers.strong_password)
+        ac_anon_group_id = ac2_client.get_groups(prefix=f'thecvf.com/CVPR/2024/Conference/Submission4/Area_Chair_.*', signatory='ac2@cvpr.cc')[0].id
+
+        meta_review = ac2_client.get_notes(invitation='thecvf.com/CVPR/2024/Conference/Submission4/-/Meta_Review')[0]
+
+        meta_review_revision = ac2_client.post_note_edit(
+            invitation='thecvf.com/CVPR/2024/Conference/Submission4/Meta_Review1/-/Meta_Review_Revision',
+            signatures=[ac_anon_group_id],
+            note=openreview.api.Note(
+                id=meta_review.id,
+                content={
+                    'final_recommendation': { 'value': 'Accept' },
+                    'select_as_highlight_or_oral': { 'value': 'Highlight: Top 10% of the accepted papers' },
+                    'award_candidate': { 'value': 'Yes' }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=meta_review_revision['id'])
+
+        # Meta review should be updated with new fields
+        meta_review = ac2_client.get_notes(invitation='thecvf.com/CVPR/2024/Conference/Submission4/-/Meta_Review')[0]
+        assert meta_review.readers == [ 'thecvf.com/CVPR/2024/Conference/Submission4/Senior_Area_Chairs', 
+                                       'thecvf.com/CVPR/2024/Conference/Submission4/Area_Chairs',
+                                       'thecvf.com/CVPR/2024/Conference/Program_Chairs' ]
+        assert 'final_recommendation' in meta_review.content
+        assert 'select_as_highlight_or_oral' in meta_review.content
+        assert 'award_candidate' in meta_review.content
