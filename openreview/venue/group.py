@@ -206,6 +206,7 @@ class GroupBuilder(object):
 
         if self.venue.use_secondary_area_chairs:
             content['secondary_area_chairs_name'] = { 'value': self.venue.secondary_area_chairs_name }
+            content['secondary_area_chairs_anon_name'] = { 'value': self.venue.get_anon_committee_name(self.venue.secondary_area_chairs_name) }
 
         if self.venue.use_senior_area_chairs:
             content['senior_area_chairs_id'] = { 'value': self.venue.get_senior_area_chairs_id() }
