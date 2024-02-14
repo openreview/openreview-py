@@ -490,7 +490,7 @@ class TestCVPRConference():
                     'description': 'How helpful is this review? Please refer to the reviewer guidelines: https://cvpr.thecvf.com/Conferences/2024/ReviewerGuidelines',
                     'value': {
                         'param': {
-                            'type': 'integer',
+                            'type': 'string',
                             'input': 'radio',
                             'enum': [
                                 "0: below expectations",
