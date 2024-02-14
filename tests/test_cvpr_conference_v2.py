@@ -477,7 +477,7 @@ class TestCVPRConference():
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
-        venue.custom_stage = openreview.stages.CustomStage(name='Review_Rating',
+        venue.custom_stage = openreview.stages.CustomStage(name='Rating',
             reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
             due_date=due_date,
@@ -493,9 +493,9 @@ class TestCVPRConference():
                             'type': 'integer',
                             'input': 'radio',
                             'enum': [
-                                { 'value': 0, 'description': '0: below expectations' },
-                                { 'value': 1, 'description': '1: meets expectations' },
-                                { 'value': 2, 'description': '2: exceeds expectations' }
+                                "0: below expectations",
+                                "1: meets expectations",
+                                "2: exceeds expectations"
                             ]
                         }
                     }
@@ -519,11 +519,11 @@ class TestCVPRConference():
 
         venue.create_custom_stage()
 
-        helpers.await_queue_edit(openreview_client, 'thecvf.com/CVPR/2024/Conference/-/Review_Rating-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'thecvf.com/CVPR/2024/Conference/-/Rating-0-1', count=1)
 
-        invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/-/Review_Rating')
+        invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/-/Rating')
         assert invitation
-        invitations = openreview_client.get_invitations(invitation='thecvf.com/CVPR/2024/Conference/-/Review_Rating')
+        invitations = openreview_client.get_invitations(invitation='thecvf.com/CVPR/2024/Conference/-/Rating')
         assert invitations and len(invitations) == 2
 
         submissions = venue.get_submissions(sort='number:asc', details='directReplies')
@@ -531,7 +531,7 @@ class TestCVPRConference():
         reviews = [reply for reply in first_submission.details['directReplies'] if f'thecvf.com/CVPR/2024/Conference/Submission{first_submission.number}/-/Official_Review']
         assert len(reviews) == 2
 
-        invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/Submission1/Official_Review1/-/Review_Rating')
+        invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/Submission1/Official_Review1/-/Rating')
         assert invitation.invitees == ['thecvf.com/CVPR/2024/Conference/Program_Chairs', 'thecvf.com/CVPR/2024/Conference/Submission1/Area_Chairs']
         assert invitation.noninvitees == ['thecvf.com/CVPR/2024/Conference/Submission1/Secondary_Area_Chairs']
         assert 'rating' in invitation.edit['note']['content']
@@ -553,7 +553,7 @@ class TestCVPRConference():
             signatures=[ac_anon_group_id],
             note=openreview.api.Note(
                 content={
-                    'rating': { 'value': 0 },
+                    'rating': { 'value': "0: below expectations" },
                     'rating_justification': { 'value': 'This review is not helpful.' }
                 }
             )
@@ -561,7 +561,7 @@ class TestCVPRConference():
 
         helpers.await_queue(openreview_client)
 
-        invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/Submission1/Official_Review2/-/Review_Rating')
+        invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/Submission1/Official_Review2/-/Rating')
 
         #post another review rating to same paper
         rating_edit = ac_client.post_note_edit(
@@ -569,7 +569,7 @@ class TestCVPRConference():
             signatures=[ac_anon_group_id],
             note=openreview.api.Note(
                 content={
-                    'rating': { 'value': 2 },
+                    'rating': { 'value': "2: exceeds expectations" },
                 }
             )
         )
