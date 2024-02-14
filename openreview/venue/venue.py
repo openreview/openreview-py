@@ -37,6 +37,7 @@ class Venue(object):
         self.area_chair_roles = ['Area_Chairs']
         self.senior_area_chair_roles = ['Senior_Area_Chairs']        
         self.area_chairs_name = 'Area_Chairs'
+        self.secondary_area_chairs_name = 'Secondary_Area_Chairs'
         self.senior_area_chairs_name = 'Senior_Area_Chairs'
         self.ethics_chairs_name = 'Ethics_Chairs'
         self.ethics_reviewers_name = 'Ethics_Reviewers'
@@ -277,10 +278,17 @@ class Venue(object):
     def get_area_chairs_id(self, number = None, anon=False):
         ac_name = self.get_anon_area_chairs_name()
         return self.get_committee_id(f'{ac_name}.*' if anon else self.area_chairs_name, number)
+    
+    def get_secondary_area_chairs_id(self, number = None, anon=False):
+        ac_name = self.get_anon_committee_name(self.secondary_area_chairs_name)
+        return self.get_committee_id(f'{ac_name}.*' if anon else self.secondary_area_chairs_name, number)    
 
     ## Compatibility with Conference, refactor conference references to use get_area_chairs_id
     def get_anon_area_chair_id(self, number, anon_id):
         return self.get_area_chairs_id(number, True)
+
+    def get_anon_secondary_area_chair_id(self, number, anon_id):
+        return self.get_secondary_area_chairs_id(number, True)
 
     def get_senior_area_chairs_id(self, number = None):
         return self.get_committee_id(self.senior_area_chairs_name, number)
@@ -795,7 +803,7 @@ Total Errors: {len(errors)}
                 message = messages[decision_note['content']['decision']['value']]
                 final_message = message.replace("{{submission_title}}", note.content['title']['value'])
                 final_message = final_message.replace("{{forum_url}}", f'https://openreview.net/forum?id={note.id}')
-                self.client.post_message(subject, recipients=[self.get_authors_id(note.number)], message=final_message, parentGroup=self.get_authors_id())
+                self.client.post_message(subject, recipients=[self.get_authors_id(note.number)], message=final_message, parentGroup=self.get_authors_id(), replyTo=self.contact)
 
         tools.concurrent_requests(send_notification, paper_notes)
 

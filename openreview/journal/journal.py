@@ -427,6 +427,12 @@ class Journal(object):
 
     def get_issn(self):
         return self.settings.get('issn', None)
+    
+    def get_submission_license(self):
+        return self.settings.get('submission_license', 'CC BY-SA 4.0')
+    
+    def get_expertise_model(self):
+        return self.settings.get('expertise_model', 'specter+mfr')
 
     def are_authors_anonymous(self):
         return self.settings.get('author_anonymity', True)
@@ -532,10 +538,12 @@ class Journal(object):
         if self.is_submission_public():
             readers.append('everyone')
 
-        return readers + [
-            self.get_editors_in_chief_id(), 
-            self.get_action_editors_id(), 
-            self.get_action_editors_id(number), 
+        readers.append(self.get_editors_in_chief_id())
+
+        if not self.is_submission_public():
+            readers.append(self.get_action_editors_id())
+            
+        return readers + [self.get_action_editors_id(number), 
             self.get_reviewers_id(number), 
             self.get_reviewers_id(number, anon=True) + '.*', 
             self.get_authors_id(number)
@@ -786,7 +794,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
 
         ## Notify action editors
-        if is_public or self.get_action_editors_id(number=forum.number) in readers:
+        if is_public or self.get_action_editors_id(number=forum.number) in readers or self.get_action_editors_id() in readers:
             message = f'''Hi {{{{fullname}}}},
 
 {before_invitation} {lower_formatted_invitation} has been {action} on a submission for which you are an Action Editor.

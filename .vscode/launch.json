@@ -1,0 +1,19 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "args": [ "tests/test_iclr_conference_v2.py" ],
+            "name": "pytests",
+            "type": "python",
+            "request": "launch",
+            "program": "/opt/homebrew/bin/pytest",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "purpose": [ "debug-test" ],
+            "env": {"PYTEST_ADDOPTS": "--no-cov"}
+        }
+    ]
+}

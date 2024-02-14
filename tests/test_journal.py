@@ -89,6 +89,7 @@ class TestJournal():
                             'submission_public': True,
                             'assignment_delay': 5,
                             'submission_name': 'Submission',
+                            'submission_license': 'CC BY-SA 4.0',
                             'eic_submission_notification': False,
                             'certifications': [
                                 'Featured Certification',
@@ -131,6 +132,7 @@ class TestJournal():
                             'archived_reviewers': True,
                             'expert_reviewers': True,
                             'external_reviewers': True,
+                            'expertise_model': 'specter+mfr',
                             'official_recommendation_additional_fields': {
                                 'pilot_recommendation_to_iclr_track': {
                                     'order': 98,
@@ -365,6 +367,7 @@ class TestJournal():
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
         note_id_1=submission_note_1['note']['id']
+        assert submission_note_1['note']['license'] == 'CC BY-SA 4.0'
 
         messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLR] New submission to TMLR: Paper title')
         assert len(messages) == 0
@@ -392,7 +395,7 @@ class TestJournal():
 
 Thank you for submitting your work titled "Paper title" to TMLR.
 
-Before the review process starts, you need to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
+Before the review process starts, you need to submit three or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
 
 To do so, please follow this link: https://openreview.net/invitation?id=TMLR/Paper1/Action_Editors/-/Recommendation or check your tasks in the Author Console: https://openreview.net/group?id=TMLR/Authors
 
@@ -417,7 +420,15 @@ The TMLR Editors-in-Chief
         assert note.content['venue']['value'] == 'Submitted to TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Submitted'
 
-        assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Official_Comment")
+        invitation = openreview_client.get_invitation(f"{venue_id}/Paper1/-/Official_Comment")
+        assert invitation.edit['note']['readers']['param']['enum'] == [
+            "everyone",
+            "TMLR/Editors_In_Chief",
+            "TMLR/Paper1/Action_Editors",
+            "TMLR/Paper1/Reviewers",
+            "TMLR/Paper1/Reviewer_.*",
+            "TMLR/Paper1/Authors"
+        ]
 
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
         assert len(invitations) == 10, ", ".join([i.id for i in invitations])

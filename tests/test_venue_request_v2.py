@@ -1156,6 +1156,7 @@ class TestVenueRequest():
         #check co-author email
         messages = client.get_messages(to='venue_author_v2@mail.com', subject="TestVenue@OR'2030V2 has received your submission titled test submission 2")
         assert messages and len(messages) == 1
+        assert messages[0]['content']['replyTo'] == 'test@mail.com'
         assert 'If you have any questions, please contact the PCs at test@mail.com' in messages[0]['content']['text']
         assert 'If you are not an author of this submission and would like to be removed, please contact the author who added you at venue_author_v2_2@mail.com' in messages[0]['content']['text']
 
@@ -1839,7 +1840,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert invitation.edit['note']['forum'] == review_note['note']['forum']
         assert invitation.edit['note']['replyto'] == review_note['note']['id']
 
-    def test_review_rating(self, client, helpers, venue, openreview_client):
+    def test_review_revision(self, client, helpers, venue, openreview_client):
 
         venue = openreview.get_conference(client, venue['request_form_note'].id, support_user='openreview.net/Support')
 
@@ -1874,7 +1875,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                             }
                         },
                         'readers': [
-                            "V2.cc/2030/Conference",
+                            "V2.cc/2030/Conference/Program_Chairs",
                             "V2.cc/2030/Conference/Submission${7/content/noteNumber/value}/Area_Chairs",
                             "${5/signatures}"
                         ]
@@ -1893,6 +1894,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Official_Review1/-/Review_Revision')
         assert invitation and anon_group_id in invitation.invitees
+        assert 'readers' in invitation.edit['note']['content']['final_review_rating']
 
         review = reviewer_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review', sort='number:asc')[0]
         assert review.readers == ['V2.cc/2030/Conference/Program_Chairs',
@@ -1901,6 +1903,9 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                                   'V2.cc/2030/Conference/Submission1/Reviewers',
                                   'V2.cc/2030/Conference/Submission1/Authors']
         assert 'readers' in review.content['review_rating']
+
+        assert invitation.edit['note']['forum'] == review.forum
+        assert invitation.edit['note']['id'] == review.id
 
         review_revision = reviewer_client.post_note_edit(
             invitation='V2.cc/2030/Conference/Submission1/Official_Review1/-/Review_Revision',
@@ -1925,6 +1930,62 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert 'final_review_rating' in review.content
         assert 'readers' in review.content['review_rating']
         assert 'readers' in review.content['final_review_rating']
+        assert review.content['final_review_rating']['readers'] == [
+            "V2.cc/2030/Conference/Program_Chairs",
+            "V2.cc/2030/Conference/Submission1/Area_Chairs",
+            anon_group_id]
+
+        ## Test release of final_review_rating
+        venue.custom_stage = openreview.stages.CustomStage(name='Review_Revision',
+            reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            reply_type=openreview.stages.CustomStage.ReplyType.REVISION,
+            due_date=due_date,
+            exp_date=due_date + datetime.timedelta(days=1),
+            invitees=[openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED],
+            content={
+                'final_review_rating': {
+                        'order': 1,
+                        'value': {
+                            'param': {
+                                'type': 'integer',
+                                'enum': [
+                                    { 'value': 10, 'description': '10: Top 5% of accepted papers, seminal paper' },
+                                    { 'value': 9, 'description': '9: Top 15% of accepted papers, strong accept' },
+                                    { 'value': 8, 'description': '8: Top 50% of accepted papers, clear accept' },
+                                    { 'value': 7, 'description': '7: Good paper, accept' },
+                                    { 'value': 6, 'description': '6: Marginally above acceptance threshold' },
+                                    { 'value': 5, 'description': '5: Marginally below acceptance threshold' },
+                                    { 'value': 4, 'description': '4: Ok but not good enough - rejection' },
+                                    { 'value': 3, 'description': '3: Clear rejection' },
+                                    { 'value': 2, 'description': '2: Strong rejection' },
+                                    { 'value': 1, 'description': '1: Trivial or wrong' }
+                                ],
+                                'input': 'radio'
+                            }
+                        },
+                        'readers': {
+                            "delete": True
+                        }
+                    }
+            },
+            allow_de_anonymization=False)
+
+        venue.create_custom_stage()
+        
+        invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Official_Review1/-/Review_Revision')
+        assert 'readers' not in invitation.edit['note']['content']['final_review_rating']
+        
+        anon_groups = reviewer_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Reviewer_', signatory='~VenueThree_Reviewer1')
+        anon_group_id = anon_groups[0].id
+
+        review = reviewer_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review', sort='number:asc')[0]
+        assert 'final_review_rating' in review.content
+        assert 'readers' not in review.content['final_review_rating']
+
+        edits = openreview_client.get_note_edits(review.id)
+        assert edits[0].note.content['final_review_rating']['readers'] == { 'delete': True }
+        assert edits[0].readers == ['V2.cc/2030/Conference', anon_group_id ]
 
     def test_custom_stage(self, client, test_client, helpers, venue, openreview_client):
 
@@ -1974,6 +2035,12 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert 'review_quality' in invitation.edit['note']['content']
         assert invitation.edit['note']['forum'] == submissions[0].id
         assert invitation.edit['note']['replyto'] == reviews[0]['id']
+        assert invitation.edit['note']['id'] == {
+            'param': {
+                'withInvitation': 'V2.cc/2030/Conference/Submission1/Official_Review1/-/Author_Review_Rating',
+                'optional': True
+            }
+        }
         assert invitation.edit['note']['readers'] == [
             'V2.cc/2030/Conference/Program_Chairs',
             '${3/signatures}'
@@ -2423,6 +2490,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             to='venue_author_v2@mail.com',
             subject="[TestVenue@OR'2030V2] Decision posted to your submission - Paper Number: 1, Paper Title: \"test submission\"")
         assert messages and len(messages) == 1
+        assert messages[0]['content']['replyTo'] == 'test@mail.com'
         assert messages[0]['content']['text'] == f'''To view the decision, click here: https://openreview.net/forum?id={submission.id}&noteId={decision_note['note']['id']}'''
 
         with open(os.path.join(os.path.dirname(__file__), 'data/decisions_more.csv'), 'w') as file_handle:

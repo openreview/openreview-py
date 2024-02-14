@@ -638,6 +638,7 @@ class InvitationBuilder(object):
                     'readers': ['everyone'],
                     'writers': [venue_id],
                     'invitees': [venue_id, self.venue.get_area_chairs_id(number='${3/content/noteNumber/value}')],
+                    'noninvitees': [self.venue.get_authors_id(number='${3/content/noteNumber/value}')] + ([self.venue.get_secondary_area_chairs_id('${3/content/noteNumber/value}')] if self.venue.use_secondary_area_chairs else []),
                     'maxReplies': 1,
                     'cdate': meta_review_cdate,
                     'process': '''def process(client, edit, invitation):
@@ -902,7 +903,9 @@ class InvitationBuilder(object):
                 head = {
                     'param': {
                         'type': 'profile',
-                        'inGroup': venue.get_area_chairs_id()
+                        'options': {
+                            'group': venue.get_area_chairs_id()
+                        }
                     }
                 }
 
@@ -959,8 +962,10 @@ class InvitationBuilder(object):
                     'tail': {
                         'param': {
                             'type': 'profile',
-                            'inGroup': match_group_id
-                        }
+                            'options': {
+                                'group': match_group_id
+                            }
+                        },
                     },
                     'label': {
                         'param': {
@@ -2040,6 +2045,12 @@ class InvitationBuilder(object):
         if custom_stage_reply_type == 'reply':
             paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, number='${2/content/noteNumber/value}')
             with_invitation = self.venue.get_invitation_id(name=custom_stage.name, number='${6/content/noteNumber/value}')
+            note_id = {
+                'param': {
+                    'withInvitation': with_invitation,
+                    'optional': True
+                }
+            }
             edit_readers = ['${2/note/readers}']
             note_readers = custom_stage.get_readers(self.venue, '${5/content/noteNumber/value}')
             invitees = custom_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}')
@@ -2064,10 +2075,16 @@ class InvitationBuilder(object):
             submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${6/content/noteNumber/value}/'
             reply_prefix = stage_name + '${6/content/replyNumber/value}'
             with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix=submission_prefix+reply_prefix)
+            note_id = {
+                'param': {
+                    'withInvitation': with_invitation,
+                    'optional': True
+                }
+            }
             reply_to = '${4/content/replyto/value}'
 
             if custom_stage_reply_type == 'revision':
-                with_invitation = self.venue.get_invitation_id(name=stage_name, number='${6/content/noteNumber/value}')
+                note_id = '${4/content/replyto/value}'
                 reply_to = None
                 edit_readers = [venue_id, '${2/signatures}']
                 note_readers = None
@@ -2141,12 +2158,7 @@ class InvitationBuilder(object):
                         'readers': edit_readers,
                         'writers': [venue_id],
                         'note': {
-                            'id': {
-                                'param': {
-                                    'withInvitation': with_invitation,
-                                    'optional': True
-                                }
-                            },
+                            'id': note_id,
                             'forum': '${4/content/noteId/value}',
                             'ddate': {
                                 'param': {
@@ -2458,7 +2470,9 @@ class InvitationBuilder(object):
                     'tail': {
                         'param': {
                             'type': 'profile',
-                            'inGroup': committee_id
+                            'options': {
+                                'group': committee_id
+                            }
                         }
                     },
                     'label': {

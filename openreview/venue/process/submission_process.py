@@ -7,6 +7,7 @@ def process(client, edit, invitation):
     authors_name = domain.content['authors_name']['value']
     submission_name = domain.content['submission_name']['value']
     short_phrase = domain.content['subtitle']['value']
+    contact = domain.content['contact']['value']
     submission_email = domain.content['submission_email_template']['value']
     email_pcs = domain.content['submission_email_pcs']['value']
     program_chairs_id = domain.content['program_chairs_id']['value']
@@ -121,7 +122,8 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
         client.post_message(
             subject=author_subject,
             message=author_message,
-            recipients=[edit.tauthor]
+            recipients=[edit.tauthor],
+            replyTo=contact
         )
 
     # send co-author emails
@@ -131,7 +133,8 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
             subject=author_subject,
             message=author_message,
             recipients=note.content['authorids']['value'],
-            ignoreRecipients=[edit.tauthor]
+            ignoreRecipients=[edit.tauthor],
+            replyTo=contact
         )
 
     if email_pcs:
