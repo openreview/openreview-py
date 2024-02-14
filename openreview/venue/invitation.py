@@ -319,6 +319,8 @@ class InvitationBuilder(object):
         
         content = review_stage.get_content(api_version='2', conference=self.venue)
 
+        content_query = review_stage.content_query
+
         invitation = Invitation(id=review_invitation_id,
             invitees=[venue_id],
             readers=[venue_id],
@@ -332,6 +334,9 @@ class InvitationBuilder(object):
             content={
                 'review_process_script': {
                     'value': self.get_process_content('process/review_process.py')
+                },
+                'content_query': {
+                    'value': content_query
                 }
             },
             edit={

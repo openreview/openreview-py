@@ -539,7 +539,8 @@ class ReviewStage(object):
         remove_fields = [],
         rating_field_name = 'rating',
         confidence_field_name = 'confidence',
-        process_path = None
+        process_path = None,
+        content_query = {}
     ):
 
         self.start_date = start_date
@@ -558,6 +559,7 @@ class ReviewStage(object):
         self.rating_field_name = rating_field_name
         self.confidence_field_name = confidence_field_name
         self.process_path = process_path
+        self.content_query = content_query
 
     def _get_reviewer_readers(self, conference, number, review_signature=None):
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
