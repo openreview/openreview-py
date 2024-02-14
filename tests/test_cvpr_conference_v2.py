@@ -926,3 +926,22 @@ class TestCVPRConference():
         assert 'award_candidate' in meta_review.content
 
         assert meta_review.content['metareview']['value'] == 'Revised comment title'
+
+        # Secondary AC can't post meta review revision
+        secondary_ac_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)
+        secondary_ac_anon_group_id = secondary_ac_client.get_groups(prefix=f'thecvf.com/CVPR/2024/Conference/Submission4/Secondary_Area_Chair_.*', signatory='ac1@cvpr.cc')[0].id
+
+        with pytest.raises(openreview.OpenReviewException, match=r'signatures can only contain the allowed values: thecvf.com/CVPR/2024/Conference/Program_Chairs, thecvf.com/CVPR/2024/Conference/Submission4/Area_Chair_.*'):
+            meta_review_revision = ac2_client.post_note_edit(
+                invitation='thecvf.com/CVPR/2024/Conference/Submission4/Meta_Review1/-/Meta_Review_Revision',
+                signatures=[secondary_ac_anon_group_id],
+                note=openreview.api.Note(
+                    id=meta_review.id,
+                    content={
+                        'metareview': { 'value': 'Revised comment title by secondary ac' },
+                        'final_recommendation': { 'value': 'Reject' },
+                        'select_as_highlight_or_oral': { 'value': 'No' },
+                        'award_candidate': { 'value': 'No' }
+                    }
+                )
+            )
