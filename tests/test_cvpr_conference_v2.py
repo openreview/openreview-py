@@ -489,12 +489,12 @@ class TestCVPRConference():
                     'description': 'How helpful is this review? Please refer to the reviewer guidelines: https://cvpr.thecvf.com/Conferences/2024/ReviewerGuidelines',
                     'value': {
                         'param': {
-                            'type': 'string',
+                            'type': 'integer',
                             'input': 'radio',
                             'enum': [
-                                "0: below expectations",
-                                "1: meets expectations",
-                                "2: exceeds expectations"
+                                { 'value': 0, 'description': '0: below expectations' },
+                                { 'value': 1, 'description': '1: meets expectations' },
+                                { 'value': 2, 'description': '2: exceeds expectations' }
                             ]
                         }
                     }
@@ -577,7 +577,7 @@ class TestCVPRConference():
             signatures=[ac_anon_group_id],
             note=openreview.api.Note(
                 content={
-                    'rating': { 'value': "0: below expectations" },
+                    'rating': { 'value': 0 },
                     'rating_justification': { 'value': 'This review is not helpful.' }
                 }
             )
@@ -593,7 +593,7 @@ class TestCVPRConference():
             signatures=[ac_anon_group_id],
             note=openreview.api.Note(
                 content={
-                    'rating': { 'value': "2: exceeds expectations" },
+                    'rating': { 'value': 2 },
                 }
             )
         )
