@@ -1313,12 +1313,13 @@ class CustomStage(object):
         SENIOR_AREA_CHAIRS_ASSIGNED = 2
         AREA_CHAIRS = 3
         AREA_CHAIRS_ASSIGNED = 4
-        REVIEWERS = 5
-        REVIEWERS_ASSIGNED = 6
-        REVIEWERS_SUBMITTED = 7
-        AUTHORS = 8
-        ETHICS_CHAIRS = 9
-        ETHICS_REVIEWERS_ASSIGNED = 10
+        SECONDARY_AREA_CHAIRS = 5
+        REVIEWERS = 6
+        REVIEWERS_ASSIGNED = 7
+        REVIEWERS_SUBMITTED = 8
+        AUTHORS = 9
+        ETHICS_CHAIRS = 10
+        ETHICS_REVIEWERS_ASSIGNED = 11
 
     class Source(Enum):
         ALL_SUBMISSIONS = 0
@@ -1363,6 +1364,9 @@ class CustomStage(object):
         if conference.use_area_chairs and self.Participants.AREA_CHAIRS_ASSIGNED in self.invitees:
             invitees.append(conference.get_area_chairs_id(number))
 
+        if conference.use_secondary_area_chairs and self.Participants.SECONDARY_AREA_CHAIRS in self.invitees:
+            invitees.append(conference.get_secondary_area_chairs_id(number))
+
         if self.Participants.REVIEWERS_ASSIGNED in self.invitees:
             invitees.append(conference.get_reviewers_id(number))
 
@@ -1379,6 +1383,14 @@ class CustomStage(object):
             invitees.append(conference.get_ethics_reviewers_id(number))
 
         return invitees
+    
+    def get_noninvitees(self, conference, number):
+        noninvitees = []
+
+        if conference.use_area_chairs and self.Participants.AREA_CHAIRS_ASSIGNED in self.invitees and conference.use_secondary_area_chairs and self.Participants.SECONDARY_AREA_CHAIRS not in self.invitees:
+            noninvitees.append(conference.get_secondary_area_chairs_id(number))
+
+        return noninvitees
 
     def get_readers(self, conference, number):
         readers = [conference.get_program_chairs_id()]
@@ -1411,6 +1423,14 @@ class CustomStage(object):
             readers.append('${3/signatures}')
 
         return readers
+    
+    def get_nonreaders(self, conference, number):
+        nonreaders = []
+
+        if conference.use_area_chairs and self.Participants.AREA_CHAIRS_ASSIGNED in self.readers and conference.use_secondary_area_chairs and self.Participants.SECONDARY_AREA_CHAIRS not in self.readers:
+            nonreaders.append(conference.get_secondary_area_chairs_id(number))
+
+        return nonreaders
 
     def get_signatures(self, conference, number):
         if self.allow_de_anonymization:
