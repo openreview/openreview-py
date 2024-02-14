@@ -12,7 +12,8 @@ if (args.event) {
     options: {
       postQuery: {
         'content.event_certifications': args.event
-      }
+      },
+      pageSize: 1000
     }
   })
 }
@@ -26,7 +27,6 @@ return {
       subtitle: `Event certification ${utils.prettyId(args.event)}`
     },
     parentGroupId: entity.parent,
-    apiVersion: 2,
     tabs: tabs
   }
 }

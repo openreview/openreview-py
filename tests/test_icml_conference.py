@@ -14,8 +14,8 @@ class TestICMLConference():
 
 
     @pytest.fixture(scope="class")
-    def profile_management(self, client):
-        profile_management = ProfileManagement(client, 'openreview.net')
+    def profile_management(self, openreview_client):
+        profile_management = ProfileManagement(openreview_client, 'openreview.net')
         profile_management.setup()
         return profile_management
 
@@ -26,9 +26,12 @@ class TestICMLConference():
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@icml.cc', 'Program', 'ICMLChair')
+        helpers.create_user('pc@icml.cc', 'Program', 'ICMLChair')
+        pc_client = openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
+
 
         sac_client = helpers.create_user('sac1@gmail.com', 'SAC', 'ICMLOne')
+
         helpers.create_user('sac2@icml.cc', 'SAC', 'ICMLTwo')
         helpers.create_user('ac1@icml.cc', 'AC', 'ICMLOne')
         helpers.create_user('ac2@icml.cc', 'AC', 'ICMLTwo')
@@ -55,6 +58,7 @@ class TestICMLConference():
                 'Official Website URL': 'https://icml.cc',
                 'program_chair_emails': ['pc@icml.cc'],
                 'contact_email': 'pc@icml.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
@@ -71,7 +75,8 @@ class TestICMLConference():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
-                'api_version': '2'
+                'api_version': '2',
+                'submission_license': ['CC BY 4.0']
             }))
 
         helpers.await_queue()
@@ -104,30 +109,33 @@ class TestICMLConference():
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Expertise_Selection')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Senior_Area_Chairs/-/Expertise_Selection')
 
-        sac_client.post_note(openreview.Note(
+        sac_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
-            readers = ['everyone'],
-            signatures = ['~SAC_ICMLOne1'],
-            writers = ['~SAC_ICMLOne1'],
-            content = {
-                'title': 'Paper title 1',
-                'abstract': 'Paper abstract 1',
-                'authors': ['SAC ICML', 'Test2 Client'],
-                'authorids': ['~SAC_ICMLOne1', 'test2@mail.com']
-            }
+            signatures=['~SAC_ICMLOne1'],
+            note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                content = {
+                    'title': { 'value': 'Paper title 1' },
+                    'abstract': { 'value': 'Paper abstract 1' },
+                    'authors': { 'value': ['SAC ICML', 'Test2 Client'] },
+                    'authorids': { 'value': ['~SAC_ICMLOne1', 'test2@mail.com'] },
+                    'venue': { 'value': 'Arxiv' }
+                },
+                license = 'CC BY-SA 4.0'
         ))
 
-        sac_client.post_note(openreview.Note(
+        sac_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
-            readers = ['everyone'],
-            signatures = ['~SAC_ICMLOne1'],
-            writers = ['~SAC_ICMLOne1'],
-            content = {
-                'title': 'Paper title 2',
-                'abstract': 'Paper abstract 2',
-                'authors': ['SAC ICML', 'Test2 Client'],
-                'authorids': ['~SAC_ICMLOne1', 'test2@mail.com']
-            }
+            signatures=['~SAC_ICMLOne1'],
+            note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                content = {
+                    'title': { 'value': 'Paper title 2' },
+                    'abstract': { 'value': 'Paper abstract 2' },
+                    'authors': { 'value': ['SAC ICML', 'Test2 Client'] },
+                    'authorids': { 'value': ['~SAC_ICMLOne1', 'test2@mail.com'] }
+                },
+                license = 'CC BY-SA 4.0'
         ))
 
         pc_client.post_note(openreview.Note(
@@ -145,6 +153,7 @@ class TestICMLConference():
                 'Official Website URL': 'https://icml.cc',
                 'program_chair_emails': ['pc@icml.cc'],
                 'contact_email': 'pc@icml.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
@@ -242,9 +251,10 @@ class TestICMLConference():
                 'Official Website URL': 'https://icml.cc',
                 'program_chair_emails': ['pc@icml.cc', 'pc2@icml.cc'],
                 'contact_email': 'pc@icml.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
-                'Submission Start Date': now.strftime('%Y/%m/%d'),
-                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Submission Start Date': now.strftime('%Y/%m/%d %H:%M'),
+                'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
@@ -296,6 +306,12 @@ class TestICMLConference():
         pc_group = pc_client.get_group('ICML.cc/2023/Conference/Program_Chairs')
         assert ['pc@icml.cc', 'pc2@icml.cc'] == pc_group.members
 
+        submission_start = now.strftime('%b %d %Y %I:%M%p')
+        submission_end = due_date.strftime('%b %d %Y %I:%M%p')
+        group_content = openreview_client.get_group('ICML.cc/2023/Conference').content
+        assert 'date' in group_content
+        assert group_content['date']['value'] == f"Submission Start: {submission_start} UTC-0, Submission Deadline: {submission_end} UTC-0"
+
         pc_client.post_note(openreview.Note(
             content={
                 'title': 'Thirty-ninth International Conference on Machine Learning',
@@ -304,6 +320,7 @@ class TestICMLConference():
                 'Official Website URL': 'https://icml.cc',
                 'program_chair_emails': ['pc@icml.cc', 'pc3@icml.cc'],
                 'contact_email': 'pc@icml.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
@@ -624,7 +641,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
         assert 'profile_confirmed' not in invitation.edit['note']['content']
         assert 'expertise_confirmed' not in invitation.edit['note']['content']
 
-    def test_submissions(self, client, openreview_client, helpers, test_client):
+    def test_submissions(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
@@ -719,7 +736,38 @@ reviewer6@gmail.com, Reviewer ICMLSix
         for i in range(1,101):
             assert f'ICML.cc/2023/Conference/Submission{i}/Authors' in authors_group.members
 
-    def test_post_submission(self, client, openreview_client, helpers):
+        # assert authors see Submission button to edit their submissions
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), test_client.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+        note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
+        assert note_div
+        button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
+        assert button_row
+        buttons = button_row.find_elements(By.CLASS_NAME, 'btn-xs')
+        assert buttons[0].text == 'Edit  '
+        buttons[0].click()
+        time.sleep(0.5)
+        dropdown = button_row.find_element(By.CLASS_NAME, 'dropdown-menu')
+        dropdown_values = dropdown.find_elements(By.TAG_NAME, "a")
+        values = [value.text for value in dropdown_values]
+        assert ['Submission'] == values
+
+        # assert PCs can also see Submission button to edit submissions
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), pc_client_v2.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+        note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
+        assert note_div
+        button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
+        assert button_row
+        buttons = button_row.find_elements(By.CLASS_NAME, 'btn-xs')
+        assert buttons[0].text == 'Edit  '
+        buttons[0].click()
+        time.sleep(0.5)
+        dropdown = button_row.find_element(By.CLASS_NAME, 'dropdown-menu')
+        dropdown_values = dropdown.find_elements(By.TAG_NAME,"a")
+        values = [value.text for value in dropdown_values]
+        assert ['Submission', 'Post Submission', 'PC Revision'] == values
+
+    def test_post_submission(self, client, openreview_client, test_client, helpers, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -728,6 +776,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
         ## close the submissions
         now = datetime.datetime.utcnow()
         due_date = now - datetime.timedelta(days=1)
+        exp_date = now + datetime.timedelta(days=10)
         pc_client.post_note(openreview.Note(
             content={
                 'title': 'Thirty-ninth International Conference on Machine Learning',
@@ -736,6 +785,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
                 'Official Website URL': 'https://icml.cc',
                 'program_chair_emails': ['pc@icml.cc', 'pc3@icml.cc'],
                 'contact_email': 'pc@icml.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
@@ -796,8 +846,8 @@ reviewer6@gmail.com, Reviewer ICMLSix
                             }
                         }
                     }
-                }
-
+                },
+                'withdraw_submission_expiration': exp_date.strftime('%Y/%m/%d')
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
@@ -810,12 +860,29 @@ reviewer6@gmail.com, Reviewer ICMLSix
 
         helpers.await_queue()
 
+        submissions = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
+        submission = submissions[0]
+
+        # assert authors don't see Submission button anymore
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), test_client.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+        note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
+        assert note_div
+        button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
+        assert button_row
+        buttons = button_row.find_elements(By.CLASS_NAME, 'btn-xs')
+        assert len(buttons) == 0
+
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
         submission_invitation = pc_client_v2.get_invitation('ICML.cc/2023/Conference/-/Submission')
         assert submission_invitation.expdate < openreview.tools.datetime_millis(now)
 
         assert len(pc_client_v2.get_all_invitations(invitation='ICML.cc/2023/Conference/-/Withdrawal')) == 101
+        withdrawal_inv = pc_client_v2.get_invitation('ICML.cc/2023/Conference/Submission1/-/Withdrawal')
+        assert withdrawal_inv.expdate == openreview.tools.datetime_millis(exp_date.replace(hour=0, minute=0, second=0, microsecond=0))
         assert len(pc_client_v2.get_all_invitations(invitation='ICML.cc/2023/Conference/-/Desk_Rejection')) == 101
+        desk_reject_inv = pc_client_v2.get_invitation('ICML.cc/2023/Conference/Submission1/-/Desk_Rejection')
+        desk_reject_due_date = due_date + datetime.timedelta(days=90)
+        assert desk_reject_inv.expdate == openreview.tools.datetime_millis(desk_reject_due_date.replace(hour=0, minute=0, second=0, microsecond=0))
         assert pc_client_v2.get_invitation('ICML.cc/2023/Conference/-/PC_Revision')
 
         ## make submissions visible to ACs only
@@ -995,11 +1062,12 @@ reviewer6@gmail.com, Reviewer ICMLSix
 
         messages = openreview_client.get_messages(to = 'melisa@yahoo.com', subject = 'ICML 2023 has received a new revision of your submission titled Paper title 1 Version 2')
         assert len(messages) == 1
+        assert messages[0]['content']['replyTo'] == 'pc@icml.cc'
         assert messages[0]['content']['text'] == f'''Your new revision of the submission to ICML 2023 has been posted.
 
 Title: Paper title 1 Version 2
 
-Abstract This is an abstract 1
+Abstract: This is an abstract 1
 
 To view your submission, click here: https://openreview.net/forum?id={submission.id}'''
 
@@ -1139,8 +1207,10 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
         helpers.await_queue()
 
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Bid')
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Bid')
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Bid')
+        assert invitation.edit['tail']['param']['options']['group'] == 'ICML.cc/2023/Conference/Area_Chairs'
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Bid')
+        assert invitation.edit['tail']['param']['options']['group'] == 'ICML.cc/2023/Conference/Reviewers'
 
         ## Hide the pdf and supplementary material
         pc_client.post_note(openreview.Note(
@@ -1287,6 +1357,16 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                 label = 'ac-matching'
             ))
 
+        # post duplicate AC Proposed_Assignment edge
+        openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'ICML.cc/2023/Conference/Area_Chairs/-/Proposed_Assignment',
+                head = submissions[0].id,
+                tail = '~AC_ICMLOne1',
+                signatures = ['ICML.cc/2023/Conference/Program_Chairs'],
+                weight = 1,
+                label = 'ac-matching'
+            ))
+
         for i in range(20,40):
             for r in ['~Reviewer_ICMLTwo1', '~Reviewer_ICMLThree1', '~Reviewer_ICMLFour1']:
                 reviewers_proposed_edges.append(openreview.api.Edge(
@@ -1396,6 +1476,26 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission100/Senior_Area_Chairs')
         assert ['~SAC_ICMLOne1'] == sac_group.members
 
+        assignment_edges = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Assignment', head=submissions[0].id, tail='~AC_ICMLOne1')
+        assert assignment_edges and len(assignment_edges) == 2
+
+        # remove duplicate edge and make sure assignment still remains
+        assignment_edge = assignment_edges[0]
+        assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assignment_edge.cdate = None
+        edge = pc_client_v2.post_edge(assignment_edge)
+
+        helpers.await_queue_edit(openreview_client, edit_id=edge.id)
+
+        ac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Area_Chairs')
+        assert ['~AC_ICMLOne1'] == ac_group.members
+
+        sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs')
+        assert ['~SAC_ICMLOne1'] == sac_group.members
+
+        assignment_edges = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Assignment', head=submissions[0].id, tail='~AC_ICMLOne1')
+        assert assignment_edges and len(assignment_edges) == 1
+
         ### Reviewers reassignment of proposed assignments
 
         now = datetime.datetime.utcnow()
@@ -1435,6 +1535,17 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
         anon_group_id = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLOne1')[0].id
 
+        ## add a reviewer with max quota an get an error
+        with pytest.raises(openreview.OpenReviewException, match=r'Max Papers allowed reached for Reviewer ICMLFive'):
+            ac_client.post_edge(
+                openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment',
+                    signatures=[anon_group_id],
+                    head=submissions[0].id,
+                    tail='~Reviewer_ICMLFive1',
+                    label='reviewer-matching',
+                    weight=1
+            ))        
+        
         ## recruit external reviewer
         with pytest.raises(openreview.OpenReviewException, match=r'the user has a conflict'):
             ac_client.post_edge(
@@ -1545,7 +1656,7 @@ OpenReview Team'''
         openreview.venue.Venue.check_new_profiles(openreview_client)
 
         ## External reviewer creates a profile and accepts the invitation again
-        external_reviewer=helpers.create_user('melisa@icml.cc', 'Melisa', 'ICML')
+        helpers.create_user('melisa@icml.cc', 'Melisa', 'ICML')
 
         ## Run Job
         openreview.venue.Venue.check_new_profiles(openreview_client)
@@ -1583,6 +1694,10 @@ OpenReview Team'''
         assert not openreview_client.get_groups('ICML.cc/2023/Conference/Reviewers', member='melisa@icml.cc')
 
         venue.set_assignments(assignment_title='reviewer-matching', committee_id='ICML.cc/2023/Conference/Reviewers', enable_reviewer_reassignment=True)
+
+        # Check that deploying assignments removes reviewers_proposed_assignment_title
+        venue_group = pc_client_v2.get_group('ICML.cc/2023/Conference')
+        assert 'reviewers_proposed_assignment_title' not in venue_group.content
 
         proposed_recruitment_inv = openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment_Recruitment')
         assert proposed_recruitment_inv.expdate and proposed_recruitment_inv.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
@@ -1641,20 +1756,7 @@ OpenReview Team'''
         sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission100/Senior_Area_Chairs')
         assert ['~SAC_ICMLTwo1'] == sac_group.members
 
-        ## Change assigned AC
-        assignment_edge = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Assignment', head=submissions[0].id, tail='~AC_ICMLOne1')[0]
-        assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        assignment_edge.cdate = None
-        edge = pc_client_v2.post_edge(assignment_edge)
-
-        helpers.await_queue_edit(openreview_client, edit_id=edge.id)
-
-        ac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Area_Chairs')
-        assert [] == ac_group.members
-
-        sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs')
-        assert [] == sac_group.members
-
+        ## Change assigned AC, add new AC first and then remove old AC
         edge = pc_client_v2.post_edge(openreview.api.Edge(
             invitation = 'ICML.cc/2023/Conference/Area_Chairs/-/Assignment',
             head = submissions[0].id,
@@ -1662,6 +1764,19 @@ OpenReview Team'''
             signatures = ['ICML.cc/2023/Conference/Program_Chairs'],
             weight = 1
         ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=edge.id)
+
+        ac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Area_Chairs')
+        assert ['~AC_ICMLOne1', '~AC_ICMLTwo1'] == ac_group.members
+
+        sac_group = pc_client_v2.get_group('ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs')
+        assert ['~SAC_ICMLOne1','~SAC_ICMLTwo1'] == sac_group.members
+
+        assignment_edge = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Assignment', head=submissions[0].id, tail='~AC_ICMLOne1')[0]
+        assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assignment_edge.cdate = None
+        edge = pc_client_v2.post_edge(assignment_edge)
 
         helpers.await_queue_edit(openreview_client, edit_id=edge.id)
 
@@ -1683,8 +1798,7 @@ OpenReview Team'''
             group = openreview.api.Group(
                 id = 'ICML.cc/2023/Conference',
                 content = {
-                    'enable_reviewers_reassignment': { 'value': True },
-                    'reviewers_proposed_assignment_title': { 'value': { 'delete': True } }
+                    'enable_reviewers_reassignment': { 'value': True }
                 }
             )
         )
@@ -1757,7 +1871,7 @@ Confirmation of the assignment is pending until the invited reviewer creates a p
 OpenReview Team'''
 
         ## External reviewer creates a profile and accepts the invitation again
-        external_reviewer=helpers.create_user('carlos@icml.cc', 'Carlos', 'ICML', institution='amazon.com')
+        helpers.create_user('carlos@icml.cc', 'Carlos', 'ICML', institution='amazon.com')
 
         ## Run Job
         openreview.venue.Venue.check_new_profiles(openreview_client)
@@ -1818,7 +1932,7 @@ OpenReview Team'''
         helpers.await_queue(openreview_client)
 
         ## External reviewer creates a profile and accepts the invitation again
-        external_reviewer=helpers.create_user('celeste@icml.cc', 'Celeste', 'ICML')
+        helpers.create_user('celeste@icml.cc', 'Celeste', 'ICML')
 
         ## Run Job
         openreview.venue.Venue.check_new_profiles(openreview_client)
@@ -1852,6 +1966,7 @@ OpenReview Team'''
 
         messages = openreview_client.get_messages(to='celeste@icml.cc', subject='[ICML 2023] You have been assigned as a Reviewer for paper number 1')
         assert messages and len(messages) == 1
+        assert messages[0]['content']['replyTo'] == 'pc@icml.cc'
         assert messages[0]['content']['text'] == f'''This is to inform you that you have been assigned as a Reviewer for paper number 1 for ICML 2023.
 
 To review this new assignment, please login to OpenReview and go to https://openreview.net/forum?id={submissions[0].id}.
@@ -2015,7 +2130,7 @@ ICML 2023 Conference Program Chairs'''
         sac_group = pc_client.get_group('ICML.cc/2023/Conference/Submission11/Senior_Area_Chairs')
         assert [] == sac_group.members
 
-    def test_review_stage(self, client, openreview_client, helpers):
+    def test_review_stage(self, client, openreview_client, helpers, selenium, request_page):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -2205,18 +2320,18 @@ ICML 2023 Conference Program Chairs'''
                         "description": "Please provide an \"overall score\" for this submission.",
                         "value": {
                             "param": {
-                                "type": "string",
+                                "type": 'integer',
                                 "enum": [
-                                    "10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.",
-                                    "9: Very Strong Accept: Technically flawless paper with groundbreaking impact on at least one area of AI/ML and excellent impact on multiple areas of AI/ML, with flawless evaluation, resources, and reproducibility, and no unaddressed ethical considerations.",
-                                    "8: Strong Accept: Technically strong paper, with novel ideas, excellent impact on at least one area, or high-to-excellent impact on multiple areas, with excellent evaluation, resources, and reproducibility, and no unaddressed ethical considerations.",
-                                    "7: Accept: Technically solid paper, with high impact on at least one sub-area, or moderate-to-high impact on more than one areas, with good-to-excellent evaluation, resources, reproducibility, and no unaddressed ethical considerations.",
-                                    "6: Weak Accept: Technically solid, moderate-to-high impact paper, with no major concerns with respect to evaluation, resources, reproducibility, ethical considerations.",
-                                    "5: Borderline accept: Technically solid paper where reasons to accept outweigh reasons to reject, e.g., limited evaluation. Please use sparingly.",
-                                    "4: Borderline reject: Technically solid paper where reasons to reject, e.g., limited evaluation, outweigh reasons to accept, e.g., good evaluation. Please use sparingly.",
-                                    "3: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations.",
-                                    "2: Strong Reject: For instance, a paper with major technical flaws, and/or poor evaluation, limited impact, poor reproducibility and mostly unaddressed ethical considerations.",
-                                    "1: Very Strong Reject: For instance, a paper with trivial results or unaddressed ethical considerations"
+                                    { 'value': 10, 'description': "10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations." },
+                                    { 'value': 9, 'description': "9: Very Strong Accept: Technically flawless paper with groundbreaking impact on at least one area of AI/ML and excellent impact on multiple areas of AI/ML, with flawless evaluation, resources, and reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 8, 'description': "8: Strong Accept: Technically strong paper, with novel ideas, excellent impact on at least one area, or high-to-excellent impact on multiple areas, with excellent evaluation, resources, and reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 7, 'description': "7: Accept: Technically solid paper, with high impact on at least one sub-area, or moderate-to-high impact on more than one areas, with good-to-excellent evaluation, resources, reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 6, 'description': "6: Weak Accept: Technically solid, moderate-to-high impact paper, with no major concerns with respect to evaluation, resources, reproducibility, ethical considerations." },
+                                    { 'value': 5, 'description': "5: Borderline accept: Technically solid paper where reasons to accept outweigh reasons to reject, e.g., limited evaluation. Please use sparingly." },
+                                    { 'value': 4, 'description': "4: Borderline reject: Technically solid paper where reasons to reject, e.g., limited evaluation, outweigh reasons to accept, e.g., good evaluation. Please use sparingly." },
+                                    { 'value': 3, 'description': "3: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations." },
+                                    { 'value': 2, 'description': "2: Strong Reject: For instance, a paper with major technical flaws, and/or poor evaluation, limited impact, poor reproducibility and mostly unaddressed ethical considerations." },
+                                    { 'value': 1, 'description': "1: Very Strong Reject: For instance, a paper with trivial results or unaddressed ethical considerations" }
                                 ],
                                 "input": "radio"
 
@@ -2228,13 +2343,13 @@ ICML 2023 Conference Program Chairs'''
                         "description": "Please provide a \"confidence score\" for your assessment of this submission to indicate how confident you are in your evaluation.",
                         "value": {
                             "param": {
-                                "type": "string",
+                                "type": 'integer',
                                 "enum": [
-                                    "5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.",
-                                    "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work.",
-                                    "3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
-                                    "2: You are willing to defend your assessment, but it is quite likely that you did not understand the central parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
-                                    "1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked."
+                                   { 'value': 5, 'description': "5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully." },
+                                   { 'value': 4, 'description': "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work." },
+                                   { 'value': 3, 'description': "3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked." },
+                                   { 'value': 2, 'description': "2: You are willing to defend your assessment, but it is quite likely that you did not understand the central parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked." },
+                                   { 'value': 1, 'description': "1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked." }
                                 ],
                                 "input": "radio"
                             }
@@ -2424,18 +2539,18 @@ ICML 2023 Conference Program Chairs'''
                         "description": "Please provide an \"overall score\" for this submission.",
                         "value": {
                             "param": {
-                                "type": "string",
+                                "type": 'integer',
                                 "enum": [
-                                    "10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.",
-                                    "9: Very Strong Accept: Technically flawless paper with groundbreaking impact on at least one area of AI/ML and excellent impact on multiple areas of AI/ML, with flawless evaluation, resources, and reproducibility, and no unaddressed ethical considerations.",
-                                    "8: Strong Accept: Technically strong paper, with novel ideas, excellent impact on at least one area, or high-to-excellent impact on multiple areas, with excellent evaluation, resources, and reproducibility, and no unaddressed ethical considerations.",
-                                    "7: Accept: Technically solid paper, with high impact on at least one sub-area, or moderate-to-high impact on more than one areas, with good-to-excellent evaluation, resources, reproducibility, and no unaddressed ethical considerations.",
-                                    "6: Weak Accept: Technically solid, moderate-to-high impact paper, with no major concerns with respect to evaluation, resources, reproducibility, ethical considerations.",
-                                    "5: Borderline accept: Technically solid paper where reasons to accept outweigh reasons to reject, e.g., limited evaluation. Please use sparingly.",
-                                    "4: Borderline reject: Technically solid paper where reasons to reject, e.g., limited evaluation, outweigh reasons to accept, e.g., good evaluation. Please use sparingly.",
-                                    "3: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations.",
-                                    "2: Strong Reject: For instance, a paper with major technical flaws, and/or poor evaluation, limited impact, poor reproducibility and mostly unaddressed ethical considerations.",
-                                    "1: Very Strong Reject: For instance, a paper with trivial results or unaddressed ethical considerations"
+                                    { 'value': 10, 'description': "10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations." },
+                                    { 'value': 9, 'description': "9: Very Strong Accept: Technically flawless paper with groundbreaking impact on at least one area of AI/ML and excellent impact on multiple areas of AI/ML, with flawless evaluation, resources, and reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 8, 'description': "8: Strong Accept: Technically strong paper, with novel ideas, excellent impact on at least one area, or high-to-excellent impact on multiple areas, with excellent evaluation, resources, and reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 7, 'description': "7: Accept: Technically solid paper, with high impact on at least one sub-area, or moderate-to-high impact on more than one areas, with good-to-excellent evaluation, resources, reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 6, 'description': "6: Weak Accept: Technically solid, moderate-to-high impact paper, with no major concerns with respect to evaluation, resources, reproducibility, ethical considerations." },
+                                    { 'value': 5, 'description': "5: Borderline accept: Technically solid paper where reasons to accept outweigh reasons to reject, e.g., limited evaluation. Please use sparingly." },
+                                    { 'value': 4, 'description': "4: Borderline reject: Technically solid paper where reasons to reject, e.g., limited evaluation, outweigh reasons to accept, e.g., good evaluation. Please use sparingly." },
+                                    { 'value': 3, 'description': "3: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations." },
+                                    { 'value': 2, 'description': "2: Strong Reject: For instance, a paper with major technical flaws, and/or poor evaluation, limited impact, poor reproducibility and mostly unaddressed ethical considerations." },
+                                    { 'value': 1, 'description': "1: Very Strong Reject: For instance, a paper with trivial results or unaddressed ethical considerations" }
                                 ],
                                 "input": "radio"
 
@@ -2447,13 +2562,13 @@ ICML 2023 Conference Program Chairs'''
                         "description": "Please provide a \"confidence score\" for your assessment of this submission to indicate how confident you are in your evaluation.",
                         "value": {
                             "param": {
-                                "type": "string",
+                                "type": 'integer',
                                 "enum": [
-                                    "5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.",
-                                    "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work.",
-                                    "3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
-                                    "2: You are willing to defend your assessment, but it is quite likely that you did not understand the central parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
-                                    "1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked."
+                                   { 'value': 5, 'description': "5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully." },
+                                   { 'value': 4, 'description': "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work." },
+                                   { 'value': 3, 'description': "3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked." },
+                                   { 'value': 2, 'description': "2: You are willing to defend your assessment, but it is quite likely that you did not understand the central parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked." },
+                                   { 'value': 1, 'description': "1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked." }
                                 ],
                                 "input": "radio"
                             }
@@ -2512,8 +2627,8 @@ ICML 2023 Conference Program Chairs'''
                     'soundness': { 'value': '3 good'},
                     'presentation': { 'value': '3 good'},
                     'contribution': { 'value': '3 good'},
-                    'rating': { 'value': '10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.'},
-                    'confidence': { 'value': '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.'},
+                    'rating': { 'value': 10 },
+                    'confidence': { 'value': 5 },
                     'code_of_conduct': { 'value': 'Yes'},
                 }
             )
@@ -2526,6 +2641,21 @@ ICML 2023 Conference Program Chairs'''
 
         messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your official review has been received on your assigned Paper number: 1, Paper title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
+        assert messages[0]['content']['replyTo'] == 'pc@icml.cc'
+
+        ## check how the description is rendered
+        note = review_edit['note']
+        review_id = note['id']
+        request_page(selenium, "http://localhost:3030/forum?id=" + review_edit['note']['forum'], openreview_client.token, by=By.ID, wait_for_element='forum-replies')
+        note_panel = selenium.find_element(By.XPATH, f'//div[@data-id="{review_id}"]')
+        fields = note_panel.find_elements(By.CLASS_NAME, 'note-content-field')
+        assert len(fields) == 11
+        assert fields[8].text == 'Rating:'
+        assert fields[9].text == 'Confidence:'        
+        values = note_panel.find_elements(By.CLASS_NAME, 'note-content-value')
+        assert len(values) == 11
+        assert values[8].text == '10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.'
+        assert values[9].text == '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.'        
 
         review_edit = reviewer_client.post_note_edit(
             invitation='ICML.cc/2023/Conference/Submission1/-/Official_Review',
@@ -2541,8 +2671,8 @@ ICML 2023 Conference Program Chairs'''
                     'soundness': { 'value': '3 good'},
                     'presentation': { 'value': '3 good'},
                     'contribution': { 'value': '3 good'},
-                    'rating': { 'value': '10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.'},
-                    'confidence': { 'value': '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.'},
+                    'rating': { 'value': 10 },
+                    'confidence': { 'value': 5 },
                     'code_of_conduct': { 'value': 'Yes'},
                 }
             )
@@ -2576,8 +2706,8 @@ ICML 2023 Conference Program Chairs'''
                     'soundness': { 'value': '1 poor'},
                     'presentation': { 'value': '1 poor'},
                     'contribution': { 'value': '1 poor'},
-                    'rating': { 'value': '1: Very Strong Reject: For instance, a paper with trivial results or unaddressed ethical considerations'},
-                    'confidence': { 'value': '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.'},
+                    'rating': { 'value': 1 },
+                    'confidence': { 'value': 5 },
                     'code_of_conduct': { 'value': 'Yes'},
                 }
             )
@@ -2601,8 +2731,8 @@ ICML 2023 Conference Program Chairs'''
                     'soundness': { 'value': '3 good'},
                     'presentation': { 'value': '3 good'},
                     'contribution': { 'value': '3 good'},
-                    'rating': { 'value': '10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.'},
-                    'confidence': { 'value': '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.'},
+                    'rating': { 'value': 10 },
+                    'confidence': { 'value': 5 },
                     'code_of_conduct': { 'value': 'Yes'},
                 }
             )
@@ -2627,13 +2757,13 @@ ICML 2023 Conference Program Chairs'''
                         'soundness': { 'value': '1 poor'},
                         'presentation': { 'value': '1 poor'},
                         'contribution': { 'value': '1 poor'},
-                        'rating': { 'value': '10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.'},
-                        'confidence': { 'value': '1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked.'},
+                        'rating': { 'value': 10 },
+                        'confidence': { 'value': 1 },
                         'code_of_conduct': { 'value': 'Yes'},
                     }
                 )
             )
-        assert openReviewError.value.args[0].get('name') == 'ValidationError'
+        assert openReviewError.value.args[0].get('name') == 'ItemsError'
 
         ## Extend deadline
         start_date = now - datetime.timedelta(days=20)
@@ -2784,18 +2914,18 @@ ICML 2023 Conference Program Chairs'''
                         "description": "Please provide an \"overall score\" for this submission.",
                         "value": {
                             "param": {
-                                "type": "string",
+                                "type": 'integer',
                                 "enum": [
-                                    "10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.",
-                                    "9: Very Strong Accept: Technically flawless paper with groundbreaking impact on at least one area of AI/ML and excellent impact on multiple areas of AI/ML, with flawless evaluation, resources, and reproducibility, and no unaddressed ethical considerations.",
-                                    "8: Strong Accept: Technically strong paper, with novel ideas, excellent impact on at least one area, or high-to-excellent impact on multiple areas, with excellent evaluation, resources, and reproducibility, and no unaddressed ethical considerations.",
-                                    "7: Accept: Technically solid paper, with high impact on at least one sub-area, or moderate-to-high impact on more than one areas, with good-to-excellent evaluation, resources, reproducibility, and no unaddressed ethical considerations.",
-                                    "6: Weak Accept: Technically solid, moderate-to-high impact paper, with no major concerns with respect to evaluation, resources, reproducibility, ethical considerations.",
-                                    "5: Borderline accept: Technically solid paper where reasons to accept outweigh reasons to reject, e.g., limited evaluation. Please use sparingly.",
-                                    "4: Borderline reject: Technically solid paper where reasons to reject, e.g., limited evaluation, outweigh reasons to accept, e.g., good evaluation. Please use sparingly.",
-                                    "3: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations.",
-                                    "2: Strong Reject: For instance, a paper with major technical flaws, and/or poor evaluation, limited impact, poor reproducibility and mostly unaddressed ethical considerations.",
-                                    "1: Very Strong Reject: For instance, a paper with trivial results or unaddressed ethical considerations"
+                                    { 'value': 10, 'description': "10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations." },
+                                    { 'value': 9, 'description': "9: Very Strong Accept: Technically flawless paper with groundbreaking impact on at least one area of AI/ML and excellent impact on multiple areas of AI/ML, with flawless evaluation, resources, and reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 8, 'description': "8: Strong Accept: Technically strong paper, with novel ideas, excellent impact on at least one area, or high-to-excellent impact on multiple areas, with excellent evaluation, resources, and reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 7, 'description': "7: Accept: Technically solid paper, with high impact on at least one sub-area, or moderate-to-high impact on more than one areas, with good-to-excellent evaluation, resources, reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 6, 'description': "6: Weak Accept: Technically solid, moderate-to-high impact paper, with no major concerns with respect to evaluation, resources, reproducibility, ethical considerations." },
+                                    { 'value': 5, 'description': "5: Borderline accept: Technically solid paper where reasons to accept outweigh reasons to reject, e.g., limited evaluation. Please use sparingly." },
+                                    { 'value': 4, 'description': "4: Borderline reject: Technically solid paper where reasons to reject, e.g., limited evaluation, outweigh reasons to accept, e.g., good evaluation. Please use sparingly." },
+                                    { 'value': 3, 'description': "3: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations." },
+                                    { 'value': 2, 'description': "2: Strong Reject: For instance, a paper with major technical flaws, and/or poor evaluation, limited impact, poor reproducibility and mostly unaddressed ethical considerations." },
+                                    { 'value': 1, 'description': "1: Very Strong Reject: For instance, a paper with trivial results or unaddressed ethical considerations" }
                                 ],
                                 "input": "radio"
 
@@ -2807,13 +2937,13 @@ ICML 2023 Conference Program Chairs'''
                         "description": "Please provide a \"confidence score\" for your assessment of this submission to indicate how confident you are in your evaluation.",
                         "value": {
                             "param": {
-                                "type": "string",
+                                "type": 'integer',
                                 "enum": [
-                                    "5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.",
-                                    "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work.",
-                                    "3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
-                                    "2: You are willing to defend your assessment, but it is quite likely that you did not understand the central parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
-                                    "1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked."
+                                   { 'value': 5, 'description': "5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully." },
+                                   { 'value': 4, 'description': "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work." },
+                                   { 'value': 3, 'description': "3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked." },
+                                   { 'value': 2, 'description': "2: You are willing to defend your assessment, but it is quite likely that you did not understand the central parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked." },
+                                   { 'value': 1, 'description': "1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked." }
                                 ],
                                 "input": "radio"
                             }
@@ -2933,7 +3063,7 @@ ICML 2023 Conference Program Chairs'''
 
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Review_Rating')) == 3
 
-        invitation = openreview_client.get_invitation(f'{anon_group_id}/-/Review_Rating')
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/Official_Review1/-/Review_Rating')
         assert invitation.invitees == ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission1/Area_Chairs']
         assert 'review_quality' in invitation.edit['note']['content']
         assert invitation.edit['note']['forum'] == submissions[0].id
@@ -2964,7 +3094,7 @@ ICML 2023 Conference Program Chairs'''
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer2@icml.cc', password=helpers.strong_password)
         anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLTwo1')
         anon_group_id = anon_groups[0].id
-        invitation = openreview_client.get_invitation(f'{anon_group_id}/-/Review_Rating')
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/Official_Review2/-/Review_Rating')
 
         #post another review rating to same paper
         rating_edit = ac_client.post_note_edit(
@@ -3051,8 +3181,8 @@ ICML 2023 Conference Program Chairs'''
                     'soundness': { 'value': '3 good'},
                     'presentation': { 'value': '3 good'},
                     'contribution': { 'value': '3 good'},
-                    'rating': { 'value': '10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.'},
-                    'confidence': { 'value': '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.'},
+                    'rating': { 'value': 10 },
+                    'confidence': { 'value': 5 },
                     'code_of_conduct': { 'value': 'Yes'},
                 }
             )
@@ -3062,7 +3192,7 @@ ICML 2023 Conference Program Chairs'''
 
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Review_Rating')) == 4
 
-        invitation = openreview_client.get_invitation(f'{anon_group_id}/-/Review_Rating')
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission3/Official_Review1/-/Review_Rating')
         assert invitation.invitees == ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission3/Area_Chairs']
         assert 'review_quality' in invitation.edit['note']['content']
         assert invitation.edit['note']['forum'] == review_edit['note']['forum']
@@ -3425,6 +3555,101 @@ ICML 2023 Conference Program Chairs'''
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Comment')
         assert invitation.invitees == ['ICML.cc/2023/Conference', 'openreview.net/Support', 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers']
 
+        # post ethics review
+        #ethics_group = openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers')
+        # 'Reviewer', 'ICMLOne')
+        openreview_client.add_members_to_group('ICML.cc/2023/Conference/Submission5/Ethics_Reviewers', '~Reviewer_ICMLOne1')
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
+
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission5/Ethics_Reviewer_', signatory='~Reviewer_ICMLOne1')
+        anon_group_id = anon_groups[0].id
+
+        review_edit = reviewer_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission5/-/Ethics_Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    "recommendation": {
+                        "value": "1: No serious ethical issues"
+                    },
+                    "ethics_concerns": {
+                        "value": "I have no concerns."
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        reviews = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/Submission5/-/Ethics_Review')
+        assert len(reviews) == 1
+        assert reviews[0].readers == [
+            'ICML.cc/2023/Conference/Program_Chairs',
+            'ICML.cc/2023/Conference/Ethics_Chairs',
+            reviews[0].signatures[0]
+        ]
+
+        # Set expiration date
+        exp_date = now
+        stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'ethics_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'ethics_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'ethics_review_expiration_date': exp_date.strftime('%Y/%m/%d'),
+                'make_ethics_reviews_public': 'No, ethics reviews should NOT be revealed publicly when they are posted',
+                'release_ethics_reviews_to_authors': "No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors",
+                'release_ethics_reviews_to_reviewers': 'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review',
+                'remove_ethics_review_form_options': 'ethics_review',
+                'additional_ethics_review_form_options': {
+                    "ethics_concerns": {
+                        'order': 1,
+                        'description': 'Briefly summarize the ethics concerns.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 200000,
+                                'markdown': True,
+                                'input': 'textarea'
+                            }
+                        }
+                    }
+                },
+                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
+            },
+            forum=request_form.forum,
+            referent=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number),
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+        helpers.await_queue(openreview_client)
+
+        # attempt to post another note
+        openreview_client.add_members_to_group('ICML.cc/2023/Conference/Submission5/Ethics_Reviewers', '~Reviewer_ICMLTwo1')
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer2@icml.cc', password=helpers.strong_password)
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission5/Ethics_Reviewer_', signatory='~Reviewer_ICMLTwo1')
+        anon_group_id = anon_groups[0].id
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation ICML.cc/2023/Conference/Submission5/-/Ethics_Review has expired'):
+            review_edit = reviewer_client.post_note_edit(
+                invitation='ICML.cc/2023/Conference/Submission5/-/Ethics_Review',
+                signatures=[anon_group_id],
+                note=openreview.api.Note(
+                    content={
+                        "recommendation": {
+                            "value": "1: No serious ethical issues"
+                        },
+                        "ethics_concerns": {
+                            "value": "I have very serious concerns."
+                        }
+                    }
+                )
+            )
+
+
     def test_comment_stage(self, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
@@ -3457,8 +3682,32 @@ ICML 2023 Conference Program Chairs'''
         assert invitation
         assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers' in invitation.invitees
         assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers' in invitation.edit['note']['readers']['param']['enum']
-        assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewer_.*' in invitation.edit['signatures']['param']['regex']
-        assert 'ICML.cc/2023/Conference/Ethics_Chairs' in invitation.edit['signatures']['param']['regex']
+        assert invitation.edit['signatures']['param']['items'] == [
+            {
+            "value": "ICML.cc/2023/Conference/Program_Chairs",
+            "optional": True
+            },
+            {
+            "value": "ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission1/Area_Chair_.*",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission1/Reviewer_.*",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission1/Ethics_Reviewer_.*",
+            "optional": True
+            },
+            {
+            "value": "ICML.cc/2023/Conference/Ethics_Chairs",
+            "optional": True
+            }
+        ]
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Official_Comment')
         assert invitation
         assert 'ICML.cc/2023/Conference/Submission2/Ethics_Reviewers' not in invitation.edit['note']['readers']['param']['enum']
@@ -3468,9 +3717,34 @@ ICML 2023 Conference Program Chairs'''
         assert invitation        
         assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers' in invitation.invitees
         assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers' in invitation.edit['note']['readers']['param']['enum']
-        assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewer_.*' in invitation.edit['signatures']['param']['regex']
-        assert 'ICML.cc/2023/Conference/Ethics_Chairs' in invitation.edit['signatures']['param']['regex']
-
+        
+        assert invitation.edit['signatures']['param']['items'] == [
+            {
+            "value": "ICML.cc/2023/Conference/Program_Chairs",
+            "optional": True
+            },
+            {
+            "value": "ICML.cc/2023/Conference/Submission5/Senior_Area_Chairs",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission5/Area_Chair_.*",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission5/Reviewer_.*",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission5/Ethics_Reviewer_.*",
+            "optional": True
+            },
+            {
+            "value": "ICML.cc/2023/Conference/Ethics_Chairs",
+            "optional": True
+            }
+        ]
+        
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
         # unflag a paper
         note = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', number=[5])[0]
@@ -3492,8 +3766,32 @@ ICML 2023 Conference Program Chairs'''
         assert invitation        
         assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers' not in invitation.invitees
         assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers' in invitation.edit['note']['readers']['param']['enum']
-        assert 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewer_.*' in invitation.edit['signatures']['param']['regex']
-
+        assert invitation.edit['signatures']['param']['items'] == [
+            {
+            "value": "ICML.cc/2023/Conference/Program_Chairs",
+            "optional": True
+            },
+            {
+            "value": "ICML.cc/2023/Conference/Submission5/Senior_Area_Chairs",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission5/Area_Chair_.*",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission5/Reviewer_.*",
+            "optional": True
+            },
+            {
+            "prefix": "ICML.cc/2023/Conference/Submission5/Ethics_Reviewer_.*",
+            "optional": True
+            },
+            {
+            "value": "ICML.cc/2023/Conference/Ethics_Chairs",
+            "optional": True
+            }
+        ]
         submissions = openreview_client.get_notes(content= { 'venueid': 'ICML.cc/2023/Conference/Submission'}, sort='number:asc')
         assert submissions and len(submissions) == 100
         assert 'flagged_for_ethics_review' in submissions[4].content and not submissions[4].content['flagged_for_ethics_review']['value']
@@ -3533,9 +3831,11 @@ ICML 2023 Conference Program Chairs'''
         pretty_signature = openreview.tools.pretty_id(signature)
         messages = openreview_client.get_messages(to='ac2@icml.cc', subject=f'[ICML 2023] {pretty_signature} commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
+        assert messages[0]['content']['replyTo'] == 'pc@icml.cc'
 
         messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your comment was received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
+        assert messages[0]['content']['replyTo'] == 'pc@icml.cc'
 
         comment_edit = reviewer_client.post_note_edit(
             invitation='ICML.cc/2023/Conference/Submission1/-/Official_Comment',
@@ -3747,18 +4047,18 @@ ICML 2023 Conference Program Chairs'''
                         "description": "Please provide an \"overall score\" for this submission.",
                         "value": {
                             "param": {
-                                "type": "string",
+                                "type": 'integer',
                                 "enum": [
-                                    "10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations.",
-                                    "9: Very Strong Accept: Technically flawless paper with groundbreaking impact on at least one area of AI/ML and excellent impact on multiple areas of AI/ML, with flawless evaluation, resources, and reproducibility, and no unaddressed ethical considerations.",
-                                    "8: Strong Accept: Technically strong paper, with novel ideas, excellent impact on at least one area, or high-to-excellent impact on multiple areas, with excellent evaluation, resources, and reproducibility, and no unaddressed ethical considerations.",
-                                    "7: Accept: Technically solid paper, with high impact on at least one sub-area, or moderate-to-high impact on more than one areas, with good-to-excellent evaluation, resources, reproducibility, and no unaddressed ethical considerations.",
-                                    "6: Weak Accept: Technically solid, moderate-to-high impact paper, with no major concerns with respect to evaluation, resources, reproducibility, ethical considerations.",
-                                    "5: Borderline accept: Technically solid paper where reasons to accept outweigh reasons to reject, e.g., limited evaluation. Please use sparingly.",
-                                    "4: Borderline reject: Technically solid paper where reasons to reject, e.g., limited evaluation, outweigh reasons to accept, e.g., good evaluation. Please use sparingly.",
-                                    "3: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations.",
-                                    "2: Strong Reject: For instance, a paper with major technical flaws, and/or poor evaluation, limited impact, poor reproducibility and mostly unaddressed ethical considerations.",
-                                    "1: Very Strong Reject: For instance, a paper with trivial results or unaddressed ethical considerations"
+                                    { 'value': 10, 'description': "10: Award quality: Technically flawless paper with groundbreaking impact, with exceptionally strong evaluation, reproducibility, and resources, and no unaddressed ethical considerations." },
+                                    { 'value': 9, 'description': "9: Very Strong Accept: Technically flawless paper with groundbreaking impact on at least one area of AI/ML and excellent impact on multiple areas of AI/ML, with flawless evaluation, resources, and reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 8, 'description': "8: Strong Accept: Technically strong paper, with novel ideas, excellent impact on at least one area, or high-to-excellent impact on multiple areas, with excellent evaluation, resources, and reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 7, 'description': "7: Accept: Technically solid paper, with high impact on at least one sub-area, or moderate-to-high impact on more than one areas, with good-to-excellent evaluation, resources, reproducibility, and no unaddressed ethical considerations." },
+                                    { 'value': 6, 'description': "6: Weak Accept: Technically solid, moderate-to-high impact paper, with no major concerns with respect to evaluation, resources, reproducibility, ethical considerations." },
+                                    { 'value': 5, 'description': "5: Borderline accept: Technically solid paper where reasons to accept outweigh reasons to reject, e.g., limited evaluation. Please use sparingly." },
+                                    { 'value': 4, 'description': "4: Borderline reject: Technically solid paper where reasons to reject, e.g., limited evaluation, outweigh reasons to accept, e.g., good evaluation. Please use sparingly." },
+                                    { 'value': 3, 'description': "3: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility and incompletely addressed ethical considerations." },
+                                    { 'value': 2, 'description': "2: Strong Reject: For instance, a paper with major technical flaws, and/or poor evaluation, limited impact, poor reproducibility and mostly unaddressed ethical considerations." },
+                                    { 'value': 1, 'description': "1: Very Strong Reject: For instance, a paper with trivial results or unaddressed ethical considerations" }
                                 ],
                                 "input": "radio"
 
@@ -3770,13 +4070,13 @@ ICML 2023 Conference Program Chairs'''
                         "description": "Please provide a \"confidence score\" for your assessment of this submission to indicate how confident you are in your evaluation.",
                         "value": {
                             "param": {
-                                "type": "string",
+                                "type": 'integer',
                                 "enum": [
-                                    "5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.",
-                                    "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work.",
-                                    "3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
-                                    "2: You are willing to defend your assessment, but it is quite likely that you did not understand the central parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
-                                    "1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked."
+                                   { 'value': 5, 'description': "5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully." },
+                                   { 'value': 4, 'description': "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work." },
+                                   { 'value': 3, 'description': "3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked." },
+                                   { 'value': 2, 'description': "2: You are willing to defend your assessment, but it is quite likely that you did not understand the central parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked." },
+                                   { 'value': 1, 'description': "1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked." }
                                 ],
                                 "input": "radio"
                             }
@@ -3949,6 +4249,7 @@ ICML 2023 Conference Program Chairs'''
         messages = openreview_client.get_messages(subject = '[ICML 2023] Your author rebuttal was posted on Submission Number: 1, Submission Title: "Paper title 1 Version 2"')
         assert len(messages) == 2
         assert 'test@mail.com' in messages[0]['content']['to']
+        assert messages[0]['content']['replyTo'] == 'pc@icml.cc'
         messages = openreview_client.get_messages(subject = '[ICML 2023] An author rebuttal was posted on Submission Number: 1, Submission Title: "Paper title 1 Version 2"')
         assert len(messages) == 8
         assert f'https://openreview.net/forum?id={review.forum}&noteId={rebuttal_id}' in messages[4]['content']['text']
@@ -4070,7 +4371,8 @@ ICML 2023 Conference Program Chairs'''
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -4186,7 +4488,7 @@ ICML 2023 Conference Program Chairs'''
         anon_groups = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLTwo1')
         anon_group_id = anon_groups[0].id
 
-        invitation_id = f'{anon_group_id}/-/Meta_Review_Agreement'
+        invitation_id = 'ICML.cc/2023/Conference/Submission1/Meta_Review1/-/Meta_Review_Agreement'
 
         agreement_edit = sac_client.post_note_edit(
             invitation=invitation_id,
@@ -4231,7 +4533,7 @@ ICML 2023 Conference Program Chairs'''
 
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review_Agreement')) == 2
 
-        invitation_id = f'{anon_group_id}/-/Meta_Review_Agreement'
+        invitation_id = 'ICML.cc/2023/Conference/Submission2/Meta_Review1/-/Meta_Review_Agreement'
         sac_client = openreview.api.OpenReviewClient(username = 'sac1@gmail.com', password=helpers.strong_password)
 
         agreement_edit = sac_client.post_note_edit(
@@ -4308,7 +4610,8 @@ ICML 2023 Conference Program Chairs'''
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -4373,7 +4676,8 @@ ICML 2023 Conference Program Chairs'''
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
@@ -4403,8 +4707,25 @@ ICML 2023 Conference Program Chairs'''
             'ICML.cc/2023/Conference/Submission1/Authors'
         ]
 
+        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission3/-/Decision')[0]
+        assert 'Revision Needed' == decision.content['decision']['value']
+
+        # manually change a decision
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
+        decision_note = pc_client_v2.post_note_edit(invitation='ICML.cc/2023/Conference/Submission3/-/Decision',
+            signatures=['ICML.cc/2023/Conference/Program_Chairs'],
+            note=openreview.api.Note(
+                id=decision.id,
+                content={
+                    'decision': {'value': 'Accept'},
+                    'comment': {'value': 'This is a comment.'}
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
+
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
         #release decisions to authors and reviewers
-        #post decisions from request form
         decision_stage_note = pc_client.post_note(openreview.Note(
             content={
                 'decision_start_date': start_date.strftime('%Y/%m/%d'),
@@ -4423,12 +4744,13 @@ ICML 2023 Conference Program Chairs'''
                                 'type': 'string',
                                 'maxLength': 5000,
                                 'input': 'textarea',
-                                'optional': True
+                                'optional': True,
+                                'deletable': True
                             }
                         }
                     }
                 },
-                'decisions_file': url
+                'decisions_file': request_form.content['decisions_file']
             },
             forum=request_form.forum,
             invitation=decision_stage_invitation,
@@ -4451,7 +4773,11 @@ ICML 2023 Conference Program Chairs'''
         ]
         assert not decision.nonreaders
 
-    def test_post_decision_stage(self, client, openreview_client, helpers):
+        # assert decisions were not overwritten
+        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission3/-/Decision')[0]
+        assert 'Accept' == decision.content['decision']['value']
+
+    def test_post_decision_stage(self, client, openreview_client, helpers, selenium, request_page):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -4559,6 +4885,7 @@ Best,
 
         messages = client.get_messages(subject='[ICML 2023] Decision notification for your submission 1: Paper title 1 Version 2')
         assert len(messages) == 5
+        assert messages[0]['content']['replyTo'] == 'pc@icml.cc'
         recipients = [msg['content']['to'] for msg in messages]
         assert 'sac1@gmail.com' in recipients
         assert 'test@mail.com' in recipients
@@ -4566,6 +4893,11 @@ Best,
         assert 'melisa@yahoo.com' in recipients
         assert 'andrew@amazon.com' in recipients
         assert 'We are delighted to inform you that your submission has been accepted.' in messages[0]['content']['text']
+
+        replies = pc_client.get_notes(forum=request_form.id, invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment')
+        assert len(replies) == 2
+        assert replies[0].content['title'] == 'Decision Notification Status'
+        assert 'Decision notifications have been sent to the authors. You can check the status of the emails by clicking on this link: https://openreview.net/messages?parentGroup=ICML.cc/2023/Conference/Authors' in replies[0].content['comment']
 
         for submission in accepted_submissions:
             assert submission.readers == ['everyone']
@@ -4578,12 +4910,13 @@ Best,
             assert submission.content['venue']['value'] == 'ICML 2023'
             assert submission.content['venueid']['value'] == 'ICML.cc/2023/Conference'
 
+        year = datetime.datetime.now().year
         valid_bibtex = '''@inproceedings{
-user2023paper,
+user'''+str(year)+'''paper,
 title={Paper title 1 Version 2},
 author={SomeFirstName User and Peter SomeLastName and Andrew Mc and SAC ICMLOne and Melisa ICML},
 booktitle={Thirty-ninth International Conference on Machine Learning},
-year={2023},
+year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''
 
         valid_bibtex = valid_bibtex + accepted_submissions[0].forum + '''}
@@ -4609,16 +4942,143 @@ url={https://openreview.net/forum?id='''
             assert 'readers' not in submission.content['financial_aid']
 
         valid_bibtex = '''@misc{
-anonymous2023paper,
+anonymous'''+str(year)+'''paper,
 title={Paper title 2},
 author={Anonymous},
-year={2023},
+year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''
 
         valid_bibtex = valid_bibtex + rejected_submissions[0].forum + '''}
 }'''
 
         assert '_bibtex' in rejected_submissions[0].content and rejected_submissions[0].content['_bibtex']['value'] == valid_bibtex
+
+        #make sure all decision process functions have finished
+        for number in range(1, 101):
+            helpers.await_queue_edit(openreview_client, invitation=f'ICML.cc/2023/Conference/Submission{number}/-/Decision')
+
+        authors_accepted_group = openreview_client.get_group('ICML.cc/2023/Conference/Authors/Accepted')
+        num_accepted_papers = len(authors_accepted_group.members)
+
+        # add publication chair
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Thirty-ninth International Conference on Machine Learning',
+                'Official Venue Name': 'Thirty-ninth International Conference on Machine Learning',
+                'Abbreviated Venue Name': 'ICML 2023',
+                'Official Website URL': 'https://icml.cc',
+                'program_chair_emails': ['pc@icml.cc', 'pc3@icml.cc'],
+                'contact_email': 'pc@icml.cc',
+                'publication_chairs': 'Yes, our venue has Publication Chairs',
+                'publication_chairs_emails': ['publicationchair@icml.com'],
+                'Venue Start Date': '2023/07/01',
+                'Submission Deadline': request_form.content['Submission Deadline'],
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'Additional Submission Options': request_form.content['Additional Submission Options'],
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        pub_chair_group = openreview_client.get_group('ICML.cc/2023/Conference/Publication_Chairs')
+        assert pub_chair_group and 'publicationchair@icml.com' in pub_chair_group.members
+
+        # check members have not changed
+        authors_accepted_group = openreview_client.get_group('ICML.cc/2023/Conference/Authors/Accepted')
+        assert len(authors_accepted_group.members) == num_accepted_papers
+
+        submissions = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
+        submission = submissions[0]
+
+        # assert PCs can't use Submission invitation after post decision is run
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), pc_client_v2.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+        note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
+        assert note_div
+        button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
+        assert button_row
+        buttons = button_row.find_elements(By.CLASS_NAME, 'btn-xs')
+        assert buttons[0].text == 'Edit  '
+        buttons[0].click()
+        time.sleep(0.5)
+        dropdown = button_row.find_element(By.CLASS_NAME, 'dropdown-menu')
+        dropdown_values = dropdown.find_elements(By.TAG_NAME, "a")
+        values = [value.text for value in dropdown_values]
+        assert ['Post Submission', 'PC Revision', 'Ethics Review Flag'] == values
+
+        #Post another post decision note
+        now = datetime.datetime.utcnow()
+        short_name = 'ICML 2023'
+        post_decision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'reveal_authors': 'Reveal author identities of only accepted submissions to the public',
+                'submission_readers': 'Make accepted submissions public and hide rejected submissions',
+                'hide_fields': ['supplementary_material', 'pdf'],
+                'home_page_tab_names': {
+                    'Accept': 'Accept',
+                    'Revision Needed': 'Revision Needed',
+                    'Reject': 'Submitted'
+                },
+                'send_decision_notifications': 'Yes, send an email notification to the authors',
+                'accept_email_content': f'''Dear {{{{fullname}}}},
+
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+
+Best,
+{short_name} Program Chairs
+''',
+                'reject_email_content': f'''Dear {{{{fullname}}}},
+
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted.
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+
+Best,
+{short_name} Program Chairs
+''',
+                'revision_needed_email_content': f'''Dear {{{{fullname}}}},
+
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}.
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+
+Best,
+{short_name} Program Chairs
+'''
+            },
+            forum=request_form.forum,
+            invitation=invitation.id,
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+        assert post_decision_stage_note
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id = post_decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        # check emails were not resent and decision emails status comment was not re-posted
+        messages = client.get_messages(subject='[ICML 2023] Decision notification for your submission 1: Paper title 1 Version 2')
+        assert len(messages) == 5
+
+        replies = pc_client.get_notes(forum=request_form.id, invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment')
+        assert len(replies) == 2
 
     def test_forum_chat(self, openreview_client, helpers):
 

@@ -32,10 +32,10 @@ class Assignment(object):
         authors_id=self.journal.get_authors_id(number=note.number)
 
         action_editors = self.journal.get_action_editors()
-        action_editor_profiles = tools.get_profiles(self.client, action_editors, with_publications=True)
+        action_editor_profiles = tools.get_profiles(self.client, action_editors, with_publications=True, with_relations=True)
 
         authors = self.journal.get_authors(number=note.number)
-        author_profiles = tools.get_profiles(self.client, authors, with_publications=True)
+        author_profiles = tools.get_profiles(self.client, authors, with_publications=True, with_relations=True)
 
         ## Create affinity scores
         affinity_score_edges = []
@@ -85,10 +85,10 @@ class Assignment(object):
         authors_id = self.journal.get_authors_id(number=note.number)
 
         reviewers = self.journal.get_reviewers()
-        reviewer_profiles = tools.get_profiles(self.client, reviewers, with_publications=True)
+        reviewer_profiles = tools.get_profiles(self.client, reviewers, with_publications=True, with_relations=True)
 
         authors = self.journal.get_authors(number=note.number)
-        author_profiles = tools.get_profiles(self.client, authors, with_publications=True)
+        author_profiles = tools.get_profiles(self.client, authors, with_publications=True, with_relations=True)
 
         ## Create affinity scores
         affinity_score_edges = []
@@ -133,10 +133,10 @@ class Assignment(object):
 
     def compute_conflicts(self, note, reviewer):
 
-        reviewer_profiles = tools.get_profiles(self.client, [reviewer], with_publications=True)
+        reviewer_profiles = tools.get_profiles(self.client, [reviewer], with_publications=True, with_relations=True)
 
         authors = self.journal.get_authors(number=note.number)
-        author_profiles = tools.get_profiles(self.client, authors, with_publications=True)
+        author_profiles = tools.get_profiles(self.client, authors, with_publications=True, with_relations=True)
 
         return tools.get_conflicts(author_profiles, reviewer_profiles[0], policy='NeurIPS', n_years=3)
 
@@ -200,6 +200,14 @@ class Assignment(object):
                                 tail=assignment.tail,
                                 weight=1
                             ))
+                        previous_archived_assignments = self.client.get_edges(invitation=journal.get_ae_assignment_id(archived=True), head = previous_forum_id)
+                        for assignment in previous_archived_assignments:
+                            self.client.post_edge(openreview.api.Edge(
+                                invitation=journal.get_ae_resubmission_score_id(),
+                                head=submitted_submission.id,
+                                tail=assignment.tail,
+                                weight=1
+                            ))                        
 
         ## Compute the AE quota and use invitation: TMLR/Action_Editors/-/Local_Custom_Max_Papers:
         all_submissions = { s.id: s for s in self.client.get_all_notes(invitation= journal.get_author_submission_id(), details='directReplies')}

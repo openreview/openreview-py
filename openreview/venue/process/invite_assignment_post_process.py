@@ -2,6 +2,7 @@ def process(client, edge, invitation):
 
     domain = client.get_group(invitation.domain)
     short_phrase = domain.content['subtitle']['value']
+    contact = domain.content['contact']['value']
     recruitment_invitation_id = invitation.content['recruitment_invitation_id']['value']
     committee_invited_id = invitation.content['committee_invited_id']['value']
     invite_label = invitation.content['invite_label']['value']
@@ -60,19 +61,21 @@ def process(client, edge, invitation):
             message=email_template.format(
                 title=submission.content['title']['value'],
                 number=submission.number,
-                abstract=submission.content['abstract']['value'],
+                abstract=submission.content.get('abstract', {}).get('value'),
                 invitation_url=invitation_url,
                 inviter_id=inviter_id,
                 inviter_name=inviter_preferred_name,
                 inviter_email=edge.tauthor
             )
         else:
+            abstract_string = f'''
+Abstract: {submission.content['abstract']['value']}
+''' if 'abstract' in submission.content else ''
+            
             message=f'''Hi {preferred_name},
 
 You were invited {action_string} the paper number: {submission.number}, title: "{submission.content['title']['value']}".
-
-Abstract: {submission.content['abstract']['value']}
-
+{abstract_string}
 {invitation_links}
 
 Thanks,
@@ -91,7 +94,7 @@ Thanks,
             client.add_members_to_group(committee_invited_id, [user_profile.id])
 
         ## - Send email
-        response = client.post_message(subject, [user_profile.id], message, parentGroup=committee_invited_id)
+        response = client.post_message(subject, [user_profile.id], message, parentGroup=committee_invited_id, replyTo=contact)
 
         ## - Update edge to INVITED_LABEL
         edge.label=invited_label

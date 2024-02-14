@@ -17,12 +17,12 @@ def process(client, edit, invitation):
 
         # compute conflicts with ethics chairs
         authorids = submission.content['authorids']['value']
-        author_profiles = openreview.tools.get_profiles(client, authorids, with_publications=True)
+        author_profiles = openreview.tools.get_profiles(client, authorids, with_publications=True, with_relations=True)
         members_without_conflict = []
         ethics_chairs = client.get_group(ethics_chairs_id).members
         if ethics_chairs:
             for chair in ethics_chairs:
-                user_profile=openreview.tools.get_profiles(client, [chair], with_publications=True)[0]
+                user_profile=openreview.tools.get_profiles(client, [chair], with_publications=True, with_relations=True)[0]
                 conflicts=openreview.tools.get_conflicts(author_profiles, user_profile, policy=conflict_policy, n_years=conflict_n_years)
                 if not conflicts:
                     members_without_conflict.append(user_profile.id)

@@ -111,7 +111,9 @@ class TestOpenSubmissions():
         assert groups[0].members == ['reviewer@aclweb.org']
         assert groups[0].readers == ['aclweb.org/ACL/2020/Workshop/NLP-COVID', groups[0].id]
 
-        reviewer_client=helpers.create_user('reviewer@aclweb.org', 'Reviewer', 'ACL')
+        helpers.create_user('reviewer@aclweb.org', 'Reviewer', 'ACL')
+        reviewer_client = openreview.Client(username='reviewer@aclweb.org', password=helpers.strong_password)
+
 
         submissions=reviewer_client.get_notes(invitation='aclweb.org/ACL/2020/Workshop/NLP-COVID/-/Submission', sort='tmdate')
         assert submissions
@@ -179,7 +181,9 @@ class TestOpenSubmissions():
 
         assert openreview.tools.get_invitation(client, conference.get_invitation_id(name = 'Decision', number = 1))
 
-        pc_client = helpers.create_user('pc@aclweb.org', 'PC', 'ACL')
+        helpers.create_user('pc@aclweb.org', 'PC', 'ACL')
+        pc_client = openreview.Client(username='pc@aclweb.org', password=helpers.strong_password)
+
 
         note = openreview.Note(invitation = conference.get_invitation_id(name = 'Decision', number = 1),
             forum = submissions[0].id,

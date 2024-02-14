@@ -14,24 +14,25 @@ class Helpers:
     strong_password = 'Or$3cur3P@ssw0rd'
 
     @staticmethod
-    def create_user(email, first, last, alternates=[], institution=None):
+    def create_user(email, first, last, alternates=[], institution=None, fullname=None):
 
-        super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password=Helpers.strong_password)
+        fullname = f'{first} {last}' if fullname is None else fullname
+
+        super_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001', username='openreview.net', password=Helpers.strong_password)
         profile = openreview.tools.get_profile(super_client, email)
         if profile:
             return Helpers.get_user(email)
 
-        client = openreview.Client(baseurl = 'http://localhost:3000')
+        client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001')
         assert client is not None, "Client is none"
 
-        res = client.register_user(email = email, first = first, last = last, password = Helpers.strong_password)
+        res = client.register_user(email = email, fullname = fullname, password = Helpers.strong_password)
         username = res.get('id')
         assert res, "Res i none"
         profile_content={
             'names': [
                     {
-                        'first': first,
-                        'last': last,
+                        'fullname': fullname,
                         'username': username,
                         'preferred': True
                     }
@@ -39,22 +40,21 @@ class Helpers:
             'emails': [email] + alternates,
             'preferredEmail': 'info@openreview.net' if email == 'openreview.net' else email
         }
-        if institution:
-            profile_content['history'] = [{
-                'position': 'PhD Student',
-                'start': 2017,
-                'end': None,
-                'institution': {
-                    'domain': institution
-                }
-            }]
+        profile_content['history'] = [{
+            'position': 'PhD Student',
+            'start': 2017,
+            'end': None,
+            'institution': {
+                'domain': institution if institution else email.split('@')[1],
+            }
+        }]
         res = client.activate_user(email, profile_content)
         assert res, "Res i none"
         return client
 
     @staticmethod
     def get_user(email):
-        return openreview.Client(baseurl = 'http://localhost:3000', username = email, password = Helpers.strong_password)
+        return openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', username = email, password = Helpers.strong_password)
 
     @staticmethod
     def await_queue(super_client=None):
@@ -167,17 +167,6 @@ def client():
 @pytest.fixture(scope="session")
 def openreview_client():
     client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', username='openreview.net', password=Helpers.strong_password)
-    client.post_invitation_edit(invitations=None,
-        readers=['openreview.net'],
-        writers=['openreview.net'],
-        signatures=['~Super_User1'],
-        invitation=openreview.api.Invitation(id='openreview.net/-/Edit',
-            invitees=['openreview.net'],
-            readers=['openreview.net'],
-            signatures=['~Super_User1'],
-            edit=True
-        )
-    )
     yield client
 
 @pytest.fixture(scope="session")
@@ -189,13 +178,13 @@ def journal_request():
 
 @pytest.fixture(scope="session")
 def test_client():
-    client = Helpers.create_user('test@mail.com', 'SomeFirstName', 'User')
-    yield client
+    Helpers.create_user('test@mail.com', 'SomeFirstName', 'User')
+    yield openreview.Client(baseurl = 'http://localhost:3000', username='test@mail.com', password=Helpers.strong_password)
 
 @pytest.fixture(scope="session")
 def peter_client():
-    client = Helpers.create_user('peter@mail.com', 'Peter', 'SomeLastName')
-    yield client
+    Helpers.create_user('peter@mail.com', 'Peter', 'SomeLastName')
+    yield openreview.Client(baseurl = 'http://localhost:3000', username='peter@mail.com', password=Helpers.strong_password)
 
 @pytest.fixture
 def firefox_options(firefox_options):

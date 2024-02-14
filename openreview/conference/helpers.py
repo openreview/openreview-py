@@ -10,6 +10,8 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         urls = openreview.tools.get_base_urls(client)
         openreview_client = openreview.api.OpenReviewClient(baseurl = urls[1], token=client.token)
         venue = openreview.venue.Venue(openreview_client, note.content['venue_id'], support_user)
+        venue_group = openreview.tools.get_group(openreview_client, note.content['venue_id'])
+        venue_content = venue_group.content if venue_group else {}
         
         ## Run test faster
         if 'openreview.net' in support_user:
@@ -19,13 +21,16 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.request_form_id = request_form_id
         venue.use_area_chairs = note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs'
         venue.use_senior_area_chairs = note.content.get('senior_area_chairs') == 'Yes, our venue has Senior Area Chairs'
+        venue.use_secondary_area_chairs = note.content.get('secondary_area_chairs') == 'Yes, our venue has Secondary Area Chairs'
         venue.use_ethics_chairs = note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers'
         venue.use_ethics_reviewers = note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers'
-        venue.use_publication_chairs = 'publication_chairs_emails' in note.content
+        venue.use_publication_chairs = note.content.get('publication_chairs', 'No, our venue does not have Publication Chairs') == 'Yes, our venue has Publication Chairs'
         venue.automatic_reviewer_assignment = note.content.get('submission_reviewer_assignment', '') == 'Automatic'
         venue.senior_area_chair_roles = note.content.get('senior_area_chair_roles', ['Senior_Area_Chairs'])
         venue.area_chair_roles = note.content.get('area_chair_roles', ['Area_Chairs'])
         venue.reviewer_roles = note.content.get('reviewer_roles', ['Reviewers'])
+        venue.allow_gurobi_solver = venue_content.get('allow_gurobi_solver', {}).get('value', False)
+        venue.submission_license = note.content.get('submission_license', ['CC BY 4.0'])
         set_homepage_options(note, venue)
         venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')
         venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
@@ -34,7 +39,8 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
 
         venue.submission_stage = get_submission_stage(note, venue)
         venue.review_stage = get_review_stage(note)
-        venue.bid_stages = get_bid_stages(note)
+        if 'bid_due_date' in note.content:
+            venue.bid_stages = get_bid_stages(note)
         venue.meta_review_stage = get_meta_review_stage(note)
         venue.comment_stage = get_comment_stage(note)
         venue.decision_stage = get_decision_stage(note)
@@ -353,7 +359,7 @@ def get_submission_stage(request_forum, venue):
             submission_start_date = datetime.datetime.strptime(submission_start_date, '%Y/%m/%d %H:%M')
         except ValueError:
             submission_start_date = datetime.datetime.strptime(submission_start_date, '%Y/%m/%d')
-        submission_start_date_str = submission_start_date.strftime('%b %d %Y') + ' UTC-0'
+        submission_start_date_str = submission_start_date.strftime('%b %d %Y %I:%M%p') + ' UTC-0'
     else:
         submission_start_date = None
         
@@ -404,13 +410,30 @@ def get_submission_stage(request_forum, venue):
     submission_email = request_forum.content.get('submission_email', None)
     hide_fields = request_forum.content.get('hide_fields', [])
     force_profiles = 'Yes' in request_forum.content.get('force_profiles_only', '')
-    author_reorder_after_first_deadline = request_forum.content.get('submission_deadline_author_reorder', 'No') == 'Yes'
+
+    author_reorder_map = {
+        'Yes': openreview.stages.AuthorReorder.ALLOW_REORDER,
+        'No': openreview.stages.AuthorReorder.ALLOW_EDIT,
+        'Do not allow any changes to author lists': openreview.stages.AuthorReorder.DISALLOW_EDIT
+    }
+    author_reorder_after_first_deadline = author_reorder_map[request_forum.content.get('submission_deadline_author_reorder', 'No')]
+    email_pcs_on_withdraw = 'Yes' in request_forum.content.get('email_pcs_for_withdrawn_submissions', '')
+    email_pcs_on_desk_reject = 'Yes' in request_forum.content.get('email_pcs_for_desk_rejected_submissions', '')
 
     second_deadline_additional_fields = request_forum.content.get('second_deadline_additional_options', {})
     if isinstance(second_deadline_additional_fields, str):
         second_deadline_additional_fields = json.loads(second_deadline_additional_fields.strip())
 
     second_deadline_remove_fields = request_forum.content.get('second_deadline_remove_options', [])
+
+    withdraw_submission_exp_date = request_forum.content.get('withdraw_submission_expiration', '').strip()
+    if withdraw_submission_exp_date:
+        try:
+            withdraw_submission_exp_date = datetime.datetime.strptime(withdraw_submission_exp_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            withdraw_submission_exp_date = datetime.datetime.strptime(withdraw_submission_exp_date, '%Y/%m/%d')
+    else:
+        withdraw_submission_exp_date = None
 
     return openreview.stages.SubmissionStage(name = name,
         double_blind=double_blind,
@@ -422,10 +445,13 @@ def get_submission_stage(request_forum, venue):
         hide_fields=hide_fields,
         subject_areas=subject_areas,
         create_groups=create_groups,
+        withdraw_submission_exp_date=withdraw_submission_exp_date,
         author_names_revealed=author_names_revealed,
         papers_released=papers_released,
         readers=readers,
         email_pcs=email_pcs,
+        email_pcs_on_withdraw=email_pcs_on_withdraw,
+        email_pcs_on_desk_reject=email_pcs_on_desk_reject,
         author_reorder_after_first_deadline = author_reorder_after_first_deadline,
         submission_email=submission_email,
         force_profiles=force_profiles,
@@ -565,7 +591,7 @@ def get_rebuttal_stage(request_forum):
         readers.append(openreview.stages.ReviewRebuttalStage.Readers.REVIEWERS_SUBMITTED)
 
     if 'Everyone' in rebuttal_readers:
-        readers = [openreview.stages.CommentStage.Readers.EVERYONE]
+        readers = [openreview.stages.ReviewRebuttalStage.Readers.EVERYONE]
 
     email_pcs = 'Yes' in request_forum.content.get('email_program_chairs_about_rebuttals', '')
 
@@ -598,6 +624,15 @@ def get_ethics_review_stage(request_forum):
     else:
         review_due_date = None
 
+    review_exp_date = request_forum.content.get('ethics_review_expiration_date', '').strip()
+    if review_exp_date:
+        try:
+            review_exp_date = datetime.datetime.strptime(review_exp_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            review_exp_date = datetime.datetime.strptime(review_exp_date, '%Y/%m/%d')
+    else:
+        review_exp_date = None
+
     review_form_additional_options = request_forum.content.get('additional_ethics_review_form_options', {})
 
     review_form_remove_options = request_forum.content.get('remove_ethics_review_form_options', '').replace(',', ' ').split()
@@ -618,6 +653,7 @@ def get_ethics_review_stage(request_forum):
     return openreview.stages.EthicsReviewStage(
         start_date = review_start_date,
         due_date = review_due_date,
+        exp_date = review_exp_date,
         release_to_public = (request_forum.content.get('make_ethics_reviews_public', None) == 'Yes, ethics reviews should be revealed publicly when they are posted'),
         release_to_authors = (request_forum.content.get('release_ethics_reviews_to_authors', '').startswith('Yes')),
         release_to_reviewers = release_to_reviewers,
@@ -777,7 +813,15 @@ def get_submission_revision_stage(request_forum):
     if request_forum.content.get('accepted_submissions_only', '') == 'Enable revision for accepted submissions only':
         only_accepted = True
 
-    allow_author_reorder = request_forum.content.get('submission_author_edition', '') == 'Allow reorder of existing authors only'
+    author_reorder_map = {
+        'Allow reorder of existing authors only': openreview.stages.AuthorReorder.ALLOW_REORDER,
+        'Allow addition and removal of authors': openreview.stages.AuthorReorder.ALLOW_EDIT,
+        'Do not allow any changes to author lists': openreview.stages.AuthorReorder.DISALLOW_EDIT
+    }
+    allow_author_reorder = author_reorder_map[request_forum.content.get('submission_author_edition', 'Allow addition and removal of authors')]
+
+    if request_forum.content.get('api_version', '1') == '1':
+        allow_author_reorder = request_forum.content.get('submission_author_edition', '') == 'Allow reorder of existing authors only'
 
     return openreview.stages.SubmissionRevisionStage(
         name=revision_name,

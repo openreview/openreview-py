@@ -138,7 +138,7 @@ def get_profile(client, value, with_publications=False):
     return profile
 
 
-def get_profiles(client, ids_or_emails, with_publications=False, as_dict=False):
+def get_profiles(client, ids_or_emails, with_publications=False, with_relations=False, as_dict=False):
     '''
     Helper function that repeatedly queries for profiles, given IDs and emails.
     Useful for getting more Profiles than the server will return by default (1000)
@@ -207,18 +207,34 @@ def get_profiles(client, ids_or_emails, with_publications=False, as_dict=False):
         client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
         client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
 
-        notes_v1 = concurrent_requests(lambda profile : client_v1.get_all_notes(content={'authorids': profile.id}), profiles)
+        notes_v1 = concurrent_requests(lambda profile : client_v1.get_all_notes(content={'authorids': profile.id}), profiles, desc='Loading API v1 publications')
         for idx, publications in enumerate(notes_v1):
             profiles[idx].content['publications'] = publications
 
-        notes_v2 = concurrent_requests(lambda profile : client_v2.get_all_notes(content={'authorids': profile.id}), profiles)
+        notes_v2 = concurrent_requests(lambda profile : client_v2.get_all_notes(content={'authorids': profile.id}), profiles, desc='Loading API v2 publications')
         for idx, publications in enumerate(notes_v2):
             if profiles[idx].content.get('publications'):
                 profiles[idx].content['publications'] = profiles[idx].content['publications'] +  publications
             else:
                 profiles[idx].content['publications'] = publications
 
+    if with_relations:
 
+        relation_profile_ids = set()
+        for profile in profiles:
+            relation_usernames = [relation.get('username') for relation in profile.content.get('relations', []) if relation.get('username')]
+            relation_emails = [relation.get('email') for relation in profile.content.get('relations', []) if relation.get('email')]
+            relation_profile_ids.update(relation_usernames)
+            relation_profile_ids.update(relation_emails)
+
+        relation_profiles_by_id = get_profiles(client, list(relation_profile_ids), as_dict=True)
+
+        for profile in profiles:
+            for relation in profile.content.get('relations', []):
+                relation_profile = relation_profiles_by_id.get(relation.get('username')) or relation_profiles_by_id.get(relation.get('email'))
+                if relation_profile:
+                    relation['profile_id'] = relation_profile.id
+    
     if as_dict:
         profiles_as_dict = {}
         for id in ids:
@@ -275,7 +291,7 @@ def get_invitation(client, id):
         print('Can not retrieve invitation', e)
     return invitation
 
-def create_profile(client, email, first, last, middle=None, url='http://no_url', allow_duplicates=False):
+def create_profile(client, email, fullname, url='http://no_url', allow_duplicates=False):
 
     """
     Given email, first name, last name, and middle name (optional), creates a new profile.
@@ -308,29 +324,18 @@ def create_profile(client, email, first, last, middle=None, url='http://no_url',
         # this is so that we catch more potential collisions;
         # let the caller decide what to do with false positives.
 
-        username_response_FL_only = client.get_tildeusername(
-            first,
-            last,
-            None
-        )
-
-        username_response_full = client.get_tildeusername(
-            first,
-            last,
-            middle
-        )
+        username_response = client.get_tildeusername(fullname)
 
         # the username in each response will end with 1
         # if profiles don't exist for those names
-        username_FL_unclaimed = username_response_FL_only['username'].endswith('1')
-        username_full_unclaimed = username_response_full['username'].endswith('1')
+        username_unclaimed = username_response['username'].endswith('1')
 
-        if all([username_FL_unclaimed, username_full_unclaimed]):
+        if username_unclaimed:
             profile_exists = False
         else:
             profile_exists = True
 
-        tilde_id = username_response_full['username']
+        tilde_id = username_response['username']
         if (not profile_exists) or allow_duplicates:
 
             tilde_group = openreview.Group(id=tilde_id, signatures=[client.profile.id], signatories=[tilde_id], readers=[tilde_id], writers=[client.profile.id], members=[email])
@@ -340,9 +345,7 @@ def create_profile(client, email, first, last, middle=None, url='http://no_url',
                 'preferredEmail': email,
                 'names': [
                     {
-                        'first': first,
-                        'middle': middle,
-                        'last': last,
+                        'fullname': fullname,
                         'username': tilde_id
                     }
                 ],
@@ -357,8 +360,8 @@ def create_profile(client, email, first, last, middle=None, url='http://no_url',
 
         else:
             raise openreview.OpenReviewException(
-                'Failed to create new profile {tilde_id}: There is already a profile with the name: \"{first} {middle} {last}\"'.format(
-                    first=first, middle=middle, last=last, tilde_id=tilde_id))
+                'Failed to create new profile {tilde_id}: There is already a profile with the name: \"{fullname}\"'.format(
+                    fullname=fullname, tilde_id=tilde_id))
     else:
         raise openreview.OpenReviewException('There is already a profile with this email address: {}'.format(email))
 
@@ -366,25 +369,6 @@ def create_authorid_profiles(client, note, print=print):
     # for all submissions get authorids, if in form of email address, try to find associated profile
     # if profile doesn't exist, create one
     created_profiles = []
-
-    def clean_name(name):
-        '''
-        Replaces invalid characters with equivalent valid ones.
-        '''
-        return name.replace('’', "'")
-
-    def get_names(author_name):
-        '''
-        Splits a string into first and last (and middle, if applicable) names.
-        '''
-        names = author_name.split(' ')
-        if len(names) > 1:
-            first = names[0]
-            last = names[-1]
-            middle = ' '.join(names[1:-1])
-            return [clean_name(n) for n in [first, last, middle]]
-        else:
-            return []
 
     if 'authorids' in note.content and 'authors' in note.content:
         author_names = [a.replace('*', '') for a in note.content['authors']]
@@ -396,16 +380,12 @@ def create_authorid_profiles(client, note, print=print):
                 author_name = author_name.strip()
 
                 if '@' in author_id:
-                    names = get_names(author_name)
-                    if names:
-                        try:
-                            profile = create_profile(client=client, email=author_id, first=names[0], last=names[1], middle=names[2])
-                            created_profiles.append(profile)
-                            print('{}: profile created with id {}'.format(note.id, profile.id))
-                        except openreview.OpenReviewException as e:
-                            print('Error while creating profile for note id {note_id}, author {author_id}, '.format(note_id=note.id, author_id=author_id), e)
-                    else:
-                        print('{}: invalid author name {}'.format(note.id, author_name))
+                    try:
+                        profile = create_profile(client=client, email=author_id, fullname=author_name)
+                        created_profiles.append(profile)
+                        print('{}: profile created with id {}'.format(note.id, profile.id))
+                    except openreview.OpenReviewException as e:
+                        print('Error while creating profile for note id {note_id}, author {author_id}, '.format(note_id=note.id, author_id=author_id), e)
         else:
             print('{}: length mismatch. authors ({}), authorids ({})'.format(
                 note.id,
@@ -434,17 +414,9 @@ def get_preferred_name(profile, last_name_only=False):
         primary_preferred_name = names[0]
 
     if last_name_only:
-        return primary_preferred_name['last']
+        return primary_preferred_name['fullname'].split(' ')[-1]    
 
-    name_parts = []
-    if primary_preferred_name.get('first'):
-        name_parts.append(primary_preferred_name['first'])
-    if primary_preferred_name.get('middle'):
-        name_parts.append(primary_preferred_name['middle'])
-    if primary_preferred_name.get('last'):
-        name_parts.append(primary_preferred_name['last'])
-
-    return ' '.join(name_parts)
+    return primary_preferred_name['fullname']
 
 def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='under review', anonymous=True, names_reversed=False, baseurl='https://openreview.net', editor=None):
     """
@@ -824,7 +796,7 @@ class efficient_iterget:
         self.get_function = get_function
         self.current_batch, total = self.get_function(**self.params)
 
-        self.gathering_responses = tqdm(total=total, desc=desc)
+        self.gathering_responses = tqdm(total=total, desc=desc) if total > self.params['limit'] else None
 
     def update_batch(self):
         after = self.current_batch[-1].id
@@ -841,7 +813,8 @@ class efficient_iterget:
 
     def __next__(self):
         if len(self.current_batch) == 0:
-            self.gathering_responses.close()
+            if self.gathering_responses:
+                self.gathering_responses.close()
             raise StopIteration
         else:
             next_obj = self.current_batch[self.obj_index]
@@ -849,7 +822,8 @@ class efficient_iterget:
                 self.update_batch()
                 self.obj_index = 0
             else:
-                self.gathering_responses.update(1)
+                if self.gathering_responses:
+                    self.gathering_responses.update(1)
                 self.obj_index += 1
             return next_obj
 
@@ -1355,6 +1329,7 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=None)
     :rtype: list[str]
     """
 
+    author_ids = set()
     author_domains = set()
     author_emails = set()
     author_relations = set()
@@ -1369,6 +1344,7 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=None)
 
     for profile in author_profiles:
         author_info = info_function(profile, n_years)
+        author_ids.add(author_info['id'])
         author_domains.update(author_info['domains'])
         author_emails.update(author_info['emails'])
         author_relations.update(author_info['relations'])
@@ -1378,8 +1354,10 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=None)
 
     conflicts = set()
     conflicts.update(author_domains.intersection(user_info['domains']))
-    conflicts.update(author_relations.intersection(user_info['emails']))
-    conflicts.update(author_emails.intersection(user_info['relations']))
+    conflicts.update(author_relations.intersection(user_info['emails'])) ## keep this one until all relations have a profile
+    conflicts.update(author_relations.intersection([user_info['id']]))
+    conflicts.update(author_ids.intersection(user_info['relations']))
+    conflicts.update(author_emails.intersection(user_info['relations'])) ## keep this one until all relations have a profile
     conflicts.update(author_emails.intersection(user_info['emails']))
     conflicts.update(author_publications.intersection(user_info['publications']))
 
@@ -1432,22 +1410,10 @@ def get_profile_info(profile, n_years=None):
             domains.add(domain)
 
     ## Relations section
-    for relation in profile.content.get('relations', []):
-        try:
-            end = int(relation.get('end'))
-        except:
-            end = None
-        if end is None or end > cut_off_year:
-            relations.add(relation['email'])
+    relations = filter_relations_by_year(profile.content.get('relations', []), cut_off_year)
 
     ## Publications section: get publications within last n years, default is all publications from previous years
-    for publication in profile.content.get('publications', []):
-        publication_date = publication.pdate or publication.cdate or publication.tcdate or 0
-        try:
-            if datetime.datetime.fromtimestamp(publication_date/1000).year > cut_off_year:
-                publications.add(publication.id)
-        except:
-            print('Error extracting the date for publication: ', publication.id)
+    publications = filter_publications_by_year(profile.content.get('publications', []), cut_off_year)
 
     return {
         'id': profile.id,
@@ -1494,16 +1460,7 @@ def get_neurips_profile_info(profile, n_years=None):
                 domains.add(domain)
 
     ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
-    for r in profile.content.get('relations', []):
-        if (r.get('relation', '') or '') in ['Coauthor','Coworker']:
-            try:
-                end = int(r.get('end'))
-            except:
-                end = None
-            if end is None or end > cut_off_year:
-                relations.add(r['email'])
-        else:
-            relations.add(r['email'])
+    relations = filter_relations_by_year(profile.content.get('relations', []), cut_off_year, ['Coauthor','Coworker'])
 
     ## Emails section
     for email in profile.content['emails']:
@@ -1524,25 +1481,7 @@ def get_neurips_profile_info(profile, n_years=None):
                 print('Profile with invalid email:', profile.id, email)
 
     ## Publications section: get publications within last n years
-    curr_year = datetime.datetime.now().year
-    for pub in profile.content.get('publications', []):
-        year = None
-        if 'year' in pub.content and isinstance(pub.content['year'], str):
-            try:
-                converted_year = int(pub.content['year'])
-                if converted_year <= curr_year:
-                    year = converted_year
-            except Exception as e:
-                year = None
-        if not year:
-            timtestamp = pub.cdate if pub.cdate else pub.tcdate
-            try:
-                year = int(datetime.datetime.fromtimestamp(timtestamp/1000).year)
-            except:
-                year = -1
-                print('Error extracting the date for publication: ', pub.id)            
-        if year > cut_off_year:
-            publications.add(pub.id)
+    publications = filter_publications_by_year(profile.content.get('publications', []), cut_off_year)
 
     return {
         'id': profile.id,
@@ -1588,12 +1527,7 @@ def get_current_submissions_profile_info(profile, n_years=None, submission_venue
                 domains.add(domain)
 
     ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
-    for r in profile.content.get('relations', []):
-        if (r.get('relation', '') or '') in ['Coauthor','Coworker']:
-            if r.get('end') is None or int(r.get('end')) > cut_off_year:
-                relations.add(r['email'])
-        else:
-            relations.add(r['email'])
+    relations = filter_relations_by_year(profile.content.get('relations', []), cut_off_year, ['Coauthor','Coworker'])
 
     ## Get publications
     for publication in profile.content.get('publications', []):
@@ -1607,6 +1541,66 @@ def get_current_submissions_profile_info(profile, n_years=None, submission_venue
         'relations': relations,
         'publications': publications
     }
+
+def filter_publications_by_year(publications, cut_off_year):
+    
+    def extract_year(publication_id, timestamp):
+        try:
+            return int(datetime.datetime.fromtimestamp(timestamp/1000).year)
+        except:
+            print('Error extracting the date for publication: ', publication_id)       
+            return None
+    
+    ## Publications section: get publications within last n years
+    ## 1. try to get the year from the publication date
+    ## 2. if not available, try to get the year from the content year field
+    ## 3. if not available, try to get the year from the creation date
+    filtered_publications = set()
+    current_year = datetime.datetime.now().year
+    for publication in publications:
+        year = None
+        if publication.pdate:
+            year = extract_year(publication.id, publication.pdate)
+
+        if not year and 'year' in publication.content:
+            unformatted_year = None
+            if isinstance(publication.content['year'], dict) and 'value' in publication.content['year']:
+                unformatted_year = publication.content['year']['value']
+            elif isinstance(publication.content['year'], str):
+                unformatted_year = publication.content['year']
+
+            try:
+                converted_year = int(unformatted_year)
+                if converted_year <= current_year:
+                    year = converted_year
+            except Exception as e:
+                year = None
+        if not year:
+            year = extract_year(publication.id, publication.cdate if publication.cdate else publication.tcdate)
+
+        if year and year > cut_off_year:
+            filtered_publications.add(publication.id)
+
+    return filtered_publications    
+
+def filter_relations_by_year(relations, cut_off_year, only_relations=None):
+
+    filtered_relations = set()
+    for r in relations:
+        relation_id = r.get('profile_id', r.get('username', r.get('email')))
+        if relation_id:
+            end = None
+            try:
+                end = int(r.get('end'))
+            except:
+                end = None            
+            if only_relations is None or r.get('relation', '') in only_relations:
+                if end is None or end > cut_off_year:
+                    filtered_relations.add(relation_id)
+            else:
+                filtered_relations.add(relation_id)
+
+    return filtered_relations
 
 def post_bulk_edges (client, edges, batch_size = 50000):
     num_edges = len(edges)

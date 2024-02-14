@@ -27,7 +27,7 @@ def process(client, note, invitation):
                     submission_deadline = datetime.datetime.strptime(submission_deadline, '%Y/%m/%d')
                 matching_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Paper_Matching_Setup')
                 if matching_invitation:
-                    matching_invitation.cdate = openreview.tools.datetime_millis(submission_deadline)
+                    matching_invitation.cdate = openreview.tools.datetime_millis(conference.submission_stage.due_date)
                     client.post_invitation(matching_invitation)
                 revision_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Revision'))
                 if revision_invitation and conference.submission_stage.second_due_date and not forum_note.content.get('submission_revision_deadline'):
@@ -201,7 +201,7 @@ def process(client, note, invitation):
                         hide_fields=forum_note.content.get('hide_fields', [])
                     )
 
-                if forum_note.content.get('api_version') == '2' and 'publication_chairs_emails' in forum_note.content and forum_note.content['publication_chairs_emails']:
+                if forum_note.content.get('api_version') == '2' and forum_note.content.get('publication_chairs', 'No') == 'Yes, our venue has Publication Chairs':
                     submission_revision_inv = client.get_invitation(f'{SUPPORT_GROUP}/-/Request{forum_note.number}/Submission_Revision_Stage')
                     if conference.get_publication_chairs_id() not in submission_revision_inv.invitees:
                         invitees = submission_revision_inv.invitees
@@ -300,6 +300,16 @@ def process(client, note, invitation):
             conference.create_meta_review_stage()
 
         elif invitation_type == 'Decision_Stage':
+            # check if decisions file has changed from previous revision
+            decision_stage_notes = client.get_references(
+                referent=forum_note.id,
+                invitation=f'{SUPPORT_GROUP}/-/Request{forum_note.number}/Decision_Stage',
+                limit=2
+            )
+            if len(decision_stage_notes) > 1:
+                previous_decisions_file = decision_stage_notes[-1].content.get('decisions_file', '')
+                if previous_decisions_file == forum_note.content.get('decisions_file', ''):
+                    conference.decision_stage.decisions_file = None
             conference.create_decision_stage()
 
             content = {
@@ -344,7 +354,7 @@ def process(client, note, invitation):
                 decision_options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
 
             content['send_decision_notifications'] = {
-                'description': 'Would you like to notify the authors regarding the decision? If yes, please carefully review the template below for each decision option before you click submit to send out the emails.',
+                'description': 'Would you like to notify the authors regarding the decision? If yes, please carefully review the template below for each decision option before you click submit to send out the emails. Note that you can only send email notifications from the OpenReview UI once. If you need to send additional emails, you can do so by using the python client.',
                 'value-radio': [
                     'Yes, send an email notification to the authors',
                     'No, I will send the emails to the authors'
@@ -479,6 +489,30 @@ Best,
                     for decision in decision_options
                 }
                 conference.send_decision_notifications(decision_options, email_messages)
+
+                if forum_note.content.get('api_version', '1') == '2':
+
+                    notes = client.get_notes(invitation=SUPPORT_GROUP+'/-/Request'+str(forum_note.number)+'/Comment')
+                    posted_status = False
+                    for note in notes:
+                        if note.content.get('title', '') == 'Decision Notification Status':
+                            posted_status = True
+                            break
+
+                    if not posted_status:
+                        comment_note = openreview.Note(
+                            invitation = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Comment',
+                            forum = forum_note.id,
+                            replyto = forum_note.id,
+                            readers = comment_readers,
+                            writers = [SUPPORT_GROUP],
+                            signatures = [SUPPORT_GROUP],
+                            content = {
+                                'title': 'Decision Notification Status',
+                                'comment': f'Decision notifications have been sent to the authors. You can check the status of the emails by clicking on this link: https://openreview.net/messages?parentGroup={conference.id}/Authors',
+                            }
+                        )
+                        client.post_note(comment_note)
 
         submission_content = conference.submission_stage.get_content(forum_note.content.get('api_version', '1'))
         submission_revision_invitation = client.get_invitation(SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Submission_Revision_Stage')

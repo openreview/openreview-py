@@ -870,7 +870,7 @@ class OfficialCommentInvitation(openreview.Invitation):
                     ]
                 },
                 'signatures': {
-                    'values-regex': comment_stage.get_signatures_regex(conference, note.number),
+                    'values-regex': '|'.join(comment_stage.get_signatures(conference, note.number)),
                     'description': 'How your identity will be displayed.'
                 }
             }
@@ -931,7 +931,7 @@ class PaperReviewInvitation(openreview.Invitation):
     def __init__(self, conference, note):
 
         review_stage = conference.review_stage
-        signature_regex = review_stage.get_signatures(conference, note.number)
+        signature_regex = '|'.join(review_stage.get_signatures(conference, note.number))
         readers = review_stage.get_readers(conference, note.number)
         nonreaders = review_stage.get_nonreaders(conference, note.number)
 
@@ -994,10 +994,14 @@ class EthicsReviewInvitation(openreview.Invitation):
             file_content = file_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
             file_content = file_content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + ethics_review_stage.name + "';")
 
+            exp_date = tools.datetime_millis(ethics_review_stage.exp_date) if ethics_review_stage.exp_date else None
+            if not exp_date:
+                exp_date = tools.datetime_millis(ethics_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if ethics_review_stage.due_date else None
+
             super(EthicsReviewInvitation, self).__init__(id = conference.get_invitation_id(ethics_review_stage.name),
                 cdate = tools.datetime_millis(ethics_review_stage.start_date),
                 duedate = tools.datetime_millis(ethics_review_stage.due_date),
-                expdate = tools.datetime_millis(ethics_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if ethics_review_stage.due_date else None,
+                expdate = exp_date,
                 readers = ['everyone'],
                 writers = [conference.id],
                 signatures = [conference.id],
@@ -1013,7 +1017,7 @@ class PaperEthicsReviewInvitation(openreview.Invitation):
     def __init__(self, conference, note):
 
         ethics_review_stage = conference.ethics_review_stage
-        signature_regex = ethics_review_stage.get_signatures(conference, note.number)
+        signature_regex = '|'.join(ethics_review_stage.get_signatures(conference, note.number))
         readers = ethics_review_stage.get_readers(conference, note.number)
         nonreaders = ethics_review_stage.get_nonreaders(conference, note.number)
 
@@ -1370,7 +1374,7 @@ class PaperMetaReviewInvitation(openreview.Invitation):
                     'description': 'Who can edit this meta-review.'
                 },
                 'signatures': {
-                    'values-regex': meta_review_stage.get_signatures_regex(conference, note.number),
+                    'values-regex': '|'.join(meta_review_stage.get_signatures(conference, note.number)),
                     'description': 'How your identity will be displayed.'
                 }
             }

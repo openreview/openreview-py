@@ -5,7 +5,7 @@ def process(client, edit, invitation):
     ## Notify readers
     journal.notify_readers(edit)
 
-    note=edit.note
+    note=client.get_note(edit.note.id)
 
     ## On update or delete return
     if note.tcdate != note.tmdate:
@@ -16,7 +16,7 @@ def process(client, edit, invitation):
     ## Update submission and set the decision submitted status
     client.post_note_edit(
         invitation = journal.get_meta_invitation_id(),
-        readers = [journal.venue_id, journal.get_action_editors_id(submission.number), journal.get_reviewers_id(submission.number), journal.get_authors_id(submission.number)],
+        readers = journal.get_under_review_submission_readers(submission.number),
         writers = [journal.venue_id],
         signatures = [journal.venue_id],
         note = openreview.api.Note(

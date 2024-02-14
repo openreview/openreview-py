@@ -1,5 +1,6 @@
 import openreview
 import pytest
+import datetime
 import random
 import types
 import sys
@@ -237,7 +238,7 @@ class TestTools():
         assert len(notes) == 1333
 
     def test_get_all_refs(self, client):
-        refs_iterator = openreview.tools.iterget_references(client)
+        refs_iterator = openreview.tools.iterget_references(client, invitation='GetAllNotes/-/Submission')
         assert refs_iterator
 
     def test_get_all_tags(self, client):
@@ -442,6 +443,48 @@ class TestTools():
         conflicts = openreview.tools.get_conflicts([user2_profile], user_profile)
         assert len(conflicts) == 0
 
+        user2_profile.content['relations'] = [{
+            'relation': 'Advisor',
+            'name': 'First Last',
+            'username': '~First_Last2',
+            'start': 2015,
+            'end': None
+        },
+        {
+            'relation': 'Coauthor',
+            'name': 'Some NAme',
+            'email': 'test@mail.com',
+            'start': 2015,
+            'end': None
+        }]
+        user2_profile.content['dblp'] = 'https://dblp.org/pid/l/Last:First'
+        user2_profile.content['history'] = [{
+            'position': 'Professor',
+            'institution': {
+                'domain': 'cmu.edu'
+            },
+            'start': 2015,
+            'end': None
+        }]
+        user2_profile = client.post_profile(user2_profile)
+
+        conflicts = openreview.tools.get_conflicts([user2_profile], user_profile)
+        
+        assert len(conflicts) == 1
+        assert conflicts[0] == '~First_Last2'
+
+        conflicts = openreview.tools.get_conflicts([user_profile], user2_profile)
+
+        assert len(conflicts) == 1
+        assert conflicts[0] == '~First_Last2'
+
+        test_profile = openreview.tools.get_profiles(client, ['test@mail.com'], with_relations=True)[0]
+        user_profiles = openreview.tools.get_profiles(client, ['user2@qq.com'], with_relations=True)
+        conflicts = openreview.tools.get_conflicts(user_profiles, test_profile, policy='NeurIPS')
+
+        assert len(conflicts) == 1
+        assert conflicts[0] == '~SomeFirstName_User1'
+
         guest_client = openreview.Client()
         user_profile = guest_client.get_profile(email_or_id='user@qq.com')
         user2_profile = guest_client.get_profile(email_or_id='user2@qq.com')
@@ -623,3 +666,83 @@ class TestTools():
         assert profiles['alternate@mail.com'].id == '~SomeFirstName_User1'
         assert profiles['test_user@mail.com'].id == 'test_user@mail.com'
         assert profiles['~Test_Name1'] is None
+
+
+    def test_filter_by_publications(self, client, test_client):
+        
+        publications = [
+            openreview.Note(
+                id = '1',
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2014, 4, 30)),
+                content = {
+                    'year': '2017'
+                },
+                invitation = 'test/-/Submission',
+                readers=[],
+                writers=[],
+                signatures=[]
+            ),
+            openreview.Note(
+                id = '2',
+                tcdate = openreview.tools.datetime_millis(datetime.datetime(2015, 4, 30)),
+                content = {
+
+                },
+                invitation = 'test/-/Submission',
+                readers=[],
+                writers=[],
+                signatures=[]
+            ),
+            openreview.Note(
+                id = '3',
+                cdate = openreview.tools.datetime_millis(datetime.datetime(2016, 4, 30)),
+                content = {
+
+                },
+                invitation = 'test/-/Submission',
+                readers=[],
+                writers=[],
+                signatures=[]
+            ),
+            openreview.Note(
+                id = '4',
+                content = {
+                    'year': '2017'
+                },
+                invitation = 'test/-/Submission',
+                readers=[],
+                writers=[],
+                signatures=[]
+            ),
+            openreview.api.Note(
+                id = '5',
+                content = {
+                    'year': { 'value': 2017 }
+                }
+            ),
+            openreview.api.Note(
+                id = '6',
+                pdate = 111111111111111111111,
+                content = {
+                    'year': { 'value': 2018 }
+                }
+            )
+        ]
+
+        filtered_publications = openreview.tools.filter_publications_by_year(publications, 2013)
+        assert len(filtered_publications) == 6
+        
+        filtered_publications = openreview.tools.filter_publications_by_year(publications, 2014)
+        assert len(filtered_publications) == 5
+        
+        filtered_publications = openreview.tools.filter_publications_by_year(publications, 2015)
+        assert len(filtered_publications) == 4
+
+        filtered_publications = openreview.tools.filter_publications_by_year(publications, 2016)
+        assert len(filtered_publications) == 3
+
+        filtered_publications = openreview.tools.filter_publications_by_year(publications, 2017)
+        assert len(filtered_publications) == 1
+
+        filtered_publications = openreview.tools.filter_publications_by_year(publications, 2018)
+        assert len(filtered_publications) == 0

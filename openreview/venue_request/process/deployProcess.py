@@ -78,6 +78,10 @@ Hi Program Chairs,
 
 Thank you for choosing OpenReview to host your upcoming venue.
 
+We recommend making authors aware of OpenReview's moderation policy for newly created profiles in the Call for Papers:
+- New profiles created without an institutional email will go through a moderation process that **can take up to two weeks**.
+- New profiles created with an institutional email will be activated automatically.
+
 We have set up the venue based on the information that you provided here: {baseurl}/forum?id={noteId}
 
 You can use the following links to access the venue:
@@ -413,7 +417,7 @@ If you would like to change your decision, please follow the link in the previou
     # revision_stage_invitation
     submission_revision_readers = []
     submission_revision_readers.extend(readers)
-    if forum.content.get('api_version') == '2' and 'publication_chairs_emails' in forum.content and forum.content['publication_chairs_emails']:
+    if forum.content.get('api_version') == '2' and forum.content.get('publication_chairs', 'No') == 'Yes, our venue has Publication Chairs':
         submission_revision_readers.append(conference.get_publication_chairs_id())
     client.post_invitation(openreview.Invitation(
         id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Submission_Revision_Stage',
@@ -616,3 +620,4 @@ If you would like to change your decision, please follow the link in the previou
             },
             signatures=['~Super_User1']
         ))
+

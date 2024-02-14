@@ -8,7 +8,7 @@ def process_update(client, edge, invitation, existing_edge):
 
     venue_id = journal.venue_id
     note = client.get_note(edge.head)
-    assigned_action_editor = client.search_profiles(ids=[note.content['assigned_action_editor']['value']])[0]
+    assigned_action_editor = client.search_profiles(ids=[note.content['assigned_action_editor']['value'].split(',')[0]])[0]
     group = client.get_group(journal.get_reviewers_id(number=note.number))
     tail_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), tail=edge.tail)
     head_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), head=edge.head)
@@ -17,6 +17,7 @@ def process_update(client, edge, invitation, existing_edge):
     number_of_reviewers = journal.get_number_of_reviewers()
     review_visibility = 'publicly visible' if journal.is_submission_public() else 'visible to all the reviewers'
     submission_length = ' If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.' if journal.get_submission_length() else ''
+    official_reviewer = client.get_groups(member=edge.tail, id=journal.get_reviewers_id())
 
     ## Check task completion
     if len(head_assignment_edges) >= number_of_reviewers:
@@ -36,7 +37,7 @@ def process_update(client, edge, invitation, existing_edge):
             client.post_edge(submission_edge)
 
     ## Enable reviewer responsibility task
-    if len(tail_assignment_edges) == 1 and not edge.ddate and not client.get_groups(member=edge.tail, id=journal.get_solicit_reviewers_id(number=note.number)):
+    if not journal.should_skip_reviewer_responsibility_acknowledgement() and len(tail_assignment_edges) == 1 and not edge.ddate and official_reviewer:
         print('Enable reviewer responsibility task for', edge.tail)
         responsiblity_invitation_edit = journal.invitation_builder.set_single_reviewer_responsibility_invitation(edge.tail, journal.get_due_date(weeks = 1))
 
@@ -44,6 +45,8 @@ def process_update(client, edge, invitation, existing_edge):
     pending_review_edge = None
     if pending_review_edges:
         pending_review_edge = pending_review_edges[0]
+
+    reviewer_group = client.get_group(journal.get_reviewers_id())
 
     ## Unassignment action
     if edge.ddate and edge.tail in group.members:
@@ -53,19 +56,15 @@ def process_update(client, edge, invitation, existing_edge):
         recipients=[edge.tail]
         subject=f'[{journal.short_name}] You have been unassigned from {journal.short_name} submission {note.number}: {note.content["title"]["value"]}'
 
-        message=f'''Hi {{{{fullname}}}},
-
-We recently informed you that your help was requested to review a {journal.short_name} submission "{note.number}: {note.content['title']['value']}".
-
-However, it was just determined that your help is no longer needed for this submission and you have been unassigned as a reviewer for it.
-
-If you have any questions, don't hesitate to reach out directly to the Action Editor (AE) for the submission, for example by leaving a comment readable by the AE only, on the OpenReview page for the submission: https://openreview.net/forum?id={note.id}
-
-Apologies for the change and thank you for your continued involvement with {journal.short_name}!
-
-The {journal.short_name} Editors-in-Chief
-note: replies to this email will go to the AE, {assigned_action_editor.get_preferred_name(pretty=True)}.
-'''
+        message=reviewer_group.content['unassignment_email_template_script']['value'].format(
+            short_name=journal.short_name,
+            submission_id=note.id,
+            submission_number=note.number,
+            submission_title=note.content['title']['value'],
+            website=journal.website,
+            contact_info=journal.contact_info,
+            assigned_action_editor=assigned_action_editor.get_preferred_name(pretty=True)
+        )
 
         client.post_message(subject, recipients, message, replyTo=assigned_action_editor.get_preferred_email())
 
@@ -108,27 +107,28 @@ note: replies to this email will go to the AE, {assigned_action_editor.get_prefe
         ack_invitation_edit = journal.invitation_builder.set_note_reviewer_assignment_acknowledgement_invitation(note, edge.tail, journal.get_due_date(days = 2), duedate.strftime("%b %d, %Y"))
         
         recipients = [edge.tail]
-        ignoreRecipients = [journal.get_solicit_reviewers_id(number=note.number)]
         subject=f'''[{journal.short_name}] Assignment to review new {journal.short_name} submission {note.number}: {note.content['title']['value']}'''
-        message=f'''Hi {{{{fullname}}}},
+        message=reviewer_group.content['assignment_email_template_script']['value'].format(
+            short_name=journal.short_name,
+            venue_id=venue_id,
+            submission_id=note.id,
+            submission_number=note.number,
+            submission_title=note.content['title']['value'],
+            submission_length=submission_length,
+            website=journal.website,
+            contact_info=journal.contact_info,
+            review_period_length=review_period_length,
+            review_duedate=duedate.strftime("%b %d"),
+            ack_invitation_url=f'https://openreview.net/forum?id={note.id}&invitationId={ack_invitation_edit["invitation"]["id"]}',
+            invitation_url=f'https://openreview.net/forum?id={note.id}&invitationId={journal.get_review_id(number=note.number)}',
+            number_of_reviewers=number_of_reviewers,
+            review_visibility=review_visibility,
+            reviewers_max_papers=journal.get_reviewers_max_papers(),
+            assigned_action_editor=assigned_action_editor.get_preferred_name(pretty=True)
+        )
 
-With this email, we request that you submit, within {review_period_length} weeks ({duedate.strftime("%b %d")}) a review for your newly assigned {journal.short_name} submission "{note.number}: {note.content['title']['value']}".{submission_length}
-
-Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note.id}&invitationId={ack_invitation_edit['invitation']['id']}
-
-As a reminder, reviewers are **expected to accept all assignments** for submissions that fall within their expertise and annual quota ({journal.get_reviewers_max_papers()} papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another {journal.short_name} submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).
-
-To submit your review, please follow this link: https://openreview.net/forum?id={note.id}&invitationId={journal.get_review_id(number=note.number)} or check your tasks in the Reviewers Console: https://openreview.net/group?id={journal.venue_id}/Reviewers#reviewer-tasks
-
-Once submitted, your review will become privately visible to the authors and AE. Then, as soon as {number_of_reviewers} reviews have been submitted, all reviews will become {review_visibility}. For more details and guidelines on performing your review, visit {journal.website}.
-
-We thank you for your essential contribution to {journal.short_name}!
-
-The {journal.short_name} Editors-in-Chief
-note: replies to this email will go to the AE, {assigned_action_editor.get_preferred_name(pretty=True)}.
-'''
-
-        client.post_message(subject, recipients, message, ignoreRecipients=ignoreRecipients, parentGroup=group.id, replyTo=assigned_action_editor.get_preferred_email())
+        if official_reviewer:
+            client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=assigned_action_editor.get_preferred_email())
 
     if responsiblity_invitation_edit is not None:
 

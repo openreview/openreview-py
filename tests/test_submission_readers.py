@@ -41,6 +41,7 @@ class TestSubmissionReaders():
                     'test@mail.com',
                     'tom@mail.com'],
                 'contact_email': 'test@mail.com',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'No, our venue does not have Senior Area Chairs',
                 'Venue Start Date': now.strftime('%Y/%m/%d'),
@@ -53,7 +54,8 @@ class TestSubmissionReaders():
                 'reviewer_identity': ['Program Chairs', 'Assigned Area Chair', 'Assigned Senior Area Chair'],
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
-                'Expected Submissions': '1000'
+                'Expected Submissions': '1000',
+                'submission_license': ['CC BY 4.0']
             })
 
         request_form_note=test_client.post_note(request_form_note)
@@ -84,7 +86,9 @@ class TestSubmissionReaders():
 
     def test_submission_stage(self, client, venue, helpers):
 
-        author_client = helpers.create_user('workshop_author1@mail.com', 'Workshop', 'Author')
+        helpers.create_user('workshop_author1@mail.com', 'Workshop', 'Author')
+        author_client = openreview.Client(username='workshop_author1@mail.com', password=helpers.strong_password)
+
 
         submission_one = author_client.post_note(openreview.Note(
             invitation='{}/-/Submission'.format(venue['venue_id']),

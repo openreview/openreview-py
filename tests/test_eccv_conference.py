@@ -299,7 +299,9 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert conference, 'conference is None'
         conference.set_program_chairs(['pc@eccv.org'])
 
-        pc_client = helpers.create_user('pc@eccv.org', 'Program', 'ECCVChair')
+        helpers.create_user('pc@eccv.org', 'Program', 'ECCVChair')
+        pc_client = openreview.Client(username='pc@eccv.org', password=helpers.strong_password)
+
 
         group = pc_client.get_group('thecvf.com/ECCV/2020/Conference')
         assert group
@@ -403,27 +405,27 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
     def test_expertise_selection(self, conference, helpers, selenium, request_page):
 
-        reviewer_client = helpers.create_user('test_reviewer_eccv@mail.com', 'ReviewerFirstName', 'Eccv')
+        helpers.create_user('test_reviewer_eccv@mail.com', 'ReviewerFirstName', 'Eccv')
+        reviewer_client = openreview.Client(username='test_reviewer_eccv@mail.com', password=helpers.strong_password)
+
         reviewer_tasks_url = 'http://localhost:3030/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
         request_page(selenium, reviewer_tasks_url, reviewer_client.token)
 
         assert selenium.find_element(By.LINK_TEXT, 'Expertise Selection')
 
         request_page(selenium, 'http://localhost:3030/invitation?id=thecvf.com/ECCV/2020/Conference/-/Expertise_Selection', reviewer_client.token, wait_for_element='header')
-        header = selenium.find_element(By.ID, 'header')
+        content = selenium.find_element(By.ID, 'content')
+        assert content
+        header = content.find_elements(By.TAG_NAME, "header")
         assert header
-        notes = header.find_elements(By.CLASS_NAME, "description")
+        notes = content.find_element(By.CLASS_NAME, "description").find_elements(By.TAG_NAME, "p")
         assert notes
-        assert len(notes) == 1
-        assert notes[0].text == '''Listed below are all the papers you have authored that exist in the OpenReview database.
-
-By default, we consider all of these papers to formulate your expertise. Please click on "Exclude" for papers that you do NOT want to be used to represent your expertise.
-
-Your previously authored papers from selected conferences were imported automatically from DBLP.org. The keywords in these papers will be used to rank submissions for you during the bidding process, and to assign submissions to you during the review process. If there are DBLP papers missing, you can add them by editing your OpenReview profile and then clicking on 'Add DBLP Papers to Profile'.
-
-Papers not automatically included as part of this import process can be uploaded by using the Upload button. Make sure that your email is part of the "authorids" field of the upload form. Otherwise the paper will not appear in the list, though it will be included in the recommendations process. Only upload papers co-authored by you.
-
-Please contact info@openreview.net with any questions or concerns about this interface, or about the expertise scoring process.'''
+        assert len(notes) == 5
+        assert notes[0].text == 'Listed below are all the papers you have authored that exist in the OpenReview database.'
+        assert notes[1].text == 'By default, we consider all of these papers to formulate your expertise. Please click "Exclude" for papers that you do NOT want to be used to represent your expertise.'
+        assert notes[2].text == "Your previously authored papers from selected conferences were automatically imported from DBLP.org. The keywords in these papers will be used to rank submissions for you during the bidding process, and to assign submissions to you during the review process. If there are DBLP papers missing, you can add them by going to your OpenReview profile and clicking \"Add DBLP Papers to Profile\"."
+        assert notes[3].text == 'Papers not automatically included as part of this import process can be uploaded with the Upload button below. Make sure that your email is part of the "authorids" field of the upload form, otherwise the paper will not appear in the list, though it will be included in the recommendations process. Only upload papers you are an author of.'
+        assert notes[4].text == 'Please contact info@openreview.net with any questions or concerns about this interface, or about the expertise scoring process.'
 
     def test_open_registration(self, conference, helpers, selenium, request_page):
 
@@ -474,7 +476,9 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert len(notes) == 1
         assert notes[0].text == 'This page provides information and status updates for the ECCV 2020. It will be regularly updated as the conference progresses, so please check back frequently.\nYou have agreed to review up to 7 papers.'
 
-        reviewer2_client = helpers.create_user('mohit+1@mail.com', 'Mohit', 'EccvReviewer')
+        helpers.create_user('mohit+1@mail.com', 'Mohit', 'EccvReviewer')
+        reviewer2_client = openreview.Client(username='mohit+1@mail.com', password=helpers.strong_password)
+
         request_page(selenium, 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Reviewers', reviewer2_client.token, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert header
@@ -485,7 +489,9 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         #Area Chairs
         conference.set_area_chairs(['test_ac_eccv@mail.com'])
-        ac_client = helpers.create_user('test_ac_eccv@mail.com', 'AreachairFirstName', 'Eccv')
+        helpers.create_user('test_ac_eccv@mail.com', 'AreachairFirstName', 'Eccv')
+        ac_client = openreview.Client(username='test_ac_eccv@mail.com', password=helpers.strong_password)
+
         reviewer_tasks_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs#areachair-tasks'
         request_page(selenium, reviewer_tasks_url, ac_client.token, by=By.LINK_TEXT, wait_for_element='Area Chair Profile Confirmation')
 
@@ -571,6 +577,8 @@ Please contact info@openreview.net with any questions or concerns about this int
         # check if conference is added in active_venues
         active_venues = client.get_group('active_venues')
         assert conference.id in active_venues.members
+        assert conference.id in client.get_group('venues').members
+        assert 'thecvf.com/ECCV' in client.get_group('host').members        
 
         for submission in submissions:
             id = conference.get_invitation_id('Supplementary_Material', submission.number)
@@ -664,12 +672,23 @@ Please contact info@openreview.net with any questions or concerns about this int
 
     def test_recommend_reviewers(self, conference, test_client, helpers, selenium, request_page):
 
-        r1_client = helpers.create_user('reviewer1@fb.com', 'Reviewer', 'ECCV One')
-        r2_client = helpers.create_user('reviewer2@google.com', 'Reviewer', 'ECCV Two')
-        r3_client = helpers.create_user('reviewer3@umass.edu', 'Reviewer', 'ECCV Three')
-        r4_client = helpers.create_user('reviewer4@mit.edu', 'Reviewer', 'ECCV Four')
-        ac1_client = helpers.create_user('ac1@eccv.org', 'AreaChair', 'ECCV One')
-        ac2_client = helpers.create_user('ac2@eccv.org', 'AreaChair', 'ECCV Two')
+        helpers.create_user('reviewer1@fb.com', 'Reviewer', 'ECCV One')
+        r1_client = openreview.Client(username='reviewer1@fb.com', password=helpers.strong_password)
+
+        helpers.create_user('reviewer2@google.com', 'Reviewer', 'ECCV Two')
+        r2_client = openreview.Client(username='reviewer2@google.com', password=helpers.strong_password)
+
+        helpers.create_user('reviewer3@umass.edu', 'Reviewer', 'ECCV Three')
+        r3_client = openreview.Client(username='reviewer3@umass.edu', password=helpers.strong_password)
+
+        helpers.create_user('reviewer4@mit.edu', 'Reviewer', 'ECCV Four')
+        r4_client = openreview.Client(username='reviewer4@mit.edu', password=helpers.strong_password)
+
+        helpers.create_user('ac1@eccv.org', 'AreaChair', 'ECCV One')
+        ac1_client = openreview.Client(username='ac1@eccv.org', password=helpers.strong_password)
+
+        helpers.create_user('ac2@eccv.org', 'AreaChair', 'ECCV Two')
+        ac2_client = openreview.Client(username='ac2@eccv.org', password=helpers.strong_password)
 
         conference.set_reviewers(['~Reviewer_ECCV_One1', '~Reviewer_ECCV_Two1', '~Reviewer_ECCV_Three1', '~Reviewer_ECCV_Four1'])
         conference.set_area_chairs(['~AreaChair_ECCV_One1', '~AreaChair_ECCV_Two1'])
@@ -700,7 +719,9 @@ Please contact info@openreview.net with any questions or concerns about this int
         )
 
         # Test adding reviewer after conflicts are built
-        r5_client = helpers.create_user('reviewer5@fb.com', 'Reviewer', 'ECCV Five')
+        helpers.create_user('reviewer5@fb.com', 'Reviewer', 'ECCV Five')
+        r5_client = openreview.Client(username='reviewer5@fb.com', password=helpers.strong_password)
+
         conference.set_reviewers(['~Reviewer_ECCV_One1', '~Reviewer_ECCV_Two1', '~Reviewer_ECCV_Three1', '~Reviewer_ECCV_Four1', '~Reviewer_ECCV_Five1'])
         assert r5_client.get_edges_count(invitation='thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict') == 0
         conference.set_matching_conflicts(r5_client.profile.id)

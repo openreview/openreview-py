@@ -51,6 +51,7 @@ class TestVenueRequest():
                     'test@mail.com',
                     'tom@mail.com'],
                 'contact_email': 'test@mail.com',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'Venue Start Date': now.strftime('%Y/%m/%d'),
@@ -67,7 +68,8 @@ class TestVenueRequest():
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair'],
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
-                'use_recruitment_template': 'No'
+                'use_recruitment_template': 'No',
+                'submission_license': ['CC BY 4.0']
             })
 
         with pytest.raises(openreview.OpenReviewException, match=r'Assigned area chairs must see the reviewer identity'):
@@ -135,7 +137,9 @@ class TestVenueRequest():
         assert title_tag
         assert title_tag.text == 'Host a Venue'
 
-        pc_client = helpers.create_user('new_test_user@mail.com', 'NewFirstName', 'User')
+        helpers.create_user('new_test_user@mail.com', 'NewFirstName', 'User')
+        pc_client = openreview.Client(username='new_test_user@mail.com', password=helpers.strong_password)
+
 
         support_group = client.get_group(support_group_id)
         client.add_members_to_group(group=support_group, members=['~Support_User1'])
@@ -168,8 +172,9 @@ class TestVenueRequest():
                     'new_test_user@mail.com',
                     'tom@mail.com'],
                 'contact_email': 'new_test_user@mail.com',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
-                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': abstract_due_date.strftime('%Y/%m/%d %H:%M'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',
@@ -186,7 +191,8 @@ class TestVenueRequest():
                 'desk_rejected_submissions_author_anonymity': 'Yes, author identities of desk rejected submissions should be revealed.',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
-                'submission_name': 'Submission_Test'
+                'submission_name': 'Submission_Test',
+                'submission_license': ['CC BY 4.0']
             }))
 
         assert request_form_note
@@ -334,6 +340,7 @@ class TestVenueRequest():
             'Submission Deadline': request_form_note.content['Submission Deadline'],
             'Venue Start Date': request_form_note.content['Venue Start Date'],
             'contact_email': request_form_note.content['contact_email'],
+            'publication_chairs':'No, our venue does not have Publication Chairs',
             'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
             'desk_rejected_submissions_author_anonymity': 'No, author identities of desk rejected submissions should not be revealed.',
 
@@ -387,8 +394,9 @@ class TestVenueRequest():
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
-                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'remove_submission_options': ['pdf'],
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
                 'Additional Submission Options': {
@@ -454,8 +462,9 @@ class TestVenueRequest():
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
-                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'remove_submission_options': ['pdf'],
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
                 'Additional Submission Options': {
@@ -750,7 +759,8 @@ class TestVenueRequest():
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline':  venue['request_form_note'].content['Submission Deadline'],
                 'Venue Start Date':  venue['request_form_note'].content['Venue Start Date'],
-                'contact_email': venue['request_form_note'].content['contact_email']
+                'contact_email': venue['request_form_note'].content['contact_email'],
+                'publication_chairs':'No, our venue does not have Publication Chairs'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -860,7 +870,8 @@ class TestVenueRequest():
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline':  venue['request_form_note'].content['Submission Deadline'],
                 'Venue Start Date':  venue['request_form_note'].content['Venue Start Date'],
-                'contact_email': venue['request_form_note'].content['contact_email']
+                'contact_email': venue['request_form_note'].content['contact_email'],
+                'publication_chairs':'No, our venue does not have Publication Chairs'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -975,7 +986,9 @@ class TestVenueRequest():
 
     def test_venue_bid_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
-        reviewer_client = helpers.create_user('venue_reviewer1@mail.com', 'Venue', 'Reviewer')
+        helpers.create_user('venue_reviewer1@mail.com', 'Venue', 'Reviewer')
+        reviewer_client = openreview.Client(username='venue_reviewer1@mail.com', password=helpers.strong_password)
+
 
         reviewer_group_id = '{}/Reviewers'.format(venue['venue_id'])
         reviewer_group = client.get_group(reviewer_group_id)
@@ -1019,8 +1032,9 @@ class TestVenueRequest():
         pc_group = client.get_group('{}/Program_Chairs'.format(venue['venue_id']))
         client.add_members_to_group(group=pc_group, members=['pc@test.com'])
 
-        author_client = helpers.create_user('venue_author1@mail.com', 'Venue', 'Author')
-        reviewer_client = helpers.create_user('venue_reviewer2@mail.com', 'Venue', 'Reviewer')
+        helpers.create_user('venue_author1@mail.com', 'Venue', 'Author')
+        author_client = openreview.Client(username='venue_author1@mail.com', password=helpers.strong_password)
+        helpers.create_user('venue_reviewer2@mail.com', 'Venue', 'Reviewer')
 
         submission = author_client.post_note(openreview.Note(
             invitation='{}/-/Submission'.format(venue['venue_id']),
@@ -1056,7 +1070,8 @@ class TestVenueRequest():
         assert 'tom@mail.com' in recipients
         assert 'pc@test.com' in recipients
 
-        author_client = helpers.create_user('venue_author2@mail.com', 'Venue', 'Author')
+        helpers.create_user('venue_author2@mail.com', 'Venue', 'Author')
+        author_client = openreview.Client(username='venue_author2@mail.com', password=helpers.strong_password)
 
         submission = author_client.post_note(openreview.Note(
             invitation='{}/-/Submission'.format(venue['venue_id']),
@@ -1295,8 +1310,9 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
-                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
+                'publication_chairs':'No, our venue does not have Publication Chairs',
                 'withdraw_submission_expiration': withdraw_exp_date,
             },
             forum=venue['request_form_note'].forum,
@@ -1439,7 +1455,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
-        meta_reviewer_client = helpers.create_user('venue_ac1@mail.com', 'Venue', 'Ac')
+        helpers.create_user('venue_ac1@mail.com', 'Venue', 'Ac')
+        meta_reviewer_client = openreview.Client(username='venue_ac1@mail.com', password=helpers.strong_password)
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
         conference.setup_post_submission_stage(force=True)
@@ -2036,7 +2053,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
     def test_post_submission_deadline_edit(self, client, test_client, selenium, request_page, helpers, venue):
-        author_client = helpers.create_user('venue_author3@mail.com', 'Venue', 'Author')
+        helpers.create_user('venue_author3@mail.com', 'Venue', 'Author')
+        author_client = openreview.Client(username='venue_author3@mail.com', password=helpers.strong_password)
         submission = author_client.post_note(openreview.Note(
             invitation='{}/-/Submission'.format(venue['venue_id']),
             readers=[
@@ -2074,8 +2092,9 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
-                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
+                'publication_chairs':'No, our venue does not have Publication Chairs'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -2129,8 +2148,9 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
-                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
+                'publication_chairs':'No, our venue does not have Publication Chairs'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
