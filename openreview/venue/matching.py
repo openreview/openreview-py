@@ -998,7 +998,7 @@ class Matching(object):
         type_affinity_scores = type(compute_affinity_scores)
 
         if type_affinity_scores == str:
-            if compute_affinity_scores in ['specter+mfr', 'specter2+scincl']:
+            if compute_affinity_scores in ['specter+mfr', 'specter2']:
                 invitation, matching_status = self._compute_scores(
                     venue.get_affinity_score_id(self.match_group.id),
                     submissions,
