@@ -1033,6 +1033,7 @@ class TestCVPRConference():
             content=meta_review_revision_content)
 
         venue.create_custom_stage()
+        helpers.await_queue()
 
         invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/-/AC_Revision')
         assert invitation
@@ -1040,6 +1041,7 @@ class TestCVPRConference():
         # Only 1 paper invitation was created
         invitations = openreview_client.get_invitations(invitation='thecvf.com/CVPR/2024/Conference/-/AC_Revision')
         assert invitations and len(invitations) == 1
+        assert 'thecvf.com/CVPR/2024/Conference/Submission4/Meta_Review1/-/AC_Revision' in invitations[0].id
 
         # Posting a new meta review creates a meta review revision invitation for that paper
         ac1_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)       
@@ -1059,6 +1061,7 @@ class TestCVPRConference():
 
         invitations = openreview_client.get_invitations(invitation='thecvf.com/CVPR/2024/Conference/-/AC_Revision')
         assert invitations and len(invitations) == 2
+        assert 'thecvf.com/CVPR/2024/Conference/Submission5/Meta_Review1/-/AC_Revision' in invitations[1].id
 
         # Post a meta review revision
         ac2_client = openreview.api.OpenReviewClient(username='ac2@cvpr.cc', password=helpers.strong_password)
@@ -1096,7 +1099,7 @@ class TestCVPRConference():
         assert meta_review.content['metareview']['value'] == 'Revised comment title'
 
         # Allow SACs to modify all meta review fields
-        sac_revision_invitation = openreview_client.post_invitation_edit(
+        openreview_client.post_invitation_edit(
             invitations='thecvf.com/CVPR/2024/Conference/-/Edit',
             readers=[venue.id],
             writers=[venue.id],
@@ -1114,14 +1117,14 @@ class TestCVPRConference():
                 }
             )
         )
-        helpers.await_queue_edit(openreview_client, invitation='thecvf.com/CVPR/2024/Conference/-/Meta_Review_SAC_Revision-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='thecvf.com/CVPR/2024/Conference/-/Meta_Review_SAC_Revision-0-1', count=2)
 
         # Post meta review SAC revision
         sac_client = openreview.api.OpenReviewClient(username='sac1@cvpr.cc', password=helpers.strong_password)
         meta_review = sac_client.get_notes(invitation='thecvf.com/CVPR/2024/Conference/Submission4/-/Meta_Review')[0]
         sac_revision = sac_client.post_note_edit(
             invitation='thecvf.com/CVPR/2024/Conference/Submission4/-/Meta_Review_SAC_Revision',
-            signatures=['thecvf.com/CVPR/2024/Conference/Submission4/Senior_Area_Chairs'], #fix
+            signatures=['thecvf.com/CVPR/2024/Conference/Submission4/Senior_Area_Chairs'],
             note=openreview.api.Note(
                 id=meta_review.id,
                 content={
@@ -1133,15 +1136,13 @@ class TestCVPRConference():
                 }
             )
         )
-        helpers.await_queue_edit(openreview_client, edit_id=sac_revision['id'])
-
 
         # Secondary AC can't post meta review revision
         secondary_ac_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)
         secondary_ac_anon_group_id = secondary_ac_client.get_groups(prefix=f'thecvf.com/CVPR/2024/Conference/Submission4/Secondary_Area_Chair_.*', signatory='ac1@cvpr.cc')[0].id
 
-        with pytest.raises(openreview.OpenReviewException, match=r'signatures can only contain the allowed values: thecvf.com/CVPR/2024/Conference/Program_Chairs, thecvf.com/CVPR/2024/Conference/Submission4/Area_Chair_.*'):
-            meta_review_revision = ac2_client.post_note_edit(
+        with pytest.raises(openreview.OpenReviewException, match=r'User is not writer of the Note'):
+            meta_review_revision = secondary_ac_client.post_note_edit(
                 invitation='thecvf.com/CVPR/2024/Conference/Submission4/Meta_Review1/-/AC_Revision',
                 signatures=[secondary_ac_anon_group_id],
                 note=openreview.api.Note(
