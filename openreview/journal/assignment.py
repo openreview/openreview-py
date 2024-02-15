@@ -146,7 +146,7 @@ class Assignment(object):
             group_id=committee_id,
             paper_id=note.id,
             expertise_selection_id=self.journal.get_expertise_selection_id(committee_id),
-            model='specter+mfr')
+            model=self.journal.get_expertise_model())
         print('Request expertise for', note.id, committee_id, job.get('jobId'))
         return job.get('jobId')
 

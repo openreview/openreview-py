@@ -2065,7 +2065,9 @@ class InvitationBuilder(object):
             }
             edit_readers = ['${2/note/readers}']
             note_readers = custom_stage.get_readers(self.venue, '${5/content/noteNumber/value}')
+            note_nonreaders = custom_stage.get_nonreaders(self.venue, number='${5/content/noteNumber/value}')
             invitees = custom_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}')
+            noninvitees = custom_stage.get_noninvitees(self.venue, number='${3/content/noteNumber/value}')
             if custom_stage_replyto == 'forum':
                 reply_to = '${4/content/noteId/value}'
             elif custom_stage_replyto == 'withForum':
@@ -2101,6 +2103,8 @@ class InvitationBuilder(object):
                 edit_readers = [venue_id, '${2/signatures}']
                 note_readers = None
                 invitees = ['${3/content/replytoSignatures/value}']
+                noninvitees = []
+                note_nonreaders = []
 
         invitation_content = {
             'source': { 'value': custom_stage_source },
@@ -2151,6 +2155,7 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'minReplies': 1,
                     'invitees': invitees,
+                    'noninvitees': noninvitees,
                     'cdate': custom_stage_cdate,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -2168,6 +2173,7 @@ class InvitationBuilder(object):
                             }
                         },
                         'readers': edit_readers,
+                        'nonreaders': ['${2/note/nonreaders}'] if note_nonreaders else [],
                         'writers': [venue_id],
                         'note': {
                             'id': note_id,
@@ -2221,6 +2227,9 @@ class InvitationBuilder(object):
 
         if note_readers:
             invitation.edit['invitation']['edit']['note']['readers'] = note_readers
+
+        if note_nonreaders:
+            invitation.edit['invitation']['edit']['note']['nonreaders'] = note_nonreaders
 
         if custom_stage_duedate:
             invitation.edit['invitation']['duedate'] = custom_stage_duedate
