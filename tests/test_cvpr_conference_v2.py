@@ -1033,7 +1033,7 @@ class TestCVPRConference():
             content=meta_review_revision_content)
 
         venue.create_custom_stage()
-        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'thecvf.com/CVPR/2024/Conference/-/Final_Revision-0-1', count=1)
 
         invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/-/Final_Revision')
         assert invitation
