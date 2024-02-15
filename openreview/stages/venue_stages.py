@@ -540,7 +540,8 @@ class ReviewStage(object):
         rating_field_name = 'rating',
         confidence_field_name = 'confidence',
         process_path = None,
-        content_query = {}
+        content_query = {},
+        child_invitations_name = 'Official_Review'
     ):
 
         self.start_date = start_date
@@ -560,6 +561,7 @@ class ReviewStage(object):
         self.confidence_field_name = confidence_field_name
         self.process_path = process_path
         self.content_query = content_query
+        self.child_invitations_name = child_invitations_name
 
     def _get_reviewer_readers(self, conference, number, review_signature=None):
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
