@@ -1023,7 +1023,7 @@ class TestCVPRConference():
             }
         }
 
-        venue.custom_stage = openreview.stages.CustomStage(name='AC_Revision',
+        venue.custom_stage = openreview.stages.CustomStage(name='Final_Revision',
             reply_to=openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
             reply_type=openreview.stages.CustomStage.ReplyType.REVISION,
@@ -1035,13 +1035,13 @@ class TestCVPRConference():
         venue.create_custom_stage()
         helpers.await_queue()
 
-        invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/-/AC_Revision')
+        invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/-/Final_Revision')
         assert invitation
 
         # Only 1 paper invitation was created
-        invitations = openreview_client.get_invitations(invitation='thecvf.com/CVPR/2024/Conference/-/AC_Revision')
+        invitations = openreview_client.get_invitations(invitation='thecvf.com/CVPR/2024/Conference/-/Final_Revision')
         assert invitations and len(invitations) == 1
-        assert 'thecvf.com/CVPR/2024/Conference/Submission4/Meta_Review1/-/AC_Revision' in invitations[0].id
+        assert 'thecvf.com/CVPR/2024/Conference/Submission4/Meta_Review1/-/Final_Revision' in invitations[0].id
 
         # Posting a new meta review creates a meta review revision invitation for that paper
         ac1_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)       
@@ -1059,9 +1059,9 @@ class TestCVPRConference():
 
         helpers.await_queue_edit(openreview_client, invitation='thecvf.com/CVPR/2024/Conference/Submission5/-/Meta_Review')
 
-        invitations = openreview_client.get_invitations(invitation='thecvf.com/CVPR/2024/Conference/-/AC_Revision')
+        invitations = openreview_client.get_invitations(invitation='thecvf.com/CVPR/2024/Conference/-/Final_Revision')
         assert invitations and len(invitations) == 2
-        assert 'thecvf.com/CVPR/2024/Conference/Submission5/Meta_Review1/-/AC_Revision' in invitations[1].id
+        assert 'thecvf.com/CVPR/2024/Conference/Submission5/Meta_Review1/-/Final_Revision' in invitations[1].id
 
         # Post a meta review revision
         ac2_client = openreview.api.OpenReviewClient(username='ac2@cvpr.cc', password=helpers.strong_password)
@@ -1070,7 +1070,7 @@ class TestCVPRConference():
         meta_review = ac2_client.get_notes(invitation='thecvf.com/CVPR/2024/Conference/Submission4/-/Meta_Review')[0]
 
         meta_review_revision = ac2_client.post_note_edit(
-            invitation='thecvf.com/CVPR/2024/Conference/Submission4/Meta_Review1/-/AC_Revision',
+            invitation='thecvf.com/CVPR/2024/Conference/Submission4/Meta_Review1/-/Final_Revision',
             signatures=[ac_anon_group_id],
             note=openreview.api.Note(
                 id=meta_review.id,
@@ -1143,7 +1143,7 @@ class TestCVPRConference():
 
         with pytest.raises(openreview.OpenReviewException, match=r'User is not writer of the Note'):
             meta_review_revision = secondary_ac_client.post_note_edit(
-                invitation='thecvf.com/CVPR/2024/Conference/Submission4/Meta_Review1/-/AC_Revision',
+                invitation='thecvf.com/CVPR/2024/Conference/Submission4/Meta_Review1/-/Final_Revision',
                 signatures=[secondary_ac_anon_group_id],
                 note=openreview.api.Note(
                     id=meta_review.id,
