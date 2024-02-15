@@ -2040,6 +2040,7 @@ class InvitationBuilder(object):
         custom_stage_replyto = custom_stage.get_reply_to()
         custom_stage_source = custom_stage.get_source_submissions()
         custom_stage_reply_type = custom_stage.get_reply_type()
+        note_writers = None
 
         if custom_stage_reply_type == 'reply':
             paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, number='${2/content/noteNumber/value}')
@@ -2053,6 +2054,7 @@ class InvitationBuilder(object):
             edit_readers = ['${2/note/readers}']
             note_readers = custom_stage.get_readers(self.venue, '${5/content/noteNumber/value}')
             note_nonreaders = custom_stage.get_nonreaders(self.venue, number='${5/content/noteNumber/value}')
+            note_writers = [venue_id, '${3/signatures}']
             invitees = custom_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}')
             noninvitees = custom_stage.get_noninvitees(self.venue, number='${3/content/noteNumber/value}')
             if custom_stage_replyto == 'forum':
@@ -2161,7 +2163,7 @@ class InvitationBuilder(object):
                         },
                         'readers': edit_readers,
                         'nonreaders': ['${2/note/nonreaders}'] if note_nonreaders else [],
-                        'writers': [venue_id],
+                        'writers': [venue_id, '${2/signatures}'],
                         'note': {
                             'id': note_id,
                             'forum': '${4/content/noteId/value}',
@@ -2173,7 +2175,6 @@ class InvitationBuilder(object):
                                 }
                             },
                             'signatures': ['${3/signatures}'],
-                            'writers': [venue_id, '${3/signatures}'],
                             'content': content
                         }
                     }
@@ -2217,6 +2218,9 @@ class InvitationBuilder(object):
 
         if note_nonreaders:
             invitation.edit['invitation']['edit']['note']['nonreaders'] = note_nonreaders
+
+        if note_writers:
+            invitation.edit['invitation']['edit']['note']['writers'] = note_writers
 
         if custom_stage_duedate:
             invitation.edit['invitation']['duedate'] = custom_stage_duedate
