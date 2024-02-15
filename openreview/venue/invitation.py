@@ -736,7 +736,6 @@ class InvitationBuilder(object):
                         'readers': ['everyone'],
                         'writers': [venue_id],
                         'invitees': [venue_id, self.venue.get_senior_area_chairs_id(number='${3/content/noteNumber/value}')],
-                        'maxReplies': 1,
                         'cdate': meta_review_cdate,
                         'edit': {
                             'signatures': { 
