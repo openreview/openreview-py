@@ -319,6 +319,7 @@ class InvitationBuilder(object):
         
         content = review_stage.get_content(api_version='2', conference=self.venue)
 
+        previous_content_query = {}
         invitation = tools.get_invitation(self.client, review_invitation_id)
         if invitation:
             previous_content_query = invitation.content.get('content_query', {}).get('value', {})
