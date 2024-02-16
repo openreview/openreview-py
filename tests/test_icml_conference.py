@@ -2394,7 +2394,7 @@ ICML 2023 Conference Program Chairs'''
                 }
             },
             remove_fields=['title', 'review'],
-            content_query={
+            source_submissions_query={
                 'position_paper_track': 'No'
             }
         )
@@ -2602,7 +2602,7 @@ ICML 2023 Conference Program Chairs'''
                 }
             },
             remove_fields=['title', 'review'],
-            content_query={
+            source_submissions_query={
                 'position_paper_track': 'No'
             }
         )
@@ -2625,7 +2625,7 @@ ICML 2023 Conference Program Chairs'''
             exp_date=review_exp_date,
             name='Position_Paper_Review',
             remove_fields=['title'],
-            content_query={
+            source_submissions_query={
                 'position_paper_track': 'Yes'
             }
         )
@@ -3929,7 +3929,7 @@ ICML 2023 Conference Program Chairs'''
                 }
             },
             remove_fields=['title', 'review'],
-            content_query={
+            source_submissions_query={
                 'position_paper_track': 'No'
             }
         )
