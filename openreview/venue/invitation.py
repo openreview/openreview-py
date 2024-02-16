@@ -319,12 +319,12 @@ class InvitationBuilder(object):
         
         content = review_stage.get_content(api_version='2', conference=self.venue)
 
-        previous_content_query = {}
+        previous_query = {}
         invitation = tools.get_invitation(self.client, review_invitation_id)
         if invitation:
-            previous_content_query = invitation.content.get('content_query', {}).get('value', {})
+            previous_query = invitation.content.get('source_submissions_query', {}).get('value', {})
 
-        content_query = review_stage.content_query if review_stage.content_query else previous_content_query
+        source_submissions_query = review_stage.source_submissions_query if review_stage.source_submissions_query else previous_query
 
         invitation = Invitation(id=review_invitation_id,
             invitees=[venue_id],
@@ -422,9 +422,9 @@ class InvitationBuilder(object):
         if review_expdate:
             invitation.edit['invitation']['expdate'] = review_expdate
 
-        if content_query:
-            invitation.content['content_query'] = {
-                'value': content_query
+        if source_submissions_query:
+            invitation.content['source_submissions_query'] = {
+                'value': source_submissions_query
             }
 
         if self.venue.ethics_review_stage:
