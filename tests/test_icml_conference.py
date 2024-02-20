@@ -220,6 +220,14 @@ class TestICMLConference():
                 'homepage_override': {
                     'location': 'Hawaii, USA',
                     'instructions': 'For author guidelines, please click [here](https://icml.cc/Conferences/2023/StyleAuthorInstructions)'
+                },
+                'source_submissions_query_mapping': {
+                    'Official_Review': {
+                        'position_paper_track': 'No'
+                    },
+                    'Position_Paper_Review': {
+                        'position_paper_track': 'Yes'
+                    }
                 }
             }
         ))
@@ -3472,6 +3480,9 @@ ICML 2023 Conference Program Chairs'''
                 )
             )
 
+        # assert number of Official_Review and Paper_Track_Review invitations has not changed after flagging papers for ethics reviews
+        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Official_Review')) == 50
+        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Paper_Track_Review')) == 50
 
     def test_comment_stage(self, openreview_client, helpers):
 
@@ -3940,6 +3951,7 @@ ICML 2023 Conference Program Chairs'''
 
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
 
+        # check reviews of a flagged paper is visible to ethics reviewers and authors
         reviews = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Official_Review')
         assert len(reviews) == 2
         assert reviews[0].readers == [
@@ -3962,36 +3974,23 @@ ICML 2023 Conference Program Chairs'''
             reviews[0].signatures[0]
         ]
 
-        # release position paper reviews by directly editing the review invitation
-        openreview_client.post_invitation_edit(
-            invitations='ICML.cc/2023/Conference/-/Edit',
-            readers=['ICML.cc/2023/Conference'],
-            writers=['ICML.cc/2023/Conference'],
-            signatures=['ICML.cc/2023/Conference'],
-            invitation=openreview.api.Invitation(
-                id='ICML.cc/2023/Conference/-/Position_Paper_Review',
-                edit={
-                    'invitation': {
-                        'edit': {
-                            'note': {
-                                'readers': [
-                                    "ICML.cc/2023/Conference/Program_Chairs",
-                                    "ICML.cc/2023/Conference/Submission${5/content/noteNumber/value}/Senior_Area_Chairs",
-                                    "ICML.cc/2023/Conference/Submission${5/content/noteNumber/value}/Area_Chairs",
-                                    "ICML.cc/2023/Conference/Submission${5/content/noteNumber/value}/Reviewers/Submitted",
-                                    "ICML.cc/2023/Conference/Submission${5/content/noteNumber/value}/Authors",
-                                    # 'ICML.cc/2023/Conference/Submission2/Ethics_Reviewers', ## how to release to ethics reviewers?
-                                    "${3/signatures}"
-                                ]
-                            }
-                        }
-                    }
-                }
-            )
+        # release position paper reviews
+        venue.review_stage = openreview.stages.ReviewStage(
+            due_date=now - datetime.timedelta(days=3),
+            release_to_authors=True,
+            release_to_reviewers=openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED,
+            name='Position_Paper_Review',
+            remove_fields=['title'],
+            source_submissions_query={
+                'position_paper_track': 'Yes'
+            }
         )
+
+        venue.create_review_stage()
 
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Position_Paper_Review-0-1', count=3)
 
+        # check reviews of a non-flagged paper is not visible to ethics reviewers but it visible to authors
         reviews = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/Submission2/-/Official_Review')
         assert len(reviews) == 1
         assert reviews[0].readers == [
@@ -4000,7 +3999,6 @@ ICML 2023 Conference Program Chairs'''
             'ICML.cc/2023/Conference/Submission2/Area_Chairs',
             'ICML.cc/2023/Conference/Submission2/Reviewers/Submitted',
             'ICML.cc/2023/Conference/Submission2/Authors',
-            # 'ICML.cc/2023/Conference/Submission2/Ethics_Reviewers',
             reviews[0].signatures[0]
         ]
 

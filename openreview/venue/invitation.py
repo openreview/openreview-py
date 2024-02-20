@@ -445,6 +445,67 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=False)
         return invitation
+    
+    def update_review_invitations(self):
+
+        source_submissions_query_mapping = self.venue.source_submissions_query_mapping
+        if not source_submissions_query_mapping:
+            source_submissions_query_mapping = {
+                self.venue.review_stage.name: None
+            }
+
+        for stage_name in source_submissions_query_mapping.keys():
+
+            print('Updating invitation:', stage_name)
+
+            invitation = openreview.tools.get_invitation(self.client, self.venue.get_invitation_id(stage_name))
+            if invitation:
+
+                note_readers = ['${5/content/noteReaders/value}']
+
+                review_readers = invitation.edit['invitation']['edit']['note']['readers']
+                review_readers = [reader.replace('${5/content/noteNumber/value}', '{number}') for reader in review_readers]
+                if '${5/content/noteReaders/value}' in review_readers:
+                    if '${3/signatures}' in review_readers:
+                        note_readers.append('${3/signatures}')
+                    review_readers = []
+                else:
+                    if '${3/signatures}' in review_readers:
+                        note_readers.append('${3/signatures}')
+                        review_readers.remove('${3/signatures}')
+
+                review_invitation = Invitation(id=invitation.id,
+                    edit={
+                        'content': {
+                            'noteReaders': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string[]', 'regex': f'{self.venue_id}/.*|everyone'
+                                    }
+                                }
+                            }
+                        },
+                        'invitation': {
+                            'edit': {
+                                'note': {
+                                    'readers': note_readers
+                                }
+                            }
+                        }
+                    }
+                )
+                if review_readers:
+                    review_invitation.content = {
+                        'review_readers': {
+                            'value': review_readers
+                        }
+                    }
+
+                self.client.post_invitation_edit(invitations=self.venue.get_meta_invitation_id(),
+                    signatures=[self.venue_id],
+                    replacement=False,
+                    invitation=review_invitation
+                )
 
     def set_review_rebuttal_invitation(self):
 

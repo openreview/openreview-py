@@ -36,6 +36,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
         venue.senior_area_chair_identity_readers = get_identity_readers(note, 'senior_area_chair_identity')
         venue.decision_heading_map = get_decision_heading_map(venue.short_name, note)
+        venue.source_submissions_query_mapping = note.content.get('source_submissions_query_mapping', {})
 
         venue.submission_stage = get_submission_stage(note, venue)
         venue.review_stage = get_review_stage(note)

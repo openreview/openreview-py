@@ -7,8 +7,17 @@ def process(client, edit, invitation):
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     review_name = domain.content.get('review_name', {}).get('value')
     ethics_review_name = domain.content.get('ethics_review_name', {}).get('value')
+    source_submissions_query_mapping = domain.content.get('source_submissions_query_mapping', {}).get('value')
 
     submission = client.get_note(edit.note.id)
+
+    # get correct review invitation name
+    if source_submissions_query_mapping:
+        for invitation_name, query in source_submissions_query_mapping.items():
+            submission_field_name = query.keys()[0]
+
+            if submission.content.get(submission_field_name, {}).get('value', '') in query[submission_field_name]:
+                review_name = invitation_name 
 
     if submission.content['flagged_for_ethics_review']['value']:
 
@@ -32,6 +41,7 @@ def process(client, edit, invitation):
         if 'everyone' not in final_readers:
             final_readers.append(f'{venue_id}/{submission_name}{submission.number}/{ethics_reviewers_name}')
 
+        print('review_name:', review_name)
         paper_invitation_edit = client.post_invitation_edit(
                 invitations=f'{venue_id}/-/{review_name}',
                 readers=[venue_id],
