@@ -735,6 +735,7 @@ def get_meta_review_stage(request_forum):
         public = request_forum.content.get('make_meta_reviews_public', '').startswith('Yes'),
         release_to_authors = (request_forum.content.get('release_meta_reviews_to_authors', '').startswith('Yes')),
         release_to_reviewers = release_to_reviewers,
+        recommendation_field_name=request_forum.content.get('recommendation_field_name', 'recommendation'),
         additional_fields = meta_review_form_additional_options,
         remove_fields = meta_review_form_remove_options
     )
