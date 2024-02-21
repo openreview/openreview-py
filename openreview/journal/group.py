@@ -484,6 +484,6 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
 
     def set_impersonators(self, impersonators):
         return self.post_group(openreview.api.Group(
-            id = self.venue_id,
+            id = self.journal.venue_id,
             impersonators = impersonators
         ))
