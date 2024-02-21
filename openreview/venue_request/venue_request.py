@@ -1465,6 +1465,13 @@ class VenueRequest():
                 'order': 45,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
+            },
+            'commitments_venue': {
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 46,
+                'required': False,
+                'hidden': True
             }
         }
 
