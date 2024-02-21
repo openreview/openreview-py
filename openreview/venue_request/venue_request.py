@@ -586,7 +586,7 @@ class VenueStages():
                 'order' : 30,
                 'value-dict': {},
                 'required': False,
-                'description': 'Configure additional options in the meta review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected. For more information on the default meta review form, please refer to our FAQ: https://openreview.net/faq#question-default-forms'
+                'description': 'Configure additional options in the meta review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected. For more information on the default meta review form, please refer to our docs: https://docs.openreview.net/reference/default-forms/default-meta-review-form'
             },
             'remove_meta_review_form_options': {
                 'order': 31,
