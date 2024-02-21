@@ -575,6 +575,13 @@ class VenueStages():
                 'hidden': True,
                 'order': 29
             },
+            'recommendation_field_name': {
+                'description': "Name of the recommendation field. Default is \'recommendation\'. Customize this field in \'Additional Meta Review Form Options\'. See how it's configured in the default meta review form here: https://docs.openreview.net/reference/default-forms/default-meta-review-form",
+                'value-regex': '.*',
+                'required': False,
+                'default': 'recommendation',
+                'order': 29
+            },
             'additional_meta_review_form_options': {
                 'order' : 30,
                 'value-dict': {},
