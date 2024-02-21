@@ -435,6 +435,8 @@ def get_submission_stage(request_forum, venue):
     else:
         withdraw_submission_exp_date = None
 
+    commitments_venue = request_forum.content.get('commitments_venue', 'No') == 'Yes'
+
     return openreview.stages.SubmissionStage(name = name,
         double_blind=double_blind,
         start_date=submission_start_date,
@@ -456,7 +458,8 @@ def get_submission_stage(request_forum, venue):
         submission_email=submission_email,
         force_profiles=force_profiles,
         second_deadline_additional_fields=second_deadline_additional_fields,
-        second_deadline_remove_fields=second_deadline_remove_fields)
+        second_deadline_remove_fields=second_deadline_remove_fields,
+        commitments_venue=commitments_venue)
 
 def get_bid_stages(request_forum):
     bid_start_date = request_forum.content.get('bid_start_date', '').strip()
