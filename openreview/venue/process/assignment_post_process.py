@@ -3,6 +3,7 @@ def process_update(client, edge, invitation, existing_edge):
     domain = client.get_group(edge.domain)
     venue_id = domain.id
     short_phrase = domain.content['subtitle']['value']
+    contact = domain.content['contact']['value']
     program_chairs_id = domain.content['program_chairs_id']['value']
     submission_name = domain.content['submission_name']['value']
     reviewers_name = invitation.content['reviewers_name']['value']
@@ -60,4 +61,4 @@ Thank you,
 
 {signature}'''
 
-        client.post_message(subject, recipients, message, parentGroup=group.id)
+        client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=contact)

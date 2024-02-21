@@ -47,6 +47,8 @@ return {
     reviewerName: domain.content.reviewers_name?.value,
     anonReviewerName: domain.content.reviewers_anon_name?.value,
     anonAreaChairName: domain.content.area_chairs_anon_name?.value,
+    secondaryAreaChairName: domain.content.secondary_area_chairs_name?.value,
+    secondaryAnonAreaChairName: domain.content.secondary_area_chairs_anon_name?.value,     
     scoresName: 'Affinity_Score',
     shortPhrase: domain.content.subtitle?.value,
     enableQuerySearch: true,

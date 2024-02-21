@@ -238,7 +238,7 @@ class TestTools():
         assert len(notes) == 1333
 
     def test_get_all_refs(self, client):
-        refs_iterator = openreview.tools.iterget_references(client)
+        refs_iterator = openreview.tools.iterget_references(client, invitation='GetAllNotes/-/Submission')
         assert refs_iterator
 
     def test_get_all_tags(self, client):

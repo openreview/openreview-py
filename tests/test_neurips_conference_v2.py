@@ -215,6 +215,7 @@ Please see our [call for papers](https://nips.cc/Conferences/2023/CallForPapers)
 
         messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2023] Senior Area Chair Invitation accepted')
         assert messages and len(messages) == 1
+        assert messages[0]['content']['replyTo'] == 'pc@neurips.cc'
         assert messages[0]['content']['text'] == '''Thank you for accepting the invitation to be a Senior Area Chair for NeurIPS 2023.
 
 The NeurIPS 2023 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.

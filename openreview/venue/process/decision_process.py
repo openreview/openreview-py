@@ -3,6 +3,7 @@ def process(client, edit, invitation):
     domain = client.get_group(edit.domain)
     venue_id = domain.id
     short_name = domain.get_content_value('subtitle')
+    contact = domain.get_content_value('contact')
     authors_name = domain.get_content_value('authors_name')
     submission_name = domain.get_content_value('submission_name')    
     authors_accepted_id = domain.get_content_value('authors_accepted_id')    
@@ -20,7 +21,8 @@ def process(client, edit, invitation):
         client.post_message(
             recipients=[paper_authors_id],
             subject=f'''[{short_name}] Decision {action} your submission - Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''To view the decision, click here: https://openreview.net/forum?id={submission.id}&noteId={decision.id}'''
+            message=f'''To view the decision, click here: https://openreview.net/forum?id={submission.id}&noteId={decision.id}''',
+            replyTo=contact
         )
 
     if (authors_accepted_id):      

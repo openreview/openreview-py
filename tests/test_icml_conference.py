@@ -1062,6 +1062,7 @@ reviewer6@gmail.com, Reviewer ICMLSix
 
         messages = openreview_client.get_messages(to = 'melisa@yahoo.com', subject = 'ICML 2023 has received a new revision of your submission titled Paper title 1 Version 2')
         assert len(messages) == 1
+        assert messages[0]['content']['replyTo'] == 'pc@icml.cc'
         assert messages[0]['content']['text'] == f'''Your new revision of the submission to ICML 2023 has been posted.
 
 Title: Paper title 1 Version 2
@@ -1206,8 +1207,10 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
         helpers.await_queue()
 
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Bid')
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Bid')
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Bid')
+        assert invitation.edit['tail']['param']['options']['group'] == 'ICML.cc/2023/Conference/Area_Chairs'
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Bid')
+        assert invitation.edit['tail']['param']['options']['group'] == 'ICML.cc/2023/Conference/Reviewers'
 
         ## Hide the pdf and supplementary material
         pc_client.post_note(openreview.Note(
@@ -1692,6 +1695,10 @@ OpenReview Team'''
 
         venue.set_assignments(assignment_title='reviewer-matching', committee_id='ICML.cc/2023/Conference/Reviewers', enable_reviewer_reassignment=True)
 
+        # Check that deploying assignments removes reviewers_proposed_assignment_title
+        venue_group = pc_client_v2.get_group('ICML.cc/2023/Conference')
+        assert 'reviewers_proposed_assignment_title' not in venue_group.content
+
         proposed_recruitment_inv = openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment_Recruitment')
         assert proposed_recruitment_inv.expdate and proposed_recruitment_inv.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
@@ -1791,8 +1798,7 @@ OpenReview Team'''
             group = openreview.api.Group(
                 id = 'ICML.cc/2023/Conference',
                 content = {
-                    'enable_reviewers_reassignment': { 'value': True },
-                    'reviewers_proposed_assignment_title': { 'value': { 'delete': True } }
+                    'enable_reviewers_reassignment': { 'value': True }
                 }
             )
         )
@@ -1960,6 +1966,7 @@ OpenReview Team'''
 
         messages = openreview_client.get_messages(to='celeste@icml.cc', subject='[ICML 2023] You have been assigned as a Reviewer for paper number 1')
         assert messages and len(messages) == 1
+        assert messages[0]['content']['replyTo'] == 'pc@icml.cc'
         assert messages[0]['content']['text'] == f'''This is to inform you that you have been assigned as a Reviewer for paper number 1 for ICML 2023.
 
 To review this new assignment, please login to OpenReview and go to https://openreview.net/forum?id={submissions[0].id}.
@@ -2634,6 +2641,7 @@ ICML 2023 Conference Program Chairs'''
 
         messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your official review has been received on your assigned Paper number: 1, Paper title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
+        assert messages[0]['content']['replyTo'] == 'pc@icml.cc'
 
         ## check how the description is rendered
         note = review_edit['note']
@@ -3823,9 +3831,11 @@ ICML 2023 Conference Program Chairs'''
         pretty_signature = openreview.tools.pretty_id(signature)
         messages = openreview_client.get_messages(to='ac2@icml.cc', subject=f'[ICML 2023] {pretty_signature} commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
+        assert messages[0]['content']['replyTo'] == 'pc@icml.cc'
 
         messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your comment was received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
+        assert messages[0]['content']['replyTo'] == 'pc@icml.cc'
 
         comment_edit = reviewer_client.post_note_edit(
             invitation='ICML.cc/2023/Conference/Submission1/-/Official_Comment',
@@ -4239,6 +4249,7 @@ ICML 2023 Conference Program Chairs'''
         messages = openreview_client.get_messages(subject = '[ICML 2023] Your author rebuttal was posted on Submission Number: 1, Submission Title: "Paper title 1 Version 2"')
         assert len(messages) == 2
         assert 'test@mail.com' in messages[0]['content']['to']
+        assert messages[0]['content']['replyTo'] == 'pc@icml.cc'
         messages = openreview_client.get_messages(subject = '[ICML 2023] An author rebuttal was posted on Submission Number: 1, Submission Title: "Paper title 1 Version 2"')
         assert len(messages) == 8
         assert f'https://openreview.net/forum?id={review.forum}&noteId={rebuttal_id}' in messages[4]['content']['text']
@@ -4874,6 +4885,7 @@ Best,
 
         messages = client.get_messages(subject='[ICML 2023] Decision notification for your submission 1: Paper title 1 Version 2')
         assert len(messages) == 5
+        assert messages[0]['content']['replyTo'] == 'pc@icml.cc'
         recipients = [msg['content']['to'] for msg in messages]
         assert 'sac1@gmail.com' in recipients
         assert 'test@mail.com' in recipients

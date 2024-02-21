@@ -642,6 +642,7 @@ class InvitationBuilder(object):
                     'readers': ['everyone'],
                     'writers': [venue_id],
                     'invitees': [venue_id, self.venue.get_area_chairs_id(number='${3/content/noteNumber/value}')],
+                    'noninvitees': [self.venue.get_authors_id(number='${3/content/noteNumber/value}')] + ([self.venue.get_secondary_area_chairs_id('${3/content/noteNumber/value}')] if self.venue.use_secondary_area_chairs else []),
                     'maxReplies': 1,
                     'cdate': meta_review_cdate,
                     'process': '''def process(client, edit, invitation):
@@ -739,7 +740,6 @@ class InvitationBuilder(object):
                         'readers': ['everyone'],
                         'writers': [venue_id],
                         'invitees': [venue_id, self.venue.get_senior_area_chairs_id(number='${3/content/noteNumber/value}')],
-                        'maxReplies': 1,
                         'cdate': meta_review_cdate,
                         'edit': {
                             'signatures': { 
@@ -906,7 +906,9 @@ class InvitationBuilder(object):
                 head = {
                     'param': {
                         'type': 'profile',
-                        'inGroup': venue.get_area_chairs_id()
+                        'options': {
+                            'group': venue.get_area_chairs_id()
+                        }
                     }
                 }
 
@@ -963,8 +965,10 @@ class InvitationBuilder(object):
                     'tail': {
                         'param': {
                             'type': 'profile',
-                            'inGroup': match_group_id
-                        }
+                            'options': {
+                                'group': match_group_id
+                            }
+                        },
                     },
                     'label': {
                         'param': {
@@ -2040,13 +2044,23 @@ class InvitationBuilder(object):
         custom_stage_replyto = custom_stage.get_reply_to()
         custom_stage_source = custom_stage.get_source_submissions()
         custom_stage_reply_type = custom_stage.get_reply_type()
+        note_writers = None
 
         if custom_stage_reply_type == 'reply':
             paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, number='${2/content/noteNumber/value}')
             with_invitation = self.venue.get_invitation_id(name=custom_stage.name, number='${6/content/noteNumber/value}')
+            note_id = {
+                'param': {
+                    'withInvitation': with_invitation,
+                    'optional': True
+                }
+            }
             edit_readers = ['${2/note/readers}']
             note_readers = custom_stage.get_readers(self.venue, '${5/content/noteNumber/value}')
+            note_nonreaders = custom_stage.get_nonreaders(self.venue, number='${5/content/noteNumber/value}')
+            note_writers = [venue_id, '${3/signatures}']
             invitees = custom_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}')
+            noninvitees = custom_stage.get_noninvitees(self.venue, number='${3/content/noteNumber/value}')
             if custom_stage_replyto == 'forum':
                 reply_to = '${4/content/noteId/value}'
             elif custom_stage_replyto == 'withForum':
@@ -2068,14 +2082,22 @@ class InvitationBuilder(object):
             submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${6/content/noteNumber/value}/'
             reply_prefix = stage_name + '${6/content/replyNumber/value}'
             with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix=submission_prefix+reply_prefix)
+            note_id = {
+                'param': {
+                    'withInvitation': with_invitation,
+                    'optional': True
+                }
+            }
             reply_to = '${4/content/replyto/value}'
 
             if custom_stage_reply_type == 'revision':
-                with_invitation = self.venue.get_invitation_id(name=stage_name, number='${6/content/noteNumber/value}')
+                note_id = '${4/content/replyto/value}'
                 reply_to = None
                 edit_readers = [venue_id, '${2/signatures}']
                 note_readers = None
                 invitees = ['${3/content/replytoSignatures/value}']
+                noninvitees = []
+                note_nonreaders = []
 
         invitation_content = {
             'source': { 'value': custom_stage_source },
@@ -2126,6 +2148,7 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'minReplies': 1,
                     'invitees': invitees,
+                    'noninvitees': noninvitees,
                     'cdate': custom_stage_cdate,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -2143,14 +2166,10 @@ class InvitationBuilder(object):
                             }
                         },
                         'readers': edit_readers,
-                        'writers': [venue_id],
+                        'nonreaders': ['${2/note/nonreaders}'] if note_nonreaders else [],
+                        'writers': [venue_id, '${2/signatures}'],
                         'note': {
-                            'id': {
-                                'param': {
-                                    'withInvitation': with_invitation,
-                                    'optional': True
-                                }
-                            },
+                            'id': note_id,
                             'forum': '${4/content/noteId/value}',
                             'ddate': {
                                 'param': {
@@ -2160,7 +2179,6 @@ class InvitationBuilder(object):
                                 }
                             },
                             'signatures': ['${3/signatures}'],
-                            'writers': [venue_id, '${3/signatures}'],
                             'content': content
                         }
                     }
@@ -2201,6 +2219,12 @@ class InvitationBuilder(object):
 
         if note_readers:
             invitation.edit['invitation']['edit']['note']['readers'] = note_readers
+
+        if note_nonreaders:
+            invitation.edit['invitation']['edit']['note']['nonreaders'] = note_nonreaders
+
+        if note_writers:
+            invitation.edit['invitation']['edit']['note']['writers'] = note_writers
 
         if custom_stage_duedate:
             invitation.edit['invitation']['duedate'] = custom_stage_duedate
@@ -2462,7 +2486,9 @@ class InvitationBuilder(object):
                     'tail': {
                         'param': {
                             'type': 'profile',
-                            'inGroup': committee_id
+                            'options': {
+                                'group': committee_id
+                            }
                         }
                     },
                     'label': {
