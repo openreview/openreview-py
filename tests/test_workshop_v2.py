@@ -343,6 +343,7 @@ class TestWorkshopV2():
         assert messages and len(messages) == 1
         # Test that abstract doesn't appear in Invite Assignment email
         assert messages[0]['content']['text'].startswith('Hi External Reviewer Adobe,\n\nYou were invited to review the paper number: 12, title: "Paper title No Abstract Version 2".\n\nPlease respond the invitation clicking the following link:')
+        assert messages[0]['content']['replyTo'] == 'pc@icaps.cc'
 
     def test_publication_chair(self, client, openreview_client, helpers):
 

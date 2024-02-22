@@ -68,7 +68,7 @@ class TestDMLRJournal():
                             },
                             "editors_email": "dmlr@jmlr.org",
                             "skip_ac_recommendation": True,
-                            "number_of_reviewers": 3,
+                            "number_of_reviewers": 2,
                             "reviewers_max_papers": 6,
                             "ae_recommendation_period": 1,
                             "under_review_approval_period": 2,
@@ -359,7 +359,7 @@ Your first task is to make sure the submitted preprint is appropriate for DMLR a
 
 Please follow this link to perform this task: https://openreview.net/forum?id={note_id_1}&invitationId=DMLR/Paper1/-/Review_Approval
 
-If you think the submission can continue through DMLR's review process, click the button "Under Review". Otherwise, click on "Desk Reject". Once the submission has been confirmed, then the review process will begin, and your next step will be to assign 3 reviewers to the paper. You will get a follow up email when OpenReview is ready for you to assign these 3 reviewers.
+If you think the submission can continue through DMLR's review process, click the button "Under Review". Otherwise, click on "Desk Reject". Once the submission has been confirmed, then the review process will begin, and your next step will be to assign 2 reviewers to the paper. You will get a follow up email when OpenReview is ready for you to assign these 2 reviewers.
 
 We thank you for your essential contribution to DMLR!
 
@@ -424,7 +424,6 @@ note={Under review}
 
         david_client = OpenReviewClient(username='david@dmlrone.com', password=helpers.strong_password)
         carlos_client = OpenReviewClient(username='carlos@dmlrthree.com', password=helpers.strong_password)
-        javier_client = OpenReviewClient(username='javier@dmlrtwo.com', password=helpers.strong_password)
 
         andrew_paper1_anon_groups = andrew_client.get_groups(prefix=f'DMLR/Paper1/Action_Editor_.*', signatory='~Andrew_Ng1')
         assert len(andrew_paper1_anon_groups) == 1
@@ -455,7 +454,7 @@ As a reminder, reviewers are **expected to accept all assignments** for submissi
 
 To submit your review, please follow this link: https://openreview.net/forum?id={note_id_1}&invitationId=DMLR/Paper1/-/Review or check your tasks in the Reviewers Console: https://openreview.net/group?id=DMLR/Reviewers#reviewer-tasks
 
-Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become visible to all the reviewers. For more details and guidelines on performing your review, visit data.mlr.press.
+Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 2 reviews have been submitted, all reviews will become visible to all the reviewers. For more details and guidelines on performing your review, visit data.mlr.press.
 
 We thank you for your essential contribution to DMLR!
 
@@ -477,21 +476,10 @@ note: replies to this email will go to the AE, Andrew Ng.
             weight=1
         ))
 
-        ## Javier Barden
-        paper_assignment_edge = andrew_client.post_edge(openreview.Edge(invitation='DMLR/Reviewers/-/Assignment',
-            readers=["DMLR", "DMLR/Paper1/Action_Editors", '~Javier_Ba1'],
-            nonreaders=["DMLR/Paper1/Authors"],
-            writers=["DMLR", "DMLR/Paper1/Action_Editors"],
-            signatures=[graham_paper1_anon_group.id],
-            head=note_id_1,
-            tail='~Javier_Ba1',
-            weight=1
-        ))
-
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         reviewerrs_group = ce_client.get_group('DMLR/Paper1/Reviewers')
-        assert reviewerrs_group.members == ['~David_Bo1', '~Carlos_Ge1', '~Javier_Ba1']
+        assert reviewerrs_group.members == ['~David_Bo1', '~Carlos_Ge1']
 
         david_anon_groups=david_client.get_groups(prefix='DMLR/Paper1/Reviewer_.*', signatory='~David_Bo1')
         assert len(david_anon_groups) == 1
@@ -543,46 +531,19 @@ note: replies to this email will go to the AE, Andrew Ng.
 
         helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'])
 
-        javier_anon_groups=javier_client.get_groups(prefix='DMLR/Paper1/Reviewer_.*', signatory='~Javier_Ba1')
-        assert len(javier_anon_groups) == 1
-
-        ## Post a review edit
-        javier_review_note = javier_client.post_note_edit(invitation='DMLR/Paper1/-/Review',
-            signatures=[javier_anon_groups[0].id],
-            note=Note(
-                content={
-                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'limitations': { 'value': 'limitations' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'claims_and_evidence': { 'value': 'Yes' },
-                    'extended_submissions': { 'value': 'extended_submissions' },
-                    'audience': { 'value': 'Yes' },
-                    'datasets_and_benchmarks': { 'value': 'datasets_and_benchmarks' },
-                    'recommendation': { 'value': '4: Accept.' },
-                    'confidence': { 'value': '3: You are very confident in your assessment.' }
-                }
-            )
-        )
-
-        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'])
-
         ## All the reviewes should be visible to all the reviewers now
         reviews=openreview_client.get_notes(forum=note_id_1, invitation='DMLR/Paper1/-/Review', sort= 'number:asc')
-        assert len(reviews) == 3
+        assert len(reviews) == 2
         assert reviews[0].readers == ['DMLR/Editors_In_Chief', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
         assert reviews[0].signatures == [david_anon_groups[0].id]
         assert reviews[1].readers == ['DMLR/Editors_In_Chief', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
         assert reviews[1].signatures == [carlos_anon_groups[0].id]
-        assert reviews[2].readers == ['DMLR/Editors_In_Chief', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
-        assert reviews[2].signatures == [javier_anon_groups[0].id]
 
         ## Post a review edit
-        javier_review_note = javier_client.post_note_edit(invitation='DMLR/Paper1/-/Review',
-            signatures=[javier_anon_groups[0].id],
+        carlos_review_note = carlos_client.post_note_edit(invitation='DMLR/Paper1/-/Review',
+            signatures=[carlos_anon_groups[0].id],
             note=Note(
-                id=javier_review_note['note']['id'],
+                id=carlos_review_note['note']['id'],
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions VERSION 2' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
@@ -599,10 +560,9 @@ note: replies to this email will go to the AE, Andrew Ng.
             )
         )
 
-        review_note = javier_client.get_note(javier_review_note['note']['id'])
+        review_note = carlos_client.get_note(carlos_review_note['note']['id'])
         assert review_note.content['summary_of_contributions']['value'] == 'summary_of_contributions VERSION 2'
         assert review_note.readers == ['DMLR/Editors_In_Chief', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
-
 
         invitations = openreview_client.get_invitations(replyForum=note_id_1, prefix='DMLR/Paper1')
         assert len(invitations) == 6
@@ -614,7 +574,35 @@ note: replies to this email will go to the AE, Andrew Ng.
         assert "DMLR/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
 
         official_comment_invitation = openreview_client.get_invitation("DMLR/Paper1/-/Official_Comment")
-        assert 'everyone' not in official_comment_invitation.edit['note']['readers']['param']['enum']
+        assert official_comment_invitation.edit['note']['readers']['param']['enum'] == [
+            "DMLR/Editors_In_Chief",
+            "DMLR/Action_Editors",
+            "DMLR/Paper1/Action_Editors",
+            "DMLR/Paper1/Reviewers",
+            "DMLR/Paper1/Reviewer_.*",
+            "DMLR/Paper1/Authors"
+        ]
+
+        ## Make a comment before approving the submission to be under review
+        comment_note = carlos_client.post_note_edit(invitation='DMLR/Paper1/-/Official_Comment',
+            signatures=[carlos_anon_groups[0].id],
+            note=Note(
+                signatures=[carlos_anon_groups[0].id],
+                readers=['DMLR/Editors_In_Chief', 'DMLR/Action_Editors', carlos_anon_groups[0].id],
+                forum=note_id_1,
+                replyto=note_id_1,
+                content={
+                    'comment': { 'value': 'My review was posted thanks for your patiente' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])               
+
+        messages = openreview_client.get_messages(to = 'andrew@dmlrzero.com', subject = '[DMLR] Official Comment posted on submission 1: Paper title')
+        assert len(messages) == 1
+        assert 'Hi Andrew Ng,\n\nAn official comment has been posted on a submission for which you are an Action Editor.\n\nSubmission: Paper title\nTitle: \nComment: My review was posted thanks for your patiente\n\nTo view the official comment, click here' in messages[0]['content']['text']
+
 
         assert openreview.tools.get_invitation(openreview_client, 'DMLR/Paper1/-/Official_Recommendation')
 
@@ -625,7 +613,6 @@ note: replies to this email will go to the AE, Andrew Ng.
         ce_client = OpenReviewClient(username='ce@mailseven.com', password=helpers.strong_password)
         david_client = OpenReviewClient(username='david@dmlrone.com', password=helpers.strong_password)
         carlos_client = OpenReviewClient(username='carlos@dmlrthree.com', password=helpers.strong_password)
-        javier_client = OpenReviewClient(username='javier@dmlrtwo.com', password=helpers.strong_password)        
         note_id_1 = openreview_client.get_notes(invitation='DMLR/-/Submission')[0].id
         
         ce_client.post_invitation_edit(
@@ -676,20 +663,6 @@ note: replies to this email will go to the AE, Andrew Ng.
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id']) 
-
-        javier_anon_groups=javier_client.get_groups(prefix='DMLR/Paper1/Reviewer_.*', signatory='~Javier_Ba1')
-        assert len(javier_anon_groups) == 1
-
-        official_recommendation_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
-            signatures=[javier_anon_groups[0].id],
-            note=Note(
-                content={
-                    'recommendation_confirmation': { 'value': 'Yes' }
-                }
-            )
-        )
-
-        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])                                     
     
     def test_decision(self, journal, openreview_client, helpers):
 
@@ -713,6 +686,8 @@ note: replies to this email will go to the AE, Andrew Ng.
                 )
             )
             helpers.await_queue_edit(openreview_client, edit_id=rating_note['id'])
+
+            assert rating_note['note']['readers'] == ['DMLR/Editors_In_Chief', 'DMLR/Action_Editors']
 
         decision_note = andrew_client.post_note_edit(invitation='DMLR/Paper1/-/Decision',
             signatures=[andrew_paper1_anon_group.id],
@@ -748,4 +723,75 @@ note: replies to this email will go to the AE, Andrew Ng.
         decision_note = ce_client.get_note(decision_note.id)
         assert decision_note.readers == ['DMLR/Editors_In_Chief', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
         assert decision_note.nonreaders == []
+
+        ## Authors enter the camera ready revision
+        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        revision_note = test_client.post_note_edit(invitation=f'DMLR/Paper1/-/Camera_Ready_Revision',
+            signatures=["DMLR/Paper1/Authors"],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title VERSION 2' },
+                    'authors': { 'value': ['SomeFirstName User', 'Melisa Ane']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_Ane1']},
+                    'abstract': { 'value': 'Paper abstract' },
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'video': { 'value': 'https://youtube.com/dfenxkw'}
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
+
+        ## AE verifies the camera ready revision
+        verification_note = andrew_client.post_note_edit(invitation='DMLR/Paper1/-/Camera_Ready_Verification',
+                            signatures=[andrew_paper1_anon_group.id],
+                            note=Note(
+                                signatures=[andrew_paper1_anon_group.id],
+                                content= {
+                                    'verification': { 'value': 'I confirm that camera ready manuscript complies with the DMLR stylefile and, if appropriate, includes the minor revisions that were requested.' }
+                                 }
+                            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=verification_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='DMLR/-/Accepted')
+
+        note = openreview_client.get_note(note_id_1)
+        assert note
+        assert note.forum == note_id_1
+        assert note.replyto is None
+        assert note.pdate
+        assert note.invitations == ['DMLR/-/Submission', 'DMLR/-/Under_Review', 'DMLR/-/Edit', 'DMLR/Paper1/-/Camera_Ready_Revision', 'DMLR/-/Accepted']
+        assert note.readers == ['everyone']
+        assert note.writers == ['DMLR']
+        assert note.signatures == ['DMLR/Paper1/Authors']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melisa_Ane1']
+        assert note.content['authors']['value'] == ['SomeFirstName User', 'Melisa Ane']
+        # Check with cArlos
+        assert note.content['authorids'].get('readers') is None
+        assert note.content['authors'].get('readers') is None
+        assert note.content['venue']['value'] == 'Accepted by DMLR'
+        assert note.content['venueid']['value'] == 'DMLR'
+        assert note.content['title']['value'] == 'Paper title VERSION 2'
+        assert note.content['abstract']['value'] == 'Paper abstract'
+        assert note.content['certifications']['value'] == ['Featured Certification', 'Reproducibility Certification']
+        assert note.content['_bibtex']['value'] == '''@article{
+user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+title={Paper title {VERSION} 2},
+author={SomeFirstName User and Melisa Ane},
+journal={Journal of Data-centric Machine Learning Research},
+issn={XXXX-XXXX},
+year={''' + str(datetime.datetime.today().year) + '''},
+url={https://openreview.net/forum?id=''' + note_id_1 + '''},
+note={Featured Certification, Reproducibility Certification}
+}'''
+
+        reviews = openreview_client.get_notes(forum=note_id_1, invitation='DMLR/Paper1/-/Review', sort= 'number:asc')
+
+        for review in reviews:
+            assert review.readers == ['everyone']
+            assert review.signatures == [review.signatures[0]]
+
 

@@ -1124,7 +1124,7 @@ class Matching(object):
         }
         invitation.minReplies = 1
         invitation.maxReplies = 1
-        invitation.signatures = [venue.get_program_chairs_id()]
+        invitation.signatures = [venue.id]
         invite_assignment_invitation=venue.invitation_builder.save_invitation(invitation, replacement=True)
 
         # set assignment recruitment invitation
@@ -1165,7 +1165,7 @@ class Matching(object):
         if role_name in venue.area_chair_roles:
             reviewer_name = venue.area_chairs_name
             review_name = 'Meta_Review'
-
+            
         papers = self._get_submissions()
         reviews = client.get_notes(invitation=venue.get_invitation_id(review_name, number='.*'), limit=1)
         proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id),
@@ -1234,6 +1234,19 @@ class Matching(object):
 
         print('Posting assignment edges', len(assignment_edges))
         openreview.tools.post_bulk_edges(client=client, edges=assignment_edges)
+
+        # Remove reviewers_proposed_assignment_title if deploying reviewer assignments
+        if self.is_reviewer:
+            self.client.post_group_edit(
+                invitation = venue.get_meta_invitation_id(),
+                signatures = [venue.venue_id],
+                group = openreview.api.Group(
+                    id = venue.venue_id,
+                    content = {
+                        'reviewers_proposed_assignment_title': { 'value': { 'delete': True } }
+                    }
+                )
+            )
 
     def deploy_sac_assignments(self, assignment_title, overwrite):
 
