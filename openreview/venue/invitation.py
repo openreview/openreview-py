@@ -1245,6 +1245,152 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=False)
         return invitation
+    
+    def set_chat_invitation(self):
+        venue_id = self.venue_id
+        comment_stage = self.venue.comment_stage
+        chat_invitation = self.venue.get_invitation_id('Chat')
+        comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
+        comment_expdate = tools.datetime_millis(comment_stage.end_date) if comment_stage.end_date else None
+
+        invitation = Invitation(id=chat_invitation,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            cdate=comment_cdate,
+            date_processes=[{ 
+                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                'script': self.invitation_edit_process              
+            }],
+            content={
+                'chat_process_script': {
+                    'value': self.get_process_content('process/chat_comment_process.py')
+                }
+            },
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'replacement': True,
+                'invitation': {
+                    'id': self.venue.get_invitation_id('Chat', '${2/content/noteNumber/value}'),
+                    'signatures': [ venue_id ],
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'invitees': comment_stage.get_chat_invitees(self.venue, number='${3/content/noteNumber/value}'),
+                    'cdate': comment_cdate,
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['chat_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
+                    'edit': {
+                        'signatures': { 
+                            'param': { 
+                                'enum': comment_stage.get_chat_signatures(self.venue, '${7/content/noteNumber/value}')
+                            }
+                        },
+                        'readers': ['${2/note/readers}'],
+                        'writers': [venue_id],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': self.venue.get_invitation_id('Chat', '${6/content/noteNumber/value}'),
+                                    'optional': True
+                                }
+                            },
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': { 
+                                'param': {
+                                    'withForum': '${6/content/noteId/value}', 
+                                }
+                            },
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            },
+                            'signatures': ['${3/signatures}'],
+                            'readers': comment_stage.get_chat_readers(self.venue, '${5/content/noteNumber/value}'),
+                            'writers': [venue_id, '${3/signatures}'],
+                            'content': {
+                                'message': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 1000,
+                                            'markdown': True
+                                        }
+                                    }
+                                }                                
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        if comment_expdate:
+            invitation.edit['invitation']['expdate'] = comment_expdate
+
+        self.save_invitation(invitation, replacement=False)
+
+        self.client.post_invitation_edit(
+            invitations=self.venue.get_meta_invitation_id(),
+            signatures = [venue_id],
+            invitation = openreview.api.Invitation(
+                id = self.venue.submission_stage.get_submission_id(self.venue),
+                reply_forum_views = [
+                    {
+                        'id': 'all',
+                        'label': 'All'
+                    },
+                    {
+                        'id': 'discussion',
+                        'label': 'Discussion',
+                        'filter': f'-invitations:{venue_id}/Submission${{note.number}}/-/Chat',
+                        'nesting': 3,
+                        'sort': 'date-desc',
+                        'layout': 'default',
+                        'live': True
+                    },
+                    {
+                        'id': 'reviewers-chat',
+                        'label': 'Reviewers Chat',
+                        'filter': f'invitations:{venue_id}/Submission${{note.number}}/-/Chat,{venue_id}/Submission${{note.number}}/-/{self.venue.review_stage.name}',
+                        'nesting': 1,
+                        'sort': 'date-asc',
+                        'layout': 'chat',
+                        'live': True,
+                        'expandedInvitations': [f'{venue_id}/Submission${{note.number}}/-/Chat']
+                    }
+                ]
+            )
+        )        
+        return invitation    
 
     def set_decision_invitation(self):
 

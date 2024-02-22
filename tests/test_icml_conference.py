@@ -3665,7 +3665,8 @@ ICML 2023 Conference Program Chairs'''
                 'commentary_end_date': end_date.strftime('%Y/%m/%d'),
                 'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
                 'additional_readers': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Assigned Submitted Reviewers'],
-                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
+                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue',
+                'enable_chat_between_committee_members': 'Yes, enable chat between committee members'
             },
             forum=request_form.forum,
             invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment_Stage',
@@ -3677,7 +3678,12 @@ ICML 2023 Conference Program Chairs'''
         ))
 
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Comment-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Chat-0-1', count=1)
 
+        chat_invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Chat')
+        assert len(chat_invitations) == 100
+        
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Comment')
         assert invitation
         assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers' in invitation.invitees
