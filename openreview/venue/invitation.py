@@ -1365,10 +1365,6 @@ class InvitationBuilder(object):
                 id = self.venue.submission_stage.get_submission_id(self.venue),
                 reply_forum_views = [
                     {
-                        'id': 'all',
-                        'label': 'All'
-                    },
-                    {
                         'id': 'discussion',
                         'label': 'Discussion',
                         'filter': f'-invitations:{venue_id}/Submission${{note.number}}/-/Chat',
@@ -1378,8 +1374,8 @@ class InvitationBuilder(object):
                         'live': True
                     },
                     {
-                        'id': 'reviewers-chat',
-                        'label': 'Reviewers Chat',
+                        'id': 'committee-chat',
+                        'label': 'Committee members Chat',
                         'filter': f'invitations:{venue_id}/Submission${{note.number}}/-/Chat,{venue_id}/Submission${{note.number}}/-/{self.venue.review_stage.name}',
                         'nesting': 1,
                         'sort': 'date-asc',
