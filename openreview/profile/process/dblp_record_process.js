@@ -1,6 +1,6 @@
 async function process(client, edit, invitation) {
   client.throwErrors = true;
-  
+
   const note = Tools.convertDblpXmlToNote(edit.content?.xml?.value);
 
   note.id = edit.note.id;
@@ -12,7 +12,7 @@ async function process(client, edit, invitation) {
   const html = note.content.html?.value;
 
   if (html) {
-    const { abstract,pdf } = await Tools.extractAbstract(html);
+    const { abstract, pdf } = await extractAbstract(html);
     if (abstract) {
       note.content.abstract = { value: abstract };
     }

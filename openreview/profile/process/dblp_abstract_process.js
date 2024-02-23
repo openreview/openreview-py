@@ -5,7 +5,8 @@ async function process(client, edit, invitation) {
   const html = result.notes?.[0]?.content?.html?.value
   let abstract = null
   if (html) {
-    ({abstract}) = await Tools.extractAbstract(html)
+    const extractionResult = await extractAbstract(html)
+    abstract = extractionResult.abstract
   }
 
   if (!abstract) return
