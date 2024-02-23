@@ -2418,9 +2418,6 @@ You can find the final reviews for your paper on the submission page in OpenRevi
 
 Best,
 TestVenue@OR'2030 Program Chairs
-
-
-Please note that responding to this email will direct your reply to tacl@venue.org.
 '''
 
         test_client.post_note(post_decision_stage_note)
