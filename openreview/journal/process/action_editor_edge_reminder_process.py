@@ -9,7 +9,7 @@ def process(client, invitation):
 
     edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), head=submission.id)
 
-    if len(edges) >= 3:
+    if len(edges) >= journal.get_number_of_reviewers():
       return
 
     if date_index == 0 or date_index == 1:
