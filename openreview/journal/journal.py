@@ -1094,10 +1094,11 @@ Your {lower_formatted_invitation} on a submission has been {action}
             author_group = client.get_group(journal.get_authors_id())
 
             ## Get all the submissions that don't have a decision affinity scores
-            submissions = journal.client.get_all_notes(invitation=journal.get_author_submission_id(), content = { 'venueid': journal.submitted_venue_id})
+            submissions = journal.client.get_all_notes(invitation=journal.get_author_submission_id())
+            active_submissions = [s for s in submissions if s.content['venueid']['value'] in [journal.submitted_venue_id, journal.assigning_AE_venue_id, journal.assigned_AE_venue_id]]
 
             ## For each submission check the status of the expertise task
-            for submission in tqdm(submissions):
+            for submission in tqdm(active_submissions):
                 ae_score_count = journal.client.get_edges_count(invitation=journal.get_ae_affinity_score_id(), head=submission.id)
                 if ae_score_count == 0:
                     print('Submission with no AE scores', submission.id, submission.number)
