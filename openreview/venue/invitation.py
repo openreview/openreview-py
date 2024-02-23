@@ -1308,7 +1308,7 @@ class InvitationBuilder(object):
                     'edit': {
                         'signatures': { 
                             'param': { 
-                                'enum': comment_stage.get_chat_signatures(self.venue, '${7/content/noteNumber/value}')
+                                'enum': comment_stage.get_chat_signatures(self.venue, '${6/content/noteNumber/value}')
                             }
                         },
                         'readers': ['${2/note/readers}'],
