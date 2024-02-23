@@ -292,15 +292,15 @@ note: replies to this email will go to the AE, {assigned_action_editor}.
 
         messages = openreview_client.get_messages(to = 'melisa@dmlrfour.com', subject = '[DMLR] New submission to DMLR: Paper title')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Melisa Ane,\n\nYour submission to DMLR has been received.\n\nSubmission Number: 1\n\nTitle: Paper title\n\nTo view the submission, click here: https://openreview.net/forum?id={note_id_1}\n'''
+        assert messages[0]['content']['text'] == f'''Hi Melisa Ane,\n\nYour submission to DMLR has been received.\n\nSubmission Number: 1\n\nTitle: Paper title\n\nTo view the submission, click here: https://openreview.net/forum?id={note_id_1}\n\n\nPlease note that responding to this email will direct your reply to dmlr@jmlr.org.\n'''
         
         messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[DMLR] New submission to DMLR: Paper title')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,\n\nYour submission to DMLR has been received.\n\nSubmission Number: 1\n\nTitle: Paper title\n\nTo view the submission, click here: https://openreview.net/forum?id={note_id_1}\n'''
+        assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,\n\nYour submission to DMLR has been received.\n\nSubmission Number: 1\n\nTitle: Paper title\n\nTo view the submission, click here: https://openreview.net/forum?id={note_id_1}\n\n\nPlease note that responding to this email will direct your reply to dmlr@jmlr.org.\n'''
 
         messages = openreview_client.get_messages(to = 'ce@mailseven.com', subject = '[DMLR] New submission to DMLR: Paper title')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Ce Zhang,\n\nA new submission has been received for DMLR.\n\nTo view the submission, click here: https://openreview.net/forum?id={note_id_1}\n'''
+        assert messages[0]['content']['text'] == f'''Hi Ce Zhang,\n\nA new submission has been received for DMLR.\n\nTo view the submission, click here: https://openreview.net/forum?id={note_id_1}\n\n\nPlease note that responding to this email will direct your reply to dmlr@jmlr.org.\n'''
 
 
         Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
@@ -364,6 +364,9 @@ If you think the submission can continue through DMLR's review process, click th
 We thank you for your essential contribution to DMLR!
 
 The DMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to dmlr@jmlr.org.
 '''
 
         andrew_paper1_anon_groups = andrew_client.get_groups(prefix=f'DMLR/Paper1/Action_Editor_.*', signatory='~Andrew_Ng1')
@@ -460,6 +463,9 @@ We thank you for your essential contribution to DMLR!
 
 The DMLR Editors-in-Chief
 note: replies to this email will go to the AE, Andrew Ng.
+
+
+Please note that responding to this email will direct your reply to andrew@dmlrzero.com.
 '''
         assert messages[0]['content']['replyTo'] == 'andrew@dmlrzero.com'
 
