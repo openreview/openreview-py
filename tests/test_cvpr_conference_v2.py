@@ -679,6 +679,7 @@ class TestCVPRConference():
                 'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
                 'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_meta_reviews_to_reviewers': 'Meta review should not be revealed to any reviewer',
+                'recommendation_field_name': 'preliminary_recommendation',
                 'remove_meta_review_form_options': ['recommendation', 'confidence'],
                 'additional_meta_review_form_options': {
                     "metareview": {
@@ -719,6 +720,9 @@ class TestCVPRConference():
         ))
 
         helpers.await_queue() 
+
+        domain = openreview_client.get_group('thecvf.com/CVPR/2024/Conference')
+        assert domain.content['meta_review_recommendation']['value'] == 'preliminary_recommendation'
 
         ac1_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)       
         ac2_client = openreview.api.OpenReviewClient(username='ac2@cvpr.cc', password=helpers.strong_password)
