@@ -1137,6 +1137,19 @@ class TestCVPRConference():
             )
         )
 
+        ## Try to edit the invitation and don't get prefix group not found error
+        openreview_client.post_invitation_edit(
+            invitations='thecvf.com/CVPR/2024/Conference/-/Edit',
+            readers=[venue.id],
+            writers=[venue.id],
+            signatures=[venue.id],
+            invitation=openreview.api.Invitation(
+                id='thecvf.com/CVPR/2024/Conference/Submission4/Meta_Review1/-/Final_Revision',
+                expdate=openreview.tools.datetime_millis(due_date + datetime.timedelta(days=1))
+            )
+        )
+      
+        
         # Secondary AC can't post meta review revision
         secondary_ac_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)
         secondary_ac_anon_group_id = secondary_ac_client.get_groups(prefix=f'thecvf.com/CVPR/2024/Conference/Submission4/Secondary_Area_Chair_.*', signatory='ac1@cvpr.cc')[0].id
