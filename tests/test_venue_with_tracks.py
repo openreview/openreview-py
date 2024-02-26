@@ -1020,7 +1020,4 @@ Please go to the TheWebConf24 Reviewers Console and check your pending tasks: ht
 
 If you would like to change your decision, please click the Decline link in the previous invitation email.
 
-OpenReview Team
-
-Please note that responding to this email will direct your reply to pc@webconf.org.
-'''
+OpenReview Team'''
