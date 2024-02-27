@@ -234,7 +234,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                    'values-regex': '~.*'
                 },
                 'content': review_stage_content
             }
@@ -316,7 +316,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                    'values-regex': '~.*'
                 },
                 'content': rebuttal_stage_content
             }
@@ -431,7 +431,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                    'values-regex': '~.*'
                 },
                 'content': ethics_review_stage_content
             }
@@ -512,7 +512,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                    'values-regex': '~.*'
                 },
                 'content': comment_stage_content
             }
@@ -616,7 +616,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                    'values-regex': '~.*'
                 },
                 'content': meta_review_stage_content
             }
@@ -694,7 +694,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                    'values-regex': '~.*'
                 },
                 'content': submission_revision_stage_content
             }
@@ -835,7 +835,7 @@ class VenueStages():
                             'values': [],
                         },
                         'signatures': {
-                            'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                            'values-regex': self.venue_request.support_group.id
                         },
                         'content': decisions_upload_status_content
                     }
@@ -860,7 +860,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                    'values-regex': '~.*'
                 },
                 'content': decision_stage_content
             }
@@ -914,7 +914,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                    'values-regex': '~.*'
                 },
                 'content': post_decision_content
             }
@@ -983,7 +983,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                    'values-regex': '~.*'
                 },
                 'content': registration_content
             }
@@ -1051,7 +1051,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                    'values-regex': '~.*'
                 },
                 'content': registration_content
             }
@@ -1505,7 +1505,7 @@ class VenueRequest():
                             ]
                         },
                         'signatures': {
-                            'values-regex': '~.*|' + self.support_group.id
+                            'values-regex': '~.*'
                         },
                         'content': self.request_content
                     }
@@ -1642,7 +1642,7 @@ class VenueRequest():
                         'values':[],
                     },
                     'signatures': {
-                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                        'values-regex': '~.*'
                     },
                     'content': post_submission_content
                 }
@@ -1754,7 +1754,7 @@ If you would like to change your decision, please follow the link in the previou
                         'values':[],
                     },
                     'signatures': {
-                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                        'values-regex': '~.*'
                     },
                     'content': recruitment_content
                 }
@@ -1820,7 +1820,7 @@ If you would like to change your decision, please follow the link in the previou
                         'values': [],
                     },
                     'signatures': {
-                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                        'values-regex': self.support_group.id
                     },
                     'content': recruitment_status_content
                 }
@@ -1901,7 +1901,7 @@ If you would like to change your decision, please follow the link in the previou
                         'values':[],
                     },
                     'signatures': {
-                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                        'values-regex': '~.*'
                     },
                     'content': remind_recruitment_content
                 }
@@ -1955,7 +1955,7 @@ If you would like to change your decision, please follow the link in the previou
                         'values': [],
                     },
                     'signatures': {
-                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                        'values-regex': self.support_group.id
                     },
                     'content': remind_recruitment_status_content
                 }
@@ -2027,7 +2027,7 @@ If you would like to change your decision, please follow the link in the previou
                             'values':[],
                         },
                         'signatures': {
-                            'values-regex': '~.*|{}'.format(self.support_group.id)
+                            'values-regex': '~.*'
                         },
                         'content': matching_content
                     }
@@ -2086,7 +2086,7 @@ If you would like to change your decision, please follow the link in the previou
                         'values': [],
                     },
                     'signatures': {
-                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                        'values-regex': self.support_group.id
                     },
                     'content': matching_status_content
                 }
@@ -2118,7 +2118,7 @@ If you would like to change your decision, please follow the link in the previou
                         ]
                     },
                     'signatures': {
-                        'values-regex': '~.*|' + self.support_group.id,
+                        'values-regex': self.support_group.id,
                         'description': 'How your identity will be displayed.'
                     },
                     'content': {
