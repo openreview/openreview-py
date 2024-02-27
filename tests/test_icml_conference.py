@@ -1108,7 +1108,10 @@ Title: Paper title 1 Version 2
 
 Abstract: This is an abstract 1
 
-To view your submission, click here: https://openreview.net/forum?id={submission.id}'''
+To view your submission, click here: https://openreview.net/forum?id={submission.id}
+
+Please note that responding to this email will direct your reply to pc@icml.cc.
+'''
 
     def test_ac_bidding(self, client, openreview_client, helpers, test_client):
 
@@ -2014,7 +2017,10 @@ To check all of your assigned papers, go to https://openreview.net/group?id=ICML
 
 Thank you,
 
-ICML 2023 Conference Program Chairs'''
+ICML 2023 Conference Program Chairs
+
+Please note that responding to this email will direct your reply to pc@icml.cc.
+'''
 
         assert openreview_client.get_groups('ICML.cc/2023/Conference/Emergency_Reviewers', member='celeste@icml.cc')
         assert openreview_client.get_groups('ICML.cc/2023/Conference/Reviewers', member='celeste@icml.cc')

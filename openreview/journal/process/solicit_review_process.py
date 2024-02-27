@@ -30,7 +30,6 @@ We ask that you provide a response within 1 week, by {duedate.strftime("%b %d")}
 We thank you for your contribution to {journal.short_name}!
 
 The {journal.short_name} Editors-in-Chief
-
 ''',
         replyTo=journal.contact_info
     )

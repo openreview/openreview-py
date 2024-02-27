@@ -581,11 +581,18 @@ class VenueStages():
                 'hidden': True,
                 'order': 29
             },
+            'recommendation_field_name': {
+                'description': "Name of the recommendation field. Default is \'recommendation\'. Customize this field in \'Additional Meta Review Form Options\'. See how it's configured in the default meta review form here: https://docs.openreview.net/reference/default-forms/default-meta-review-form",
+                'value-regex': '.*',
+                'required': False,
+                'default': 'recommendation',
+                'order': 29
+            },
             'additional_meta_review_form_options': {
                 'order' : 30,
                 'value-dict': {},
                 'required': False,
-                'description': 'Configure additional options in the meta review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected. For more information on the default meta review form, please refer to our FAQ: https://openreview.net/faq#question-default-forms'
+                'description': 'Configure additional options in the meta review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected. For more information on the default meta review form, please refer to our docs: https://docs.openreview.net/reference/default-forms/default-meta-review-form'
             },
             'remove_meta_review_form_options': {
                 'order': 31,
@@ -1464,6 +1471,13 @@ class VenueRequest():
                 'order': 45,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
+            },
+            'commitments_venue': {
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 46,
+                'required': False,
+                'hidden': True
             }
         }
 

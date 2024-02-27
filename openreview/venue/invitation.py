@@ -115,6 +115,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
         submission_license = self.venue.submission_license
+        commitments_venue = submission_stage.commitments_venue
 
         content = submission_stage.get_content(api_version='2', conference=self.venue, venue_id=self.venue.get_submission_venue_id())
 
@@ -127,7 +128,7 @@ class InvitationBuilder(object):
         submission_invitation = Invitation(
             id=submission_id,
             invitees = ['~'],
-            signatures = [venue_id],
+            signatures = [venue_id] if not commitments_venue else ['~Super_User1'],
             readers = ['everyone'],
             writers = [venue_id],
             cdate=submission_cdate,
@@ -187,6 +188,9 @@ class InvitationBuilder(object):
                         "enum": license_options
                     }
                 }
+
+        if commitments_venue:
+            submission_invitation.preprocess=self.get_process_content('process/submission_commitments_preprocess.py')
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=False)
 
