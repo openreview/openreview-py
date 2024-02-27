@@ -24,7 +24,7 @@ class InvitationBuilder(object):
 
         self.author_edge_reminder_process = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week)],
-            'script': self.get_process_content('process/author_edge_reminder_process.py')
+            'script': self.get_super_dateprocess_content('author_edge_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'one week' })
         }
 
         self.author_reminder_process = {
@@ -54,7 +54,7 @@ class InvitationBuilder(object):
 
         self.ae_edge_reminder_process = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week), "#{4/duedate} + " + str(one_month)],
-            'script': self.get_process_content('process/action_editor_edge_reminder_process.py')
+            'script': self.get_super_dateprocess_content('ae_edge_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'one week', 2: 'one month' })
         }
 
     def set_invitations(self, assignment_delay):
@@ -244,6 +244,12 @@ class InvitationBuilder(object):
                     },
                     'author_reminder_script': {
                         'value': self.get_process_content('process/author_reminder_process.py')
+                    },
+                    'ae_edge_reminder_script': {
+                        'value': self.get_process_content('process/action_editor_edge_reminder_process.py')
+                    },
+                    'author_edge_reminder_script': {
+                        'value': self.get_process_content('process/author_edge_reminder_process.py')
                     }
                 },
                 edit=True
