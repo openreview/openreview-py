@@ -1057,6 +1057,86 @@ class VenueStages():
             }
         ))
 
+    def setup_review_rating_stage(self):
+        
+        review_rating_stage_content = {
+            'review_rating_start_date': {
+                'description': 'When does the review rating stage begin? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'order': 1
+            },
+            'review_rating_deadline': {
+                'description': 'When does the review rating stage end? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'required': True,
+                'order': 2
+            },
+            'review_rating_expiration_date': {
+                'description': 'After this date, no more review ratings can be submitted. This is the hard deadline users will not be able to see. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59). Default is 30 minutes after the review rating deadline.',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'required': False,
+                'order': 3
+            },
+            'release_to_senior_area_chairs': {
+                'description': 'Should the review ratings be visible to paper\'s senior area chairs immediately upon posting?',
+                'value-radio': [
+                    'Yes, review ratings should be revealed when they are posted to the paper\'s senior area chairs',
+                    'No, review ratings should NOT be revealed when they are posted to the paper\'s senior area chairs'
+                ],
+                'required': True,
+                'default': 'No, review ratings should NOT be revealed when they are posted to the paper\'s senior area chairs',
+                'order': 4
+            },
+            'review_rating_form_options': {
+                'order': 5,
+                'value-dict': {},
+                'required': True,
+                'description': 'Configure the fields in the review rating form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.',
+                'default': {
+                    'review_quality': {
+                        'order': 1,
+                        'description': 'How helpful is this review?',
+                        'value': {
+                            'param': {
+                                'type': 'integer',
+                                'input': 'radio',
+                                'enum': [
+                                    {'value': 0, 'description': '0: below expectations'},
+                                    {'value': 1, 'description': '1: meets expectations'},
+                                    {'value': 2, 'description': '2: exceeds expectations'}
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        self.venue_request.client.post_invitation(openreview.Invitation(
+            id='{}/-/Review_Rating_Stage'.format(self.venue_request.support_group.id),
+            readers=['everyone'],
+            writers=[],
+            signatures=[self.venue_request.super_user],
+            invitees=['everyone'],
+            multiReply=True,
+            process_string=self.file_content,
+            reply={
+                'readers': {
+                    'values-copied': [
+                        self.venue_request.support_group.id,
+                        '{content.program_chair_emails}'
+                    ]
+                },
+                'writers': {
+                    'values':[],
+                },
+                'signatures': {
+                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                },
+                'content': review_rating_stage_content
+            }
+        ))
+
 class VenueRequest():
 
     def __init__(self, client, support_group_id, super_user):
@@ -1109,6 +1189,7 @@ class VenueRequest():
         self.decision_stage_super_invitation = venue_stages.setup_decision_stage()
         self.post_decision_stage_invitation = venue_stages.setup_post_decision_stage()
         venue_stages.setup_registration_stages()
+        venue_stages.setup_review_rating_stage()
 
     def setup_request_form(self):
 
