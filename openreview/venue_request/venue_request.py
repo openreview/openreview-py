@@ -234,7 +234,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                    'values-regex': '~.*'
                 },
                 'content': review_stage_content
             }
@@ -316,7 +316,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                    'values-regex': '~.*'
                 },
                 'content': rebuttal_stage_content
             }
@@ -431,7 +431,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                    'values-regex': '~.*'
                 },
                 'content': ethics_review_stage_content
             }
@@ -512,7 +512,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                    'values-regex': '~.*'
                 },
                 'content': comment_stage_content
             }
@@ -575,11 +575,18 @@ class VenueStages():
                 'hidden': True,
                 'order': 29
             },
+            'recommendation_field_name': {
+                'description': "Name of the recommendation field. Default is \'recommendation\'. Customize this field in \'Additional Meta Review Form Options\'. See how it's configured in the default meta review form here: https://docs.openreview.net/reference/default-forms/default-meta-review-form",
+                'value-regex': '.*',
+                'required': False,
+                'default': 'recommendation',
+                'order': 29
+            },
             'additional_meta_review_form_options': {
                 'order' : 30,
                 'value-dict': {},
                 'required': False,
-                'description': 'Configure additional options in the meta review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected. For more information on the default meta review form, please refer to our FAQ: https://openreview.net/faq#question-default-forms'
+                'description': 'Configure additional options in the meta review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected. For more information on the default meta review form, please refer to our docs: https://docs.openreview.net/reference/default-forms/default-meta-review-form'
             },
             'remove_meta_review_form_options': {
                 'order': 31,
@@ -609,7 +616,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                    'values-regex': '~.*'
                 },
                 'content': meta_review_stage_content
             }
@@ -687,7 +694,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                    'values-regex': '~.*'
                 },
                 'content': submission_revision_stage_content
             }
@@ -828,7 +835,7 @@ class VenueStages():
                             'values': [],
                         },
                         'signatures': {
-                            'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                            'values-regex': self.venue_request.support_group.id
                         },
                         'content': decisions_upload_status_content
                     }
@@ -853,7 +860,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                    'values-regex': '~.*'
                 },
                 'content': decision_stage_content
             }
@@ -907,7 +914,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                    'values-regex': '~.*'
                 },
                 'content': post_decision_content
             }
@@ -976,7 +983,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                    'values-regex': '~.*'
                 },
                 'content': registration_content
             }
@@ -1044,7 +1051,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                    'values-regex': '~.*'
                 },
                 'content': registration_content
             }
@@ -1498,7 +1505,7 @@ class VenueRequest():
                             ]
                         },
                         'signatures': {
-                            'values-regex': '~.*|' + self.support_group.id
+                            'values-regex': '~.*'
                         },
                         'content': self.request_content
                     }
@@ -1635,7 +1642,7 @@ class VenueRequest():
                         'values':[],
                     },
                     'signatures': {
-                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                        'values-regex': '~.*'
                     },
                     'content': post_submission_content
                 }
@@ -1747,7 +1754,7 @@ If you would like to change your decision, please follow the link in the previou
                         'values':[],
                     },
                     'signatures': {
-                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                        'values-regex': '~.*'
                     },
                     'content': recruitment_content
                 }
@@ -1813,7 +1820,7 @@ If you would like to change your decision, please follow the link in the previou
                         'values': [],
                     },
                     'signatures': {
-                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                        'values-regex': self.support_group.id
                     },
                     'content': recruitment_status_content
                 }
@@ -1894,7 +1901,7 @@ If you would like to change your decision, please follow the link in the previou
                         'values':[],
                     },
                     'signatures': {
-                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                        'values-regex': '~.*'
                     },
                     'content': remind_recruitment_content
                 }
@@ -1948,7 +1955,7 @@ If you would like to change your decision, please follow the link in the previou
                         'values': [],
                     },
                     'signatures': {
-                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                        'values-regex': self.support_group.id
                     },
                     'content': remind_recruitment_status_content
                 }
@@ -2020,7 +2027,7 @@ If you would like to change your decision, please follow the link in the previou
                             'values':[],
                         },
                         'signatures': {
-                            'values-regex': '~.*|{}'.format(self.support_group.id)
+                            'values-regex': '~.*'
                         },
                         'content': matching_content
                     }
@@ -2079,7 +2086,7 @@ If you would like to change your decision, please follow the link in the previou
                         'values': [],
                     },
                     'signatures': {
-                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                        'values-regex': self.support_group.id
                     },
                     'content': matching_status_content
                 }
@@ -2111,7 +2118,7 @@ If you would like to change your decision, please follow the link in the previou
                         ]
                     },
                     'signatures': {
-                        'values-regex': '~.*|' + self.support_group.id,
+                        'values-regex': self.support_group.id,
                         'description': 'How your identity will be displayed.'
                     },
                     'content': {

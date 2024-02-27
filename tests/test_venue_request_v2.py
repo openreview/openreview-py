@@ -2491,7 +2491,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             subject="[TestVenue@OR'2030V2] Decision posted to your submission - Paper Number: 1, Paper Title: \"test submission\"")
         assert messages and len(messages) == 1
         assert messages[0]['content']['replyTo'] == 'test@mail.com'
-        assert messages[0]['content']['text'] == f'''To view the decision, click here: https://openreview.net/forum?id={submission.id}&noteId={decision_note['note']['id']}'''
+        assert messages[0]['content']['text'] == f'''To view the decision, click here: https://openreview.net/forum?id={submission.id}&noteId={decision_note['note']['id']}\n\nPlease note that responding to this email will direct your reply to test@mail.com.\n'''
 
         with open(os.path.join(os.path.dirname(__file__), 'data/decisions_more.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
@@ -2945,7 +2945,10 @@ Title: revised test submission 3
 
 Abstract revised abstract 3
 
-To view your submission, click here: https://openreview.net/forum?id={updated_note.id}'''
+To view your submission, click here: https://openreview.net/forum?id={updated_note.id}
+
+Please note that responding to this email will direct your reply to test@mail.com.
+'''
         assert message_text in messages[0]['content']['text']
 
     def test_venue_submission_revision_stage_accepted_papers_only(self, client, test_client, helpers, venue, openreview_client):

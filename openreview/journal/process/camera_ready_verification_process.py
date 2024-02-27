@@ -63,7 +63,6 @@ This is to inform you that your submitted camera ready version of your paper {su
 We thank you again for your contribution to {journal.short_name} and congratulate you for your successful submission!
 
 The {journal.short_name} Editors-in-Chief
-
 ''',
         replyTo=journal.contact_info
     )

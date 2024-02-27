@@ -679,6 +679,7 @@ class TestCVPRConference():
                 'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
                 'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_meta_reviews_to_reviewers': 'Meta review should not be revealed to any reviewer',
+                'recommendation_field_name': 'preliminary_recommendation',
                 'remove_meta_review_form_options': ['recommendation', 'confidence'],
                 'additional_meta_review_form_options': {
                     "metareview": {
@@ -719,6 +720,9 @@ class TestCVPRConference():
         ))
 
         helpers.await_queue() 
+
+        domain = openreview_client.get_group('thecvf.com/CVPR/2024/Conference')
+        assert domain.content['meta_review_recommendation']['value'] == 'preliminary_recommendation'
 
         ac1_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)       
         ac2_client = openreview.api.OpenReviewClient(username='ac2@cvpr.cc', password=helpers.strong_password)
@@ -1137,6 +1141,19 @@ class TestCVPRConference():
             )
         )
 
+        ## Try to edit the invitation and don't get prefix group not found error
+        openreview_client.post_invitation_edit(
+            invitations='thecvf.com/CVPR/2024/Conference/-/Edit',
+            readers=[venue.id],
+            writers=[venue.id],
+            signatures=[venue.id],
+            invitation=openreview.api.Invitation(
+                id='thecvf.com/CVPR/2024/Conference/Submission4/Meta_Review1/-/Final_Revision',
+                expdate=openreview.tools.datetime_millis(due_date + datetime.timedelta(days=1))
+            )
+        )
+      
+        
         # Secondary AC can't post meta review revision
         secondary_ac_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)
         secondary_ac_anon_group_id = secondary_ac_client.get_groups(prefix=f'thecvf.com/CVPR/2024/Conference/Submission4/Secondary_Area_Chair_.*', signatory='ac1@cvpr.cc')[0].id

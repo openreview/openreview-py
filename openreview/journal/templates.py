@@ -50,7 +50,6 @@ Visit the following link to perform this task: {invitation_url}
 If any correction is needed, you may contact the authors directly by email or through OpenReview.
 
 The {short_name} Editors-in-Chief
-
 '''
 
 ae_official_recommendation_starts_email_template = '''Hi {{{{fullname}}}},
