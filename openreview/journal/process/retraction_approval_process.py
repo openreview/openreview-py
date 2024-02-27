@@ -34,7 +34,6 @@ As {journal.short_name} Editors-in-Chief, we have submitted our decision on your
 To view our decision, follow this link: https://openreview.net/forum?id={edit.note.forum}&noteId={edit.note.id}
 
 The {journal.short_name} Editors-in-Chief
-
 ''',
         replyTo=journal.contact_info
     )

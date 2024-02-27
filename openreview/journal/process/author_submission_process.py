@@ -18,7 +18,8 @@ def process(client, edit, invitation):
                 submission_id=note.id,
                 submission_number=note.number,
                 submission_title=note.content['title']['value']
-            )
+            ),
+            replyTo=journal.contact_info
         )
 
     if note.tcdate == note.tmdate and journal.should_eic_submission_notification():
@@ -29,5 +30,6 @@ def process(client, edit, invitation):
             message=eic_group.content['new_submission_email_template_script']['value'].format(
                 short_name=journal.short_name,
                 submission_id=note.id,
-            )
+            ),
+            replyTo=journal.contact_info
         )   
