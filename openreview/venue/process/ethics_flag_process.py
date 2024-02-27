@@ -14,7 +14,7 @@ def process(client, edit, invitation):
     # get correct review invitation name
     if source_submissions_query_mapping:
         for invitation_name, query in source_submissions_query_mapping.items():
-            submission_field_name = query.keys()[0]
+            submission_field_name = list(query.keys())[0]
 
             if submission.content.get(submission_field_name, {}).get('value', '') in query[submission_field_name]:
                 review_name = invitation_name 

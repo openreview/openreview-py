@@ -3486,9 +3486,9 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
                 )
             )
 
-        # assert number of Official_Review and Paper_Track_Review invitations has not changed after flagging papers for ethics reviews
+        # assert number of Official_Review and Position_Paper_Review invitations has not changed after flagging papers for ethics reviews
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Official_Review')) == 50
-        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Paper_Track_Review')) == 50
+        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Position_Paper_Review')) == 50
 
     def test_comment_stage(self, openreview_client, helpers):
 
