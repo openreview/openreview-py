@@ -31,58 +31,59 @@ def process(client, edit, invitation):
                 group=openreview.api.Group()
             )
         
-        # edit review invitation and reviews
-        review_readers = invitation.content['review_readers']['value']
-        final_readers = []
-        final_readers.extend(review_readers)
-        final_readers = [reader.replace('{number}', str(submission.number)) for reader in final_readers]
-        if '{signatures}' in final_readers:
-            final_readers.remove('{signatures}')
-        if 'everyone' not in final_readers:
-            final_readers.append(f'{venue_id}/{submission_name}{submission.number}/{ethics_reviewers_name}')
+        # edit review invitation and reviews if invitation exists
+        if openreview.tools.get_invitation(client, f'{venue_id}/-/{review_name}'):
+            review_readers = invitation.content['review_readers']['value']
+            final_readers = []
+            final_readers.extend(review_readers)
+            final_readers = [reader.replace('{number}', str(submission.number)) for reader in final_readers]
+            if '{signatures}' in final_readers:
+                final_readers.remove('{signatures}')
+            if 'everyone' not in final_readers:
+                final_readers.append(f'{venue_id}/{submission_name}{submission.number}/{ethics_reviewers_name}')
 
-        print('review_name:', review_name)
-        paper_invitation_edit = client.post_invitation_edit(
-                invitations=f'{venue_id}/-/{review_name}',
-                readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                content={
-                    'noteId': {
-                        'value': submission.id
+            print('review_name:', review_name)
+            paper_invitation_edit = client.post_invitation_edit(
+                    invitations=f'{venue_id}/-/{review_name}',
+                    readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    content={
+                        'noteId': {
+                            'value': submission.id
+                        },
+                        'noteNumber': {
+                            'value': submission.number
+                        },
+                        'noteReaders': {
+                            'value': final_readers
+                        }
                     },
-                    'noteNumber': {
-                        'value': submission.number
-                    },
-                    'noteReaders': {
-                        'value': final_readers
-                    }
-                },
-                invitation=openreview.api.Invitation()
-            )
-
-        paper_invitation = client.get_invitation(paper_invitation_edit['invitation']['id'])
-        notes = client.get_notes(invitation=paper_invitation.id)
-        invitation_readers = paper_invitation.edit['note'].get('readers')
-
-        if type(invitation_readers) is list:
-            for note in notes:
-                final_invitation_readers = list(dict.fromkeys([note.signatures[0] if 'signatures' in r else r for r in invitation_readers]))
-                updated_note = openreview.api.Note(
-                    id = note.id
+                    invitation=openreview.api.Invitation()
                 )
-                if note.readers != final_invitation_readers:
-                    updated_note.readers = final_invitation_readers
-                    updated_note.nonreaders = paper_invitation.edit['note'].get('nonreaders')
-                if updated_note.content or updated_note.readers:
-                    client.post_note_edit(
-                        invitation = meta_invitation_id,
-                        readers = final_invitation_readers,
-                        nonreaders = paper_invitation.edit['note'].get('nonreaders'),
-                        writers = [venue_id],
-                        signatures = [venue_id],
-                        note = updated_note
+
+            paper_invitation = client.get_invitation(paper_invitation_edit['invitation']['id'])
+            notes = client.get_notes(invitation=paper_invitation.id)
+            invitation_readers = paper_invitation.edit['note'].get('readers')
+
+            if type(invitation_readers) is list:
+                for note in notes:
+                    final_invitation_readers = list(dict.fromkeys([note.signatures[0] if 'signatures' in r else r for r in invitation_readers]))
+                    updated_note = openreview.api.Note(
+                        id = note.id
                     )
+                    if note.readers != final_invitation_readers:
+                        updated_note.readers = final_invitation_readers
+                        updated_note.nonreaders = paper_invitation.edit['note'].get('nonreaders')
+                    if updated_note.content or updated_note.readers:
+                        client.post_note_edit(
+                            invitation = meta_invitation_id,
+                            readers = final_invitation_readers,
+                            nonreaders = paper_invitation.edit['note'].get('nonreaders'),
+                            writers = [venue_id],
+                            signatures = [venue_id],
+                            note = updated_note
+                        )
 
         # create ethics review invitation
         paper_invitation_edit = client.post_invitation_edit(
