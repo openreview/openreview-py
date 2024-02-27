@@ -84,6 +84,7 @@ class ProfileManagement():
                 signatures=[dblp_group_id],
                 invitees=['~'],
                 process=file_content,
+                maxReplies=1000,
                 edit={
                     'readers': ['everyone'],
                     'signatures': { 
