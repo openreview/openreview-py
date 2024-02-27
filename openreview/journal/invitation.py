@@ -1024,9 +1024,22 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.get_submission_additional_fields():
             for key, value in self.journal.get_submission_additional_fields().items():
-                invitation.edit['note']['content'][key] = value if value else { "delete": True }             
+                invitation.edit['note']['content'][key] = value if value else { "delete": True }
 
-        print(invitation.edit['note']['content'])
+        submission_license = self.journal.get_submission_license()
+        if isinstance(submission_license, str):
+            invitation.edit['note']['license'] = submission_license
+        
+        if isinstance(submission_license, list):
+            if len(submission_license) == 1:
+                invitation.edit['note']['license'] = submission_license[0]
+            else:
+                invitation.edit['note']['license'] = {
+                    "param": {
+                        "enum": [ { "value": license, "description": license } for license in submission_license ]
+                    }
+                }             
+
         self.save_invitation(invitation)
 
     def set_ae_assignment(self, assignment_delay):
@@ -1855,7 +1868,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             invitees=[venue_id, action_editors_id] + additional_committee,
             readers=[venue_id, action_editors_id] + additional_committee,
             writers=[venue_id],
-            signatures=[self.journal.get_editors_in_chief_id()],
+            signatures=[venue_id],
             minReplies=1,
             maxReplies=1,
             type='Edge',
@@ -1928,7 +1941,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             invitees=[venue_id],
             readers=[venue_id, action_editors_id] + additional_committee,
             writers=[venue_id],
-            signatures=[self.journal.get_editors_in_chief_id()],
+            signatures=[venue_id],
             minReplies=1,
             maxReplies=1,
             type='Edge',
@@ -2181,7 +2194,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             invitees=[venue_id, action_editors_id] + additional_committee,
             readers=[venue_id, action_editors_id] + additional_committee,
             writers=[venue_id],
-            signatures=[self.journal.get_editors_in_chief_id()],
+            signatures=[venue_id],
             minReplies=1,
             maxReplies=1,
             type='Edge',
@@ -3334,10 +3347,6 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'venueid': {
                             'value': self.journal.accepted_venue_id,
                             'order': 2
-                        },
-                        'license': {
-                            'value': 'Creative Commons Attribution 4.0 International (CC BY 4.0)',
-                            'order': 4
                         }
                     }
                 }

@@ -427,6 +427,12 @@ class Journal(object):
 
     def get_issn(self):
         return self.settings.get('issn', None)
+    
+    def get_submission_license(self):
+        return self.settings.get('submission_license', 'CC BY-SA 4.0')
+    
+    def get_expertise_model(self):
+        return self.settings.get('expertise_model', 'specter+mfr')
 
     def are_authors_anonymous(self):
         return self.settings.get('author_anonymity', True)
@@ -532,10 +538,12 @@ class Journal(object):
         if self.is_submission_public():
             readers.append('everyone')
 
-        return readers + [
-            self.get_editors_in_chief_id(), 
-            self.get_action_editors_id(), 
-            self.get_action_editors_id(number), 
+        readers.append(self.get_editors_in_chief_id())
+
+        if not self.is_submission_public():
+            readers.append(self.get_action_editors_id())
+            
+        return readers + [self.get_action_editors_id(number), 
             self.get_reviewers_id(number), 
             self.get_reviewers_id(number, anon=True) + '.*', 
             self.get_authors_id(number)
@@ -746,8 +754,7 @@ Submission: {forum.content['title']['value']}
             formatted_content = formatted_content + f'{formatted_field}: {note.content.get(field, {}).get("value", "")}' + '\n'
 
         content = f'''{formatted_content}
-To view the {lower_formatted_invitation}, click here: https://openreview.net/forum?id={note.forum}&noteId={note.id}
-'''
+To view the {lower_formatted_invitation}, click here: https://openreview.net/forum?id={note.forum}&noteId={note.id}'''
 
         ## Notify author of the note
         if action == 'posted' and self.get_editors_in_chief_id() not in note.signatures:
@@ -786,7 +793,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
 
         ## Notify action editors
-        if is_public or self.get_action_editors_id(number=forum.number) in readers:
+        if is_public or self.get_action_editors_id(number=forum.number) in readers or self.get_action_editors_id() in readers:
             message = f'''Hi {{{{fullname}}}},
 
 {before_invitation} {lower_formatted_invitation} has been {action} on a submission for which you are an Action Editor.
@@ -1086,10 +1093,11 @@ Your {lower_formatted_invitation} on a submission has been {action}
             author_group = client.get_group(journal.get_authors_id())
 
             ## Get all the submissions that don't have a decision affinity scores
-            submissions = journal.client.get_all_notes(invitation=journal.get_author_submission_id(), content = { 'venueid': journal.submitted_venue_id})
+            submissions = journal.client.get_all_notes(invitation=journal.get_author_submission_id())
+            active_submissions = [s for s in submissions if s.content['venueid']['value'] in [journal.submitted_venue_id, journal.assigning_AE_venue_id, journal.assigned_AE_venue_id]]
 
             ## For each submission check the status of the expertise task
-            for submission in tqdm(submissions):
+            for submission in tqdm(active_submissions):
                 ae_score_count = journal.client.get_edges_count(invitation=journal.get_ae_affinity_score_id(), head=submission.id)
                 if ae_score_count == 0:
                     print('Submission with no AE scores', submission.id, submission.number)
@@ -1631,7 +1639,7 @@ A conflict was detected between you and the submission authors and the assignmen
 If you have any questions, please contact us as info@openreview.net.
 
 OpenReview Team'''
-            response = client.post_message(subject, [edge.tail], message)
+            response = client.post_message(subject, [edge.tail], message, replyTo=journal.contact_info)
 
             ## Send email to inviter
             subject=f"[{journal.short_name}] Conflict detected between reviewer {user_profile.get_preferred_name(pretty=True)} and paper {submission.number}: {submission.content['title']['value']}"
@@ -1643,7 +1651,7 @@ If you have any questions, please contact us as info@openreview.net.
 OpenReview Team'''
 
             ## - Send email
-            response = client.post_message(subject, edge.signatures, message)            
+            response = client.post_message(subject, edge.signatures, message, replyTo=journal.contact_info)            
         
         def mark_as_accepted(journal, edge, submission, user_profile):
 
@@ -1684,7 +1692,7 @@ If you would like to change your decision, please click the Decline link in the 
 OpenReview Team'''
 
                 ## - Send email
-                response = client.post_message(subject, [edge.tail], message)
+                response = client.post_message(subject, [edge.tail], message, replyTo=journal.contact_info)
 
                 ## Send email to inviter
                 subject=f'[{short_phrase}] {reviewer_name} {user_profile.get_preferred_name(pretty=True)} signed up and is assigned to paper {submission.number}: {submission.content["title"]["value"]}'
@@ -1694,7 +1702,7 @@ The {reviewer_name} {user_profile.get_preferred_name(pretty=True)}({user_profile
 OpenReview Team'''
 
                 ## - Send email
-                response = client.post_message(subject, edge.signatures, message)            
+                response = client.post_message(subject, edge.signatures, message, replyTo=journal.contact_info)            
         
         journal_requests = client.get_all_notes(invitation=f'{support_group_id}/-/Journal_Request')
 

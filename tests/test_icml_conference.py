@@ -1069,7 +1069,10 @@ Title: Paper title 1 Version 2
 
 Abstract: This is an abstract 1
 
-To view your submission, click here: https://openreview.net/forum?id={submission.id}'''
+To view your submission, click here: https://openreview.net/forum?id={submission.id}
+
+Please note that responding to this email will direct your reply to pc@icml.cc.
+'''
 
     def test_ac_bidding(self, client, openreview_client, helpers, test_client):
 
@@ -1207,8 +1210,10 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
         helpers.await_queue()
 
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Bid')
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Bid')
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Bid')
+        assert invitation.edit['tail']['param']['options']['group'] == 'ICML.cc/2023/Conference/Area_Chairs'
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Bid')
+        assert invitation.edit['tail']['param']['options']['group'] == 'ICML.cc/2023/Conference/Reviewers'
 
         ## Hide the pdf and supplementary material
         pc_client.post_note(openreview.Note(
@@ -1693,6 +1698,10 @@ OpenReview Team'''
 
         venue.set_assignments(assignment_title='reviewer-matching', committee_id='ICML.cc/2023/Conference/Reviewers', enable_reviewer_reassignment=True)
 
+        # Check that deploying assignments removes reviewers_proposed_assignment_title
+        venue_group = pc_client_v2.get_group('ICML.cc/2023/Conference')
+        assert 'reviewers_proposed_assignment_title' not in venue_group.content
+
         proposed_recruitment_inv = openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment_Recruitment')
         assert proposed_recruitment_inv.expdate and proposed_recruitment_inv.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
@@ -1792,8 +1801,7 @@ OpenReview Team'''
             group = openreview.api.Group(
                 id = 'ICML.cc/2023/Conference',
                 content = {
-                    'enable_reviewers_reassignment': { 'value': True },
-                    'reviewers_proposed_assignment_title': { 'value': { 'delete': True } }
+                    'enable_reviewers_reassignment': { 'value': True }
                 }
             )
         )
@@ -1970,7 +1978,10 @@ To check all of your assigned papers, go to https://openreview.net/group?id=ICML
 
 Thank you,
 
-ICML 2023 Conference Program Chairs'''
+ICML 2023 Conference Program Chairs
+
+Please note that responding to this email will direct your reply to pc@icml.cc.
+'''
 
         assert openreview_client.get_groups('ICML.cc/2023/Conference/Emergency_Reviewers', member='celeste@icml.cc')
         assert openreview_client.get_groups('ICML.cc/2023/Conference/Reviewers', member='celeste@icml.cc')
