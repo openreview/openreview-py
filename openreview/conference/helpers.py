@@ -49,6 +49,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.registration_stages = get_registration_stages(note, venue)
         if 'ethics_review_deadline' in note.content:
             venue.ethics_review_stage = get_ethics_review_stage(note)
+        venue.custom_stage = get_review_rating_stage(note)
 
         include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
         venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date, include_option=include_expertise_selection)
@@ -1010,3 +1011,64 @@ def get_registration_stages(request_forum, venue):
     if 'Yes' in request_forum.content.get('Area Chairs (Metareviewers)') and 'AC_form_title' in request_forum.content:
         stages.append(get_ac_registration_stage(request_forum, venue))
     return stages
+
+def get_review_rating_stage(request_forum):
+
+    review_rating_start_date = request_forum.content.get('review_ratingstart_date', '').strip()
+    if review_rating_start_date:
+        try:
+            review_rating_start_date = datetime.datetime.strptime(review_rating_start_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            review_rating_start_date = datetime.datetime.strptime(review_rating_start_date, '%Y/%m/%d')
+    else:
+        review_rating_start_date = None
+
+    review_rating_due_date = request_forum.content.get('review_rating_deadline', '').strip()
+    if review_rating_due_date:
+        try:
+            review_rating_due_date = datetime.datetime.strptime(review_rating_due_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            review_rating_due_date = datetime.datetime.strptime(review_rating_due_date, '%Y/%m/%d')
+    else:
+        review_rating_due_date = None
+
+    review_rating_exp_date = request_forum.content.get('review_rating_expiration_date', '').strip()
+    if review_rating_exp_date:
+        try:
+            review_rating_exp_date = datetime.datetime.strptime(review_rating_exp_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            review_rating_exp_date = datetime.datetime.strptime(review_rating_exp_date, '%Y/%m/%d')
+    else:
+        review_rating_exp_date = None
+
+    readers = [openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED] if 'Yes' in request_forum.content.get('release_to_senior_area_chairs', 'No') else [openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED]
+
+    default_content = {
+        'review_quality': {
+            'order': 1,
+            'description': 'How helpful is this review?',
+            'value': {
+                'param': {
+                    'type': 'integer',
+                    'input': 'radio',
+                    'enum': [
+                        {'value': 0, 'description': '0: below expectations'},
+                        {'value': 1, 'description': '1: meets expectations'},
+                        {'value': 2, 'description': '2: exceeds expectations'}
+                    ]
+                }
+            }
+        }
+    }
+    content = request_forum.content.get('review_rating_form_options', default_content)
+
+    return openreview.stages.CustomStage(name='Rating',
+        reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
+        source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+        reply_type=openreview.stages.CustomStage.ReplyType.REPLY,
+        start_date=review_rating_start_date,
+        due_date=review_rating_due_date,
+        exp_date=review_rating_exp_date,
+        invitees=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
+        readers=readers,
+        content=content)
