@@ -13,15 +13,6 @@ from openreview.stages.arr_content import arr_submission_content, hide_fields
 
 # API2 template from ICML
 class TestARRVenueV2():
-
-
-    @pytest.fixture(scope="class")
-    def profile_management(self, client):
-        profile_management = ProfileManagement(client, 'openreview.net')
-        profile_management.setup()
-        return profile_management
-
-
     def test_create_conference(self, client, openreview_client, helpers, profile_management):
 
         now = datetime.datetime.utcnow()
