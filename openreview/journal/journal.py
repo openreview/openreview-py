@@ -754,8 +754,7 @@ Submission: {forum.content['title']['value']}
             formatted_content = formatted_content + f'{formatted_field}: {note.content.get(field, {}).get("value", "")}' + '\n'
 
         content = f'''{formatted_content}
-To view the {lower_formatted_invitation}, click here: https://openreview.net/forum?id={note.forum}&noteId={note.id}
-'''
+To view the {lower_formatted_invitation}, click here: https://openreview.net/forum?id={note.forum}&noteId={note.id}'''
 
         ## Notify author of the note
         if action == 'posted' and self.get_editors_in_chief_id() not in note.signatures:
@@ -1640,7 +1639,7 @@ A conflict was detected between you and the submission authors and the assignmen
 If you have any questions, please contact us as info@openreview.net.
 
 OpenReview Team'''
-            response = client.post_message(subject, [edge.tail], message)
+            response = client.post_message(subject, [edge.tail], message, replyTo=journal.contact_info)
 
             ## Send email to inviter
             subject=f"[{journal.short_name}] Conflict detected between reviewer {user_profile.get_preferred_name(pretty=True)} and paper {submission.number}: {submission.content['title']['value']}"
@@ -1652,7 +1651,7 @@ If you have any questions, please contact us as info@openreview.net.
 OpenReview Team'''
 
             ## - Send email
-            response = client.post_message(subject, edge.signatures, message)            
+            response = client.post_message(subject, edge.signatures, message, replyTo=journal.contact_info)            
         
         def mark_as_accepted(journal, edge, submission, user_profile):
 
@@ -1693,7 +1692,7 @@ If you would like to change your decision, please click the Decline link in the 
 OpenReview Team'''
 
                 ## - Send email
-                response = client.post_message(subject, [edge.tail], message)
+                response = client.post_message(subject, [edge.tail], message, replyTo=journal.contact_info)
 
                 ## Send email to inviter
                 subject=f'[{short_phrase}] {reviewer_name} {user_profile.get_preferred_name(pretty=True)} signed up and is assigned to paper {submission.number}: {submission.content["title"]["value"]}'
@@ -1703,7 +1702,7 @@ The {reviewer_name} {user_profile.get_preferred_name(pretty=True)}({user_profile
 OpenReview Team'''
 
                 ## - Send email
-                response = client.post_message(subject, edge.signatures, message)            
+                response = client.post_message(subject, edge.signatures, message, replyTo=journal.contact_info)            
         
         journal_requests = client.get_all_notes(invitation=f'{support_group_id}/-/Journal_Request')
 
