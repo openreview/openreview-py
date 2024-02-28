@@ -139,7 +139,7 @@ Thanks,
             client.remove_members_from_group(committee_invited_id, [user_profile.id])
 
         ## Send email
-        subject=f'[{short_phrase}] Rescinded invitation {action_string} paper titled "{submission.content["title"]["value"]}"'
+        subject=f'[{short_phrase}] Invitation canceled {action_string} paper titled "{submission.content["title"]["value"]}"'
         message=f'''Hi {preferred_name},
 
 You were previously invited {action_string} the paper number: {submission.number}, title: "{submission.content['title']['value']}".

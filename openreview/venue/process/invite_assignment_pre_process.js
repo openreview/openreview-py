@@ -13,17 +13,8 @@ async function process(client, edge, invitation) {
   const conflictPolicy = invitation.content.reviewers_conflict_policy?.value
   const conflictNYears = invitation.content.reviewers_conflict_n_years?.value
 
-  if (edge.ddate) {
-    if (edge.label === acceptedLabel) {
-      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Edge cannot be removed as the user has already accepted the invitation.` }))
-    }
-    if (edge.label === declinedLabel) {
-      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Edge cannot be removed as the user has already declined the invitation.` }))
-    }
-    if (edge.label === 'Conflict Detected') {
-      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Edge cannot be removed as a conflict was detected between the user and the submission.` }))
-    }
-    return
+  if (edge.ddate && edge.label !== inviteLabel) {
+    return Promise.reject(new OpenReviewError({ name: 'Error', message: `Cannot cancel the invitation since it has status: "${edge.label}"` }))
   }
 
   if (edge.label !== inviteLabel) {
