@@ -60,10 +60,13 @@ class TestEMNLPConference():
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'How did you hear about us?': 'ML conferences',
+                'email_pcs_for_withdrawn_submissions': 'Yes, email PCs.',
+                'email_pcs_for_desk_rejected_submissions': 'Yes, email PCs.',
                 'Expected Submissions': '1000',
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
-                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers'
+                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
+                'submission_license': ['CC BY 4.0']
             }))
 
         helpers.await_queue()
@@ -353,17 +356,23 @@ class TestEMNLPConference():
         withdrawn_submission = openreview_client.get_notes(invitation='EMNLP/2023/Conference/-/Withdrawn_Submission')
         assert len(withdrawn_submission) == 1
 
+        year = datetime.datetime.now().year
         valid_bibtex = '''@misc{
-anonymous2023test,
+anonymous'''+str(year)+'''test,
 title={Test Paper Title 5},
 author={Anonymous},
-year={2023},
+year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''
 
         valid_bibtex = valid_bibtex + withdrawn_submission[0].forum + '''}
 }'''
 
         assert '_bibtex' in withdrawn_submission[0].content and withdrawn_submission[0].content['_bibtex']['value'] == valid_bibtex
+
+        messages = client.get_messages(subject='[EMNLP 2023]: Paper #5 withdrawn by paper authors')
+        assert messages and len(messages) == 3
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'pc@emnlp.org' in recipients
 
         pc_openreview_client = openreview.api.OpenReviewClient(username='pc@emnlp.org', password=helpers.strong_password)
 
@@ -395,10 +404,10 @@ url={https://openreview.net/forum?id='''
         assert len(desk_rejected_submission) == 1
 
         valid_bibtex = '''@misc{
-anonymous2023test,
+anonymous'''+str(year)+'''test,
 title={Test Paper Title 5},
 author={Anonymous},
-year={2023},
+year={'''+str(year)+'''},
 url={https://openreview.net/forum?id='''
 
         valid_bibtex = valid_bibtex + desk_rejected_submission[0].forum + '''}
@@ -774,6 +783,8 @@ url={https://openreview.net/forum?id='''
 
         messages = client.get_messages(subject='[EMNLP 2023]: Paper #1 desk-rejected by Senior Area Chairs')
         assert messages and len(messages) == 5
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'pc@emnlp.org' in recipients
 
         ac_client = openreview.api.OpenReviewClient(username = 'ac2@emnlp.org', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='EMNLP/2023/Conference/-/Submission', sort='number:asc')
@@ -1083,3 +1094,59 @@ url={https://openreview.net/forum?id='''
 
         assert result.get('token') is not None
         assert result.get('user', {}).get('id') == area_chairs[0]
+
+    def test_release_reviews(self, client, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@emnlp.org', password=helpers.strong_password)
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
+
+        ## make submissions visible to everyone
+        pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'submission_readers': 'Everyone (submissions are public)'
+            },
+            forum=request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['EMNLP/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_EMNLPChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
+
+        submissions = openreview_client.get_notes(content={'venueid':'EMNLP/2023/Conference/Submission'}, sort='number:asc')
+        assert len(submissions) == 3
+
+        for submission in submissions:
+            submission.readers = [
+                "everyone"
+            ]
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
+        ## run review stage
+        review_stage_note=pc_client.post_note(openreview.Note(
+            content={
+                'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'Yes, reviews should be revealed publicly when they are posted',
+                'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Review should not be revealed to any reviewer, except to the author of the review',
+                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews',
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Review_Stage'.format(request_form.number),
+            readers=['EMNLP/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_EMNLPChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
+
+        assert len(openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Official_Review')) == 3
+        invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission3/-/Official_Review')
+        assert invitation.edit['note']['readers'] == ['everyone']

@@ -66,6 +66,9 @@ class TestJournalMatching():
 
         openreview_client.add_members_to_group('CARP/Action_Editors', ['~Ana_Prada1', '~Paul_McCartney1', '~John_Lennon1', '~Janis_Joplin1', '~Diego_Armando1', '~Ken_Beck1'])
 
+        assert 'CARP' in openreview_client.get_group('active_venues').members
+        assert 'CARP' in openreview_client.get_group('venues').members
+        assert 'CARP' in openreview_client.get_group('host').members
 
     def test_submission(self, journal, openreview_client, test_client, helpers):
 

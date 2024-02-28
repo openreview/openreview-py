@@ -188,9 +188,9 @@ var renderData = function(venueStatusData) {
           var recommendationHtml = '';
           if (data.recommendation) {
             recommendationHtml = '<h4>Recommendation:</h4>' +
-            '<p>' + data.recommendation.content.decision_recommendation.value + '</p>' +
+            '<p>' + (data.recommendation.content.decision_recommendation?.value  || 'Yes' )+ '</p>' +
             '<h4>Certifications:</h4>' +
-            '<p>' + (data.recommendation.content.certification_recommendations && data.recommendation.content.certification_recommendations.value.join(', ')) + '</p>';
+            '<p>' + ((data.recommendation.content.certification_recommendations && data.recommendation.content.certification_recommendations.value.join(', ')) || '') + '</p>';
           }
           return '<div>' +
           recommendationHtml +

@@ -68,7 +68,8 @@ class TestVenueRequest():
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair'],
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
-                'use_recruitment_template': 'No'
+                'use_recruitment_template': 'No',
+                'submission_license': ['CC BY 4.0']
             })
 
         with pytest.raises(openreview.OpenReviewException, match=r'Assigned area chairs must see the reviewer identity'):
@@ -173,7 +174,7 @@ class TestVenueRequest():
                 'contact_email': 'new_test_user@mail.com',
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
-                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': abstract_due_date.strftime('%Y/%m/%d %H:%M'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',
@@ -190,7 +191,8 @@ class TestVenueRequest():
                 'desk_rejected_submissions_author_anonymity': 'Yes, author identities of desk rejected submissions should be revealed.',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
-                'submission_name': 'Submission_Test'
+                'submission_name': 'Submission_Test',
+                'submission_license': ['CC BY 4.0']
             }))
 
         assert request_form_note
@@ -392,7 +394,7 @@ class TestVenueRequest():
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
-                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'remove_submission_options': ['pdf'],
@@ -460,7 +462,7 @@ class TestVenueRequest():
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
-                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'remove_submission_options': ['pdf'],
@@ -1308,7 +1310,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
-                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'withdraw_submission_expiration': withdraw_exp_date,
@@ -2090,7 +2092,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
-                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
                 'publication_chairs':'No, our venue does not have Publication Chairs'
             },
@@ -2146,7 +2148,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
-                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
                 'publication_chairs':'No, our venue does not have Publication Chairs'
             },

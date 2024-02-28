@@ -121,11 +121,11 @@ class GroupBuilder(object):
 
         if venue_group.web is None:
 
-            self.client_v1.add_members_to_group('venues', venue_id)
+            self.client.add_members_to_group('venues', venue_id)
             root_id = groups[0].id
             if root_id == root_id.lower():
                 root_id = groups[1].id        
-            self.client_v1.add_members_to_group('host', root_id)
+            self.client.add_members_to_group('host', root_id)
 
             with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
                 content = f.read()
@@ -185,6 +185,7 @@ class GroupBuilder(object):
             'desk_rejection_reversion_id': { 'value': self.venue.get_invitation_id('Desk_Rejection_Reversion') },
             'desk_reject_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
             'desk_rejection_name': { 'value': 'Desk_Rejection'},
+            'desk_rejection_email_pcs': { 'value': self.venue.submission_stage.email_pcs_on_desk_reject },
             'desk_rejected_submission_reveal_authors': { 'value': self.venue.submission_stage.desk_rejected_submission_reveal_authors },
             'automatic_reviewer_assignment': { 'value': self.venue.automatic_reviewer_assignment },
             'decision_heading_map': { 'value': self.venue.decision_heading_map }
@@ -203,6 +204,9 @@ class GroupBuilder(object):
             content['area_chairs_recruitment_id'] = { 'value': self.venue.get_recruitment_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_assignment_id'] = { 'value': self.venue.get_assignment_id(self.venue.get_area_chairs_id(), deployed=True) }
 
+        if self.venue.use_secondary_area_chairs:
+            content['secondary_area_chairs_name'] = { 'value': self.venue.secondary_area_chairs_name }
+            content['secondary_area_chairs_anon_name'] = { 'value': self.venue.get_anon_committee_name(self.venue.secondary_area_chairs_name) }
 
         if self.venue.use_senior_area_chairs:
             content['senior_area_chairs_id'] = { 'value': self.venue.get_senior_area_chairs_id() }
@@ -468,9 +472,9 @@ class GroupBuilder(object):
                 self.client.remove_members_from_group(publication_chairs_group_id, members_to_remove)
 
     def add_to_active_venues(self):
-        active_venues = self.client_v1.get_group('active_venues')
+        active_venues = self.client.get_group('active_venues')
         if self.venue_id not in active_venues.members:
-            self.client_v1.add_members_to_group(active_venues, self.venue_id)
+            self.client.add_members_to_group(active_venues, self.venue_id)
     
     def create_recruitment_committee_groups(self, committee_name):
 

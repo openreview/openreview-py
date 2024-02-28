@@ -1,7 +1,7 @@
-def process(client, note, invitation):
+def process(client, edit, invitation):
 
-    email = note.content.get('email')
-    profile_id = note.content.get('profile_id')
+    email = edit.note.content.get('email', {}).get('value')
+    profile_id = edit.note.content.get('profile_id', {}).get('value')
 
     profiles = openreview.tools.get_profiles(client, [profile_id])
 

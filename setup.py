@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name='openreview-py',
 
-    version='1.32.3',
+    version='1.36.1',
 
     description='OpenReview API Python client library',
     url='https://github.com/openreview/openreview-py',

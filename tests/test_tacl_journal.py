@@ -46,6 +46,7 @@ class TestTACLJournal():
                     'settings': {
                         'value': {
                             'submission_public': False,
+                            'release_submission_after_acceptance': False,
                             'skip_ac_recommendation': True,
                             'skip_reviewer_responsibility_acknowledgement': True,
                             'assignment_delay': 0,
@@ -188,6 +189,9 @@ If you think the submission can continue through TACL's review process, click th
 We thank you for your essential contribution to TACL!
 
 The TACL Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tacl@venue.org.
 '''
 
         graham_paper1_anon_groups = graham_client.get_groups(prefix=f'TACL/Paper1/Action_Editor_.*', signatory='~Graham_Neubig1')
@@ -285,6 +289,9 @@ We thank you for your essential contribution to TACL!
 
 The TACL Editors-in-Chief
 note: replies to this email will go to the AE, Graham Neubig.
+
+
+Please note that responding to this email will direct your reply to graham@mailseven.com.
 '''
         assert messages[0]['content']['replyTo'] == 'graham@mailseven.com'
 
@@ -444,6 +451,9 @@ We thank you for your essential contribution to TACL!
 
 The TACL Editors-in-Chief
 note: replies to this email will go to the AE, Graham Neubig.
+
+
+Please note that responding to this email will direct your reply to graham@mailseven.com.
 '''
         messages = journal.client.get_messages(subject = '[TACL] Reviewers must submit official recommendation for TACL submission 1: Paper title UPDATED')
         assert len(messages) == 1

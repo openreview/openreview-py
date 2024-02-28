@@ -27,7 +27,7 @@ def process(client, note, invitation):
                     submission_deadline = datetime.datetime.strptime(submission_deadline, '%Y/%m/%d')
                 matching_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Paper_Matching_Setup')
                 if matching_invitation:
-                    matching_invitation.cdate = openreview.tools.datetime_millis(submission_deadline)
+                    matching_invitation.cdate = openreview.tools.datetime_millis(conference.submission_stage.due_date)
                     client.post_invitation(matching_invitation)
                 revision_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Revision'))
                 if revision_invitation and conference.submission_stage.second_due_date and not forum_note.content.get('submission_revision_deadline'):
@@ -266,7 +266,7 @@ def process(client, note, invitation):
             if forum_note.content.get('api_version') == '2':
 
                 review_due_date = forum_note.content.get('review_deadline').strip()
-                cdate = datetime.datetime.utcnow()
+                cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
                 if review_due_date:
                     try:
                         review_due_date = datetime.datetime.strptime(review_due_date, '%Y/%m/%d %H:%M')
@@ -290,6 +290,79 @@ def process(client, note, invitation):
                     signatures = ['~Super_User1']
                 ))
 
+                review_rating_stage_content = {
+                    'review_rating_start_date': {
+                        'description': 'When does the review rating stage begin? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                        'order': 1
+                    },
+                    'review_rating_deadline': {
+                        'description': 'When does the review rating stage end? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                        'required': True,
+                        'order': 2
+                    },
+                    'review_rating_expiration_date': {
+                        'description': 'After this date, no more review ratings can be submitted. This is the hard deadline users will not be able to see. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59). Default is 30 minutes after the review rating deadline.',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                        'required': False,
+                        'order': 3
+                    },
+                    'release_to_senior_area_chairs': {
+                        'description': 'Should the review ratings be visible to paper\'s senior area chairs immediately upon posting?',
+                        'value-radio': [
+                            'Yes, review ratings should be revealed when they are posted to the paper\'s senior area chairs',
+                            'No, review ratings should NOT be revealed when they are posted to the paper\'s senior area chairs'
+                        ],
+                        'required': True,
+                        'default': 'No, review ratings should NOT be revealed when they are posted to the paper\'s senior area chairs',
+                        'order': 4
+                    },
+                    'review_rating_form_options': {
+                        'order': 5,
+                        'value-dict': {},
+                        'required': True,
+                        'description': 'Configure the fields in the review rating form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.',
+                        'default': {
+                            'review_quality': {
+                                'order': 1,
+                                'description': 'How helpful is this review?',
+                                'value': {
+                                    'param': {
+                                        'type': 'integer',
+                                        'input': 'radio',
+                                        'enum': [
+                                            {'value': 0, 'description': '0: below expectations'},
+                                            {'value': 1, 'description': '1: meets expectations'},
+                                            {'value': 2, 'description': '2: exceeds expectations'}
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if 'No' in forum_note.content.get('senior_area_chairs', 'No'):
+                    del review_rating_stage_content['release_to_senior_area_chairs']
+
+                client.post_invitation(openreview.Invitation(
+                    id = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Review_Rating_Stage',
+                    super = SUPPORT_GROUP + '/-/Review_Rating_Stage',
+                    invitees = [conference.get_program_chairs_id(), SUPPORT_GROUP],
+                    cdate = cdate,
+                    reply = {
+                        'forum': forum_note.id,
+                        'referent': forum_note.id,
+                        'readers' : {
+                            'description': 'The users who will be allowed to read the above content.',
+                            'values' : [conference.get_program_chairs_id(), SUPPORT_GROUP]
+                        },
+                        'content': review_rating_stage_content
+                    },
+                    signatures = ['~Super_User1']
+                ))
+
         elif invitation_type == 'Rebuttal_Stage':
             conference.create_review_rebuttal_stage()
 
@@ -300,6 +373,16 @@ def process(client, note, invitation):
             conference.create_meta_review_stage()
 
         elif invitation_type == 'Decision_Stage':
+            # check if decisions file has changed from previous revision
+            decision_stage_notes = client.get_references(
+                referent=forum_note.id,
+                invitation=f'{SUPPORT_GROUP}/-/Request{forum_note.number}/Decision_Stage',
+                limit=2
+            )
+            if len(decision_stage_notes) > 1:
+                previous_decisions_file = decision_stage_notes[-1].content.get('decisions_file', '')
+                if previous_decisions_file == forum_note.content.get('decisions_file', ''):
+                    conference.decision_stage.decisions_file = None
             conference.create_decision_stage()
 
             content = {
@@ -503,6 +586,10 @@ Best,
                             }
                         )
                         client.post_note(comment_note)
+
+        elif invitation_type == 'Review_Rating_Stage':
+
+            conference.create_custom_stage()
 
         submission_content = conference.submission_stage.get_content(forum_note.content.get('api_version', '1'))
         submission_revision_invitation = client.get_invitation(SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Submission_Revision_Stage')

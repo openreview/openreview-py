@@ -15,9 +15,11 @@ var DECISION_NAME = 'Decision';
 var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
 var JOURNAL_REQUEST_ID = '';
 var REVIEWER_REPORT_ID = '';
+var NUMBER_OF_REVIEWERS = 3;
 
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var REVIEWERS_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Assignment';
+var REVIEWERS_INVITE_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Invite_Assignment';
 var REVIEWERS_CONFLICT_ID = REVIEWERS_ID + '/-/Conflict';
 var REVIEWERS_AFFINITY_SCORE_ID = REVIEWERS_ID + '/-/Affinity_Score';
 var REVIEWERS_CUSTOM_MAX_PAPERS_ID = REVIEWERS_ID + '/-/Custom_Max_Papers';
@@ -47,7 +49,8 @@ var ASSIGNMENT_ACKNOWLEDGEMENT_NAME = 'Assignment/Acknowledgement';
 var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + ')');
 var reviewersUrl = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',tail:' + user.profile.id +
   '&traverse=' + REVIEWERS_ASSIGNMENT_ID +
-  '&edit=' + REVIEWERS_ASSIGNMENT_ID +
+  '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' +
+    REVIEWERS_INVITE_ASSIGNMENT_ID + 
   '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + 
     REVIEWERS_CONFLICT_ID + ';' + 
     REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
@@ -263,7 +266,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         id: reviewerAssignmentInvitation.id,
         cdate: reviewerAssignmentInvitation.cdate,
         duedate: reviewerAssignmentInvitation.duedate,
-        complete: reviewers.length >= 3,
+        complete: reviewers.length >= NUMBER_OF_REVIEWERS,
         replies: reviewers
       });
     }
@@ -273,7 +276,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         id: reviewInvitation.id,
         cdate: reviewInvitation.cdate,
         duedate: reviewInvitation.duedate,
-        complete: reviewNotes.length >= 3,
+        complete: reviewNotes.length >= NUMBER_OF_REVIEWERS,
         replies: reviewNotes
       });
     }
@@ -283,7 +286,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         id: officialRecommendationInvitation.id,
         cdate: officialRecommendationInvitation.cdate,
         duedate: officialRecommendationInvitation.duedate,
-        complete: officialRecommendationNotes.length >= 3,
+        complete: officialRecommendationNotes.length >= NUMBER_OF_REVIEWERS,
         replies: officialRecommendationNotes
       });
     }
@@ -356,7 +359,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
       if (completedReview) {
         var reviewerRecommendation = recommendationByReviewer[completedReview.signatures[0]];
         if (reviewerRecommendation) {
-          status.Recommendation = reviewerRecommendation.content.decision_recommendation.value;
+          status.Recommendation = reviewerRecommendation.content.decision_recommendation?.value || 'Yes';
           status.Certifications = reviewerRecommendation.content.certification_recommendations ? reviewerRecommendation.content.certification_recommendations.value.join(', ') : '';
         }
         var reviewerRating = submission.details.replies.find(function (p) {
@@ -403,7 +406,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
           {
             name: 'Edit Assignments',
             url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=' + REVIEWERS_ASSIGNMENT_ID +
-            '&edit=' + REVIEWERS_ASSIGNMENT_ID +
+            '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_INVITE_ASSIGNMENT_ID +
             '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
             '&maxColumns=2&version=2' +
             '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available'

@@ -68,7 +68,8 @@ class TestWorkshopV2():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
-                'api_version': '2'
+                'api_version': '2',
+                'submission_license': ['CC BY 4.0']
             }))
 
         helpers.await_queue()
@@ -342,6 +343,7 @@ class TestWorkshopV2():
         assert messages and len(messages) == 1
         # Test that abstract doesn't appear in Invite Assignment email
         assert messages[0]['content']['text'].startswith('Hi External Reviewer Adobe,\n\nYou were invited to review the paper number: 12, title: "Paper title No Abstract Version 2".\n\nPlease respond the invitation clicking the following link:')
+        assert messages[0]['content']['replyTo'] == 'pc@icaps.cc'
 
     def test_publication_chair(self, client, openreview_client, helpers):
 
@@ -530,7 +532,7 @@ Best,
                 'submission_revision_name': 'Camera_Ready_Revision',
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for accepted submissions only',
-                'submission_author_edition': 'Allow addition and removal of authors',
+                'submission_author_edition': 'Do not allow any changes to author lists',
                 'submission_revision_additional_options': {
                     "supplementary_materials": {
                         "value": {
@@ -549,7 +551,7 @@ Best,
                         "order": 1
                     },
                 },
-                'submission_revision_remove_options': ['title', 'authors', 'authorids', 'pdf', 'keywords']
+                'submission_revision_remove_options': ['title', 'pdf', 'keywords']
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Submission_Revision_Stage'.format(request_form.number),
@@ -568,6 +570,9 @@ Best,
 
         invitations = openreview_client.get_invitations(invitation='PRL/2023/ICAPS/-/Camera_Ready_Revision')
         assert len(invitations) == 6
+        invitation = openreview_client.get_invitation(id='PRL/2023/ICAPS/Submission1/-/Camera_Ready_Revision')
+        assert 'authors' not in invitation.edit['note']['content']
+        assert 'authorids' not in invitation.edit['note']['content']
 
         request_page(selenium, 'http://localhost:3030/group?id=PRL/2023/ICAPS/Publication_Chairs', publication_chair_client.token, wait_for_element='header')
         notes_panel = selenium.find_element(By.ID, 'notes')

@@ -229,7 +229,9 @@ class Matching(object):
         edge_tail = {
             'param': {
                 'type': 'profile',
-                'inGroup': self.match_group.id
+                'options': {
+                    'group': self.match_group.id
+                }
             }
         }
 
@@ -251,6 +253,7 @@ class Matching(object):
             readers = invitation_readers,
             writers = [venue_id],
             signatures = [venue_id],
+            responseArchiveDate = venue.get_edges_archive_date(),
             edge = {
                 'id': {
                     'param': {
@@ -295,7 +298,7 @@ class Matching(object):
     def _build_conflicts(self, submissions, user_profiles, get_profile_info, compute_conflicts_n_years):
         if self.alternate_matching_group:
             other_matching_group = self.client.get_group(self.alternate_matching_group)
-            other_matching_profiles = tools.get_profiles(self.client, other_matching_group.members)
+            other_matching_profiles = tools.get_profiles(self.client, other_matching_group.members, with_publications=True, with_relations=True)
             return self._build_profile_conflicts(other_matching_profiles, user_profiles, compute_conflicts_n_years)
         return self._build_note_conflicts(submissions, user_profiles, get_profile_info, compute_conflicts_n_years)
 
@@ -311,14 +314,14 @@ class Matching(object):
             authorids = submission.content['authorids']['value']
             all_authorids = all_authorids + authorids
 
-        author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, as_dict=True)
+        author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, with_relations=True, as_dict=True)
 
         ## for AC conflicts, check SAC conflicts too
         sac_user_info_by_id = {}
         if self.is_area_chair:
             sacs_by_ac =  { g['id']['head']: [v['tail'] for v in g['values']] for g in self.client.get_grouped_edges(invitation=self.venue.get_assignment_id(self.senior_area_chairs_id, deployed=True), groupby='head', select=None)}
             if sacs_by_ac:
-                sac_user_profiles = openreview.tools.get_profiles(self.client, self.client.get_group(self.senior_area_chairs_id).members, with_publications=True)
+                sac_user_profiles = openreview.tools.get_profiles(self.client, self.client.get_group(self.senior_area_chairs_id).members, with_publications=True, with_relations=True)
                 if self.sac_profile_info:
                     info_funcion = tools.info_function_builder(self.sac_profile_info)
                     sac_user_info_by_id = { p.id: info_funcion(p, self.sac_n_years, self.venue.get_submission_venue_id()) for p in sac_user_profiles }
@@ -327,7 +330,7 @@ class Matching(object):
 
             pcs_by_sac = { g['id']['head']: g['values'][0]['tail'] for g in self.client.get_grouped_edges(invitation=self.venue.get_assignment_id(self.venue.get_program_chairs_id(), deployed=True), groupby='head', select=None)}
             if pcs_by_sac:
-                pc_user_profiles = openreview.tools.get_profiles(self.client, self.client.get_group(self.venue.get_program_chairs_id()).members, with_publications=True)
+                pc_user_profiles = openreview.tools.get_profiles(self.client, self.client.get_group(self.venue.get_program_chairs_id()).members, with_publications=True, with_relations=True)   
                 pc_user_info_by_id = { p.id: info_function(p, compute_conflicts_n_years) for p in pc_user_profiles }
 
         edges = []
@@ -337,6 +340,7 @@ class Matching(object):
             authorids = submission.content['authorids']['value']
 
             # Extract domains from each authorprofile
+            author_ids = set()
             author_domains = set()
             author_emails = set()
             author_relations = set()
@@ -344,6 +348,7 @@ class Matching(object):
             for authorid in authorids:
                 if author_profile_by_id.get(authorid):
                     author_info = info_function(author_profile_by_id[authorid], compute_conflicts_n_years)
+                    author_ids.add(author_info['id'])
                     author_domains.update(author_info['domains'])
                     author_emails.update(author_info['emails'])
                     author_relations.update(author_info['relations'])
@@ -355,8 +360,10 @@ class Matching(object):
             for user_info in user_profiles_info:
                 conflicts = set()
                 conflicts.update(author_domains.intersection(user_info['domains']))
-                conflicts.update(author_relations.intersection(user_info['emails']))
-                conflicts.update(author_emails.intersection(user_info['relations']))
+                conflicts.update(author_relations.intersection(user_info['emails'])) ## keep this until all the relations are updated
+                conflicts.update(author_relations.intersection([user_info['id']]))
+                conflicts.update(author_emails.intersection(user_info['relations'])) ## keep this until all the relations are updated
+                conflicts.update(author_ids.intersection(user_info['relations']))
                 conflicts.update(author_emails.intersection(user_info['emails']))
                 conflicts.update(author_publications.intersection(user_info['publications']))
 
@@ -367,8 +374,10 @@ class Matching(object):
                         sac_info = sac_user_info_by_id.get(sac)
                         if sac_info:
                             conflicts.update(author_domains.intersection(sac_info['domains']))
-                            conflicts.update(author_relations.intersection(sac_info['emails']))
-                            conflicts.update(author_emails.intersection(sac_info['relations']))
+                            conflicts.update(author_relations.intersection(sac_info['emails'])) ## keep this until all the relations are updated
+                            conflicts.update(author_relations.intersection([sac_info['id']]))
+                            conflicts.update(author_emails.intersection(sac_info['relations'])) ## keep this until all the relations are updated
+                            conflicts.update(author_ids.intersection(sac_info['relations']))
                             conflicts.update(author_emails.intersection(sac_info['emails']))
                             conflicts.update(author_publications.intersection(sac_info['publications']))
 
@@ -379,8 +388,10 @@ class Matching(object):
                         pc_info = pc_user_info_by_id.get(pc)
                         if pc_info:
                             conflicts.update(author_domains.intersection(pc_info['domains']))
-                            conflicts.update(author_relations.intersection(pc_info['emails']))
-                            conflicts.update(author_emails.intersection(pc_info['relations']))
+                            conflicts.update(author_relations.intersection(pc_info['emails'])) ## keep this until all the relations are updated
+                            conflicts.update(author_relations.intersection([pc_info['id']]))
+                            conflicts.update(author_emails.intersection(pc_info['relations'])) ## keep this until all the relations are updated
+                            conflicts.update(author_ids.intersection(pc_info['relations']))
                             conflicts.update(author_emails.intersection(pc_info['emails']))
                             conflicts.update(author_publications.intersection(pc_info['publications']))
 
@@ -970,7 +981,7 @@ class Matching(object):
                 'WARNING: not all reviewers have been converted to profile IDs.',
                 'Members without profiles will not have metadata created.')
 
-        user_profiles = openreview.tools.get_profiles(client, self.match_group.members, with_publications=compute_conflicts)
+        user_profiles = openreview.tools.get_profiles(client, self.match_group.members, with_publications=compute_conflicts, with_relations=compute_conflicts)
 
         submissions = self._get_submissions()
 
@@ -978,6 +989,7 @@ class Matching(object):
             raise openreview.OpenReviewException(f'The match group is empty: {self.match_group.id}')
         if self.alternate_matching_group:
             other_matching_group = self.client.get_group(self.alternate_matching_group)
+            other_matching_group = openreview.tools.replace_members_with_ids(client, other_matching_group)
             if not other_matching_group.members:
                 raise openreview.OpenReviewException(f'The alternate match group is empty: {self.alternate_matching_group}')
         elif not submissions:
@@ -1111,7 +1123,7 @@ class Matching(object):
         }
         invitation.minReplies = 1
         invitation.maxReplies = 1
-        invitation.signatures = [venue.get_program_chairs_id()]
+        invitation.signatures = [venue.id]
         invite_assignment_invitation=venue.invitation_builder.save_invitation(invitation, replacement=True)
 
         # set assignment recruitment invitation
@@ -1152,7 +1164,7 @@ class Matching(object):
         if role_name in venue.area_chair_roles:
             reviewer_name = venue.area_chairs_name
             review_name = 'Meta_Review'
-
+            
         papers = self._get_submissions()
         reviews = client.get_notes(invitation=venue.get_invitation_id(review_name, number='.*'), limit=1)
         proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id),
@@ -1221,6 +1233,19 @@ class Matching(object):
 
         print('Posting assignment edges', len(assignment_edges))
         openreview.tools.post_bulk_edges(client=client, edges=assignment_edges)
+
+        # Remove reviewers_proposed_assignment_title if deploying reviewer assignments
+        if self.is_reviewer:
+            self.client.post_group_edit(
+                invitation = venue.get_meta_invitation_id(),
+                signatures = [venue.venue_id],
+                group = openreview.api.Group(
+                    id = venue.venue_id,
+                    content = {
+                        'reviewers_proposed_assignment_title': { 'value': { 'delete': True } }
+                    }
+                )
+            )
 
     def deploy_sac_assignments(self, assignment_title, overwrite):
 

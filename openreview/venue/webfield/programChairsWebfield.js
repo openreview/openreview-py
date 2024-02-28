@@ -25,7 +25,6 @@ return {
       title: 'Program Chairs Console',
       instructions: `This page provides information and status updates for the ${domain.content.subtitle?.value}. It will be regularly updated as the conference progresses, so please check back frequently.`
     },
-    apiVersion: 2,
     venueId: domain.id,
     areaChairsId: domain.content.area_chairs_id?.value,
     seniorAreaChairsId: domain.content.senior_area_chairs_id?.value,
@@ -48,6 +47,8 @@ return {
     reviewerName: domain.content.reviewers_name?.value,
     anonReviewerName: domain.content.reviewers_anon_name?.value,
     anonAreaChairName: domain.content.area_chairs_anon_name?.value,
+    secondaryAreaChairName: domain.content.secondary_area_chairs_name?.value,
+    secondaryAnonAreaChairName: domain.content.secondary_area_chairs_anon_name?.value,     
     scoresName: 'Affinity_Score',
     shortPhrase: domain.content.subtitle?.value,
     enableQuerySearch: true,

@@ -40,15 +40,14 @@ class Helpers:
             'emails': [email] + alternates,
             'preferredEmail': 'info@openreview.net' if email == 'openreview.net' else email
         }
-        if institution:
-            profile_content['history'] = [{
-                'position': 'PhD Student',
-                'start': 2017,
-                'end': None,
-                'institution': {
-                    'domain': institution
-                }
-            }]
+        profile_content['history'] = [{
+            'position': 'PhD Student',
+            'start': 2017,
+            'end': None,
+            'institution': {
+                'domain': institution if institution else email.split('@')[1],
+            }
+        }]
         res = client.activate_user(email, profile_content)
         assert res, "Res i none"
         return client
@@ -168,17 +167,6 @@ def client():
 @pytest.fixture(scope="session")
 def openreview_client():
     client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', username='openreview.net', password=Helpers.strong_password)
-    client.post_invitation_edit(invitations=None,
-        readers=['openreview.net'],
-        writers=['openreview.net'],
-        signatures=['~Super_User1'],
-        invitation=openreview.api.Invitation(id='openreview.net/-/Edit',
-            invitees=['openreview.net'],
-            readers=['openreview.net'],
-            signatures=['~Super_User1'],
-            edit=True
-        )
-    )
     yield client
 
 @pytest.fixture(scope="session")

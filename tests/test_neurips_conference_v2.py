@@ -79,7 +79,8 @@ class TestNeurIPSConference():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'api_version': '2',
-                'submission_deadline_author_reorder': 'Yes'
+                'submission_deadline_author_reorder': 'Yes',
+                'submission_license': ['CC BY 4.0']
             }))
 
         helpers.await_queue()
@@ -214,11 +215,15 @@ Please see our [call for papers](https://nips.cc/Conferences/2023/CallForPapers)
 
         messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2023] Senior Area Chair Invitation accepted')
         assert messages and len(messages) == 1
+        assert messages[0]['content']['replyTo'] == 'pc@neurips.cc'
         assert messages[0]['content']['text'] == '''Thank you for accepting the invitation to be a Senior Area Chair for NeurIPS 2023.
 
 The NeurIPS 2023 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
 
-If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.
+
+Please note that responding to this email will direct your reply to pc@neurips.cc.
+'''
 
         messages = client.get_messages(to='sac2@gmail.com', subject='[NeurIPS 2023] Invitation to serve as Senior Area Chair')
         assert messages and len(messages) == 1
@@ -295,7 +300,10 @@ You have selected a reduced load of 2 submissions to review.
 
 The NeurIPS 2023 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
 
-If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.
+
+Please note that responding to this email will direct your reply to pc@neurips.cc.
+'''
 
     def test_ac_registration(self, client, openreview_client, helpers):
 
@@ -563,7 +571,7 @@ If you would like to change your decision, please follow the link in the previou
         messages = client.get_messages(to='reviewer1@umass.edu', subject='[NeurIPS 2023] Reviewer Invitation declined')
         assert messages
         assert len(messages)
-        assert messages[0]['content']['text'] == 'You have declined the invitation to become a Reviewer for NeurIPS 2023.\n\nIf you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'
+        assert messages[0]['content']['text'] == 'You have declined the invitation to become a Reviewer for NeurIPS 2023.\n\nIf you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.\n\nPlease note that responding to this email will direct your reply to pc@neurips.cc.\n'
 
         notes = openreview_client.get_notes(invitation='NeurIPS.cc/2023/Conference/Reviewers/-/Recruitment', content={'user': 'reviewer1@umass.edu'})
         assert notes
@@ -596,7 +604,10 @@ You have selected a reduced load of 4 submissions to review.
 
 The NeurIPS 2023 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
 
-If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.
+
+Please note that responding to this email will direct your reply to pc@neurips.cc.
+'''
 
         ## Check reviewers console load
         reviewer_client=openreview.api.OpenReviewClient(username='reviewer1@umass.edu', password=helpers.strong_password)
@@ -642,7 +653,7 @@ If you would like to change your decision, please follow the link in the previou
         messages = client.get_messages(to='reviewer2@mit.edu', subject='[NeurIPS 2023] Reviewer Invitation declined')
         assert messages
         assert len(messages)
-        assert messages[0]['content']['text'] =='You have declined the invitation to become a Reviewer for NeurIPS 2023.\n\nIf you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'
+        assert messages[0]['content']['text'] =='You have declined the invitation to become a Reviewer for NeurIPS 2023.\n\nIf you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.\n\nPlease note that responding to this email will direct your reply to pc@neurips.cc.\n'
 
         openreview_client.add_members_to_group('NeurIPS.cc/2023/Conference/Reviewers', ['reviewer2@mit.edu', 'reviewer3@ibm.com', 'reviewer4@fb.com', 'reviewer5@google.com', 'reviewer6@amazon.com'])
 
@@ -905,6 +916,16 @@ If you would like to change your decision, please follow the link in the previou
         revision_inv =  test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Revision')
         assert revision_inv
         assert ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Submission5/Authors'] == revision_inv.readers
+        assert 'readers' in revision_inv.edit['note']['content']['authors']
+        assert  revision_inv.edit['note']['content']['authors']['readers'] == [
+            "NeurIPS.cc/2023/Conference",
+            "NeurIPS.cc/2023/Conference/Submission5/Authors"
+        ]
+        assert 'readers' in revision_inv.edit['note']['content']['authorids']
+        assert  revision_inv.edit['note']['content']['authorids']['readers'] == [
+            "NeurIPS.cc/2023/Conference",
+            "NeurIPS.cc/2023/Conference/Submission5/Authors"
+        ]
 
         post_submission =  openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Post_Submission')
         assert 'authors' in post_submission.edit['note']['content']
@@ -974,6 +995,19 @@ If you would like to change your decision, please follow the link in the previou
                 }
             ))
         helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
+
+        note_edits = openreview_client.get_note_edits(invitation='NeurIPS.cc/2023/Conference/Submission2/-/Revision')
+        assert len(note_edits) == 1
+        assert 'readers' in note_edits[0].note.content['authors']
+        assert  note_edits[0].note.content['authors']['readers'] == [
+        "NeurIPS.cc/2023/Conference",
+        "NeurIPS.cc/2023/Conference/Submission2/Authors"
+        ]
+        assert 'readers' in note_edits[0].note.content['authors']
+        assert  note_edits[0].note.content['authors']['readers'] == [
+        "NeurIPS.cc/2023/Conference",
+        "NeurIPS.cc/2023/Conference/Submission2/Authors"
+        ]
 
         ## update submission
         revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission4/-/Revision',
@@ -2087,18 +2121,18 @@ If you would like to change your decision, please follow the link in the previou
         helpers.await_queue()
 
         submissions = openreview_client.get_notes(invitation='NeurIPS.cc/2023/Conference/-/Submission', sort='number:asc')
-        reviews = pc_client_v2.get_notes(invitation='NeurIPS.cc/2023/Conference/Submission1/-/Official_Review')
+        reviews = pc_client_v2.get_notes(invitation='NeurIPS.cc/2023/Conference/Submission1/-/Official_Review', sort='number:asc')
         review = reviews[0]
 
         assert len(openreview_client.get_invitations(invitation='NeurIPS.cc/2023/Conference/-/Rebuttal')) == 2
-        invitation = openreview_client.get_invitation(f'{review.signatures[0]}/-/Rebuttal')
+        invitation = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/Submission1/Official_Review1/-/Rebuttal')
         assert invitation.maxReplies == 1
         assert invitation.edit['note']['replyto'] == review.id
 
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
         rebuttal_edit = test_client.post_note_edit(
-            invitation=f'{review.signatures[0]}/-/Rebuttal',
+            invitation='NeurIPS.cc/2023/Conference/Submission1/Official_Review1/-/Rebuttal',
             signatures=['NeurIPS.cc/2023/Conference/Submission1/Authors'],
             note=openreview.api.Note(
                 replyto = review.id,
@@ -2120,7 +2154,7 @@ If you would like to change your decision, please follow the link in the previou
 
         with pytest.raises(openreview.OpenReviewException, match=r'.*You have reached the maximum number \(1\) of replies for this Invitation.*'):
             rebuttal_edit = test_client.post_note_edit(
-                invitation=f'{review.signatures[0]}/-/Rebuttal',
+                invitation='NeurIPS.cc/2023/Conference/Submission1/Official_Review1/-/Rebuttal',
                 signatures=['NeurIPS.cc/2023/Conference/Submission1/Authors'],
                 note=openreview.api.Note(
                     replyto = review.id,
@@ -2265,11 +2299,7 @@ If you would like to change your decision, please follow the link in the previou
 
         helpers.await_queue()
 
-
-        reviews = pc_client_v2.get_notes(invitation='NeurIPS.cc/2023/Conference/Submission1/-/Official_Review')
-        review = reviews[0]
-
-        rebuttal = openreview_client.get_notes(invitation=f'{review.signatures[0]}/-/Rebuttal')[0]
+        rebuttal = openreview_client.get_notes(invitation='NeurIPS.cc/2023/Conference/Submission1/Official_Review1/-/Rebuttal')[0]
         assert rebuttal.readers == [
             'NeurIPS.cc/2023/Conference/Program_Chairs',
             'NeurIPS.cc/2023/Conference/Submission1/Senior_Area_Chairs',

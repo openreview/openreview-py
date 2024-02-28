@@ -8,7 +8,8 @@ else:
 
 from . import tools
 import requests
-from requests.adapters import HTTPAdapter, Retry
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 import pprint
 import os
 import re
@@ -19,6 +20,17 @@ import traceback
 class OpenReviewException(Exception):
     pass
 
+class LogRetry(Retry):
+     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)   
+
+    def increment(self, method=None, url=None, response=None, error=None, _pool=None, _stacktrace=None):
+        # Log retry information before calling the parent class method
+        print(f"Retrying request: {method} {url}, response: {response}, error: {error}")
+
+        # Call the parent class method to perform the actual retry increment
+        return super().increment(method=method, url=url, response=response, error=error, _pool=_pool, _stacktrace=_stacktrace)
 class Client(object):
     """
     :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
@@ -77,10 +89,11 @@ class Client(object):
             'Accept': 'application/json',
         }
 
+        retry_strategy = LogRetry(total=3, backoff_factor=0.1, status_forcelist=[ 500, 502, 503, 504 ], respect_retry_after_header=False)
         self.session = requests.Session()
-        retries = Retry(total=16, backoff_factor=0.2, status_forcelist=[500, 502, 503, 504])
-        self.session.mount('https://', HTTPAdapter(max_retries=retries))
-        self.session.mount('http://', HTTPAdapter(max_retries=retries))
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session.mount('https://', adapter)
+        self.session.mount('http://', adapter)
 
         if self.token:
             self.headers['Authorization'] = 'Bearer ' + self.token
@@ -354,7 +367,7 @@ class Client(object):
         else:
             raise OpenReviewException(['Profile Not Found'])
 
-    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None, fullname=None, use_ES = False):
+    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None, fullname=None, relation=None, use_ES = False):
         """
         Gets a list of profiles using either their ids or corresponding emails
 
@@ -443,6 +456,10 @@ class Client(object):
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
 
+        if relation:
+            response = self.session.get(self.profiles_url, params = {'relation': relation }, headers = self.headers)
+            response = self.__handle_response(response)
+            return [Profile.from_json(p) for p in response.json()['profiles']]
 
         return []
 
@@ -750,7 +767,7 @@ class Client(object):
 
         return self.get_groups(**params)
 
-    def get_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, after=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, sort=None, super=None, with_count=False, select=None):
+    def get_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, after=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, sort=None, super=None, with_count=False, select=None, type=None):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
 
@@ -839,6 +856,8 @@ class Client(object):
             params['sort'] = sort
         if expired is not None:
             params['expired'] = expired
+        if type is not None:
+            params['type'] = type
 
         response = self.session.get(self.invitations_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
@@ -850,7 +869,7 @@ class Client(object):
 
         return invitations
     
-    def get_all_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, sort=None, with_count=False):
+    def get_all_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, sort=None, with_count=False, type=None):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
 
@@ -926,6 +945,8 @@ class Client(object):
             params['sort'] = sort
         if with_count is not None:
             params['with_count'] = with_count
+        if type is not None:
+            params['type'] = type
 
         return list(tools.efficient_iterget(self.get_invitations, desc='Getting V1 Invitations', **params))
 
@@ -2253,6 +2274,7 @@ class Invitation(object):
         transform = None,
         bulk = None,
         reply_forum_views = [],
+        responseArchiveDate = None,
         details = None):
 
         self.id = id
@@ -2276,6 +2298,7 @@ class Invitation(object):
         self.bulk = bulk
         self.details = details
         self.reply_forum_views = reply_forum_views
+        self.responseArchiveDate = responseArchiveDate
         self.web = None
         self.process = None
         self.preprocess = None
@@ -2327,7 +2350,8 @@ class Invitation(object):
             'signatures': self.signatures,
             'multiReply': self.multiReply,
             'transform': self.transform,
-            'replyForumViews': self.reply_forum_views
+            'replyForumViews': self.reply_forum_views,
+            'responseArchiveDate': self.responseArchiveDate
         }
 
         if self.super:
@@ -2378,6 +2402,7 @@ class Invitation(object):
             reply = i.get('reply'),
             details = i.get('details'),
             reply_forum_views = i.get('replyForumViews'),
+            responseArchiveDate = i.get('responseArchiveDate'),
             bulk = i.get('bulk')
             )
         if 'web' in i:
@@ -2818,23 +2843,33 @@ class Profile(object):
         :rtype: dict
         """
         body = {
-            'id': self.id,
-            'tcdate': self.tcdate,
-            'tmdate': self.tmdate,
-            'referent': self.referent,
-            'packaging': self.packaging,
             'invitation': self.invitation,
-            'readers': self.readers,
-            'nonreaders': self.nonreaders,
             'signatures': self.signatures,
-            'writers': self.writers,
             'content': self.content,
-            'metaContent': self.metaContent,
-            'active': self.active,
-            'password': self.password
+            'metaContent': self.metaContent
         }
+        if self.id:
+            body['id'] = self.id
+        if self.referent:
+            body['referent'] = self.referent
+        if self.packaging:
+            body['packaging'] = self.packaging
+        if self.tcdate:
+            body['tcdate'] = self.tcdate
+        if self.tmdate:
+            body['tmdate'] = self.tmdate
         if hasattr(self, 'tauthor'):
             body['tauthor'] = self.tauthor
+        if self.active:
+            body['active'] = self.active
+        if self.password:
+            body['password'] = self.password
+        if self.readers:
+            body['readers'] = self.readers
+        if self.nonreaders:
+            body['nonreaders'] = self.nonreaders
+        if self.writers:
+            body['writers'] = self.writers
         return body
 
     @classmethod

@@ -14,8 +14,8 @@ class TestICLRConference():
 
 
     @pytest.fixture(scope="class")
-    def profile_management(self, client):
-        profile_management = ProfileManagement(client, 'openreview.net')
+    def profile_management(self, openreview_client):
+        profile_management = ProfileManagement(openreview_client, 'openreview.net')
         profile_management.setup()
         return profile_management
 
@@ -77,7 +77,7 @@ class TestICLRConference():
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
-                'submission_license': 'CC BY-SA 4.0'
+                'submission_license': ['CC BY 4.0', 'CC BY-SA 4.0', 'CC0 1.0'] # Allow authors to select license
             }))
 
         helpers.await_queue()
@@ -180,10 +180,12 @@ class TestICLRConference():
     def test_submissions(self, client, openreview_client, helpers, test_client):
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu', 'deepmind.com', 'co.ux', 'apple.com', 'nvidia.com']
         for i in range(1,12):
             note = openreview.api.Note(
+                license = 'CC BY-SA 4.0',
                 content = {
                     'title': { 'value': 'Paper title ' + str(i) },
                     'abstract': { 'value': 'This is an abstract ' + str(i) },
@@ -208,8 +210,9 @@ class TestICLRConference():
         assert ['ICLR.cc/2024/Conference', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICLROne1'] == submissions[0].readers
         assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICLROne1'] == submissions[0].content['authorids']['value']
 
-        # Check that submission license is same as request form
-        assert submissions[0].license == 'CC BY-SA 4.0'
+        # Check that note.license is from license list
+        licenses = request_form.content['submission_license']
+        assert submissions[0].license in licenses
 
         authors_group = openreview_client.get_group(id='ICLR.cc/2024/Conference/Authors')
 
@@ -267,6 +270,12 @@ class TestICLRConference():
         assert submissions[0].readers == ['everyone']
         assert '_bibtex' in submissions[0].content
         assert 'author={Anonymous}' in submissions[0].content['_bibtex']['value']
+        
+        # Assert that activation date of matching invitation == abstract deadline
+        matching_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup')
+        abstract_date_midnight = datetime.datetime.combine(abstract_date, datetime.datetime.min.time())
+        abstract_date_ms = abstract_date_midnight.replace(tzinfo=datetime.timezone.utc).timestamp() * 1000
+        assert matching_invitation.cdate == abstract_date_ms
 
         ## close full paper submission
         now = datetime.datetime.utcnow()
@@ -458,11 +467,11 @@ class TestICLRConference():
             },
             {
                 "value": "ICLR.cc/2024/Conference/Program_Chairs",
-                "optional": True
+                "optional": False
             },
             {
                 "value": "ICLR.cc/2024/Conference/Submission1/Senior_Area_Chairs",
-                "optional": True
+                "optional": False
             },
             {
                 "value": "ICLR.cc/2024/Conference/Submission1/Area_Chairs",

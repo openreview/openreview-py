@@ -9,7 +9,8 @@ else:
 
 from .. import tools
 import requests
-from requests.adapters import HTTPAdapter, Retry
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 import pprint
 import os
 import re
@@ -19,6 +20,27 @@ import traceback
 from openreview import Profile
 from openreview import OpenReviewException
 from .. import tools
+
+class LogRetry(Retry):
+     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)   
+
+    def increment(self, method=None, url=None, response=None, error=None, _pool=None, _stacktrace=None):
+        # Log retry information before calling the parent class method
+        response_string = 'no response'
+        if response:
+            if 'application/json' in response.headers.get('Content-Type'):
+                response_string = response.json()
+            if response.text:
+                response_string = response.text
+            else:
+                response_string = response.reason
+        print(f"Retrying request: {method} {url}, response: {response_string}, error: {error}")
+
+        # Call the parent class method to perform the actual retry increment
+        return super().increment(method=method, url=url, response=response, error=error, _pool=_pool, _stacktrace=_stacktrace)
+    
 
 class OpenReviewClient(object):
     """
@@ -48,9 +70,11 @@ class OpenReviewClient(object):
         self.edges_url = self.baseurl + '/edges'
         self.bulk_edges_url = self.baseurl + '/edges/bulk'
         self.edges_count_url = self.baseurl + '/edges/count'
+        self.edges_rename = self.baseurl + '/edges/rename'
         self.profiles_url = self.baseurl + '/profiles'
         self.profiles_search_url = self.baseurl + '/profiles/search'
         self.profiles_merge_url = self.baseurl + '/profiles/merge'
+        self.profiles_rename = self.baseurl + '/profiles/rename'
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
@@ -74,10 +98,11 @@ class OpenReviewClient(object):
             'Accept': 'application/json'
         }
 
+        retry_strategy = LogRetry(total=3, backoff_factor=1, status_forcelist=[ 500, 502, 503, 504 ], respect_retry_after_header=False)
         self.session = requests.Session()
-        retries = Retry(total=8, backoff_factor=0.1, status_forcelist=[ 500, 502, 503, 504 ])
-        self.session.mount('https://', HTTPAdapter(max_retries=retries))
-        self.session.mount('http://', HTTPAdapter(max_retries=retries))
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session.mount('https://', adapter)
+        self.session.mount('http://', adapter)
 
         if self.token:
             self.headers['Authorization'] = 'Bearer ' + self.token
@@ -365,7 +390,7 @@ class OpenReviewClient(object):
         else:
             raise OpenReviewException(['Profile Not Found'])
 
-    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None, fullname=None, use_ES = False):
+    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None, fullname=None, relation=None, use_ES = False):
         """
         Gets a list of profiles using either their ids or corresponding emails
 
@@ -438,8 +463,6 @@ class OpenReviewClient(object):
                     profiles_by_email[p['email']] = profile
             return profiles_by_email
 
-
-
         if ids:
             full_response = []
             for id_batch in batches(ids):
@@ -454,7 +477,11 @@ class OpenReviewClient(object):
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
 
-
+        if relation:
+            response = self.session.get(self.profiles_url, params = {'relation': relation }, headers = self.headers)
+            response = self.__handle_response(response)
+            return [Profile.from_json(p) for p in response.json()['profiles']]
+        
         return []
 
     def get_pdf(self, id, is_reference=False):
@@ -585,6 +612,29 @@ class OpenReviewClient(object):
 
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
+
+    def rename_profile(self, current_id, new_id):
+        """
+        Updates a the profile id of a Profile
+
+        :param current_id: Current profile id
+        :type profile: str
+        :param new_id: New profile id
+        :type profile: str
+
+        :return: The new updated Profile
+        :rtype: Profile
+        """
+        response = self.session.post(
+            self.profiles_rename,
+            json = {
+                'currentId': current_id,
+                'newId': new_id
+            },
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        return Profile.from_json(response.json())        
 
     def merge_profiles(self, profileTo, profileFrom):
         """
@@ -1196,7 +1246,7 @@ class OpenReviewClient(object):
 
         return list(tools.efficient_iterget(self.get_notes, desc='Getting V2 Notes', **params))
 
-    def get_note_edit(self, id):
+    def get_note_edit(self, id, trash=None):
         """
         Get a single edit by id if available
 
@@ -1206,12 +1256,12 @@ class OpenReviewClient(object):
         :return: edit matching the passed id
         :rtype: Note
         """
-        response = self.session.get(self.note_edits_url, params = {'id':id}, headers = self.headers)
+        response = self.session.get(self.note_edits_url, params = {'id':id, 'trash': 'true' if trash == True else 'false'}, headers = self.headers)
         response = self.__handle_response(response)
         n = response.json()['edits'][0]
         return Edit.from_json(n)
 
-    def get_note_edits(self, note_id = None, invitation = None, with_count=False, sort=None):
+    def get_note_edits(self, note_id = None, invitation = None, with_count=False, sort=None, trash=None):
         """
         Gets a list of edits for a note. The edits that will be returned match all the criteria passed in the parameters.
 
@@ -1225,6 +1275,7 @@ class OpenReviewClient(object):
             params['invitation'] = invitation
         if sort:
             params['sort'] = sort
+        params['trash'] = 'true' if trash == True else 'false'
 
         response = self.session.get(self.note_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1446,6 +1497,30 @@ class OpenReviewClient(object):
         edge_objects = [Edge.from_json(edge) for edge in received_json_array]
         return edge_objects
 
+    def rename_edges(self, current_id, new_id):
+        """
+        Updates an Edge
+
+        :param profile: Edge object
+        :type edge: Edge
+
+        :return: The new updated Edge
+        :rtype: Edge
+        """
+        response = self.session.post(
+            self.edges_rename,
+            json = {
+                'currentId': current_id,
+                'newId': new_id
+            },
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        #print('RESPONSE: ', response.json())
+        received_json_array = response.json()
+        edge_objects = [Edge.from_json(edge) for edge in received_json_array]
+        return edge_objects
+
     def post_venue(self, venue):
         """
         Posts the venue. Upon success, returns the posted Venue object.
@@ -1572,7 +1647,7 @@ class OpenReviewClient(object):
         """
         if parentGroup:
             recipients = self.get_group(parentGroup).transform_to_anon_ids(recipients)
-        
+
         response = self.session.post(self.messages_url, json = {
             'groups': recipients,
             'subject': subject ,
@@ -1639,7 +1714,7 @@ class OpenReviewClient(object):
                 return self.get_group(group.id)
             else:
                 if members:
-                    response = requests.put(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
+                    response = self.session.put(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
                     response = self.__handle_response(response)
                     return Group.from_json(response.json())
 
@@ -1682,7 +1757,7 @@ class OpenReviewClient(object):
                 )
                 return self.get_group(group.id)
             else:
-                response = requests.delete(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
+                response = self.session.delete(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
                 response = self.__handle_response(response)
                 return Group.from_json(response.json())                           
 
@@ -1838,7 +1913,7 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    def post_note_edit(self, invitation, signatures, note=None, readers=None, writers=None, nonreaders=None):
+    def post_note_edit(self, invitation, signatures, note=None, readers=None, writers=None, nonreaders=None, content=None):
         """
         """
         edit_json = {
@@ -1855,6 +1930,9 @@ class OpenReviewClient(object):
 
         if nonreaders is not None:
             edit_json['nonreaders'] = nonreaders
+
+        if content is not None:
+            edit_json['content'] = content
 
         response = self.session.post(self.note_edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
@@ -1886,7 +1964,7 @@ class OpenReviewClient(object):
         if replacement is not None:
             edit_json['replacement'] = replacement            
 
-        response = requests.post(self.group_edits_url, json = edit_json, headers = self.headers)
+        response = self.session.post(self.group_edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()        
@@ -2023,6 +2101,25 @@ class OpenReviewClient(object):
         print('get expertise status', response_json)
         return response_json
 
+    def get_expertise_jobs(self, status=None, baseurl=None):
+
+        print('get expertise jobs', baseurl, status)
+        base_url = baseurl if baseurl else self.baseurl
+        if base_url.startswith('http://localhost'):
+            print('get expertise jobs localhost, return []')
+            return { 'results': [] }
+
+        params = {}
+        if status:
+            params['status'] = status
+
+        response = self.session.get(base_url + '/expertise/status/all', params = params, headers = self.headers)
+        response = self.__handle_response(response)
+
+        response_json = response.json()
+        print('get expertise jobs', response_json)
+        return response_json
+    
     def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False):
 
         print('get expertise results', baseurl, job_id)
@@ -2347,6 +2444,7 @@ class Invitation(object):
         bulk = None,
         content = None,
         reply_forum_views = [],
+        responseArchiveDate = None,
         details = None):
 
         self.id = id
@@ -2372,6 +2470,7 @@ class Invitation(object):
         self.bulk = bulk
         self.details = details
         self.reply_forum_views = reply_forum_views
+        self.responseArchiveDate = responseArchiveDate
         self.web = web
         self.process = process
         self.preprocess = preprocess
@@ -2452,6 +2551,9 @@ class Invitation(object):
         if self.content:
             body['content'] = self.content
 
+        if self.responseArchiveDate:
+            body['responseArchiveDate'] = self.responseArchiveDate
+
         if  self.minReplies:
             body['minReplies']=self.minReplies
         if  self.maxReplies:
@@ -2506,6 +2608,7 @@ class Invitation(object):
             maxReplies = i.get('maxReplies'),
             details = i.get('details'),
             reply_forum_views = i.get('replyForumViews'),
+            responseArchiveDate = i.get('responseArchiveDate'),
             bulk = i.get('bulk')
             )
         if 'content' in i:
