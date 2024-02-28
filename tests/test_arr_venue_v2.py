@@ -13,6 +13,11 @@ from openreview.stages.arr_content import arr_submission_content, hide_fields
 
 # API2 template from ICML
 class TestARRVenueV2():
+    @pytest.fixture(scope="class")
+    def profile_management(self, openreview_client):
+        profile_management = ProfileManagement(openreview_client, 'openreview.net')
+        profile_management.setup()
+        return profile_management
     def test_create_conference(self, client, openreview_client, helpers, profile_management):
 
         now = datetime.datetime.utcnow()
@@ -22,8 +27,7 @@ class TestARRVenueV2():
         helpers.create_user('pc@aclrollingreview.org', 'Program', 'ARRChair')
         pc_client = openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
 
-        helpers.create_user('sac1@aclrollingreview.com', 'SAC', 'ARROne')
-        sac_client = openreview.Client(username='sac1@aclrollingreview.com', password=helpers.strong_password)
+        sac_client = helpers.create_user('sac1@aclrollingreview.com', 'SAC', 'ARROne')
         helpers.create_user('sac2@aclrollingreview.com', 'SAC', 'ARRTwo')
         helpers.create_user('ac1@aclrollingreview.com', 'AC', 'ARROne')
         helpers.create_user('ac2@aclrollingreview.com', 'AC', 'ARRTwo')
@@ -67,7 +71,8 @@ class TestARRVenueV2():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
-                'api_version': '2'
+                'api_version': '2',
+                'submission_license': ['CC BY-SA 4.0']
             }))
 
         helpers.await_queue()
@@ -98,30 +103,34 @@ class TestARRVenueV2():
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Expertise_Selection')
 
-        sac_client.post_note(openreview.Note(
+        sac_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
-            readers = ['everyone'],
-            signatures = ['~SAC_ARROne1'],
-            writers = ['~SAC_ARROne1'],
-            content = {
-                'title': 'Paper title 1',
-                'abstract': 'Paper abstract 1',
-                'authors': ['SAC ARR', 'Test2 Client'],
-                'authorids': ['~SAC_ARROne1', 'test2@mail.com']
-            }
+            signatures=['~SAC_ARROne1'],
+            note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                content = {
+                    'title': { 'value': 'Paper title 1' },
+                    'abstract': { 'value': 'Paper abstract 1' },
+                    'authors': { 'value': ['SAC ARR', 'Test2 Client'] },
+                    'authorids': { 'value': ['~SAC_ARROne1', 'test2@mail.com'] },
+                    'venue': { 'value': 'Arxiv' }
+                },
+                license = 'CC BY-SA 4.0'
         ))
 
-        sac_client.post_note(openreview.Note(
+        sac_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
-            readers = ['everyone'],
-            signatures = ['~SAC_ARROne1'],
-            writers = ['~SAC_ARROne1'],
-            content = {
-                'title': 'Paper title 2',
-                'abstract': 'Paper abstract 2',
-                'authors': ['SAC ARR', 'Test2 Client'],
-                'authorids': ['~SAC_ARROne1', 'test2@mail.com']
-            }
+            signatures=['~SAC_ARROne1'],
+            note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                content = {
+                    'title': { 'value': 'Paper title 2' },
+                    'abstract': { 'value': 'Paper abstract 2' },
+                    'authors': { 'value': ['SAC ARR', 'Test2 Client'] },
+                    'authorids': { 'value': ['~SAC_ARROne1', 'test2@mail.com'] },
+                    'venue': { 'value': 'Arxiv' }
+                },
+                license = 'CC BY-SA 4.0'
         ))
 
         pc_client.post_note(openreview.Note(
