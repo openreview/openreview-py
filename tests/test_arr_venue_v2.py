@@ -18,7 +18,7 @@ class TestARRVenueV2():
         profile_management = ProfileManagement(openreview_client, 'openreview.net')
         profile_management.setup()
         return profile_management
-    def test_create_conference(self, client, openreview_client, helpers, test_client, profile_management):
+    def test_create_conferences(self, client, openreview_client, helpers, test_client, profile_management):
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
@@ -79,7 +79,7 @@ class TestARRVenueV2():
         helpers.await_queue()
 
         # Post a deploy note
-        client.post_note(openreview.Note(
+        august_deploy_edit = client.post_note(openreview.Note(
             content={'venue_id': 'aclweb.org/ACL/ARR/2023/August'},
             forum=request_form_note.forum,
             invitation='openreview.net/Support/-/Request{}/Deploy'.format(request_form_note.number),
@@ -90,7 +90,7 @@ class TestARRVenueV2():
             writers=['openreview.net/Support']
         ))
 
-        helpers.await_queue()
+        helpers.await_queue_edit(client, invitation='openreview.net/Support/-/Request{}/Deploy'.format(request_form_note.number))
 
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August')
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs')
@@ -134,6 +134,7 @@ class TestARRVenueV2():
                 license = 'CC BY-SA 4.0'
         ))
 
+        # Update submission fields
         pc_client.post_note(openreview.Note(
             invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision',
             forum=request_form_note.id,
@@ -166,7 +167,8 @@ class TestARRVenueV2():
                 'hide_fields': hide_fields
             }
         ))
-        helpers.await_queue()
+
+        helpers.await_queue_edit(client, invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision')
 
         submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Submission')
         assert submission_invitation
@@ -176,6 +178,7 @@ class TestARRVenueV2():
         domain = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August')
         assert 'recommendation' == domain.content['meta_review_recommendation']['value']
 
+        # Build current cycle invitations
         venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
         invitation_builder = openreview.arr.InvitationBuilder(venue)
         invitation_builder.set_preprint_release_submission_invitation()
@@ -224,7 +227,7 @@ class TestARRVenueV2():
         helpers.await_queue()
 
         # Post a deploy note
-        client.post_note(openreview.Note(
+        june_deploy_edit = client.post_note(openreview.Note(
             content={'venue_id': 'aclweb.org/ACL/ARR/2023/June'},
             forum=request_form_note.forum,
             invitation='openreview.net/Support/-/Request{}/Deploy'.format(request_form_note.number),
@@ -235,7 +238,7 @@ class TestARRVenueV2():
             writers=['openreview.net/Support']
         ))
 
-        helpers.await_queue()
+        helpers.await_queue_edit(client, invitation='openreview.net/Support/-/Request{}/Deploy'.format(request_form_note.number))
 
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/June')
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Senior_Area_Chairs')
@@ -331,20 +334,6 @@ class TestARRVenueV2():
         venue.create_ethics_review_stage()
 
         # Create past registration stages
-        '''
-        helpers.create_user('sac1@aclrollingreview.com', 'SAC', 'ARROne')
-        sac_client = openreview.Client(username='sac1@aclrollingreview.com', password=helpers.strong_password)
-        helpers.create_user('sac2@aclrollingreview.com', 'SAC', 'ARRTwo')
-        helpers.create_user('ac1@aclrollingreview.com', 'AC', 'ARROne')
-        helpers.create_user('ac2@aclrollingreview.com', 'AC', 'ARRTwo')
-        helpers.create_user('reviewer1@aclrollingreview.com', 'Reviewer', 'ARROne')
-        helpers.create_user('reviewer2@aclrollingreview.com', 'Reviewer', 'ARRTwo')
-        helpers.create_user('reviewer3@aclrollingreview.com', 'Reviewer', 'ARRThree')
-        helpers.create_user('reviewer4@aclrollingreview.com', 'Reviewer', 'ARRFour')
-        helpers.create_user('reviewer5@aclrollingreview.com', 'Reviewer', 'ARRFive')
-        helpers.create_user('reviewer6@aclrollingreview.com', 'Reviewer', 'ARRSix')
-        helpers.create_user('reviewerethics@aclrollingreview.com', 'Reviewer', 'ARRSeven')
-        '''
         venue.registration_stages.append(
             openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
             name = 'Registration',
