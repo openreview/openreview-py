@@ -18,7 +18,7 @@ class TestARRVenueV2():
         profile_management = ProfileManagement(openreview_client, 'openreview.net')
         profile_management.setup()
         return profile_management
-    def test_create_conferences(self, client, openreview_client, helpers, test_client, profile_management):
+    def test_august_cycle(self, client, openreview_client, helpers, test_client, profile_management):
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
@@ -187,7 +187,13 @@ class TestARRVenueV2():
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Share_Data')
 
+    def test_june_cycle(self, client, openreview_client, helpers, test_client, profile_management):
         # Build the previous cycle
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
             signatures=['~Program_ARRChair1'],
@@ -390,6 +396,20 @@ class TestARRVenueV2():
 
         # Create past expertise edges
         user_client = openreview.api.OpenReviewClient(username='reviewer1@aclrollingreview.com', password=helpers.strong_password)
+        archive_note = user_client.post_note_edit(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            signatures=['~Reviewer_ARROne1'],
+            note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                content = {
+                    'title': { 'value': 'Paper title 2' },
+                    'abstract': { 'value': 'Paper abstract 2' },
+                    'authors': { 'value': ['Reviewer ARR', 'Test2 Client'] },
+                    'authorids': { 'value': ['~Reviewer_ARROne1', 'test2@mail.com'] },
+                    'venue': { 'value': 'Arxiv' }
+                },
+                license = 'CC BY-SA 4.0'
+        ))
         user_client.post_edge(
             openreview.api.Edge(
                 invitation = venue.get_expertise_selection_id(committee_id = venue.get_reviewers_id()),
