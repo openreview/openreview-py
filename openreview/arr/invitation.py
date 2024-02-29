@@ -152,77 +152,46 @@ class InvitationBuilder(object):
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=False)
 
-    def set_copy_groups_invitation(self):
-        def translate_readers(readers):
-            true_readers = []
-            for r in readers:
-                if r == IdentityReaders.PROGRAM_CHAIRS:
-                    true_readers.append(self.venue.get_program_chairs_id())
-                elif r == IdentityReaders.AREA_CHAIRS:
-                    true_readers.append(self.venue.get_area_chairs_id())
-                elif r == IdentityReaders.REVIEWERS:
-                    true_readers.append(self.venue.get_reviewers_id())
-            return true_readers
-        
+    def set_share_data_invitation(self):
         venue_id = self.venue_id
 
-        groups = [
-            self.venue.get_reviewers_id(),
-            self.venue.get_area_chairs_id(),
-            self.venue.get_senior_area_chairs_id(),
-            self.venue.get_ethics_reviewers_id(),
-            self.venue.get_ethics_chairs_id()
-        ]
+        share_data_id = f'{venue_id}/-/Share_Data'
+        share_data_cdate= tools.datetime_millis(datetime.datetime.utcnow())
 
-        for group_id in groups:
-
-            # Identity readers
-            group_readers = []
-            if group_id == self.venue.get_reviewers_id():
-                group_readers = translate_readers(self.venue.reviewer_identity_readers)
-            elif group_id == self.venue.get_area_chairs_id():
-                group_readers = translate_readers(self.venue.area_chair_identity_readers)
-            elif group_id == self.venue.get_senior_area_chairs_id():
-                group_readers = translate_readers(self.venue.senior_area_chair_identity_readers)
-            elif group_id == self.venue.get_ethics_reviewers_id():
-                group_readers = [self.venue_id, self.venue.get_ethics_reviewers_id(), self.venue.get_ethics_chairs_id()]
-            elif group_id == self.venue.get_ethics_chairs_id():
-                group_readers = [self.venue_id, self.venue.get_ethics_chairs_id()]
-
-            copy_groups_id = f"{venue_id}/{group_id.split('/')[-1]}/-/Copy"
-            copy_groups_cdate= tools.datetime_millis(datetime.datetime.utcnow())
-                
-            copy_invitation = Invitation(
-                id=copy_groups_id,
-                invitees=[venue_id],
-                readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                cdate=copy_groups_cdate,
-                process=self.get_process_content('process/copy_group.py'),
-                edit={
+        share_data_inv = Invitation(
+            id=share_data_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            cdate=share_data_cdate,
+            process=self.get_process_content('process/share_data.py'),
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'note': {
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
                     'signatures': [venue_id],
                     'readers': [venue_id],
                     'writers': [venue_id],
-                    'group': {
-                        'content': {
-                            'original_group': {
-                                'value': {
-                                    'param': {
-                                        'regex': '.*', 'type': 'string'
-                                    }
+                    'content': {
+                        'next_cycle': {
+                            'value': {
+                                'param': {
+                                    'regex': '.*', 'type': 'string',
                                 }
                             }
-                        },
-                        'id': group_id,
-                        'readers': group_readers,
-                        'nonreaders': [],
-                        'writers': [self.venue.id, group_id],
-                        'signatures': [self.venue.id],
-                        'signatories': [self.venue.id, group_id],
+                        }
                     }
-
                 }
-            )
+            }
+        )
 
-            copy_invitation = self.save_invitation(copy_invitation, replacement=False) 
+        self.save_invitation(share_data_inv, replacement=False) 

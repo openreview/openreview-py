@@ -586,7 +586,7 @@ arr_registration_task = {
                 "type": "string",
                 "enum": ["Yes"],
                 "input": "checkbox",
-                "required": True
+                "optional": False
             }
         }
     },
@@ -598,7 +598,7 @@ arr_registration_task = {
                 "type": "string",
                 "enum": ["Yes"],
                 "input": "checkbox",
-                "required": True
+                "optional": False
             }
         }
     },
@@ -610,7 +610,7 @@ arr_registration_task = {
                 "type": "string",
                 "enum": ["Yes"],
                 "input": "checkbox",
-                "required": True
+                "optional": False
             }
         }
     },
@@ -622,42 +622,16 @@ arr_registration_task = {
                 "type": "string",
                 "enum": ["Yes"],
                 "input": "checkbox",
-                "required": True
+                "optional": False
             }
         }
     },
     "research_area": {
         "order": 5,
         "description": "Research Areas / Tracks. Select all relevant research areas / tracks that are the best fit for your expertise. These will be used to inform the reviewer and action editor assignment",
-        "values-checkbox": [
-            "Computational Social Science and Cultural Analytics",
-            "Dialogue and Interactive Systems",
-            "Discourse and Pragmatics",
-            "Efficient/Low-Resource Methods for NLP",
-            "Ethics, Bias, and Fairness",
-            "Generation",
-            "Information Extraction",
-            "Information Retrieval and Text Mining",
-            "Interpretability and Analysis of Models for NLP",
-            "Linguistic theories, Cognitive Modeling and Psycholinguistics",
-            "Machine Learning for NLP",
-            "Machine Translation",
-        "Multilinguality and Language Diversity",
-            "Multimodality and Language Grounding to Vision, Robotics and Beyond",
-            "Phonology, Morphology and Word Segmentation",
-            "Question Answering",
-            "Resources and Evaluation",
-            "Semantics: Lexical",
-            "Semantics: Sentence-level Semantics, Textual Inference and Other areas",
-            "Sentiment Analysis, Stylistic Analysis, and Argument Mining",
-            "Speech recognition, text-to-speech and spoken language understanding",
-            "Summarization",
-            "Syntax: Tagging, Chunking and Parsing / ML",
-            "NLP Applications"
-        ],
         "value": {
             "param": {
-                "type": "string",
+                "type": "string[]",
                 "enum": [
                     "Computational Social Science and Cultural Analytics",
                     "Dialogue and Interactive Systems",
@@ -685,7 +659,7 @@ arr_registration_task = {
                     "NLP Applications"
                 ],
                 "input": "checkbox",
-                "required": True
+                "optional": False
             }
         }
     }
