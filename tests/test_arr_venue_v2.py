@@ -187,6 +187,27 @@ class TestARRVenueV2():
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Share_Data')
 
+        # Create current registration stages
+        venue.registration_stages.append(
+            openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
+            name = 'Registration',
+            start_date = None,
+            due_date = due_date,
+            instructions = arr_registration_task_forum['instructions'],
+            title = arr_registration_task_forum['title'],
+            additional_fields=arr_registration_task)
+        )
+        venue.registration_stages.append(
+            openreview.stages.RegistrationStage(committee_id = venue.get_area_chairs_id(),
+            name = 'Registration',
+            start_date = None,
+            due_date = due_date,
+            instructions = arr_registration_task_forum['instructions'],
+            title = arr_registration_task_forum['title'],
+            additional_fields=arr_registration_task)
+        )
+        venue.create_registration_stages()
+
     def test_june_cycle(self, client, openreview_client, helpers, test_client, profile_management):
         # Build the previous cycle
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
@@ -459,18 +480,51 @@ class TestARRVenueV2():
 
         helpers.await_queue_edit(openreview_client, edit_id=share_data_edit['id'])
 
+        # Multiple calls should not migrate data multiple times
+        share_data_edit = openreview_client.post_note_edit(
+            invitation="aclweb.org/ACL/ARR/2023/June/-/Share_Data",
+            readers=["aclweb.org/ACL/ARR/2023/June"],
+            writers=["aclweb.org/ACL/ARR/2023/June"],
+            signatures=["aclweb.org/ACL/ARR/2023/June"],
+            note=openreview.api.Note(
+                content={
+                    'next_cycle': {
+                        'value': 'aclweb.org/ACL/ARR/2023/August'
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=share_data_edit['id'])
+
         # Find August in readers of groups and registration notes
-        assert august_venue.id in pc_client.get_group(june_venue.get_reviewers_id()).readers
-        assert august_venue.id in pc_client.get_group(june_venue.get_area_chairs_id()).readers
-        assert august_venue.id in pc_client.get_group(june_venue.get_senior_area_chairs_id()).readers
-        assert august_venue.id in pc_client.get_group(june_venue.get_ethics_reviewers_id()).readers
-        assert august_venue.id in pc_client.get_group(june_venue.get_ethics_chairs_id()).readers
+        assert set(pc_client.get_group(june_venue.get_reviewers_id()).members) == set(pc_client.get_group(august_venue.get_reviewers_id()).members)
+        assert set(pc_client.get_group(june_venue.get_area_chairs_id()).members) == set(pc_client.get_group(august_venue.get_area_chairs_id()).members)
+        assert set(pc_client.get_group(june_venue.get_senior_area_chairs_id()).members) == set(pc_client.get_group(august_venue.get_senior_area_chairs_id()).members)
+        assert set(pc_client.get_group(june_venue.get_ethics_reviewers_id()).members) == set(pc_client.get_group(august_venue.get_ethics_reviewers_id()).members)
+        assert set(pc_client.get_group(june_venue.get_ethics_chairs_id()).members) == set(pc_client.get_group(august_venue.get_ethics_chairs_id()).members)
 
         june_reviewer_registration_notes = pc_client.get_all_notes(invitation=f"{june_venue.get_reviewers_id()}/-/Registration")
-        assert all(any(august_venue.id in r for r in note.readers) for note in june_reviewer_registration_notes)
-        june_ac_registration_notes = pc_client.get_all_notes(invitation=f"{june_venue.get_area_chairs_id()}/-/Registration")
-        assert all(any(august_venue.id in r for r in note.readers) for note in june_ac_registration_notes)
+        august_reviewer_registration_notes = pc_client.get_all_notes(invitation=f"{june_venue.get_area_chairs_id()}/-/Registration")
+        assert all(j.signatures[0] == a.signatures[0] for a, j in zip(june_reviewer_registration_notes, august_reviewer_registration_notes))
+        june_ac_registration_notes = pc_client.get_all_notes(invitation=f"{june_venue.get_reviewers_id()}/-/Registration")
+        august_ac_registration_notes = pc_client.get_all_notes(invitation=f"{june_venue.get_area_chairs_id()}/-/Registration")
+        assert all(j.signatures[0] == a.signatures[0] for a, j in zip(june_ac_registration_notes, august_ac_registration_notes))
 
+        # Load and check for August in readers of edges
+        june_reviewers_with_edges = {o['id']['tail']: o['values'][0]['head'] for o in client.get_grouped_edges(invitation=f"{june_venue.get_reviewers_id()}/-/Expertise_Selection", groupby='tail', select='head')}
+        june_acs_with_edges = {o['id']['tail']: o['values'][0]['head'] for o in client.get_grouped_edges(invitation=f"{june_venue.get_area_chairs_id()}/-/Expertise_Selection", groupby='tail', select='head')}
+
+        august_reviewers_with_edges = {o['id']['tail']: o['values'][0]['head'] for o in client.get_grouped_edges(invitation=f"{august_venue.get_reviewers_id()}/-/Expertise_Selection", groupby='tail', select='head')}
+        august_acs_with_edges = {o['id']['tail']: o['values'][0]['head'] for o in client.get_grouped_edges(invitation=f"{august_venue.get_area_chairs_id()}/-/Expertise_Selection", groupby='tail', select='head')}
+    
+        for reviewer, edges in june_reviewers_with_edges.items():
+            assert reviewer in august_reviewers_with_edges
+            assert set(edges) == set(august_reviewers_with_edges[reviewer])
+
+        for ac, edges in june_acs_with_edges.items():
+            assert ac in august_acs_with_edges
+            assert set(edges) == set(august_acs_with_edges[ac])
 
 
     def test_unavailability_and_registration_tasks(self, client, openreview_client, helpers):

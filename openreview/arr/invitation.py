@@ -163,7 +163,7 @@ class InvitationBuilder(object):
             invitees=[venue_id],
             readers=[venue_id],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=['~Super_User1'],
             cdate=share_data_cdate,
             process=self.get_process_content('process/share_data.py'),
             edit={

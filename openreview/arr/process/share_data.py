@@ -1,5 +1,18 @@
 def process(client, edit, invitation):
 
+    def _is_identical_content(note_to_post, notes):
+        for note in notes:
+            is_identical = True
+            if set(note.content.keys()) != set(note_to_post.content.keys()):
+                continue
+            for k, v in note_to_post.content.items():
+                if v['value'] != note.content[k]['value']:
+                    is_identical = False
+            if is_identical:
+                return note
+        return None
+
+    import time
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     submission_venue_id = domain.content['submission_venue_id']['value']
@@ -30,57 +43,67 @@ def process(client, edit, invitation):
     ]
 
     for group in groups:
-        if next_cycle_id not in group.readers:
-            group.readers.append(next_cycle_id)
-            client.post_group_edit(
-                invitation=meta_invitation_id,
-                readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                group=openreview.api.Group(
-                    id=group.id,
-                    readers=group.readers
-                )
-            )
+        role = group.id.split('/')[-1]
+        destination_group = client.get_group(f"{next_cycle_id}/{role}")
+        missing_members = set(group.members).difference(set(destination_group.members))
+        if len(missing_members) > 0:
+            client.add_members_to_group(destination_group, list(missing_members))
 
     # Notes (Registraton Notes)
     roles = [domain.content['area_chairs_id']['value'], domain.content['reviewers_id']['value']]
     for role in roles:
         reg_invitation = client.get_invitation(f"{role}/-/Registration")
-        note_readers = reg_invitation.edit['note']['readers']
-        if next_cycle_id not in reg_invitation.edit['note']['readers']:
-            note_readers = [next_cycle_id] + note_readers
+        next_reg_invitation = client.get_invitation(f"{next_cycle_id}/{role.split('/')[-1]}/-/Registration")
 
-        client.post_invitation_edit(
-            invitations=meta_invitation_id,
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            invitation=openreview.api.Invitation(
-                id=f"{role}/-/Registration",
-                edit={
-                    'note': {
-                        'readers': note_readers
-                    }
-                }
-            )
-        )
-
-        # Registration invitations have no edit process function, manually post edits with new readers
+        existing_notes = client.get_all_notes(invitation=next_reg_invitation.id)
         notes = client.get_all_notes(invitation=reg_invitation.id)
+
         for note in notes:
-            reg_note_readers = note.readers
-            if next_cycle_id not in reg_note_readers:
-                reg_note_readers = [next_cycle_id] + reg_note_readers
+            if _is_identical_content(note, existing_notes):
+                continue
+            # Clear note fields
+            note.id = None
+            note.invitations = None
+            note.cdate = None
+            note.mdate = None
+            note.license = None
+            note.readers = [next_cycle_id, note.signatures[0]]
+            note.writers = [next_cycle_id, note.signatures[0]]
+            note.forum = next_reg_invitation.edit['note']['forum']
+            note.replyto = next_reg_invitation.edit['note']['replyto']
 
             client.post_note_edit(
-                invitation=meta_invitation_id, ## Would like to not use the meta invitation but cannot sign with user and client is a group
-                signatures=[venue_id],
+                invitation=f"{next_cycle_id}/{role.split('/')[-1]}/-/Registration",
+                signatures=note.signatures,
                 readers=note.readers,
-                note=openreview.api.Note(
-                    id=note.id,
-                    readers=reg_note_readers
-                )
+                note=note
             )
 
     # Edges (Expertise Edges)
+    for role in roles:
+        exp_edges = {o['id']['tail']: o['values'] for o in client.get_grouped_edges(
+            invitation=f"{role}/-/Expertise_Selection",
+            groupby='tail',
+            select='head,label')
+        }
+        existing_exp_edges = {o['id']['tail']: [e['head'] for e in o['values']] for o in client.get_grouped_edges(
+            invitation=f"{next_cycle_id}/{role.split('/')[-1]}/-/Expertise_Selection",
+            groupby='tail',
+            select='head')
+        }
+
+        for tail, pub_edges in exp_edges.items():
+            for pub_edge in pub_edges:
+                if tail in existing_exp_edges and pub_edge['head'] in existing_exp_edges[tail]:
+                    continue
+                client.post_edge(
+                    openreview.api.Edge(
+                        invitation=f"{next_cycle_id}/{role.split('/')[-1]}/-/Expertise_Selection",
+                        readers=[next_cycle_id, tail],
+                        writers=[next_cycle_id, tail],
+                        signatures=[tail],
+                        head=pub_edge['head'],
+                        tail=tail,
+                        label=pub_edge['label']
+                    )
+                )
