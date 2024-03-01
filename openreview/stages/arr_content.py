@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 arr_submission_content = {
     "title": {
         "order": 1,
@@ -571,6 +573,91 @@ arr_reviewer_ac_recognition_task = {
         }
     }
 }
+
+arr_max_load_task_forum = {
+    "title": "Unavailability and Maximum Load Request",
+    "instructions": "Please complete this form to indicate your (un)availability for reviewing. If you do not complete this form, you will receive the default load of this cycle.\n\nIf you wish to change your maximum load, please delete your previous request using the trash can icon, refresh the page and submit a new request."
+}
+
+arr_reviewer_max_load_task = {
+    "maximum_load": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [0, 4, 5, 6, 7, 8],
+                "optional": False,
+                "type": "integer",
+            }
+        },
+        "description": "Enter your maximum reviewing load for papers in this cycle. This refers only to the specific role mentioned at the top of this page. A load of '0' indicates you are unable to review new submissions.",
+        "order": 1,
+    },
+    "maximum_load_resubmission": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": ["Yes", "No"],
+                "optional": False,
+                "type": "string",
+            }
+        },
+        "description": "Are you able to review resubmissions of papers you previously reviewed? (even if you answered '0' to the previous question)",
+        "order": 2,
+    },
+    "next_available_month": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "January",
+                    "February",
+                    "March",
+                    "April",
+                    "May",
+                    "June",
+                    "July",
+                    "August",
+                    "September",
+                    "October",
+                    "November",
+                    "December",
+                ],
+                "optional": True,
+                "type": "string",
+            }
+        },
+        "description": "If you are going to be unavailable for an extended period of time, please indicate the next month that you will be available. Leave",
+        "order": 3,
+    },
+    "next_available_year": {
+        "value": {"param": {"regex": "[0-9]{0,4}", "optional": True, "type": "string"}},
+        "description": "If you are going to be unavailable for an extended period of time, please fill out the next year, in combination with the previously filled out month, that you will be available.",
+        "order": 4,
+    },
+}
+
+arr_ac_max_load_task = deepcopy(arr_reviewer_max_load_task)
+arr_ac_max_load_task["maximum_load"] = {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [0, 6, 7, 8, 9, 10, 11, 12],
+                "optional": False,
+                "type": "integer",
+            }
+        },
+        "description": "Enter your maximum reviewing load for papers in this cycle. This refers only to the specific role mentioned at the top of this page. A load of '0' indicates you are unable to review new submissions.",
+        "order": 1,
+    }
+arr_sac_max_load_task = deepcopy(arr_reviewer_max_load_task)
+arr_sac_max_load_task["maximum_load"] = {
+    "value": {
+        "param": {"regex": "[0-9]{0,3}", "optional": False, "type": "string"}
+    },
+    "description": "Enter your maximum reviewing load for papers in this cycle. This refers only to the specific role mentioned at the top of this page. A load of '0' indicates you are unable to review new submissions.",
+    "order": 1,
+}
+
 
 arr_content_license_task_forum = {
     "title": "Association for Computational Linguistics - Peer Reviewer Content License Agreement",

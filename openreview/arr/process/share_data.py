@@ -51,7 +51,10 @@ def process(client, edit, invitation):
             client.add_members_to_group(destination_group, list(missing_members))
 
     # Notes (Registraton Notes)
-    roles = [domain.content['area_chairs_id']['value'].replace(venue_id, previous_cycle_id), domain.content['reviewers_id']['value'].replace(venue_id, previous_cycle_id)]
+    roles = [
+        domain.content['senior_area_chairs_id']['value'].replace(venue_id, previous_cycle_id),
+        domain.content['area_chairs_id']['value'].replace(venue_id, previous_cycle_id),
+        domain.content['reviewers_id']['value'].replace(venue_id, previous_cycle_id)]
     for role in roles:
         reg_invitation = client.get_invitation(f"{role}/-/Registration")
         next_reg_invitation = client.get_invitation(f"{next_cycle_id}/{role.split('/')[-1]}/-/Registration")

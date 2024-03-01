@@ -15,7 +15,11 @@ from openreview.stages.arr_content import (
     arr_registration_task_forum,
     arr_registration_task,
     arr_content_license_task_forum,
-    arr_content_license_task
+    arr_content_license_task,
+    arr_max_load_task_forum,
+    arr_reviewer_max_load_task,
+    arr_ac_max_load_task,
+    arr_sac_max_load_task
 )
 # API2 template from ICML
 class TestARRVenueV2():
@@ -243,13 +247,14 @@ class TestARRVenueV2():
             additional_fields=arr_registration_task)
         )
         venue.registration_stages.append(
-            openreview.stages.RegistrationStage(committee_id = venue.get_area_chairs_id(),
-            name = 'Registration',
+            openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
+            name = 'Max_Load_And_Unavailability_Request',
             start_date = None,
             due_date = due_date,
-            instructions = arr_registration_task_forum['instructions'],
-            title = venue.get_area_chairs_name() + ' ' + arr_registration_task_forum['title'],
-            additional_fields=arr_registration_task)
+            instructions = arr_max_load_task_forum['instructions'],
+            title = venue.get_reviewers_name() + ' ' + arr_max_load_task_forum['title'],
+            additional_fields=arr_reviewer_max_load_task,
+            remove_fields=['profile_confirmed', 'expertise_confirmed'])
         )
         venue.registration_stages.append(
             openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
@@ -259,6 +264,46 @@ class TestARRVenueV2():
             instructions = arr_content_license_task_forum['instructions'],
             title = arr_content_license_task_forum['title'],
             additional_fields=arr_content_license_task,
+            remove_fields=['profile_confirmed', 'expertise_confirmed'])
+        )
+
+        venue.registration_stages.append(
+            openreview.stages.RegistrationStage(committee_id = venue.get_area_chairs_id(),
+            name = 'Registration',
+            start_date = None,
+            due_date = due_date,
+            instructions = arr_registration_task_forum['instructions'],
+            title = venue.get_area_chairs_name() + ' ' + arr_registration_task_forum['title'],
+            additional_fields=arr_registration_task)
+        )
+        venue.registration_stages.append(
+            openreview.stages.RegistrationStage(committee_id = venue.get_area_chairs_id(),
+            name = 'Max_Load_And_Unavailability_Request',
+            start_date = None,
+            due_date = due_date,
+            instructions = arr_max_load_task_forum['instructions'],
+            title = venue.get_area_chairs_name() + ' ' + arr_max_load_task_forum['title'],
+            additional_fields=arr_ac_max_load_task,
+            remove_fields=['profile_confirmed', 'expertise_confirmed'])
+        )
+
+        venue.registration_stages.append(
+            openreview.stages.RegistrationStage(committee_id = venue.get_senior_area_chairs_id(),
+            name = 'Registration',
+            start_date = None,
+            due_date = due_date,
+            instructions = arr_registration_task_forum['instructions'],
+            title = venue.senior_area_chairs_name.replace('_', ' ') + ' ' + arr_registration_task_forum['title'],
+            additional_fields=arr_registration_task)
+        )
+        venue.registration_stages.append(
+            openreview.stages.RegistrationStage(committee_id = venue.get_senior_area_chairs_id(),
+            name = 'Max_Load_And_Unavailability_Request',
+            start_date = None,
+            due_date = due_date,
+            instructions = arr_max_load_task_forum['instructions'],
+            title = venue.senior_area_chairs_name.replace('_', ' ') + ' ' + arr_max_load_task_forum['title'],
+            additional_fields=arr_sac_max_load_task,
             remove_fields=['profile_confirmed', 'expertise_confirmed'])
         )
         venue.create_registration_stages()
@@ -418,23 +463,75 @@ class TestARRVenueV2():
             start_date = None,
             due_date = due_date,
             instructions = arr_registration_task_forum['instructions'],
-            title = arr_registration_task_forum['title'],
+            title = venue.get_reviewers_name() + ' ' + arr_registration_task_forum['title'],
             additional_fields=arr_registration_task)
         )
+        venue.registration_stages.append(
+            openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
+            name = 'Max_Load_And_Unavailability_Request',
+            start_date = None,
+            due_date = due_date,
+            instructions = arr_max_load_task_forum['instructions'],
+            title = venue.get_reviewers_name() + ' ' + arr_max_load_task_forum['title'],
+            additional_fields=arr_reviewer_max_load_task,
+            remove_fields=['profile_confirmed', 'expertise_confirmed'])
+        )
+        venue.registration_stages.append(
+            openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
+            name = 'License_Agreement',
+            start_date = None,
+            due_date = due_date,
+            instructions = arr_content_license_task_forum['instructions'],
+            title = arr_content_license_task_forum['title'],
+            additional_fields=arr_content_license_task,
+            remove_fields=['profile_confirmed', 'expertise_confirmed'])
+        )
+
         venue.registration_stages.append(
             openreview.stages.RegistrationStage(committee_id = venue.get_area_chairs_id(),
             name = 'Registration',
             start_date = None,
             due_date = due_date,
             instructions = arr_registration_task_forum['instructions'],
-            title = arr_registration_task_forum['title'],
+            title = venue.get_area_chairs_name() + ' ' + arr_registration_task_forum['title'],
             additional_fields=arr_registration_task)
+        )
+        venue.registration_stages.append(
+            openreview.stages.RegistrationStage(committee_id = venue.get_area_chairs_id(),
+            name = 'Max_Load_And_Unavailability_Request',
+            start_date = None,
+            due_date = due_date,
+            instructions = arr_max_load_task_forum['instructions'],
+            title = venue.get_area_chairs_name() + ' ' + arr_max_load_task_forum['title'],
+            additional_fields=arr_ac_max_load_task,
+            remove_fields=['profile_confirmed', 'expertise_confirmed'])
+        )
+
+        venue.registration_stages.append(
+            openreview.stages.RegistrationStage(committee_id = venue.get_senior_area_chairs_id(),
+            name = 'Registration',
+            start_date = None,
+            due_date = due_date,
+            instructions = arr_registration_task_forum['instructions'],
+            title = venue.senior_area_chairs_name.replace('_', ' ') + ' ' + arr_registration_task_forum['title'],
+            additional_fields=arr_registration_task)
+        )
+        venue.registration_stages.append(
+            openreview.stages.RegistrationStage(committee_id = venue.get_senior_area_chairs_id(),
+            name = 'Max_Load_And_Unavailability_Request',
+            start_date = None,
+            due_date = due_date,
+            instructions = arr_max_load_task_forum['instructions'],
+            title = venue.senior_area_chairs_name.replace('_', ' ') + ' ' + arr_max_load_task_forum['title'],
+            additional_fields=arr_sac_max_load_task,
+            remove_fields=['profile_confirmed', 'expertise_confirmed'])
         )
         venue.create_registration_stages()
 
         # Post some registration notes
         reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@aclrollingreview.com', password=helpers.strong_password)
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@aclrollingreview.com', password=helpers.strong_password)
+        sac_client = openreview.api.OpenReviewClient(username = 'sac1@aclrollingreview.com', password=helpers.strong_password)
         reviewer_client.post_note_edit(
             invitation=f'{venue.get_reviewers_id()}/-/Registration',
             signatures=['~Reviewer_ARROne1'],
@@ -462,6 +559,21 @@ class TestARRVenueV2():
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
                     'research_area': { 'value': ['Generation', 'NLP Applications'] },
+                }
+            )
+        )
+        sac_client.post_note_edit(
+            invitation=f'{venue.get_senior_area_chairs_id()}/-/Registration',
+            signatures=['~SAC_ARROne1'],
+            note=openreview.api.Note(
+                content = {
+                    'profile_confirmed': { 'value': 'Yes' },
+                    'expertise_confirmed': { 'value': 'Yes' },
+                    'domains': { 'value': 'Yes' },
+                    'emails': { 'value': 'Yes' },
+                    'DBLP': { 'value': 'Yes' },
+                    'semantic_scholar': { 'value': 'Yes' },
+                    'research_area': { 'value': ['Summarization', 'NLP Applications'] },
                 }
             )
         )
@@ -501,6 +613,17 @@ class TestARRVenueV2():
                 signatures = ['~AC_ARROne1'],
                 head = archive_note['note']['id'],
                 tail = '~AC_ARROne1',
+                label = 'Exclude'
+        ))
+        user_client = openreview.api.OpenReviewClient(username='sac1@aclrollingreview.com', password=helpers.strong_password)
+        user_client.post_edge(
+            openreview.api.Edge(
+                invitation = venue.get_expertise_selection_id(committee_id = venue.get_senior_area_chairs_id()),
+                readers = [venue.id, '~SAC_ARROne1'],
+                writers = [venue.id, '~SAC_ARROne1'],
+                signatures = ['~SAC_ARROne1'],
+                head = archive_note['note']['id'],
+                tail = '~SAC_ARROne1',
                 label = 'Exclude'
         ))
 
@@ -556,18 +679,23 @@ class TestARRVenueV2():
         assert set(pc_client.get_group(june_venue.get_ethics_chairs_id()).members) == set(pc_client.get_group(august_venue.get_ethics_chairs_id()).members)
 
         june_reviewer_registration_notes = pc_client.get_all_notes(invitation=f"{june_venue.get_reviewers_id()}/-/Registration")
-        august_reviewer_registration_notes = pc_client.get_all_notes(invitation=f"{june_venue.get_area_chairs_id()}/-/Registration")
+        august_reviewer_registration_notes = pc_client.get_all_notes(invitation=f"{august_venue.get_reviewers_id()}/-/Registration")
         assert all(j.signatures[0] == a.signatures[0] for a, j in zip(june_reviewer_registration_notes, august_reviewer_registration_notes))
-        june_ac_registration_notes = pc_client.get_all_notes(invitation=f"{june_venue.get_reviewers_id()}/-/Registration")
-        august_ac_registration_notes = pc_client.get_all_notes(invitation=f"{june_venue.get_area_chairs_id()}/-/Registration")
+        june_ac_registration_notes = pc_client.get_all_notes(invitation=f"{june_venue.get_area_chairs_id()}/-/Registration")
+        august_ac_registration_notes = pc_client.get_all_notes(invitation=f"{august_venue.get_area_chairs_id()}/-/Registration")
         assert all(j.signatures[0] == a.signatures[0] for a, j in zip(june_ac_registration_notes, august_ac_registration_notes))
+        june_sac_registration_notes = pc_client.get_all_notes(invitation=f"{june_venue.get_senior_area_chairs_id()}/-/Registration")
+        august_sac_registration_notes = pc_client.get_all_notes(invitation=f"{august_venue.get_senior_area_chairs_id()}/-/Registration")
+        assert all(j.signatures[0] == a.signatures[0] for a, j in zip(june_sac_registration_notes, august_sac_registration_notes))
 
         # Load and check for August in readers of edges
         june_reviewers_with_edges = {o['id']['tail']: o['values'][0]['head'] for o in client.get_grouped_edges(invitation=f"{june_venue.get_reviewers_id()}/-/Expertise_Selection", groupby='tail', select='head')}
         june_acs_with_edges = {o['id']['tail']: o['values'][0]['head'] for o in client.get_grouped_edges(invitation=f"{june_venue.get_area_chairs_id()}/-/Expertise_Selection", groupby='tail', select='head')}
+        june_sacs_with_edges = {o['id']['tail']: o['values'][0]['head'] for o in client.get_grouped_edges(invitation=f"{june_venue.get_senior_area_chairs_id()}/-/Expertise_Selection", groupby='tail', select='head')}
 
         august_reviewers_with_edges = {o['id']['tail']: o['values'][0]['head'] for o in client.get_grouped_edges(invitation=f"{august_venue.get_reviewers_id()}/-/Expertise_Selection", groupby='tail', select='head')}
         august_acs_with_edges = {o['id']['tail']: o['values'][0]['head'] for o in client.get_grouped_edges(invitation=f"{august_venue.get_area_chairs_id()}/-/Expertise_Selection", groupby='tail', select='head')}
+        august_sacs_with_edges = {o['id']['tail']: o['values'][0]['head'] for o in client.get_grouped_edges(invitation=f"{august_venue.get_senior_area_chairs_id()}/-/Expertise_Selection", groupby='tail', select='head')}
     
         for reviewer, edges in june_reviewers_with_edges.items():
             assert reviewer in august_reviewers_with_edges
@@ -577,8 +705,12 @@ class TestARRVenueV2():
             assert ac in august_acs_with_edges
             assert set(edges) == set(august_acs_with_edges[ac])
 
+        for sac, edges in june_sacs_with_edges.items():
+            assert sac in august_sacs_with_edges
+            assert set(edges) == set(august_sacs_with_edges[sac])
 
-    def test_unavailability_and_registration_tasks(self, client, openreview_client, helpers):
+
+    def test_unavailability_tasks(self, client, openreview_client, helpers):
         # Set up the forms for max load and tracks for reviewers/ACs/SACs
         # Also copy expertise edges and registration notes into the current cycle
         pass
