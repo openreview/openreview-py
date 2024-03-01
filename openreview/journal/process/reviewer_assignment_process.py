@@ -66,7 +66,7 @@ def process_update(client, edge, invitation, existing_edge):
             assigned_action_editor=assigned_action_editor.get_preferred_name(pretty=True)
         )
 
-        client.post_message(subject, recipients, message, replyTo=assigned_action_editor.get_preferred_email())
+        client.post_message(journal.get_meta_invitation_id(), subject, recipients, message, replyTo=assigned_action_editor.get_preferred_email())
 
         if pending_review_edge and pending_review_edge.weight > 0:
             pending_review_edge.weight -= 1
@@ -128,7 +128,7 @@ def process_update(client, edge, invitation, existing_edge):
         )
 
         if official_reviewer:
-            client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=assigned_action_editor.get_preferred_email())
+            client.post_message(journal.get_meta_invitation_id(), subject, recipients, message, parentGroup=group.id, replyTo=assigned_action_editor.get_preferred_email())
 
     if responsiblity_invitation_edit is not None:
 
@@ -146,5 +146,5 @@ We thank you for your essential contribution to {journal.short_name}!
 
 The {journal.short_name} Editors-in-Chief
 '''
-        client.post_message(subject, recipients, message, ignoreRecipients=ignoreRecipients, parentGroup=group.id, replyTo=journal.contact_info)
+        client.post_message(journal.get_meta_invitation_id(), subject, recipients, message, ignoreRecipients=ignoreRecipients, parentGroup=group.id, replyTo=journal.contact_info)
 

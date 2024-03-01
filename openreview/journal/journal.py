@@ -763,7 +763,7 @@ To view the {lower_formatted_invitation}, click here: https://openreview.net/for
 Your {lower_formatted_invitation} on a submission has been {action}
 {content}
 '''
-            self.client.post_message(recipients=[edit.tauthor], subject=subject, message=message, replyTo=self.contact_info)
+            self.client.post_message(invitation=self.get_meta_invitation_id(), recipients=[edit.tauthor], subject=subject, message=message, replyTo=self.contact_info)
 
         ## Notify authors
         if is_public or self.get_authors_id(number=forum.number) in readers:
@@ -772,7 +772,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 {before_invitation} {lower_formatted_invitation} has been {action} on your submission.
 {content}
 '''
-            self.client.post_message(recipients=[self.get_authors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
+            self.client.post_message(invitation=self.get_meta_invitation_id(), recipients=[self.get_authors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
 
         ## Notify reviewers
         reviewer_recipients = []
@@ -789,7 +789,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 {before_invitation} {lower_formatted_invitation} has been {action} on a submission for which you are a reviewer.
 {content}
 '''
-            self.client.post_message(recipients=reviewer_recipients, subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
+            self.client.post_message(invitation=self.get_meta_invitation_id(), recipients=reviewer_recipients, subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
 
 
         ## Notify action editors
@@ -799,7 +799,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 {before_invitation} {lower_formatted_invitation} has been {action} on a submission for which you are an Action Editor.
 {content}
 '''
-            self.client.post_message(recipients=[self.get_action_editors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
+            self.client.post_message(invitation=self.get_meta_invitation_id(), recipients=[self.get_action_editors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
 
 
         if self.get_editors_in_chief_id() in readers and len(readers) == 2 and 'comment' in lower_formatted_invitation:
@@ -808,7 +808,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 {before_invitation} {lower_formatted_invitation} has been {action} on a submission for which you are serving as Editor-In-Chief.
 {content}
 '''
-            self.client.post_message(recipients=[self.get_editors_in_chief_id()], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
+            self.client.post_message(invitation=self.get_meta_invitation_id(), recipients=[self.get_editors_in_chief_id()], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
 
     def setup_note_invitations(self):
 
@@ -1124,6 +1124,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                                     invitation_url=f'https://openreview.net/invitation?id={journal.get_ae_recommendation_id(number=submission.number)}'
                                 )                                
                                 journal.client.post_message(
+                                    invitation=journal.get_meta_invitation_id(),
                                     recipients=submission.signatures,
                                     subject=f'[{journal.short_name}] Suggest candidate Action Editor for your new {journal.short_name} submission',
                                     message=message,
@@ -1639,7 +1640,7 @@ A conflict was detected between you and the submission authors and the assignmen
 If you have any questions, please contact us as info@openreview.net.
 
 OpenReview Team'''
-            response = client.post_message(subject, [edge.tail], message, replyTo=journal.contact_info)
+            response = client.post_message(journal.get_meta_invitation_id(), subject, [edge.tail], message, replyTo=journal.contact_info)
 
             ## Send email to inviter
             subject=f"[{journal.short_name}] Conflict detected between reviewer {user_profile.get_preferred_name(pretty=True)} and paper {submission.number}: {submission.content['title']['value']}"
@@ -1651,7 +1652,7 @@ If you have any questions, please contact us as info@openreview.net.
 OpenReview Team'''
 
             ## - Send email
-            response = client.post_message(subject, edge.signatures, message, replyTo=journal.contact_info)            
+            response = client.post_message(journal.get_meta_invitation_id(), subject, edge.signatures, message, replyTo=journal.contact_info)            
         
         def mark_as_accepted(journal, edge, submission, user_profile):
 
@@ -1692,7 +1693,7 @@ If you would like to change your decision, please click the Decline link in the 
 OpenReview Team'''
 
                 ## - Send email
-                response = client.post_message(subject, [edge.tail], message, replyTo=journal.contact_info)
+                response = client.post_message(journal.get_meta_invitation_id(), subject, [edge.tail], message, replyTo=journal.contact_info)
 
                 ## Send email to inviter
                 subject=f'[{short_phrase}] {reviewer_name} {user_profile.get_preferred_name(pretty=True)} signed up and is assigned to paper {submission.number}: {submission.content["title"]["value"]}'
@@ -1702,7 +1703,7 @@ The {reviewer_name} {user_profile.get_preferred_name(pretty=True)}({user_profile
 OpenReview Team'''
 
                 ## - Send email
-                response = client.post_message(subject, edge.signatures, message, replyTo=journal.contact_info)            
+                response = client.post_message(journal.get_meta_invitation_id(), subject, edge.signatures, message, replyTo=journal.contact_info)            
         
         journal_requests = client.get_all_notes(invitation=f'{support_group_id}/-/Journal_Request')
 

@@ -63,7 +63,7 @@ Thanks,
 
         
         ## - Send email
-        response = client.post_message(subject, [user_profile.id], message, replyTo=inviter_profile.get_preferred_name())
+        response = client.post_message(journal.get_meta_invitation_id(), subject, [user_profile.id], message, replyTo=inviter_profile.get_preferred_name())
 
         ## - Update edge to INVITED_LABEL
         edge.label=invite_label

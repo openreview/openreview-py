@@ -1623,7 +1623,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None):
+    def post_message(self, invitation, subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None):
         """
         Posts a message to the recipients and consequently sends them emails
 
@@ -1649,6 +1649,7 @@ class OpenReviewClient(object):
             recipients = self.get_group(parentGroup).transform_to_anon_ids(recipients)
 
         response = self.session.post(self.messages_url, json = {
+            'invitation': invitation,
             'groups': recipients,
             'subject': subject ,
             'message': message,
@@ -2426,6 +2427,7 @@ class Invitation(object):
         signatures = None,
         edit = None,
         edge = None,
+        message = None,
         type = 'Note',
         noninvitees = None,
         nonreaders = None,
@@ -2464,6 +2466,7 @@ class Invitation(object):
         self.maxReplies = maxReplies
         self.edit = edit
         self.edge = edge
+        self.message = message
         self.type = type
         self.tcdate = tcdate
         self.tmdate = tmdate
@@ -2573,6 +2576,8 @@ class Invitation(object):
                 body['edge']=self.edit
         if self.edge:
             body['edge']=self.edge
+        if self.message:
+            body['message']=self.message
         if self.bulk is not None:
             body['bulk']=self.bulk
         return body
@@ -2626,8 +2631,10 @@ class Invitation(object):
         if 'edge' in i:
             invitation.edit = i['edge']
             invitation.type = 'Edge'
+        if 'message' in i:
+            invitation.message = i['message']
+            invitation.type = 'Message'
         return invitation
-
 class Edge(object):
     def __init__(self, head, tail, invitation, domain=None, readers=None, writers=None, signatures=None, id=None, weight=None, label=None, cdate=None, ddate=None, nonreaders=None, tcdate=None, tmdate=None, tddate=None, tauthor=None):
         self.id = id

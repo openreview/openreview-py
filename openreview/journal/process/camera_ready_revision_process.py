@@ -37,6 +37,7 @@ def process(client, edit, invitation):
         contact_info=journal.contact_info
     )    
     client.post_message(
+        invitation=journal.get_meta_invitation_id(),
         recipients=[journal.get_action_editors_id(number=submission.number)],
         subject=f'''[{journal.short_name}] Review camera ready version for {journal.short_name} paper {submission.number}: {submission.content['title']['value']}''',
         message=message,

@@ -17,6 +17,7 @@ def process(client, edit, invitation):
         contact_info=journal.contact_info
     )     
     client.post_message(
+        invitation=journal.get_meta_invitation_id(),
         recipients=[journal.get_authors_id(number=submission.number)],
         subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
         message=message,

@@ -11,6 +11,7 @@ def process(client, edit, invitation):
     ## Send email to EICs
     print('Send email to EICs')
     client.post_message(
+        invitation=journal.get_meta_invitation_id(),
         recipients=[journal.get_editors_in_chief_id()],
         subject=f'''[{journal.short_name}] Authors request to retract {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
         message=f'''Hi {{{{fullname}}}},

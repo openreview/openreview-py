@@ -18,6 +18,7 @@ def process(client, invitation):
     if date_index == 0 or date_index == 1:
         print('send email to action editors', late_invitees)
         client.post_message(
+            invitation=journal.get_meta_invitation_id(),
             recipients=late_invitees,
             subject=f'''[{journal.short_name}] You are late in performing a task for assigned paper {submission.number}: {submission.content['title']['value']}''',
             message=f'''Hi {{{{fullname}}}},
@@ -44,6 +45,7 @@ The {journal.short_name} Editors-in-Chief
       days_late = 'one week' if date_index == 1 else 'one month'
       for profile in profiles:
         client.post_message(
+            invitation=journal.get_meta_invitation_id(),
             recipients=[journal.get_editors_in_chief_id()],
             ignoreRecipients=[journal.get_authors_id(number=submission.number)],
             subject=f'''[{journal.short_name}] AE is late in performing a task for assigned paper {submission.number}: {submission.content['title']['value']}''',

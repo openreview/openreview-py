@@ -13,6 +13,7 @@ def process(client, invitation):
     ## send email to reviewers
     print('send email to reviewers')
     client.post_message(
+        invitation=journal.get_meta_invitation_id(),
         recipients=[journal.get_reviewers_id(number=submission.number)],
         ignoreRecipients=signatures,
         subject=f'''[{journal.short_name}] You are late in performing a task for assigned paper {submission.number}: {submission.content['title']['value']}''',

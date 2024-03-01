@@ -11,6 +11,7 @@ def process(client, edit, invitation):
     author_email_template = author_group.content.get('new_submission_email_template_script', {}).get('value')
     if author_email_template:
         client.post_message(
+            invitation=journal.get_meta_invitation_id(),
             subject=f'[{journal.short_name}] New submission to {journal.short_name}: {note.content["title"]["value"]}',
             recipients=note.content['authorids']['value'],
             message=author_email_template.format(
@@ -25,6 +26,7 @@ def process(client, edit, invitation):
     if note.tcdate == note.tmdate and journal.should_eic_submission_notification():
         eic_group = client.get_group(journal.get_editors_in_chief_id())
         client.post_message(
+            invitation=journal.get_meta_invitation_id(),
             subject=f'[{journal.short_name}] New submission to {journal.short_name}: {note.content["title"]["value"]}',
             recipients=[journal.get_editors_in_chief_id()],
             message=eic_group.content['new_submission_email_template_script']['value'].format(

@@ -23,6 +23,7 @@ def process(client, edit, invitation):
         role='Editors-in-Chief'
     )    
     client.post_message(
+        invitation=journal.get_meta_invitation_id(),
         recipients=submission.signatures,
         subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
         message=message,
