@@ -452,7 +452,7 @@ class TestVenueRequest():
         assert title_tag
         assert title_tag.text == '{} Updated'.format(venue['request_form_note'].content['title'])
 
-    def test_venue_recruitment_email_error(self, client, test_client, selenium, request_page, venue, helpers):
+    def test_venue_recruitment_email_error(self, client, test_client, selenium, request_page, venue, helpers, openreview_client):
 
         # Test Reviewer Recruitment
         # request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
@@ -490,9 +490,9 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
 
-        messages = client.get_messages(to='reviewer_candidate1_v2@mail.com')
+        messages = openreview_client.get_messages(to='reviewer_candidate1_v2@mail.com')
         assert not messages
-        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com')
+        messages = openreview_client.get_messages(to='reviewer_candidate2_v2@mail.com')
         assert not messages
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
@@ -587,12 +587,12 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
 
-        messages = client.get_messages(to='reviewer_candidate1_v2@mail.com')
+        messages = openreview_client.get_messages(to='reviewer_candidate1_v2@mail.com')
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
         assert messages[0]['content']['text'].startswith('Dear Reviewer One,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
-        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com')
+        messages = openreview_client.get_messages(to='reviewer_candidate2_v2@mail.com')
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
         assert messages[0]['content']['text'].startswith('Dear Reviewer Two,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
@@ -626,7 +626,7 @@ class TestVenueRequest():
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
         helpers.await_queue_edit(openreview_client, invitation='V2.cc/2030/Conference/Reviewers/-/Recruitment')
 
-        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="[TestVenue@OR'2030V2] Reviewer Invitation accepted")
+        messages = openreview_client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="[TestVenue@OR'2030V2] Reviewer Invitation accepted")
         assert messages and len(messages) == 1
 
         #reinvite reviewer, no email should be sent
@@ -650,7 +650,7 @@ class TestVenueRequest():
 
         helpers.await_queue()
 
-        messages = client.get_messages(to='reviewer_candidate1_v2@mail.com')
+        messages = openreview_client.get_messages(to='reviewer_candidate1_v2@mail.com')
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
 
@@ -689,7 +689,7 @@ class TestVenueRequest():
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
 
         # Emails get sent correctly
-        messages = client.get_messages(to='reviewer_candidate3_v2@mail.com')
+        messages = openreview_client.get_messages(to='reviewer_candidate3_v2@mail.com')
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
         assert messages[0]['content']['text'].startswith('Dear Reviewer Three,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
@@ -697,7 +697,7 @@ class TestVenueRequest():
         last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
         assert '1 users' in last_comment.content['invited']
 
-    def test_venue_recruitment_tilde_IDs(self, client, test_client, selenium, request_page, venue, helpers):
+    def test_venue_recruitment_tilde_IDs(self, client, test_client, selenium, request_page, venue, helpers, openreview_client):
 
         # Test Reviewer Recruitment
         # request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
@@ -735,13 +735,13 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
 
-        messages = client.get_messages(to='reviewer_one_tilde_v2@mail.com')
+        messages = openreview_client.get_messages(to='reviewer_one_tilde_v2@mail.com')
         assert messages and len(messages) == 2
 
         assert messages[1]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
         assert messages[1]['content']['text'].startswith('Dear Reviewer OneTildeV,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
-        messages = client.get_messages(to='reviewer_two_tilde_v2@mail.com')
+        messages = openreview_client.get_messages(to='reviewer_two_tilde_v2@mail.com')
         assert messages and len(messages) == 2
         assert messages[1]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
         assert messages[1]['content']['text'].startswith('Dear Reviewer TwoTildeV,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
@@ -784,13 +784,13 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
 
-        messages = client.get_messages(to='ac_one@mail.com')
+        messages = openreview_client.get_messages(to='ac_one@mail.com')
         assert messages and len(messages) == 1
 
         assert messages[0]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Area Chair"
         assert messages[0]['content']['text'].startswith('Dear invitee,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Area Chair.')
 
-        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com')
+        messages = openreview_client.get_messages(to='reviewer_candidate2_v2@mail.com')
         assert messages and len(messages) == 3
         assert messages[2]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Area Chair"
         assert messages[2]['content']['text'].startswith('Dear Reviewer Two,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Area Chair.')
@@ -807,10 +807,10 @@ class TestVenueRequest():
 
         helpers.await_queue_edit(openreview_client, invitation='V2.cc/2030/Conference/Area_Chairs/-/Recruitment')
 
-        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="[TestVenue@OR'2030V2] Area Chair Invitation accepted")
+        messages = openreview_client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="[TestVenue@OR'2030V2] Area Chair Invitation accepted")
         assert messages and len(messages) == 1
 
-    def test_venue_remind_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
+    def test_venue_remind_recruitment(self, client, test_client, selenium, request_page, venue, helpers, openreview_client):
 
         # Test Reviewer Remind Recruitment
         # request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
@@ -843,18 +843,18 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Remind_Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
 
-        messages = client.get_messages(to='reviewer_candidate1_v2@mail.com')
+        messages = openreview_client.get_messages(to='reviewer_candidate1_v2@mail.com')
         assert messages and len(messages) == 2
         assert messages[1]['content']['subject'] == "Reminder: [TestVenue@OR'2030V2] Invitation to serve as Reviewer"
         assert messages[1]['content']['text'].startswith('Dear invitee,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
-        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="Reminder: [TestVenue@OR'2030V2] Invitation to serve as Reviewer")
+        messages = openreview_client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="Reminder: [TestVenue@OR'2030V2] Invitation to serve as Reviewer")
         assert not messages
 
-        messages = client.get_messages(to='reviewer_one_tilde_v2@mail.com', subject="Reminder: [TestVenue@OR'2030V2] Invitation to serve as Reviewer")
+        messages = openreview_client.get_messages(to='reviewer_one_tilde_v2@mail.com', subject="Reminder: [TestVenue@OR'2030V2] Invitation to serve as Reviewer")
         assert messages and len(messages) == 1
 
-        messages = client.get_messages(to='reviewer_two_tilde_v2@mail.com', subject="Reminder: [TestVenue@OR'2030V2] Invitation to serve as Reviewer")
+        messages = openreview_client.get_messages(to='reviewer_two_tilde_v2@mail.com', subject="Reminder: [TestVenue@OR'2030V2] Invitation to serve as Reviewer")
         assert messages and len(messages) == 1
 
         remind_recruitment_status_invitation = '{}/-/Request{}/Remind_Recruitment_Status'.format(venue['support_group_id'],
@@ -1123,12 +1123,12 @@ class TestVenueRequest():
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
 
-        messages = client.get_messages(subject="TestVenue@OR'2030V2 has received your submission titled test submission")
+        messages = openreview_client.get_messages(subject="TestVenue@OR'2030V2 has received your submission titled test submission")
         assert messages and len(messages) == 1
         assert 'venue_author_v2@mail.com' in messages[0]['content']['to']
         assert 'If you have any questions, please contact the PCs at test@mail.com' in messages[0]['content']['text']
 
-        messages = client.get_messages(subject="TestVenue@OR'2030V2 has received a new submission titled test submission")
+        messages = openreview_client.get_messages(subject="TestVenue@OR'2030V2 has received a new submission titled test submission")
         assert messages and len(messages) == 2
         recipients = [msg['content']['to'] for msg in messages]
         assert 'test@mail.com' in recipients
@@ -1154,14 +1154,14 @@ class TestVenueRequest():
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id'])
 
         #check co-author email
-        messages = client.get_messages(to='venue_author_v2@mail.com', subject="TestVenue@OR'2030V2 has received your submission titled test submission 2")
+        messages = openreview_client.get_messages(to='venue_author_v2@mail.com', subject="TestVenue@OR'2030V2 has received your submission titled test submission 2")
         assert messages and len(messages) == 1
         assert messages[0]['content']['replyTo'] == 'test@mail.com'
         assert 'If you have any questions, please contact the PCs at test@mail.com' in messages[0]['content']['text']
         assert 'If you are not an author of this submission and would like to be removed, please contact the author who added you at venue_author_v2_2@mail.com' in messages[0]['content']['text']
 
         #check tauthor email
-        messages = client.get_messages(to='venue_author_v2_2@mail.com', subject="TestVenue@OR'2030V2 has received your submission titled test submission 2")
+        messages = openreview_client.get_messages(to='venue_author_v2_2@mail.com', subject="TestVenue@OR'2030V2 has received your submission titled test submission 2")
         assert messages and len(messages) == 1
         assert 'If you have any questions, please contact the PCs at test@mail.com' in messages[0]['content']['text']
         assert 'If you are not an author of this submission and would like to be removed, please contact the author who added you at venue_author_v2_2@mail.com' not in messages[0]['content']['text']
@@ -2550,7 +2550,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         ))
         helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
 
-        messages = client.get_messages(
+        messages = openreview_client.get_messages(
             to='venue_author_v2@mail.com',
             subject="[TestVenue@OR'2030V2] Decision posted to your submission - Paper Number: 1, Paper Title: \"test submission\"")
         assert messages and len(messages) == 1
@@ -2998,9 +2998,9 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert updated_note.content['authors']['value'] == ['VenueFour Author', 'VenueThree Author']
         assert updated_note.content['authorids']['value'] == ['~VenueFour_Author1', '~VenueThree_Author1']
 
-        messages = client.get_messages(to = 'venue_author3_v2@mail.com', subject='TestVenue@OR\'2030V2 has received a new revision of your submission titled revised test submission 3')
+        messages = openreview_client.get_messages(to = 'venue_author3_v2@mail.com', subject='TestVenue@OR\'2030V2 has received a new revision of your submission titled revised test submission 3')
         assert messages and len(messages) == 1
-        messages = client.get_messages(to = 'venue_author_v2_2@mail.com', subject='TestVenue@OR\'2030V2 has received a new revision of your submission titled revised test submission 3')
+        messages = openreview_client.get_messages(to = 'venue_author_v2_2@mail.com', subject='TestVenue@OR\'2030V2 has received a new revision of your submission titled revised test submission 3')
         assert messages and len(messages) == 1
 
         message_text = f'''Your new revision of the submission to TestVenue@OR'2030V2 has been posted.
@@ -3184,7 +3184,7 @@ Best,
         assert submissions[2].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
         assert submissions[2].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
 
-        last_message = client.get_messages(to='venue_author_v2@mail.com', subject='[TestVenue@OR\'2030V2] Decision notification for your submission 1: test submission')[0]
+        last_message = openreview_client.get_messages(to='venue_author_v2@mail.com', subject='[TestVenue@OR\'2030V2] Decision notification for your submission 1: test submission')[0]
         assert "Dear VenueTwo Author,\n\nThank you for submitting your paper, test submission, to TestVenue@OR'2030V2." in last_message['content']['text']
         assert f"https://openreview.net/forum?id={submissions[0].id}" in last_message['content']['text']
 

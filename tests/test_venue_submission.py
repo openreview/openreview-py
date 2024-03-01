@@ -819,7 +819,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         updated_note = author_client.get_note(id=submissions[0].forum)
 
-        messages = client.get_messages(to = 'celeste@maileleven.com', subject='TV 22 has received a new revision of your submission titled Paper 1 Title REVISED AGAIN')
+        messages = openreview_client.get_messages(to = 'celeste@maileleven.com', subject='TV 22 has received a new revision of your submission titled Paper 1 Title REVISED AGAIN')
         assert messages and len(messages) == 1
         assert messages[0]['content']['replyTo'] == 'testvenue@contact.com'
 

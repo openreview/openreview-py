@@ -153,7 +153,7 @@ class TestICLRConference():
 
         helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2024/Conference/Reviewers/-/Recruitment', count=2)
 
-        messages = client.get_messages(subject='[ICLR 2024] Reviewer Invitation accepted with reduced load')
+        messages = openreview_client.get_messages(subject='[ICLR 2024] Reviewer Invitation accepted with reduced load')
         assert len(messages) == 2
 
         assert len(openreview_client.get_group('ICLR.cc/2024/Conference/Reviewers').members) == 2
