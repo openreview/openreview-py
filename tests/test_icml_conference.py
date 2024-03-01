@@ -1641,6 +1641,27 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         ))
         helpers.await_queue_edit(openreview_client, edge.id)
 
+        helpers.create_user('emilia@icml.cc', 'Emilia', 'ICML')
+        edge = ac_client.post_edge(
+            openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
+                signatures=[anon_group_id],
+                head=submissions[0].id,
+                tail='~Emilia_ICML1',
+                label='Invitation Sent',
+                weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edge.id)
+
+        # delete Invitation Sent edge
+        invite_edge=ac_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Emilia_ICML1')[0]
+        invite_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        edge = ac_client.post_edge(invite_edge)
+
+        time.sleep(5) ## wait until the process function runs   
+
+        messages = client.get_messages(to='emilia@icml.cc', subject='[ICML 2023] Invitation canceled to review paper titled "Paper title 1 Version 2"')
+        assert messages and len(messages) == 1
+
         with pytest.raises(openreview.OpenReviewException, match=r'the user is already invited'):
             ac_client.post_edge(
                 openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
@@ -1693,6 +1714,12 @@ The Reviewer melisa@icml.cc that you invited to review paper 1 has accepted the 
 Confirmation of the assignment is pending until the invited reviewer creates a profile in OpenReview and no conflicts of interest are detected.
 
 OpenReview Team'''
+
+        # try to remove Invite_Assignment edge with label == 'Pending Sign Up'
+        with pytest.raises(openreview.OpenReviewException, match=r'Cannot cancel the invitation since it has status: "Pending Sign Up"'):
+            invite_edge=pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='melisa@icml.cc')[0]
+            invite_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+            pc_client_v2.post_edge(invite_edge)
 
         ## Run Job
         openreview.venue.Venue.check_new_profiles(openreview_client)
@@ -2066,6 +2093,12 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
         helpers.await_queue(openreview_client)
+
+        # try to delete Invite Assignment edge after reviewer Accepted
+        with pytest.raises(openreview.OpenReviewException, match=r'Cannot cancel the invitation since it has status: "Accepted"'):
+            invite_edge=ac_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Reviewer_ICMLFour1')[0]
+            invite_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+            ac_client.post_edge(invite_edge)
 
         reviewers_group = pc_client.get_group('ICML.cc/2023/Conference/Submission1/Reviewers')
         assert len(reviewers_group.members) == 6
