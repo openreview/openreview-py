@@ -9,6 +9,7 @@ import csv
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 from openreview import ProfileManagement
+from openreview.venue import matching
 from openreview.stages.arr_content import (
     arr_submission_content,
     hide_fields,
@@ -237,9 +238,11 @@ class TestARRVenueV2():
         venue.create_ethics_review_stage()
 
         # Create current registration stages
+        registration_name = 'Registration'
+        max_load_name = 'Max_Load_And_Unavailability_Request'
         venue.registration_stages.append(
             openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
-            name = 'Registration',
+            name = registration_name,
             start_date = None,
             due_date = due_date,
             instructions = arr_registration_task_forum['instructions'],
@@ -248,7 +251,7 @@ class TestARRVenueV2():
         )
         venue.registration_stages.append(
             openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
-            name = 'Max_Load_And_Unavailability_Request',
+            name = max_load_name,
             start_date = None,
             due_date = due_date,
             instructions = arr_max_load_task_forum['instructions'],
@@ -269,7 +272,7 @@ class TestARRVenueV2():
 
         venue.registration_stages.append(
             openreview.stages.RegistrationStage(committee_id = venue.get_area_chairs_id(),
-            name = 'Registration',
+            name = registration_name,
             start_date = None,
             due_date = due_date,
             instructions = arr_registration_task_forum['instructions'],
@@ -278,7 +281,7 @@ class TestARRVenueV2():
         )
         venue.registration_stages.append(
             openreview.stages.RegistrationStage(committee_id = venue.get_area_chairs_id(),
-            name = 'Max_Load_And_Unavailability_Request',
+            name = max_load_name,
             start_date = None,
             due_date = due_date,
             instructions = arr_max_load_task_forum['instructions'],
@@ -289,7 +292,7 @@ class TestARRVenueV2():
 
         venue.registration_stages.append(
             openreview.stages.RegistrationStage(committee_id = venue.get_senior_area_chairs_id(),
-            name = 'Registration',
+            name = registration_name,
             start_date = None,
             due_date = due_date,
             instructions = arr_registration_task_forum['instructions'],
@@ -298,7 +301,7 @@ class TestARRVenueV2():
         )
         venue.registration_stages.append(
             openreview.stages.RegistrationStage(committee_id = venue.get_senior_area_chairs_id(),
-            name = 'Max_Load_And_Unavailability_Request',
+            name = max_load_name,
             start_date = None,
             due_date = due_date,
             instructions = arr_max_load_task_forum['instructions'],
@@ -307,6 +310,28 @@ class TestARRVenueV2():
             remove_fields=['profile_confirmed', 'expertise_confirmed'])
         )
         venue.create_registration_stages()
+
+        # Create custom max papers invitations early
+        venue_roles = [
+            venue.get_reviewers_id(),
+            venue.get_area_chairs_id(),
+            venue.get_senior_area_chairs_id()
+        ]
+        for role in venue_roles:
+            m = matching.Matching(venue, venue.client.get_group(role), None, None)
+            m._create_edge_invitation(venue.get_custom_max_papers_id(m.match_group.id))
+
+            openreview_client.post_invitation_edit(
+                invitations=venue.get_meta_invitation_id(),
+                readers=[venue.id],
+                writers=[venue.id],
+                signatures=[venue.id],
+                invitation=openreview.api.Invitation(
+                    id=f"{role}/-/{max_load_name}",
+                    process=invitation_builder.get_process_content('process/max_load_process.py')
+                )
+            )
+
 
     def test_june_cycle(self, client, openreview_client, helpers, test_client, profile_management):
         # Build the previous cycle
@@ -457,9 +482,11 @@ class TestARRVenueV2():
         venue.create_ethics_review_stage()
 
         # Create past registration stages
+        registration_name = 'Registration'
+        max_load_name = 'Max_Load_And_Unavailability_Request'
         venue.registration_stages.append(
             openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
-            name = 'Registration',
+            name = registration_name,
             start_date = None,
             due_date = due_date,
             instructions = arr_registration_task_forum['instructions'],
@@ -468,7 +495,7 @@ class TestARRVenueV2():
         )
         venue.registration_stages.append(
             openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
-            name = 'Max_Load_And_Unavailability_Request',
+            name = max_load_name,
             start_date = None,
             due_date = due_date,
             instructions = arr_max_load_task_forum['instructions'],
@@ -489,7 +516,7 @@ class TestARRVenueV2():
 
         venue.registration_stages.append(
             openreview.stages.RegistrationStage(committee_id = venue.get_area_chairs_id(),
-            name = 'Registration',
+            name = registration_name,
             start_date = None,
             due_date = due_date,
             instructions = arr_registration_task_forum['instructions'],
@@ -498,7 +525,7 @@ class TestARRVenueV2():
         )
         venue.registration_stages.append(
             openreview.stages.RegistrationStage(committee_id = venue.get_area_chairs_id(),
-            name = 'Max_Load_And_Unavailability_Request',
+            name = max_load_name,
             start_date = None,
             due_date = due_date,
             instructions = arr_max_load_task_forum['instructions'],
@@ -509,7 +536,7 @@ class TestARRVenueV2():
 
         venue.registration_stages.append(
             openreview.stages.RegistrationStage(committee_id = venue.get_senior_area_chairs_id(),
-            name = 'Registration',
+            name = registration_name,
             start_date = None,
             due_date = due_date,
             instructions = arr_registration_task_forum['instructions'],
@@ -518,7 +545,7 @@ class TestARRVenueV2():
         )
         venue.registration_stages.append(
             openreview.stages.RegistrationStage(committee_id = venue.get_senior_area_chairs_id(),
-            name = 'Max_Load_And_Unavailability_Request',
+            name = max_load_name,
             start_date = None,
             due_date = due_date,
             instructions = arr_max_load_task_forum['instructions'],
