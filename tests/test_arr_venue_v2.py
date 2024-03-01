@@ -9,8 +9,14 @@ import csv
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 from openreview import ProfileManagement
-from openreview.stages.arr_content import arr_submission_content, hide_fields, arr_registration_task_forum, arr_registration_task
-
+from openreview.stages.arr_content import (
+    arr_submission_content,
+    hide_fields,
+    arr_registration_task_forum,
+    arr_registration_task,
+    arr_content_license_task_forum,
+    arr_content_license_task
+)
 # API2 template from ICML
 class TestARRVenueV2():
     @pytest.fixture(scope="class")
@@ -233,7 +239,7 @@ class TestARRVenueV2():
             start_date = None,
             due_date = due_date,
             instructions = arr_registration_task_forum['instructions'],
-            title = arr_registration_task_forum['title'],
+            title = venue.get_reviewers_name() + ' ' + arr_registration_task_forum['title'],
             additional_fields=arr_registration_task)
         )
         venue.registration_stages.append(
@@ -242,8 +248,18 @@ class TestARRVenueV2():
             start_date = None,
             due_date = due_date,
             instructions = arr_registration_task_forum['instructions'],
-            title = arr_registration_task_forum['title'],
+            title = venue.get_area_chairs_name() + ' ' + arr_registration_task_forum['title'],
             additional_fields=arr_registration_task)
+        )
+        venue.registration_stages.append(
+            openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
+            name = 'License_Agreement',
+            start_date = None,
+            due_date = due_date,
+            instructions = arr_content_license_task_forum['instructions'],
+            title = arr_content_license_task_forum['title'],
+            additional_fields=arr_content_license_task,
+            remove_fields=['profile_confirmed', 'expertise_confirmed'])
         )
         venue.create_registration_stages()
 
