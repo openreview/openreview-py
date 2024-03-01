@@ -1,6 +1,7 @@
 def process(client, edge, invitation):
 
     domain = client.get_group(invitation.domain)
+    meta_invitation_id = domain.content['meta_invitation_id']['value']
     short_phrase = domain.content['subtitle']['value']
     contact = domain.content['contact']['value']
     recruitment_invitation_id = invitation.content['recruitment_invitation_id']['value']
@@ -94,7 +95,7 @@ Thanks,
             client.add_members_to_group(committee_invited_id, [user_profile.id])
 
         ## - Send email
-        response = client.post_message(subject, [user_profile.id], message, parentGroup=committee_invited_id, replyTo=contact)
+        response = client.post_message(meta_invitation_id, subject, [user_profile.id], message, parentGroup=committee_invited_id, replyTo=contact)
 
         ## - Update edge to INVITED_LABEL
         edge.label=invited_label
