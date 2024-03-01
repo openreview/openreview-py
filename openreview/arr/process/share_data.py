@@ -26,7 +26,8 @@ def process(client, edit, invitation):
         ## invitation is in the future, do not process
         print('invitation is not yet active', cdate)
         return
-    next_cycle_id = edit.note.content['next_cycle']['value']
+    previous_cycle_id = edit.note.content['previous_cycle']['value']
+    next_cycle_id = venue_id
     
     ## Try and retrieve different groups, notes and edges and change their readership
 
@@ -34,11 +35,11 @@ def process(client, edit, invitation):
     groups = [
         client.get_group(group_id) for group_id in
         [
-            domain.content['reviewers_id']['value'],
-            domain.content['area_chairs_id']['value'],
-            domain.content['senior_area_chairs_id']['value'],
-            domain.content['ethics_chairs_id']['value'],
-            f"{venue_id}/{domain.content['ethics_reviewers_name']['value']}",
+            domain.content['reviewers_id']['value'].replace(venue_id, previous_cycle_id),
+            domain.content['area_chairs_id']['value'].replace(venue_id, previous_cycle_id),
+            domain.content['senior_area_chairs_id']['value'].replace(venue_id, previous_cycle_id),
+            domain.content['ethics_chairs_id']['value'].replace(venue_id, previous_cycle_id),
+            f"{previous_cycle_id}/{domain.content['ethics_reviewers_name']['value']}",
         ]
     ]
 
@@ -50,7 +51,7 @@ def process(client, edit, invitation):
             client.add_members_to_group(destination_group, list(missing_members))
 
     # Notes (Registraton Notes)
-    roles = [domain.content['area_chairs_id']['value'], domain.content['reviewers_id']['value']]
+    roles = [domain.content['area_chairs_id']['value'].replace(venue_id, previous_cycle_id), domain.content['reviewers_id']['value'].replace(venue_id, previous_cycle_id)]
     for role in roles:
         reg_invitation = client.get_invitation(f"{role}/-/Registration")
         next_reg_invitation = client.get_invitation(f"{next_cycle_id}/{role.split('/')[-1]}/-/Registration")

@@ -182,7 +182,7 @@ class InvitationBuilder(object):
                     'readers': [venue_id],
                     'writers': [venue_id],
                     'content': {
-                        'next_cycle': {
+                        'previous_cycle': {
                             'value': {
                                 'param': {
                                     'regex': '.*', 'type': 'string',

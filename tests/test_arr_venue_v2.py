@@ -187,6 +187,45 @@ class TestARRVenueV2():
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Share_Data')
 
+        # Create ethics review stage to add values into domain
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'ethics_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'ethics_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_ethics_reviews_public': 'No, ethics reviews should NOT be revealed publicly when they are posted',
+                'release_ethics_reviews_to_authors': "No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors",
+                'release_ethics_reviews_to_reviewers': 'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review',
+                'remove_ethics_review_form_options': 'ethics_review',
+                'additional_ethics_review_form_options': {
+                    "ethics_concerns": {
+                        'order': 1,
+                        'description': 'Briefly summarize the ethics concerns.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 200000,
+                                'markdown': True,
+                                'input': 'textarea'
+                            }
+                        }
+                    }
+                },
+                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
+            },
+            forum=request_form_note.forum,
+            referent=request_form_note.forum,
+            invitation='openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form_note.number),
+            readers=[venue.get_program_chairs_id(), 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+        
+        venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
+        venue.create_ethics_review_stage()
+
         # Create current registration stages
         venue.registration_stages.append(
             openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
@@ -276,10 +315,6 @@ class TestARRVenueV2():
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Authors')
 
         venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
-        invitation_builder = openreview.arr.InvitationBuilder(venue)
-        invitation_builder.set_share_data_invitation()
-
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/June/-/Share_Data')
 
         # Populate past groups
         openreview_client.add_members_to_group(
@@ -465,14 +500,14 @@ class TestARRVenueV2():
         august_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
 
         share_data_edit = openreview_client.post_note_edit(
-            invitation="aclweb.org/ACL/ARR/2023/June/-/Share_Data",
-            readers=["aclweb.org/ACL/ARR/2023/June"],
-            writers=["aclweb.org/ACL/ARR/2023/June"],
-            signatures=["aclweb.org/ACL/ARR/2023/June"],
+            invitation="aclweb.org/ACL/ARR/2023/August/-/Share_Data",
+            readers=["aclweb.org/ACL/ARR/2023/August"],
+            writers=["aclweb.org/ACL/ARR/2023/August"],
+            signatures=["aclweb.org/ACL/ARR/2023/August"],
             note=openreview.api.Note(
                 content={
-                    'next_cycle': {
-                        'value': 'aclweb.org/ACL/ARR/2023/August'
+                    'previous_cycle': {
+                        'value': 'aclweb.org/ACL/ARR/2023/June'
                     }
                 }
             )
@@ -482,14 +517,14 @@ class TestARRVenueV2():
 
         # Multiple calls should not migrate data multiple times
         share_data_edit = openreview_client.post_note_edit(
-            invitation="aclweb.org/ACL/ARR/2023/June/-/Share_Data",
-            readers=["aclweb.org/ACL/ARR/2023/June"],
-            writers=["aclweb.org/ACL/ARR/2023/June"],
-            signatures=["aclweb.org/ACL/ARR/2023/June"],
+            invitation="aclweb.org/ACL/ARR/2023/August/-/Share_Data",
+            readers=["aclweb.org/ACL/ARR/2023/August"],
+            writers=["aclweb.org/ACL/ARR/2023/August"],
+            signatures=["aclweb.org/ACL/ARR/2023/August"],
             note=openreview.api.Note(
                 content={
-                    'next_cycle': {
-                        'value': 'aclweb.org/ACL/ARR/2023/August'
+                    'previous_cycle': {
+                        'value': 'aclweb.org/ACL/ARR/2023/June'
                     }
                 }
             )
