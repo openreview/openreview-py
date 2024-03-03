@@ -1,4 +1,5 @@
 from copy import deepcopy
+from datetime import datetime
 
 arr_submission_content = {
     "title": {
@@ -584,9 +585,9 @@ arr_reviewer_max_load_task = {
         "value": {
             "param": {
                 "input": "radio",
-                "enum": [0, 4, 5, 6, 7, 8],
+                "enum": ["0", "4", "5", "6", "7", "8"],
                 "optional": False,
-                "type": "integer",
+                "type": "string",
             }
         },
         "description": "Enter your maximum reviewing load for papers in this cycle. This refers only to the specific role mentioned at the top of this page. A load of '0' indicates you are unable to review new submissions.",
@@ -630,7 +631,14 @@ arr_reviewer_max_load_task = {
         "order": 3,
     },
     "next_available_year": {
-        "value": {"param": {"regex": "[0-9]{0,4}", "optional": True, "type": "string"}},
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [datetime.today().year + i for i in range(5)],
+                "optional": True,
+                "type": "integer",
+            }
+        },
         "description": "If you are going to be unavailable for an extended period of time, please fill out the next year, in combination with the previously filled out month, that you will be available.",
         "order": 4,
     },
@@ -641,9 +649,9 @@ arr_ac_max_load_task["maximum_load"] = {
         "value": {
             "param": {
                 "input": "radio",
-                "enum": [0, 6, 7, 8, 9, 10, 11, 12],
+                "enum": ["0", "6", "7", "8", "9", "10", "11", "12"],
                 "optional": False,
-                "type": "integer",
+                "type": "string",
             }
         },
         "description": "Enter your maximum reviewing load for papers in this cycle. This refers only to the specific role mentioned at the top of this page. A load of '0' indicates you are unable to review new submissions.",
