@@ -101,12 +101,17 @@ class InvitationBuilder(object):
             signatures=['~Super_User1'],
             cdate=scheduler_cdate,
             content={
-                'setup_venue_stages_date': {'value': 0}
+                'setup_venue_stages_date': {'value': 0},
+                'preprint_release_submission_date': {'value': 0},
             },
             date_processes=[
                 {
                     'dates': ["#{4/content/setup_venue_stages_date/value}"],
                     'script': self.get_process_content('process/setup_venue_stages.py'),
+                },
+                {
+                    'dates': ["#{4/content/preprint_release_submission_date/value}"],
+                    'script': self.get_process_content('process/setup_preprint_release.py'),
                 }
             ]
         )

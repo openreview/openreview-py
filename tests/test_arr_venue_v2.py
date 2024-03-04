@@ -1470,14 +1470,20 @@ class TestARRVenueV2():
         assert 'readers' not in submissions[0].content['justification_for_not_keeping_action_editor_or_reviewers']
 
         ## release preprint submissions
-        pc_client_v2.post_invitation_edit(
-            invitations='aclweb.org/ACL/ARR/2023/August/-/Edit',
-            signatures=['aclweb.org/ACL/ARR/2023/August'],
-            invitation=openreview.api.Invitation(id='aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(minutes=1)),
-                signatures=['aclweb.org/ACL/ARR/2023/August']
+        scheduler_edit = pc_client_v2.post_invitation_edit(
+            invitations="aclweb.org/ACL/ARR/2023/August/-/Edit",
+            readers=["aclweb.org/ACL/ARR/2023/August"],
+            writers=["aclweb.org/ACL/ARR/2023/August"],
+            signatures=["aclweb.org/ACL/ARR/2023/August"],
+            invitation=openreview.api.Invitation(
+                id='aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler',
+                content={
+                    'preprint_release_submission_date': {'value': openreview.tools.datetime_millis(openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3))}
+                }
             )
         )
+
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-1-0', count=1)
 
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission-0-1', count=2)
 
