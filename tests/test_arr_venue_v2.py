@@ -37,6 +37,7 @@ class TestARRVenueV2():
         # Post the request form note
         helpers.create_user('pc@aclrollingreview.org', 'Program', 'ARRChair')
         pc_client = openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        pc_client_v2 = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
 
         sac_client = helpers.create_user('sac1@aclrollingreview.com', 'SAC', 'ARROne')
         helpers.create_user('sac2@aclrollingreview.com', 'SAC', 'ARRTwo')
@@ -194,9 +195,21 @@ class TestARRVenueV2():
         invitation_builder = openreview.arr.InvitationBuilder(venue)
         invitation_builder.set_preprint_release_submission_invitation()
         invitation_builder.set_share_data_invitation()
+        invitation_builder.set_override_revision_process_invitation()
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Share_Data')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Override_Revision_Process')
+
+        override_revision_edit = pc_client_v2.post_note_edit(
+            invitation="aclweb.org/ACL/ARR/2023/August/-/Override_Revision_Process",
+            readers=["aclweb.org/ACL/ARR/2023/August"],
+            writers=["aclweb.org/ACL/ARR/2023/August"],
+            signatures=["aclweb.org/ACL/ARR/2023/August"],
+            note=openreview.api.Note()
+        )
+
+        helpers.await_queue_edit(client, edit_id=override_revision_edit['id'])        
 
         # Create ethics review stage to add values into domain
         now = datetime.datetime.utcnow()
@@ -346,6 +359,7 @@ class TestARRVenueV2():
     def test_june_cycle(self, client, openreview_client, helpers, test_client, profile_management):
         # Build the previous cycle
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        pc_client_v2 = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
@@ -488,6 +502,8 @@ class TestARRVenueV2():
             writers=[]
         ))
         
+        helpers.await_queue_edit(client, invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Ethics_Review_Stage')
+
         venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
         venue.create_ethics_review_stage()
 
@@ -806,6 +822,213 @@ class TestARRVenueV2():
                 label = 'Exclude'
         ))
 
+    
+    def test_submission_preprocess(self, client, openreview_client, test_client, helpers):
+        # Update the submission preprocess function and test validation for combinations
+        # of previous_URL/reassignment_request_action_editor/reassignment_request_reviewers
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        june_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+
+        generic_note_content = {
+            'title': { 'value': 'Paper title '},
+            'abstract': { 'value': 'This is an abstract ' },
+            'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@meta.com']},
+            'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
+            'TLDR': { 'value': 'This is a tldr '},
+            'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+            'responsible_NLP_research': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+            'paper_type': { 'value': 'short' },
+            'research_area': { 'value': 'Generation' },
+            'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
+            'data': {'value': '/pdf/' + 'p' * 40 +'.zip' },
+            'preprint': { 'value': 'yes'},
+            'existing_preprints': { 'value': 'existing_preprints' },
+            'preferred_venue': { 'value': 'ACL Conference' },
+            'consent_to_share_data': { 'value': 'yes' },
+            'consent_to_review': { 'value': 'yes' }
+        }
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
+        invitation_builder = openreview.arr.InvitationBuilder(june_venue)
+        invitation_builder.set_override_revision_process_invitation()
+
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/June/-/Override_Revision_Process')
+
+        override_revision_edit = pc_client_v2.post_note_edit(
+            invitation="aclweb.org/ACL/ARR/2023/June/-/Override_Revision_Process",
+            readers=["aclweb.org/ACL/ARR/2023/June"],
+            writers=["aclweb.org/ACL/ARR/2023/June"],
+            signatures=["aclweb.org/ACL/ARR/2023/June"],
+            note=openreview.api.Note()
+        )
+
+        helpers.await_queue_edit(client, edit_id=override_revision_edit['id'])
+
+        # Update submission fields
+        pc_client.post_note(openreview.Note(
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Revision',
+            forum=request_form.id,
+            readers=['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.id,
+            replyto=request_form.id,
+            signatures=['~Program_ARRChair1'],
+            writers=[],
+            content={
+                'title': 'ACL Rolling Review 2023 - June',
+                'Official Venue Name': 'ACL Rolling Review 2023 - June',
+                'Abbreviated Venue Name': 'ARR - June 2023',
+                'Official Website URL': 'http://aclrollingreview.org',
+                'program_chair_emails': ['editors@aclrollingreview.org', 'pc@aclrollingreview.org'],
+                'contact_email': 'editors@aclrollingreview.org',
+                'Venue Start Date': '2023/08/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'publication_chairs':'No, our venue does not have Publication Chairs',  
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'use_recruitment_template': 'Yes',
+                'Additional Submission Options': arr_submission_content,
+                'remove_submission_options': ['keywords'],
+                'homepage_override': { #TODO: Update
+                    'location': 'Hawaii, USA',
+                    'instructions': 'For author guidelines, please click [here](https://icml.cc/Conferences/2023/StyleAuthorInstructions)'
+                },
+                'hide_fields': hide_fields
+            }
+        ))
+
+        helpers.await_queue_edit(client, invitation=f'openreview.net/Support/-/Request{request_form.number}/Revision')
+
+        # Allow: submission with no previous URL
+        note = openreview.api.Note(
+            content = generic_note_content
+        )
+
+        allowed_note = test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=note)
+        
+        helpers.await_queue_edit(openreview_client, edit_id=allowed_note['id'])
+
+        # Allow: submission with valid previous URL
+        note = openreview.api.Note(
+            content = {
+                    **generic_note_content,
+                    'previous_URL': { 'value': f"http://localhost:3030/forum?id={allowed_note['note']['id']}" },
+                    'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                    'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' }
+                }
+        )
+
+        allowed_note_second = test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=note)
+        
+        helpers.await_queue_edit(openreview_client, edit_id=allowed_note_second['id'])
+
+        # Not allowed: submission with invalid previous URL
+        with pytest.raises(openreview.OpenReviewException, match=r'Provided paper link does not correspond to a submission in OpenReview'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+                signatures=['~SomeFirstName_User1'],
+                note=openreview.api.Note(
+                content = {
+                    **generic_note_content,
+                    'previous_URL': { 'value': 'https://arxiv.org/abs/1234.56789' },
+                    'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                    'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
+                }
+            )
+        )
+
+        # Not allowed: submission with reassignment requests and no previous URL
+        with pytest.raises(openreview.OpenReviewException, match=r'You have selected a reassignment request with no previous URL. Please enter a URL or close and re-open the submission form to clear your reassignment request'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+                signatures=['~SomeFirstName_User1'],
+                note=openreview.api.Note(
+                content = {
+                    **generic_note_content,
+                    'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                    'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
+                }
+            )
+        )
+
+        # Not allowed: submission with reviewer reassignment request and no previous URL
+        with pytest.raises(openreview.OpenReviewException, match=r'You have selected a reassignment request with no previous URL. Please enter a URL or close and re-open the submission form to clear your reassignment request'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+                signatures=['~SomeFirstName_User1'],
+                note=openreview.api.Note(
+                content = {
+                    **generic_note_content,
+                    'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
+                }
+            )
+        )
+
+        # Not allowed: submission with AE reassignment request and no previous URL
+        with pytest.raises(openreview.OpenReviewException, match=r'You have selected a reassignment request with no previous URL. Please enter a URL or close and re-open the submission form to clear your reassignment request'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+                signatures=['~SomeFirstName_User1'],
+                note=openreview.api.Note(
+                content = {
+                    **generic_note_content,
+                    'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
+                }
+            )
+        )
+
+        # Not allowed: submission with previous URL and no reassignment requests
+        with pytest.raises(openreview.OpenReviewException, match=r'Since you are re-submitting, please indicate if you would like the same editors/reviewers as your indicated previous submission'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+                signatures=['~SomeFirstName_User1'],
+                note=openreview.api.Note(
+                content = {
+                    **generic_note_content,
+                    'previous_URL': { 'value': f"http://localhost:3030/forum?id={allowed_note['note']['id']}" },
+                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
+                }
+            )
+        )
+
+        # Not allowed: submission with previous URL and only reviewer reassignment request
+        with pytest.raises(openreview.OpenReviewException, match=r'Since you are re-submitting, please indicate if you would like the same editors/reviewers as your indicated previous submission'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+                signatures=['~SomeFirstName_User1'],
+                note=openreview.api.Note(
+                content = {
+                    **generic_note_content,
+                    'previous_URL': { 'value': f"http://localhost:3030/forum?id={allowed_note['note']['id']}" },
+                    'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
+                }
+            )
+        )
+
+        # Not allowed: submission with previous URL and only AE reassignment request
+        with pytest.raises(openreview.OpenReviewException, match=r'Since you are re-submitting, please indicate if you would like the same editors/reviewers as your indicated previous submission'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+                signatures=['~SomeFirstName_User1'],
+                note=openreview.api.Note(
+                content = {
+                    **generic_note_content,
+                    'previous_URL': { 'value': f"http://localhost:3030/forum?id={allowed_note['note']['id']}" },
+                    'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
+                }
+            )
+        )
+
     def test_copy_members(self, client, openreview_client, helpers):
         # Create a previous cycle (2023/June) and test the script that copies all roles
         # (reviewers/ACs/SACs/ethics reviewers/ethics chairs) into the current cycle (2023/August)
@@ -888,7 +1111,6 @@ class TestARRVenueV2():
         for sac, edges in june_sacs_with_edges.items():
             assert sac in august_sacs_with_edges
             assert set(edges) == set(august_sacs_with_edges[sac])
-
 
     def test_unavailability_process_functions(self, client, openreview_client, helpers):
         # Update the process functions for each of the unavailability forms, set up the custom max papers
@@ -1095,11 +1317,6 @@ class TestARRVenueV2():
         assert '~AC_ARRTwo1' not in august_ac_edges
         assert '~SAC_ARRTwo1' not in august_sac_edges
         
-
-    def test_submission_preprocess(self, client, openreview_client, helpers):
-        # Update the submission preprocess function and test validation for combinations
-        # of previous_URL/reassignment_request_action_editor/reassignment_request_reviewers
-        pass
 
     def test_supplementary_materials_and_preprints(self, client, openreview_client, helpers):
         # After the submission deadline, opt-in papers have their readers set to everyone

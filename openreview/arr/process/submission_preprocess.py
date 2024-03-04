@@ -1,13 +1,36 @@
 def process(client, edit, invitation):
 
-    paper_link = edit.note.content['previous_URL']['value']
-    paper_forum = paper_link.split('=')[-1]
+    editor_reassignment_field = edit.note.content.get('reassignment_request_action_editor', {}).get('value', '')
+    editor_reassignment_request = len(editor_reassignment_field) > 0 and 'not a resubmission' not in editor_reassignment_field
+    reviewer_reassignment_field = edit.note.content.get('reassignment_request_reviewers', {}).get('value', '')
+    reviewer_reassignment_request = len(reviewer_reassignment_field) > 0 and 'not a resubmission' not in reviewer_reassignment_field
+    paper_link = edit.note.content.get('previous_URL', {}).get('value')
 
-    try:
+    if paper_link:
+        paper_forum = paper_link.split('=')[-1]
         client_v1=openreview.Client(baseurl=openreview.tools.get_base_urls(client)[0], token=client.token)
-        arr_submission = client_v1.get_note(paper_forum)
-    except openreview.OpenReviewException as e:
-        raise openreview.OpenReviewException('Provided paper link does not correspond to a submission in OpenReview')
 
-    if 'aclweb.org/ACL/ARR' not in arr_submission.invitation:
-        raise openreview.OpenReviewException('Provided paper link does not correspond to an ARR submission')
+        try:
+            arr_submission_v1 = client_v1.get_note(paper_forum)
+        except:
+            arr_submission_v1 = None
+
+        try:
+            arr_submission_v2 = client.get_note(paper_forum)
+        except:
+            arr_submission_v2 = None
+
+        
+        if not arr_submission_v1 and not arr_submission_v2:
+            raise openreview.OpenReviewException('Provided paper link does not correspond to a submission in OpenReview')
+
+        if (arr_submission_v1 and 'aclweb.org/ACL/ARR' not in arr_submission_v1.invitation) or (arr_submission_v2 and not any('aclweb.org/ACL/ARR' in inv for inv in arr_submission_v2.invitations)):
+            raise openreview.OpenReviewException('Provided paper link does not correspond to an ARR submission')
+
+    # If provided previous URL but left a reassignment request blank
+    if paper_link and (not editor_reassignment_request or not reviewer_reassignment_request):
+      raise openreview.OpenReviewException('Since you are re-submitting, please indicate if you would like the same editors/reviewers as your indicated previous submission')
+
+    # If no previous URL but selected reassignment
+    if not paper_link and (editor_reassignment_request or reviewer_reassignment_request):
+      raise openreview.OpenReviewException('You have selected a reassignment request with no previous URL. Please enter a URL or close and re-open the submission form to clear your reassignment request')

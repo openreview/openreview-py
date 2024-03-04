@@ -3,8 +3,12 @@ def process(client, note, invitation):
     import traceback
     import json
 
-    GROUP_PREFIX = ''
-    SUPPORT_GROUP = GROUP_PREFIX + '/Support'
+    client_v2 = openreview.api.OpenReviewClient(
+        baseurl=openreview.tools.get_base_urls(client)[1],
+        token=client.token
+    )
+
+    SUPPORT_GROUP = invitation.id.split('/-/')[0]
     invitation_type = invitation.id.split('/')[-1]
     forum_note = client.get_note(note.forum)
 
@@ -12,13 +16,17 @@ def process(client, note, invitation):
 
     try:
         conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP, setup=True)
+        invitation_builder = openreview.arr.InvitationBuilder(conference)
         short_name = conference.get_short_name()
         comment_readers = [conference.get_program_chairs_id(), SUPPORT_GROUP]
-        if invitation_type in ['Bid_Stage', 'Review_Stage', 'Meta_Review_Stage', 'Decision_Stage', 'Submission_Revision_Stage', 'Comment_Stage']:
-            conference.setup_post_submission_stage(hide_fields=forum_note.content.get('hide_fields', []))
 
         if invitation_type == 'Revision':
             conference.create_submission_stage()
+            # ARR: Add submission pre-process
+            invitation = client_v2.get_invitation(conference.get_submission_id())
+            invitation.preprocess = invitation_builder.get_process_content('process/submission_preprocess.py')
+            conference.invitation_builder.save_invitation(invitation)
+
             submission_deadline = forum_note.content.get('Submission Deadline', '').strip()
             if submission_deadline:
                 try:

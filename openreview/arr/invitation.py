@@ -194,4 +194,48 @@ class InvitationBuilder(object):
             }
         )
 
-        self.save_invitation(share_data_inv, replacement=False) 
+        self.save_invitation(share_data_inv, replacement=False)
+
+    def set_override_revision_process_invitation(self):
+        venue_id = self.venue_id
+
+        override_id = f'{venue_id}/-/Override_Revision_Process'
+        override_cdate= tools.datetime_millis(datetime.datetime.utcnow())
+
+        override_inv = Invitation(
+            id=override_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=['~Super_User1'],
+            cdate=override_cdate,
+            process=self.get_process_content('process/override_revision_process.py'),
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'note': {
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'signatures': [venue_id],
+                    'readers': [venue_id],
+                    'writers': [venue_id],
+                    'content': {
+                        'previous_cycle': {
+                            'value': {
+                                'param': {
+                                    'regex': '.*', 'type': 'string', 'optional': True ## Placeholder content fields
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(override_inv, replacement=False) 
