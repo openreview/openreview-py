@@ -196,16 +196,15 @@ class TestARRVenueV2():
         invitation_builder = openreview.arr.InvitationBuilder(venue)
         invitation_builder.set_arr_scheduler_invitation()
         invitation_builder.set_preprint_release_submission_invitation()
-        invitation_builder.set_share_data_invitation()
+        invitation_builder.set_setup_shared_data_invitation()
         invitation_builder.set_setup_venue_stages_invitation()
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission')
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Share_Data')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Setup_Shared_Data')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Setup_Venue_Stages')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler')
 
         now = datetime.datetime.utcnow()
-        due_date = now + datetime.timedelta(days=3)
 
         scheduler_edit = pc_client_v2.post_invitation_edit(
             invitations="aclweb.org/ACL/ARR/2023/August/-/Edit",
@@ -1057,38 +1056,40 @@ class TestARRVenueV2():
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
         august_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
 
-        share_data_edit = pc_client_v2.post_note_edit(
-            invitation="aclweb.org/ACL/ARR/2023/August/-/Share_Data",
+        now = datetime.datetime.utcnow()
+
+        scheduler_edit = pc_client_v2.post_invitation_edit(
+            invitations="aclweb.org/ACL/ARR/2023/August/-/Edit",
             readers=["aclweb.org/ACL/ARR/2023/August"],
             writers=["aclweb.org/ACL/ARR/2023/August"],
             signatures=["aclweb.org/ACL/ARR/2023/August"],
-            note=openreview.api.Note(
+            invitation=openreview.api.Invitation(
+                id='aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler',
                 content={
-                    'previous_cycle': {
-                        'value': 'aclweb.org/ACL/ARR/2023/June'
-                    }
+                    'previous_cycle': {'value': 'aclweb.org/ACL/ARR/2023/June'},
+                    'setup_shared_data_date': {'value': openreview.tools.datetime_millis(openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3))}
                 }
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=share_data_edit['id'])
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-1-0', count=1)
 
-        # Multiple calls should not migrate data multiple times
-        share_data_edit = pc_client_v2.post_note_edit(
-            invitation="aclweb.org/ACL/ARR/2023/August/-/Share_Data",
+        # Call twice to ensure data only gets copied once
+        scheduler_edit = pc_client_v2.post_invitation_edit(
+            invitations="aclweb.org/ACL/ARR/2023/August/-/Edit",
             readers=["aclweb.org/ACL/ARR/2023/August"],
             writers=["aclweb.org/ACL/ARR/2023/August"],
             signatures=["aclweb.org/ACL/ARR/2023/August"],
-            note=openreview.api.Note(
+            invitation=openreview.api.Invitation(
+                id='aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler',
                 content={
-                    'previous_cycle': {
-                        'value': 'aclweb.org/ACL/ARR/2023/June'
-                    }
+                    'previous_cycle': {'value': 'aclweb.org/ACL/ARR/2023/June'},
+                    'setup_shared_data_date': {'value': openreview.tools.datetime_millis(openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3))}
                 }
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=share_data_edit['id'])
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-1-0', count=2)
 
         # Find August in readers of groups and registration notes
         assert set(pc_client_v2.get_group(june_venue.get_reviewers_id()).members) == set(pc_client_v2.get_group(august_venue.get_reviewers_id()).members)
@@ -1483,7 +1484,7 @@ class TestARRVenueV2():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-1-0', count=1)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-2-0', count=1)
 
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission-0-1', count=2)
 

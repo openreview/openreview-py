@@ -102,12 +102,17 @@ class InvitationBuilder(object):
             cdate=scheduler_cdate,
             content={
                 'setup_venue_stages_date': {'value': 0},
+                'setup_shared_data_date': {'value': 0},
                 'preprint_release_submission_date': {'value': 0},
             },
             date_processes=[
                 {
                     'dates': ["#{4/content/setup_venue_stages_date/value}"],
                     'script': self.get_process_content('management/setup_venue_stages.py'),
+                },
+                {
+                    'dates': ["#{4/content/setup_shared_data_date/value}"],
+                    'script': self.get_process_content('management/setup_shared_data.py'),
                 },
                 {
                     'dates': ["#{4/content/preprint_release_submission_date/value}"],
@@ -183,10 +188,10 @@ class InvitationBuilder(object):
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=False)
 
-    def set_share_data_invitation(self):
+    def set_setup_shared_data_invitation(self):
         venue_id = self.venue_id
 
-        share_data_id = f'{venue_id}/-/Share_Data'
+        share_data_id = f'{venue_id}/-/Setup_Shared_Data'
         share_data_cdate= tools.datetime_millis(datetime.datetime.utcnow())
 
         share_data_inv = Invitation(

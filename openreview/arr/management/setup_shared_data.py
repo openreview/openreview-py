@@ -1,4 +1,4 @@
-def process(client, edit, invitation):
+def process(client, invitation):
     # TODO: Store registration and max load names in domain content to parameterize them
 
     import time, calendar
@@ -69,7 +69,7 @@ def process(client, edit, invitation):
         ## invitation is in the future, do not process
         print('invitation is not yet active', cdate)
         return
-    previous_cycle_id = edit.note.content['previous_cycle']['value']
+    previous_cycle_id = invitation.content['previous_cycle']['value']
     next_cycle_id = venue_id
     
     ## Try and retrieve different groups, notes and edges and change their readership
