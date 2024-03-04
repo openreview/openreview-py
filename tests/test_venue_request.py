@@ -666,10 +666,10 @@ class TestVenueRequest():
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
 
         messages = client.get_messages(to='reviewer_one_tilde@mail.com')
-        assert messages and len(messages) == 2
+        assert messages and len(messages) == 1
 
-        assert messages[1]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
-        assert messages[1]['content']['text'].startswith('Dear Reviewer OneTilde,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
+        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
+        assert messages[0]['content']['text'].startswith('Dear Reviewer OneTilde,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
 
         messages = client.get_messages(to = 'reviewer_one_tilde@mail.com', subject = "[TestVenue@OR'2030] Invitation to serve as Reviewer")
         text = messages[0]['content']['text']
@@ -681,9 +681,9 @@ class TestVenueRequest():
         assert 'Please complete your registration and expertise selection tasks here: https://openreview.net/tasks' in messages[0]['content']['text']
 
         messages = client.get_messages(to='reviewer_two_tilde@mail.com')
-        assert messages and len(messages) == 2
-        assert messages[1]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
-        assert messages[1]['content']['text'].startswith('Dear Reviewer TwoTilde,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
+        assert messages[0]['content']['text'].startswith('Dear Reviewer TwoTilde,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
                                                                                    venue['request_form_note'].number)
@@ -826,10 +826,10 @@ class TestVenueRequest():
         helpers.await_queue()
 
         messages = client.get_messages(to='reviewer_three_tilde@mail.com')
-        assert messages and len(messages) == 2
+        assert messages and len(messages) == 1
 
-        assert messages[1]['content']['subject'] == "[TestVenue@OR'2030 Modified] Invitation to serve as Reviewer"
-        assert "You have been nominated by the program chair committee of TestVenue@OR'2030 Modified to serve as Reviewer." in messages[1]['content']['text']
+        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030 Modified] Invitation to serve as Reviewer"
+        assert "You have been nominated by the program chair committee of TestVenue@OR'2030 Modified to serve as Reviewer." in messages[0]['content']['text']
 
         remind_recruitment_invitation = client.get_invitation('{}/-/Request{}/Remind_Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number))
 
@@ -852,10 +852,10 @@ class TestVenueRequest():
         helpers.await_queue()
 
         messages = client.get_messages(to='reviewer_three_tilde@mail.com')
-        assert messages and len(messages) == 3
+        assert messages and len(messages) == 2
 
-        assert messages[2]['content']['subject'] == "Reminder: [TestVenue@OR'2030 Modified] Invitation to serve as Reviewer"
-        assert "You have been nominated by the program chair committee of TestVenue@OR'2030 Modified to serve as Reviewer." in messages[2]['content']['text']
+        assert messages[1]['content']['subject'] == "Reminder: [TestVenue@OR'2030 Modified] Invitation to serve as Reviewer"
+        assert "You have been nominated by the program chair committee of TestVenue@OR'2030 Modified to serve as Reviewer." in messages[1]['content']['text']
 
         venue_revision_note = test_client.post_note(openreview.Note(
             content={
