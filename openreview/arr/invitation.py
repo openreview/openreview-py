@@ -107,11 +107,11 @@ class InvitationBuilder(object):
             date_processes=[
                 {
                     'dates': ["#{4/content/setup_venue_stages_date/value}"],
-                    'script': self.get_process_content('process/setup_venue_stages.py'),
+                    'script': self.get_process_content('management/setup_venue_stages.py'),
                 },
                 {
                     'dates': ["#{4/content/preprint_release_submission_date/value}"],
-                    'script': self.get_process_content('process/setup_preprint_release.py'),
+                    'script': self.get_process_content('management/setup_preprint_release.py'),
                 }
             ]
         )
@@ -196,7 +196,7 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=['~Super_User1'],
             cdate=share_data_cdate,
-            process=self.get_process_content('process/share_data.py'),
+            process=self.get_process_content('management/setup_shared_data.py'),
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -240,7 +240,7 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=['~Super_User1'],
             cdate=override_cdate,
-            process=self.get_process_content('process/setup_venue_stages.py')
+            process=self.get_process_content('management/setup_venue_stages.py')
         )
 
         self.save_invitation(override_inv, replacement=False) 
