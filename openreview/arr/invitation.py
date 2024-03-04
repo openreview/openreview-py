@@ -86,6 +86,32 @@ class InvitationBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
             process = f.read()
             return process
+        
+    def set_arr_scheduler_invitation(self):
+        venue_id = self.venue_id
+
+        scheduler_id = f'{venue_id}/-/ARR_Scheduler'
+        scheduler_cdate= tools.datetime_millis(datetime.datetime.utcnow())
+
+        scheduler_inv = Invitation(
+            id=scheduler_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=['~Super_User1'],
+            cdate=scheduler_cdate,
+            content={
+                'setup_venue_stages_date': {'value': 0}
+            },
+            date_processes=[
+                {
+                    'dates': ["#{4/content/setup_venue_stages_date/value}"],
+                    'script': self.get_process_content('process/setup_venue_stages.py'),
+                }
+            ]
+        )
+
+        self.save_invitation(scheduler_inv, replacement=False) 
 
     def set_preprint_release_submission_invitation(self):
         venue_id = self.venue_id
@@ -196,10 +222,10 @@ class InvitationBuilder(object):
 
         self.save_invitation(share_data_inv, replacement=False)
 
-    def set_override_revision_process_invitation(self):
+    def set_setup_venue_stages_invitation(self):
         venue_id = self.venue_id
 
-        override_id = f'{venue_id}/-/Override_Revision_Process'
+        override_id = f'{venue_id}/-/Setup_Venue_Stages'
         override_cdate= tools.datetime_millis(datetime.datetime.utcnow())
 
         override_inv = Invitation(
@@ -209,33 +235,7 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=['~Super_User1'],
             cdate=override_cdate,
-            process=self.get_process_content('process/override_revision_process.py'),
-            edit={
-                'signatures': [venue_id],
-                'readers': [venue_id],
-                'writers': [venue_id],
-                'note': {
-                    'ddate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True,
-                            'deletable': True
-                        }
-                    },
-                    'signatures': [venue_id],
-                    'readers': [venue_id],
-                    'writers': [venue_id],
-                    'content': {
-                        'previous_cycle': {
-                            'value': {
-                                'param': {
-                                    'regex': '.*', 'type': 'string', 'optional': True ## Placeholder content fields
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            process=self.get_process_content('process/setup_venue_stages.py')
         )
 
         self.save_invitation(override_inv, replacement=False) 

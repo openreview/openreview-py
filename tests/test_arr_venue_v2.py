@@ -6,6 +6,7 @@ import re
 import random
 import os
 import csv
+import sys
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 from openreview import ProfileManagement
@@ -193,23 +194,33 @@ class TestARRVenueV2():
         # Build current cycle invitations
         venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
         invitation_builder = openreview.arr.InvitationBuilder(venue)
+        invitation_builder.set_arr_scheduler_invitation()
         invitation_builder.set_preprint_release_submission_invitation()
         invitation_builder.set_share_data_invitation()
-        invitation_builder.set_override_revision_process_invitation()
+        invitation_builder.set_setup_venue_stages_invitation()
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Share_Data')
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Override_Revision_Process')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Setup_Venue_Stages')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler')
 
-        override_revision_edit = pc_client_v2.post_note_edit(
-            invitation="aclweb.org/ACL/ARR/2023/August/-/Override_Revision_Process",
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
+        scheduler_edit = pc_client_v2.post_invitation_edit(
+            invitations="aclweb.org/ACL/ARR/2023/August/-/Edit",
             readers=["aclweb.org/ACL/ARR/2023/August"],
             writers=["aclweb.org/ACL/ARR/2023/August"],
             signatures=["aclweb.org/ACL/ARR/2023/August"],
-            note=openreview.api.Note()
+            invitation=openreview.api.Invitation(
+                id='aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler',
+                content={
+                    'setup_venue_stages_date': {'value': openreview.tools.datetime_millis(openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3))}
+                }
+            )
         )
 
-        helpers.await_queue_edit(client, edit_id=override_revision_edit['id'])        
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-0-0', count=1)
 
         # Create ethics review stage to add values into domain
         now = datetime.datetime.utcnow()
@@ -855,19 +866,24 @@ class TestARRVenueV2():
         due_date = now + datetime.timedelta(days=3)
 
         invitation_builder = openreview.arr.InvitationBuilder(june_venue)
-        invitation_builder.set_override_revision_process_invitation()
+        invitation_builder.set_arr_scheduler_invitation()
 
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/June/-/Override_Revision_Process')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/June/-/ARR_Scheduler')
 
-        override_revision_edit = pc_client_v2.post_note_edit(
-            invitation="aclweb.org/ACL/ARR/2023/June/-/Override_Revision_Process",
+        override_revision_edit = pc_client_v2.post_invitation_edit(
+            invitations="aclweb.org/ACL/ARR/2023/June/-/Edit",
             readers=["aclweb.org/ACL/ARR/2023/June"],
             writers=["aclweb.org/ACL/ARR/2023/June"],
             signatures=["aclweb.org/ACL/ARR/2023/June"],
-            note=openreview.api.Note()
+            invitation=openreview.api.Invitation(
+                id='aclweb.org/ACL/ARR/2023/June/-/ARR_Scheduler',
+                content={
+                    'setup_venue_stages_date': {'value': openreview.tools.datetime_millis(openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3))}
+                }
+            )
         )
 
-        helpers.await_queue_edit(client, edit_id=override_revision_edit['id'])
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/June/-/ARR_Scheduler-0-0', count=1)
 
         # Update submission fields
         pc_client.post_note(openreview.Note(

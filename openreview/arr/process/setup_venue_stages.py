@@ -1,4 +1,4 @@
-def process(client, edit, invitation):
+def process(client, invitation):
 
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
