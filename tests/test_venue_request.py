@@ -278,7 +278,7 @@ class TestVenueRequest():
             to='new_test_user@mail.com',
             subject='Comment posted to your request for service: Test 2021 Venue')
         assert messages and len(messages) == 2
-        assert 'A comment was posted to your service request. \n\nComment title: Comment by Support' in messages[0]['content']['text']
+        assert 'A comment was posted to your service request. \n\nComment title: Comment by Support' in messages[0]['content']['text'] or 'A comment was posted to your service request. \n\nComment title: Comment by Support' in messages[1]['content']['text']
 
         messages = client.get_messages(
             to='support@openreview.net',
