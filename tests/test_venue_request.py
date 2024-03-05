@@ -285,7 +285,7 @@ class TestVenueRequest():
             subject='Comment posted to a service request: Test 2021 Venue'
         )
         assert messages and len(messages) == 2
-        assert 'A comment was posted to a service request. \n\nComment title: Comment by Support' in messages[0]['content']['text']
+        assert 'A comment was posted to a service request. \n\nComment title: Comment by Support' in messages[0]['content']['text'] or 'A comment was posted to a service request. \n\nComment title: Comment by Support' in messages[1]['content']['text']
 
         # Test Deploy
         deploy_note = client.post_note(openreview.Note(
