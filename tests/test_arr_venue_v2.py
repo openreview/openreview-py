@@ -194,11 +194,13 @@ class TestARRVenueV2():
         # Build current cycle invitations
         venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
         invitation_builder = openreview.arr.InvitationBuilder(venue)
+        invitation_builder.set_arr_configuration_invitation()
         invitation_builder.set_arr_scheduler_invitation()
         invitation_builder.set_preprint_release_submission_invitation()
         invitation_builder.set_setup_shared_data_invitation()
         invitation_builder.set_setup_venue_stages_invitation()
 
+        assert client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/ARR_Configuration')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Setup_Shared_Data')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Setup_Venue_Stages')
@@ -206,16 +208,18 @@ class TestARRVenueV2():
 
         now = datetime.datetime.utcnow()
 
-        scheduler_edit = pc_client_v2.post_invitation_edit(
-            invitations="aclweb.org/ACL/ARR/2023/August/-/Edit",
-            readers=["aclweb.org/ACL/ARR/2023/August"],
-            writers=["aclweb.org/ACL/ARR/2023/August"],
-            signatures=["aclweb.org/ACL/ARR/2023/August"],
-            invitation=openreview.api.Invitation(
-                id='aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler',
+        pc_client.post_note(
+            openreview.Note(
                 content={
-                    'setup_venue_stages_date': {'value': openreview.tools.datetime_millis(openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3))}
-                }
+                    'setup_venue_stages_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S')
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form_note.number}/ARR_Configuration',
+                forum=request_form_note.id,
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form_note.id,
+                replyto=request_form_note.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
             )
         )
 
@@ -865,20 +869,23 @@ class TestARRVenueV2():
         due_date = now + datetime.timedelta(days=3)
 
         invitation_builder = openreview.arr.InvitationBuilder(june_venue)
+        invitation_builder.set_arr_configuration_invitation()
         invitation_builder.set_arr_scheduler_invitation()
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/June/-/ARR_Scheduler')
 
-        override_revision_edit = pc_client_v2.post_invitation_edit(
-            invitations="aclweb.org/ACL/ARR/2023/June/-/Edit",
-            readers=["aclweb.org/ACL/ARR/2023/June"],
-            writers=["aclweb.org/ACL/ARR/2023/June"],
-            signatures=["aclweb.org/ACL/ARR/2023/June"],
-            invitation=openreview.api.Invitation(
-                id='aclweb.org/ACL/ARR/2023/June/-/ARR_Scheduler',
+        pc_client.post_note(
+            openreview.Note(
                 content={
-                    'setup_venue_stages_date': {'value': openreview.tools.datetime_millis(openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3))}
-                }
+                    'setup_venue_stages_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S')
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
             )
         )
 
@@ -1058,34 +1065,38 @@ class TestARRVenueV2():
 
         now = datetime.datetime.utcnow()
 
-        scheduler_edit = pc_client_v2.post_invitation_edit(
-            invitations="aclweb.org/ACL/ARR/2023/August/-/Edit",
-            readers=["aclweb.org/ACL/ARR/2023/August"],
-            writers=["aclweb.org/ACL/ARR/2023/August"],
-            signatures=["aclweb.org/ACL/ARR/2023/August"],
-            invitation=openreview.api.Invitation(
-                id='aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler',
+        pc_client.post_note(
+            openreview.Note(
                 content={
-                    'previous_cycle': {'value': 'aclweb.org/ACL/ARR/2023/June'},
-                    'setup_shared_data_date': {'value': openreview.tools.datetime_millis(openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3))}
-                }
+                    'previous_cycle': 'aclweb.org/ACL/ARR/2023/June',
+                    'setup_shared_data_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S')
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
             )
         )
 
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-1-0', count=1)
 
         # Call twice to ensure data only gets copied once
-        scheduler_edit = pc_client_v2.post_invitation_edit(
-            invitations="aclweb.org/ACL/ARR/2023/August/-/Edit",
-            readers=["aclweb.org/ACL/ARR/2023/August"],
-            writers=["aclweb.org/ACL/ARR/2023/August"],
-            signatures=["aclweb.org/ACL/ARR/2023/August"],
-            invitation=openreview.api.Invitation(
-                id='aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler',
+        pc_client.post_note(
+            openreview.Note(
                 content={
-                    'previous_cycle': {'value': 'aclweb.org/ACL/ARR/2023/June'},
-                    'setup_shared_data_date': {'value': openreview.tools.datetime_millis(openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3))}
-                }
+                    'previous_cycle': 'aclweb.org/ACL/ARR/2023/June',
+                    'setup_shared_data_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S')
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
             )
         )
 
@@ -1471,16 +1482,18 @@ class TestARRVenueV2():
         assert 'readers' not in submissions[0].content['justification_for_not_keeping_action_editor_or_reviewers']
 
         ## release preprint submissions
-        scheduler_edit = pc_client_v2.post_invitation_edit(
-            invitations="aclweb.org/ACL/ARR/2023/August/-/Edit",
-            readers=["aclweb.org/ACL/ARR/2023/August"],
-            writers=["aclweb.org/ACL/ARR/2023/August"],
-            signatures=["aclweb.org/ACL/ARR/2023/August"],
-            invitation=openreview.api.Invitation(
-                id='aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler',
+        pc_client.post_note(
+            openreview.Note(
                 content={
-                    'preprint_release_submission_date': {'value': openreview.tools.datetime_millis(openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3))}
-                }
+                    'preprint_release_submission_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S')
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
             )
         )
 

@@ -87,6 +87,71 @@ class InvitationBuilder(object):
             process = f.read()
             return process
         
+    def set_arr_configuration_invitation(self):
+        # Must be run by super user
+        client_v1 = openreview.Client(
+            baseurl=openreview.tools.get_base_urls(self.client)[0],
+            token=self.client.token
+        )
+
+        venue_id = self.venue_id
+        request_form_id = self.venue.request_form_id
+        request_form = client_v1.get_note(request_form_id)
+        support_group = request_form.invitation.split('/-/')[0]
+
+        client_v1.post_invitation(openreview.Invitation(
+            id=f"{support_group}/-/Request{request_form.number}/ARR_Configuration",
+            readers=[venue_id],
+            writers=[support_group],
+            signatures=['~Super_User1'],
+            invitees=[venue_id],
+            multiReply=True,
+            process_string=self.get_process_content('process/configuration_process.py'),
+            reply={
+                'forum':request_form_id,
+                'referent': request_form_id,
+                'readers': {
+                    'description': 'The users who will be allowed to read the above content.',
+                    'values' : [
+                        support_group,
+                        self.venue.get_program_chairs_id()
+                    ]
+                },
+                'writers': {
+                    'values':[],
+                },
+                'signatures': {
+                    'values-regex': '~.*'
+                },
+                'content': {
+                    'previous_cycle': {
+                        'description': 'What is the previous cycle? This will be used to fetch data and copy it into the current venue.',
+                        'value-regex': '.*',
+                        'order': 10,
+                        'required': False
+                    },
+                    'setup_venue_stages_date': {
+                        'description': 'When should the venue request process functions be overridden? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+                        'order': 11,
+                        'required': False
+                    },
+                    'setup_shared_data_date': {
+                        'description': 'When should the data be copied over? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+                        'order': 12,
+                        'required': False
+                    },
+                    'preprint_release_submission_date': {
+                        'description': 'When should submissions be copied over and the opt-in papers be revealed to the public? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+                        'order': 13,
+                        'required': False
+                    }
+                }
+            }
+        ))
+        
     def set_arr_scheduler_invitation(self):
         venue_id = self.venue_id
 
