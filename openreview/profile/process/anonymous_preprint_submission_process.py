@@ -57,6 +57,7 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
     #send tauthor email
     if edit.tauthor.lower() != 'openreview.net':
         client.post_message(
+            invitation=f'{venue_id}/-/Edit',
             subject=author_subject,
             message=author_message,
             recipients=[edit.tauthor]
@@ -65,6 +66,7 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
     # send co-author emails
     author_message += f'''\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at {edit.tauthor}'''
     client.post_message(
+        invitation=f'{venue_id}/-/Edit',
         subject=author_subject,
         message=author_message,
         recipients=note.content['authorids']['value'],

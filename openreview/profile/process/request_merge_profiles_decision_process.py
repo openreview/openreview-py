@@ -4,7 +4,9 @@ def process(client, edit, invitation):
     recipients = [request_note.content.get('email', {}).get('value')] if '(guest)' in request_note.signatures else request_note.signatures
     
     if 'Rejected' == request_note.content['status']['value']:
-        client.post_message(subject='Profile merge request has been rejected', 
+        client.post_message(
+        invitation=f'{edit.domain}/-/Edit',
+        subject='Profile merge request has been rejected', 
         recipients=recipients, 
         message=f'''Hi {{{{fullname}}}},
 
@@ -21,7 +23,9 @@ The OpenReview Team.
         return       
     
     if 'Accepted' == request_note.content['status']['value']:
-        client.post_message(subject='Profile merge request has been accepted', 
+        client.post_message(
+        invitation=f'{edit.domain}/-/Edit',
+        subject='Profile merge request has been accepted', 
         recipients=recipients, 
         message=f'''Hi {{{{fullname}}}},
 

@@ -20,7 +20,9 @@ def process(client, edit, invitation):
 
         print(f'Publications for {username}: {len(api1_publications) + len(api2_publications)}')
         if api1_publications or api2_publications:
-            client.post_message(subject='Profile name removal request has been received', 
+            client.post_message(
+            invitation=f'{edit.domain}/-/Edit',
+            subject='Profile name removal request has been received', 
             recipients=edit.note.signatures, 
             message=f'''Hi {{{{fullname}}}},
 

@@ -700,7 +700,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         assert pc_client.get_invitation('openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number))
 
-    def test_recruit_ethics_reviewers(self, client, request_page, selenium, helpers):
+    def test_recruit_ethics_reviewers(self, client, request_page, selenium, helpers, openreview_client):
 
         ## Need super user permission to add the venue to the active_venues group
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)

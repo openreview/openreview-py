@@ -2,7 +2,9 @@ def process(client, edit, invitation):
 
     note = client.get_note(edit.note.id)
 
-    client.post_message(subject='Profile merge request has been received', 
+    client.post_message(
+    invitation=f'{edit.domain}/-/Edit',
+    subject='Profile merge request has been received', 
     recipients=[note.content.get('email', {}).get('value')] if '(guest)' in note.signatures else note.signatures, 
     message=f'''Hi {{{{fullname}}}},
 
