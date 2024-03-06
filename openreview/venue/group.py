@@ -188,7 +188,9 @@ class GroupBuilder(object):
             'desk_rejection_email_pcs': { 'value': self.venue.submission_stage.email_pcs_on_desk_reject },
             'desk_rejected_submission_reveal_authors': { 'value': self.venue.submission_stage.desk_rejected_submission_reveal_authors },
             'automatic_reviewer_assignment': { 'value': self.venue.automatic_reviewer_assignment },
-            'decision_heading_map': { 'value': self.venue.decision_heading_map }
+            'decision_heading_map': { 'value': self.venue.decision_heading_map },
+            'reviewers_message_submission_id': { 'value': self.venue.get_message_id(number='{number}') },
+            'reviewers_message_id': { 'value': self.venue.get_message_id(committee_id=self.venue.get_reviewers_id()) }
         }
 
         if self.venue.submission_stage.subject_areas:
@@ -203,6 +205,7 @@ class GroupBuilder(object):
             content['area_chairs_conflict_id'] = { 'value': self.venue.get_conflict_score_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_recruitment_id'] = { 'value': self.venue.get_recruitment_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_assignment_id'] = { 'value': self.venue.get_assignment_id(self.venue.get_area_chairs_id(), deployed=True) }
+            content['area_chairs_message_id'] =  { 'value': self.venue.get_message_id(committee_id=self.venue.get_area_chairs_id()) }
 
         if self.venue.use_secondary_area_chairs:
             content['secondary_area_chairs_name'] = { 'value': self.venue.secondary_area_chairs_name }

@@ -164,6 +164,9 @@ class Venue(object):
     def get_constraint_label_id(self, committee_id):
         return self.get_invitation_id('Constraint_Label', prefix=committee_id)
 
+    def get_message_id(self, committee_id=None, number=None):
+        return self.get_invitation_id('Message', prefix=committee_id, number=number)
+
     def get_recommendation_id(self, committee_id=None):
         if not committee_id:
             committee_id = self.get_reviewers_id()
@@ -454,6 +457,7 @@ class Venue(object):
         self.invitation_builder.set_post_submission_invitation()
         self.invitation_builder.set_pc_submission_revision_invitation()
         self.invitation_builder.set_submission_reviewer_group_invitation()
+        self.invitation_builder.set_submission_message_invitation()
         if self.use_area_chairs:
             self.invitation_builder.set_submission_area_chair_group_invitation()
         if self.use_senior_area_chairs:
