@@ -4040,6 +4040,10 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
             'ICML.cc/2023/Conference/Submission2/Authors',
             reviews[0].signatures[0]
         ]
+        edits = openreview_client.get_note_edits(note_id=reviews[0].id)
+        for edit in edits:
+            assert edit.readers == edit.note.readers
+            assert '${2/note/readers}' not in edit.readers
 
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
