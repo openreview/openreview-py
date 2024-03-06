@@ -366,6 +366,7 @@ class TestICLRConference():
     def test_comment_stage(self, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@iclr.cc', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@iclr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # Post an official comment stage note
@@ -437,6 +438,35 @@ class TestICLRConference():
                 "optional": True
             }
         ]
+
+        # PC posts comment to Reviewers/Submitted, no email is sent to group
+        submissions = openreview_client.get_notes(invitation='ICLR.cc/2024/Conference/-/Submission', sort='number:asc')
+        official_comment_note = pc_client_v2.post_note_edit(
+            invitation='ICLR.cc/2024/Conference/Submission2/-/Official_Comment',
+            signatures=['ICLR.cc/2024/Conference/Program_Chairs'],
+            note=openreview.api.Note(
+                replyto=submissions[1].id,
+                content={
+                    'title': {'value': 'test comment title'},
+                    'comment': {'value': 'test comment'}
+                },
+                readers=[
+                    'ICLR.cc/2024/Conference/Program_Chairs',
+                    'ICLR.cc/2024/Conference/Submission2/Senior_Area_Chairs',
+                    'ICLR.cc/2024/Conference/Submission2/Reviewers/Submitted'
+                ]
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=official_comment_note['id'])
+
+        official_comment_notes = openreview_client.get_notes(invitation='ICLR.cc/2024/Conference/Submission2/-/Official_Comment')
+        assert len(official_comment_notes) == 1
+        assert 'ICLR.cc/2024/Conference/Submission2/Reviewers/Submitted' in official_comment_notes[0].readers
+
+        messages = openreview_client.get_messages(subject='[ICLR 2024] Program Chairs commented on a paper.*')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['to'] == 'pc3@iclr.cc'
 
         ## allow public comments
         comment_stage_note = pc_client.post_note(openreview.Note(
