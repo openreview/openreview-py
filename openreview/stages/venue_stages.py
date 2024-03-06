@@ -338,7 +338,7 @@ class SubmissionStage(object):
         return content
     
     def get_hidden_field_names(self):
-        return (['authors', 'authorids'] if self.double_blind else []) + self.hide_fields
+        return (['authors', 'authorids'] if self.double_blind and not self.author_names_revealed else []) + self.hide_fields
 
     def is_under_submission(self):
         return self.due_date is None or datetime.datetime.utcnow() < self.due_date
