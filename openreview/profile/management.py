@@ -1155,7 +1155,7 @@ class ProfileManagement():
                     id=f'{self.support_group_id}/-/Profile_Merge',
                     readers=['everyone'],
                     writers=[self.support_group_id],
-                    signatures=[self.support_group_id],
+                    signatures=[self.super_user],
                     invitees=['~', '(guest)'],
                     process=file_content,
                     edit={
