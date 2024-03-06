@@ -48,6 +48,12 @@ class VenueStages():
             'value-dict': {},
             'description': 'Override homepage defaults: title, subtitle, deadline, date, website, location. Valid JSON expected.'
         }
+        revision_content['source_submissions_query_mapping'] = {
+            'order': 23,
+            'value-dict': {},
+            'hidden': True,
+            'required': False
+        }
 
         with open(os.path.join(os.path.dirname(__file__), 'process/revision_pre_process.py')) as pre:
             pre_process_file_content = pre.read()
