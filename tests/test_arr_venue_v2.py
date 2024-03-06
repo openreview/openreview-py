@@ -204,10 +204,15 @@ class TestARRVenueV2():
 
         now = datetime.datetime.utcnow()
 
+        registration_name = 'Registration'
+        max_load_name = 'Max_Load_And_Unavailability_Request'
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_venue_stages_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S')
+                    'setup_venue_stages_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S'),
+                    'form_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form_note.number}/ARR_Configuration',
                 forum=request_form_note.id,
@@ -261,94 +266,17 @@ class TestARRVenueV2():
         venue.create_ethics_review_stage()
 
         # Pin 2023 and 2024 into next available year
-        for content in [
+        task_array = [
             arr_reviewer_max_load_task,
             arr_ac_max_load_task,
             arr_sac_max_load_task,
-        ]:
-            content['next_available_year']['value']['param']['enum'] = list(set([2022, 2023, 2024] + content['next_available_year']['value']['param']['enum']))
-
-        # Create current registration stages
-        registration_name = 'Registration'
-        max_load_name = 'Max_Load_And_Unavailability_Request'
-        venue.registration_stages.append(
-            openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
-            name = registration_name,
-            start_date = None,
-            due_date = due_date,
-            instructions = arr_registration_task_forum['instructions'],
-            title = venue.get_reviewers_name() + ' ' + arr_registration_task_forum['title'],
-            additional_fields=arr_registration_task)
-        )
-        venue.registration_stages.append(
-            openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
-            name = max_load_name,
-            start_date = None,
-            due_date = due_date,
-            instructions = arr_max_load_task_forum['instructions'],
-            title = venue.get_reviewers_name() + ' ' + arr_max_load_task_forum['title'],
-            additional_fields=arr_reviewer_max_load_task,
-            remove_fields=['profile_confirmed', 'expertise_confirmed'])
-        )
-        venue.registration_stages.append(
-            openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
-            name = 'License_Agreement',
-            start_date = None,
-            due_date = due_date,
-            instructions = arr_content_license_task_forum['instructions'],
-            title = arr_content_license_task_forum['title'],
-            additional_fields=arr_content_license_task,
-            remove_fields=['profile_confirmed', 'expertise_confirmed'])
-        )
-
-        venue.registration_stages.append(
-            openreview.stages.RegistrationStage(committee_id = venue.get_area_chairs_id(),
-            name = registration_name,
-            start_date = None,
-            due_date = due_date,
-            instructions = arr_registration_task_forum['instructions'],
-            title = venue.get_area_chairs_name() + ' ' + arr_registration_task_forum['title'],
-            additional_fields=arr_registration_task)
-        )
-        venue.registration_stages.append(
-            openreview.stages.RegistrationStage(committee_id = venue.get_area_chairs_id(),
-            name = max_load_name,
-            start_date = None,
-            due_date = due_date,
-            instructions = arr_max_load_task_forum['instructions'],
-            title = venue.get_area_chairs_name() + ' ' + arr_max_load_task_forum['title'],
-            additional_fields=arr_ac_max_load_task,
-            remove_fields=['profile_confirmed', 'expertise_confirmed'])
-        )
-
-        venue.registration_stages.append(
-            openreview.stages.RegistrationStage(committee_id = venue.get_senior_area_chairs_id(),
-            name = registration_name,
-            start_date = None,
-            due_date = due_date,
-            instructions = arr_registration_task_forum['instructions'],
-            title = venue.senior_area_chairs_name.replace('_', ' ') + ' ' + arr_registration_task_forum['title'],
-            additional_fields=arr_registration_task)
-        )
-        venue.registration_stages.append(
-            openreview.stages.RegistrationStage(committee_id = venue.get_senior_area_chairs_id(),
-            name = max_load_name,
-            start_date = None,
-            due_date = due_date,
-            instructions = arr_max_load_task_forum['instructions'],
-            title = venue.senior_area_chairs_name.replace('_', ' ') + ' ' + arr_max_load_task_forum['title'],
-            additional_fields=arr_sac_max_load_task,
-            remove_fields=['profile_confirmed', 'expertise_confirmed'])
-        )
-        venue.create_registration_stages()
-
-        # Create custom max papers invitations early
+        ]
         venue_roles = [
             venue.get_reviewers_id(),
             venue.get_area_chairs_id(),
             venue.get_senior_area_chairs_id()
         ]
-        for role in venue_roles:
+        for role, task_field in zip(venue_roles, task_array):
             m = matching.Matching(venue, venue.client.get_group(role), None, None)
             m._create_edge_invitation(venue.get_custom_max_papers_id(m.match_group.id))
 
@@ -359,11 +287,25 @@ class TestARRVenueV2():
                 signatures=[venue.id],
                 invitation=openreview.api.Invitation(
                     id=f"{role}/-/{max_load_name}",
-                    process=invitation_builder.get_process_content('process/max_load_process.py'),
-                    preprocess=invitation_builder.get_process_content('process/max_load_preprocess.py')
+                    edit={
+                        'note': {
+                            'content':{
+                                'next_available_year': {
+                                    'value': {
+                                        'param': {
+                                            "input": "radio",
+                                            "optional": True,
+                                            "type": "integer",
+                                            'enum' : list(set([2022, 2023, 2024] + task_field['next_available_year']['value']['param']['enum']))
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 )
             )
-        # TODO: Move max load setup into an ARR invitation
+
 
 
     def test_june_cycle(self, client, openreview_client, helpers, test_client, profile_management):
@@ -873,7 +815,10 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_venue_stages_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S')
+                    'setup_venue_stages_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S'),
+                    'form_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
