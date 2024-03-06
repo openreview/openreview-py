@@ -197,13 +197,9 @@ class TestARRVenueV2():
         invitation_builder.set_arr_configuration_invitation()
         invitation_builder.set_arr_scheduler_invitation()
         invitation_builder.set_preprint_release_submission_invitation()
-        invitation_builder.set_setup_shared_data_invitation()
-        invitation_builder.set_setup_venue_stages_invitation()
 
         assert client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/ARR_Configuration')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission')
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Setup_Shared_Data')
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Setup_Venue_Stages')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler')
 
         now = datetime.datetime.utcnow()
