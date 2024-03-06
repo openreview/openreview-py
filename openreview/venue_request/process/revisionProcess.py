@@ -587,6 +587,33 @@ Best,
                         )
                         client.post_note(comment_note)
 
+            # update Submission_Revision_stage invitation
+            if forum_note.content.get('reveal_authors') == 'Reveal author identities of only accepted submissions to the public':
+                revision_stage_inv = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Submission_Revision_Stage')
+                if revision_stage_inv:
+                    content = revision_stage_inv.reply['content']
+                    content['accepted_submissions_only'] = {
+                        'description': 'At this point, revisions can only be enabled for accepted submissions. If you would like to enable revisions for rejected submissions as well, please contact us at info@openreview.net.',
+                        'value-radio': [
+                            'Enable revision for accepted submissions only',
+                        ],
+                        'default': 'Enable revision for accepted submissions only',
+                        'required': True,
+                        'order': 4
+                    }
+                    client.post_invitation(openreview.Invitation(
+                        id = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Submission_Revision_Stage',
+                        super = SUPPORT_GROUP + '/-/Submission_Revision_Stage',
+                        invitees = [conference.get_program_chairs_id(), SUPPORT_GROUP],
+                        reply = {
+                            'forum': forum_note.id,
+                            'referent': forum_note.id,
+                            'readers' : revision_stage_inv.reply['readers'],
+                            'content': content
+                        },
+                        signatures = ['~Super_User1']
+                    ))
+
         elif invitation_type == 'Review_Rating_Stage':
 
             conference.create_custom_stage()
