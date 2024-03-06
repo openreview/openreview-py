@@ -794,3 +794,353 @@ arr_registration_task = {
         }
     }
 }
+
+arr_ae_checklist = {
+    "appropriateness": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Is the paper appropriate to *ACL?",
+        "order": 1
+    },
+    "formatting": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Is the paper properly formatted according to the template? Templates for *ACL conferences found here: https://github.com/acl-org/acl-style-files",
+        "order": 2
+    },
+    "length": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Does the paper have the proper length? Short papers: 4 content pages maximum, Long papers: 8 content pages maximum, Ethical considerations: 1 content page maximum",
+        "order": 3
+    },
+    "anonymity": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Is the paper anonymous?",
+        "order": 4
+    },
+    "limitations": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Does the paper have a section entitled \"Limitations\"?",
+        "order": 5
+    },
+    "responsible_checklist": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Have the authors completed the responsible NLP research checklist?",
+        "order": 6
+    },
+    "potential_violation_justification": {
+        "value": {
+            "param": {
+                "regex": ".{1,250}",
+                "optional": False,
+                "default": "There are no violations with this submission",
+                "type": "string"
+            }
+        },
+        "description": "Modify only if a violation is marked. If you have marked any violation on this checklist, please give a brief explanation of the issue",
+        "order": 7
+    },
+    "number_of_assignments": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Does the submission have 3 reviewers?",
+        "order": 8
+    },
+    "diversity": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Are the reviewers diverse, in regards to seniority, geographies and institutions? If not, answer 'no' and please modify the assignments",
+        "order": 9
+    },
+    "need_ethics_review": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Should this paper be sent for an in-depth ethics review? We have a small ethics committee that can specially review very challenging papers when it comes to ethical issues. If this seems to be such a paper, then please explain why below, and we will try to ensure that it receives a separate review.",
+        "order": 10
+    },
+    "ethics_review_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A (I answered no to the previous question)",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Please provide a meaningful justification for why this paper needs an ethics review. Note that lack of ethical considerations section, limitations section, copyright details etc. should be directly communicated to the authors in your reviews, and often do not need a full ethics review. When in doubt, please flag. For more guidelines on ethics review flagging, see https://aclrollingreview.org/ethics-flagging-guidelines/",
+        "order": 11
+    },
+    "resubmission": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No",
+                    "This paper is a not a resubmission"
+                ],
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "description": "If the paper is a resubmission, does the link to the previous submission work?",
+        "order": 12
+    },
+    "resubmission_reassignments": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No",
+                    "This paper is a not a resubmission"
+                ],
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "description": "If the paper is a resubmission and the authors requested the same reviewers (the authors answered 'yes' to the Reviewer Reassignment Request field), are the previous reviewers reassigned? If not, answer 'no' and please modify the assignments",
+        "order": 13
+    },
+    "comment": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "description": "Your comment or reply (max 10000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq",
+        "order": 14
+    }
+}
+
+
+arr_reviewer_checklist = {
+    "appropriateness": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Is the paper appropriate to *ACL?",
+        "order": 1
+    },
+    "formatting": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Is the paper properly formatted according to the template? Templates for *ACL conferences found here: https://github.com/acl-org/acl-style-files. Please note that ACL has separate LaTeX and Microsoft Word templates, and PDFs produced by these templates look different from each other.",
+        "order": 2
+    },
+    "length": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Does the paper have the proper length? Short papers: 4 content pages maximum, Long papers: 8 content pages maximum, Ethical considerations and Limitations do not count toward this limit",
+        "order": 3
+    },
+    "anonymity": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Is the paper anonymous?",
+        "order": 4
+    },
+    "limitations": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Does the paper have a section entitled \"Limitations\"?",
+        "order": 5
+    },
+    "responsible_checklist": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Have the authors completed the responsible NLP research checklist? The new format for the checklist document is here https://aclrollingreview.org/responsibleNLPresearch/.",
+        "order": 6
+    },
+    "potential_violation_justification": {
+        "value": {
+            "param": {
+                "regex": ".{1,250}",
+                "optional": False,
+                "default": "There are no violations with this submission",
+                "type": "string"
+            }
+        },
+        "description": "Modify only if a violation is marked. If you have marked any violation on this checklist, please give a brief explanation of the issue",
+        "order": 7
+    },
+    "need_ethics_review": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Should this paper be sent for an in-depth ethics review? We have a small ethics committee that can specially review very challenging papers when it comes to ethical issues. If this seems to be such a paper, then please explain why below, and we will try to ensure that it receives a separate review. Please refer to https://aclrollingreview.org/ethics-flagging-guidelines/",
+        "order": 8
+    },
+    "ethics_review_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "default": "N/A (I answered no to the previous question)",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Please provide a meaningful justification for why this paper needs an ethics review. Note that lack of ethical considerations section, limitations section, copyright details etc. should be directly communicated to the authors in your reviews, and often do not need a full ethics review. When in doubt, please flag. For more guidelines on ethics review flagging, see https://aclrollingreview.org/ethics-flagging-guidelines/",
+        "order": 9
+    },
+    "comment": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "description": "Your comment or reply (max 10000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq",
+        "order": 10
+    }
+}
+

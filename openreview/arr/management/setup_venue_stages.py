@@ -8,7 +8,9 @@ def process(client, invitation):
         arr_max_load_task_forum,
         arr_reviewer_max_load_task,
         arr_ac_max_load_task,
-        arr_sac_max_load_task
+        arr_sac_max_load_task,
+        arr_reviewer_checklist,
+        arr_ae_checklist
     )
     from openreview.venue import matching
     from datetime import datetime
@@ -21,9 +23,6 @@ def process(client, invitation):
 
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
-    submission_venue_id = domain.content['submission_venue_id']['value']
-    meta_invitation_id = domain.content['meta_invitation_id']['value']
-    venue_name = domain.content['title']['value']
     request_form_id = domain.content['request_form_id']['value']
 
     client_v1 = openreview.Client(
@@ -46,6 +45,10 @@ def process(client, invitation):
     overall_exp = fetch_date('form_expiration_date') / 1000
     max_load_due = fetch_date('maximum_load_due_date') / 1000
     max_load_exp = (overall_exp if fetch_date('maximum_load_exp_date') is None else fetch_date('maximum_load_exp_date')) / 1000
+    reviewer_checklist_due = fetch_date('reviewer_checklist_due_date')
+    reviewer_checklist_exp = fetch_date('reviewer_checklist_exp_date')
+    ae_checklist_due = fetch_date('ae_checklist_due_date')
+    ae_checklist_exp = fetch_date('ae_checklist_exp_date')
 
     registration_name = 'Registration'
     max_load_name = 'Max_Load_And_Unavailability_Request'
@@ -148,3 +151,43 @@ def process(client, invitation):
                 preprocess=invitation_builder.get_process_content('process/max_load_preprocess.py')
             )
         )
+
+    # Create checklist custom stages and overwrite their process functions
+    venue.custom_stage = openreview.stages.CustomStage(name='Reviewer_Checklist',
+        reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
+        source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+        due_date=reviewer_checklist_due,
+        exp_date=reviewer_checklist_exp,
+        invitees=[openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED],
+        readers=[
+            openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+            openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
+            openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED
+        ],
+        content=arr_reviewer_checklist,
+        notify_readers=False,
+        email_sacs=False)
+
+    invitation_builder.set_custom_stage_invitation(
+        process_script = 'checklist_process.py',
+        preprocess_script = 'checklist_preprocess.py'
+    )
+
+    venue.custom_stage = openreview.stages.CustomStage(name='Action_Editor_Checklist',
+        reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
+        source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+        due_date=ae_checklist_due,
+        exp_date=ae_checklist_exp,
+        invitees=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
+        readers=[
+            openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+            openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED
+        ],
+        content=arr_ae_checklist,
+        notify_readers=False,
+        email_sacs=False)
+
+    invitation_builder.set_custom_stage_invitation(
+        process_script = 'checklist_process.py',
+        preprocess_script = 'checklist_preprocess.py'
+    )
