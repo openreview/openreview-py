@@ -11,15 +11,24 @@ async function process(client, edit, invitation) {
 
   const html = note.content.html?.value;
 
-  if (html) {
-    const { abstract, pdf } = await extractAbstract(html);
-    if (abstract) {
-      note.content.abstract = { value: abstract };
+  try {
+    if (html) {
+      const { abstract, pdf, error } = await extractAbstract(html);
+      console.log('abstract: ' + abstract);
+      console.log('pdf: ' + pdf);
+      console.log('error: ' + error);
+      if (abstract) {
+        note.content.abstract = { value: abstract };
+      }
+      if (pdf) {
+        note.content.pdf = { value: pdf };
+      }
     }
-    if (pdf) {
-      note.content.pdf = { value: pdf };
-    }
+  } catch (error) {
+    console.log('error: ' + error);
   }
+
+
 
   await client.postNoteEdit({
     invitation: 'DBLP.org/-/Edit',
