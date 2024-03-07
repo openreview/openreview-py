@@ -81,7 +81,56 @@ class InvitationBuilder(object):
                 )
             )
 
-    # Non-blocking custom stage
+    # Modified ethics review flag invitation
+    def set_verification_flag_invitation(self):
+        venue_id = self.venue_id
+        flag_invitation_id = f'{venue_id}/-/Desk_Reject_Verification_Flag'
+        submission_id = self.venue.submission_stage.get_submission_id(self.venue)
+
+        flag_readers = [venue_id]
+        if self.venue.use_senior_area_chairs:
+            flag_readers.append(self.venue.get_senior_area_chairs_id('${{4/id}/number}'))
+        
+        flag_invitation = Invitation(
+            id=flag_invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = ['everyone'],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': submission_id,
+                            'optional': True
+                        }
+                    },
+                    'signatures': [ self.venue.get_authors_id('${{2/id}/number}') ],
+                    'writers': [venue_id, self.venue.get_authors_id('${{2/id}/number}')],
+                    'content': {
+                        'flagged_for_desk_reject_verification': {
+                            'value': {
+                                'param': {
+                                    'type': 'boolean',
+                                    'enum': [True, False],
+                                    'input': 'radio'
+                                }
+                            },
+                            'readers': flag_readers
+                        }
+                    }
+                }
+            },
+            process=self.get_process_content('process/verification_process.py')
+        )
+
+        self.save_invitation(flag_invitation, replacement=False)
+        return flag_invitation
+
+    # Non-blocking custom stage with process/pre-process arguments
     def set_custom_stage_invitation(self, process_script = None, preprocess_script = None):
 
         venue_id = self.venue_id
@@ -159,9 +208,10 @@ class InvitationBuilder(object):
             'email_pcs': { 'value': custom_stage.email_pcs },
             'email_sacs': { 'value': custom_stage.email_sacs },
             'notify_readers': { 'value': custom_stage.notify_readers },
-            'email_template': { 'value': custom_stage.email_template if custom_stage.email_template else '' },
-            'custom_stage_process_script': { 'value': self.get_process_content(f'process/{process_script}') if process_script is not None else None}
+            'email_template': { 'value': custom_stage.email_template if custom_stage.email_template else '' }
         }
+        if process_script:
+            invitation_content['custom_stage_process_script'] = { 'value': self.get_process_content(f'process/{process_script}')}
 
         invitation = Invitation(id=custom_stage_invitation_id,
             invitees=[venue_id],
@@ -204,16 +254,6 @@ class InvitationBuilder(object):
                     'invitees': invitees,
                     'noninvitees': noninvitees,
                     'cdate': custom_stage_cdate,
-                    'preprocess': self.get_process_content(f'process/{preprocess_script}') if preprocess_script is not None else None,
-                    'process': '''def process(client, edit, invitation):
-    meta_invitation = client.get_invitation(invitation.invitations[0])
-    script = meta_invitation.content['custom_stage_process_script']['value']
-    funcs = {
-        'openreview': openreview
-    }
-    exec(script, funcs)
-    funcs['process'](client, edit, invitation)
-''',
                     'edit': {
                         'signatures': { 
                             'param': { 
@@ -240,6 +280,20 @@ class InvitationBuilder(object):
                 }
             }
         )
+
+        if preprocess_script:
+            invitation.edit['invitation']['preprocess'] = self.get_process_content(f'process/{preprocess_script}')
+
+        if process_script:
+            invitation.edit['invitation']['process'] = '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['custom_stage_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+'''
 
         if reply_to:
             invitation.edit['invitation']['edit']['note']['replyto'] = reply_to

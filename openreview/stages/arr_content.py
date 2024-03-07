@@ -795,6 +795,21 @@ arr_registration_task = {
     }
 }
 
+arr_desk_reject_verification = {
+    "verification": {
+        "order": 1,
+        "description": "Indicate whether or not a decision to desk reject this paper has been made or not",
+        "value": {
+            "param": {
+                "type": "string",
+                "enum": ["I have checked the potential violation(s) and have decided to either desk reject this submission or decided that no further action is required."],
+                "input": "checkbox",
+                "optional": False
+            }
+        }
+    }
+}
+
 arr_ae_checklist = {
     "appropriateness": {
         "value": {

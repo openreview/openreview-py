@@ -10,7 +10,8 @@ def process(client, invitation):
         arr_ac_max_load_task,
         arr_sac_max_load_task,
         arr_reviewer_checklist,
-        arr_ae_checklist
+        arr_ae_checklist,
+        arr_desk_reject_verification
     )
     from openreview.venue import matching
     from datetime import datetime
@@ -191,3 +192,21 @@ def process(client, invitation):
         process_script = 'checklist_process.py',
         preprocess_script = 'checklist_preprocess.py'
     )
+
+    # Create desk reject verification - will be active for all papers, only show flagged papers
+    venue.custom_stage = openreview.stages.CustomStage(name='Desk_Reject_Verification',
+        reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
+        source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+        exp_date=overall_exp,
+        invitees=[],
+        readers=[],
+        content=arr_desk_reject_verification,
+        notify_readers=False,
+        email_sacs=False)
+
+    invitation_builder.set_custom_stage_invitation(
+        process_script = None,
+        preprocess_script = None
+    )
+
+    invitation_builder.set_verification_flag_invitation()
