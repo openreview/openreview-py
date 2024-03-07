@@ -274,7 +274,10 @@ class GroupBuilder(object):
             content['area_chairs_conflict_policy'] = venue_group.content.get('area_chairs_conflict_policy')
 
         if venue_group.content.get('area_chairs_conflict_n_years'):
-            content['area_chairs_conflict_n_years'] = venue_group.content.get('area_chairs_conflict_n_years')            
+            content['area_chairs_conflict_n_years'] = venue_group.content.get('area_chairs_conflict_n_years')
+
+        if self.venue.source_submissions_query_mapping:
+            content['source_submissions_query_mapping'] = { 'value': self.venue.source_submissions_query_mapping }    
 
         update_content = self.get_update_content(venue_group.content, content)
         if update_content:

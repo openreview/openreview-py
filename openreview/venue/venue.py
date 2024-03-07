@@ -74,6 +74,7 @@ class Venue(object):
         self.allow_gurobi_solver = False
         self.submission_license = None
         self.use_publication_chairs = False
+        self.source_submissions_query_mapping = {}
 
     def get_id(self):
         return self.venue_id
@@ -547,7 +548,7 @@ class Venue(object):
 
         flag_invitation = self.invitation_builder.set_ethics_stage_invitation()
         self.invitation_builder.set_ethics_paper_groups_invitation()
-        self.invitation_builder.set_review_invitation()
+        self.invitation_builder.update_review_invitations()
         self.invitation_builder.set_ethics_review_invitation()
         if self.ethics_review_stage.enable_comments:
             self.invitation_builder.set_official_comment_invitation()

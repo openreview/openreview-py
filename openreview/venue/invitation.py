@@ -323,6 +323,13 @@ class InvitationBuilder(object):
         
         content = review_stage.get_content(api_version='2', conference=self.venue)
 
+        previous_query = {}
+        invitation = tools.get_invitation(self.client, review_invitation_id)
+        if invitation:
+            previous_query = invitation.content.get('source_submissions_query', {}).get('value', {})
+
+        source_submissions_query = review_stage.source_submissions_query if review_stage.source_submissions_query else previous_query
+
         invitation = Invitation(id=review_invitation_id,
             invitees=[venue_id],
             readers=[venue_id],
@@ -360,7 +367,7 @@ class InvitationBuilder(object):
                 },
                 'replacement': True,
                 'invitation': {
-                    'id': self.venue.get_invitation_id(review_stage.name, '${2/content/noteNumber/value}'),
+                    'id': self.venue.get_invitation_id(review_stage.child_invitations_name, '${2/content/noteNumber/value}'),
                     'signatures': [ venue_id ],
                     'readers': ['everyone'],
                     'writers': [venue_id],
@@ -388,7 +395,7 @@ class InvitationBuilder(object):
                         'note': {
                             'id': {
                                 'param': {
-                                    'withInvitation': self.venue.get_invitation_id(review_stage.name, '${6/content/noteNumber/value}'),
+                                    'withInvitation': self.venue.get_invitation_id(review_stage.child_invitations_name, '${6/content/noteNumber/value}'),
                                     'optional': True
                                 }
                             },
@@ -419,6 +426,11 @@ class InvitationBuilder(object):
         if review_expdate:
             invitation.edit['invitation']['expdate'] = review_expdate
 
+        if source_submissions_query:
+            invitation.content['source_submissions_query'] = {
+                'value': source_submissions_query
+            }
+
         if self.venue.ethics_review_stage:
             invitation.edit['content']['noteReaders'] = {
                 'value': {
@@ -437,6 +449,67 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=False)
         return invitation
+    
+    def update_review_invitations(self):
+
+        source_submissions_query_mapping = self.venue.source_submissions_query_mapping
+        if not source_submissions_query_mapping:
+            source_submissions_query_mapping = {
+                self.venue.review_stage.name: None
+            }
+
+        for stage_name in source_submissions_query_mapping.keys():
+
+            print('Updating invitation:', stage_name)
+
+            invitation = openreview.tools.get_invitation(self.client, self.venue.get_invitation_id(stage_name))
+            if invitation:
+
+                note_readers = ['${5/content/noteReaders/value}']
+
+                review_readers = invitation.edit['invitation']['edit']['note']['readers']
+                review_readers = [reader.replace('${5/content/noteNumber/value}', '{number}') for reader in review_readers]
+                if '${5/content/noteReaders/value}' in review_readers:
+                    if '${3/signatures}' in review_readers:
+                        note_readers.append('${3/signatures}')
+                    review_readers = []
+                else:
+                    if '${3/signatures}' in review_readers:
+                        note_readers.append('${3/signatures}')
+                        review_readers.remove('${3/signatures}')
+
+                review_invitation = Invitation(id=invitation.id,
+                    edit={
+                        'content': {
+                            'noteReaders': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string[]', 'regex': f'{self.venue_id}/.*|everyone'
+                                    }
+                                }
+                            }
+                        },
+                        'invitation': {
+                            'edit': {
+                                'note': {
+                                    'readers': note_readers
+                                }
+                            }
+                        }
+                    }
+                )
+                if review_readers:
+                    review_invitation.content = {
+                        'review_readers': {
+                            'value': review_readers
+                        }
+                    }
+
+                self.client.post_invitation_edit(invitations=self.venue.get_meta_invitation_id(),
+                    signatures=[self.venue_id],
+                    replacement=False,
+                    invitation=review_invitation
+                )
 
     def set_review_rebuttal_invitation(self):
 
