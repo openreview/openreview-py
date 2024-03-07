@@ -665,7 +665,8 @@ var formatData = function(
           id: submission.id,
           noteId: submission.id,
           invitationId: getInvitationId(submission.number, REVIEW_NAME)
-        })
+        }),
+        anonymousGroupId: reviewer.anonymousGroupId
       }
 
       if (reviewerStatus) {
@@ -969,6 +970,7 @@ var renderTable = function(container, rows) {
         'Click on the link below to go to the submission page:\n\n{{forumUrl}}\n\n' +
         'Thank you,\n' + SHORT_PHRASE + ' Editor-in-Chief',
       replyTo: EDITORS_IN_CHIEF_EMAIL,
+      messageInvitationId: VENUE_ID + '/-/Edit',
       menu: [{
         id: 'all-reviewers',
         name: 'All reviewers of selected papers',

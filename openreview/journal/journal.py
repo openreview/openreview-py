@@ -276,6 +276,9 @@ class Journal(object):
     
     def get_reviewer_expertise_selection_id(self):
         return self.__get_invitation_id(name='Expertise_Selection', prefix=self.get_reviewers_id())
+    
+    def get_reviewers_message_id(self, number=None):
+        return self.__get_invitation_id(name='Message', number=number)
 
     def get_expertise_selection_id(self, committee_id):
         return self.__get_invitation_id(name='Expertise_Selection', prefix=committee_id)
@@ -410,6 +413,7 @@ class Journal(object):
         self.invitation_builder.set_note_withdrawal_invitation(note)
         self.invitation_builder.set_note_desk_rejection_invitation(note)
         self.invitation_builder.set_note_comment_invitation(note, public=False)
+        self.invitation_builder.set_note_reviewer_message_invitation(note)
         self.assignment.request_expertise(note, self.get_action_editors_id())
         self.assignment.request_expertise(note, self.get_reviewers_id())
         print('Finished setup author submission data.')
