@@ -17,7 +17,6 @@ This is to inform you that the paper {note.number}: {note.content['title']['valu
 We thank you for your involvement with {journal.short_name}!
 
 The {journal.short_name} Editors-in-Chief
-
 ''',
         replyTo=journal.contact_info
     )

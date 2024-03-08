@@ -74,6 +74,7 @@ class Venue(object):
         self.allow_gurobi_solver = False
         self.submission_license = None
         self.use_publication_chairs = False
+        self.source_submissions_query_mapping = {}
 
     def get_id(self):
         return self.venue_id
@@ -543,7 +544,7 @@ class Venue(object):
 
         flag_invitation = self.invitation_builder.set_ethics_stage_invitation()
         self.invitation_builder.set_ethics_paper_groups_invitation()
-        self.invitation_builder.set_review_invitation()
+        self.invitation_builder.update_review_invitations()
         self.invitation_builder.set_ethics_review_invitation()
         if self.ethics_review_stage.enable_comments:
             self.invitation_builder.set_official_comment_invitation()
@@ -803,7 +804,7 @@ Total Errors: {len(errors)}
                 message = messages[decision_note['content']['decision']['value']]
                 final_message = message.replace("{{submission_title}}", note.content['title']['value'])
                 final_message = final_message.replace("{{forum_url}}", f'https://openreview.net/forum?id={note.id}')
-                self.client.post_message(subject, recipients=[self.get_authors_id(note.number)], message=final_message, parentGroup=self.get_authors_id(), replyTo=self.contact)
+                self.client.post_message(subject, recipients=[self.get_authors_id(note.number)], message=final_message, replyTo=self.contact)
 
         tools.concurrent_requests(send_notification, paper_notes)
 
