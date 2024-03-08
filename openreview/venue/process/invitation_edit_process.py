@@ -45,9 +45,11 @@ def process(client, invitation):
     def get_children_notes():
         source = invitation.content.get('source', {}).get('value', 'all_submissions') if invitation.content else False
         reply_to = invitation.content.get('reply_to', {}).get('value', 'forum') if invitation.content else False
+        source_submissions_query = invitation.content.get('source_submissions_query', {}).get('value') if invitation.content else ''
 
         print('source', source)
         print('reply_to', reply_to)
+        print('source_submissions_query', source_submissions_query)
         if source == 'accepted_submissions':
             source_submissions = client.get_all_notes(content={ 'venueid': venue_id }, sort='number:asc')
             if not source_submissions and decision_name:
@@ -64,6 +66,10 @@ def process(client, invitation):
 
             if source == 'flagged_for_ethics_review':
                 source_submissions = [s for s in source_submissions if s.content.get('flagged_for_ethics_review', {}).get('value', False)]
+
+        if source_submissions_query:
+            for key, value in source_submissions_query.items():
+                source_submissions = [s for s in source_submissions if value in s.content.get(key, {}).get('value', '')]
 
         if reply_to == 'reviews':
             children_notes = [openreview.api.Note.from_json(reply) for s in source_submissions for reply in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{review_name}' in reply['invitations']]
@@ -102,6 +108,8 @@ def process(client, invitation):
         for note in notes:
             final_invitation_readers = list(dict.fromkeys([note.signatures[0] if 'signatures' in r else r for r in invitation_readers]))
             edit_readers = list(dict.fromkeys([note.signatures[0] if 'signatures' in r else r for r in paper_invitation.edit.get('readers',[])]))
+            if '${2/note/readers}' in edit_readers:
+                edit_readers = final_invitation_readers
             updated_content = updated_content_readers(note, paper_invitation)
             updated_note = openreview.api.Note(
                 id = note.id

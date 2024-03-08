@@ -338,7 +338,7 @@ class SubmissionStage(object):
         return content
     
     def get_hidden_field_names(self):
-        return (['authors', 'authorids'] if self.double_blind else []) + self.hide_fields
+        return (['authors', 'authorids'] if self.double_blind and not self.author_names_revealed else []) + self.hide_fields
 
     def is_under_submission(self):
         return self.due_date is None or datetime.datetime.utcnow() < self.due_date
@@ -555,7 +555,9 @@ class ReviewStage(object):
         remove_fields = [],
         rating_field_name = 'rating',
         confidence_field_name = 'confidence',
-        process_path = None
+        process_path = None,
+        source_submissions_query = {},
+        child_invitations_name = 'Official_Review'
     ):
 
         self.start_date = start_date
@@ -574,6 +576,8 @@ class ReviewStage(object):
         self.rating_field_name = rating_field_name
         self.confidence_field_name = confidence_field_name
         self.process_path = process_path
+        self.source_submissions_query = source_submissions_query
+        self.child_invitations_name = child_invitations_name
 
     def _get_reviewer_readers(self, conference, number, review_signature=None):
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:

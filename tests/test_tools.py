@@ -480,7 +480,7 @@ class TestTools():
 
         test_profile = openreview.tools.get_profiles(client, ['test@mail.com'], with_relations=True)[0]
         user_profiles = openreview.tools.get_profiles(client, ['user2@qq.com'], with_relations=True)
-        conflicts = openreview.tools.get_conflicts(user_profiles, test_profile, policy='NeurIPS')
+        conflicts = openreview.tools.get_conflicts(user_profiles, test_profile, policy='NeurIPS', n_years=5)
 
         assert len(conflicts) == 1
         assert conflicts[0] == '~SomeFirstName_User1'
