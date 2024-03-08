@@ -5094,107 +5094,10 @@ Best,
 
     def test_forum_chat(self, openreview_client, helpers):
 
-        openreview_client.post_invitation_edit(
-            invitations='ICML.cc/2023/Conference/-/Edit',
-            readers = ['ICML.cc/2023/Conference'],
-            writers = ['ICML.cc/2023/Conference'],
-            signatures = ['ICML.cc/2023/Conference'],
-            invitation = openreview.api.Invitation(
-                id = 'ICML.cc/2023/Conference/-/Submission',
-                reply_forum_views = [
-                    {
-                        'id': 'all',
-                        'label': 'All'
-                    },
-                    {
-                        'id': 'discussion',
-                        'label': 'Discussion',
-                        'filter': '-invitations:ICML.cc/2023/Conference/Submission${note.number}/-/Chat',
-                        'nesting': 3,
-                        'sort': 'date-desc',
-                        'layout': 'default',
-                        'live': True
-                    },
-                    {
-                        'id': 'reviewers-chat',
-                        'label': 'Reviewers Chat',
-                        'filter': 'invitations:ICML.cc/2023/Conference/Submission${note.number}/-/Chat,ICML.cc/2023/Conference/Submission${note.number}/-/Official_Review',
-                        'nesting': 1,
-                        'sort': 'date-asc',
-                        'layout': 'chat',
-                        'live': True,
-                        'expandedInvitations': ['ICML.cc/2023/Conference/Submission${note.number}/-/Chat']
-                    }
-                ]
-            )
-        )
-
         submission_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Submission')
         assert len(submission_invitation.reply_forum_views)
 
         submission = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', number=1)[0]
-
-        openreview_client.post_invitation_edit(
-            invitations='ICML.cc/2023/Conference/-/Edit',
-            readers = ['ICML.cc/2023/Conference'],
-            writers = ['ICML.cc/2023/Conference'],
-            signatures = ['ICML.cc/2023/Conference'],
-            invitation = openreview.api.Invitation(
-                id = 'ICML.cc/2023/Conference/Submission1/-/Chat',
-                readers = ['everyone'],
-                writers = ['ICML.cc/2023/Conference'],
-                signatures = ['ICML.cc/2023/Conference'],
-                invitees = ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission1/Area_Chairs', 'ICML.cc/2023/Conference/Submission1/Reviewers'],
-                edit = {
-                    'readers': ['ICML.cc/2023/Conference', '${2/signatures}'],
-                    'writers': ['ICML.cc/2023/Conference'],
-                    'signatures': {
-                        'param': {
-                            'enum': [
-                                'ICML.cc/2023/Conference/Program_Chairs',
-                                'ICML.cc/2023/Conference/Submission1/Area_Chair_.*',
-                                'ICML.cc/2023/Conference/Submission1/Reviewer_.*',
-                            ]
-                        }
-                    },
-                    'note': {
-                        'id': {
-                            'param': {
-                                'withInvitation': 'ICML.cc/2023/Conference/Submission1/-/Chat',
-                                'optional': True
-                            }
-                        },
-                        'readers': ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission1/Area_Chairs', 'ICML.cc/2023/Conference/Submission1/Reviewers'],
-                        'writers': ['ICML.cc/2023/Conference'],
-                        'signatures': ['${3/signatures}'],
-                        'ddate': {
-                            'param': {
-                                'range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'deletable': True
-                            }
-                        },
-                        'forum': submission.id,
-                        'replyto': {
-                            'param': {
-                                'withForum': submission.id
-                            }
-                        },
-                        'content': {
-                            'message': {
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 50000,
-                                        'markdown': True
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            )
-        )
 
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
 
