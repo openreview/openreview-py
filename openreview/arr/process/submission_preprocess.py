@@ -1,5 +1,5 @@
 def process(client, edit, invitation):
-
+    # TODO: Check for reviews and meta-reviews
     editor_reassignment_field = edit.note.content.get('reassignment_request_action_editor', {}).get('value', '')
     editor_reassignment_request = len(editor_reassignment_field) > 0 and 'not a resubmission' not in editor_reassignment_field
     reviewer_reassignment_field = edit.note.content.get('reassignment_request_reviewers', {}).get('value', '')

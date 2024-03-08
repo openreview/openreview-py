@@ -1000,6 +1000,42 @@ class TestARRVenueV2():
             )
         )
 
+        # Call post submission to setup for reassignment tests
+        pc_client.post_note(openreview.Note(
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Revision',
+            forum=request_form.id,
+            readers=['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.id,
+            replyto=request_form.id,
+            signatures=['~Program_ARRChair1'],
+            writers=[],
+            content={
+                'title': 'ACL Rolling Review 2023 - June',
+                'Official Venue Name': 'ACL Rolling Review 2023 - June',
+                'Abbreviated Venue Name': 'ARR - June 2023',
+                'Official Website URL': 'http://aclrollingreview.org',
+                'program_chair_emails': ['editors@aclrollingreview.org', 'pc@aclrollingreview.org'],
+                'contact_email': 'editors@aclrollingreview.org',
+                'Venue Start Date': '2023/08/01',
+                'Submission Deadline': (now + datetime.timedelta(seconds=10)).strftime('%Y/%m/%d'),
+                'publication_chairs':'No, our venue does not have Publication Chairs',  
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'use_recruitment_template': 'Yes',
+                'Additional Submission Options': arr_submission_content,
+                'remove_submission_options': ['keywords'],
+                'homepage_override': { #TODO: Update
+                    'location': 'Hawaii, USA',
+                    'instructions': 'For author guidelines, please click [here](https://icml.cc/Conferences/2023/StyleAuthorInstructions)'
+                },
+                'hide_fields': hide_fields
+            }
+        ))
+
+        helpers.await_queue()
+
     def test_copy_members(self, client, openreview_client, helpers):
         # Create a previous cycle (2023/June) and test the script that copies all roles
         # (reviewers/ACs/SACs/ethics reviewers/ethics chairs) into the current cycle (2023/August)
@@ -1018,7 +1054,7 @@ class TestARRVenueV2():
             openreview.Note(
                 content={
                     'previous_cycle': 'aclweb.org/ACL/ARR/2023/June',
-                    'setup_shared_data_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S')
+                    'setup_shared_data_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=10)).strftime('%Y/%m/%d %H:%M:%S')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
