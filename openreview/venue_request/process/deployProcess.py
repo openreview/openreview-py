@@ -92,7 +92,9 @@ You can use the following links to access the venue:
 If you need to make a change to the information provided in your request form, please feel free to revise it directly using the "Revision" button. You can also control several stages of your venue by using the Stage buttons. Note that any change you make will be immediately applied to your venue.
 If you have any questions, please refer to our FAQ: https://openreview.net/faq
 
-If you need special features that are not included in your request form, you can post a comment here or contact us at info@openreview.net and we will assist you.
+If you need special features that are not included in your request form, you can post a comment here or contact us at info@openreview.net and we will assist you. We recommend reaching out to us well in advance and setting deadlines for a Monday.  
+
+**OpenReview support is responsive from 9AM - 5PM EST Monday through Friday**. Requests made on weekends or US holidays can expect to receive a response on the next business day.
 
 Best,
 
