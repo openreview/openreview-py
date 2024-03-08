@@ -459,19 +459,25 @@ class InvitationBuilder(object):
                         'order': 15,
                         'required': False
                     },
-                    'setup_sac_matching_date': {
-                        'description': 'When should conflicts be computed and the matching data be set up? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                    'setup_sae_matching_date': {
+                        'description': 'When should conflicts be computed and the matching data for SAEs be set up? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
                         'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
                         'order': 16,
                         'required': False
                     },
-                    'sac_affinity_scores': {
+                    'sae_affinity_scores': {
                         'description': 'Upload a CSV file containing affinity scores for SAC-paper pairs (one SAC-paper pair per line in the format: submission_id, SAC_id, affinity_score)',
                         'order': 17,
                         'value-file': {
                             'fileTypes': ['csv'],
                             'size': 50
                         },
+                        'required': False
+                    },
+                    'setup_sae_ae_assignment_date': {
+                        'description': 'When will both SAE and AE assignments be deployed? This must happen after both assignments are deployed to give SAEs access to the AE assignments. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+                        'order': 18,
                         'required': False
                     }
                 }
@@ -496,13 +502,14 @@ class InvitationBuilder(object):
                 'setup_venue_stages_date': {'value': 0},
                 'setup_shared_data_date': {'value': 0},
                 'preprint_release_submission_date': {'value': 0},
-                'setup_sac_matching_date': {'value': 0},
+                'setup_sae_matching_date': {'value': 0},
                 'maximum_load_due_date': {'value': 0},
                 'maximum_load_exp_date': {'value': 0},
                 'ae_checklist_due_date': {'value': 0},
                 'ae_checklist_exp_date': {'value': 0},
                 'reviewer_checklist_due_date': {'value': 0},
-                'reviewer_checklist_exp_date': {'value': 0}
+                'reviewer_checklist_exp_date': {'value': 0},
+                'setup_sae_ae_assignment_date': {'value': 0}
             },
             date_processes=[
                 {
@@ -518,8 +525,12 @@ class InvitationBuilder(object):
                     'script': self.get_process_content('management/setup_preprint_release.py'),
                 },
                 {
-                    'dates': ["#{4/content/setup_sac_matching_date/value}"],
+                    'dates': ["#{4/content/setup_sae_matching_date/value}"],
                     'script': self.get_process_content('management/setup_matching.py'),
+                },
+                {
+                    'dates': ["#{4/content/setup_sae_ae_assignment_date/value}"],
+                    'script': self.get_process_content('management/setup_sae_ae_assignments.py'),
                 }
             ]
         )
