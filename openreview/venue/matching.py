@@ -82,6 +82,7 @@ class Matching(object):
         return readers
 
     def _create_edge_invitation(self, edge_id, any_tail=False, default_label=None):
+        print(f"building {self.match_group_name}/-/{edge_id}")
 
         venue = self.venue
         venue_id = venue.venue_id

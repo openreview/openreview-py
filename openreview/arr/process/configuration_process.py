@@ -18,6 +18,7 @@ def process(client, note, invitation):
     meta_invitation_id = domain.content['meta_invitation_id']['value']
 
     invitation_content = {}
+    invitation_content['configuration_note_id'] = { 'value' : note.id }
     for field, raw_value in note.content.items():
         if 'date' in field:
             value = openreview.tools.datetime_millis(
