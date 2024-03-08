@@ -213,6 +213,9 @@ To do so, please follow this link: https://openreview.net/invitation?id=MELBA/Pa
 For more details and guidelines on the MELBA review process, visit melba-journal.org.
 
 The MELBA Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to editors@melba-journal.org.
 '''
 
     def test_ae_assignment(self, journal, openreview_client, test_client, helpers):

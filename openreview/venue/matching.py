@@ -242,7 +242,6 @@ class Matching(object):
                     'regex': '~.*|.+@.+'
                 }
             }
-            edge_writers = [venue_id]
 
         if default_label and edge_label:
             edge_label['param']['default'] = default_label
@@ -1100,6 +1099,8 @@ class Matching(object):
             'assignment_label': { 'value': assignment_title } if assignment_title else { 'delete': True },
             'invite_label': { 'value': invite_label },
             'invited_label': { 'value': invited_label },
+            'accepted_label': { 'value': accepted_label },
+            'declined_label': { 'value': declined_label },
             'recruitment_invitation_id': { 'value': recruitment_invitation_id },
             'committee_invited_id': { 'value': venue.get_committee_id(name=invited_committee_name + '/Invited') },
             'paper_reviewer_invited_id': { 'value': venue.get_committee_id(name=invited_committee_name + '/Invited', number='{number}') if assignment_title else ''},

@@ -2101,6 +2101,25 @@ class OpenReviewClient(object):
         print('get expertise status', response_json)
         return response_json
 
+    def get_expertise_jobs(self, status=None, baseurl=None):
+
+        print('get expertise jobs', baseurl, status)
+        base_url = baseurl if baseurl else self.baseurl
+        if base_url.startswith('http://localhost'):
+            print('get expertise jobs localhost, return []')
+            return { 'results': [] }
+
+        params = {}
+        if status:
+            params['status'] = status
+
+        response = self.session.get(base_url + '/expertise/status/all', params = params, headers = self.headers)
+        response = self.__handle_response(response)
+
+        response_json = response.json()
+        print('get expertise jobs', response_json)
+        return response_json
+    
     def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False):
 
         print('get expertise results', baseurl, job_id)

@@ -68,7 +68,6 @@ This is to inform you that your request to act as a reviewer for {journal.short_
 Respectfully,
 
 The {journal.short_name} Editors-in-Chief
-
 ''',
             replyTo=journal.contact_info
         )
