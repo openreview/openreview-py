@@ -588,6 +588,21 @@ class TestARRVenueV2():
                 }
             )
         )
+        reviewer_two_client.post_note_edit(
+            invitation=f'{venue.get_reviewers_id()}/-/{registration_name}',
+            signatures=['~Reviewer_ARRTwo1'],
+            note=openreview.api.Note(
+                content = {
+                    'profile_confirmed': { 'value': 'Yes' },
+                    'expertise_confirmed': { 'value': 'Yes' },
+                    'domains': { 'value': 'Yes' },
+                    'emails': { 'value': 'Yes' },
+                    'DBLP': { 'value': 'Yes' },
+                    'semantic_scholar': { 'value': 'Yes' },
+                    'research_area': { 'value': ['Summarization'] },
+                }
+            )
+        )
         ac_client.post_note_edit(
             invitation=f'{venue.get_area_chairs_id()}/-/{registration_name}',
             signatures=['~AC_ARROne1'],
@@ -1628,6 +1643,14 @@ class TestARRVenueV2():
 
         openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs'))
 
+        with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in submissions:
+                for ac in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members:
+                    writer.writerow([submission.id, ac, round(random.random(), 2)])
+
+        affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
+
         client.post_note(openreview.Note(
             content={
                 'title': 'Paper Matching Setup',
@@ -1698,6 +1721,30 @@ class TestARRVenueV2():
         june_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
         august_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
+        june_submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission', sort='number:asc')
+        submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+
+        # Remove resubmission information from all but submissions 2 and 3
+        for submission in submissions:
+            if submission.number in [2, 3]:
+                continue
+            openreview_client.post_note_edit(
+                invitation=august_venue.get_meta_invitation_id(),
+                readers=[august_venue.id],
+                writers=[august_venue.id],
+                signatures=[august_venue.id],
+                note=openreview.api.Note(
+                    id=submission.id,
+                    content={
+                        'previous_URL': { 'delete': True },
+                        'reassignment_request_action_editor': { 'delete': True },
+                        'reassignment_request_reviewers': { 'delete': True },
+                        'justification_for_not_keeping_action_editor_or_reviewers': { 'delete': True },
+                    }
+                )
+            )
+
+        helpers.await_queue()
 
         # Set up June reviewer and area chair groups (for simplicity, map idx 1-to-1 and 2-to-2)
         openreview_client.add_members_to_group(june_venue.get_reviewers_id(number=2), '~Reviewer_ARROne1')
@@ -1705,10 +1752,55 @@ class TestARRVenueV2():
         openreview_client.add_members_to_group(june_venue.get_area_chairs_id(number=2), '~AC_ARROne1')
         openreview_client.add_members_to_group(june_venue.get_area_chairs_id(number=3), '~AC_ARRTwo1')
 
+        # Post reviews to add them into Reviewers submitted
+        start_date = datetime.datetime.utcnow()
+        due_date = start_date + datetime.timedelta(days=3)
+        june_venue.review_stage = openreview.stages.ReviewStage(
+            start_date=start_date,
+            due_date=due_date,
+        )
+
+        june_venue.create_review_stage()
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/June/-/Official_Review-0-1', count=1)
+
+        reviewer_client_1 = openreview.api.OpenReviewClient(username='reviewer1@aclrollingreview.com', password=helpers.strong_password)
+        reviewer_client_2 = openreview.api.OpenReviewClient(username='reviewer2@aclrollingreview.com', password=helpers.strong_password)
+
+        anon_groups = reviewer_client_1.get_groups(prefix='aclweb.org/ACL/ARR/2023/June/Submission2/Reviewer_', signatory='~Reviewer_ARROne1')
+        anon_group_id_1 = anon_groups[0].id
+        anon_groups = reviewer_client_2.get_groups(prefix='aclweb.org/ACL/ARR/2023/June/Submission3/Reviewer_', signatory='~Reviewer_ARRTwo1')
+        anon_group_id_2 = anon_groups[0].id
+
+        reviewer_client_1.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/June/Submission2/-/Official_Review',
+            signatures=[anon_group_id_1],
+            note=openreview.api.Note(
+                content={
+                    "title": { "value": 'some title' },
+                    "review": { "value": 'some review' },
+                    "rating": { "value": 10 },
+                    "confidence": { "value": 5 }
+                }
+            )
+        )
+
+        reviewer_client_2.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/June/Submission3/-/Official_Review',
+            signatures=[anon_group_id_2],
+            note=openreview.api.Note(
+                content={
+                    "title": { "value": 'some title' },
+                    "review": { "value": 'some review' },
+                    "rating": { "value": 10 },
+                    "confidence": { "value": 5 }
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
         # Point August submissions idx 1 and 2 to June papers and set submission reassignment requests
         # Let 1 = same and 2 = not same
-        june_submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission', sort='number:asc')
-        submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
         openreview_client.post_note_edit(
             invitation=august_venue.get_meta_invitation_id(),
             readers=[august_venue.id],
@@ -1739,9 +1831,75 @@ class TestARRVenueV2():
         )
 
         # Call the stage
+        pc_client.post_note(
+            openreview.Note(
+                content={
+                    'setup_tracks_and_reassignment_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S')
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-4-0', count=1)
         # For 1, assert that the affinity scores on June reviewers/aes is 3
+        ac_scores = {
+            g['id']['tail'] : g['values'][0]
+            for g in pc_client_v2.get_grouped_edges(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Affinity_Score', head=submissions[1].id, select='tail,id,weight', groupby='tail')
+        }
+        rev_scores = {
+            g['id']['tail'] : g['values'][0]
+            for g in pc_client_v2.get_grouped_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Affinity_Score', head=submissions[1].id, select='tail,id,weight', groupby='tail')
+        }
+        assert ac_scores['~AC_ARROne1']['weight'] == 3
+        assert rev_scores['~Reviewer_ARROne1']['weight'] == 3
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs').members
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers/Submitted' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers/Submitted').members
+
         # For 2, assert that the affinity scores on June reviewers/aes is 0
+        ac_scores = {
+            g['id']['tail'] : g['values'][0]
+            for g in pc_client_v2.get_grouped_edges(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Affinity_Score', head=submissions[2].id, select='tail,id,weight', groupby='tail')
+        }
+        rev_scores = {
+            g['id']['tail'] : g['values'][0]
+            for g in pc_client_v2.get_grouped_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Affinity_Score', head=submissions[2].id, select='tail,id,weight', groupby='tail')
+        }
+        assert ac_scores['~AC_ARRTwo1']['weight'] == 0
+        assert rev_scores['~Reviewer_ARRTwo1']['weight'] == 0
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Area_Chairs').members
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Reviewers/Submitted').members
+
         # Check for existence of track information
+        track_edges = {
+            g['id']['tail'] : g['values']
+            for g in pc_client_v2.get_grouped_edges(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Research_Area', select='head,id,weight', groupby='tail')
+        }
+        assert len(track_edges.keys()) == 1
+        assert '~Reviewer_ARROne1' in track_edges
+        assert len(track_edges['~Reviewer_ARROne1']) == 101
+
+        track_edges = {
+            g['id']['tail'] : g['values']
+            for g in pc_client_v2.get_grouped_edges(invitation=f'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Research_Area', select='head,id,weight', groupby='tail')
+        }
+        assert len(track_edges.keys()) == 1
+        assert '~AC_ARROne1' in track_edges
+        assert len(track_edges['~AC_ARROne1']) == 101
+
+        track_edges = {
+            g['id']['tail'] : g['values']
+            for g in pc_client_v2.get_grouped_edges(invitation=f'aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Research_Area', select='head,id,weight', groupby='tail')
+        }
+        assert len(track_edges.keys()) == 1
+        assert '~SAC_ARROne1' in track_edges
+        assert len(track_edges['~SAC_ARROne1']) == 101
+            
 
     def test_sae_ae_assignments(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
@@ -1809,7 +1967,7 @@ class TestARRVenueV2():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-4-0', count=1)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-5-0', count=1)
 
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Emergency_Area_Chairs')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment').content['sync_sac_id']['value'] == ''

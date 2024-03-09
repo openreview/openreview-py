@@ -1,5 +1,6 @@
 def process(client, invitation):
 
+
     from openreview.venue import matching
     from collections import defaultdict
 
@@ -54,7 +55,7 @@ def process(client, invitation):
     submissions = venue.get_submissions()
 
     resubmissions = filter(
-        lambda s: len(s.content[previous_url_field]['value']) > 0, 
+        lambda s: previous_url_field in s.content and len(s.content[previous_url_field]['value']) > 0, 
         submissions
     )
 
@@ -93,42 +94,71 @@ def process(client, invitation):
         senior_area_chairs_id: [venue_id]
     }
 
+    # Create reviewers submitted groups 
+    for submission in submissions:
+        readers=[
+            venue_id,
+            venue.get_senior_area_chairs_id(number=submission.number),
+            venue.get_area_chairs_id(number=submission.number),
+            venue.get_reviewers_id(number=submission.number, submitted=True)
+        ]
+        client.post_group_edit(
+            invitation=meta_invitation_id,
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            group=openreview.api.Group(id=venue.get_reviewers_id(number=submission.number, submitted=True),
+                readers=readers,
+                writers=[venue_id],
+                signatures=[venue_id],
+                signatories=[venue_id],
+                members=[]
+            )
+        )
+
     for submission in resubmissions:
         # 1) Find all reassignments and reassignment requests -> 0 out or set to 3
         if 'is not a' in submission.content[rev_reassignment_field]['value'] or \
-            'is not a' in submission.content[rev_reassignment_field]['value']:
+            'is not a' in submission.content[ae_reassignment_field]['value']:
             continue
         wants_new_reviewers = submission.content[rev_reassignment_field]['value'].startswith('Yes')
         wants_new_ae = submission.content[ae_reassignment_field]['value'].startswith('Yes')
-        previous_id = submission.content[previous_url_field].split('?id=')[1].split('&')[0]
+        previous_id = submission.content[previous_url_field]['value'].split('?id=')[1].split('&')[0]
         try:
             previous_submission = client_v1.get_note(previous_id)
             previous_venue_id = previous_submission.invitation.split('/-/')[0]
-            previous_reviewers = client_v1.get_group(f"{previous_venue_id}/Reviewers/Submitted")
-            previous_ae = client_v1.get_group(f"{previous_venue_id}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
+            previous_reviewers = client_v1.get_group(f"{previous_venue_id}/Paper{previous_submission.number}/Reviewers/Submitted")
+            previous_ae = client_v1.get_group(f"{previous_venue_id}/Paper{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
             current_client = client_v1
         except:
             previous_submission = client.get_note(previous_id)
             previous_venue_id = previous_submission.domain
-            previous_reviewers = client.get_group(f"{previous_venue_id}/Reviewers/Submitted")
-            previous_ae = client.get_group(f"{previous_venue_id}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
+            previous_reviewers = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Reviewers/Submitted")
+            previous_ae = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
             current_client = client
 
         ae_scores = {
-            g['id']['tail'] : g['values']
-            for g in client.get_grouped_edges(invitation=ae_affinity_inv, head=submission.id, select='tail,id,weight')
+            g['id']['tail'] : g['values'][0]
+            for g in current_client.get_grouped_edges(invitation=ae_affinity_inv, head=submission.id, select='tail,id,weight', groupby='tail')
         }
         rev_scores = {
-            g['id']['tail'] : g['values']
-            for g in client.get_grouped_edges(invitation=rev_affinity_inv, head=submission.id, select='tail,id,weight')
+            g['id']['tail'] : g['values'][0]
+            for g in current_client.get_grouped_edges(invitation=rev_affinity_inv, head=submission.id, select='tail,id,weight', groupby='tail')
         }
         
         # Handle reviewer reassignment
         for reviewer in previous_reviewers.members:
+            if previous_venue_id not in reviewer and not reviewer.startswith('~'): # Must be previous venue anon id or a profile ID
+                continue
+
+            if previous_venue_id in reviewer:
+                reviewer = current_client.get_group(reviewer).members[0] ## De-anonymize
+            
             if reviewer not in name_to_id or name_to_id[reviewer] not in rev_scores:
                 continue
+
             reviewer_id = name_to_id[reviewer]
-            reviewer_edge = rev_scores[reviewers_id]
+            reviewer_edge = rev_scores[reviewer_id]
 
             if wants_new_reviewers:
                 updated_weight = 0
@@ -144,10 +174,17 @@ def process(client, invitation):
                 edge_readers=[venue_id, senior_area_chairs_id, area_chairs_id, reviewer_id]
             )
 
-        # Handle AE reassignment
+        # Handle AE reassignments)
         for ae in previous_ae.members:
+            if previous_venue_id not in ae and not ae.startswith('~'): # Must be previous venue anon id or a profile ID
+                continue
+
+            if previous_venue_id in ae:
+                ae = current_client.get_group(ae).members[0] ## De-anonymize
+
             if ae not in name_to_id or name_to_id[ae] not in ae_scores:
                 continue
+
             ae_id = name_to_id[ae]
             ae_edge = ae_scores[ae_id]
 

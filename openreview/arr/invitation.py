@@ -474,10 +474,16 @@ class InvitationBuilder(object):
                         },
                         'required': False
                     },
+                    'setup_tracks_and_reassignment_date': {
+                        'description': 'When will submission track and reassignment data be finalized? This will modify the affinity scores and indicate which reviewers and action editors have matching tracks. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+                        'order': 18,
+                        'required': False
+                    },
                     'setup_sae_ae_assignment_date': {
                         'description': 'When will both SAE and AE assignments be deployed? This must happen after both assignments are deployed to give SAEs access to the AE assignments. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
                         'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
-                        'order': 18,
+                        'order': 19,
                         'required': False
                     }
                 }
@@ -509,6 +515,7 @@ class InvitationBuilder(object):
                 'ae_checklist_exp_date': {'value': 0},
                 'reviewer_checklist_due_date': {'value': 0},
                 'reviewer_checklist_exp_date': {'value': 0},
+                'setup_tracks_and_reassignment_date': {'value': 0},
                 'setup_sae_ae_assignment_date': {'value': 0}
             },
             date_processes=[
@@ -527,6 +534,10 @@ class InvitationBuilder(object):
                 {
                     'dates': ["#{4/content/setup_sae_matching_date/value}"],
                     'script': self.get_process_content('management/setup_matching.py'),
+                },
+                {
+                    'dates': ["#{4/content/setup_tracks_and_reassignment_date/value}"],
+                    'script': self.get_process_content('management/setup_reassignment_data.py'),
                 },
                 {
                     'dates': ["#{4/content/setup_sae_ae_assignment_date/value}"],
