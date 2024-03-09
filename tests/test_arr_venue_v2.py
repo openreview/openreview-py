@@ -614,7 +614,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Summarization', 'NLP Applications'] },
+                    'research_area': { 'value': ['Generation', 'Summarization', 'NLP Applications'] },
                 }
             )
         )
@@ -1689,6 +1689,59 @@ class TestARRVenueV2():
         affinity_scores =  openreview_client.get_grouped_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Affinity_Score', groupby='id')
         assert affinity_scores
         assert len(affinity_scores) == 101 * 6 ## submissions * reviewers
+
+    def test_resubmission_and_track_matching_data(self, client, openreview_client, helpers, test_client, request_page, selenium):
+        # Create groups for previous cycle
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        june_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        august_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
+
+        # Set up June reviewer and area chair groups (for simplicity, map idx 1-to-1 and 2-to-2)
+        openreview_client.add_members_to_group(june_venue.get_reviewers_id(number=2), '~Reviewer_ARROne1')
+        openreview_client.add_members_to_group(june_venue.get_reviewers_id(number=3), '~Reviewer_ARRTwo1')
+        openreview_client.add_members_to_group(june_venue.get_area_chairs_id(number=2), '~AC_ARROne1')
+        openreview_client.add_members_to_group(june_venue.get_area_chairs_id(number=3), '~AC_ARRTwo1')
+
+        # Point August submissions idx 1 and 2 to June papers and set submission reassignment requests
+        # Let 1 = same and 2 = not same
+        june_submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission', sort='number:asc')
+        submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+        openreview_client.post_note_edit(
+            invitation=august_venue.get_meta_invitation_id(),
+            readers=[august_venue.id],
+            writers=[august_venue.id],
+            signatures=[august_venue.id],
+            note=openreview.api.Note(
+                id=submissions[1].id,
+                content={
+                    'previous_URL': {'value': f'http://localhost:3030/forum?id={june_submissions[1].id}'},
+                    'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                    'reassignment_request_reviewers': { 'value': 'No, I want the same set of reviewers from our previous submission and understand that new reviewers may be assigned if any of the previous ones are unavailable' },
+                }
+            )
+        )
+        openreview_client.post_note_edit(
+            invitation=august_venue.get_meta_invitation_id(),
+            readers=[august_venue.id],
+            writers=[august_venue.id],
+            signatures=[august_venue.id],
+            note=openreview.api.Note(
+                id=submissions[2].id,
+                content={
+                    'previous_URL': {'value': f'http://localhost:3030/forum?id={june_submissions[2].id}'},
+                    'reassignment_request_action_editor': {'value': 'Yes, I want a different action editor for our submission' },
+                    'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                }
+            )
+        )
+
+        # Call the stage
+        # For 1, assert that the affinity scores on June reviewers/aes is 3
+        # For 2, assert that the affinity scores on June reviewers/aes is 0
+        # Check for existence of track information
 
     def test_sae_ae_assignments(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
