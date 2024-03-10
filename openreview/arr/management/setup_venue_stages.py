@@ -205,7 +205,7 @@ def process(client, invitation):
         email_sacs=False)
 
     invitation_builder.set_custom_stage_invitation(
-        process_script = None,
+        process_script = 'verification_process.py',
         preprocess_script = None
     )
 

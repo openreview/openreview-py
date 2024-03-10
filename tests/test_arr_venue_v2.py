@@ -1994,3 +1994,196 @@ class TestARRVenueV2():
         assert len(sac_client.get_edges(invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment', head=submissions[1].id, tail='~AC_ARROne1')) == 1
         assert len(sac_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs').members) == 1
         assert sac_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs').members[0] == '~AC_ARROne1'
+
+    def test_checklists(self, client, openreview_client, helpers, test_client, request_page, selenium):
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
+        submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+        violation_fields = ['appropriateness', 'formatting', 'length', 'anonymity', 'responsible_checklist', 'limitations'] # TODO: move to domain or somewhere?
+        only_required_fields = ['number_of_assignments', 'diversity']
+
+        default_fields = {field: True for field in violation_fields + only_required_fields}
+        default_fields['need_ethics_review'] = False
+        test_submission = submissions[1]
+
+        reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@aclrollingreview.com', password=helpers.strong_password)
+        reviewer_two_client = openreview.api.OpenReviewClient(username = 'reviewer2@aclrollingreview.com', password=helpers.strong_password)
+        ac_client = openreview.api.OpenReviewClient(username = 'ac1@aclrollingreview.com', password=helpers.strong_password)
+
+        # Add reviewers to submission 2
+        openreview_client.add_members_to_group(venue.get_reviewers_id(number=2), ['~Reviewer_ARROne1', '~Reviewer_ARRTwo1'])
+
+        test_data_templates = {
+            'aclweb.org/ACL/ARR/2023/August/Reviewers': {
+                'checklist_invitation': 'aclweb.org/ACL/ARR/2023/August/Submission2/-/Reviewer_Checklist',
+                'user': reviewer_client.get_groups(prefix='aclweb.org/ACL/ARR/2023/August/Submission2/Reviewer_', signatory='~Reviewer_ARROne1')[0].id,
+                'client': reviewer_client
+            },
+            'aclweb.org/ACL/ARR/2023/August/Area_Chairs': {
+                'checklist_invitation': 'aclweb.org/ACL/ARR/2023/August/Submission2/-/Action_Editor_Checklist',
+                'user': ac_client.get_groups(prefix='aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chair_', signatory='~AC_ARROne1')[0].id,
+                'client': ac_client
+            }
+        }
+
+        def post_checklist(chk_client, chk_inv, user, tested_field=None, ddate=None, existing_note=None):
+            def generate_checklist_content(tested_field=None):
+                ret_content = {field: {'value':'Yes'} if default_fields[field] else {'value':'No'} for field in default_fields}
+                ret_content['potential_violation_justification'] = {'value': 'There are no violations with this submission'}
+                ret_content['ethics_review_justification'] = {'value': 'N/A (I answered no to the previous question)'}
+
+                if tested_field:
+                    ret_content[tested_field] = {'value':'Yes'} if not default_fields[tested_field] else {'value':'No'}
+                    ret_content['ethics_review_justification'] = {'value': 'There is an issue'}
+                    ret_content['potential_violation_justification'] = {'value': 'There are violations with this submission'}
+
+                if 'Reviewer' in chk_inv:
+                    for field in only_required_fields:
+                        del ret_content[field]
+
+                return ret_content
+            
+            if not existing_note:
+                content = generate_checklist_content(tested_field=tested_field)
+            if existing_note:
+                content = existing_note['content']
+                if tested_field:
+                    content[tested_field] = {'value':'Yes'} if not default_fields[tested_field] else {'value':'No'}
+                    content['ethics_review_justification'] = {'value': 'There is an issue'}
+                    content['potential_violation_justification'] = {'value': 'There are violations with this submission'}
+            
+            chk_edit = chk_client.post_note_edit(
+                invitation=chk_inv,
+                signatures=[user],
+                note=openreview.api.Note(
+                    id=None if not existing_note else existing_note['id'],
+                    content = generate_checklist_content(tested_field=tested_field) if not existing_note else existing_note['content'],
+                    ddate=ddate
+                )
+            )
+
+            helpers.await_queue(openreview_client)
+
+            return chk_edit, pc_client_v2.get_note(test_submission.id)
+        
+        def now():
+            return openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
+        checklist_inv = test_data_templates[venue.get_reviewers_id()]['checklist_invitation']
+        user = test_data_templates[venue.get_reviewers_id()]['user']
+        user_client = test_data_templates[venue.get_reviewers_id()]['client']
+        # Post checklist with no ethics flag and no violation field - check that flags are not there
+        edit, test_submission = post_checklist(user_client, checklist_inv, user)
+        assert 'flagged_for_ethics_review' not in test_submission.content
+        assert 'flagged_for_desk_reject_verification' not in test_submission.content
+        _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=edit['note'])
+
+        # Post checklist with no ethics flag and a violation field - check for DSV flag
+        edit, test_submission = post_checklist(user_client, checklist_inv, user, tested_field=violation_fields[0])
+        assert 'flagged_for_ethics_review' not in test_submission.content
+        assert 'flagged_for_desk_reject_verification' in test_submission.content
+        assert test_submission.content['flagged_for_desk_reject_verification']['value']
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate > now()
+
+        # Delete checklist - check DSV flag is False, invitation is expired
+        _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=edit['note'])
+        assert 'flagged_for_ethics_review' not in test_submission.content
+        assert 'flagged_for_desk_reject_verification' in test_submission.content
+        assert not test_submission.content['flagged_for_desk_reject_verification']['value']
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
+
+        # Re-post with no ethics flag and a violation field - check DSV flag is True
+        violation_edit, test_submission = post_checklist(user_client, checklist_inv, user, tested_field=violation_fields[0])
+        assert 'flagged_for_ethics_review' not in test_submission.content
+        assert 'flagged_for_desk_reject_verification' in test_submission.content
+        assert test_submission.content['flagged_for_desk_reject_verification']['value']
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate > now()
+
+        # Edit with no ethics flag and no violation field - check DSV flag is False
+        violation_edit['note']['content'][violation_fields[0]]['value'] = 'Yes'
+        _, test_submission = post_checklist(user_client, checklist_inv, user, existing_note=violation_edit['note'])
+        assert 'flagged_for_ethics_review' not in test_submission.content
+        assert 'flagged_for_desk_reject_verification' in test_submission.content
+        assert not test_submission.content['flagged_for_desk_reject_verification']['value']
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
+
+        # Edit with ethics flag and no violation field - check DSV flag is false and ethics flag exists and is True
+        _, test_submission = post_checklist(user_client, checklist_inv, user, tested_field='need_ethics_review', existing_note=violation_edit['note'])
+        assert 'flagged_for_ethics_review' in test_submission.content
+        assert 'flagged_for_desk_reject_verification' in test_submission.content
+        assert not test_submission.content['flagged_for_desk_reject_verification']['value']
+        assert test_submission.content['flagged_for_ethics_review']['value']
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
+
+        # Delete checklist - check both flags False
+        _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=violation_edit['note'])
+        assert 'flagged_for_ethics_review' in test_submission.content
+        assert 'flagged_for_desk_reject_verification' in test_submission.content
+        assert not test_submission.content['flagged_for_desk_reject_verification']['value']
+        assert not test_submission.content['flagged_for_ethics_review']['value']
+
+        # Re-post with no flag - check both flags false
+        _, test_submission = post_checklist(user_client, checklist_inv, user)
+        assert 'flagged_for_ethics_review' in test_submission.content
+        assert 'flagged_for_desk_reject_verification' in test_submission.content
+        assert not test_submission.content['flagged_for_desk_reject_verification']['value']
+        assert not test_submission.content['flagged_for_ethics_review']['value']
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
+
+
+        # Test checklists for AEs
+        checklist_inv = test_data_templates[venue.get_area_chairs_id()]['checklist_invitation']
+        user = test_data_templates[venue.get_area_chairs_id()]['user']
+        user_client = test_data_templates[venue.get_area_chairs_id()]['client']
+        # Post checklist with no ethics flag and no violation field - check that flags are not there
+        edit, test_submission = post_checklist(user_client, checklist_inv, user)
+        assert not test_submission.content['flagged_for_desk_reject_verification']['value']
+        assert not test_submission.content['flagged_for_ethics_review']['value']
+        _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=edit['note'])
+
+        # Post checklist with no ethics flag and a violation field - check for DSV flag
+        edit, test_submission = post_checklist(user_client, checklist_inv, user, tested_field=violation_fields[0])
+        assert test_submission.content['flagged_for_desk_reject_verification']['value']
+        assert not test_submission.content['flagged_for_ethics_review']['value']
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate > now()
+
+        # Delete checklist - check DSV flag is False, invitation is expired
+        _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=edit['note'])
+        assert not test_submission.content['flagged_for_desk_reject_verification']['value']
+        assert not test_submission.content['flagged_for_ethics_review']['value']
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
+
+        # Re-post with no ethics flag and a violation field - check DSV flag is True
+        violation_edit, test_submission = post_checklist(user_client, checklist_inv, user, tested_field=violation_fields[0])
+        assert test_submission.content['flagged_for_desk_reject_verification']['value']
+        assert not test_submission.content['flagged_for_ethics_review']['value']
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate > now()
+
+        # Edit with no ethics flag and no violation field - check DSV flag is False
+        violation_edit['note']['content'][violation_fields[0]]['value'] = 'Yes'
+        _, test_submission = post_checklist(user_client, checklist_inv, user, existing_note=violation_edit['note'])
+        assert not test_submission.content['flagged_for_desk_reject_verification']['value']
+        assert not test_submission.content['flagged_for_ethics_review']['value']
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
+
+        # Edit with ethics flag and no violation field - check DSV flag is false and ethics flag exists and is True
+        _, test_submission = post_checklist(user_client, checklist_inv, user, tested_field='need_ethics_review', existing_note=violation_edit['note'])
+        assert not test_submission.content['flagged_for_desk_reject_verification']['value']
+        assert test_submission.content['flagged_for_ethics_review']['value']
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
+
+        # Delete checklist - check both flags False
+        _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=violation_edit['note'])
+        assert not test_submission.content['flagged_for_desk_reject_verification']['value']
+        assert not test_submission.content['flagged_for_ethics_review']['value']
+
+        # Re-post with no flag - check both flags false
+        _, test_submission = post_checklist(user_client, checklist_inv, user)
+        assert not test_submission.content['flagged_for_desk_reject_verification']['value']
+        assert not test_submission.content['flagged_for_ethics_review']['value']
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
+
+
+        pass

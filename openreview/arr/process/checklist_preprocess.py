@@ -17,3 +17,7 @@ def process(client, edit, invitation):
     if 'no violations' in note.content.get('potential_violation_justification', 'no violations') or len(note.content.get('potential_violation_justification', '')) <= 0:
       exception_string = f"You have indicated a potential violation with the following fields: {', '.join(violated_fields)}. Please enter a brief explanation under \"Potential Violation Justification\""
       raise openreview.OpenReviewException(exception_string)
+    
+  needs_ethics_review = edit.note.content.get('need_ethics_review', {}).get('value', 'No') == 'Yes'
+  if needs_ethics_review and 'N/A' in edit.note.content.get('ethics_review_justification', {}).get('value', 'N/A'):
+    raise openreview.OpenReviewException("You have indicated that this submission needs an ethics review. Please enter a brief justification for your flagging.")

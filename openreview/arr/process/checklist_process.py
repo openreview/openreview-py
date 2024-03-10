@@ -6,10 +6,12 @@ def process(client, edit, invitation):
     forum = client.get_note(id=edit.note.forum, details='replies')
 
     ethics_flag_edits = client.get_note_edits(note_id=edit.note.forum, invitation=f"{venue_id}/-/Ethics_Review_Flag")
+    dsv_flag_edits = client.get_note_edits(note_id=edit.note.forum, invitation=f"{venue_id}/-/Desk_Reject_Verification_Flag")
 
     dsv_flagged = forum.content.get('flagged_for_desk_reject_verification', {}).get('value')
     ethics_flagged = forum.content.get('flagged_for_ethics_review', {}).get('value')
     has_ethic_flag_history = len(ethics_flag_edits) > 0
+    has_dsv_flag_history = len(dsv_flag_edits) > 0
 
     def post_flag(invitation_name, value=False):
        return client.post_note_edit(
@@ -23,6 +25,34 @@ def process(client, edit, invitation):
 
     needs_ethics_review = edit.note.content.get('need_ethics_review', {}).get('value', 'No') == 'Yes'
     violation_fields = ['appropriateness', 'formatting', 'length', 'anonymity', 'responsible_checklist', 'limitations']
+
+    if edit.note.ddate:
+        # Check for DSV unflagging
+        checklists = filter(
+           lambda reply: any('Checklist' in inv for inv in reply['invitations']),
+           forum.details['replies']
+        )
+
+        dsv_unflag = True
+        for checklist in checklists:
+            dsv_unflag = dsv_unflag and all(checklist['content'].get(field, {}).get('value', 'Yes') == 'Yes' for field in violation_fields)
+
+        if dsv_unflag and has_dsv_flag_history:
+            post_flag(
+                'Desk_Reject_Verification',
+                value = False
+            )
+
+        ethics_unflag = True
+        for checklist in checklists:
+            ethics_unflag = ethics_unflag and checklist['content'].get('need_ethics_review', {}).get('value', 'No') != 'Yes'
+
+        if ethics_unflag and has_ethic_flag_history:
+            post_flag(
+                'Ethics_Review',
+                value = False
+            )
+                
 
     # Desk Rejection Flagging
     if not all(edit.note.content.get(field, {}).get('value', 'Yes') == 'Yes' for field in violation_fields) and not dsv_flagged:
@@ -41,7 +71,7 @@ def process(client, edit, invitation):
         for checklist in checklists:
             dsv_unflag = dsv_unflag and all(checklist['content'].get(field, {}).get('value', 'Yes') == 'Yes' for field in violation_fields)
 
-        if dsv_unflag:
+        if dsv_unflag and has_dsv_flag_history and dsv_flagged:
             post_flag(
                 'Desk_Reject_Verification',
                 value = False
@@ -100,7 +130,7 @@ def process(client, edit, invitation):
         for checklist in checklists:
             ethics_unflag = ethics_unflag and checklist['content'].get('need_ethics_review', {}).get('value', 'No') != 'Yes'
 
-        if ethics_unflag:
+        if ethics_unflag and has_ethic_flag_history and ethics_flagged:
             post_flag(
                 'Ethics_Review',
                 value = False
