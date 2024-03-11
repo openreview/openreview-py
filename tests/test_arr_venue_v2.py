@@ -2002,6 +2002,14 @@ class TestARRVenueV2():
         venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
         violation_fields = ['appropriateness', 'formatting', 'length', 'anonymity', 'responsible_checklist', 'limitations'] # TODO: move to domain or somewhere?
+        format_field = {
+            'appropriateness': 'Appropriateness',
+            'formatting': 'Formatting',
+            'length': 'Length',
+            'anonymity': 'Anonymity',
+            'responsible_checklist': 'Responsible Checklist',
+            'limitations': 'Limitations'
+        }
         only_required_fields = ['number_of_assignments', 'diversity']
 
         default_fields = {field: True for field in violation_fields + only_required_fields}
@@ -2028,7 +2036,7 @@ class TestARRVenueV2():
             }
         }
 
-        def post_checklist(chk_client, chk_inv, user, tested_field=None, ddate=None, existing_note=None):
+        def post_checklist(chk_client, chk_inv, user, tested_field=None, ddate=None, existing_note=None, skip_justification_check=False):
             def generate_checklist_content(tested_field=None):
                 ret_content = {field: {'value':'Yes'} if default_fields[field] else {'value':'No'} for field in default_fields}
                 ret_content['potential_violation_justification'] = {'value': 'There are no violations with this submission'}
@@ -2036,8 +2044,9 @@ class TestARRVenueV2():
 
                 if tested_field:
                     ret_content[tested_field] = {'value':'Yes'} if not default_fields[tested_field] else {'value':'No'}
-                    ret_content['ethics_review_justification'] = {'value': 'There is an issue'}
-                    ret_content['potential_violation_justification'] = {'value': 'There are violations with this submission'}
+                    if not skip_justification_check:
+                        ret_content['ethics_review_justification'] = {'value': 'There is an issue'}
+                        ret_content['potential_violation_justification'] = {'value': 'There are violations with this submission'}
 
                 if 'Reviewer' in chk_inv:
                     for field in only_required_fields:
@@ -2074,6 +2083,14 @@ class TestARRVenueV2():
         checklist_inv = test_data_templates[venue.get_reviewers_id()]['checklist_invitation']
         user = test_data_templates[venue.get_reviewers_id()]['user']
         user_client = test_data_templates[venue.get_reviewers_id()]['client']
+
+        # Test checklist pre-process
+        with pytest.raises(openreview.OpenReviewException, match=r'You have indicated that this submission needs an ethics review. Please enter a brief justification for your flagging.'):
+            post_checklist(user_client, checklist_inv, user, tested_field='need_ethics_review', skip_justification_check=True)
+        for field in violation_fields:
+            with pytest.raises(openreview.OpenReviewException, match=rf'You have indicated a potential violation with the following fields: {format_field[field]}. Please enter a brief explanation under \"Potential Violation Justification\"'):
+                post_checklist(user_client, checklist_inv, user, tested_field=field, skip_justification_check=True)
+                
         # Post checklist with no ethics flag and no violation field - check that flags are not there
         edit, test_submission = post_checklist(user_client, checklist_inv, user)
         assert 'flagged_for_ethics_review' not in test_submission.content
@@ -2180,10 +2197,9 @@ class TestARRVenueV2():
         assert not test_submission.content['flagged_for_ethics_review']['value']
 
         # Re-post with no flag - check both flags false
-        _, test_submission = post_checklist(user_client, checklist_inv, user)
+        ae_edit, test_submission = post_checklist(user_client, checklist_inv, user)
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
 
-
-        pass
+        # Test un_flagged consensus
