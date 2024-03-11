@@ -29,9 +29,7 @@ def process(client, edit, invitation):
     
 Paper number: {submission.number}
 
-Paper title: {submission.content['title']['value']}
-
-Comment: {comment.content['comment']['value']}
+Message: {comment.content['message']['value']}
 
 To view the comment, click here: https://openreview.net/forum?id={submission.id}&noteId={comment.id}'''
 

@@ -5022,6 +5022,8 @@ Best,
             )
         )
 
+        helpers.await_queue_edit(openreview_client, edit_id=note_edit['id'])
+
         pc_client=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
 
         note_edit = pc_client.post_note_edit(
@@ -5034,3 +5036,5 @@ Best,
                 }
             )
         )
+
+        helpers.await_queue_edit(openreview_client, edit_id=note_edit['id'])
