@@ -2036,7 +2036,7 @@ class TestARRVenueV2():
             }
         }
 
-        def post_checklist(chk_client, chk_inv, user, tested_field=None, ddate=None, existing_note=None, skip_justification_check=False):
+        def post_checklist(chk_client, chk_inv, user, tested_field=None, ddate=None, existing_note=None, override_fields=None):
             def generate_checklist_content(tested_field=None):
                 ret_content = {field: {'value':'Yes'} if default_fields[field] else {'value':'No'} for field in default_fields}
                 ret_content['potential_violation_justification'] = {'value': 'There are no violations with this submission'}
@@ -2044,9 +2044,8 @@ class TestARRVenueV2():
 
                 if tested_field:
                     ret_content[tested_field] = {'value':'Yes'} if not default_fields[tested_field] else {'value':'No'}
-                    if not skip_justification_check:
-                        ret_content['ethics_review_justification'] = {'value': 'There is an issue'}
-                        ret_content['potential_violation_justification'] = {'value': 'There are violations with this submission'}
+                    ret_content['ethics_review_justification'] = {'value': 'There is an issue'}
+                    ret_content['potential_violation_justification'] = {'value': 'There are violations with this submission'}
 
                 if 'Reviewer' in chk_inv:
                     for field in only_required_fields:
@@ -2062,13 +2061,17 @@ class TestARRVenueV2():
                     content[tested_field] = {'value':'Yes'} if not default_fields[tested_field] else {'value':'No'}
                     content['ethics_review_justification'] = {'value': 'There is an issue'}
                     content['potential_violation_justification'] = {'value': 'There are violations with this submission'}
+
+            if override_fields:
+                for field in override_fields.keys():
+                    content[field] = override_fields[field]
             
             chk_edit = chk_client.post_note_edit(
                 invitation=chk_inv,
                 signatures=[user],
                 note=openreview.api.Note(
                     id=None if not existing_note else existing_note['id'],
-                    content = generate_checklist_content(tested_field=tested_field) if not existing_note else existing_note['content'],
+                    content = content,
                     ddate=ddate
                 )
             )
@@ -2085,11 +2088,15 @@ class TestARRVenueV2():
         user_client = test_data_templates[venue.get_reviewers_id()]['client']
 
         # Test checklist pre-process
+        force_justifications = {
+                'potential_violation_justification': {'value': 'There are no violations with this submission'},
+                'ethics_review_justification': {'value': 'N/A (I answered no to the previous question)'}
+        }
         with pytest.raises(openreview.OpenReviewException, match=r'You have indicated that this submission needs an ethics review. Please enter a brief justification for your flagging.'):
-            post_checklist(user_client, checklist_inv, user, tested_field='need_ethics_review', skip_justification_check=True)
+            post_checklist(user_client, checklist_inv, user, tested_field='need_ethics_review', override_fields=force_justifications)
         for field in violation_fields:
             with pytest.raises(openreview.OpenReviewException, match=rf'You have indicated a potential violation with the following fields: {format_field[field]}. Please enter a brief explanation under \"Potential Violation Justification\"'):
-                post_checklist(user_client, checklist_inv, user, tested_field=field, skip_justification_check=True)
+                post_checklist(user_client, checklist_inv, user, tested_field=field, override_fields=force_justifications)
                 
         # Post checklist with no ethics flag and no violation field - check that flags are not there
         edit, test_submission = post_checklist(user_client, checklist_inv, user)
@@ -2112,14 +2119,14 @@ class TestARRVenueV2():
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
 
         # Re-post with no ethics flag and a violation field - check DSV flag is True
-        violation_edit, test_submission = post_checklist(user_client, checklist_inv, user, tested_field=violation_fields[0])
+        violation_edit, test_submission = post_checklist(user_client, checklist_inv, user, tested_field=violation_fields[1])
         assert 'flagged_for_ethics_review' not in test_submission.content
         assert 'flagged_for_desk_reject_verification' in test_submission.content
         assert test_submission.content['flagged_for_desk_reject_verification']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate > now()
 
         # Edit with no ethics flag and no violation field - check DSV flag is False
-        violation_edit['note']['content'][violation_fields[0]]['value'] = 'Yes'
+        violation_edit['note']['content'][violation_fields[1]]['value'] = 'Yes'
         _, test_submission = post_checklist(user_client, checklist_inv, user, existing_note=violation_edit['note'])
         assert 'flagged_for_ethics_review' not in test_submission.content
         assert 'flagged_for_desk_reject_verification' in test_submission.content
@@ -2142,7 +2149,7 @@ class TestARRVenueV2():
         assert not test_submission.content['flagged_for_ethics_review']['value']
 
         # Re-post with no flag - check both flags false
-        _, test_submission = post_checklist(user_client, checklist_inv, user)
+        reviewer_edit, test_submission = post_checklist(user_client, checklist_inv, user)
         assert 'flagged_for_ethics_review' in test_submission.content
         assert 'flagged_for_desk_reject_verification' in test_submission.content
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
@@ -2161,7 +2168,7 @@ class TestARRVenueV2():
         _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=edit['note'])
 
         # Post checklist with no ethics flag and a violation field - check for DSV flag
-        edit, test_submission = post_checklist(user_client, checklist_inv, user, tested_field=violation_fields[0])
+        edit, test_submission = post_checklist(user_client, checklist_inv, user, tested_field=violation_fields[2])
         assert test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate > now()
@@ -2173,13 +2180,13 @@ class TestARRVenueV2():
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
 
         # Re-post with no ethics flag and a violation field - check DSV flag is True
-        violation_edit, test_submission = post_checklist(user_client, checklist_inv, user, tested_field=violation_fields[0])
+        violation_edit, test_submission = post_checklist(user_client, checklist_inv, user, tested_field=violation_fields[3])
         assert test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate > now()
 
         # Edit with no ethics flag and no violation field - check DSV flag is False
-        violation_edit['note']['content'][violation_fields[0]]['value'] = 'Yes'
+        violation_edit['note']['content'][violation_fields[3]]['value'] = 'Yes'
         _, test_submission = post_checklist(user_client, checklist_inv, user, existing_note=violation_edit['note'])
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
@@ -2203,3 +2210,34 @@ class TestARRVenueV2():
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
 
         # Test un_flagged consensus
+        reviewer_inv = test_data_templates[venue.get_reviewers_id()]['checklist_invitation']
+        reviewer = test_data_templates[venue.get_reviewers_id()]['user']
+        reviewer_client = test_data_templates[venue.get_reviewers_id()]['client']
+
+        # First set both flags, then unflag 1, then unflag both
+        ae_edit, test_submission = post_checklist(user_client, checklist_inv, user, tested_field='need_ethics_review', existing_note=ae_edit['note'])
+        reviewer_edit, test_submission = post_checklist(reviewer_client, reviewer_inv, reviewer, tested_field='need_ethics_review', existing_note=reviewer_edit['note'])
+        assert not test_submission.content['flagged_for_desk_reject_verification']['value']
+        assert test_submission.content['flagged_for_ethics_review']['value']
+
+        reviewer_edit, test_submission = post_checklist(reviewer_client, reviewer_inv, reviewer, existing_note=reviewer_edit['note'], override_fields={'need_ethics_review': {'value': 'No'}})
+        assert not test_submission.content['flagged_for_desk_reject_verification']['value']
+        assert test_submission.content['flagged_for_ethics_review']['value']
+
+        ae_edit, test_submission = post_checklist(user_client, checklist_inv, user, existing_note=ae_edit['note'], override_fields={'need_ethics_review': {'value': 'No'}})
+        assert not test_submission.content['flagged_for_desk_reject_verification']['value']
+        assert not test_submission.content['flagged_for_ethics_review']['value']
+
+        # Repeat for desk reject verification
+        ae_edit, test_submission = post_checklist(user_client, checklist_inv, user, tested_field=violation_fields[4], existing_note=ae_edit['note'])
+        reviewer_edit, test_submission = post_checklist(reviewer_client, reviewer_inv, reviewer, tested_field=violation_fields[4], existing_note=reviewer_edit['note'])
+        assert test_submission.content['flagged_for_desk_reject_verification']['value']
+        assert not test_submission.content['flagged_for_ethics_review']['value']
+
+        reviewer_edit, test_submission = post_checklist(reviewer_client, reviewer_inv, reviewer, existing_note=reviewer_edit['note'], override_fields={violation_fields[4]: {'value': 'Yes'}})
+        assert test_submission.content['flagged_for_desk_reject_verification']['value']
+        assert not test_submission.content['flagged_for_ethics_review']['value']
+
+        ae_edit, test_submission = post_checklist(user_client, checklist_inv, user, existing_note=ae_edit['note'], override_fields={violation_fields[4]: {'value': 'Yes'}})
+        assert not test_submission.content['flagged_for_desk_reject_verification']['value']
+        assert not test_submission.content['flagged_for_ethics_review']['value']
