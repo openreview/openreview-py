@@ -4484,8 +4484,9 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         invitations_container = selenium.find_element(By.CLASS_NAME, 'invitations-container')
         invitation_buttons = invitations_container.find_element(By.CLASS_NAME, 'invitation-buttons')
         buttons = invitation_buttons.find_elements(By.TAG_NAME, 'button')
-        assert len(buttons) ==  1
+        assert len(buttons) ==  2
         assert buttons[0].text == 'Official Comment'
+        assert buttons[1].text == 'Chat'
 
         ## SAC can edit the meta review
         meta_review_edit = sac_client.post_note_edit(
