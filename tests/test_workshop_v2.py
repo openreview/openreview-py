@@ -551,7 +551,7 @@ Best,
                         "order": 1
                     },
                 },
-                'submission_revision_remove_options': ['title', 'pdf', 'keywords']
+                'submission_revision_remove_options': ['title', 'pdf', 'keywords', 'authors', 'authorids']
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Submission_Revision_Stage'.format(request_form.number),
