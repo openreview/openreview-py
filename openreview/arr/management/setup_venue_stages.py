@@ -11,20 +11,29 @@ def process(client, invitation):
         arr_sac_max_load_task,
         arr_reviewer_checklist,
         arr_ae_checklist,
-        arr_desk_reject_verification
+        arr_desk_reject_verification,
+        arr_official_review_content,
+        arr_metareview_content
     )
     from openreview.venue import matching
     from datetime import datetime
 
-    def fetch_date(field_name):
+    def fetch_date(field_name, to_datetime=False):
         value = invitation.content.get(field_name, {}).get('value')
         if value == 0:
             return None
-        return value
+        return value if not to_datetime else value/1000
 
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     request_form_id = domain.content['request_form_id']['value']
+    replace_processes = [
+        'Revision',
+        'Review_Stage',
+        'Meta_Review_Stage',
+        'Ethics_Review_Stage',
+        'Comment_Stage'
+    ]
 
     client_v1 = openreview.Client(
         baseurl=openreview.tools.get_base_urls(client)[0],
@@ -36,15 +45,15 @@ def process(client, invitation):
     venue_stage_invitations = client_v1.get_all_invitations(regex=f"{support_group}/-/Request{request_form.number}.*")
     venue = openreview.helpers.get_conference(client_v1, request_form_id, support_group)
     invitation_builder = openreview.arr.InvitationBuilder(venue)
-    venue_stage_invitations = [i for i in venue_stage_invitations if '/Revision' in i.id]
+    venue_stage_invitations = [i for i in venue_stage_invitations if any(i.id.endswith(ending) for ending in replace_processes)]
     for venue_invitation in venue_stage_invitations:
         venue_invitation.process = invitation_builder.get_process_content('process/revisionProcess.py')
         client_v1.post_invitation(venue_invitation)
 
     print([i.id for i in venue_stage_invitations]) # We use: review, meta-review, comment, revision, ethics review, rev/ac registration, 
 
-    overall_exp = fetch_date('form_expiration_date') / 1000
-    max_load_due = fetch_date('maximum_load_due_date') / 1000
+    overall_exp = fetch_date('form_expiration_date', to_datetime=True)
+    max_load_due = fetch_date('maximum_load_due_date', to_datetime=True)
     max_load_exp = (overall_exp if fetch_date('maximum_load_exp_date') is None else fetch_date('maximum_load_exp_date')) / 1000
     reviewer_checklist_due = fetch_date('reviewer_checklist_due_date')
     reviewer_checklist_exp = fetch_date('reviewer_checklist_exp_date')

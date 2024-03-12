@@ -1603,6 +1603,30 @@ class TestARRVenueV2():
         august_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
+        # Create review stages
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        pc_client.post_note(
+            openreview.Note(
+                content={
+                    'setup_review_stages_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S'),
+                    'reviewing_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
+                    'reviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'reviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'metareviewing_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
+                    'metareviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'metareviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
+            )
+        )
+
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
 
         with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
@@ -1717,12 +1741,40 @@ class TestARRVenueV2():
         # Create groups for previous cycle
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
-        june_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
+        june_request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        june_venue = openreview.helpers.get_conference(client, june_request_form.id, 'openreview.net/Support')
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
         august_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         june_submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission', sort='number:asc')
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+
+        ## Create June review stages
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        pc_client.post_note(
+            openreview.Note(
+                content={
+                    'setup_review_stages_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S'),
+                    'reviewing_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
+                    'reviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'reviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'metareviewing_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
+                    'metareviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'metareviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                },
+                invitation=f"openreview.net/Support/-/Request{june_request_form.number}/ARR_Configuration",
+                forum=june_request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'openreview.net/Support'],
+                referent=june_request_form.id,
+                replyto=june_request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
+            )
+        )
+
+        helpers.await_queue()
+        helpers.await_queue(openreview_client)
 
         # Remove resubmission information from all but submissions 2 and 3
         for submission in submissions:
@@ -1744,24 +1796,12 @@ class TestARRVenueV2():
                 )
             )
 
-        helpers.await_queue()
 
         # Set up June reviewer and area chair groups (for simplicity, map idx 1-to-1 and 2-to-2)
         openreview_client.add_members_to_group(june_venue.get_reviewers_id(number=2), '~Reviewer_ARROne1')
         openreview_client.add_members_to_group(june_venue.get_reviewers_id(number=3), '~Reviewer_ARRTwo1')
         openreview_client.add_members_to_group(june_venue.get_area_chairs_id(number=2), '~AC_ARROne1')
         openreview_client.add_members_to_group(june_venue.get_area_chairs_id(number=3), '~AC_ARRTwo1')
-
-        # Post reviews to add them into Reviewers submitted
-        start_date = datetime.datetime.utcnow()
-        due_date = start_date + datetime.timedelta(days=3)
-        june_venue.review_stage = openreview.stages.ReviewStage(
-            start_date=start_date,
-            due_date=due_date,
-        )
-
-        june_venue.create_review_stage()
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/June/-/Official_Review-0-1', count=1)
 
         reviewer_client_1 = openreview.api.OpenReviewClient(username='reviewer1@aclrollingreview.com', password=helpers.strong_password)
         reviewer_client_2 = openreview.api.OpenReviewClient(username='reviewer2@aclrollingreview.com', password=helpers.strong_password)
@@ -1776,10 +1816,23 @@ class TestARRVenueV2():
             signatures=[anon_group_id_1],
             note=openreview.api.Note(
                 content={
-                    "title": { "value": 'some title' },
-                    "review": { "value": 'some review' },
-                    "rating": { "value": 10 },
-                    "confidence": { "value": 5 }
+                    "confidence": { "value": 5 },
+                    "paper_summary": { "value": 'some summary' },
+                    "summary_of_strengths": { "value": 'some strengths' },
+                    "summary_of_weaknesses": { "value": 'some weaknesses' },
+                    "comments_suggestions_and_typos": { "value": 'some comments' },
+                    "soundness": { "value": 1 },
+                    "overall_assessment": { "value": 1 },
+                    "best_paper": { "value": "No" },
+                    "ethical_concerns": { "value": "N/A" },
+                    "reproducibility": { "value": 1 },
+                    "datasets": { "value": 1 },
+                    "software": { "value": 1 },
+                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
+                    "Knowledge_of_paper": {"value": "After the review process started"},
+                    "Knowledge_of_paper_source": {"value": ["A research talk"]},
+                    "impact_of_knowledge_of_paper": {"value": "A lot"},
+                    "reviewer_certification": {"value": "A Name"}
                 }
             )
         )
@@ -1789,10 +1842,23 @@ class TestARRVenueV2():
             signatures=[anon_group_id_2],
             note=openreview.api.Note(
                 content={
-                    "title": { "value": 'some title' },
-                    "review": { "value": 'some review' },
-                    "rating": { "value": 10 },
-                    "confidence": { "value": 5 }
+                    "confidence": { "value": 5 },
+                    "paper_summary": { "value": 'some summary' },
+                    "summary_of_strengths": { "value": 'some strengths' },
+                    "summary_of_weaknesses": { "value": 'some weaknesses' },
+                    "comments_suggestions_and_typos": { "value": 'some comments' },
+                    "soundness": { "value": 1 },
+                    "overall_assessment": { "value": 1 },
+                    "best_paper": { "value": "No" },
+                    "ethical_concerns": { "value": "N/A" },
+                    "reproducibility": { "value": 1 },
+                    "datasets": { "value": 1 },
+                    "software": { "value": 1 },
+                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
+                    "Knowledge_of_paper": {"value": "After the review process started"},
+                    "Knowledge_of_paper_source": {"value": ["A research talk"]},
+                    "impact_of_knowledge_of_paper": {"value": "A lot"},
+                    "reviewer_certification": {"value": "A Name"}
                 }
             )
         )
@@ -1801,7 +1867,7 @@ class TestARRVenueV2():
 
         # Point August submissions idx 1 and 2 to June papers and set submission reassignment requests
         # Let 1 = same and 2 = not same
-        openreview_client.post_note_edit(
+        review_edit_1 = openreview_client.post_note_edit(
             invitation=august_venue.get_meta_invitation_id(),
             readers=[august_venue.id],
             writers=[august_venue.id],
@@ -1815,7 +1881,7 @@ class TestARRVenueV2():
                 }
             )
         )
-        openreview_client.post_note_edit(
+        review_edit_2 = openreview_client.post_note_edit(
             invitation=august_venue.get_meta_invitation_id(),
             readers=[august_venue.id],
             writers=[august_venue.id],
@@ -1829,6 +1895,9 @@ class TestARRVenueV2():
                 }
             )
         )
+
+        helpers.await_queue()
+        helpers.await_queue(openreview_client)
 
         # Call the stage
         pc_client.post_note(

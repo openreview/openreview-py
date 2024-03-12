@@ -11,6 +11,7 @@ def process(client, invitation):
             wait_to_finish=True,
             soft_delete=True
         )
+        print(f'{profile_id}->{submission_id},weight={new_weight}')
         client.post_edge(
             openreview.api.Edge(
                 invitation=edge_inv,
@@ -54,10 +55,12 @@ def process(client, invitation):
     invitation_builder = openreview.arr.InvitationBuilder(venue)
     submissions = venue.get_submissions()
 
-    resubmissions = filter(
+    resubmissions = list(filter(
         lambda s: previous_url_field in s.content and len(s.content[previous_url_field]['value']) > 0, 
         submissions
-    )
+    ))
+
+    print(f"records of resubmission: {','.join([s.id for s in resubmissions])}")
 
     # Fetch profiles and map names to profile IDs - account for change in preferred names
     all_profiles = []
@@ -115,8 +118,10 @@ def process(client, invitation):
                 members=[]
             )
         )
-
+    print('iterating through')
+    print(list(resubmissions))
     for submission in resubmissions:
+        print(f"rewriting {submission.id}")
         # 1) Find all reassignments and reassignment requests -> 0 out or set to 3
         if 'is not a' in submission.content[rev_reassignment_field]['value'] or \
             'is not a' in submission.content[ae_reassignment_field]['value']:
@@ -136,6 +141,8 @@ def process(client, invitation):
             previous_reviewers = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Reviewers/Submitted")
             previous_ae = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
             current_client = client
+
+        print(f"previous submission {submission.id}\nreviewers {wants_new_reviewers}\nae {wants_new_ae}")
 
         ae_scores = {
             g['id']['tail'] : g['values'][0]

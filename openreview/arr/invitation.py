@@ -485,7 +485,49 @@ class InvitationBuilder(object):
                         'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
                         'order': 19,
                         'required': False
-                    }
+                    },
+                    'reviewing_start_date': {
+                        'description': 'When should reviewing start? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+                        'order': 20,
+                        'required': False
+                    },
+                    'reviewing_due_date': {
+                        'description': 'When should reviewing end? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+                        'order': 21,
+                        'required': False
+                    },
+                    'reviewing_exp_date': {
+                        'description': 'When should the reviewing forms be disabled? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+                        'order': 22,
+                        'required': False
+                    },
+                    'metareviewing_start_date': {
+                        'description': 'When should reviewing start? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+                        'order': 23,
+                        'required': False
+                    },
+                    'metareviewing_due_date': {
+                        'description': 'When should reviewing end? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+                        'order': 24,
+                        'required': False
+                    },
+                    'metareviewing_exp_date': {
+                        'description': 'When should the reviewing forms be disabled? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+                        'order': 25,
+                        'required': False
+                    },
+                    'setup_review_stages_date': {
+                        'description': 'When should the review stages be created? This date should be after the submission deadline. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+                        'order': 16,
+                        'required': False
+                    },
                 }
             }
         ))
@@ -516,7 +558,14 @@ class InvitationBuilder(object):
                 'reviewer_checklist_due_date': {'value': 0},
                 'reviewer_checklist_exp_date': {'value': 0},
                 'setup_tracks_and_reassignment_date': {'value': 0},
-                'setup_sae_ae_assignment_date': {'value': 0}
+                'setup_sae_ae_assignment_date': {'value': 0},
+                'reviewing_start_date': {'value': 0},
+                'reviewing_due_date': {'value': 0},
+                'reviewing_exp_date': {'value': 0},
+                'metareviewing_start_date': {'value': 0},
+                'metareviewing_due_date': {'value': 0},
+                'metareviewing_exp_date': {'value': 0},
+                'setup_review_stages_date': {'value': 0}
             },
             date_processes=[
                 {
@@ -542,6 +591,10 @@ class InvitationBuilder(object):
                 {
                     'dates': ["#{4/content/setup_sae_ae_assignment_date/value}"],
                     'script': self.get_process_content('management/setup_sae_ae_assignments.py'),
+                },
+                {
+                    'dates': ["#{4/content/setup_review_stages_date/value}"],
+                    'script': self.get_process_content('management/setup_review_stages.py'),
                 }
             ]
         )

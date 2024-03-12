@@ -330,230 +330,648 @@ hide_fields_from_public = [
 
 arr_official_review_content = {
     "confidence": {
-        "order": 6,
         "value": {
             "param": {
-                "type": "string",
-                "enum": [
-                    "5 = Positive that my evaluation is correct. I read the paper very carefully and am familiar with related work.",
-                    "4 = Quite sure. I tried to check the important points carefully. It's unlikely, though conceivable, that I missed something that should affect my ratings.",
-                    "3 = Pretty sure, but there's a chance I missed something. Although I have a good feel for this area in general, I did not carefully check the paper's details, e.g., the math or experimental design.",
-                    "2 = Willing to defend my evaluation, but it is fairly likely that I missed some details, didn't understand some central points, or can't be sure about the novelty of the work.",
-                    "1 = Not my area, or paper is very hard to understand. My evaluation is just an educated guess."
-                ],
                 "input": "radio",
-                "optional": True
+                "enum": [
+                    {
+                        "value": 5,
+                        "description": "5 = Positive that my evaluation is correct. I read the paper very carefully and am familiar with related work."
+                    },
+                    {
+                        "value": 4,
+                        "description": "4 = Quite sure. I tried to check the important points carefully. It's unlikely, though conceivable, that I missed something that should affect my ratings."
+                    },
+                    {
+                        "value": 3,
+                        "description": "3 =  Pretty sure, but there's a chance I missed something. Although I have a good feel for this area in general, I did not carefully check the paper's details, e.g., the math or experimental design."
+                    },
+                    {
+                        "value": 2,
+                        "description": "2 =  Willing to defend my evaluation, but it is fairly likely that I missed some details, didn't understand some central points, or can't be sure about the novelty of the work."
+                    },
+                    {
+                        "value": 1,
+                        "description": "1 = Not my area, or paper is very hard to understand. My evaluation is just an educated guess."
+                    }
+                ],
+                "optional": False,
+                "type": "integer"
             }
-        }
+        },
+        "order": 1
     },
     "paper_summary": {
-        "order": 1,
-        "description": "Describe what this paper is about. This should help action editors and area chairs to understand the topic of the work and highlight any possible misunderstandings. Maximum length 1000 characters.",
         "value": {
             "param": {
-                "type": "string",
-                "maxLength": 20000,
-                "markdown": True,
-                "input": "textarea"
+                "minLength": 1,
+                "optional": False,
+                "type": "string"
             }
-        }
+        },
+        "order": 3,
+        "description": "Describe what this paper is about. This should help action editors and area chairs to understand the topic of the work and highlight any possible misunderstandings. Maximum length 20000 characters."
     },
     "summary_of_strengths": {
-        "order": 2,
-        "description": "What are the major reasons to publish this paper at a selective *ACL venue? These could include novel and useful methodology, insightful empirical results or theoretical analysis, clear organization of related literature, or any other reason why interested readers of *ACL papers may find the paper useful. Maximum length 5000 characters.",
         "value": {
             "param": {
-                "type": "string",
-                "maxLength": 20000,
-                "markdown": True,
-                "input": "textarea"
+                "minLength": 1,
+                "optional": False,
+                "type": "string"
             }
-        }
+        },
+        "order": 4,
+        "description": "What are the major reasons to publish this paper at a selective *ACL venue? These could include novel and useful methodology, insightful empirical results or theoretical analysis, clear organization of related literature, or any other reason why interested readers of *ACL papers may find the paper useful. Maximum length 20000 characters."
     },
     "summary_of_weaknesses": {
-        "order": 3,
-        "description": "What are the concerns that you have about the paper that would cause you to favor prioritizing other high-quality papers that are also under consideration for publication? These could include concerns about correctness of the results or argumentation, limited perceived impact of the methods or findings (note that impact can be significant both in broad or in narrow sub-fields), lack of clarity in exposition, or any other reason why interested readers of *ACL papers may gain less from this paper than they would from other papers under consideration. Where possible, please number your concerns so authors may respond to them individually. Maximum length 5000 characters.",
         "value": {
             "param": {
-                "type": "string",
-                "maxLength": 20000,
-                "markdown": True,
-                "input": "textarea"
+                "minLength": 1,
+                "optional": False,
+                "type": "string"
             }
-        }
+        },
+        "order": 5,
+        "description": "What are the concerns that you have about the paper that would cause you to favor prioritizing other high-quality papers that are also under consideration for publication? These could include concerns about correctness of the results or argumentation, limited perceived impact of the methods or findings (note that impact can be significant both in broad or in narrow sub-fields), lack of clarity in exposition, or any other reason why interested readers of *ACL papers may gain less from this paper than they would from other papers under consideration. Where possible, please number your concerns so authors may respond to them individually. Maximum length 20000 characters."
     },
     "comments_suggestions_and_typos": {
-        "order": 4,
-        "description": "If you have any comments to the authors about how they may improve their paper, other than addressing the concerns above, please list them here.\n Maximum length 5000 characters.",
         "value": {
             "param": {
-                "type": "string",
-                "maxLength": 20000,
-                "markdown": True,
-                "input": "textarea"
+                "minLength": 1,
+                "optional": False,
+                "type": "string"
             }
-        }
+        },
+        "order": 6,
+        "description": "If you have any comments to the authors about how they may improve their paper, other than addressing the concerns above, please list them here.\n Maximum length 20000 characters."
+    },
+    "soundness": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    {
+                        "value": 5.0,
+                        "description": "5 = Excellent: This study is one of the most thorough I have seen, given its type."
+                    },
+                    {
+                        "value": 4.5,
+                        "description": "4.5 "
+                    },
+                    {
+                        "value": 4.0,
+                        "description": "4 = Strong: This study provides sufficient support for all of its claims/arguments. Some extra experiments could be nice, but not essential."
+                    },
+                    {
+                        "value": 3.5,
+                        "description": "3.5 "
+                    },
+                    {
+                        "value": 3.0,
+                        "description": "3 = Acceptable: This study provides sufficient support for its major claims/arguments. Some minor points may need extra support or details."
+                    },
+                    {
+                        "value": 2.5,
+                        "description": "2.5 "
+                    },
+                    {
+                        "value": 2.0,
+                        "description": "2 = Poor: Some of the main claims/arguments are not sufficiently supported. There are major technical/methodological problems."
+                    },
+                    {
+                        "value": 1.5,
+                        "description": "1.5 "
+                    },
+                    {
+                        "value": 1.0,
+                        "description": "1 = Major Issues: This study is not yet sufficiently thorough to warrant publication or is not relevant to ACL."
+                    }
+                ],
+                "optional": False,
+                "type": "float"
+            }
+        },
+        "order": 7,
+        "description": "How sound and thorough is this study? Does the paper clearly state scientific claims and provide adequate support for them? For experimental papers: consider the depth and/or breadth of the research questions investigated, technical soundness of experiments, methodological validity of evaluation. For position papers, surveys: consider the current state of the field is adequately represented, and main counter-arguments acknowledged. For resource papers: consider the data collection methodology, resulting data & the difference from existing resources are described in sufficient detail. Please adjust your baseline to account for the length of the paper."
     },
     "overall_assessment": {
-        "order": 5,
-        "description": "Would you personally like to see this paper presented at an *ACL event that invites submissions on this topic? For example, you may feel that a paper should be presented if its contributions would be useful to its target audience, deepen the understanding of a given topic, or help establish cross-disciplinary connections. Note: Even high-scoring papers can be in need of minor changes (e.g. typos, non-core missing refs, etc.).",
         "value": {
             "param": {
-                "type": "string",
+                "input": "radio",
                 "enum": [
-                    "5 = Top-Notch: This is one of the best papers I read recently, of great interest for the (broad or narrow) sub-communities that might build on it.",
-                    "4.5 ",
-                    "4 = This paper represents solid work, and is of significant interest for the (broad or narrow) sub-communities that might build on it.",
-                    "3.5 ",
-                    "3 = Good: This paper makes a reasonable contribution, and might be of interest for some (broad or narrow) sub-communities, possibly with minor revisions.",
-                    "2.5 ",
-                    "2 = Revisions Needed: This paper has some merit, but also significant flaws, and needs work before it would be of interest to the community.",
-                    "1.5 ",
-                    "1 = Major Revisions Needed: This paper has significant flaws, and needs substantial work before it would be of interest to the community.",
-                    "0 = This paper is not relevant to the *ACL community (for example, is in no way related to natural language processing)."
+                    {
+                        "value": 5.0,
+                        "description": "5 = Top-Notch: This is one of the best papers I read recently, of great interest for the (broad or narrow) sub-communities that might build on it."
+                    },
+                    {
+                        "value": 4.5,
+                        "description": "4.5 "
+                    },
+                    {
+                        "value": 4.0,
+                        "description": "4 = This paper represents solid work, and is of significant interest for the (broad or narrow) sub-communities that might build on it."
+                    },
+                    {
+                        "value": 3.5,
+                        "description": "3.5 "
+                    },
+                    {
+                        "value": 3.0,
+                        "description": "3 = Good: This paper makes a reasonable contribution, and might be of interest for some (broad or narrow) sub-communities, possibly with minor revisions."
+                    },
+                    {
+                        "value": 2.5,
+                        "description": "2.5 "
+                    },
+                    {
+                        "value": 2.0,
+                        "description": "2 = Revisions Needed: This paper has some merit, but also significant flaws, and needs work before it would be of interest to the community."
+                    },
+                    {
+                        "value": 1.5,
+                        "description": "1.5 "
+                    },
+                    {
+                        "value": 1.0,
+                        "description": "1 = Major Revisions Needed: This paper has significant flaws, and needs substantial work before it would be of interest to the community."
+                    },
+                    {
+                        "value": 0.0,
+                        "description": "0 = This paper is not relevant to the *ACL community (for example, is in no way related to natural language processing)."
+                    }
                 ],
-                "input": "radio"
+                "optional": False,
+                "type": "float"
             }
-        }
+        },
+        "order": 8,
+        "description": "Would you personally like to see this paper presented at an *ACL event that invites submissions on this topic? For example, you may feel that a paper should be presented if its contributions would be useful to its target audience, deepen the understanding of a given topic, or help establish cross-disciplinary connections. Note: Even high-scoring papers can be in need of minor changes (e.g. typos, non-core missing refs, etc.)."
     },
     "best_paper": {
-        "order": 7,
-        "description": "Could this be a best paper in a top-tier *ACL venue?",
         "value": {
             "param": {
-                "type": "string",
+                "input": "radio",
                 "enum": [
                     "Yes",
                     "Maybe",
                     "No"
                 ],
-                "input": "radio"
+                "optional": False,
+                "type": "string"
             }
-        }
+        },
+        "order": 9,
+        "description": "Could the camera-ready version of this paper merit consideration for an 'outstanding paper' award (up to 2.5% of accepted papers at *ACL conferences will be recognized in this way)? Outstanding papers should be either fascinating, controversial, surprising, impressive, or potentially field-changing. Awards will be decided based on the camera-ready version of the paper."
     },
     "best_paper_justification": {
-        "order": 8,
-        "description": "If you answered Yes or Maybe to the question about consideration for an award, please briefly describe why.",
         "value": {
             "param": {
-                "type": "string",
-                "maxLength": 5000,
-                "markdown": True,
+                "minLength": 1,
                 "optional": True,
-                "input": "textarea"
+                "type": "string"
             }
-        }
+        },
+        "order": 10,
+        "description": "If you answered Yes or Maybe to the question about consideration for an award, please briefly describe why."
     },
     "limitations_and_societal_impact": {
-        "order": 9,
-        "description": "Have the authors adequately discussed the limitations and potential positive and negative societal impacts of their work? If not, please include constructive suggestions for improvement. Authors should be rewarded rather than punished for being up front about the limitations of their work and any potential negative societal impact. You are encouraged to think through whether any critical points are missing and provide these as feedback for the authors. Consider, for example, cases of exclusion of user groups, overgeneralization of findings, unfair impacts on traditionally marginalized populations, bias confirmation, under- and overexposure of languages or approaches, and dual use (see Hovy and Spruit, 2016, for examples of those). Consider who benefits from the technology if it is functioning as intended, as well as who might be harmed, and how. Consider the failure modes, and in case of failure, who might be harmed and how.",
         "value": {
             "param": {
-                "type": "string",
-                "maxLength": 10000,
-                "markdown": True,
+                "minLength": 1,
                 "optional": True,
-                "input": "textarea"
+                "type": "string"
             }
-        }
+        },
+        "order": 11,
+        "description": "Have the authors adequately discussed the limitations and potential positive and negative societal impacts of their work? If not, please include constructive suggestions for improvement. Authors should be rewarded rather than punished for being up front about the limitations of their work and any potential negative societal impact. You are encouraged to think through whether any critical points are missing and provide these as feedback for the authors. Consider, for example, cases of exclusion of user groups, overgeneralization of findings, unfair impacts on traditionally marginalized populations, bias confirmation, under- and overexposure of languages or approaches, and dual use (see Hovy and Spruit, 2016, for examples of those). Consider who benefits from the technology if it is functioning as intended, as well as who might be harmed, and how. Consider the failure modes, and in case of failure, who might be harmed and how."
     },
     "ethical_concerns": {
-        "order": 10,
-        "description": "Please review the ACL code of ethics (https://www.aclweb.org/portal/content/acl-code-ethics) and the ARR checklist submitted by the authors in the submission form. If there are ethical issues with this paper, please describe them and the extent to which they have been acknowledged or addressed by the authors.",
         "value": {
             "param": {
-                "type": "string",
-                "maxLength": 10000,
-                "markdown": True,
-                "input": "textarea"
+                "minLength": 1,
+                "optional": False,
+                "type": "string"
             }
-        }
+        },
+        "order": 12,
+        "description": "Please review the ACL code of ethics (https://www.aclweb.org/portal/content/acl-code-ethics) and the ARR checklist submitted by the authors in the submission form. If there are ethical issues with this paper, please describe them and the extent to which they have been acknowledged or addressed by the authors. Otherwise, enter None."
     },
     "needs_ethics_review": {
-        "order": 11,
-        "description": "Should this paper be sent for an in-depth ethics review? We have a small ethics committee that can specially review very challenging papers when it comes to ethical issues. If this seems to be such a paper, then please explain why here, and we will try to ensure that it receives a separate review.",
         "value": {
             "param": {
-                "type": "string",
+                "input": "radio",
                 "enum": [
                     "Yes",
                     "No"
                 ],
                 "optional": True,
-                "markdown": True,
-                "input": "radio"
+                "type": "string"
             }
-        }
+        },
+        "order": 13,
+        "description": "Should this paper be sent for an in-depth ethics review? We have a small ethics committee that can specially review very challenging papers when it comes to ethical issues. If this seems to be such a paper, then please explain why here, and we will try to ensure that it receives a separate review."
     },
     "reproducibility": {
-        "order": 12,
-        "description": "Is there enough information in this paper for a reader to reproduce the main results, use results presented in this paper in future work (e.g., as a baseline), or build upon this work?",
         "value": {
             "param": {
-                "type": "string",
+                "input": "radio",
                 "enum": [
-                    "5 = They could easily reproduce the results.",
-                    "4 = They could mostly reproduce the results, but there may be some variation because of sample variance or minor variations in their interpretation of the protocol or method.",
-                    "3 = They could reproduce the results with some difficulty. The settings of parameters are underspecified or subjectively determined, and/or the training/evaluation data are not widely available.",
-                    "2 = They would be hard pressed to reproduce the results: The contribution depends on data that are simply not available outside the author's institution or consortium and/or not enough details are provided.",
-                    "1 = They would not be able to reproduce the results here no matter how hard they tried."
+                    {
+                        "value": 5,
+                        "description": "5 = They could easily reproduce the results."
+                    },
+                    {
+                        "value": 4,
+                        "description": "4 = They could mostly reproduce the results, but there may be some variation because of sample variance or minor variations in their interpretation of the protocol or method."
+                    },
+                    {
+                        "value": 3,
+                        "description": "3 = They could reproduce the results with some difficulty. The settings of parameters are underspecified or subjectively determined, and/or the training/evaluation data are not widely available."
+                    },
+                    {
+                        "value": 2,
+                        "description": "2 = They would be hard pressed to reproduce the results: The contribution depends on data that are simply not available outside the author's institution or consortium and/or not enough details are provided."
+                    },
+                    {
+                        "value": 1,
+                        "description": "1 = They would not be able to reproduce the results here no matter how hard they tried."
+                    }
                 ],
-                "input": "radio"
+                "optional": False,
+                "type": "integer"
             }
-        }
+        },
+        "order": 14,
+        "description": "Is there enough information in this paper for a reader to reproduce the main results, use results presented in this paper in future work (e.g., as a baseline), or build upon this work?"
     },
     "datasets": {
-        "order": 13,
-        "description": "If the authors state (in anonymous fashion) that datasets will be released, how valuable will they be to others?",
         "value": {
             "param": {
-                "type": "string",
+                "input": "radio",
                 "enum": [
-                    "5 = Enabling: The newly released datasets should affect other people's choice of research or development projects to undertake.",
-                    "4 = Useful: I would recommend the new datasets to other researchers or developers for their ongoing work.",
-                    "3 = Potentially useful: Someone might find the new datasets useful for their work.",
-                    "2 = Documentary: The new datasets will be useful to study or replicate the reported research, although for other purposes they may have limited interest or limited usability. (Still a positive rating)",
-                    "1 = No usable datasets submitted."
+                    {
+                        "value": 5,
+                        "description": "5 = Enabling: The newly released datasets should affect other people's choice of research or development projects to undertake."
+                    },
+                    {
+                        "value": 4,
+                        "description": "4 = Useful: I would recommend the new datasets to other researchers or developers for their ongoing work."
+                    },
+                    {
+                        "value": 3,
+                        "description": "3 = Potentially useful: Someone might find the new datasets useful for their work."
+                    },
+                    {
+                        "value": 2,
+                        "description": "2 = Documentary: The new datasets will be useful to study or replicate the reported research, although for other purposes they may have limited interest or limited usability. (Still a positive rating)"
+                    },
+                    {
+                        "value": 1,
+                        "description": "1 = No usable datasets submitted."
+                    }
                 ],
-                "input": "radio"
+                "optional": False,
+                "type": "integer"
             }
-        }
+        },
+        "order": 15,
+        "description": "If the authors state (in anonymous fashion) that datasets will be released, how valuable will they be to others?"
     },
     "software": {
-        "order": 14,
-        "description": "If the authors state (in anonymous fashion) that their software will be available, how valuable will it be to others?",
         "value": {
             "param": {
-                "type": "string",
+                "input": "radio",
                 "enum": [
-                    "5 = Enabling: The newly released software should affect other people's choice of research or development projects to undertake.",
-                    "4 = Useful: I would recommend the new software to other researchers or developers for their ongoing work.",
-                    "3 = Potentially useful: Someone might find the new software useful for their work.",
-                    "2 = Documentary: The new software will be useful to study or replicate the reported research, although for other purposes it may have limited interest or limited usability. (Still a positive rating)",
-                    "1 = No usable software released."
+                    {
+                        "value": 5,
+                        "description": "5 = Enabling: The newly released software should affect other people's choice of research or development projects to undertake."
+                    },
+                    {
+                        "value": 4,
+                        "description": "4 = Useful: I would recommend the new software to other researchers or developers for their ongoing work."
+                    },
+                    {
+                        "value": 3,
+                        "description": "3 = Potentially useful: Someone might find the new software useful for their work."
+                    },
+                    {
+                        "value": 2,
+                        "description": "2 = Documentary: The new software will be useful to study or replicate the reported research, although for other purposes it may have limited interest or limited usability. (Still a positive rating)"
+                    },
+                    {
+                        "value": 1,
+                        "description": "1 = No usable software released."
+                    }
                 ],
-                "input": "radio"
+                "optional": False,
+                "type": "integer"
             }
-        }
+        },
+        "order": 16,
+        "description": "If the authors state (in anonymous fashion) that their software will be available, how valuable will it be to others?"
     },
-    "author_identity_guess": {
-        "order": 15,
-        "description": "Do you know the author identity or have an educated guess?",
+    "Knowledge_of_or_educated_guess_at_author_identity": {
         "value": {
             "param": {
-                "type": "string",
+                "input": "radio",
                 "enum": [
-                    "5 = From a violation of the anonymity-window or other double-blind-submission rules, I know/can guess at least one author's name.",
-                    "4 = From an allowed pre-existing preprint or workshop paper, I know/can guess at least one author's name.",
-                    "3 = From the contents of the submission itself, I know/can guess at least one author's name.",
-                    "2 = From social media/a talk/other informal communication, I know/can guess at least one author's name.",
-                    "1 = I do not have even an educated guess about author identity."
+                    "Yes",
+                    "No"
                 ],
-                "input": "radio"
+                "optional": False,
+                "type": "string"
             }
-        }
+        },
+        "order": 17,
+        "description": "Do you think you know who wrote this paper (at least one author name or affiliation)?"
+    },
+    "Knowledge_of_paper": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "N/A, I do not know anything about the paper from outside sources",
+                    "Before the review process",
+                    "After the review process started"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "order": 18,
+        "description": "When did you come to know about the paper from outsde sources?"
+    },
+    "Knowledge_of_paper_source": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "N/A, I do not know anything about the paper from outside sources",
+                    "Preprint on arxiv",
+                    "Social media post",
+                    "A research talk",
+                    "I can guess",
+                    "other (specify)"
+                ],
+                "optional": False,
+                "type": "string[]"
+            }
+        },
+        "order": 19,
+        "description": "How did you come to know about the paper from outside sources?"
+    },
+    "Knowledge_of_paper_source_other": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "description": "If you selected 'other' in the previous question, please provide details here.",
+        "order": 20
+    },
+    "impact_of_knowledge_of_paper": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "N/A, I do not know anything about the paper from outside sources",
+                    "Not at all",
+                    "Not much",
+                    "Somehow",
+                    "A lot"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "How (if at all) do you think your comments and ratings might have been different without this outside knowledge?",
+        "order": 21
+    },
+    "Knowledge_of_paper_additional": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "description": "Is there anything you would like to explain about your answers to the last six questions? (optional)",
+        "order": 22
+    },
+    "Knowledge_of_authors_guess": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "description": "If you chose that you 'can guess' authors identity in the question above, please write your guess here. (optional)",
+        "order": 23
+    },
+    "reviewer_certification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "By filling in your name here you certify that the review you entered accurately reflects your assessment of the work. If you used any type of automated tool to help you craft your review, you hereby certify that its use was restricted to improving grammar and style, and the substance of the review is either your own work or the work of an acknowledged secondary reviewer.",
+        "order": 24
     }
 }
+
+
+arr_metareview_content = {
+    "metareview": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "order": 1,
+        "description": "Describe what this paper is about. This should help SACs at publication venues understand what sessions the paper might fit in. Maximum 5000 characters. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq"
+    },
+    "summary_of_reasons_to_publish": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "order": 2,
+        "description": "What are the major reasons to publish this paper at a *ACL venue? This should help SACs at publication venues understand why they might want to accept the paper. Maximum 5000 characters."
+    },
+    "summary_of_suggested_revisions": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "order": 3,
+        "description": "What revisions could the authors make to the research and the paper that would improve it? This should help authors understand the reviews in context, and help them plan any future resubmission. Maximum 5000 characters."
+    },
+    "overall_assessment": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    {
+                        "value": 5,
+                        "description": "5 = The paper is largely complete and there are no clear points of revision"
+                    },
+                    {
+                        "value": 4,
+                        "description": "4 = There are minor points that may be revised"
+                    },
+                    {
+                        "value": 3,
+                        "description": "3 = There are major points that may be revised"
+                    },
+                    {
+                        "value": 2,
+                        "description": "2 = The paper would need significant revisions to reach a publishable state"
+                    },
+                    {
+                        "value": 1,
+                        "description": "1 = Even after revisions, the paper is not likely to be publishable at an *ACL venue"
+                    }
+                ],
+                "optional": False,
+                "type": "integer"
+            }
+        },
+        "order": 4
+    },
+    "suggested_venues": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "order": 5,
+        "description": "You are encouraged to suggest conferences or workshops that would be suitable for this paper."
+    },
+    "best_paper_ae": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "Maybe",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "order": 6,
+        "description": "Could the camera-ready version of this paper merit consideration for an 'outstanding paper' award (up to 2.5% of accepted papers at *ACL conferences will be recognized in this way)? Outstanding papers should be either fascinating, controversial, surprising, impressive, or potentially field-changing. Awards will be decided based on the camera-ready version of the paper."
+    },
+    "best_paper_ae_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "order": 7,
+        "description": "If you answered Yes or Maybe to the question about consideration for an award, please briefly describe why."
+    },
+    "ethical_concerns": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "order": 8,
+        "description": "Independent of your judgement of the quality of the work, please review the ACL code of ethics (https://www.aclweb.org/portal/content/acl-code-ethics) and list any ethical concerns related to this paper. Maximum length 2000 characters. Otherwise, enter None"
+    },
+    "needs_ethics_review": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "order": 9,
+        "description": "Should this paper be sent for an in-depth ethics review? We have a small ethics committee that can specially review very challenging papers when it comes to ethical issues. If this seems to be such a paper, then please explain why here, and we will try to ensure that it receives a separate review."
+    },
+    "author_identity_guess": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    {
+                        "value": 5,
+                        "description": "5 = From a violation of the anonymity-window or other double-blind-submission rules, I know/can guess at least one author's name."
+                    },
+                    {
+                        "value": 4,
+                        "description": "4 = From an allowed pre-existing preprint or workshop paper, I know/can guess at least one author's name."
+                    },
+                    {
+                        "value": 3,
+                        "description": "3 = From the contents of the submission itself, I know/can guess at least one author's name."
+                    },
+                    {
+                        "value": 2,
+                        "description": "2 = From social media/a talk/other informal communication, I know/can guess at least one author's name."
+                    },
+                    {
+                        "value": 1,
+                        "description": "1 = I do not have even an educated guess about author identity."
+                    }
+                ],
+                "optional": False,
+                "type": "integer"
+            }
+        },
+        "order": 10,
+        "description": "Do you know the author identity or have an educated guess?"
+    },
+    "great_reviews": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "order": 11,
+        "description": "Please list the ids of all reviewers who went beyond expectations in terms of providing informative and constructive reviews and discussion. For example: jAxb, zZac"
+    },
+    "poor_reviews": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "order": 12,
+        "description": "Please list the ids of all reviewers whose reviews did not meet expectations. For example: jAxb, zZac"
+    }
+}
+
 
 arr_reviewer_ac_recognition_task_forum = {
     "title": "Requesting a Letter of Recognition",
