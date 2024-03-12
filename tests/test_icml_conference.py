@@ -1659,7 +1659,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         time.sleep(5) ## wait until the process function runs   
 
-        messages = client.get_messages(to='emilia@icml.cc', subject='[ICML 2023] Invitation canceled to review paper titled "Paper title 1 Version 2"')
+        messages = openreview_client.get_messages(to='emilia@icml.cc', subject='[ICML 2023] Invitation canceled to review paper titled "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
 
         with pytest.raises(openreview.OpenReviewException, match=r'the user is already invited'):

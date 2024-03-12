@@ -151,4 +151,4 @@ Thanks,
 {inviter_id}
 {inviter_preferred_name} ({edge.tauthor})'''
 
-        response = client.post_message(subject, [user_profile.id], message)
+        response = client.post_message(meta_invitation_id, subject, [user_profile.id], message)
