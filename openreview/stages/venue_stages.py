@@ -519,8 +519,10 @@ class SubmissionRevisionStage():
                 'order':4
             }
         elif self.allow_author_reorder == AuthorReorder.DISALLOW_EDIT:
-            del content['authors']
-            del content['authorids']
+            if 'authors' in content:
+                del content['authors']
+            if 'authorids' in content:
+                del content['authorids']
 
         if conference:
             invitation_id = conference.get_invitation_id(self.name)
