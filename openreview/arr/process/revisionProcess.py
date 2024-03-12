@@ -269,7 +269,7 @@ def process(client, note, invitation):
             conference.create_registration_stages()
 
         elif invitation_type == 'Review_Stage':
-            conference.create_review_stage()
+            invitation = conference.create_review_stage()
 
             if forum_note.content.get('api_version') == '2':
 
@@ -371,6 +371,13 @@ def process(client, note, invitation):
                     signatures = ['~Super_User1']
                 ))
 
+            invitation.content = {
+                'review_process_script': {
+                    'value': invitation_builder.get_process_content('process/review_process.py')
+                }
+            }
+            invitation_builder.save_invitation(invitation, replacement=False)
+
         elif invitation_type == 'Rebuttal_Stage':
             conference.create_review_rebuttal_stage()
 
@@ -378,7 +385,13 @@ def process(client, note, invitation):
             conference.create_ethics_review_stage()
 
         elif invitation_type == 'Meta_Review_Stage':
-            conference.create_meta_review_stage()
+            invitation = conference.create_meta_review_stage()
+            invitation.content = {
+                'meta_review_process_script': {
+                    'value': invitation_builder.get_process_content('process/review_process.py')
+                }
+            }
+            invitation_builder.save_invitation(invitation, replacement=False)
 
         elif invitation_type == 'Decision_Stage':
             # check if decisions file has changed from previous revision
