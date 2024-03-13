@@ -350,6 +350,8 @@ class InvitationBuilder(object):
             invitation=invitation
         )
 
+        return invitation
+
     def get_process_content(self, file_path):
         process = None
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:

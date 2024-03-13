@@ -12,6 +12,7 @@ def process(client, invitation):
         arr_reviewer_checklist,
         arr_ae_checklist,
         arr_desk_reject_verification,
+        arr_reviewer_consent_content,
         arr_official_review_content,
         arr_metareview_content
     )
@@ -27,6 +28,7 @@ def process(client, invitation):
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     request_form_id = domain.content['request_form_id']['value']
+    meta_invitation_id = domain.content['meta_invitation_id']['value']
     replace_processes = [
         'Revision',
         'Review_Stage',
@@ -53,6 +55,7 @@ def process(client, invitation):
     print([i.id for i in venue_stage_invitations]) # We use: review, meta-review, comment, revision, ethics review, rev/ac registration, 
 
     overall_exp = fetch_date('form_expiration_date', to_datetime=True)
+    overall_exp_millis = fetch_date('form_expiration_date')
     max_load_due = fetch_date('maximum_load_due_date', to_datetime=True)
     max_load_exp = (overall_exp if fetch_date('maximum_load_exp_date') is None else fetch_date('maximum_load_exp_date')) / 1000
     reviewer_checklist_due = fetch_date('reviewer_checklist_due_date')
@@ -206,7 +209,7 @@ def process(client, invitation):
     venue.custom_stage = openreview.stages.CustomStage(name='Desk_Reject_Verification',
         reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
         source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
-        exp_date=overall_exp,
+        exp_date=overall_exp_millis,
         invitees=[],
         readers=[],
         content=arr_desk_reject_verification,
@@ -219,3 +222,46 @@ def process(client, invitation):
     )
 
     invitation_builder.set_verification_flag_invitation()
+
+    # Create review consent invitation - post invitations in review process function
+    venue.custom_stage = openreview.stages.CustomStage(name='Consent',
+        reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
+        source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+        reply_type=openreview.stages.CustomStage.ReplyType.REPLY,
+        exp_date=overall_exp_millis,
+        invitees=[],
+        readers=[],
+        content=arr_reviewer_consent_content,
+        notify_readers=False,
+        email_sacs=False)
+
+    consent_invitation = invitation_builder.set_custom_stage_invitation()
+    consent_invitation.edit['content']['replytoSignatures'] = {
+        "value": {
+            "param": {
+                "regex": ".*",
+                "type": "string"
+            }
+        }
+    }
+    consent_invitation.edit['invitation']['invitees'] = [
+      "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
+      "${3/content/replytoSignatures/value}"
+    ]
+    consent_invitation.edit['invitation']['edit']['signatures'] = {
+        "param": {
+            "items": [
+                {
+                "prefix": "aclweb.org/ACL/ARR/2023/August/Submission${7/content/noteNumber/value}/Reviewer_.*",
+                "optional": True
+                }
+            ]
+        }
+    }
+    client.post_invitation_edit(invitations=meta_invitation_id,
+        readers=[venue_id],
+        writers=[venue_id],
+        signatures=[venue_id],
+        replacement=False,
+        invitation=consent_invitation
+    )

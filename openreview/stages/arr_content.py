@@ -995,6 +995,23 @@ arr_reviewer_ac_recognition_task = {
     }
 }
 
+arr_reviewer_consent_content = {
+    'consent': {
+        'value': {
+            'param': {
+                "type": "string",
+                'enum': [
+                    'Yes, I consent to donating anonymous metadata of my review for research.',
+                    'No, I do not consent to donating anonymous metadata of my review for research.'
+                ],
+                'input': 'radio',
+                'optional': False
+            }
+        },
+        'order': 1,
+        'description': 'Do you agree for the anonymized metadata associated with your review to be included in a publicly available dataset? This dataset WILL include scores, anonymized paper and reviewer IDs that allow grouping the reviews by paper and by reviewer, as well as acceptance decisions and other numerical and categorical metadata. This dataset WILL NOT include any textual or uniquely attributable data like names, submission titles and texts, review texts, author responses, etc.',
+    }
+}
 arr_max_load_task_forum = {
     "title": "Unavailability and Maximum Load Request",
     "instructions": "Please complete this form to indicate your (un)availability for reviewing. If you do not complete this form, you will receive the default load of this cycle.\n\nIf you wish to change your maximum load, please delete your previous request using the trash can icon, refresh the page and submit a new request."
