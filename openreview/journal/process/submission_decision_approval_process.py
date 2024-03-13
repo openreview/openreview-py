@@ -16,6 +16,17 @@ def process(client, edit, invitation):
     print('Make decision public')
     journal.invitation_builder.set_note_decision_release_invitation(submission)
 
+    ## Notify the action editors
+    client.post_message(
+        subject=f'[{journal.short_name}] Decision approved for submission {submission.number}: {submission.content["title"]["value"]}',
+        recipients=[journal.get_action_editors_id(number=submission.number)],
+        message=f'''Hi {{{{fullname}}}},
+        
+Your decision on submission {submission.number}: {submission.content['title']['value']} has been approved by the Editors in Chief. The decision is now public.
+
+To know more about the decision, please follow this link: https://openreview.net/forum?id={submission.id}
+''')
+
     print('Check rejection')
     print(decision.content)
     if decision.content['recommendation']['value'] == 'Reject':
