@@ -1460,6 +1460,7 @@ Submission: Paper title UPDATED
 Number of days late: 1
 Link: https://openreview.net/forum?id={note_id_1}
 
+
 Please follow the provided link and complete your task ASAP.
 
 We thank you for your cooperation.
@@ -1631,13 +1632,14 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert len(messages) == 5
         assert messages[4]['content']['text'] == f'''Hi Carlos Mondragon,
 
-Our records show that you are late on the current reviewing task:
+Our records show that you have not acknowledged your TMLR assignment yet:
 
 Task: Assignment Acknowledgement
 Submission: Paper title UPDATED
 Number of days late: 1
 Link: https://openreview.net/forum?id={note_id_1}
 
+Acknowledging review assignments allows AEs to receive a direct confirmation that you are aware of the assignment. As a reminder, reviewers in the TMLR pool are expected to perform all review assignments of submissions that fall within their expertise and quota (unless they are exceptionally temporarily unavailable due to reasons such as illness, vacation or work leave).
 Please follow the provided link and complete your task ASAP.
 
 We thank you for your cooperation.
@@ -1665,13 +1667,14 @@ Please note that responding to this email will direct your reply to joelle@mails
         assert len(messages) == 6
         assert messages[5]['content']['text'] == f'''Hi Carlos Mondragon,
 
-Our records show that you are late on the current reviewing task:
+Our records show that you have not acknowledged your TMLR assignment yet:
 
 Task: Assignment Acknowledgement
 Submission: Paper title UPDATED
 Number of days late: five days
 Link: https://openreview.net/forum?id={note_id_1}
 
+Acknowledging review assignments allows AEs to receive a direct confirmation that you are aware of the assignment. As a reminder, reviewers in the TMLR pool are expected to perform all review assignments of submissions that fall within their expertise and quota (unless they are exceptionally temporarily unavailable due to reasons such as illness, vacation or work leave).
 Please follow the provided link and complete your task ASAP.
 
 We thank you for your cooperation.
@@ -1699,13 +1702,14 @@ Please note that responding to this email will direct your reply to joelle@mails
         assert len(messages) == 7
         assert messages[6]['content']['text'] == f'''Hi Carlos Mondragon,
 
-Our records show that you are late on the current reviewing task:
+Our records show that you have not acknowledged your TMLR assignment yet:
 
 Task: Assignment Acknowledgement
 Submission: Paper title UPDATED
 Number of days late: twelve days
 Link: https://openreview.net/forum?id={note_id_1}
 
+Acknowledging review assignments allows AEs to receive a direct confirmation that you are aware of the assignment. As a reminder, reviewers in the TMLR pool are expected to perform all review assignments of submissions that fall within their expertise and quota (unless they are exceptionally temporarily unavailable due to reasons such as illness, vacation or work leave).
 Please follow the provided link and complete your task ASAP.
 
 We thank you for your cooperation.
@@ -2292,6 +2296,15 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert decision_note.readers == ['everyone']
         assert decision_note.writers == ['TMLR']
         assert decision_note.nonreaders == []
+
+        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Decision approved for submission 1: Paper title UPDATED')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
+        
+Your decision on submission 1: Paper title UPDATED has been approved by the Editors in Chief. The decision is now public.
+
+To know more about the decision, please follow this link: https://openreview.net/forum?id={note_id_1}
+'''        
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
