@@ -237,7 +237,7 @@ class TestARRVenueV2():
         stage_note = pc_client.post_note(openreview.Note(
             content={
                 'ethics_review_start_date': start_date.strftime('%Y/%m/%d'),
-                'ethics_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'ethics_review_deadline': (start_date + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d'),
                 'make_ethics_reviews_public': 'No, ethics reviews should NOT be revealed publicly when they are posted',
                 'release_ethics_reviews_to_authors': "No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors",
                 'release_ethics_reviews_to_reviewers': 'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review',
@@ -429,7 +429,7 @@ class TestARRVenueV2():
         stage_note = pc_client.post_note(openreview.Note(
             content={
                 'ethics_review_start_date': start_date.strftime('%Y/%m/%d'),
-                'ethics_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'ethics_review_deadline': (start_date + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d'),
                 'make_ethics_reviews_public': 'No, ethics reviews should NOT be revealed publicly when they are posted',
                 'release_ethics_reviews_to_authors': "No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors",
                 'release_ethics_reviews_to_reviewers': 'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review',
@@ -1616,6 +1616,9 @@ class TestARRVenueV2():
                     'metareviewing_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
                     'metareviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                     'metareviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'ethics_reviewing_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
+                    'ethics_reviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'ethics_reviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -1761,6 +1764,9 @@ class TestARRVenueV2():
                     'metareviewing_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
                     'metareviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                     'metareviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'ethics_reviewing_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
+                    'ethics_reviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'ethics_reviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                 },
                 invitation=f"openreview.net/Support/-/Request{june_request_form.number}/ARR_Configuration",
                 forum=june_request_form.id,
@@ -2475,7 +2481,7 @@ class TestARRVenueV2():
         assert not test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Reject_Verification').expdate < now()
 
-    def test_meta_review_flagging(self, client, openreview_client, helpers, test_client, request_page, selenium):
+    def test_meta_review_flagging_and_ethics_review(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
@@ -2489,8 +2495,10 @@ class TestARRVenueV2():
         test_submission = submissions[3]
 
         openreview_client.add_members_to_group(venue.get_area_chairs_id(number=4), ['~AC_ARROne1'])
+        openreview_client.add_members_to_group(venue.get_ethics_reviewers_id(number=4), ['~EthicsReviewer_ARROne1'])
 
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@aclrollingreview.com', password=helpers.strong_password)
+        ethics_client = openreview.api.OpenReviewClient(username = 'reviewerethics@aclrollingreview.com', password=helpers.strong_password)
 
         test_data_templates = {
             'aclweb.org/ACL/ARR/2023/August/Area_Chairs': {
@@ -2595,6 +2603,10 @@ class TestARRVenueV2():
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Desk_Reject_Verification').expdate < now()
 
+        # Check that ethics reviewing is not available
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2023/August/Submission4/-/Ethics_Review has expired'):
+            ethics_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Ethics_Review')
+
         # Edit with ethics flag and no violation field - check DSV flag is false and ethics flag exists and is True
         _, test_submission = post_meta_review(user_client, review_inv, user, tested_field='needs_ethics_review', existing_note=violation_edit['note'])
         assert 'flagged_for_ethics_review' in test_submission.content
@@ -2603,12 +2615,31 @@ class TestARRVenueV2():
         assert test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Desk_Reject_Verification').expdate < now()
 
+        # Post an ethics review
+        ethics_anon_id = ethics_client.get_groups(prefix='aclweb.org/ACL/ARR/2023/August/Submission4/Ethics_Reviewer_', signatory='~EthicsReviewer_ARROne1')[0].id
+        assert ethics_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Ethics_Review')
+        ethics_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Submission4/-/Ethics_Review',
+            signatures=[ethics_anon_id],
+            note=openreview.api.Note(
+                content={
+                    'recommendation': {'value': 'a recommendation'},
+                    'issues': {'value': ['1.2 Avoid harm']},
+                    'explanation': {'value': 'an explanation'}
+                }
+            )
+        )
+
         # Delete checklist - check both flags False
         _, test_submission = post_meta_review(user_client, review_inv, user, ddate=now(), existing_note=violation_edit['note'])
         assert 'flagged_for_ethics_review' in test_submission.content
         assert 'flagged_for_desk_reject_verification' in test_submission.content
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
+
+        # Ethics reviewing disabled
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2023/August/Submission4/-/Ethics_Review has expired'):
+            ethics_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Ethics_Review')
 
         # Re-post with no flag - check both flags false
         reviewer_edit, test_submission = post_meta_review(user_client, review_inv, user)

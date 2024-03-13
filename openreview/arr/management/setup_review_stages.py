@@ -2,7 +2,8 @@ def process(client, invitation):
 
     from openreview.stages.arr_content import (
         arr_official_review_content,
-        arr_metareview_content
+        arr_metareview_content,
+        arr_ethics_review_content
     )
     from openreview.venue import matching
     from datetime import datetime
@@ -32,6 +33,9 @@ def process(client, invitation):
     metareviewing_start_date = fetch_date('metareviewing_start_date', to_datetime=True)
     metareviewing_due_date = fetch_date('metareviewing_due_date', to_datetime=True)
     metareviewing_exp_date = fetch_date('metareviewing_exp_date', to_datetime=True)
+    ethics_reviewing_start_date = fetch_date('ethics_reviewing_start_date', to_datetime=True)
+    ethics_reviewing_due_date = fetch_date('ethics_reviewing_due_date', to_datetime=True)
+    ethics_reviewing_exp_date = fetch_date('ethics_reviewing_exp_date', to_datetime=True)
 
     # Create review stages
     review_stage_note = openreview.Note(
@@ -77,3 +81,26 @@ def process(client, invitation):
         writers=[]
     )
     client_v1.post_note(meta_review_stage_note)
+
+    ethics_review_stage_note = openreview.Note(
+        content={
+            'ethics_review_start_date': datetime.fromtimestamp(ethics_reviewing_start_date).strftime('%Y/%m/%d'),
+            'ethics_review_deadline': datetime.fromtimestamp(ethics_reviewing_due_date).strftime('%Y/%m/%d'),
+            "ethics_review_expiration_date": datetime.fromtimestamp(ethics_reviewing_exp_date).strftime('%Y/%m/%d'),
+            'make_ethics_reviews_public': 'No, ethics reviews should NOT be revealed publicly when they are posted',
+            'release_ethics_reviews_to_authors': 'No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors',
+            'release_ethics_reviews_to_reviewers': 'Ethics reviews should be immediately revealed to the paper\'s reviewers and ethics reviewers',
+            'additional_ethics_review_form_options': arr_ethics_review_content,
+            'remove_ethics_review_form_options': 'ethics_review',
+            "release_submissions_to_ethics_reviewers": "We confirm we want to release the submissions and reviews to the ethics reviewers",
+            'enable_comments_for_ethics_reviewers': 'Yes, enable commenting for ethics reviewers.',
+        },
+        forum=request_form_id,
+        invitation='{}/-/Request{}/Ethics_Review_Stage'.format(support_group, request_form.number),
+        readers=['{}/Program_Chairs'.format(venue_id), support_group],
+        referent=request_form_id,
+        replyto=request_form_id,
+        signatures=[super_user],
+        writers=[]
+    )
+    client_v1.post_note(ethics_review_stage_note)
