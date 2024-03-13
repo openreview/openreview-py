@@ -7,6 +7,23 @@ def process(client, edit, invitation):
     metareview = client.get_note(edit.note.id)
     submission = client.get_note(edit.note.forum)
 
+    # potential flagging
+    flagging_info = {
+        'reply_name': 'Meta_Review',
+        'violation_fields' : {
+            'author_identity_guess': [4, 3, 2, 1]
+        },
+        'ethics_flag_field': {
+            'needs_ethics_review': 'No'
+        }
+    }
+    openreview.arr.helpers.flag_submission(
+        client,
+        edit,
+        invitation,
+        flagging_info
+    )
+
     #create children invitation if applicable
     venue_invitations = [i for i in client.get_all_invitations(prefix=venue_id + '/-/', type='invitation') if i.is_active()]
 
@@ -29,20 +46,3 @@ def process(client, edit, invitation):
                 content=content,
                 invitation=openreview.api.Invitation()
             )
-
-    # potential flagging
-    flagging_info = {
-        'reply_name': 'Meta_Review',
-        'violation_fields' : {
-            'author_identity_guess': [4, 3, 2, 1]
-        },
-        'ethics_flag_field': {
-            'needs_ethics_review': 'No'
-        }
-    }
-    openreview.arr.helpers.flag_submission(
-        client,
-        edit,
-        invitation,
-        flagging_info
-    )

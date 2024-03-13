@@ -376,6 +376,7 @@ def process(client, note, invitation):
                     'value': invitation_builder.get_process_content('process/review_process.py')
                 }
             }
+            invitation.edit['invitation']['preprocess'] = invitation_builder.get_process_content('process/review_preprocess.py')
             invitation_builder.save_invitation(invitation, replacement=False)
 
         elif invitation_type == 'Rebuttal_Stage':
@@ -385,12 +386,14 @@ def process(client, note, invitation):
             conference.create_ethics_review_stage()
 
         elif invitation_type == 'Meta_Review_Stage':
-            invitation = conference.create_meta_review_stage()
+            conference.create_meta_review_stage()
+            invitation = client_v2.get_invitation(f"{conference.id}/-/Meta_Review")
             invitation.content = {
                 'meta_review_process_script': {
-                    'value': invitation_builder.get_process_content('process/review_process.py')
+                    'value': invitation_builder.get_process_content('process/metareview_process.py')
                 }
             }
+            invitation.edit['invitation']['preprocess'] = invitation_builder.get_process_content('process/review_preprocess.py')
             invitation_builder.save_invitation(invitation, replacement=False)
 
         elif invitation_type == 'Decision_Stage':

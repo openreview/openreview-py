@@ -14,6 +14,22 @@ def process(client, edit, invitation):
     review_name = domain.get_content_value('review_name')
 
     print('arr process')
+    # potential flagging
+    flagging_info = {
+        'reply_name': 'Official_Review',
+        'violation_fields' : {
+            'Knowledge_of_or_educated_guess_at_author_identity': 'No'
+        },
+        'ethics_flag_field': {
+            'needs_ethics_review': 'No'
+        }
+    }
+    openreview.arr.helpers.flag_submission(
+        client,
+        edit,
+        invitation,
+        flagging_info
+    )
 
     submission = client.get_note(edit.note.forum)
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
@@ -167,20 +183,3 @@ Paper title: {submission.content['title']['value']}
                 content=content,
                 invitation=openreview.api.Invitation()
             )
-
-    # potential flagging
-    flagging_info = {
-        'reply_name': 'Official_Review',
-        'violation_fields' : {
-            'Knowledge_of_or_educated_guess_at_author_identity': 'No'
-        },
-        'ethics_flag_field': {
-            'needs_ethics_review': 'No'
-        }
-    }
-    openreview.arr.helpers.flag_submission(
-        client,
-        edit,
-        invitation,
-        flagging_info
-    )

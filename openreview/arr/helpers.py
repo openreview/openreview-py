@@ -43,11 +43,14 @@ def flag_submission(
     needs_ethics_review = edit.note.content.get(ethics_flag_field, {}).get('value', ethics_flag_default) != ethics_flag_default
 
     if edit.note.ddate:
+        print('deleting note, checking for unflagged consensus')
         # Check for DSV unflagging
-        checklists = filter(
+        checklists = list(filter(
            lambda reply: any(reply_name in inv for inv in reply['invitations']),
            forum.details['replies']
-        )
+        ))
+
+        print(f"{len(checklists)} valid responses for unflagging")
 
         dsv_unflag = True
         for checklist in checklists:
@@ -71,17 +74,21 @@ def flag_submission(
                 
 
     # Desk Rejection Flagging
+    print('checking for dsv')
     if not all(check_field_not_violated(edit.note.content, field) for field in violation_fields) and not dsv_flagged:
+        print('flagging dsv')
         post_flag(
            'Desk_Reject_Verification',
            value = True
         )
     else:
         # Check for unflagging
-        checklists = filter(
+        checklists = list(filter(
            lambda reply: any(reply_name in inv for inv in reply['invitations']),
            forum.details['replies']
-        )
+        ))
+
+        print(f"{len(checklists)} valid responses for unflagging")
 
         dsv_unflag = True
         for checklist in checklists:
@@ -95,6 +102,7 @@ def flag_submission(
     
     # Ethics Flagging
     if needs_ethics_review and not has_ethic_flag_history:
+        print('flagging ethics and emailing')
         post_flag(
            'Ethics_Review',
            value = True
@@ -110,11 +118,11 @@ def flag_submission(
             message=message
         )
 
-        checklists = filter(
+        checklists = list(filter(
            lambda reply: any(reply_name in inv for inv in reply['invitations']),
            forum.details['replies']
-        )
-        for checklist in checklists:
+        ))
+        for checklist in checklists: # TODO: update checklist invitations
             new_readers = [
                 domain.content['ethics_chairs_id']['value'],
                 f"{venue_id}/{domain.content['ethics_reviewers_name']['value']}",
@@ -131,16 +139,19 @@ def flag_submission(
             )
 
     elif needs_ethics_review and has_ethic_flag_history and not ethics_flagged:
+       print('flagging ethics')
        post_flag(
            'Ethics_Review',
            value = True
         )
     elif not needs_ethics_review and ethics_flagged:
         # Check for unflagged
-        checklists = filter(
+        checklists = list(filter(
             lambda reply: any(reply_name in inv for inv in reply['invitations']),
             forum.details['replies']
-        )
+        ))
+
+        print(f"{len(checklists)} valid responses for unflagging")
 
         ethics_unflag = True
         for checklist in checklists:

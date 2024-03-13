@@ -550,7 +550,8 @@ arr_official_review_content = {
             "param": {
                 "minLength": 1,
                 "optional": False,
-                "type": "string"
+                "type": "string",
+                "default": "There are no concerns with this submission"
             }
         },
         "order": 12,
@@ -894,7 +895,8 @@ arr_metareview_content = {
             "param": {
                 "minLength": 1,
                 "optional": False,
-                "type": "string"
+                "type": "string",
+                "default": "There are no concerns with this submission"
             }
         },
         "order": 8,
