@@ -12,9 +12,9 @@ def process(client, note, invitation):
     if forum_note.content.get('api_version', '1') == '2':
         matching_group = note.content['matching_group']
         senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
-        if matching_group.endswith(senior_area_chairs_name):
+        if senior_area_chairs_name and matching_group.endswith(senior_area_chairs_name):
             return
-        
+
         submission_venue_id = domain.get_content_value('submission_venue_id')
         _, num_submissions = client_v2.get_notes(content={ 'venueid':submission_venue_id }, limit=1, with_count=True)
         if compute_affinity_scores and num_submissions >= 2000:
