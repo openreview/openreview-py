@@ -902,7 +902,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'authorids': {
                             'value': {
                                 'param': {
-                                    'type': "group[]",
+                                    'type': "profile[]",
                                     'regex': r'~.*'
                                 }
                             },
@@ -5747,7 +5747,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'authorids': {
                             'value': {
                                 'param': {
-                                    'type': "group[]",
+                                    'type': "profile[]",
                                     'regex': r'~.*'
                                 }
                             },

@@ -162,6 +162,9 @@ class Venue(object):
     def get_custom_max_papers_id(self, committee_id):
         return self.get_invitation_id('Custom_Max_Papers', prefix=committee_id)
     
+    def get_custom_user_demands_id(self, committee_id):
+        return self.get_invitation_id('Custom_User_Demands', prefix=committee_id)    
+    
     def get_constraint_label_id(self, committee_id):
         return self.get_invitation_id('Constraint_Label', prefix=committee_id)
 
