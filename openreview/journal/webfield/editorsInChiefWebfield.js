@@ -191,6 +191,7 @@ var loadData = function() {
     Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME + '/Archived', { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Archived', { withProfiles: true}),
+    Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Volunteers', { withProfiles: true}),
     Webfield2.api.getAll('/invitations', {
       prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
       type: 'all',
@@ -232,6 +233,7 @@ var formatData = function(
   archivedActionEditors,
   reviewers,
   archivedReviewers,
+  volunteerReviewers,
   invitationsById,
   superInvitationIds,
   reviewerInvitationIds,
@@ -241,7 +243,7 @@ var formatData = function(
   var referrerUrl = encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#paper-status)');
 
   var reviewerStatusById = {};
-  var getReviewerStatus = function(reviewer, index, isArchived) {
+  var getReviewerStatus = function(reviewer, index, isOfficial, isArchived, isVolunteer) {
     var responsibility = responsibilityNotes.find(function(reply) {
       return reply.invitations[0] === REVIEWERS_ID + '/-/' + reviewer.id + '/' + RESPONSIBILITY_ACK_NAME;
     });
@@ -258,7 +260,9 @@ var formatData = function(
           Publications: '-',
           'Responsibility Acknowledgement': responsibility ? 'Yes' : 'No',
           'Reviewer Report': reviewerReports.length,
-          Archived: isArchived ? 'Yes' : 'No'
+          Official: isOfficial ? 'Yes' : 'No',
+          Archived: isArchived ? 'Yes' : 'No',
+          Volunteer: isVolunteer ? 'Yes' : 'No'
         }
       },
       reviewerProgressData: {
@@ -280,13 +284,21 @@ var formatData = function(
       }
     };
   }
+  var officialReviewerIds = new Set();
+  var archivedReviewerIds = new Set();
   reviewers.members.forEach(function(reviewer, index) {
-    reviewerStatusById[reviewer.id] = getReviewerStatus(reviewer, index, false);
+    reviewerStatusById[reviewer.id] = getReviewerStatus(reviewer, index, true, false, false);
+    officialReviewerIds.add(reviewer.id);
   });
 
   (archivedReviewers?.members || []).forEach(function(reviewer, index) {
-    reviewerStatusById[reviewer.id] = getReviewerStatus(reviewer, index, true);
+    reviewerStatusById[reviewer.id] = getReviewerStatus(reviewer, index, false, true, false);
+    archivedReviewerIds.add(reviewer.id);
   });
+
+  (volunteerReviewers?.members || []).forEach(function(reviewer, index) {
+    reviewerStatusById[reviewer.id] = getReviewerStatus(reviewer, index, officialReviewerIds.has(reviewer.id), archivedReviewerIds.has(reviewer.id), true);
+  });  
 
   var actionEditorStatusById = {};
   actionEditors.members.forEach(function(actionEditor, index) {
@@ -1302,6 +1314,9 @@ var renderData = function(venueStatusData) {
       papersAssigned: ['reviewerProgressData.numPapers'],
       averageRating:['ratingData.averageRating'],
       default: ['summary.name'],
+      official: ['summary.status.Official'],
+      archived: ['summary.status.Archived'],
+      volunteer: ['summary.status.Volunteer']
     },
     extraClasses: 'console-table',
     pageSize: 10,

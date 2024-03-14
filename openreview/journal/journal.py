@@ -91,6 +91,9 @@ class Journal(object):
     def get_reviewers_reported_id(self):
         return self.get_reviewers_id() + '/Reported'
     
+    def get_reviewers_volunteers_id(self):
+        return f'{self.get_reviewers_id()}/Volunteers'     
+    
     def get_expert_reviewers_id(self):
         return self.__get_group_id('Expert_Reviewers')
     
