@@ -833,6 +833,44 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
 
         assert openreview_client.get_invitation(f"{venue_id}/Paper2/-/Desk_Rejection_Approval")
+
+        ## Check eic reminders
+        openreview_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper2/-/Desk_Rejection_Approval',
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 7)) + 2000,
+                signatures=[venue_id]
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper2/-/Desk_Rejection_Approval-0-0')
+
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for the paper 2: Paper title 2')
+        assert len(messages) == 2
+
+        messages = journal.client.get_messages(to='kyunghyun@mail.com', subject = '[TMLR] You are late in performing a task for the paper 2: Paper title 2')
+        assert messages[0]['content']['text'] == f'''Hi Kyunghyun Cho,
+
+Our records show that you are late on the current task:
+
+Task: Desk Rejection Approval
+Submission: Paper title 2
+Number of days late: one week
+Link: https://openreview.net/forum?id={note_id_2}
+
+Please follow the provided link and complete your task ASAP.
+
+We thank you for your cooperation.
+
+The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
+'''
+
         approval_note = raia_client.post_note_edit(invitation='TMLR/Paper2/-/Desk_Rejection_Approval',
                             signatures=[f"{venue_id}/Editors_In_Chief"],
                             note=Note(
