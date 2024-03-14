@@ -157,15 +157,15 @@ class Matching(object):
                 'withInvitation': venue.get_submission_id()
             }
         }
-        if assignment_or_proposed:
-            edge_head = {
-                'param': {
-                    'type': 'note',
-                    'withVenueid': venue.get_submission_venue_id()
+
+        edge_tail = {
+            'param': {
+                'type': 'profile',
+                'options': {
+                    'group': self.match_group.id
                 }
             }
-        if self.submission_content:
-            edge_head['param']['withContent'] = self.submission_content
+        }
 
         edge_weight = {
             'param': {
@@ -179,6 +179,16 @@ class Matching(object):
                 'deletable': True
             }
         }
+
+        if assignment_or_proposed:
+            edge_head = {
+                'param': {
+                    'type': 'note',
+                    'withVenueid': venue.get_submission_venue_id()
+                }
+            }
+        if self.submission_content:
+            edge_head['param']['withContent'] = self.submission_content
 
         if venue.get_custom_max_papers_id(self.match_group.id) == edge_id:
             edge_head = {
@@ -194,6 +204,16 @@ class Matching(object):
                 }
             }
             edge_label = None
+
+        if venue.get_custom_user_demands_id(self.match_group.id) == edge_id:
+            edge_tail = {
+                'param': {
+                    'type': 'group',
+                    'const': self.match_group.id
+                }
+            }
+
+            edge_label = None            
 
         if venue.get_constraint_label_id(self.match_group.id) == edge_id:
             edge_head = {
@@ -225,15 +245,6 @@ class Matching(object):
 
             edge_readers.append('${2/head}')
             edge_nonreaders = []
-
-        edge_tail = {
-            'param': {
-                'type': 'profile',
-                'options': {
-                    'group': self.match_group.id
-                }
-            }
-        }
 
         if any_tail:
             edge_tail = {
@@ -1076,7 +1087,7 @@ class Matching(object):
             venue.invitation_builder.set_assignment_invitation(self.match_group.id, self.submission_content)
 
         self._build_custom_max_papers(user_profiles)
-        self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))
+        self._create_edge_invitation(self.venue.get_custom_user_demands_id(self.match_group.id))
         self.venue.update_conflict_policies(self.match_group.id, compute_conflicts, compute_conflicts_n_years)
 
         return matching_status
