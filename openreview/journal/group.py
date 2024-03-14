@@ -453,7 +453,7 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
                 nonreaders=[authors_group_id],
                 writers=[venue_id],
                 signatures=[venue_id],
-                signatories=[venue_id, action_editors_group_id],
+                signatories=[venue_id],
                 members=[],
                 anonids=True
             ))
