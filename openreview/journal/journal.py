@@ -458,6 +458,9 @@ class Journal(object):
     def should_skip_reviewer_assignment_acknowledgement(self):
         return self.settings.get('skip_reviewer_assignment_acknowledgement', False)        
 
+    def should_skip_camera_ready_revision(self):
+        return self.settings.get('skip_camera_ready_revision', False)
+
     def get_certifications(self):
         return self.settings.get('certifications', []) 
 

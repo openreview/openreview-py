@@ -5380,6 +5380,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         )
     
     def set_camera_ready_revision_invitation(self):
+
+        if self.journal.should_skip_camera_ready_revision():
+            return
+
         venue_id = self.journal.venue_id
         short_name = self.journal.short_name
 

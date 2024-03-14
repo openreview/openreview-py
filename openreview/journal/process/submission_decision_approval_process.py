@@ -47,7 +47,44 @@ To know more about the decision, please follow this link: https://openreview.net
 
     ## Enable Camera Ready Revision
     print('Enable Camera Ready Revision')
-    journal.invitation_builder.set_note_camera_ready_revision_invitation(submission, journal.get_due_date(weeks = journal.get_camera_ready_period_length()))
+    if journal.should_skip_camera_ready_revision():
+        certifications = decision.content.get('certifications', {}).get('value', [])
+        expert_reviewers = []
+
+        if journal.get_certifications():
+            if journal.has_expert_reviewers():
+                expert_reviewer_ceritification = False
+                authorids = submission.content['authorids']['value']
+                print('check if an author is an expert reviewer')
+                for authorid in authorids:
+                    print('checking', authorid)
+                    if client.get_groups(member=authorid, id=journal.get_expert_reviewers_id()) and not expert_reviewer_ceritification:
+                        print('append expert reviewer certification')
+                        certifications.append(journal.get_expert_reviewer_certification())
+                        expert_reviewers.append(authorid)
+                        expert_reviewer_ceritification = True
+
+        content= {
+            '_bibtex': {
+                'value': journal.get_bibtex(submission, journal.accepted_venue_id, certifications=certifications)
+            }
+        }
+
+        if certifications:
+            content['certifications'] = { 'value': certifications }
+
+        if expert_reviewers:
+            content['expert_reviewers'] = { 'value': expert_reviewers }
+
+        client.post_note_edit(invitation=journal.get_accepted_id(),
+            signatures=[venue_id],
+            note=openreview.api.Note(id=submission.id,
+                pdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                content= content
+            )
+        )        
+    else:
+        journal.invitation_builder.set_note_camera_ready_revision_invitation(submission, journal.get_due_date(weeks = journal.get_camera_ready_period_length()))
 
     ## Expire reviewer tasks
     print('Expire reviewer tasks')
