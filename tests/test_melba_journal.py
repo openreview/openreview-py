@@ -206,13 +206,16 @@ class TestJournal():
 
 Thank you for submitting your work titled "Paper title" to MELBA.
 
-Before the review process starts, you need to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
+Before the review process starts, you need to submit three or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
 
 To do so, please follow this link: https://openreview.net/invitation?id=MELBA/Paper1/Action_Editors/-/Recommendation or check your tasks in the Author Console: https://openreview.net/group?id=MELBA/Authors
 
 For more details and guidelines on the MELBA review process, visit melba-journal.org.
 
 The MELBA Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to editors@melba-journal.org.
 '''
 
     def test_ae_assignment(self, journal, openreview_client, test_client, helpers):

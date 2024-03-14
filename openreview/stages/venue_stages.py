@@ -79,7 +79,8 @@ class SubmissionStage(object):
             submission_email=None,
             force_profiles=False,
             second_deadline_additional_fields={},
-            second_deadline_remove_fields=[]
+            second_deadline_remove_fields=[],
+            commitments_venue=False
         ):
 
         self.start_date = start_date
@@ -114,6 +115,7 @@ class SubmissionStage(object):
         self.force_profiles = force_profiles
         self.second_deadline_additional_fields = second_deadline_additional_fields
         self.second_deadline_remove_fields = second_deadline_remove_fields
+        self.commitments_venue = commitments_venue
 
     def get_readers(self, conference, number, decision=None):
 
@@ -287,11 +289,25 @@ class SubmissionStage(object):
                     'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.',
                     'value': {
                         'param': {
-                            'type': 'group[]',
+                            'type': 'profile[]',
                             'regex': r'~.*',
                         }
                     }
                 }
+
+            if self.commitments_venue and 'paper_link' not in content:
+                content['paper_link'] = {
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'regex': '(http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)',
+                            'mismatchError': 'must be a valid link to an OpenrReview submission: https://openreview.net/forum?id=...'
+                        }
+                    },
+                    'description': 'Please provide the link to your ARR submission. The link should have the following format: https://openreview.net/forum?id=<PAPER_ID>" where <PAPER_ID> is the paper ID of your ARR submission.',
+                    'order': 8
+                }
+
 
             if conference:
                 submission_id = self.get_submission_id(conference)
@@ -322,7 +338,7 @@ class SubmissionStage(object):
         return content
     
     def get_hidden_field_names(self):
-        return (['authors', 'authorids'] if self.double_blind else []) + self.hide_fields
+        return (['authors', 'authorids'] if self.double_blind and not self.author_names_revealed else []) + self.hide_fields
 
     def is_under_submission(self):
         return self.due_date is None or datetime.datetime.utcnow() < self.due_date
@@ -504,8 +520,10 @@ class SubmissionRevisionStage():
                 'order':4
             }
         elif self.allow_author_reorder == AuthorReorder.DISALLOW_EDIT:
-            del content['authors']
-            del content['authorids']
+            if 'authors' in content:
+                del content['authors']
+            if 'authorids' in content:
+                del content['authorids']
 
         if conference:
             invitation_id = conference.get_invitation_id(self.name)
@@ -540,7 +558,9 @@ class ReviewStage(object):
         remove_fields = [],
         rating_field_name = 'rating',
         confidence_field_name = 'confidence',
-        process_path = None
+        process_path = None,
+        source_submissions_query = {},
+        child_invitations_name = 'Official_Review'
     ):
 
         self.start_date = start_date
@@ -559,6 +579,8 @@ class ReviewStage(object):
         self.rating_field_name = rating_field_name
         self.confidence_field_name = confidence_field_name
         self.process_path = process_path
+        self.source_submissions_query = source_submissions_query
+        self.child_invitations_name = child_invitations_name
 
     def _get_reviewer_readers(self, conference, number, review_signature=None):
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
@@ -1062,7 +1084,7 @@ class MetaReviewStage(object):
         REVIEWERS_SUBMITTED = 2
         NO_REVIEWERS = 3
 
-    def __init__(self, name='Meta_Review', start_date = None, due_date = None, exp_date = None, public = False, release_to_authors = False, release_to_reviewers = Readers.NO_REVIEWERS, additional_fields = {}, remove_fields=[], process = None):
+    def __init__(self, name='Meta_Review', start_date = None, due_date = None, exp_date = None, public = False, release_to_authors = False, release_to_reviewers = Readers.NO_REVIEWERS, additional_fields = {}, remove_fields=[], process = None, recommendation_field_name = 'recommendation'):
 
         self.start_date = start_date
         self.due_date = due_date
@@ -1074,7 +1096,7 @@ class MetaReviewStage(object):
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.process = None
-        self.recommendation_field_name = 'recommendation'
+        self.recommendation_field_name = recommendation_field_name
 
     def _get_reviewer_readers(self, conference, number):
         if self.release_to_reviewers is MetaReviewStage.Readers.REVIEWERS:
@@ -1314,12 +1336,13 @@ class CustomStage(object):
         SENIOR_AREA_CHAIRS_ASSIGNED = 2
         AREA_CHAIRS = 3
         AREA_CHAIRS_ASSIGNED = 4
-        REVIEWERS = 5
-        REVIEWERS_ASSIGNED = 6
-        REVIEWERS_SUBMITTED = 7
-        AUTHORS = 8
-        ETHICS_CHAIRS = 9
-        ETHICS_REVIEWERS_ASSIGNED = 10
+        SECONDARY_AREA_CHAIRS = 5
+        REVIEWERS = 6
+        REVIEWERS_ASSIGNED = 7
+        REVIEWERS_SUBMITTED = 8
+        AUTHORS = 9
+        ETHICS_CHAIRS = 10
+        ETHICS_REVIEWERS_ASSIGNED = 11
 
     class Source(Enum):
         ALL_SUBMISSIONS = 0
@@ -1364,6 +1387,9 @@ class CustomStage(object):
         if conference.use_area_chairs and self.Participants.AREA_CHAIRS_ASSIGNED in self.invitees:
             invitees.append(conference.get_area_chairs_id(number))
 
+        if conference.use_secondary_area_chairs and self.Participants.SECONDARY_AREA_CHAIRS in self.invitees:
+            invitees.append(conference.get_secondary_area_chairs_id(number))
+
         if self.Participants.REVIEWERS_ASSIGNED in self.invitees:
             invitees.append(conference.get_reviewers_id(number))
 
@@ -1380,6 +1406,14 @@ class CustomStage(object):
             invitees.append(conference.get_ethics_reviewers_id(number))
 
         return invitees
+    
+    def get_noninvitees(self, conference, number):
+        noninvitees = []
+
+        if conference.use_area_chairs and self.Participants.AREA_CHAIRS_ASSIGNED in self.invitees and conference.use_secondary_area_chairs and self.Participants.SECONDARY_AREA_CHAIRS not in self.invitees:
+            noninvitees.append(conference.get_secondary_area_chairs_id(number))
+
+        return noninvitees
 
     def get_readers(self, conference, number):
         readers = [conference.get_program_chairs_id()]
@@ -1412,6 +1446,14 @@ class CustomStage(object):
             readers.append('${3/signatures}')
 
         return readers
+    
+    def get_nonreaders(self, conference, number):
+        nonreaders = []
+
+        if conference.use_area_chairs and self.Participants.AREA_CHAIRS_ASSIGNED in self.readers and conference.use_secondary_area_chairs and self.Participants.SECONDARY_AREA_CHAIRS not in self.readers:
+            nonreaders.append(conference.get_secondary_area_chairs_id(number))
+
+        return nonreaders
 
     def get_signatures(self, conference, number):
         if self.allow_de_anonymization:

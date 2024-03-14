@@ -92,7 +92,9 @@ You can use the following links to access the venue:
 If you need to make a change to the information provided in your request form, please feel free to revise it directly using the "Revision" button. You can also control several stages of your venue by using the Stage buttons. Note that any change you make will be immediately applied to your venue.
 If you have any questions, please refer to our FAQ: https://openreview.net/faq
 
-If you need special features that are not included in your request form, you can post a comment here or contact us at info@openreview.net and we will assist you.
+If you need special features that are not included in your request form, you can post a comment here or contact us at info@openreview.net and we will assist you. We recommend reaching out to us well in advance and setting deadlines for a Monday.  
+
+**OpenReview support is responsive from 9AM - 5PM EST Monday through Friday**. Requests made on weekends or US holidays can expect to receive a response on the next business day.
 
 Best,
 
@@ -497,9 +499,9 @@ If you would like to change your decision, please follow the link in the previou
                     'order': 4
                 },            
                 'compute_affinity_scores': {
-                    'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically.',
+                    'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically. Select the model you want to use to compute the affinity scores or "No" if you don\'t want to compute affinity scores. The model "specter2+scincl" has the best performance, refer to our expertise repository for more information on the models: https://github.com/openreview/openreview-expertise.',
                     'order': 5,
-                    'value-radio': ['Yes', 'No'],
+                    'value-radio': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl','No'],
                     'required': True,
                 },
                 'upload_affinity_scores': {

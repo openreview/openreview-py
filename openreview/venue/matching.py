@@ -157,15 +157,15 @@ class Matching(object):
                 'withInvitation': venue.get_submission_id()
             }
         }
-        if assignment_or_proposed:
-            edge_head = {
-                'param': {
-                    'type': 'note',
-                    'withVenueid': venue.get_submission_venue_id()
+
+        edge_tail = {
+            'param': {
+                'type': 'profile',
+                'options': {
+                    'group': self.match_group.id
                 }
             }
-        if self.submission_content:
-            edge_head['param']['withContent'] = self.submission_content
+        }
 
         edge_weight = {
             'param': {
@@ -179,6 +179,16 @@ class Matching(object):
                 'deletable': True
             }
         }
+
+        if assignment_or_proposed:
+            edge_head = {
+                'param': {
+                    'type': 'note',
+                    'withVenueid': venue.get_submission_venue_id()
+                }
+            }
+        if self.submission_content:
+            edge_head['param']['withContent'] = self.submission_content
 
         if venue.get_custom_max_papers_id(self.match_group.id) == edge_id:
             edge_head = {
@@ -194,6 +204,16 @@ class Matching(object):
                 }
             }
             edge_label = None
+
+        if venue.get_custom_user_demands_id(self.match_group.id) == edge_id:
+            edge_tail = {
+                'param': {
+                    'type': 'group',
+                    'const': self.match_group.id
+                }
+            }
+
+            edge_label = None            
 
         if venue.get_constraint_label_id(self.match_group.id) == edge_id:
             edge_head = {
@@ -226,15 +246,6 @@ class Matching(object):
             edge_readers.append('${2/head}')
             edge_nonreaders = []
 
-        edge_tail = {
-            'param': {
-                'type': 'profile',
-                'options': {
-                    'group': self.match_group.id
-                }
-            }
-        }
-
         if any_tail:
             edge_tail = {
                 'param': {
@@ -242,7 +253,6 @@ class Matching(object):
                     'regex': '~.*|.+@.+'
                 }
             }
-            edge_writers = [venue_id]
 
         if default_label and edge_label:
             edge_label['param']['default'] = default_label
@@ -603,7 +613,7 @@ class Matching(object):
             raise openreview.OpenReviewException('Failed during bulk post of {0} edges! Input file:{1}, Scores found: {2}, Edges posted: {3}'.format(score_invitation_id, score_file, len(edges), edges_posted))
         return invitation
 
-    def _compute_scores(self, score_invitation_id, submissions):
+    def _compute_scores(self, score_invitation_id, submissions, model='specter+mfr'):
 
         venue = self.venue
         client = self.client
@@ -620,7 +630,7 @@ class Matching(object):
                 submission_content=self.submission_content,
                 alternate_match_group=self.alternate_matching_group,
                 expertise_selection_id=venue.get_expertise_selection_id(self.match_group.id),
-                model='specter+mfr'
+                model=model
             )
             status = ''
             call_count = 0
@@ -998,11 +1008,18 @@ class Matching(object):
         type_affinity_scores = type(compute_affinity_scores)
 
         if type_affinity_scores == str:
-            self._build_scores_from_file(
-                venue.get_affinity_score_id(self.match_group.id),
-                compute_affinity_scores,
-                submissions
-            )
+            if compute_affinity_scores in ['specter+mfr', 'specter2']:
+                invitation, matching_status = self._compute_scores(
+                    venue.get_affinity_score_id(self.match_group.id),
+                    submissions,
+                    compute_affinity_scores
+                )                
+            else:
+                self._build_scores_from_file(
+                    venue.get_affinity_score_id(self.match_group.id),
+                    compute_affinity_scores,
+                    submissions
+                )
 
         if type_affinity_scores == bytes:
             self._build_scores_from_stream(
@@ -1070,7 +1087,7 @@ class Matching(object):
             venue.invitation_builder.set_assignment_invitation(self.match_group.id, self.submission_content)
 
         self._build_custom_max_papers(user_profiles)
-        self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))
+        self._create_edge_invitation(self.venue.get_custom_user_demands_id(self.match_group.id))
         self.venue.update_conflict_policies(self.match_group.id, compute_conflicts, compute_conflicts_n_years)
 
         return matching_status
@@ -1093,6 +1110,8 @@ class Matching(object):
             'assignment_label': { 'value': assignment_title } if assignment_title else { 'delete': True },
             'invite_label': { 'value': invite_label },
             'invited_label': { 'value': invited_label },
+            'accepted_label': { 'value': accepted_label },
+            'declined_label': { 'value': declined_label },
             'recruitment_invitation_id': { 'value': recruitment_invitation_id },
             'committee_invited_id': { 'value': venue.get_committee_id(name=invited_committee_name + '/Invited') },
             'paper_reviewer_invited_id': { 'value': venue.get_committee_id(name=invited_committee_name + '/Invited', number='{number}') if assignment_title else ''},
@@ -1164,7 +1183,7 @@ class Matching(object):
         if role_name in venue.area_chair_roles:
             reviewer_name = venue.area_chairs_name
             review_name = 'Meta_Review'
-
+            
         papers = self._get_submissions()
         reviews = client.get_notes(invitation=venue.get_invitation_id(review_name, number='.*'), limit=1)
         proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id),
@@ -1233,6 +1252,19 @@ class Matching(object):
 
         print('Posting assignment edges', len(assignment_edges))
         openreview.tools.post_bulk_edges(client=client, edges=assignment_edges)
+
+        # Remove reviewers_proposed_assignment_title if deploying reviewer assignments
+        if self.is_reviewer:
+            self.client.post_group_edit(
+                invitation = venue.get_meta_invitation_id(),
+                signatures = [venue.venue_id],
+                group = openreview.api.Group(
+                    id = venue.venue_id,
+                    content = {
+                        'reviewers_proposed_assignment_title': { 'value': { 'delete': True } }
+                    }
+                )
+            )
 
     def deploy_sac_assignments(self, assignment_title, overwrite):
 

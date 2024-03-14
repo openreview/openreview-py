@@ -106,7 +106,7 @@ var getReplies = function(submission, name, prefix) {
 var getRatingInvitations = function(invitationsById, number) {
   var invitations = [];
   Object.keys(invitationsById).forEach(function(invitationId) {
-    if (invitationId.match(VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '.*/-/Rating')) {
+    if (invitationId.match(VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/Reviewer_.*/-/Rating')) {
       invitations.push(invitationsById[invitationId]);
     }
   })

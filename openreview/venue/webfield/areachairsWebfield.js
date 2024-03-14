@@ -48,6 +48,7 @@ return {
     submissionInvitationId: domain.content.submission_id?.value,
     seniorAreaChairsId: domain.content.senior_area_chairs_id?.value,
     areaChairName: domain.content.area_chairs_name?.value,
+    secondaryAreaChairName: domain.content.secondary_area_chairs_name?.value,
     submissionName: domain.content.submission_name?.value,
     officialReviewName: domain.content.review_name?.value,
     reviewRatingName: domain.content.review_rating?.value,

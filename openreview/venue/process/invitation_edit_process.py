@@ -45,9 +45,11 @@ def process(client, invitation):
     def get_children_notes():
         source = invitation.content.get('source', {}).get('value', 'all_submissions') if invitation.content else False
         reply_to = invitation.content.get('reply_to', {}).get('value', 'forum') if invitation.content else False
+        source_submissions_query = invitation.content.get('source_submissions_query', {}).get('value') if invitation.content else ''
 
         print('source', source)
         print('reply_to', reply_to)
+        print('source_submissions_query', source_submissions_query)
         if source == 'accepted_submissions':
             source_submissions = client.get_all_notes(content={ 'venueid': venue_id }, sort='number:asc')
             if not source_submissions and decision_name:
@@ -65,6 +67,10 @@ def process(client, invitation):
             if source == 'flagged_for_ethics_review':
                 source_submissions = [s for s in source_submissions if s.content.get('flagged_for_ethics_review', {}).get('value', False)]
 
+        if source_submissions_query:
+            for key, value in source_submissions_query.items():
+                source_submissions = [s for s in source_submissions if value in s.content.get(key, {}).get('value', '')]
+
         if reply_to == 'reviews':
             children_notes = [openreview.api.Note.from_json(reply) for s in source_submissions for reply in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{review_name}' in reply['invitations']]
         elif reply_to == 'metareviews':
@@ -77,7 +83,11 @@ def process(client, invitation):
     def update_note_readers(submission, paper_invitation):
         ## Update readers of current notes
         notes = client.get_notes(invitation=paper_invitation.id)
-        invitation_readers = paper_invitation.edit['note'].get('readers')
+        invitation_readers = paper_invitation.edit['note'].get('readers', [])
+
+        ## if invitation has param in readers, we ignore the update
+        if 'param' in invitation_readers:
+            return
 
         ## if the invitation indicates readers is everyone but the submission is not, we ignore the update
         if 'everyone' in invitation_readers and 'everyone' not in submission.readers:
@@ -95,27 +105,29 @@ def process(client, invitation):
                     }
             return updated_content
 
-        if type(invitation_readers) is list:
-            for note in notes:
-                final_invitation_readers = list(dict.fromkeys([note.signatures[0] if 'signatures' in r else r for r in invitation_readers]))
-                updated_content = updated_content_readers(note, paper_invitation)
-                updated_note = openreview.api.Note(
-                    id = note.id
+        for note in notes:
+            final_invitation_readers = list(dict.fromkeys([note.signatures[0] if 'signatures' in r else r for r in invitation_readers]))
+            edit_readers = list(dict.fromkeys([note.signatures[0] if 'signatures' in r else r for r in paper_invitation.edit.get('readers',[])]))
+            if '${2/note/readers}' in edit_readers:
+                edit_readers = final_invitation_readers
+            updated_content = updated_content_readers(note, paper_invitation)
+            updated_note = openreview.api.Note(
+                id = note.id
+            )
+            if final_invitation_readers and note.readers != final_invitation_readers:
+                updated_note.readers = final_invitation_readers
+                updated_note.nonreaders = paper_invitation.edit['note'].get('nonreaders')
+            if updated_content:
+                updated_note.content = updated_content
+            if updated_note.content or updated_note.readers:
+                client.post_note_edit(
+                    invitation = meta_invitation_id,
+                    readers = edit_readers,
+                    nonreaders = paper_invitation.edit['note'].get('nonreaders'),
+                    writers = [venue_id],
+                    signatures = [venue_id],
+                    note = updated_note
                 )
-                if note.readers != final_invitation_readers:
-                    updated_note.readers = final_invitation_readers
-                    updated_note.nonreaders = paper_invitation.edit['note'].get('nonreaders')
-                if updated_content:
-                    updated_note.content = updated_content
-                if updated_note.content or updated_note.readers:
-                    client.post_note_edit(
-                        invitation = meta_invitation_id,
-                        readers = final_invitation_readers,
-                        nonreaders = paper_invitation.edit['note'].get('nonreaders'),
-                        writers = [venue_id],
-                        signatures = [venue_id],
-                        note = updated_note
-                    ) 
 
     def post_invitation(note):
 
@@ -162,8 +174,7 @@ def process(client, invitation):
             invitation=openreview.api.Invitation()
         )
         paper_invitation = client.get_invitation(paper_invitation_edit['invitation']['id'])
-        if 'readers' in paper_invitation.edit['note']:
-            update_note_readers(note, paper_invitation)
+        update_note_readers(note, paper_invitation)
 
     notes = get_children_notes()
     print(f'create or update {len(notes)} child invitations')

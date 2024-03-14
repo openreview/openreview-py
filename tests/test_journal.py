@@ -89,6 +89,7 @@ class TestJournal():
                             'submission_public': True,
                             'assignment_delay': 5,
                             'submission_name': 'Submission',
+                            'submission_license': 'CC BY-SA 4.0',
                             'eic_submission_notification': False,
                             'certifications': [
                                 'Featured Certification',
@@ -131,6 +132,7 @@ class TestJournal():
                             'archived_reviewers': True,
                             'expert_reviewers': True,
                             'external_reviewers': True,
+                            'expertise_model': 'specter+mfr',
                             'official_recommendation_additional_fields': {
                                 'pilot_recommendation_to_iclr_track': {
                                     'order': 98,
@@ -365,6 +367,7 @@ class TestJournal():
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
         note_id_1=submission_note_1['note']['id']
+        assert submission_note_1['note']['license'] == 'CC BY-SA 4.0'
 
         messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLR] New submission to TMLR: Paper title')
         assert len(messages) == 0
@@ -392,13 +395,16 @@ class TestJournal():
 
 Thank you for submitting your work titled "Paper title" to TMLR.
 
-Before the review process starts, you need to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
+Before the review process starts, you need to submit three or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
 
 To do so, please follow this link: https://openreview.net/invitation?id=TMLR/Paper1/Action_Editors/-/Recommendation or check your tasks in the Author Console: https://openreview.net/group?id=TMLR/Authors
 
 For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper1/Authors")
@@ -474,6 +480,9 @@ Please follow the provided link and complete your task ASAP.
 We thank you for your cooperation.
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         ## Post AE recommendations
@@ -659,6 +668,9 @@ If you think the submission can continue through TMLR's review process, click th
 We thank you for your essential contribution to TMLR!
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         ## Try to assign the same AE again and get an error
@@ -764,6 +776,9 @@ Once assigned, reviewers will be asked to acknowledge on OpenReview their respon
 We thank you for your essential contribution to TMLR!
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         ## Update submission 1 again
@@ -844,6 +859,9 @@ To know more about the decision, please follow this link: https://openreview.net
 For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         note = joelle_client.get_note(note_id_2)
@@ -979,6 +997,9 @@ We thank you for your essential contribution to TMLR!
 
 The TMLR Editors-in-Chief
 note: replies to this email will go to the AE, Joelle Pineau.
+
+
+Please note that responding to this email will direct your reply to joelle@mailseven.com.
 '''
         assert messages[0]['content']['replyTo'] == 'joelle@mailseven.com'
 
@@ -1016,6 +1037,9 @@ To perform this quick task, simply visit the following link: https://openreview.
 We thank you for your essential contribution to TMLR!
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         ## Carlos Mondragon
@@ -1049,6 +1073,9 @@ We thank you for your essential contribution to TMLR!
 
 The TMLR Editors-in-Chief
 note: replies to this email will go to the AE, Joelle Pineau.
+
+
+Please note that responding to this email will direct your reply to joelle@mailseven.com.
 '''
 
         ## Check reviewer assignment reminders
@@ -1082,6 +1109,9 @@ Please follow the provided link and complete your task ASAP.
 We thank you for your cooperation.
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
 
@@ -1116,6 +1146,9 @@ We thank you for your essential contribution to TMLR!
 
 The TMLR Editors-in-Chief
 note: replies to this email will go to the AE, Joelle Pineau.
+
+
+Please note that responding to this email will direct your reply to joelle@mailseven.com.
 '''
 
         reviewerrs_group = raia_client.get_group(f'{venue_id}/Paper1/Reviewers')
@@ -1258,6 +1291,8 @@ Comment: I know the authors and I can not review this paper.
 
 To view the official comment, click here: https://openreview.net/forum?id={note_id_1}&noteId={comment_note['note']['id']}
 
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         ## Post an official comment from the EIC to the EIC only
@@ -1320,6 +1355,8 @@ Comment: This is an inapropiate comment
 
 To view the public comment, click here: https://openreview.net/forum?id={note_id_1}&noteId={comment_note_id}
 
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
 
@@ -1428,6 +1465,9 @@ Please follow the provided link and complete your task ASAP.
 We thank you for your cooperation.
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to joelle@mailseven.com.
 '''
 
         messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper 1: Paper title UPDATED')
@@ -1467,6 +1507,9 @@ Please follow up directly with the reviewer in question to ensure they complete 
 We thank you for your cooperation.
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         ## Check review reminders
@@ -1503,6 +1546,9 @@ Please follow up directly with the reviewer in question to ensure they complete 
 We thank you for your cooperation.
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''        
 
 
@@ -1539,6 +1585,9 @@ Submission: Paper title UPDATED
 Link: https://openreview.net/forum?id={note_id_1}
 
 OpenReview Team
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         messages = journal.client.get_messages(to= 'joelle@mailseven.com', subject = '[TMLR] Reviewer is late in performing a task for assigned paper 1: Paper title UPDATED')
@@ -1558,6 +1607,9 @@ Please follow up directly with the reviewer in question to ensure they complete 
 We thank you for your cooperation.
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
 
@@ -1591,6 +1643,9 @@ Please follow the provided link and complete your task ASAP.
 We thank you for your cooperation.
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to joelle@mailseven.com.
 '''
 
         raia_client.post_invitation_edit(
@@ -1622,6 +1677,9 @@ Please follow the provided link and complete your task ASAP.
 We thank you for your cooperation.
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to joelle@mailseven.com.
 '''
 
         raia_client.post_invitation_edit(
@@ -1653,6 +1711,9 @@ Please follow the provided link and complete your task ASAP.
 We thank you for your cooperation.
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to joelle@mailseven.com.
 '''
 
         late_reviewers = journal.get_late_invitees('TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement')
@@ -1688,6 +1749,9 @@ Submission: Paper title UPDATED
 Assignment acknowledgement: I acknowledge my responsibility to submit a review for this submission by the end of day on {formatted_date} UTC time.
 
 To view the acknowledgement, click here: https://openreview.net/forum?id={note_id_1}&noteId={assignment_ack_note['note']['id']}
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
 
@@ -1761,6 +1825,9 @@ For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
 
 The TMLR Editors-in-Chief
 note: replies to this email will go to the AE, Joelle Pineau.
+
+
+Please note that responding to this email will direct your reply to joelle@mailseven.com.
 '''
         assert messages[0]['content']['replyTo'] == 'joelle@mailseven.com'
 
@@ -1778,6 +1845,9 @@ We thank you for your essential contribution to TMLR!
 
 The TMLR Editors-in-Chief
 note: replies to this email will go to the AE, Joelle Pineau.
+
+
+Please note that responding to this email will direct your reply to joelle@mailseven.com.
 '''
 
         messages = openreview_client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Start of author discussion for TMLR submission 1: Paper title UPDATED')
@@ -1793,6 +1863,9 @@ For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
 We thank you for your essential contribution to TMLR!
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         messages = openreview_client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Too many reviewers assigned to TMLR submission 1: Paper title UPDATED')
@@ -1808,6 +1881,9 @@ For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
 We thank you for your essential contribution to TMLR!
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
 
@@ -1931,6 +2007,9 @@ We thank you for your essential contribution to TMLR!
 
 The TMLR Editors-in-Chief
 note: replies to this email will go to the AE, Joelle Pineau.
+
+
+Please note that responding to this email will direct your reply to joelle@mailseven.com.
 '''
         messages = journal.client.get_messages(subject = '[TMLR] Reviewers must submit official recommendation for TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
@@ -2069,6 +2148,9 @@ For more details and guidelines on performing your review, visit jmlr.org/tmlr.
 We thank you for your essential contribution to TMLR!
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         ## Update the official recommendation and don't send the email again
@@ -2226,6 +2308,9 @@ For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
 We thank you for your contribution to TMLR and congratulate you for your successful submission!
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Camera_Ready_Revision")
@@ -2316,6 +2401,8 @@ If any correction is needed, you may contact the authors directly by email or th
 
 The TMLR Editors-in-Chief
 
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         ## Check reminders
@@ -2348,6 +2435,9 @@ AE: Joelle Pineau
 Link: https://openreview.net/forum?id={note_id_1}
 
 OpenReview Team
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         ## Check reminders
@@ -2397,6 +2487,8 @@ We thank you again for your contribution to TMLR and congratulate you for your s
 
 The TMLR Editors-in-Chief
 
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         note = openreview_client.get_note(note_id_1)
@@ -2512,6 +2604,9 @@ note={Featured Certification, Reproducibility Certification, Expert Certificatio
 The authors of paper 1: Paper title VERSION 2 are requesting to retract the paper. An EIC must confirm and accept the retraction: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/-/Retraction_Approval
 
 OpenReview Team
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
         assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Retraction_Approval")
 
@@ -2537,6 +2632,8 @@ To view our decision, follow this link: https://openreview.net/forum?id={note_id
 
 The TMLR Editors-in-Chief
 
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         note = openreview_client.get_note(retraction_note['note']['id'])
@@ -2676,6 +2773,9 @@ We thank you for your essential contribution to TMLR!
 
 The TMLR Editors-in-Chief
 note: replies to this email will go to the AE, Joelle Pineau.
+
+
+Please note that responding to this email will direct your reply to joelle@mailseven.com.
 '''
 
         ## Assign Carlos Mondragon
@@ -2792,6 +2892,8 @@ We thank you for your contribution to TMLR!
 
 The TMLR Editors-in-Chief
 
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         ## Post a response
@@ -2860,6 +2962,9 @@ We thank you for your contribution to TMLR!
 
 The TMLR Editors-in-Chief
 note: replies to this email will go to the AE, Joelle Pineau.
+
+
+Please note that responding to this email will direct your reply to joelle@mailseven.com.
 '''
 
         messages = journal.client.get_messages(to = 'petersnow@yahoo.com', subject = '[TMLR] Assignment to review new TMLR submission 4: Paper title 4')
@@ -3090,6 +3195,9 @@ In any case, your submission will remain publicly available on OpenReview. You m
 For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         note = openreview_client.get_note(note_id_4)
@@ -3237,6 +3345,9 @@ However, be mindful not to discuss the submission by email through TMLR's EIC ma
 We thank you for your cooperation.
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''        
 
         ## try editing the assignmente edge being the author and get an error
@@ -3514,6 +3625,9 @@ For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
 We thank you for your contribution to TMLR and congratulate you for your successful submission!
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
         ## Expire review invitations to the jobs are cancelled
         withdraw_note = raia_client.post_note_edit(invitation='TMLR/Paper5/-/Withdrawal',
@@ -3956,6 +4070,8 @@ Respectfully,
 
 The TMLR Editors-in-Chief
 
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
         ## Solicit review to more than 2 papers
@@ -4233,6 +4349,9 @@ To know more about the decision, please follow this link: https://openreview.net
 For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
 
 The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
 
 
@@ -4521,7 +4640,7 @@ note={Under review}
         
         messages = openreview_client.get_messages(to = 'melissa@maileight.com', subject = '[TMLR] Review Approval edited on submission 12: Paper title 12')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'Hi Melissa Eight,\n\nA review approval has been edited on your submission.\n\nSubmission: Paper title 12\nUnder review: Appropriate for Review\nComment: \n\nTo view the review approval, click here: https://openreview.net/forum?id={note_id_12}&noteId={notes[0].id}\n\n'
+        assert messages[0]['content']['text'] == f'Hi Melissa Eight,\n\nA review approval has been edited on your submission.\n\nSubmission: Paper title 12\nUnder review: Appropriate for Review\nComment: \n\nTo view the review approval, click here: https://openreview.net/forum?id={note_id_12}&noteId={notes[0].id}\n\n\nPlease note that responding to this email will direct your reply to tmlr@jmlr.org.\n'
 
         note = openreview_client.get_note(note_id_12)
         journal.invitation_builder.expire_paper_invitations(note)
@@ -5021,7 +5140,7 @@ note={Expert Certification}
 
         messages = openreview_client.get_messages(to = 'melisa@mailten.com', subject = '[TMLR] Invitation to review paper titled "Paper title 14"')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Melisa Bok,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=~Melisa_Bok1&key=da9c8e30376e445b0d18011af6a8ca7863e5037e3f9aebc6aa4294e5aaa5c216&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nSamy Bengio'''
+        assert messages[0]['content']['text'] == f'''Hi Melisa Bok,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=~Melisa_Bok1&key=da9c8e30376e445b0d18011af6a8ca7863e5037e3f9aebc6aa4294e5aaa5c216&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nSamy Bengio\n\nPlease note that responding to this email will direct your reply to samy@bengio.com.\n'''
 
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
@@ -5039,11 +5158,11 @@ note={Expert Certification}
 
         messages = openreview_client.get_messages(to = 'melisa@mailten.com', subject = f'[TMLR] Reviewers Invitation accepted for paper {submission.number}: Paper title 14')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Melisa Bok,\nThank you for accepting the invitation to review the paper number: {submission.number}, title: Paper title 14.\n\nPlease go to the Tasks page and check your TMLR pending tasks: https://openreview.net/tasks\n\nIf you would like to change your decision, please follow the link in the previous invitation email and click on the \"Decline\" button.\n\nOpenReview Team'''
+        assert messages[0]['content']['text'] == f'''Hi Melisa Bok,\nThank you for accepting the invitation to review the paper number: {submission.number}, title: Paper title 14.\n\nPlease go to the Tasks page and check your TMLR pending tasks: https://openreview.net/tasks\n\nIf you would like to change your decision, please follow the link in the previous invitation email and click on the \"Decline\" button.\n\nOpenReview Team\n\nPlease note that responding to this email will direct your reply to tmlr@jmlr.org.\n'''
 
         messages = openreview_client.get_messages(to = 'samy@bengio.com', subject = f'[TMLR] Reviewers Melisa Bok accepted to review paper {submission.number}: Paper title 14')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\nThe Reviewers Melisa Bok(melisa@mailten.com) that you invited to review paper {submission.number} has accepted the invitation and is now assigned to the paper {submission.number}.\n\nOpenReview Team'''
+        assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\nThe Reviewers Melisa Bok(melisa@mailten.com) that you invited to review paper {submission.number} has accepted the invitation and is now assigned to the paper {submission.number}.\n\nOpenReview Team\n\nPlease note that responding to this email will direct your reply to tmlr@jmlr.org.\n'''
 
         messages = openreview_client.get_messages(to = 'melisa@mailten.com', subject = f'[TMLR] Assignment to review new TMLR submission {submission.number}: Paper title 14')
         assert len(messages) == 0
@@ -5064,7 +5183,7 @@ note={Expert Certification}
 
         messages = openreview_client.get_messages(to = 'harold@hotmail.com', subject = '[TMLR] Invitation to review paper titled "Paper title 14"')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi harold@hotmail.com,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=harold@hotmail.com&key=5702b25b819d98308e99b9784e37d7327e511efbd618e44df194ccefc6dcc96c&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nSamy Bengio'''
+        assert messages[0]['content']['text'] == f'''Hi harold@hotmail.com,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=harold@hotmail.com&key=5702b25b819d98308e99b9784e37d7327e511efbd618e44df194ccefc6dcc96c&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nSamy Bengio\n\nPlease note that responding to this email will direct your reply to samy@bengio.com.\n'''
 
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
@@ -5080,11 +5199,11 @@ note={Expert Certification}
 
         messages = openreview_client.get_messages(to = 'harold@hotmail.com', subject = f'[TMLR] Reviewers Invitation accepted for paper {submission.number}: Paper title 14, assignment pending')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi harold@hotmail.com,\nThank you for accepting the invitation to review the paper number: {submission.number}, title: Paper title 14.\n\nPlease signup in OpenReview using the email address harold@hotmail.com and complete your profile.\nConfirmation of the assignment is pending until your profile is active and no conflicts of interest are detected.\n\nIf you would like to change your decision, please follow the link in the previous invitation email and click on the \"Decline\" button.\n\nOpenReview Team'''
+        assert messages[0]['content']['text'] == f'''Hi harold@hotmail.com,\nThank you for accepting the invitation to review the paper number: {submission.number}, title: Paper title 14.\n\nPlease signup in OpenReview using the email address harold@hotmail.com and complete your profile.\nConfirmation of the assignment is pending until your profile is active and no conflicts of interest are detected.\n\nIf you would like to change your decision, please follow the link in the previous invitation email and click on the \"Decline\" button.\n\nOpenReview Team\n\nPlease note that responding to this email will direct your reply to tmlr@jmlr.org.\n'''
 
         messages = openreview_client.get_messages(to = 'samy@bengio.com', subject = f'[TMLR] Reviewers harold@hotmail.com accepted to review paper {submission.number}: Paper title 14, assignment pending')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\nThe Reviewers harold@hotmail.com that you invited to review paper {submission.number} has accepted the invitation.\n\nConfirmation of the assignment is pending until the invited reviewer creates a profile in OpenReview and no conflicts of interest are detected.\n\nOpenReview Team'''
+        assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\nThe Reviewers harold@hotmail.com that you invited to review paper {submission.number} has accepted the invitation.\n\nConfirmation of the assignment is pending until the invited reviewer creates a profile in OpenReview and no conflicts of interest are detected.\n\nOpenReview Team\n\nPlease note that responding to this email will direct your reply to tmlr@jmlr.org.\n'''
 
         ## Invite external reviewer with a conflict of interest
         with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for harold@mail'):
@@ -5136,8 +5255,8 @@ note={Expert Certification}
 
         messages = openreview_client.get_messages(to = 'harold@hotmail.com', subject = f'[TMLR] Reviewer Assignment confirmed for paper {submission.number}: Paper title 14')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Harold Red,\nThank you for accepting the invitation to review the paper number: {submission.number}, title: Paper title 14.\n\nPlease go to the Tasks page and check your TMLR pending tasks: https://openreview.net/tasks\n\nIf you would like to change your decision, please click the Decline link in the previous invitation email.\n\nOpenReview Team'''
+        assert messages[0]['content']['text'] == f'''Hi Harold Red,\nThank you for accepting the invitation to review the paper number: {submission.number}, title: Paper title 14.\n\nPlease go to the Tasks page and check your TMLR pending tasks: https://openreview.net/tasks\n\nIf you would like to change your decision, please click the Decline link in the previous invitation email.\n\nOpenReview Team\n\nPlease note that responding to this email will direct your reply to tmlr@jmlr.org.\n'''
 
         messages = openreview_client.get_messages(to = 'samy@bengio.com', subject = f'[TMLR] Reviewer Harold Red signed up and is assigned to paper {submission.number}: Paper title 14')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\nThe Reviewer Harold Red(harold@hotmail.com) that you invited to review paper {submission.number} has accepted the invitation, signed up and is now assigned to the paper {submission.number}.\n\nOpenReview Team'''
+        assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\nThe Reviewer Harold Red(harold@hotmail.com) that you invited to review paper {submission.number} has accepted the invitation, signed up and is now assigned to the paper {submission.number}.\n\nOpenReview Team\n\nPlease note that responding to this email will direct your reply to tmlr@jmlr.org.\n'''

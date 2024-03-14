@@ -24,7 +24,7 @@ class InvitationBuilder(object):
 
         self.author_edge_reminder_process = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week)],
-            'script': self.get_process_content('process/author_edge_reminder_process.py')
+            'script': self.get_super_dateprocess_content('author_edge_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'one week' })
         }
 
         self.author_reminder_process = {
@@ -54,7 +54,7 @@ class InvitationBuilder(object):
 
         self.ae_edge_reminder_process = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week), "#{4/duedate} + " + str(one_month)],
-            'script': self.get_process_content('process/action_editor_edge_reminder_process.py')
+            'script': self.get_super_dateprocess_content('ae_edge_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'one week', 2: 'one month' })
         }
 
     def set_invitations(self, assignment_delay):
@@ -244,6 +244,12 @@ class InvitationBuilder(object):
                     },
                     'author_reminder_script': {
                         'value': self.get_process_content('process/author_reminder_process.py')
+                    },
+                    'ae_edge_reminder_script': {
+                        'value': self.get_process_content('process/action_editor_edge_reminder_process.py')
+                    },
+                    'author_edge_reminder_script': {
+                        'value': self.get_process_content('process/author_edge_reminder_process.py')
                     }
                 },
                 edit=True
@@ -896,7 +902,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'authorids': {
                             'value': {
                                 'param': {
-                                    'type': "group[]",
+                                    'type': "profile[]",
                                     'regex': r'~.*'
                                 }
                             },
@@ -1024,9 +1030,22 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.get_submission_additional_fields():
             for key, value in self.journal.get_submission_additional_fields().items():
-                invitation.edit['note']['content'][key] = value if value else { "delete": True }             
+                invitation.edit['note']['content'][key] = value if value else { "delete": True }
 
-        print(invitation.edit['note']['content'])
+        submission_license = self.journal.get_submission_license()
+        if isinstance(submission_license, str):
+            invitation.edit['note']['license'] = submission_license
+        
+        if isinstance(submission_license, list):
+            if len(submission_license) == 1:
+                invitation.edit['note']['license'] = submission_license[0]
+            else:
+                invitation.edit['note']['license'] = {
+                    "param": {
+                        "enum": [ { "value": license, "description": license } for license in submission_license ]
+                    }
+                }             
+
         self.save_invitation(invitation)
 
     def set_ae_assignment(self, assignment_delay):
@@ -3334,10 +3353,6 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'venueid': {
                             'value': self.journal.accepted_venue_id,
                             'order': 2
-                        },
-                        'license': {
-                            'value': 'Creative Commons Attribution 4.0 International (CC BY 4.0)',
-                            'order': 4
                         }
                     }
                 }
@@ -5732,7 +5747,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'authorids': {
                             'value': {
                                 'param': {
-                                    'type': "group[]",
+                                    'type': "profile[]",
                                     'regex': r'~.*'
                                 }
                             },

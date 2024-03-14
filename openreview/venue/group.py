@@ -204,6 +204,9 @@ class GroupBuilder(object):
             content['area_chairs_recruitment_id'] = { 'value': self.venue.get_recruitment_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_assignment_id'] = { 'value': self.venue.get_assignment_id(self.venue.get_area_chairs_id(), deployed=True) }
 
+        if self.venue.use_secondary_area_chairs:
+            content['secondary_area_chairs_name'] = { 'value': self.venue.secondary_area_chairs_name }
+            content['secondary_area_chairs_anon_name'] = { 'value': self.venue.get_anon_committee_name(self.venue.secondary_area_chairs_name) }
 
         if self.venue.use_senior_area_chairs:
             content['senior_area_chairs_id'] = { 'value': self.venue.get_senior_area_chairs_id() }
@@ -268,7 +271,10 @@ class GroupBuilder(object):
             content['area_chairs_conflict_policy'] = venue_group.content.get('area_chairs_conflict_policy')
 
         if venue_group.content.get('area_chairs_conflict_n_years'):
-            content['area_chairs_conflict_n_years'] = venue_group.content.get('area_chairs_conflict_n_years')            
+            content['area_chairs_conflict_n_years'] = venue_group.content.get('area_chairs_conflict_n_years')
+
+        if self.venue.source_submissions_query_mapping:
+            content['source_submissions_query_mapping'] = { 'value': self.venue.source_submissions_query_mapping }    
 
         update_content = self.get_update_content(venue_group.content, content)
         if update_content:

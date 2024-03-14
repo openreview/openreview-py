@@ -220,7 +220,10 @@ Please see our [call for papers](https://nips.cc/Conferences/2023/CallForPapers)
 
 The NeurIPS 2023 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
 
-If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.
+
+Please note that responding to this email will direct your reply to pc@neurips.cc.
+'''
 
         messages = client.get_messages(to='sac2@gmail.com', subject='[NeurIPS 2023] Invitation to serve as Senior Area Chair')
         assert messages and len(messages) == 1
@@ -297,7 +300,10 @@ You have selected a reduced load of 2 submissions to review.
 
 The NeurIPS 2023 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
 
-If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.
+
+Please note that responding to this email will direct your reply to pc@neurips.cc.
+'''
 
     def test_ac_registration(self, client, openreview_client, helpers):
 
@@ -565,7 +571,7 @@ If you would like to change your decision, please follow the link in the previou
         messages = client.get_messages(to='reviewer1@umass.edu', subject='[NeurIPS 2023] Reviewer Invitation declined')
         assert messages
         assert len(messages)
-        assert messages[0]['content']['text'] == 'You have declined the invitation to become a Reviewer for NeurIPS 2023.\n\nIf you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'
+        assert messages[0]['content']['text'] == 'You have declined the invitation to become a Reviewer for NeurIPS 2023.\n\nIf you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.\n\nPlease note that responding to this email will direct your reply to pc@neurips.cc.\n'
 
         notes = openreview_client.get_notes(invitation='NeurIPS.cc/2023/Conference/Reviewers/-/Recruitment', content={'user': 'reviewer1@umass.edu'})
         assert notes
@@ -598,7 +604,10 @@ You have selected a reduced load of 4 submissions to review.
 
 The NeurIPS 2023 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
 
-If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.
+
+Please note that responding to this email will direct your reply to pc@neurips.cc.
+'''
 
         ## Check reviewers console load
         reviewer_client=openreview.api.OpenReviewClient(username='reviewer1@umass.edu', password=helpers.strong_password)
@@ -644,7 +653,7 @@ If you would like to change your decision, please follow the link in the previou
         messages = client.get_messages(to='reviewer2@mit.edu', subject='[NeurIPS 2023] Reviewer Invitation declined')
         assert messages
         assert len(messages)
-        assert messages[0]['content']['text'] =='You have declined the invitation to become a Reviewer for NeurIPS 2023.\n\nIf you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'
+        assert messages[0]['content']['text'] =='You have declined the invitation to become a Reviewer for NeurIPS 2023.\n\nIf you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.\n\nPlease note that responding to this email will direct your reply to pc@neurips.cc.\n'
 
         openreview_client.add_members_to_group('NeurIPS.cc/2023/Conference/Reviewers', ['reviewer2@mit.edu', 'reviewer3@ibm.com', 'reviewer4@fb.com', 'reviewer5@google.com', 'reviewer6@amazon.com'])
 
@@ -854,7 +863,7 @@ If you would like to change your decision, please follow the link in the previou
         ## finish submission deadline
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
-        first_date = now - datetime.timedelta(minutes=28)
+        first_date = now - datetime.timedelta(minutes=27)
 
         venue_revision_note = openreview.Note(
             content={

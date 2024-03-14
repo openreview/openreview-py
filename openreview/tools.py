@@ -1382,7 +1382,7 @@ def get_profile_info(profile, n_years=None):
 
     if n_years:
         cut_off_date = datetime.datetime.now()
-        cut_off_date = cut_off_date.replace(year=cut_off_date.year - n_years)
+        cut_off_date = cut_off_date - datetime.timedelta(days=365 * n_years)
         cut_off_year = cut_off_date.year
     else:
         cut_off_year = -1
@@ -1442,7 +1442,7 @@ def get_neurips_profile_info(profile, n_years=None):
 
     if n_years:
         cut_off_date = datetime.datetime.now()
-        cut_off_date = cut_off_date.replace(year=cut_off_date.year - n_years)
+        cut_off_date = cut_off_date - datetime.timedelta(days=365 * n_years)
         cut_off_year = cut_off_date.year
     else:
         cut_off_year = -1
@@ -1509,7 +1509,7 @@ def get_current_submissions_profile_info(profile, n_years=None, submission_venue
 
     if n_years is not None:
         cut_off_date = datetime.datetime.now()
-        cut_off_date = cut_off_date.replace(year=cut_off_date.year - n_years)
+        cut_off_date = cut_off_date - datetime.timedelta(days=365 * n_years)
         cut_off_year = cut_off_date.year
     else:
         cut_off_year = -1
