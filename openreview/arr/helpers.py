@@ -1,4 +1,194 @@
 import openreview
+from enum import Enum
+from datetime import datetime
+
+class ARRStage(object):
+    """
+    Wraps around several types of stages and is used to add new actions to an ARR cycle
+
+    Attributes:
+        type (ARRStage.Type): Indicator of the underlying OpenReview class
+        group_id (str, optional): Members of this group ID will be submitting or using this stage
+        required_fields (list): The list of fields that must be present in the ARR configurator to modify the stage
+        super_invitation_id (str): The ID of the super invitation, or the single invitation for registration stages
+        stage_arguments (dict): Arguments for either the stage class or the stage note posted to the venue request form
+        date_levels (int): Number of levels to traverse to update the dates 
+            (registration stages have theirs at the top level=1,
+            review stages need to modify the submission-level invitations at level=2)
+        start_date (datetime): When the users will be able to perform this action
+        due_date (datetime): If set, the date which will appear in the users' consoles
+        exp_date (datetime): The date when users will no longer be able to perform the action
+        extend (function): The function performs any additional changes need to be made on top of the stage
+            This function must take as arguments:
+                client (openreview.api.OpenReviewClient)
+                venue (openreview.venue.Venue)
+                invitation_builder (openreview.arr.InvitationBuilder)
+                request_form_note (openreview.api.Note)
+
+
+    """
+
+    class Type(Enum):
+        """
+        Enum defining the possible types of stages within the process.
+
+        Attributes:
+            REGISTRATION_STAGE (0): Represents a registration phase.
+            CUSTOM_STAGE (1): Represents a custom-configured phase.
+            STAGE_NOTE (2): Represents an informational or note-taking phase.
+        """
+        REGISTRATION_STAGE = 0
+        CUSTOM_STAGE = 1
+        STAGE_NOTE = 2
+
+    def __init__(self,
+        type = None,
+        group_id = None,
+        required_fields = None,
+        super_invitation_id = None,
+        stage_arguments = None,
+        date_levels = None,
+        start_date = None,
+        due_date = None,
+        exp_date = None,
+        process = None,
+        preprocess = None,
+        extend = None
+    ):
+        self.type : ARRStage.Type = type
+        self.group_id: str = group_id
+        self.required_fields: list = required_fields
+        self.super_invitation_id: str = super_invitation_id
+        self.stage_arguments: dict = stage_arguments
+        self.date_levels: int = date_levels
+        self.extend: function = extend
+        self.process: str = process
+        self.preprocess: str = preprocess
+
+        self.start_date: datetime = datetime.strptime(
+            start_date, '%Y/%m/%d %H:%M:%S'
+        ) if start_date is not None else start_date
+
+        self.due_date: datetime = datetime.strptime(
+            due_date, '%Y/%m/%d %H:%M:%S'
+        ) if due_date is not None else due_date
+
+        self.exp_date: datetime = datetime.strptime(
+            exp_date, '%Y/%m/%d %H:%M:%S'
+        ) if exp_date is not None else exp_date
+
+        # Parse and add start dates to stage arguments
+        if self.type == ARRStage.Type.CUSTOM_STAGE:
+            self.stage_arguments['start_date'] = self._format_date(self.start_date)
+            self.stage_arguments['due_date'] = self._format_date(self.due_date)
+            self.stage_arguments['exp_date'] = self._format_date(self.exp_date)
+        elif self.type == ARRStage.Type.REGISTRATION_STAGE:
+            self.stage_arguments['start_date'] =self.start_date
+            self.stage_arguments['due_date'] = self.due_date
+            self.stage_arguments['expdate'] = self.exp_date
+        elif self.type == ARRStage.Type.STAGE_NOTE:
+            format_type = 'strftime'
+            if 'Official_Review' in self.super_invitation_id:
+                self.stage_arguments['content']['review_start_date'] = self._format_date(self.start_date, format_type)
+                self.stage_arguments['content']['review_deadline'] = self._format_date(self.due_date, format_type)
+                self.stage_arguments['content']['review_expiration_date'] = self._format_date(self.exp_date, format_type)
+            elif 'Meta_Review' in self.super_invitation_id:
+                self.stage_arguments['content']['meta_review_start_date'] = self._format_date(self.start_date, format_type)
+                self.stage_arguments['content']['meta_review_deadline'] = self._format_date(self.due_date, format_type)
+                self.stage_arguments['content']['meta_review_expiration_date'] = self._format_date(self.exp_date, format_type)
+            elif 'Ethics_Review' in self.super_invitation_id:
+                self.stage_arguments['content']['ethics_review_start_date'] = self._format_date(self.start_date, format_type)
+                self.stage_arguments['content']['ethics_review_deadline'] = self._format_date(self.due_date, format_type)
+                self.stage_arguments['content']['ethics_review_expiration_date'] = self._format_date(self.exp_date, format_type)
+
+    def _format_date(self, date, format_type='millis', date_format='%Y/%m/%d'):
+        if date is None:
+            return None
+        if format_type == 'millis':
+            return openreview.tools.datetime_millis(date)
+        elif format_type == 'strftime':
+            return date.strftime(date_format)
+        else:
+            raise ValueError("Invalid format_type specified")
+
+    def _post_new_dates(self, client, venue):
+        meta_invitation_id = venue.get_meta_invitation_id()
+        venue_id = venue.id
+        levels = self.date_levels
+        invitation_id = self.super_invitation_id
+
+        invitation_edit_invitation_dates = {}
+        if self.start_date:
+            invitation_edit_invitation_dates['cdate'] = openreview.tools.datetime_millis(self.start_date)
+        if self.due_date:
+            invitation_edit_invitation_dates['duedate'] = openreview.tools.datetime_millis(self.due_date)
+        if self.exp_date:
+            invitation_edit_invitation_dates['expdate'] = openreview.tools.datetime_millis(self.exp_date)
+        if levels == 1:
+            client.post_invitation_edit(
+                invitations=meta_invitation_id,
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitation=openreview.api.Invitation(
+                    id=invitation_id,
+                    cdate=openreview.tools.datetime_millis(self.start_date),
+                    duedate=openreview.tools.datetime_millis(self.due_date),
+                    expdate=openreview.tools.datetime_millis(self.exp_date)
+                )
+            )
+        elif levels == 2:
+            client.post_invitation_edit(
+                invitations=meta_invitation_id,
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitation=openreview.api.Invitation(
+                    id=invitation_id,
+                    edit={
+                        'invitation': invitation_edit_invitation_dates
+                    }
+                )
+            )
+
+    def set_stage(self, client_v1, client, venue, invitation_builder, request_form_note):
+        # Find invitation
+        if openreview.tools.get_invitation(client, self.super_invitation_id):
+            self._post_new_dates(client, venue)
+        else:
+            if self.type == ARRStage.Type.REGISTRATION_STAGE:
+                venue.registration_stages = [openreview.stages.RegistrationStage(**self.stage_arguments)]
+                venue.create_registration_stages()
+                if self.process or self.preprocess:
+                    invitation = openreview.api.Invitation(
+                        id=self.super_invitation_id,
+                        signatures=[venue.id],
+                        process=None if not self.process else invitation_builder.get_process_content(self.process),
+                        preprocess=None if not self.preprocess else invitation_builder.get_process_content(self.preprocess)
+                    )
+                    client.post_invitation_edit(
+                        invitations=venue.get_meta_invitation_id(),
+                        readers=[venue.id],
+                        writers=[venue.id],
+                        signatures=[venue.id],
+                        invitation=invitation
+                    )
+
+            elif self.type == ARRStage.Type.CUSTOM_STAGE:
+                venue.custom_stage = openreview.stages.CustomStage(**self.stage_arguments)
+                invitation_builder.set_custom_stage_invitation(
+                    process_script = self.process,
+                    preprocess_script = self.preprocess
+                )
+            elif self.type == ARRStage.Type.STAGE_NOTE:
+                stage_note = openreview.Note(**self.stage_arguments)
+                client_v1.post_note(stage_note)
+
+            if self.extend:
+                self.extend(
+                    client, venue, invitation_builder, request_form_note
+                )
+
 def flag_submission(
         client,
         edit,

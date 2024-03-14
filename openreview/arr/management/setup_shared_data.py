@@ -58,9 +58,6 @@ def process(client, invitation):
 
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
-    submission_venue_id = domain.content['submission_venue_id']['value']
-    meta_invitation_id = domain.content['meta_invitation_id']['value']
-    venue_name = domain.content['title']['value']
 
     now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
     cdate = invitation.cdate

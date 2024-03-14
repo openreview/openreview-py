@@ -14,6 +14,8 @@ SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
 
 class InvitationBuilder(object):
+    REGISTRATION_NAME = 'Registration'
+    MAX_LOAD_AND_UNAVAILABILITY_NAME = 'Max_Load_And_Unavailability_Request'
 
     def __init__(self, venue, update_wait_time=5000):
         self.client = venue.client
@@ -211,7 +213,7 @@ class InvitationBuilder(object):
             'email_template': { 'value': custom_stage.email_template if custom_stage.email_template else '' }
         }
         if process_script:
-            invitation_content['custom_stage_process_script'] = { 'value': self.get_process_content(f'process/{process_script}')}
+            invitation_content['custom_stage_process_script'] = { 'value': self.get_process_content(process_script)}
 
         invitation = Invitation(id=custom_stage_invitation_id,
             invitees=[venue_id],
@@ -282,7 +284,7 @@ class InvitationBuilder(object):
         )
 
         if preprocess_script:
-            invitation.edit['invitation']['preprocess'] = self.get_process_content(f'process/{preprocess_script}')
+            invitation.edit['invitation']['preprocess'] = self.get_process_content(preprocess_script)
 
         if process_script:
             invitation.edit['invitation']['process'] = '''def process(client, edit, invitation):

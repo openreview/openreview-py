@@ -217,6 +217,9 @@ class TestARRVenueV2():
                     'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                     'reviewer_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                     'reviewer_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'ethics_reviewing_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
+                    'ethics_reviewing_due_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
+                    'ethics_reviewing_exp_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form_note.number}/ARR_Configuration',
                 forum=request_form_note.id,
@@ -228,46 +231,7 @@ class TestARRVenueV2():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-0-0', count=1)
-
-        # Create ethics review stage to add values into domain
-        now = datetime.datetime.utcnow()
-        start_date = now - datetime.timedelta(days=2)
-        due_date = now + datetime.timedelta(days=3)
-        stage_note = pc_client.post_note(openreview.Note(
-            content={
-                'ethics_review_start_date': start_date.strftime('%Y/%m/%d'),
-                'ethics_review_deadline': (start_date + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d'),
-                'make_ethics_reviews_public': 'No, ethics reviews should NOT be revealed publicly when they are posted',
-                'release_ethics_reviews_to_authors': "No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors",
-                'release_ethics_reviews_to_reviewers': 'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review',
-                'remove_ethics_review_form_options': 'ethics_review',
-                'additional_ethics_review_form_options': {
-                    "ethics_concerns": {
-                        'order': 1,
-                        'description': 'Briefly summarize the ethics concerns.',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 200000,
-                                'markdown': True,
-                                'input': 'textarea'
-                            }
-                        }
-                    }
-                },
-                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
-            },
-            forum=request_form_note.forum,
-            referent=request_form_note.forum,
-            invitation='openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form_note.number),
-            readers=[venue.get_program_chairs_id(), 'openreview.net/Support'],
-            signatures=['~Program_ARRChair1'],
-            writers=[]
-        ))
-        
-        venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
-        venue.create_ethics_review_stage()
+        helpers.await_queue()
 
         # Pin 2023 and 2024 into next available year
         task_array = [
@@ -853,7 +817,7 @@ class TestARRVenueV2():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/June/-/ARR_Scheduler-0-0', count=1)
+        helpers.await_queue()
 
         # Update submission fields
         pc_client.post_note(openreview.Note(
@@ -1630,6 +1594,8 @@ class TestARRVenueV2():
             )
         )
 
+        helpers.await_queue()
+
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
 
         with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
@@ -1779,7 +1745,6 @@ class TestARRVenueV2():
         )
 
         helpers.await_queue()
-        helpers.await_queue(openreview_client)
 
         # Remove resubmission information from all but submissions 2 and 3
         for submission in submissions:
