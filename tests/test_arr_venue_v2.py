@@ -209,7 +209,6 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_venue_stages_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S'),
                     'form_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                     'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                     'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
@@ -798,7 +797,6 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_venue_stages_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S'),
                     'form_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                     'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                     'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
@@ -1045,7 +1043,7 @@ class TestARRVenueV2():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-1-0', count=1)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-0-0', count=1)
 
         # Call twice to ensure data only gets copied once
         pc_client.post_note(
@@ -1064,7 +1062,7 @@ class TestARRVenueV2():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-1-0', count=2)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-0-0', count=2)
 
         # Find August in readers of groups and registration notes
         assert set(pc_client_v2.get_group(june_venue.get_reviewers_id()).members) == set(pc_client_v2.get_group(august_venue.get_reviewers_id()).members)
@@ -1461,7 +1459,7 @@ class TestARRVenueV2():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-2-0', count=1)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-1-0', count=1)
 
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission-0-1', count=2)
 
@@ -1573,7 +1571,6 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_review_stages_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S'),
                     'reviewing_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
                     'reviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                     'reviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
@@ -1622,7 +1619,7 @@ class TestARRVenueV2():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-3-0', count=1)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-2-0', count=1)
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Conflict')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Affinity_Score')
@@ -1723,7 +1720,6 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_review_stages_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S'),
                     'reviewing_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
                     'reviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                     'reviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
@@ -1885,7 +1881,7 @@ class TestARRVenueV2():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-4-0', count=1)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-3-0', count=1)
         # For 1, assert that the affinity scores on June reviewers/aes is 3
         ac_scores = {
             g['id']['tail'] : g['values'][0]
@@ -2006,7 +2002,7 @@ class TestARRVenueV2():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-5-0', count=1)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-4-0', count=1)
 
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Emergency_Area_Chairs')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment').content['sync_sac_id']['value'] == ''

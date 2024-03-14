@@ -409,12 +409,6 @@ class InvitationBuilder(object):
                         'order': 10,
                         'required': False
                     },
-                    'setup_venue_stages_date': {
-                        'description': 'When should the venue request process functions be overridden? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
-                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
-                        'order': 11,
-                        'required': False
-                    },
                     'maximum_load_due_date': {
                         'description': 'What should be the displayed deadline for the maximum load tasks? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
                         'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
@@ -543,13 +537,7 @@ class InvitationBuilder(object):
                         'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
                         'order': 28,
                         'required': False
-                    },
-                    'setup_review_stages_date': {
-                        'description': 'When should the review stages be created? This date should be after the submission deadline. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
-                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
-                        'order': 29,
-                        'required': False
-                    },
+                    }
                 }
             }
         ))
@@ -569,7 +557,6 @@ class InvitationBuilder(object):
             cdate=scheduler_cdate,
             content={
                 'form_expiration_date': {'value': 0},
-                'setup_venue_stages_date': {'value': 0},
                 'setup_shared_data_date': {'value': 0},
                 'preprint_release_submission_date': {'value': 0},
                 'setup_sae_matching_date': {'value': 0},
@@ -589,14 +576,9 @@ class InvitationBuilder(object):
                 'metareviewing_exp_date': {'value': 0},
                 'ethics_reviewing_start_date': {'value': 0},
                 'ethics_reviewing_due_date': {'value': 0},
-                'ethics_reviewing_exp_date': {'value': 0},
-                'setup_review_stages_date': {'value': 0}
+                'ethics_reviewing_exp_date': {'value': 0}
             },
             date_processes=[
-                {
-                    'dates': ["#{4/content/setup_venue_stages_date/value}"],
-                    'script': self.get_process_content('management/setup_venue_stages.py'),
-                },
                 {
                     'dates': ["#{4/content/setup_shared_data_date/value}"],
                     'script': self.get_process_content('management/setup_shared_data.py'),
@@ -616,10 +598,6 @@ class InvitationBuilder(object):
                 {
                     'dates': ["#{4/content/setup_sae_ae_assignment_date/value}"],
                     'script': self.get_process_content('management/setup_sae_ae_assignments.py'),
-                },
-                {
-                    'dates': ["#{4/content/setup_review_stages_date/value}"],
-                    'script': self.get_process_content('management/setup_review_stages.py'),
                 }
             ]
         )

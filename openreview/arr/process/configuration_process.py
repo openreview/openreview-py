@@ -66,9 +66,6 @@ def process(client, note, invitation):
     invitation_content = {}
     invitation_content['configuration_note_id'] = { 'value' : note.id }
     for field, raw_value in note.content.items():
-        if field in ['setup_venue_stages_date', 'setup_review_stages_date']:
-            continue
-
         if 'date' in field:
             value = openreview.tools.datetime_millis(
                 datetime.strptime(raw_value.strip(), '%Y/%m/%d %H:%M:%S')
