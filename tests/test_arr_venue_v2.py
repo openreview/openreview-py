@@ -194,9 +194,6 @@ class TestARRVenueV2():
         # Build current cycle invitations
         venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
         invitation_builder = openreview.arr.InvitationBuilder(venue)
-        invitation_builder.set_arr_configuration_invitation()
-        invitation_builder.set_arr_scheduler_invitation()
-        invitation_builder.set_preprint_release_submission_invitation()
 
         assert client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/ARR_Configuration')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission')
@@ -789,8 +786,6 @@ class TestARRVenueV2():
         due_date = now + datetime.timedelta(days=3)
 
         invitation_builder = openreview.arr.InvitationBuilder(june_venue)
-        invitation_builder.set_arr_configuration_invitation()
-        invitation_builder.set_arr_scheduler_invitation()
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/June/-/ARR_Scheduler')
 

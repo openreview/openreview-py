@@ -623,7 +623,6 @@ class InvitationBuilder(object):
             signatures = [venue_id],
             readers = ['everyone'],
             writers = [venue_id],
-            cdate=post_submission_cdate,
             date_processes=[{ 
                 'dates': ["#{4/cdate}", self.update_date_string],
                 'script': self.get_process_content('process/preprint_release_submission_process.py')              
