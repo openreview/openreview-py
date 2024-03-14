@@ -121,7 +121,7 @@ def process_update(client, edge, invitation, existing_edge):
             contact_info=journal.contact_info,
             review_period_length=review_period_length,
             review_duedate=duedate.strftime("%b %d"),
-            ack_invitation_url=f'https://openreview.net/forum?id={note.id}' + ('&invitationId={ack_invitation_edit["invitation"]["id"]}' if ack_invitation_edit else ''),
+            ack_invitation_url=f'https://openreview.net/forum?id={note.id}' + (f'&invitationId={ack_invitation_edit["invitation"]["id"]}' if ack_invitation_edit else ''),
             invitation_url=f'https://openreview.net/forum?id={note.id}&invitationId={journal.get_review_id(number=note.number)}',
             number_of_reviewers=number_of_reviewers,
             review_visibility=review_visibility,
