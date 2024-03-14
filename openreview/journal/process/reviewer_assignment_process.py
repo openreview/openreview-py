@@ -103,8 +103,10 @@ def process_update(client, edge, invitation, existing_edge):
                 duedate=openreview.tools.datetime_millis(duedate)
         ))
 
-        print('Enable assignment acknowledgement task for', edge.tail)
-        ack_invitation_edit = journal.invitation_builder.set_note_reviewer_assignment_acknowledgement_invitation(note, edge.tail, journal.get_due_date(days = 2), duedate.strftime("%b %d, %Y"))
+        ack_invitation_edit = None
+        if not journal.should_skip_reviewer_assignment_acknowledgement():
+            print('Enable assignment acknowledgement task for', edge.tail)
+            ack_invitation_edit = journal.invitation_builder.set_note_reviewer_assignment_acknowledgement_invitation(note, edge.tail, journal.get_due_date(days = 2), duedate.strftime("%b %d, %Y"))
         
         recipients = [edge.tail]
         subject=f'''[{journal.short_name}] Assignment to review new {journal.short_name} submission {note.number}: {note.content['title']['value']}'''
@@ -119,7 +121,7 @@ def process_update(client, edge, invitation, existing_edge):
             contact_info=journal.contact_info,
             review_period_length=review_period_length,
             review_duedate=duedate.strftime("%b %d"),
-            ack_invitation_url=f'https://openreview.net/forum?id={note.id}&invitationId={ack_invitation_edit["invitation"]["id"]}',
+            ack_invitation_url=f'https://openreview.net/forum?id={note.id}' + ('&invitationId={ack_invitation_edit["invitation"]["id"]}' if ack_invitation_edit else ''),
             invitation_url=f'https://openreview.net/forum?id={note.id}&invitationId={journal.get_review_id(number=note.number)}',
             number_of_reviewers=number_of_reviewers,
             review_visibility=review_visibility,

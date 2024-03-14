@@ -639,6 +639,9 @@ If you have questions after reviewing the points below that are not answered on 
     
     def set_reviewer_assignment_acknowledgement_invitation(self):
 
+        if self.journal.should_skip_reviewer_assignment_acknowledgement():
+            return         
+
         venue_id=self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
 

@@ -453,7 +453,10 @@ class Journal(object):
         return self.settings.get('skip_ac_recommendation', False)
     
     def should_skip_reviewer_responsibility_acknowledgement(self):
-        return self.settings.get('skip_reviewer_responsibility_acknowledgement', False)    
+        return self.settings.get('skip_reviewer_responsibility_acknowledgement', False) 
+
+    def should_skip_reviewer_assignment_acknowledgement(self):
+        return self.settings.get('skip_reviewer_assignment_acknowledgement', False)        
 
     def get_certifications(self):
         return self.settings.get('certifications', []) 

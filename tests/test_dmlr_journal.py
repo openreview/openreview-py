@@ -67,6 +67,7 @@ class TestDMLRJournal():
                                 "faq": "https://data.mlr.press/"
                             },
                             "editors_email": "dmlr@jmlr.org",
+                            "skip_reviewer_assignment_acknowledgement": True,
                             "skip_ac_recommendation": True,
                             "number_of_reviewers": 2,
                             "reviewers_max_papers": 6,
@@ -451,7 +452,7 @@ note={Under review}
 
 With this email, we request that you submit, within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}) a review for your newly assigned DMLR submission "1: Paper title".
 
-Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_1}&invitationId=DMLR/Paper1/Reviewers/-/~David_Bo1/Assignment/Acknowledgement
+Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_1}
 
 As a reminder, reviewers are **expected to accept all assignments** for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another DMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).
 
@@ -470,6 +471,7 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
         assert messages[0]['content']['replyTo'] == 'andrew@dmlrzero.com'
 
         assert openreview.tools.get_invitation(openreview_client, 'DMLR/Reviewers/-/~David_Bo1/Responsibility/Acknowledgement')
+        assert not openreview.tools.get_invitation(openreview_client, 'DMLR/Paper1/Reviewers/-/~David_Bo1/Assignment/Acknowledgement')
 
         ## Carlos Gardel
         paper_assignment_edge = andrew_client.post_edge(openreview.Edge(invitation='DMLR/Reviewers/-/Assignment',
