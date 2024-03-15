@@ -474,7 +474,7 @@ class Journal(object):
         return self.settings.get('submission_length', [])
     
     def get_website_url(self, key):
-        return self.settings.get('website_urls', {}).get(key, 'url not available')
+        return self.settings.get('website_urls', {}).get(key)
     
     def get_editors_in_chief_email(self):
         return self.settings.get('editors_email', self.contact_info)

@@ -80,7 +80,7 @@ class GroupBuilder(object):
             content['certifications'] = { 'value': self.journal.get_certifications() }
         if self.journal.get_eic_certifications():
             content['eic_certifications'] = { 'value': self.journal.get_eic_certifications() }
-        if self.journal.get_expert_reviewer_certification():
+        if self.journal.has_expert_reviewers():
             content['expert_reviewer_certification'] = { 'value': self.journal.get_expert_reviewer_certification() }
         if self.journal.get_event_certifications():
             content['event_certifications'] = { 'value': self.journal.get_event_certifications() }
