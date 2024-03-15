@@ -10,13 +10,17 @@ def process(client, note, invitation):
         arr_reviewer_max_load_task,
         arr_ac_max_load_task,
         arr_sac_max_load_task,
+        arr_reviewer_emergency_load_task_forum,
+        arr_reviewer_emergency_load_task,
+        arr_ac_emergency_load_task_forum,
+        arr_ac_emergency_load_task,
         arr_reviewer_checklist,
         arr_ae_checklist,
         arr_desk_reject_verification,
         arr_reviewer_consent_content,
         arr_official_review_content,
         arr_metareview_content,
-        arr_ethics_review_content
+        arr_ethics_review_content,
     )
     from openreview.arr.helpers import ARRStage
     from openreview.venue import matching
@@ -185,8 +189,8 @@ def process(client, note, invitation):
             stage_arguments={
                 'committee_id': venue.get_reviewers_id(),
                 'name': invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME,
-                'instructions': arr_registration_task_forum['instructions'],
-                'title': venue.get_reviewers_name() + ' ' + arr_registration_task_forum['title'],
+                'instructions': arr_max_load_task_forum['instructions'],
+                'title': venue.get_reviewers_name() + ' ' + arr_max_load_task_forum['title'],
                 'additional_fields': arr_reviewer_max_load_task,
                 'remove_fields': ['profile_confirmed', 'expertise_confirmed']
             },
@@ -204,8 +208,8 @@ def process(client, note, invitation):
             stage_arguments={
                 'committee_id': venue.get_area_chairs_id(),
                 'name': invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME,
-                'instructions': arr_registration_task_forum['instructions'],
-                'title': venue.get_area_chairs_name() + ' ' + arr_registration_task_forum['title'],
+                'instructions': arr_max_load_task_forum['instructions'],
+                'title': venue.get_area_chairs_name() + ' ' + arr_max_load_task_forum['title'],
                 'additional_fields': arr_ac_max_load_task,
                 'remove_fields': ['profile_confirmed', 'expertise_confirmed']
             },
@@ -223,8 +227,8 @@ def process(client, note, invitation):
             stage_arguments={   
                 'committee_id': venue.get_senior_area_chairs_id(),
                 'name': invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME,
-                'instructions': arr_registration_task_forum['instructions'],
-                'title': venue.senior_area_chairs_name.replace('_', ' ') + ' ' + arr_registration_task_forum['title'],
+                'instructions': arr_max_load_task_forum['instructions'],
+                'title': venue.senior_area_chairs_name.replace('_', ' ') + ' ' + arr_max_load_task_forum['title'],
                 'additional_fields': arr_sac_max_load_task,
                 'remove_fields': ['profile_confirmed', 'expertise_confirmed']
             },
@@ -233,6 +237,46 @@ def process(client, note, invitation):
             exp_date=note.content.get('maximum_load_exp_date'),
             process='process/max_load_process.py',
             preprocess='process/max_load_preprocess.py'
+        ),
+        ARRStage(
+            type=ARRStage.Type.REGISTRATION_STAGE,
+            group_id=venue.get_reviewers_id(),
+            required_fields=['emergency_reviewing_start_date', 'emergency_reviewing_due_date', 'emergency_reviewing_due_date'],
+            super_invitation_id=f"{venue.get_reviewers_id()}/-/{invitation_builder.EMERGENCY_REVIEWING_NAME}",
+            stage_arguments={   
+                'committee_id': venue.get_reviewers_id(),
+                'name': invitation_builder.EMERGENCY_REVIEWING_NAME,
+                'instructions': arr_reviewer_emergency_load_task_forum['instructions'],
+                'title': venue.get_reviewers_name() + ' ' + arr_reviewer_emergency_load_task_forum['title'],
+                'additional_fields': arr_reviewer_emergency_load_task,
+                'remove_fields': ['profile_confirmed', 'expertise_confirmed']
+            },
+            date_levels=1,
+            start_date=note.content.get('emergency_reviewing_start_date'),
+            due_date=note.content.get('emergency_reviewing_due_date'),
+            exp_date=note.content.get('emergency_reviewing_due_date'),
+            process='process/emergency_load_process.py',
+            preprocess='process/emergency_load_preprocess.py'
+        ),
+        ARRStage(
+            type=ARRStage.Type.REGISTRATION_STAGE,
+            group_id=venue.get_area_chairs_id(),
+            required_fields=['emergency_metareviewing_start_date', 'emergency_metareviewing_due_date', 'emergency_metareviewing_due_date'],
+            super_invitation_id=f"{venue.get_area_chairs_id()}/-/{invitation_builder.EMERGENCY_METAREVIEWING_NAME}",
+            stage_arguments={   
+                'committee_id': venue.get_area_chairs_id(),
+                'name': invitation_builder.EMERGENCY_METAREVIEWING_NAME,
+                'instructions': arr_ac_emergency_load_task_forum['instructions'],
+                'title': venue.get_area_chairs_name() + ' ' + arr_ac_emergency_load_task_forum['title'],
+                'additional_fields': arr_ac_emergency_load_task,
+                'remove_fields': ['profile_confirmed', 'expertise_confirmed']
+            },
+            date_levels=1,
+            start_date=note.content.get('emergency_metareviewing_start_date'),
+            due_date=note.content.get('emergency_metareviewing_due_date'),
+            exp_date=note.content.get('emergency_metareviewing_due_date'),
+            process='process/emergency_load_process.py',
+            preprocess='process/emergency_load_preprocess.py'
         ),
         ARRStage(
             type=ARRStage.Type.CUSTOM_STAGE,
@@ -401,24 +445,51 @@ def process(client, note, invitation):
     ]
 
     for stage in workflow_stages:
-        print(f"checking {stage.super_invitation_id} -> {stage.required_fields}=?={note.content.keys()}")
+        print(f"checking {stage.super_invitation_id}")
         if all(field in note.content for field in stage.required_fields):
             print(f"building {stage.super_invitation_id}")
             stage.set_stage(
                 client, client_v2, venue, invitation_builder, request_form
             )
 
-    # Create custom max papers invitations
+    # Create custom max papers, load and area invitations
     venue_roles = [
         venue.get_reviewers_id(),
         venue.get_area_chairs_id(),
         venue.get_senior_area_chairs_id()
     ]
+    edge_invitation_names = [
+        'Custom_Max_Papers',
+        'Registered_Load',
+        'Emergency_Load',
+        'Emergency_Area',
+        'Availability',
+    ]
     for role in venue_roles:
-        if openreview.tools.get_invitation(client_v2, venue.get_custom_max_papers_id(role)):
-            continue
-
         m = matching.Matching(venue, venue.client.get_group(role), None, None)
-        m._create_edge_invitation(venue.get_custom_max_papers_id(m.match_group.id))
-
+        if not openreview.tools.get_invitation(client_v2, venue.get_custom_max_papers_id(role)):
+            m._create_edge_invitation(venue.get_custom_max_papers_id(m.match_group.id))
         
+        if not openreview.tools.get_invitation(client_v2, f"{role}/-/Status"): # Hold "Requested" or "Reassigned", head=submission ID
+            m._create_edge_invitation(f"{role}/-/Status")
+
+        for name in edge_invitation_names:
+            if not openreview.tools.get_invitation(client_v2, f"{role}/-/{name}"):
+                cmp_inv = client_v2.get_invitation(venue.get_custom_max_papers_id(m.match_group.id))
+                cmp_inv.id = f"{role}/-/{name}"
+                cmp_inv.edit['id']['param']['withInvitation'] = f"{role}/-/{name}"
+                cmp_inv.edit['weight']['param']['optional'] = True
+                cmp_inv.edit['label'] = {
+                    "param": {
+                        "regex": ".*",
+                        "optional": True,
+                        "deletable": True
+                    }
+                }
+                client_v2.post_invitation_edit(
+                    invitations=meta_invitation_id,
+                    readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    invitation=cmp_inv
+                )

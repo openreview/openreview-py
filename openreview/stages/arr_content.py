@@ -1168,6 +1168,148 @@ arr_sac_max_load_task["maximum_load"] = {
     "order": 1,
 }
 
+arr_reviewer_emergency_load_task_forum = {
+    "title": "Emergency Reviewing Form",
+    "instructions": "Use the form below to opt in as an emergency reviewer. Your new maximum load will be made immediately available to the editors.\n\nTo edit your agreement, please click the trash can button in the top right corner of your submitted form, refresh the page, and submit another form indicating your adjusted availability\n\nTo withdraw your agreement, please click the trash can button in the top right corner of your submitted form, refresh the page, and submit another form indicating \"No\" for the \"Emergency Reviewing Agreement\"\n\nThe emergency review due is at the start day and time of the Author response period. This is a hard deadline. You can find the start date and time on https://aclrollingreview.org/dates"
+}
+
+arr_reviewer_emergency_load_task = {
+    "emergency_reviewing_agreement": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "By selecting Yes, you agree to being an emergency reviewer for this cycle.",
+        "order": 1
+    },
+    "emergency_load": {
+        "value": {
+            "param": {
+                "regex": "[0-9]{0,3}",
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "description": "Enter your emergency reviewing load. This will be added to your originally submitted load.",
+        "order": 2
+    },
+    "research_area": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Computational Social Science and Cultural Analytics",
+                    "Dialogue and Interactive Systems",
+                    "Discourse and Pragmatics",
+                    "Efficient/Low-Resource Methods for NLP",
+                    "Ethics, Bias, and Fairness",
+                    "Generation",
+                    "Information Extraction",
+                    "Information Retrieval and Text Mining",
+                    "Interpretability and Analysis of Models for NLP",
+                    "Linguistic theories, Cognitive Modeling and Psycholinguistics",
+                    "Machine Learning for NLP",
+                    "Machine Translation",
+                    "Multilinguality and Language Diversity",
+                    "Multimodality and Language Grounding to Vision, Robotics and Beyond",
+                    "Phonology, Morphology and Word Segmentation",
+                    "Question Answering",
+                    "Resources and Evaluation",
+                    "Semantics: Lexical",
+                    "Semantics: Sentence-level Semantics, Textual Inference and Other areas",
+                    "Sentiment Analysis, Stylistic Analysis, and Argument Mining",
+                    "Speech recognition, text-to-speech and spoken language understanding",
+                    "Summarization",
+                    "Syntax: Tagging, Chunking and Parsing / ML",
+                    "NLP Applications"
+                ],
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "description": "Research Areas / Tracks. Select the most relevant research area / track for your expertise",
+        "order": 3
+    }
+}
+
+arr_ac_emergency_load_task_forum = {
+    "title": "Emergency Reviewing Form",
+    "instructions": "Use the form below to opt in as an emergency action editor. Your new maximum load will be made immediately available to the senior action editors.\n\nTo edit your agreement, please click the trash can button in the top right corner of your submitted form, refresh the page, and submit another form indicating your adjusted availability.\n\nTo withdraw your agreement, please click the trash can button in the top right corner of your submitted form, refresh the page, and submit another form indicating \"No\" for the \"Emergency Metareviewing Agreement\"",
+}
+
+arr_ac_emergency_load_task = {
+    "emergency_reviewing_agreement": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "By selecting Yes, you agree to being an emergency reviewer for this cycle.",
+        "order": 1
+    },
+    "emergency_load": {
+        "value": {
+            "param": {
+                "regex": "[0-9]{0,3}",
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "description": "Enter your emergency reviewing load. This will be added to your originally submitted load.",
+        "order": 2
+    },
+    "research_area": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Computational Social Science and Cultural Analytics",
+                    "Dialogue and Interactive Systems",
+                    "Discourse and Pragmatics",
+                    "Efficient/Low-Resource Methods for NLP",
+                    "Ethics, Bias, and Fairness",
+                    "Generation",
+                    "Information Extraction",
+                    "Information Retrieval and Text Mining",
+                    "Interpretability and Analysis of Models for NLP",
+                    "Linguistic theories, Cognitive Modeling and Psycholinguistics",
+                    "Machine Learning for NLP",
+                    "Machine Translation",
+                    "Multilinguality and Language Diversity",
+                    "Multimodality and Language Grounding to Vision, Robotics and Beyond",
+                    "Phonology, Morphology and Word Segmentation",
+                    "Question Answering",
+                    "Resources and Evaluation",
+                    "Semantics: Lexical",
+                    "Semantics: Sentence-level Semantics, Textual Inference and Other areas",
+                    "Sentiment Analysis, Stylistic Analysis, and Argument Mining",
+                    "Speech recognition, text-to-speech and spoken language understanding",
+                    "Summarization",
+                    "Syntax: Tagging, Chunking and Parsing / ML",
+                    "NLP Applications"
+                ],
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "description": "Research Areas / Tracks. Select the most relevant research area / track for your expertise",
+        "order": 3
+    }
+}
+
 
 arr_content_license_task_forum = {
     "title": "Association for Computational Linguistics - Peer Reviewer Content License Agreement",

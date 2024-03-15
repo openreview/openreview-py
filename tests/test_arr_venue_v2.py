@@ -216,6 +216,12 @@ class TestARRVenueV2():
                     'ethics_reviewing_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
                     'ethics_reviewing_due_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
                     'ethics_reviewing_exp_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
+                    'emergency_reviewing_start_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'emergency_reviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'emergency_reviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'emergency_metareviewing_start_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'emergency_metareviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'emergency_metareviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form_note.number}/ARR_Configuration',
                 forum=request_form_note.id,
@@ -1697,6 +1703,94 @@ class TestARRVenueV2():
         affinity_scores =  openreview_client.get_grouped_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Affinity_Score', groupby='id')
         assert affinity_scores
         assert len(affinity_scores) == 101 * 6 ## submissions * reviewers
+
+        # Post assignment configuration notes
+        openreview_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment_Configuration',
+            readers=[august_venue.id],
+            writers=[august_venue.id],
+            signatures=[august_venue.id],
+            note=openreview.api.Note(
+                content={
+                    "title": { "value": 'reviewer-assignments'},
+                    "user_demand": { "value": '3'},
+                    "max_papers": { "value": '6'},
+                    "min_papers": { "value": '0'},
+                    "alternates": { "value": '10'},
+                    "paper_invitation": { "value": 'aclweb.org/ACL/ARR/2023/August/-/Submission&content.venueid=aclweb.org/ACL/ARR/2023/August/Submission'},
+                    "match_group": { "value": 'aclweb.org/ACL/ARR/2023/August/Reviewers'},
+                    "aggregate_score_invitation": { "value": 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score'},
+                    "conflicts_invitation": { "value": 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict'},
+                    "solver": { "value": 'FairFlow'},
+                    "status": { "value": 'Deployed'},
+                }
+            )
+        )
+        openreview_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment_Configuration',
+            readers=[august_venue.id],
+            writers=[august_venue.id],
+            signatures=[august_venue.id],
+            note=openreview.api.Note(
+                content={
+                    "title": { "value": 'ae-assignments'},
+                    "user_demand": { "value": '3'},
+                    "max_papers": { "value": '6'},
+                    "min_papers": { "value": '0'},
+                    "alternates": { "value": '10'},
+                    "paper_invitation": { "value": 'aclweb.org/ACL/ARR/2023/August/-/Submission&content.venueid=aclweb.org/ACL/ARR/2023/August/Submission'},
+                    "match_group": { "value": 'aclweb.org/ACL/ARR/2023/August/Area_Chairs'},
+                    "aggregate_score_invitation": { "value": 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Aggregate_Score'},
+                    "conflicts_invitation": { "value": 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Conflict'},
+                    "solver": { "value": 'FairFlow'},
+                    "status": { "value": 'Deployed'},
+                }
+            )
+        )
+
+        # Copy affinity scores into aggregate scores
+        reviewer_edges_to_post = []
+        reviewers = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers').members
+        for reviewer in reviewers:
+            for edge in openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Affinity_Score', tail=reviewer):
+                reviewer_edges_to_post.append(
+                    openreview.api.Edge(
+                        invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score',
+                        readers=edge.readers,
+                        writers=edge.writers,
+                        signatures=edge.signatures,
+                        nonreaders=edge.nonreaders,
+                        head=edge.head,
+                        tail=edge.tail,
+                        weight=edge.weight,
+                        label='reviewer-assignments'
+                    )
+                )
+        openreview.tools.post_bulk_edges(openreview_client, reviewer_edges_to_post)
+
+        ac_edges_to_post = []
+        acs = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members
+        for ac in acs:
+            for edge in openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Affinity_Score', tail=ac):
+                ac_edges_to_post.append(
+                    openreview.api.Edge(
+                        invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Aggregate_Score',
+                        readers=edge.readers,
+                        writers=edge.writers,
+                        signatures=edge.signatures,
+                        nonreaders=edge.nonreaders,
+                        head=edge.head,
+                        tail=edge.tail,
+                        weight=edge.weight,
+                        label='ae-assignments'
+                    )
+                )
+        openreview.tools.post_bulk_edges(openreview_client, ac_edges_to_post)
+
+        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Aggregate_Score', label='ae-assignments') == 101 * 2
+        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score', label='reviewer-assignments') == 101 * 6
+
+
     def test_resubmission_and_track_matching_data(self, client, openreview_client, helpers, test_client, request_page, selenium):
         # Create groups for previous cycle
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
@@ -2604,3 +2698,199 @@ class TestARRVenueV2():
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Desk_Reject_Verification').expdate < now()
+
+    def test_emergency_reviewing_forms(self, client, openreview_client, helpers):
+        # Update the process functions for each of the unavailability forms, set up the custom max papers
+        # invitations and test that each note posts an edge
+
+        # Load the venues
+        now = datetime.datetime.utcnow()
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
+        invitation_builder = openreview.arr.InvitationBuilder(venue)
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
+        pc_client.post_note(
+            openreview.Note(
+                content={
+                    'emergency_reviewing_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
+                    'emergency_reviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'emergency_reviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'emergency_metareviewing_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
+                    'emergency_metareviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'emergency_metareviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
+            )
+        )
+
+        helpers.await_queue()
+
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Registered_Load')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Load')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Area')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Registered_Load')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Load')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Area')
+        
+        # Test posting new notes and finding the edges
+        reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@aclrollingreview.com', password=helpers.strong_password)
+        ac_client = openreview.api.OpenReviewClient(username = 'ac2@aclrollingreview.com', password=helpers.strong_password)
+
+        reviewer_note_edit = reviewer_client.post_note_edit( ## Reviewer 1 will have an original load
+            invitation=f'{venue.get_reviewers_id()}/-/{invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME}',
+            signatures=['~Reviewer_ARROne1'],
+            note=openreview.api.Note(
+                content = {
+                    'maximum_load': { 'value': '4' },
+                    'maximum_load_resubmission': { 'value': 'No' }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=reviewer_note_edit['id'])
+        assert len(openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers', tail='~Reviewer_ARROne1')) == 1
+        assert openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers', tail='~Reviewer_ARROne1')[0].weight == 4
+
+        test_cases = [
+            {   
+                'role': venue.get_reviewers_id(),
+                'invitation_name': invitation_builder.EMERGENCY_REVIEWING_NAME,
+                'client': reviewer_client,
+                'user': '~Reviewer_ARROne1'
+            },
+            {   
+                'role': venue.get_area_chairs_id(),
+                'invitation_name': invitation_builder.EMERGENCY_METAREVIEWING_NAME,
+                'client': ac_client,
+                'user': '~AC_ARRTwo1'
+            }
+        ]
+        for case in test_cases:
+            role, inv_name, user_client, user = case['role'], case['invitation_name'], case['client'], case['user']
+
+            # Test preprocess
+            with pytest.raises(openreview.OpenReviewException, match=r'You have agreed to emergency reviewing, please enter the additional load that you want to be assigned.'):
+                user_note_edit = user_client.post_note_edit(
+                    invitation=f'{role}/-/{inv_name}',
+                    signatures=[user],
+                    note=openreview.api.Note(
+                        content = {
+                            'emergency_reviewing_agreement': { 'value': 'Yes' },
+                            'research_area': { 'value': 'Generation' }
+                        }
+                    )
+                )
+            with pytest.raises(openreview.OpenReviewException, match=r'You have agreed to emergency reviewing, please enter your closest relevant research area.'):
+                user_note_edit = user_client.post_note_edit(
+                    invitation=f'{role}/-/{inv_name}',
+                    signatures=[user],
+                    note=openreview.api.Note(
+                        content = {
+                            'emergency_reviewing_agreement': { 'value': 'Yes' },
+                            'emergency_load': { 'value': '2' },
+                        }
+                    )
+                )
+
+            # Test valid note and check for edges
+            user_note_edit = user_client.post_note_edit(
+                invitation=f'{role}/-/{inv_name}',
+                signatures=[user],
+                note=openreview.api.Note(
+                    content = {
+                        'emergency_reviewing_agreement': { 'value': 'Yes' },
+                        'emergency_load': { 'value': '2' },
+                        'research_area': { 'value': 'Generation' }
+                    }
+                )
+            )
+            
+            helpers.await_queue_edit(openreview_client, edit_id=user_note_edit['id'])
+
+            cmp_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Custom_Max_Papers", groupby='tail', select='weight')}
+            reg_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Registered_Load", groupby='tail', select='weight')}
+            emg_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Load", groupby='tail', select='weight')}
+            area_edges = {o['id']['tail']: [j['label'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Area", groupby='tail', select='label')}
+
+            assert all(user in edges for edges in [cmp_edges, reg_edges, emg_edges, area_edges])
+            assert all(len(edges[user]) == 1 for edges in [cmp_edges, reg_edges, emg_edges, area_edges])
+            cmp_original, reg_original, emg_original = cmp_edges[user][0], reg_edges[user][0], emg_edges[user][0]
+    
+            if 'Reviewer' in user:
+                assert cmp_edges[user][0] == 6
+            assert cmp_original == reg_original + emg_original
+            assert area_edges[user][0] == 'Generation'
+
+            score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
+            assert all(weight >= 10 for weight in score_edges[user])
+
+            # Test editing note
+            user_note_edit = user_client.post_note_edit(
+                invitation=f'{role}/-/{inv_name}',
+                signatures=[user],
+                note=openreview.api.Note(
+                    id=user_note_edit['note']['id'],
+                    content = {
+                        'emergency_reviewing_agreement': { 'value': 'Yes' },
+                        'emergency_load': { 'value': '4' },
+                        'research_area': { 'value': 'Machine Translation' }
+                    }
+                )
+            )
+            
+            helpers.await_queue_edit(openreview_client, edit_id=user_note_edit['id'])
+
+            cmp_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Custom_Max_Papers", groupby='tail', select='weight')}
+            reg_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Registered_Load", groupby='tail', select='weight')}
+            emg_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Load", groupby='tail', select='weight')}
+            area_edges = {o['id']['tail']: [j['label'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Area", groupby='tail', select='label')}
+
+            assert all(user in edges for edges in [cmp_edges, reg_edges, emg_edges, area_edges])
+            assert all(len(edges[user]) == 1 for edges in [cmp_edges, reg_edges, emg_edges, area_edges])
+            if 'Reviewer' in user:
+                assert cmp_edges[user][0] == 10
+            assert cmp_edges[user][0] != cmp_original
+            assert reg_edges[user][0] != reg_original
+            assert emg_edges[user][0] != emg_original
+            assert cmp_edges[user][0] == reg_edges[user][0] + emg_edges[user][0]
+            assert area_edges[user][0] == 'Machine Translation'
+
+            score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
+            assert all(weight >= 10 for weight in score_edges[user])
+
+            # Test deleting note
+            user_note_edit = user_client.post_note_edit(
+                invitation=f'{role}/-/{inv_name}',
+                signatures=[user],
+                note=openreview.api.Note(
+                    id=user_note_edit['note']['id'],
+                    ddate=openreview.tools.datetime_millis(now),
+                    content = {
+                        'emergency_reviewing_agreement': { 'value': 'Yes' },
+                        'emergency_load': { 'value': '4' },
+                        'research_area': { 'value': 'Machine Translation' }
+                    }
+                )
+            )
+            
+            helpers.await_queue_edit(openreview_client, edit_id=user_note_edit['id'])
+
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Custom_Max_Papers", tail=user) == 1
+            cmp_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Custom_Max_Papers", groupby='tail', select='weight')}
+            assert cmp_edges[user][0] == reg_edges[user][0] ## New custom max papers should just be what was registered with
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Registered_Load", tail=user) == 0
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Emergency_Load", tail=user) == 0
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Emergency_Area", tail=user) == 0
+
+            score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
+            assert all(weight < 10 for weight in score_edges[user])
