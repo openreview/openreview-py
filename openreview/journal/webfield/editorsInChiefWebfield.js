@@ -281,7 +281,8 @@ var formatData = function(
         numPapers: 0,
         papers: [],
         referrer: referrerUrl
-      }
+      },
+      note: {id: reviewer.id}
     };
   }
   var officialReviewerIds = new Set();
@@ -1298,7 +1299,8 @@ var renderData = function(venueStatusData) {
             "</tbody></table>"
           );
       },
-      Handlebars.templates.notesReviewerStatus
+      Handlebars.templates.notesReviewerStatus,
+      function (_) { return null}
     ],
     sortOptions: {
       Reviewer_Name: function(row) { return row.summary.name.toLowerCase(); },
