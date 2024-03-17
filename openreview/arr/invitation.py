@@ -558,24 +558,36 @@ class InvitationBuilder(object):
                         'order': 22,
                         'required': False
                     },
+                    'setup_review_release_date': {
+                        'description': 'The reviews be released to the authors? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+                        'order': 23,
+                        'required': False
+                    },
                     'emergency_metareviewing_start_date': {
                         'description': 'When should the emergency metareviewing opt-in form open? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
                         'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
-                        'order': 23,
+                        'order': 24,
                         'required': False
                     },
                     'emergency_metareviewing_due_date': {
                         'description': 'What due date should be advertised to the action editors for emergency reviewing? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
                         'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
-                        'order': 24,
+                        'order': 25,
                         'required': False
                     },
                     'emergency_metareviewing_exp_date': {
                         'description': 'When should the emergency metareviewing forms be disabled? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
                         'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
-                        'order': 25,
+                        'order': 26,
                         'required': False
-                    }
+                    },
+                    'setup_meta_review_release_date': {
+                        'description': 'The meta reviews be released to the authors? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+                        'order': 27,
+                        'required': False
+                    },
                 }
             }
         ))
@@ -614,7 +626,9 @@ class InvitationBuilder(object):
                 'metareviewing_exp_date': {'value': 0},
                 'ethics_reviewing_start_date': {'value': 0},
                 'ethics_reviewing_due_date': {'value': 0},
-                'ethics_reviewing_exp_date': {'value': 0}
+                'ethics_reviewing_exp_date': {'value': 0},
+                'setup_review_release_date': {'value': 0},
+                'setup_meta_review_release_date': {'value': 0}
             },
             date_processes=[
                 {
@@ -636,6 +650,14 @@ class InvitationBuilder(object):
                 {
                     'dates': ["#{4/content/setup_sae_ae_assignment_date/value}"],
                     'script': self.get_process_content('management/setup_sae_ae_assignments.py'),
+                },
+                {
+                    'dates': ["#{4/content/setup_review_release_date/value}"],
+                    'script': self.get_process_content('management/setup_review_release.py'),
+                },
+                {
+                    'dates': ["#{4/content/setup_meta_review_release_date/value}"],
+                    'script': self.get_process_content('management/setup_metareview_release.py'),
                 }
             ]
         )

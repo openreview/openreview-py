@@ -2531,6 +2531,31 @@ class TestARRVenueV2():
         assert not test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Reject_Verification').expdate < now()
 
+        # Make reviews public
+        pc_client.post_note(
+            openreview.Note(
+                content={
+                    'setup_review_release_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=1)).strftime('%Y/%m/%d %H:%M:%S')
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-5-0', count=1)
+        helpers.await_queue()
+        helpers.await_queue(openreview_client)
+
+        review = openreview_client.get_note(reviewer_edit['note']['id'])
+        assert len(review.readers) - len(reviewer_edit['note']['readers']) == 1
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Authors' in review.readers
+
+
     def test_meta_review_flagging_and_ethics_review(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
@@ -2698,6 +2723,30 @@ class TestARRVenueV2():
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Desk_Reject_Verification').expdate < now()
+
+        # Make reviews public
+        pc_client.post_note(
+            openreview.Note(
+                content={
+                    'setup_meta_review_release_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=1)).strftime('%Y/%m/%d %H:%M:%S')
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-6-0', count=1)
+        helpers.await_queue()
+        helpers.await_queue(openreview_client)
+
+        review = openreview_client.get_note(reviewer_edit['note']['id'])
+        assert len(review.readers) - len(reviewer_edit['note']['readers']) == 1
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Authors' in review.readers
 
     def test_emergency_reviewing_forms(self, client, openreview_client, helpers):
         # Update the process functions for each of the unavailability forms, set up the custom max papers
