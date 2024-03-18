@@ -140,20 +140,20 @@ class TestClient():
 
     def test_search_profiles(self, client, helpers):
         guest = openreview.Client()
-        guest.register_user(email = 'mbok@mail.com', fullname= 'Melisa Bok', password = helpers.strong_password)
+        guest.register_user(email = 'mbok@mail.com', fullname= 'Melisa Bokk', password = helpers.strong_password)
         guest.register_user(email = 'andrew@mail.com', fullname = 'Andrew McCallum', password = helpers.strong_password)
 
         profiles = client.search_profiles(confirmedEmails=['mbok@mail.com'])
         assert profiles, "Could not get the profile by email"
         assert isinstance(profiles, dict)
         assert isinstance(profiles['mbok@mail.com'], openreview.Profile)
-        assert profiles['mbok@mail.com'].id == '~Melisa_Bok1'
+        assert profiles['mbok@mail.com'].id == '~Melisa_Bokk1'
 
-        profiles = client.search_profiles(ids=['~Melisa_Bok1', '~Andrew_McCallum1'])
+        profiles = client.search_profiles(ids=['~Melisa_Bokk1', '~Andrew_McCallum1'])
         assert profiles, "Could not get the profile by id"
         assert isinstance(profiles, list)
         assert len(profiles) == 2
-        assert '~Melisa_Bok1' in profiles[1].id
+        assert '~Melisa_Bokk1' in profiles[1].id
         assert '~Andrew_McCallum1' in profiles[0].id
 
         profiles = client.search_profiles(emails=[])
@@ -162,9 +162,9 @@ class TestClient():
         assert client.profile
         assert client.profile.id == '~Super_User1'
 
-        assert '~Melisa_Bok1' == client.search_profiles(ids = ['~Melisa_Bok1'])[0].id
-        assert '~Melisa_Bok1' == client.search_profiles(confirmedEmails = ['mbok@mail.com'])['mbok@mail.com'].id
-        assert '~Melisa_Bok1' == client.search_profiles(first = 'Melisa')[0].id
+        assert '~Melisa_Bokk1' == client.search_profiles(ids = ['~Melisa_Bokk1'])[0].id
+        assert '~Melisa_Bokk1' == client.search_profiles(confirmedEmails = ['mbok@mail.com'])['mbok@mail.com'].id
+        assert '~Melisa_Bokk1' == client.search_profiles(first = 'Melisa')[0].id
         assert len(client.search_profiles(ids = ['~Melisa_Bok2'])) == 0
         assert len(client.search_profiles(emails = ['mail@mail.com'])) == 0
         assert len(client.search_profiles(first = 'Anna')) == 0
@@ -188,7 +188,7 @@ class TestClient():
                     {
                         'first': 'Melisa',
                         'last': 'Bok',
-                        'username': '~Melisa_Bok1'
+                        'username': '~Melisa_Bokk1'
                     }
                 ],
             'emails': ['mbok@mail.com'],
@@ -197,7 +197,7 @@ class TestClient():
         assert res, "Res i none"
         group = guest.get_group(id = 'mbok@mail.com')
         assert group
-        assert group.members == ['~Melisa_Bok1']
+        assert group.members == ['~Melisa_Bokk1']
 
     # def test_get_invitations_by_invitee(self, client):
     #     invitations = client.get_invitations(invitee = '~', pastdue = False)
@@ -231,7 +231,7 @@ class TestClient():
         note = openreview.Note(invitation = invitation,
             readers = ['mbok@mail.com', 'andrew@mail.com'],
             writers = ['mbok@mail.com', 'andrew@mail.com'],
-            signatures = ['~Melisa_Bok1'],
+            signatures = ['~Melisa_Bokk1'],
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
