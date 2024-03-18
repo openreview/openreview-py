@@ -208,7 +208,7 @@ class TestEMNLPConference():
         assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['submission_type']['value']['param']
         assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['supplementary_materials']['value']['param']
         assert 'TLDR' not in revision_invitation.edit['invitation']['edit']['note']['content']
-        assert 'ddate' in revision_invitation.edit['invitation']['edit']['note']
+        assert 'ddate' not in revision_invitation.edit['invitation']['edit']['note']
 
     def test_submit_papers(self, test_client, client, openreview_client, helpers):
 
@@ -327,8 +327,13 @@ class TestEMNLPConference():
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Post_Submission-0-0')
         helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Revision-0-0')
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Deletion-0-0')
 
         invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Revision')
+        assert len(invitations) == 5
+        assert invitations[0].duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))
+
+        invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Deletion')
         assert len(invitations) == 5
         assert invitations[0].duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))
 
@@ -341,70 +346,72 @@ class TestEMNLPConference():
             'EMNLP/2023/Conference/Submission5/Authors'
         ]
 
+        authors_group = openreview_client.get_group('EMNLP/2023/Conference/Authors')
+        assert 'EMNLP/2023/Conference/Submission5/Authors' in authors_group.members
+
         ## delete and revert submission
-        revision_note = test_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Revision',
+        deletion_edit = test_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Deletion',
             signatures=['EMNLP/2023/Conference/Submission5/Authors'],
             note=openreview.api.Note(
-                ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow()),
-                content = {
-                    'title': { 'value': 'Test Paper Title 5' },
-                    'authors': submissions[4].content['authors'],
-                    'authorids': submissions[4].content['authorids'],
-                    'abstract': { 'value': 'This is a test abstract 5' },
-                    'keywords': { 'value': ['machine learning', 'nlp'] },
-                    'submission_type': { 'value': 'Regular Long Paper' },
-                    'pdf': { 'value': '/pdf/' + 'p' * 40 +'.pdf' } #fields not in the submission need to be added to delete submission?
-                }
+                ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
             ))
-        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=deletion_edit['id'])
 
-        messages = client.get_messages(subject='EMNLP 2023 has received a new revision of your submission titled Test Paper Title 5')
+        messages = client.get_messages(subject='[EMNLP 2023] Your submission titled "Test Paper Title 5" has been deleted')
         assert messages and len(messages) == 2
         recipients = [msg['content']['to'] for msg in messages]
         assert 'test@mail.com' in recipients
         assert 'john@meta.com' in recipients
         assert messages[0]['content']['text'] == f'''Your submission to EMNLP 2023 has been deleted.
 
+Submission Number: 5
+
 Title: Test Paper Title 5
 
-Abstract This is a test abstract 5
+Abstract: This is a test abstract 5
 
-You can restore your submission from the submission's forum: https://openreview.net/forum?id={submissions[4].id}'''
+You can restore your submission from the submission's forum: https://openreview.net/forum?id={submissions[4].id}
+
+Please note that responding to this email will direct your reply to pc@emnlp.org.
+'''
 
         notes = test_client.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission' }, sort='number:desc')
         assert len(notes) == 4
 
-        revision_note = test_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Revision',
+        authors_group = openreview_client.get_group('EMNLP/2023/Conference/Authors')
+        assert 'EMNLP/2023/Conference/Submission5/Authors' not in authors_group.members
+
+        # restore submission
+        deletion_edit = test_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Deletion',
             signatures=['EMNLP/2023/Conference/Submission5/Authors'],
             note=openreview.api.Note(
-                ddate = {'delete': True},
-                content = {
-                    'title': { 'value': 'Test Paper Title 5' },
-                    'authors': submissions[4].content['authors'],
-                    'authorids': submissions[4].content['authorids'],
-                    'abstract': { 'value': 'This is a test abstract 5' },
-                    'keywords': { 'value': ['machine learning', 'nlp'] },
-                    'submission_type': { 'value': 'Regular Long Paper' },
-                    'pdf': { 'value': '/pdf/' + 'p' * 40 +'.pdf' }
-                }
+                ddate = {'delete': True}
             ))
-        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=deletion_edit['id'])
 
-        messages = client.get_messages(subject='EMNLP 2023 has received a new revision of your submission titled Test Paper Title 5')
-        assert messages and len(messages) == 4
+        messages = client.get_messages(subject='[EMNLP 2023] Your submission titled "Test Paper Title 5" has been restored')
+        assert messages and len(messages) == 2
         recipients = [msg['content']['to'] for msg in messages]
         assert 'test@mail.com' in recipients
         assert 'john@meta.com' in recipients
-        assert messages[3]['content']['text'] == f'''Your new revision of the submission to EMNLP 2023 has been updated.
+        assert messages[0]['content']['text'] == f'''Your submission to EMNLP 2023 has been restored.
+
+Submission Number: 5
 
 Title: Test Paper Title 5
 
-Abstract This is a test abstract 5
+Abstract: This is a test abstract 5
 
-To view your submission, click here: https://openreview.net/forum?id={submissions[4].id}'''
+To view your submission, click here: https://openreview.net/forum?id={submissions[4].id}
+
+Please note that responding to this email will direct your reply to pc@emnlp.org.
+'''
 
         notes = test_client.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission' }, sort='number:desc')
         assert len(notes) == 5
+
+        authors_group = openreview_client.get_group('EMNLP/2023/Conference/Authors')
+        assert 'EMNLP/2023/Conference/Submission5/Authors' in authors_group.members
 
         revision_due_date = now + datetime.timedelta(days=10)
 
@@ -552,6 +559,10 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         ))
 
         helpers.await_queue()
+
+        # assert Deletion invitations are expired
+        invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Deletion')
+        assert len(invitations) == 0
 
         # open revisions
         revision_due_date = now + datetime.timedelta(days=10)
@@ -843,7 +854,7 @@ url={https://openreview.net/forum?id='''
                                     ))
 
         helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
-        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Desk_Rejected_Submission', count=2)
+        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Desk_Rejected_Submission', count=1)
 
         submissions = pc_client_v2.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission'}, sort='number:asc')
         assert len(submissions) == 4
@@ -871,7 +882,7 @@ url={https://openreview.net/forum?id='''
                                     ))
 
         helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
-        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Desk_Rejected_Submission', count=3)
+        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Desk_Rejected_Submission', count=2)
 
         submissions = pc_client_v2.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission'}, sort='number:asc')
         assert len(submissions) == 3

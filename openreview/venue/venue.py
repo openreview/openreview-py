@@ -474,10 +474,10 @@ class Venue(object):
                 remove_fields=stage.second_deadline_remove_fields if stage.second_deadline_remove_fields else stage.remove_fields,
                 only_accepted=False,
                 multiReply=True,
-                allow_author_reorder=stage.author_reorder_after_first_deadline,
-                allow_deletion=True
+                allow_author_reorder=stage.author_reorder_after_first_deadline
             )
             self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)
+            self.invitation_builder.set_submission_deletion_invitation(submission_revision_stage)
 
     def create_post_submission_stage(self):
 

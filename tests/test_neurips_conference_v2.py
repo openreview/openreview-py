@@ -860,7 +860,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
                 note=note)
 
 
-        ## finish submission deadline
+        ## finish abstract deadline
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
         first_date = now - datetime.timedelta(minutes=27)
@@ -1019,36 +1019,16 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             ))
         helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
 
-       ## delete and revert submission
-        revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission4/-/Revision',
-            signatures=['NeurIPS.cc/2023/Conference/Submission4/Authors'],
+       ## delete submission
+        revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission5/-/Deletion',
+            signatures=['NeurIPS.cc/2023/Conference/Submission5/Authors'],
             note=openreview.api.Note(
-                ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow()),
-                content = {
-                    'title': { 'value': 'Paper title 4 Updated' },
-                    'abstract': { 'value': 'This is an abstract 4 updated' },
-                    'keywords': { 'value': ['machine learning', 'nlp'] },
-                }
+                ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
             ))
         helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
 
         notes = test_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Conference/Submission' }, sort='number:desc')
         assert len(notes) == 4
-
-        revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission4/-/Revision',
-            signatures=['NeurIPS.cc/2023/Conference/Submission4/Authors'],
-            note=openreview.api.Note(
-                ddate = {'delete': True},
-                content = {
-                    'title': { 'value': 'Paper title 4 Updated' },
-                    'abstract': { 'value': 'This is an abstract 4 updated' },
-                    'keywords': { 'value': ['machine learning', 'nlp'] },
-                }
-            ))
-        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
-
-        notes = test_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Conference/Submission' }, sort='number:desc')
-        assert len(notes) == 5
 
         due_date = now - datetime.timedelta(minutes=30)
 

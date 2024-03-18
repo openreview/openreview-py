@@ -194,6 +194,145 @@ class InvitationBuilder(object):
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=False)
 
+    def set_submission_deletion_invitation(self, submission_revision_stage):
+
+        venue_id = self.venue_id
+        invitation_name = 'Deletion'
+        revision_stage = submission_revision_stage
+        deletion_invitation_id = self.venue.get_invitation_id(invitation_name)
+        deletion_cdate = tools.datetime_millis(revision_stage.start_date if revision_stage.start_date else datetime.datetime.utcnow())
+        deletion_duedate = tools.datetime_millis(revision_stage.due_date) if revision_stage.due_date else None
+        deletion_expdate = tools.datetime_millis(revision_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if revision_stage.due_date else None
+
+        invitation = Invitation(id=deletion_invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            cdate=deletion_cdate,
+            date_processes=[{ 
+                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                'script': self.invitation_edit_process              
+            }],
+            content={
+                'deletion_process_script': {
+                    'value': self.get_process_content('process/submission_deletion_process.py')
+                }
+            },
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': { 
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer' 
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string' 
+                            }
+                        }
+                    }
+                },
+                'replacement': True,
+                'invitation': {
+                    'id': self.venue.get_invitation_id(invitation_name, '${2/content/noteNumber/value}'),
+                    'signatures': [venue_id],
+                    'readers': [venue_id, self.venue.get_authors_id(number='${3/content/noteNumber/value}')],
+                    'writers': [venue_id],
+                    'invitees': [venue_id, self.venue.get_authors_id(number='${3/content/noteNumber/value}')],
+                    'cdate': deletion_cdate,
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['deletion_process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
+                    'edit': {
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True                                   
+                            }
+                        },
+                        'signatures': { 
+                            'param': { 
+                                'items': [
+                                    { 'value': self.venue.get_authors_id(number='${7/content/noteNumber/value}'), 'optional': True }, 
+                                    { 'value': self.venue.get_program_chairs_id(), 'optional': True }
+                                ] 
+                            }
+                        },
+                        'readers': ['${{2/note/id}/readers}'],
+                        'writers': [venue_id, self.venue.get_authors_id(number='${4/content/noteNumber/value}')],
+                        'note': {
+                            'id': '${4/content/noteId/value}',
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        if deletion_duedate:
+            invitation.edit['invitation']['duedate'] = deletion_duedate
+
+        if deletion_expdate:
+            invitation.edit['invitation']['expdate'] = deletion_expdate
+
+        self.save_invitation(invitation, replacement=False)
+
+        expire_invitation = Invitation (
+            id=self.venue.get_invitation_id('Deletion_Expiration'),
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = ['everyone'],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },                 
+                'invitation': {
+                    'id': {
+                        'param': {
+                            'regex': self.venue.get_paper_group_prefix()
+                        }
+                    },
+                    'signatures': [venue_id],                  
+                    'expdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'deletable': True
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(expire_invitation, replacement=True)
+
     def set_post_submission_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
