@@ -100,6 +100,9 @@ class ARRStage(object):
                 self.stage_arguments['content']['ethics_review_start_date'] = self._format_date(self.start_date, format_type)
                 self.stage_arguments['content']['ethics_review_deadline'] = self._format_date(self.due_date, format_type)
                 self.stage_arguments['content']['ethics_review_expiration_date'] = self._format_date(self.exp_date, format_type)
+            elif 'Official_Comment' in self.super_invitation_id:
+                self.stage_arguments['content']['commentary_start_date'] = self._format_date(self.start_date, format_type)
+                self.stage_arguments['content']['commentary_end_date'] = self._format_date(self.exp_date, format_type)
 
     def _format_date(self, date, format_type='millis', date_format='%Y/%m/%d'):
         if date is None:

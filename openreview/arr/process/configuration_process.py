@@ -365,6 +365,34 @@ def process(client, note, invitation):
         ),
         ARRStage(
             type=ARRStage.Type.STAGE_NOTE,
+            required_fields=['comment_start_date', 'comment_end_date'],
+            super_invitation_id=f"{venue_id}/-/Official_Comment",
+            stage_arguments={
+                'content': {
+                    'participants': [
+                        'Program Chairs',
+                        'Assigned Senior Area Chairs',
+                        'Assigned Area Chairs',
+                        'Assigned Reviewers',
+                        'Assigned Submitted Reviewers'
+                    ],
+                    'additional_readers':['Program Chairs'],
+                    'email_program_chairs_about_official_comments': 'No, do not email PCs for each official comment made in the venue'
+                },
+                'forum': request_form_id,
+                'invitation': '{}/-/Request{}/Comment_Stage'.format(support_group, request_form.number),
+                'readers': ['{}/Program_Chairs'.format(venue_id), support_group],
+                'referent': request_form_id,
+                'replyto': request_form_id,
+                'signatures': ['~Super_User1'],
+                'writers': []
+            },
+            date_levels=2,
+            start_date=note.content.get('comment_start_date'),
+            exp_date=note.content.get('comment_end_date'),
+        ),
+        ARRStage(
+            type=ARRStage.Type.STAGE_NOTE,
             required_fields=['reviewing_start_date', 'reviewing_due_date', 'reviewing_exp_date'],
             super_invitation_id=f"{venue_id}/-/Official_Review",
             stage_arguments={

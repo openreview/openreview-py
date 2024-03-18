@@ -405,6 +405,18 @@ class InvitationBuilder(object):
                         'order': 13,
                         'required': False
                     },
+                    'comment_start_date': {
+                        'description': 'When should commenting be enabled for the assigned reviewing committee? This is generally enabled early, like on the submission deadline. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+                        'order': 13,
+                        'required': False
+                    },
+                    'comment_end_date': {
+                        'description': 'When should commenting be disabled? Official comments are usually enabled for 1 year. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+                        'order': 13,
+                        'required': False
+                    },
                     'previous_cycle': {
                         'description': 'What is the previous cycle? This will be used to fetch data and copy it into the current venue.',
                         'value-regex': '.*',
@@ -559,33 +571,45 @@ class InvitationBuilder(object):
                         'required': False
                     },
                     'setup_review_release_date': {
-                        'description': 'The reviews be released to the authors? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                        'description': 'When should the reviews be released to the authors? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
                         'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
                         'order': 23,
+                        'required': False
+                    },
+                    'setup_author_response_date': {
+                        'description': 'When should the author response period be enabled? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+                        'order': 24,
+                        'required': False
+                    },
+                    'close_author_response_date': {
+                        'description': 'When should the author response period close? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+                        'order': 25,
                         'required': False
                     },
                     'emergency_metareviewing_start_date': {
                         'description': 'When should the emergency metareviewing opt-in form open? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
                         'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
-                        'order': 24,
+                        'order': 26,
                         'required': False
                     },
                     'emergency_metareviewing_due_date': {
                         'description': 'What due date should be advertised to the action editors for emergency reviewing? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
                         'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
-                        'order': 25,
+                        'order': 27,
                         'required': False
                     },
                     'emergency_metareviewing_exp_date': {
                         'description': 'When should the emergency metareviewing forms be disabled? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
                         'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
-                        'order': 26,
+                        'order': 28,
                         'required': False
                     },
                     'setup_meta_review_release_date': {
                         'description': 'The meta reviews be released to the authors? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
                         'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
-                        'order': 27,
+                        'order': 29,
                         'required': False
                     },
                 }
@@ -628,7 +652,9 @@ class InvitationBuilder(object):
                 'ethics_reviewing_due_date': {'value': 0},
                 'ethics_reviewing_exp_date': {'value': 0},
                 'setup_review_release_date': {'value': 0},
-                'setup_meta_review_release_date': {'value': 0}
+                'setup_meta_review_release_date': {'value': 0},
+                'setup_author_response_date': {'value': 0},
+                'close_author_response_date': {'value': 0}
             },
             date_processes=[
                 {
@@ -658,6 +684,14 @@ class InvitationBuilder(object):
                 {
                     'dates': ["#{4/content/setup_meta_review_release_date/value}"],
                     'script': self.get_process_content('management/setup_metareview_release.py'),
+                },
+                {
+                    'dates': ["#{4/content/setup_author_response_date/value}"],
+                    'script': self.get_process_content('management/setup_rebuttal_start.py'),
+                },
+                {
+                    'dates': ["#{4/content/close_author_response_date/value}"],
+                    'script': self.get_process_content('management/setup_rebuttal_end.py'),
                 }
             ]
         )
