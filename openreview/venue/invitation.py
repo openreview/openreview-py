@@ -296,42 +296,7 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['expdate'] = deletion_expdate
 
         self.save_invitation(invitation, replacement=False)
-
-        expire_invitation = Invitation (
-            id=self.venue.get_invitation_id('Deletion_Expiration'),
-            invitees = [venue_id],
-            signatures = [venue_id],
-            readers = ['everyone'],
-            writers = [venue_id],
-            edit = {
-                'signatures': [venue_id],
-                'readers': [venue_id],
-                'writers': [venue_id],
-                'ddate': {
-                    'param': {
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'deletable': True
-                    }
-                },                 
-                'invitation': {
-                    'id': {
-                        'param': {
-                            'regex': self.venue.get_paper_group_prefix()
-                        }
-                    },
-                    'signatures': [venue_id],                  
-                    'expdate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'deletable': True
-                        }
-                    }
-                }
-            }
-        )
-
-        self.save_invitation(expire_invitation, replacement=True)
+        return invitation
 
     def set_post_submission_invitation(self):
         venue_id = self.venue_id

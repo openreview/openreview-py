@@ -7,7 +7,6 @@ def process(client, edit, invitation):
     submission_name = domain.content['submission_name']['value']
     short_phrase = domain.content['subtitle']['value']
     contact = domain.content['contact']['value']
-    deletion_expiration_id = domain.content['deletion_expiration_id']['value']
 
     note = client.get_note(edit.note.id)
     action = 'deleted' if note.ddate else 'restored'
@@ -54,30 +53,3 @@ Title: {note.content['title']['value']}{note_abstract}
             ignoreRecipients=[edit.tauthor],
             replyTo=contact
         )
-
-    if action == 'deleted':
-        invitations = client.get_invitations(replyForum=note.id, prefix=paper_group_id)
-
-        now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
-
-        for invitation in invitations:
-            print(f'Expiring invitation {invitation.id}')
-            client.post_invitation_edit(
-                invitations=deletion_expiration_id,
-                invitation=openreview.api.Invitation(id=invitation.id,
-                    expdate=now
-                )            
-            )
-    
-    elif action == 'restored':
-        invitations = client.get_invitations(replyForum=note.id, invitation=deletion_expiration_id, expired=True)
-
-        for expired_invitation in invitations:
-            print(f'Remove expiration invitation {expired_invitation.id}')
-            invitation_edits = client.get_invitation_edits(invitation_id=expired_invitation.id, invitation=deletion_expiration_id)
-            for invitation_edit in invitation_edits:
-                print(f'remove edit {edit.id}')
-                invitation_edit.ddate = now
-                invitation_edit.invitation.expdate = None
-                invitation_edit.invitation.cdate = None
-                client.post_edit(invitation_edit)

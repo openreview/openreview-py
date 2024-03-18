@@ -302,7 +302,6 @@ class TestEMNLPConference():
                         "value": {
                             "param": {
                                 "type": "file",
-                                "optional": True,
                                 "extensions": [
                                     "tgz",
                                     "zip"
@@ -462,7 +461,7 @@ Please note that responding to this email will direct your reply to pc@emnlp.org
         assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['submission_type']['value']['param']
         assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['supplementary_materials']['value']['param']
         assert 'TLDR' not in revision_invitation.edit['invitation']['edit']['note']['content']
-        assert 'ddate' in revision_invitation.edit['invitation']['edit']['note']
+        assert 'ddate' not in revision_invitation.edit['invitation']['edit']['note']
 
         # assert supplementary material content does not have any extra fields
         supplementary_material_invitation = openreview_client.get_invitation('EMNLP/2023/Conference/-/Supplementary_Material')
@@ -854,7 +853,7 @@ url={https://openreview.net/forum?id='''
                                     ))
 
         helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
-        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Desk_Rejected_Submission', count=1)
+        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Desk_Rejected_Submission', count=2)
 
         submissions = pc_client_v2.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission'}, sort='number:asc')
         assert len(submissions) == 4
@@ -882,7 +881,7 @@ url={https://openreview.net/forum?id='''
                                     ))
 
         helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
-        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Desk_Rejected_Submission', count=2)
+        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Desk_Rejected_Submission', count=3)
 
         submissions = pc_client_v2.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission'}, sort='number:asc')
         assert len(submissions) == 3
