@@ -84,7 +84,7 @@ class Helpers:
 
             time.sleep(0.5)
 
-        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[0]['status'] == 'ok', process_logs[0]['log']
 
 
     @staticmethod
