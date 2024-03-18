@@ -158,3 +158,12 @@ class TestACLCommitment():
         assert 'paper_link' in submission_invitation.edit['note']['content']
         assert submission_invitation.edit['note']['content']['paper_link']['description'] == 'This is a different description.'
         assert submission_invitation.preprocess
+
+
+        venue = openreview.helpers.get_conference(client, request_form_note.forum)
+        venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Conference/Senior_Area_Chairs/-/Submission_Group')
+        venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Conference/Area_Chairs/-/Submission_Group')
+        venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Conference/Reviewers/-/Submission_Group')        
+        venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Conference/-/Post_Submission')
+        venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Conference/-/Desk_Rejection')                
+        venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Conference/-/Withdrawal')                            
