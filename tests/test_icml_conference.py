@@ -3151,7 +3151,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-        reviewer_details = '''reviewerethics@yahoo, Reviewer ICMLSeven'''
+        reviewer_details = '''reviewerethics@yahoo.com, Reviewer ICMLSeven'''
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
@@ -3176,9 +3176,9 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         group = openreview_client.get_group('ICML.cc/2023/Conference/Ethics_Reviewers/Invited')
         assert group
         assert len(group.members) == 1
-        assert 'reviewerethics@yahoo' in group.members
+        assert 'reviewerethics@yahoo.com' in group.members
 
-        messages = openreview_client.get_messages(to='reviewerethics@yahoo', subject='[ICML 2023] Invitation to serve as Ethics Reviewer')
+        messages = openreview_client.get_messages(to='reviewerethics@yahoo.com', subject='[ICML 2023] Invitation to serve as Ethics Reviewer')
         assert messages and len(messages) == 1
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
@@ -3188,7 +3188,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         group = openreview_client.get_group('ICML.cc/2023/Conference/Ethics_Reviewers')
         assert group
         assert len(group.members) == 1
-        assert 'reviewerethics@yahoo' in group.members
+        assert 'reviewerethics@yahoo.com' in group.members
 
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
