@@ -91,6 +91,9 @@ class Journal(object):
     def get_reviewers_reported_id(self):
         return self.get_reviewers_id() + '/Reported'
     
+    def get_reviewers_volunteers_id(self):
+        return f'{self.get_reviewers_id()}/Volunteers'     
+    
     def get_expert_reviewers_id(self):
         return self.__get_group_id('Expert_Reviewers')
     
@@ -450,7 +453,13 @@ class Journal(object):
         return self.settings.get('skip_ac_recommendation', False)
     
     def should_skip_reviewer_responsibility_acknowledgement(self):
-        return self.settings.get('skip_reviewer_responsibility_acknowledgement', False)    
+        return self.settings.get('skip_reviewer_responsibility_acknowledgement', False) 
+
+    def should_skip_reviewer_assignment_acknowledgement(self):
+        return self.settings.get('skip_reviewer_assignment_acknowledgement', False)        
+
+    def should_skip_camera_ready_revision(self):
+        return self.settings.get('skip_camera_ready_revision', False)
 
     def get_certifications(self):
         return self.settings.get('certifications', []) 
@@ -465,7 +474,7 @@ class Journal(object):
         return self.settings.get('submission_length', [])
     
     def get_website_url(self, key):
-        return self.settings.get('website_urls', {}).get(key, 'url not available')
+        return self.settings.get('website_urls', {}).get(key)
     
     def get_editors_in_chief_email(self):
         return self.settings.get('editors_email', self.contact_info)
