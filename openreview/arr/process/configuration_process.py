@@ -21,6 +21,7 @@ def process(client, note, invitation):
         arr_official_review_content,
         arr_metareview_content,
         arr_ethics_review_content,
+        arr_review_rating_content,
     )
     from openreview.arr.helpers import ARRStage
     from openreview.venue import matching
@@ -362,6 +363,27 @@ def process(client, note, invitation):
             date_levels=2,
             exp_date=note.content.get('form_expiration_date'),
             extend=extend_consent
+        ),
+        ARRStage(
+            type=ARRStage.Type.CUSTOM_STAGE,
+            required_fields=['review_rating_start_date', 'review_rating_exp_date'],
+            super_invitation_id=f"{venue_id}/-/Review_Rating",
+            stage_arguments={
+                'name': 'Review_Rating',
+                'reply_to': openreview.stages.CustomStage.ReplyTo.REVIEWS,
+                'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                'invitees': [openreview.stages.CustomStage.Participants.AUTHORS],
+                'readers': [
+                    openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'content': arr_review_rating_content,
+                'notify_readers': False,
+                'email_sacs': False
+            },
+            date_levels=2,
+            start_date=note.content.get('review_rating_start_date'),
+            exp_date=note.content.get('review_rating_exp_date')
         ),
         ARRStage(
             type=ARRStage.Type.STAGE_NOTE,

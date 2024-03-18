@@ -278,8 +278,6 @@ class TestARRVenueV2():
                 )
             )
 
-
-
     def test_june_cycle(self, client, openreview_client, helpers, test_client, profile_management):
         # Build the previous cycle
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
@@ -3051,3 +3049,62 @@ class TestARRVenueV2():
 
             score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
             assert all(weight < 10 for weight in score_edges[user])
+
+    def test_review_rating_forms(self, client, openreview_client, helpers, test_client):
+        now = datetime.datetime.utcnow()
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
+        invitation_builder = openreview.arr.InvitationBuilder(venue)
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
+        pc_client.post_note(
+            openreview.Note(
+                content={
+                    'review_rating_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
+                    'review_rating_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S')
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
+            )
+        )
+
+        helpers.await_queue()
+
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Review_Rating')
+
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Review_Rating-0-1')
+
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/Official_Review4/-/Review_Rating')
+
+        rating_edit = test_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Submission3/Official_Review4/-/Review_Rating',
+            signatures=['aclweb.org/ACL/ARR/2023/August/Submission3/Authors'],
+            note=openreview.api.Note(
+                content = {
+                    "overall_review_rating": {"value": 5},
+                    "aspect_understanding": {"value": 4},
+                    "aspect_substantiation": {"value": 3},
+                    "aspect_correctness": {"value": 2},
+                    "aspect_constructiveness": {"value": 1},
+                    "scope_impact_or_importance": {"value": "Sufficiently"},
+                    "scope_originality_or_novelty": {"value": "Insufficiently"},
+                    "scope_correctness": {"value": "Not at all"},
+                    "scope_substance": {"value": "Yes"},
+                    "scope_meaningful_comparison": {"value": "Yes"},
+                    "scope_organization_or_presentation": {"value": "No"},
+                    "additional_comments": {"value": "Some comments"}
+                }
+            )
+        )
+
+        assert test_client.get_note(rating_edit['note']['id'])

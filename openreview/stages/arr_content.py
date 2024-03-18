@@ -1803,3 +1803,278 @@ arr_reviewer_checklist = {
     }
 }
 
+arr_review_rating_content = {
+    "overall_review_rating": {
+        "value": {
+            "param": {
+                "optional": False,
+                "input": "radio",
+                "enum": [
+                    {
+                        "value": 1,
+                        "description": "1 = (Poor) - Superficial, unsubstantiated, and/or factually incorrect review. The reviewer completely misunderstood this work and its contributions."
+                    },
+                    {
+                        "value": 2,
+                        "description": "2 = (Below Average) - While some of reviewer's claims/observations stand, the review still contains a number of misconceptions and/or factually incorrect and/or unsubstantiated claims."
+                    },
+                    {
+                        "value": 3,
+                        "description": "3 = (Average): The review raises several valid points, but also contains some misconceptions, factual errors, and/or unsupported claims."
+                    },
+                    {
+                        "value": 4,
+                        "description": "4 = (Above Average) - Main contributions and shortcomings of the work are correctly identified and the work is assessed fairly. Nonetheless, the review still contains some (minor) incorrect observations or unsupported claims."
+                    },
+                    {
+                        "value": 5,
+                        "description": "5 = (Solid) - The review is thorough and accurate. The reviewer has correctly identified and fairly judged all strengths and shortcomings of the work. Claims are substantiated and suggestions and/or criticism constructive."
+                    }
+                ],
+                "type": "integer"
+            }
+        },
+        "order": 1,
+        "description": "Select the score that, in your opinion, best reflects the quality of this review"
+    },
+    "aspect_understanding": {
+        "value": {
+            "param": {
+                "optional": False,
+                "input": "radio",
+                "enum": [
+                    {
+                        "value": 1,
+                        "description": "1 = (Fundamental misconception) - The reviewer completely misunderstood the main contributions (main point) of this work."
+                    },
+                    {
+                        "value": 2,
+                        "description": "2 = (Important misunderstanding(s)) - There is an important misunderstanding of one or more crucial parts/aspects of the work (e.g., motivation, novelty, methodology, experimental setup, empirical results)."
+                    },
+                    {
+                        "value": 3,
+                        "description": "3 = (Partial Understanding) - The reviewer generally understood work and some of the contributions, but also has a few clear misconceptions."
+                    },
+                    {
+                        "value": 4,
+                        "description": "4 = (Sufficient Understanding) - While the reviewer may have misunderstood some smaller bits (e.g., misinterpreted one piece of result), they have correctly understood the central contributions of the work."
+                    },
+                    {
+                        "value": 5,
+                        "description": "5 = (Complete Understanding) - The review reflects a complete understanding of the work and all of its aspects. There are no recognizable misconceptions or misunderstandings"
+                    }
+                ],
+                "type": "integer"
+            }
+        },
+        "order": 2,
+        "description": "How well did the reviewer understand the contributions of the work?"
+    },
+    "aspect_substantiation": {
+        "value": {
+            "param": {
+                "optional": False,
+                "input": "radio",
+                "enum": [
+                    {
+                        "value": 1,
+                        "description": "1 = (Poor) - The vast majority of the claims in the review are vague, generic, and unsubstantiated. No comments that specifically relate to the content/substance of our work."
+                    },
+                    {
+                        "value": 2,
+                        "description": "2 = (Insufficient) - Few of the claims in the review are substantiated, i.e., supported by evidence"
+                    },
+                    {
+                        "value": 3,
+                        "description": "3 = (Average) - The review contains both valid and supported claims as well some unsubstantiated statements and opinions."
+                    },
+                    {
+                        "value": 4,
+                        "description": "4 = (Sufficient) - Most important claims are well justified although some claims and opinions require further substantiation."
+                    },
+                    {
+                        "value": 5,
+                        "description": "5 = (Solid) - The vast majority of the claims are meaningful and well supported with evidence; reviewer's opinions are well argued for."
+                    }
+                ],
+                "type": "integer"
+            }
+        },
+        "order": 3,
+        "description": "How substantiated (i.e., supported by evidence) do you find the review's claims to be?"
+    },
+    "aspect_correctness": {
+        "value": {
+            "param": {
+                "optional": False,
+                "input": "radio",
+                "enum": [
+                    {
+                        "value": 1,
+                        "description": "1 = (Poor) - The vast majority of the reviewer's claims are factually incorrect, i.e., verifiably False."
+                    },
+                    {
+                        "value": 2,
+                        "description": "2 = (Insufficient) - Central claims made by the reviewer are (at least partially) incorrect. Correct claims refer to less relevant aspects of the work/paper."
+                    },
+                    {
+                        "value": 3,
+                        "description": "3 = (Average) - Some of the claims are correct, but some of the important claims are also at least in part (verifiably) incorrect."
+                    },
+                    {
+                        "value": 4,
+                        "description": "4 = (Sufficient) - The most prominent claims in the review are (mostly) correct. A few minor claims are (in part) incorrect."
+                    },
+                    {
+                        "value": 5,
+                        "description": "5 = (Solid) - All or (almost all) of the claims in the review are correct."
+                    }
+                ],
+                "type": "integer"
+            }
+        },
+        "order": 4,
+        "description": "How factually correct are reviewer's claims?"
+    },
+    "aspect_constructiveness": {
+        "value": {
+            "param": {
+                "optional": False,
+                "input": "radio",
+                "enum": [
+                    {
+                        "value": 1,
+                        "description": "1 = (Poor) - Reviewer's remarks and points of criticism are unclear and non-actionable. After reading the review I/we don't know what in our work/paper needs to be improved and in what way."
+                    },
+                    {
+                        "value": 2,
+                        "description": "2 = (Insufficient) - A few of the raised points are clear and actionable, but the majority of the remarks are neither clear nor helpful for improving the work."
+                    },
+                    {
+                        "value": 3,
+                        "description": "3 = (Average) - The review offers some helpful comments and suggestions, but also a fair share of non-actionable criticism."
+                    },
+                    {
+                        "value": 4,
+                        "description": "4 = (Sufficient) - Many of the comments are helpful and offer directions for improving the work; some of the (arguably less relevant) remarks are clear nor helpful."
+                    },
+                    {
+                        "value": 5,
+                        "description": "5 = (Solid) - The review is very helpful and offers clarity in form of concrete aspects in which the work/paper could/should be improved."
+                    }
+                ],
+                "type": "integer"
+            }
+        },
+        "order": 5,
+        "description": "How constructive/helpful are reviewer's remarks and points of criticism?"
+    },
+    "scope_impact_or_importance": {
+        "value": {
+            "param": {
+                "optional": False,
+                "input": "radio",
+                "enum": [
+                    "Not at all",
+                    "Insufficiently",
+                    "Sufficiently",
+                    "Extensively"
+                ],
+                "type": "string"
+            }
+        },
+        "order": 6,
+        "description": "To which extent does the review discuss the (potential) impact of your work and its importance for NLP and/or respective subarea?"
+    },
+    "scope_originality_or_novelty": {
+        "value": {
+            "param": {
+                "optional": False,
+                "input": "radio",
+                "enum": [
+                    "Not at all",
+                    "Insufficiently",
+                    "Sufficiently",
+                    "Extensively"
+                ],
+                "type": "string"
+            }
+        },
+        "order": 7,
+        "description": "To which extent does the review discuss the novelty of your work?"
+    },
+    "scope_correctness": {
+        "value": {
+            "param": {
+                "optional": False,
+                "input": "radio",
+                "enum": [
+                    "Not at all",
+                    "Insufficiently",
+                    "Sufficiently",
+                    "Extensively"
+                ],
+                "type": "string"
+            }
+        },
+        "order": 8,
+        "description": "To which extent does the review mention the (in)correctness of your work (method choice, implementation, experimental setup, interpretation of results, etc.)?"
+    },
+    "scope_substance": {
+        "value": {
+            "param": {
+                "optional": False,
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "type": "string"
+            }
+        },
+        "order": 9,
+        "description": "Does the review discuss whether the amount of work described in your paper is enough to warrant a (long/short) paper?"
+    },
+    "scope_meaningful_comparison": {
+        "value": {
+            "param": {
+                "optional": False,
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "type": "string"
+            }
+        },
+        "order": 10,
+        "description": "Does the review discuss your (lack of) comparison against relevant related work?"
+    },
+    "scope_organization_or_presentation": {
+        "value": {
+            "param": {
+                "optional": False,
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No"
+                ],
+                "type": "string"
+            }
+        },
+        "order": 11,
+        "description": " Does the review discuss the aspects of organization of your paper or the presentation of the content?"
+    },
+    "additional_comments": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "type": "string",
+                "input": "textarea"
+            }
+        },
+        "order": 12
+    }
+}
+
