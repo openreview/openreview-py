@@ -3,9 +3,10 @@ async function process(client, edit, invitation) {
 
   const result = await client.getNotes({ id: edit.note.id })
   const html = result.notes?.[0]?.content?.html?.value
+  const extractAbstractFnUrl = null;
   let abstract = null
-  if (html) {
-    const extractionResult = await extractAbstract(html)
+  if (html && extractAbstractFnUrl) {
+    const extractionResult = await fetch(`${extractAbstractFnUrl}?url=${html}`.then(response => response.json()));
     abstract = extractionResult.abstract
     console.log('abstract: ' + abstract);
     console.log('pdf: ' + extractionResult.pdf);
