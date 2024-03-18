@@ -5041,8 +5041,6 @@ note={Expert Certification}
   
         note = openreview_client.get_note(note_id_13)
         journal.invitation_builder.expire_paper_invitations(note)
-        journal.invitation_builder.expire_reviewer_responsibility_invitations()
-        journal.invitation_builder.expire_assignment_availability_invitations()
 
         ## Add Event certification
         raia_client.post_note_edit(invitation='TMLR/-/Event_Certification',
@@ -5080,8 +5078,8 @@ note={Expert Certification}
             ))
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_14['id'])
-        note_id_13=submission_note_14['note']['id']
-        submission = openreview_client.get_note(note_id_13)
+        note_id_14=submission_note_14['note']['id']
+        submission = openreview_client.get_note(note_id_14)
 
         Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
 
@@ -5095,7 +5093,7 @@ note={Expert Certification}
             readers=[venue_id, editor_in_chief_group_id, '~Samy_Bengio1'],
             writers=[venue_id, editor_in_chief_group_id],
             signatures=[editor_in_chief_group_id],
-            head=note_id_13,
+            head=note_id_14,
             tail='~Samy_Bengio1',
             weight=1
         ))
@@ -5118,7 +5116,7 @@ note={Expert Certification}
 
         helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
 
-        edits = openreview_client.get_note_edits(note_id_13, invitation='TMLR/-/Under_Review')
+        edits = openreview_client.get_note_edits(note_id_14, invitation='TMLR/-/Under_Review')
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
 
         helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Under_Review')
@@ -5126,7 +5124,7 @@ note={Expert Certification}
         ## Invite external reviewer with profile
         paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
             signatures=[joelle_paper13_anon_group.id],
-            head=note_id_13,
+            head=note_id_14,
             tail='melisa@mailten.com',
             weight=1,
             label='Invitation Sent'
@@ -5134,7 +5132,7 @@ note={Expert Certification}
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
-        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_13, tail='~Melisa_Bok1')
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_14, tail='~Melisa_Bok1')
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Invitation Sent'         
 
@@ -5147,11 +5145,11 @@ note={Expert Certification}
 
         helpers.await_queue_edit(openreview_client, invitation='TMLR/Reviewers/-/Assignment_Recruitment', count=1)
 
-        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_13, tail='~Melisa_Bok1')
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_14, tail='~Melisa_Bok1')
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Accepted'         
 
-        assignment_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', head=note_id_13, tail='~Melisa_Bok1')
+        assignment_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', head=note_id_14, tail='~Melisa_Bok1')
         assert len(assignment_edges) == 1
 
         helpers.await_queue_edit(openreview_client, edit_id=assignment_edges[0].id)
@@ -5173,7 +5171,7 @@ note={Expert Certification}
         ## Invite external reviewer with no profile
         paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
             signatures=[joelle_paper13_anon_group.id],
-            head=note_id_13,
+            head=note_id_14,
             tail='harold@hotmail.com',
             weight=1,
             label='Invitation Sent'
@@ -5190,11 +5188,11 @@ note={Expert Certification}
 
         helpers.await_queue_edit(openreview_client, invitation='TMLR/Reviewers/-/Assignment_Recruitment', count=1)
 
-        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_13, tail='harold@hotmail.com')
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_14, tail='harold@hotmail.com')
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Pending Sign Up'         
 
-        assignment_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', head=note_id_13, tail='harold@hotmail.com')
+        assignment_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', head=note_id_14, tail='harold@hotmail.com')
         assert len(assignment_edges) == 0
 
         messages = openreview_client.get_messages(to = 'harold@hotmail.com', subject = f'[TMLR] Reviewers Invitation accepted for paper {submission.number}: Paper title 14, assignment pending')
@@ -5209,7 +5207,7 @@ note={Expert Certification}
         with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for harold@mail'):
             paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
                 signatures=[joelle_paper13_anon_group.id],
-                head=note_id_13,
+                head=note_id_14,
                 tail='harold@mail.com',
                 weight=1,
                 label='Invitation Sent'
@@ -5219,7 +5217,7 @@ note={Expert Certification}
         with pytest.raises(openreview.OpenReviewException, match=r'Reviewer Javier Burroni is an official reviewer, please use the "Assign" button to make the assignment.'):
             paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
                 signatures=[joelle_paper13_anon_group.id],
-                head=note_id_13,
+                head=note_id_14,
                 tail='javier@mailtwo.com',
                 weight=1,
                 label='Invitation Sent'
@@ -5229,7 +5227,7 @@ note={Expert Certification}
         with pytest.raises(openreview.OpenReviewException, match=r'Already invited as ~Melisa_Bok1'):
             paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
                 signatures=[joelle_paper13_anon_group.id],
-                head=note_id_13,
+                head=note_id_14,
                 tail='melisa@mailten.com',
                 weight=1,
                 label='Invitation Sent'
@@ -5238,7 +5236,7 @@ note={Expert Certification}
         ## Run Job
         openreview.journal.Journal.check_new_profiles(openreview_client, support_group_id = 'openreview.net/Support')                        
 
-        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_13, tail='harold@hotmail.com')
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_14, tail='harold@hotmail.com')
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Pending Sign Up'
 
@@ -5247,9 +5245,9 @@ note={Expert Certification}
         ## Run Job
         openreview.journal.Journal.check_new_profiles(openreview_client, support_group_id = 'openreview.net/Support')                        
 
-        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_13, tail='harold@hotmail.com')
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_14, tail='harold@hotmail.com')
         assert len(invite_edges) == 0
-        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_13, tail='~Harold_Red1')
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_14, tail='~Harold_Red1')
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Accepted'
 
@@ -5260,3 +5258,11 @@ note={Expert Certification}
         messages = openreview_client.get_messages(to = 'samy@bengio.com', subject = f'[TMLR] Reviewer Harold Red signed up and is assigned to paper {submission.number}: Paper title 14')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\nThe Reviewer Harold Red(harold@hotmail.com) that you invited to review paper {submission.number} has accepted the invitation, signed up and is now assigned to the paper {submission.number}.\n\nOpenReview Team\n\nPlease note that responding to this email will direct your reply to tmlr@jmlr.org.\n'''
+
+        assignment_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', head=note_id_14, tail='~Harold_Red1')
+        helpers.await_queue_edit(openreview_client, edit_id=assignment_edges[0].id)
+        
+        note = openreview_client.get_note(note_id_14)
+        journal.invitation_builder.expire_paper_invitations(note)
+        journal.invitation_builder.expire_reviewer_responsibility_invitations()
+        journal.invitation_builder.expire_assignment_availability_invitations()
