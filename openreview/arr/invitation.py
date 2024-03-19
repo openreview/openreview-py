@@ -13,7 +13,7 @@ from .. import tools
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
 
-class InvitationBuilder(object):
+class InvitationBuilder(openreview.venue.InvitationBuilder):
     REGISTRATION_NAME = 'Registration'
     MAX_LOAD_AND_UNAVAILABILITY_NAME = 'Max_Load_And_Unavailability_Request'
     EMERGENCY_REVIEWING_NAME = 'Emergency_Reviewer_Agreement'
@@ -50,42 +50,20 @@ class InvitationBuilder(object):
     exec(script, funcs)
     funcs['process'](client, invitation)
 '''
+        self.venue_invitation_builder = openreview.venue.InvitationBuilder(venue)
 
     def save_invitation(self, invitation, replacement=None):
-        self.client.post_invitation_edit(invitations=self.venue.get_meta_invitation_id(),
-            readers=[self.venue_id],
-            writers=[self.venue_id],
-            signatures=[self.venue_id],
-            replacement=replacement,
-            invitation=invitation
-        )
-        invitation = self.client.get_invitation(invitation.id)
-
-        if invitation.date_processes and len(invitation.date_processes[0]['dates']) > 1 and self.update_date_string == invitation.date_processes[0]['dates'][1]:
-            process_logs = self.client.get_process_logs(id=invitation.id + '-0-1', min_sdate = invitation.tmdate + self.update_wait_time - 1000)
-            count = 0
-            while len(process_logs) == 0 and count < 180: ## wait up to 30 minutes
-                time.sleep(10)
-                process_logs = self.client.get_process_logs(id=invitation.id + '-0-1', min_sdate = invitation.tmdate + self.update_wait_time - 1000)
-                count += 1
-
-            if len(process_logs) == 0:
-                raise openreview.OpenReviewException('Time out waiting for invitation to complete: ' + invitation.id)
-                
-            if process_logs[0]['status'] == 'error':
-                raise openreview.OpenReviewException('Error saving invitation: ' + invitation.id)
-            
-        return invitation
-
-    def expire_invitation(self, invitation_id):
-        invitation = tools.get_invitation(self.client, id = invitation_id)
-
-        if invitation:
-            self.save_invitation(invitation=Invitation(id=invitation.id,
-                    expdate=tools.datetime_millis(datetime.datetime.utcnow()),
-                    signatures=[self.venue_id]
-                )
+        if invitation.content and 'custom_stage_process_script' in invitation.content:
+            self.client.post_invitation_edit(invitations=self.venue.get_meta_invitation_id(),
+                readers=[self.venue_id],
+                writers=[self.venue_id],
+                signatures=[self.venue_id],
+                replacement=replacement,
+                invitation=invitation
             )
+            invitation = self.client.get_invitation(invitation.id)
+            return invitation
+        return self.venue_invitation_builder.save_invitation(invitation, replacement=replacement)
 
     # Modified ethics review flag invitation
     def set_verification_flag_invitation(self):
@@ -138,224 +116,16 @@ class InvitationBuilder(object):
 
     # Non-blocking custom stage with process/pre-process arguments
     def set_custom_stage_invitation(self, process_script = None, preprocess_script = None):
+        invitation = self.venue_invitation_builder.set_custom_stage_invitation()
+        if not process_script and not preprocess_script:
+            return invitation
 
-        venue_id = self.venue_id
-        custom_stage = self.venue.custom_stage
-        custom_stage_invitation_id = self.venue.get_invitation_id(custom_stage.name)
-        custom_stage_cdate = tools.datetime_millis(custom_stage.start_date if custom_stage.start_date else datetime.datetime.utcnow())
-        custom_stage_duedate = tools.datetime_millis(custom_stage.due_date) if custom_stage.due_date else None
-        custom_stage_expdate = tools.datetime_millis(custom_stage.exp_date) if custom_stage.exp_date else None
-        if not custom_stage_expdate:
-            custom_stage_expdate = tools.datetime_millis(custom_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if custom_stage.due_date else None
-
-        content = custom_stage.get_content(api_version='2', conference=self.venue)
-
-        custom_stage_replyto = custom_stage.get_reply_to()
-        custom_stage_source = custom_stage.get_source_submissions()
-        custom_stage_reply_type = custom_stage.get_reply_type()
-        note_writers = None
-
-        if custom_stage_reply_type == 'reply':
-            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, number='${2/content/noteNumber/value}')
-            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, number='${6/content/noteNumber/value}')
-            note_id = {
-                'param': {
-                    'withInvitation': with_invitation,
-                    'optional': True
-                }
-            }
-            edit_readers = ['${2/note/readers}']
-            note_readers = custom_stage.get_readers(self.venue, '${5/content/noteNumber/value}')
-            note_nonreaders = custom_stage.get_nonreaders(self.venue, number='${5/content/noteNumber/value}')
-            note_writers = [venue_id, '${3/signatures}']
-            invitees = custom_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}')
-            noninvitees = custom_stage.get_noninvitees(self.venue, number='${3/content/noteNumber/value}')
-            if custom_stage_replyto == 'forum':
-                reply_to = '${4/content/noteId/value}'
-            elif custom_stage_replyto == 'withForum':
-                reply_to = {
-                    'param': {
-                        'withForum': '${6/content/noteId/value}'
-                    }
-                }
-
-        elif custom_stage_reply_type == 'revision':
-            if custom_stage_reply_type in ['forum', 'withForum']:
-                raise openreview.OpenReviewException('Custom stage cannot be used for revisions to submissions. Use the Submission Revision Stage instead.')
-
-        if custom_stage_replyto in ['reviews', 'metareviews']:
-            stage_name = self.venue.review_stage.name if custom_stage_replyto == 'reviews' else self.venue.meta_review_stage.name
-            submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${2/content/noteNumber/value}/'
-            reply_prefix = stage_name + '${2/content/replyNumber/value}'
-            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix=submission_prefix+reply_prefix)
-            submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${6/content/noteNumber/value}/'
-            reply_prefix = stage_name + '${6/content/replyNumber/value}'
-            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix=submission_prefix+reply_prefix)
-            note_id = {
-                'param': {
-                    'withInvitation': with_invitation,
-                    'optional': True
-                }
-            }
-            reply_to = '${4/content/replyto/value}'
-
-            if custom_stage_reply_type == 'revision':
-                note_id = '${4/content/replyto/value}'
-                reply_to = None
-                edit_readers = [venue_id, '${2/signatures}']
-                note_readers = None
-                invitees = ['${3/content/replytoSignatures/value}']
-                noninvitees = []
-                note_nonreaders = []
-
-        invitation_content = {
-            'source': { 'value': custom_stage_source },
-            'reply_to': { 'value': custom_stage_replyto },
-            'email_pcs': { 'value': custom_stage.email_pcs },
-            'email_sacs': { 'value': custom_stage.email_sacs },
-            'notify_readers': { 'value': custom_stage.notify_readers },
-            'email_template': { 'value': custom_stage.email_template if custom_stage.email_template else '' }
-        }
         if process_script:
-            invitation_content['custom_stage_process_script'] = { 'value': self.get_process_content(process_script)}
-
-        invitation = Invitation(id=custom_stage_invitation_id,
-            invitees=[venue_id],
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            cdate=custom_stage_cdate,
-            date_processes=[{ 
-                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process              
-            }],
-            content = invitation_content,
-            edit={
-                'signatures': [venue_id],
-                'readers': [venue_id],
-                'writers': [venue_id],
-                'content': {
-                    'noteNumber': {
-                        'value': {
-                            'param': {
-                                'regex': '.*', 'type': 'integer'
-                            }
-                        }
-                    },
-                    'noteId': {
-                        'value': {
-                            'param': {
-                                'regex': '.*', 'type': 'string'
-                            }
-                        }
-                    }
-                },
-                'replacement': True,
-                'invitation': {
-                    'id': paper_invitation_id,
-                    'signatures': [venue_id],
-                    'readers': ['everyone'],
-                    'writers': [venue_id],
-                    'minReplies': 1,
-                    'invitees': invitees,
-                    'noninvitees': noninvitees,
-                    'cdate': custom_stage_cdate,
-                    'edit': {
-                        'signatures': { 
-                            'param': { 
-                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in custom_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')] 
-                            }
-                        },
-                        'readers': edit_readers,
-                        'nonreaders': ['${2/note/nonreaders}'] if note_nonreaders else [],
-                        'writers': [venue_id, '${2/signatures}'],
-                        'note': {
-                            'id': note_id,
-                            'forum': '${4/content/noteId/value}',
-                            'ddate': {
-                                'param': {
-                                    'range': [ 0, 9999999999999 ],
-                                    'optional': True,
-                                    'deletable': True
-                                }
-                            },
-                            'signatures': ['${3/signatures}'],
-                            'content': content
-                        }
-                    }
-                }
-            }
-        )
-
+            invitation.content['custom_stage_process_script'] = { 'value': self.get_process_content(process_script)}
         if preprocess_script:
             invitation.edit['invitation']['preprocess'] = self.get_process_content(preprocess_script)
 
-        if process_script:
-            invitation.edit['invitation']['process'] = '''def process(client, edit, invitation):
-    meta_invitation = client.get_invitation(invitation.invitations[0])
-    script = meta_invitation.content['custom_stage_process_script']['value']
-    funcs = {
-        'openreview': openreview
-    }
-    exec(script, funcs)
-    funcs['process'](client, edit, invitation)
-'''
-
-        if reply_to:
-            invitation.edit['invitation']['edit']['note']['replyto'] = reply_to
-
-        if custom_stage_replyto in ['reviews', 'metareviews']:
-            invitation.edit['content']['replyNumber'] = {
-                'value': {
-                    'param': {
-                        'regex': '.*', 'type': 'integer',
-                        'optional': True
-                    }
-                }
-            }
-            invitation.edit['content']['replyto'] = {
-                'value': {
-                    'param': {
-                        'regex': '.*', 'type': 'string',
-                        'optional': True
-                    }
-                }
-            }
-
-        if custom_stage_reply_type == 'revision':
-            invitation.edit['content']['replytoSignatures'] = {
-                'value': {
-                    'param': {
-                        'regex': '.*', 'type': 'string',
-                        'optional': True
-                    }
-                }
-            }
-
-        if note_readers:
-            invitation.edit['invitation']['edit']['note']['readers'] = note_readers
-
-        if note_nonreaders:
-            invitation.edit['invitation']['edit']['note']['nonreaders'] = note_nonreaders
-
-        if note_writers:
-            invitation.edit['invitation']['edit']['note']['writers'] = note_writers
-
-        if custom_stage_duedate:
-            invitation.edit['invitation']['duedate'] = custom_stage_duedate
-        if custom_stage_expdate:
-            invitation.edit['invitation']['expdate'] = custom_stage_expdate
-        if not custom_stage.multi_reply:
-            invitation.edit['invitation']['maxReplies'] = 1
-
-        self.client.post_invitation_edit(invitations=self.venue.get_meta_invitation_id(),
-            readers=[self.venue_id],
-            writers=[self.venue_id],
-            signatures=[self.venue_id],
-            replacement=False,
-            invitation=invitation
-        )
-
+        self.save_invitation(invitation, replacement=False)
         return invitation
 
     def get_process_content(self, file_path):
