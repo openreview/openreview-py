@@ -459,7 +459,7 @@ submission_v2 = {
         'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
         'value': {
             'param': {
-                'type': 'group[]',
+                'type': 'profile[]',
                 'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
                 'mismatchError': 'must be a valid email or profile ID'
             }
