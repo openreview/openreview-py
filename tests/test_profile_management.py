@@ -425,7 +425,8 @@ class TestProfileManagement():
                     'abstract': { 'value': 'Paper abstract 1' },
                     'authors': { 'value': ['John Alternate Last', 'Test Client'] },
                     'authorids': { 'value': ['~John_Alternate_Last1', 'test@mail.com'] },
-                    'venue': { 'value': 'Arxiv' }
+                    'venue': { 'value': 'Arxiv' },
+                    'html': { 'value': 'https://arxiv.org/abs/test' }
                 },
                 license = 'CC BY-SA 4.0'
         ))

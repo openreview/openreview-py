@@ -20,18 +20,20 @@ def process(client, invitation):
     
     ## send email to reviewers
     print('send email to reviewers', late_invitees)
+    is_ack = invitation.id.endswith('Assignment/Acknowledgement')
     client.post_message(
         recipients=late_invitees,
         subject=f'''[{journal.short_name}] You are late in performing a task for assigned paper {submission.number}: {submission.content['title']['value']}''',
         message=f'''Hi {{{{fullname}}}},
 
-Our records show that you are late on the current reviewing task:
+Our records show that {f'you have not acknowledged your {journal.short_name} assignment yet' if is_ack else 'you are late on the current reviewing task'}:
 
 Task: {task}
 Submission: {submission.content['title']['value']}
 Number of days late: {days_late}
 Link: https://openreview.net/forum?id={submission.id}
 
+{f'Acknowledging review assignments allows AEs to receive a direct confirmation that you are aware of the assignment. As a reminder, reviewers in the {journal.short_name} pool are expected to perform all review assignments of submissions that fall within their expertise and quota (unless they are exceptionally temporarily unavailable due to reasons such as illness, vacation or work leave).' if is_ack else ''}
 Please follow the provided link and complete your task ASAP.
 
 We thank you for your cooperation.
