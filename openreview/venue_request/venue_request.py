@@ -721,7 +721,7 @@ class VenueStages():
                 'required': True
             },
             'decision_options': {
-                'description': 'What are the decision options (provide comma separated values, e.g. Accept (Best Paper), Accept, Reject)? Leave empty for default options - "Accept (Oral)", "Accept (Poster)", "Reject"',
+                'description': 'What are the decision options (provide comma separated values, e.g. Accept (Best Paper), Accept, Reject)? Please use "Accept" in the Accept options. Leave empty for default options - "Accept (Oral)", "Accept (Poster)", "Reject"',
                 'value-regex': '.*',
                 'order': 30
             },
