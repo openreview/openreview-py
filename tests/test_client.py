@@ -141,7 +141,7 @@ class TestClient():
     def test_search_profiles(self, client, helpers):
         guest = openreview.Client()
         guest.register_user(email = 'mbok@mail.com', fullname= 'Melisa Bokk', password = helpers.strong_password)
-        guest.register_user(email = 'andrew@mail.com', fullname = 'Andrew McCallum', password = helpers.strong_password)
+        guest.register_user(email = 'andrew@mail.com', fullname = 'Andrew E McCallum', password = helpers.strong_password)
 
         profiles = client.search_profiles(confirmedEmails=['mbok@mail.com'])
         assert profiles, "Could not get the profile by email"
@@ -149,12 +149,12 @@ class TestClient():
         assert isinstance(profiles['mbok@mail.com'], openreview.Profile)
         assert profiles['mbok@mail.com'].id == '~Melisa_Bokk1'
 
-        profiles = client.search_profiles(ids=['~Melisa_Bokk1', '~Andrew_McCallum1'])
+        profiles = client.search_profiles(ids=['~Melisa_Bokk1', '~Andrew_E_McCallum1'])
         assert profiles, "Could not get the profile by id"
         assert isinstance(profiles, list)
         assert len(profiles) == 2
         assert '~Melisa_Bokk1' in profiles[1].id
-        assert '~Andrew_McCallum1' in profiles[0].id
+        assert '~Andrew_E_McCallum1' in profiles[0].id
 
         profiles = client.search_profiles(emails=[])
         assert len(profiles) == 0
