@@ -10,11 +10,10 @@ async function process(client, edit, invitation) {
   }
 
   const html = note.content.html?.value;
-  const extractAbstractFnUrl = null;
 
   try {
-    if (html && extractAbstractFnUrl) {
-      const { abstract, pdf, error } = await fetch(`${extractAbstractFnUrl}?url=${html}`.then(response => response.json()));
+    if (html) {
+      const { abstract, pdf, error } = await Tools.extractAbstract(html);
       console.log('abstract: ' + abstract);
       console.log('pdf: ' + pdf);
       console.log('error: ' + error);
