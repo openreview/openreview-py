@@ -2223,15 +2223,6 @@ class InvitationBuilder(object):
         if revision_expdate:
             invitation.edit['invitation']['expdate'] = revision_expdate
 
-        if revision_stage.allow_deletion:
-            invitation.edit['invitation']['edit']['note']['ddate'] = {
-                'param': {
-                'range': [ 0, 9999999999999 ],
-                'optional': True,
-                'deletable': True
-            }
-        }  
-
         self.save_invitation(invitation, replacement=False)
         return invitation
 
