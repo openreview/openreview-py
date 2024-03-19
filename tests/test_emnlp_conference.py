@@ -356,6 +356,12 @@ class TestEMNLPConference():
             ))
         helpers.await_queue_edit(openreview_client, edit_id=deletion_edit['id'])
 
+        edit = openreview_client.get_note_edit(deletion_edit['id'])
+        assert edit.readers == [
+            'EMNLP/2023/Conference',
+            'EMNLP/2023/Conference/Submission5/Authors'
+        ]
+
         messages = client.get_messages(subject='[EMNLP 2023] Your submission titled "Test Paper Title 5" has been deleted')
         assert messages and len(messages) == 2
         recipients = [msg['content']['to'] for msg in messages]
