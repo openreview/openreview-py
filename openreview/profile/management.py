@@ -670,7 +670,7 @@ class ProfileManagement():
                                 'value': {
                                     'param': {
                                         'type': 'string',
-                                        'regex': '"(http|https):\\/\\/.+"',
+                                        'regex': '(http|https):\/\/.+',
                                         'optional': True
                                     }
                                 }
