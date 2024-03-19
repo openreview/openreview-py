@@ -565,7 +565,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Summarization'] },
+                    'research_area': { 'value': ['Summarization', 'Generation'] },
                 }
             )
         )
@@ -2098,9 +2098,11 @@ class TestARRVenueV2():
             g['id']['tail'] : g['values']
             for g in pc_client_v2.get_grouped_edges(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Research_Area', select='head,id,weight', groupby='tail')
         }
-        assert len(track_edges.keys()) == 1
+        assert len(track_edges.keys()) == 2
         assert '~Reviewer_ARROne1' in track_edges
         assert len(track_edges['~Reviewer_ARROne1']) == 101
+        assert '~Reviewer_ARRTwo1' in track_edges
+        assert len(track_edges['~Reviewer_ARRTwo1']) == 100 ## One less edge posted
 
         track_edges = {
             g['id']['tail'] : g['values']

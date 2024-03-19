@@ -59,6 +59,7 @@ def process(client, invitation):
         lambda s: previous_url_field in s.content and len(s.content[previous_url_field]['value']) > 0, 
         submissions
     ))
+    skip_scores = defaultdict(list)
 
     print(f"records of resubmission: {','.join([s.id for s in resubmissions])}")
 
@@ -99,6 +100,9 @@ def process(client, invitation):
 
     # Create reviewers submitted groups 
     for submission in submissions:
+        if openreview.tools.get_group(client, venue.get_reviewers_id(number=submission.number, submitted=True)):
+            continue
+
         readers=[
             venue_id,
             venue.get_senior_area_chairs_id(number=submission.number),
@@ -169,6 +173,7 @@ def process(client, invitation):
 
             if wants_new_reviewers:
                 updated_weight = 0
+                skip_scores[submission.id].append(reviewer_id)
             else:
                 updated_weight = 3
 
@@ -181,7 +186,7 @@ def process(client, invitation):
                 edge_readers=[venue_id, senior_area_chairs_id, area_chairs_id, reviewer_id]
             )
 
-        # Handle AE reassignments)
+        # Handle AE reassignments
         for ae in previous_ae.members:
             if previous_venue_id not in ae and not ae.startswith('~'): # Must be previous venue anon id or a profile ID
                 continue
@@ -197,6 +202,7 @@ def process(client, invitation):
 
             if wants_new_ae:
                 updated_weight = 0
+                skip_scores[submission.id].append(ae_id)
             else:
                 updated_weight = 3
 
@@ -210,8 +216,10 @@ def process(client, invitation):
             )
 
         # 2) Grant readership to previous submissions
-        current_client.add_members_to_group(previous_ae, venue.get_area_chairs_id(number=submission.number))
-        current_client.add_members_to_group(previous_reviewers, venue.get_reviewers_id(number=submission.number, submitted=True))
+        if venue.get_area_chairs_id(number=submission.number) not in previous_ae.members:
+            current_client.add_members_to_group(previous_ae, venue.get_area_chairs_id(number=submission.number))
+        if venue.get_reviewers_id(number=submission.number, submitted=True) not in previous_reviewers.members:
+            current_client.add_members_to_group(previous_reviewers, venue.get_reviewers_id(number=submission.number, submitted=True))
 
     # 3) Post track edges
     for role_id, track_to_members in track_to_ids.items():
@@ -222,6 +230,9 @@ def process(client, invitation):
             members = track_to_members[submission_track]
 
             for member in members:
+                if member in skip_scores.get(submission.id, []):
+                    continue
+
                 track_edges_to_post.append(
                     openreview.api.Edge(
                         invitation=f"{role_id}/-/{tracks_inv_name}",
