@@ -1054,7 +1054,7 @@ arr_reviewer_ac_recognition_task = {
                 "type": "string",
                 "enum": ["Yes, please send me a letter of recognition for my service as a reviewer / AE", "No, I do not need a letter of recognition for my service as a reviewer / AE"],
                 "input": "radio",
-                "required": True,
+                "optional": False,
             }
         }
     }

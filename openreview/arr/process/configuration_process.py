@@ -6,6 +6,8 @@ def process(client, note, invitation):
         arr_registration_task,
         arr_content_license_task_forum,
         arr_content_license_task,
+        arr_reviewer_ac_recognition_task_forum,
+        arr_reviewer_ac_recognition_task,
         arr_max_load_task_forum,
         arr_reviewer_max_load_task,
         arr_ac_max_load_task,
@@ -154,6 +156,38 @@ def process(client, note, invitation):
         ),
         ARRStage(
             type=ARRStage.Type.REGISTRATION_STAGE,
+            group_id=venue.get_reviewers_id(),
+            required_fields=['form_expiration_date'],
+            super_invitation_id=f"{venue.get_reviewers_id()}/-/{invitation_builder.RECOGNITION_NAME}",
+            stage_arguments={
+                'committee_id': venue.get_reviewers_id(),
+                'name': invitation_builder.RECOGNITION_NAME,
+                'instructions': arr_reviewer_ac_recognition_task_forum['instructions'],
+                'title': venue.get_reviewers_name() + ' ' + arr_reviewer_ac_recognition_task_forum['title'],
+                'additional_fields': arr_reviewer_ac_recognition_task,
+                'remove_fields': ['profile_confirmed', 'expertise_confirmed']
+            },
+            date_levels=1,
+            exp_date=note.content.get('form_expiration_date')
+        ),
+        ARRStage(
+            type=ARRStage.Type.REGISTRATION_STAGE,
+            group_id=venue.get_reviewers_id(),
+            required_fields=['form_expiration_date'],
+            super_invitation_id=f"{venue.get_reviewers_id()}/-/{invitation_builder.REVIEWER_LICENSE_NAME}",
+            stage_arguments={
+                'committee_id': venue.get_reviewers_id(),
+                'name': invitation_builder.REVIEWER_LICENSE_NAME,
+                'instructions': arr_content_license_task_forum['instructions'],
+                'title': arr_content_license_task_forum['title'],
+                'additional_fields': arr_content_license_task,
+                'remove_fields': ['profile_confirmed', 'expertise_confirmed']
+            },
+            date_levels=1,
+            exp_date=note.content.get('form_expiration_date')
+        ),
+        ARRStage(
+            type=ARRStage.Type.REGISTRATION_STAGE,
             group_id=venue.get_area_chairs_id(),
             required_fields=['form_expiration_date'],
             super_invitation_id=f"{venue.get_area_chairs_id()}/-/{invitation_builder.REGISTRATION_NAME}",
@@ -163,6 +197,22 @@ def process(client, note, invitation):
                 'instructions': arr_registration_task_forum['instructions'],
                 'title': venue.get_area_chairs_name() + ' ' + arr_registration_task_forum['title'],
                 'additional_fields': arr_registration_task
+            },
+            date_levels=1,
+            exp_date=note.content.get('form_expiration_date')
+        ),
+        ARRStage(
+            type=ARRStage.Type.REGISTRATION_STAGE,
+            group_id=venue.get_area_chairs_id(),
+            required_fields=['form_expiration_date'],
+            super_invitation_id=f"{venue.get_area_chairs_id()}/-/{invitation_builder.RECOGNITION_NAME}",
+            stage_arguments={
+                'committee_id': venue.get_area_chairs_id(),
+                'name': invitation_builder.RECOGNITION_NAME,
+                'instructions': arr_reviewer_ac_recognition_task_forum['instructions'],
+                'title': venue.get_area_chairs_name() + ' ' + arr_reviewer_ac_recognition_task_forum['title'],
+                'additional_fields': arr_reviewer_ac_recognition_task,
+                'remove_fields': ['profile_confirmed', 'expertise_confirmed']
             },
             date_levels=1,
             exp_date=note.content.get('form_expiration_date')

@@ -1308,17 +1308,65 @@ class TestARRVenueV2():
         assert '~AC_ARRTwo1' not in august_ac_edges
         assert '~SAC_ARRTwo1' not in august_sac_edges
         
-
-    def test_supplementary_materials_and_preprints(self, client, openreview_client, helpers):
-        # After the submission deadline, opt-in papers have their readers set to everyone
-        # and a subset of the blinded fields are re-posted as supplementary material
-        # Check that the submissions are publicly visible on the homepage
-        pass
-
     def test_reviewer_tasks(self, client, openreview_client, helpers):
-        # Setup reviewer licensing and recognition tasks (registration forms) and consent forms
-        # (replies to reviews)
-        pass
+        reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@aclrollingreview.com', password=helpers.strong_password)
+        ac_client = openreview.api.OpenReviewClient(username = 'ac1@aclrollingreview.com', password=helpers.strong_password)
+
+        # Recognition tasks
+        recognition_edit = reviewer_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Recognition_Request',
+            signatures=['~Reviewer_ARROne1'],
+            note=openreview.api.Note(
+                content = {
+                    "request_a_letter_of_recognition":{
+                        "value": "Yes, please send me a letter of recognition for my service as a reviewer / AE"
+                    }
+                }    
+            )
+        )
+
+        assert reviewer_client.get_note(recognition_edit['note']['id'])
+
+        recognition_edit = ac_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Recognition_Request',
+            signatures=['~AC_ARROne1'],
+            note=openreview.api.Note(
+                content = {
+                    "request_a_letter_of_recognition":{
+                        "value": "Yes, please send me a letter of recognition for my service as a reviewer / AE"
+                    }
+                }    
+            )
+        )
+
+        assert ac_client.get_note(recognition_edit['note']['id'])
+
+        # License task
+        license_edit = reviewer_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/License_Agreement',
+            signatures=['~Reviewer_ARROne1'],
+            note=openreview.api.Note(
+                content = {
+                    "attribution": { "value": "Yes, I wish to be attributed."},
+                    "agreement": { "value": "I agree"}
+                }    
+            )
+        )
+
+        assert reviewer_client.get_note(license_edit['note']['id'])
+
+        reviewer_two_client = openreview.api.OpenReviewClient(username = 'reviewer2@aclrollingreview.com', password=helpers.strong_password)
+        license_edit = reviewer_two_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/License_Agreement',
+            signatures=['~Reviewer_ARRTwo1'],
+            note=openreview.api.Note(
+                content = {
+                    "agreement": { "value": "I do not agree"}
+                }    
+            )
+        )
+
+        assert reviewer_two_client.get_note(license_edit['note']['id'])
 
     def test_submissions(self, client, openreview_client, helpers, test_client):
 

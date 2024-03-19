@@ -18,6 +18,8 @@ class InvitationBuilder(object):
     MAX_LOAD_AND_UNAVAILABILITY_NAME = 'Max_Load_And_Unavailability_Request'
     EMERGENCY_REVIEWING_NAME = 'Emergency_Reviewer_Agreement'
     EMERGENCY_METAREVIEWING_NAME = 'Emergency_Metareviewer_Agreement'
+    REVIEWER_LICENSE_NAME = 'License_Agreement'
+    RECOGNITION_NAME = 'Recognition_Request'
 
     def __init__(self, venue, update_wait_time=5000):
         self.client = venue.client
