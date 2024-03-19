@@ -315,7 +315,7 @@ def flag_submission(
            lambda reply: any(reply_name in inv for inv in reply['invitations']),
            forum.details['replies']
         ))
-        for checklist in checklists: # TODO: update checklist invitations
+        for checklist in checklists:
             new_readers = [
                 domain.content['ethics_chairs_id']['value'],
                 f"{venue_id}/{domain.content['ethics_reviewers_name']['value']}",

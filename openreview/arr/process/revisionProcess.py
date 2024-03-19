@@ -384,6 +384,9 @@ def process(client, note, invitation):
 
         elif invitation_type == 'Ethics_Review_Stage':
             conference.create_ethics_review_stage()
+            invitation = client_v2.get_invitation(f"{conference.id}/-/Ethics_Review_Flag")
+            invitation.process = invitation_builder.get_process_content('process/ethics_flag_process.py')
+            invitation_builder.save_invitation(invitation, replacement=False)
 
         elif invitation_type == 'Meta_Review_Stage':
             conference.create_meta_review_stage()

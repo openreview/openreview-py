@@ -1662,6 +1662,10 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
+                    'ae_checklist_due_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
+                    'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'reviewer_checklist_due_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
+                    'reviewer_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                     'reviewing_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
                     'reviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                     'reviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
@@ -2455,6 +2459,19 @@ class TestARRVenueV2():
         ae_edit, test_submission = post_checklist(user_client, checklist_inv, user, existing_note=ae_edit['note'], override_fields={violation_fields[4]: {'value': 'Yes'}})
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
+
+        # Check readers
+        ae_chk = openreview_client.get_note(ae_edit['note']['id'])
+        ae_chk_inv = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Action_Editor_Checklist')
+        rev_chk = openreview_client.get_note(reviewer_edit['note']['id'])
+        rev_chk_inv = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Reviewer_Checklist')
+
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Ethics_Reviewers' in ae_chk.readers
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Ethics_Reviewers' in rev_chk.readers
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Ethics_Reviewers' in ae_chk_inv.edit['readers']
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Ethics_Reviewers' in ae_chk_inv.edit['note']['readers']
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Ethics_Reviewers' in rev_chk_inv.edit['readers']
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Ethics_Reviewers' in rev_chk_inv.edit['note']['readers']
 
     def test_official_review_flagging(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)

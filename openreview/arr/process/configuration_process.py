@@ -138,6 +138,121 @@ def process(client, note, invitation):
             invitation=consent_invitation
         )
 
+    def extend_ae_checklist(client, venue, builder, request_form):
+        ae_checklist_invitation = openreview.api.Invitation(
+            id = f"{venue.id}/-/Action_Editor_Checklist",
+            content = {
+            "review_readers": {
+                "value": [
+                        venue.id + "/Program_Chairs",
+                        venue.id + "/Submission{number}/Senior_Area_Chairs",
+                        venue.id + "/Submission{number}/Area_Chairs",
+                        venue.id + "/Submission{number}/Reviewers/Submitted"
+                    ]
+                }
+            },
+            edit = {
+                'content':  {
+                    "noteNumber": {
+                        "value": {
+                            "param": {
+                                "regex": ".*",
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "noteId": {
+                        "value": {
+                            "param": {
+                                "regex": ".*",
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "noteReaders": {
+                        "value": {
+                            "param": {
+                                "type": "string[]",
+                                "regex": f"{venue.id}/.*|everyone"
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    "edit": {
+                        "note": {
+                            "readers": ['${5/content/noteReaders/value}']
+                        }
+                    }
+                }
+            }
+        )
+        ae_checklist_invitation.edit['invitation']['edit']['note']['readers'] = ['${5/content/noteReaders/value}']
+        client_v2.post_invitation_edit(invitations=meta_invitation_id,
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            replacement=False,
+            invitation=ae_checklist_invitation
+        )
+
+    def extend_reviewer_checklist(client, venue, builder, request_form):
+        reviewer_checklist_invitation = openreview.api.Invitation(
+            id = f"{venue.id}/-/Reviewer_Checklist",
+            content = {
+            "review_readers": {
+                "value": [
+                        venue.id + "/Program_Chairs",
+                        venue.id + "/Submission{number}/Senior_Area_Chairs",
+                        venue.id + "/Submission{number}/Area_Chairs",
+                        venue.id + "/Submission{number}/Reviewers/Submitted"
+                    ]
+                }
+            },
+            edit = {
+                'content':  {
+                        "noteNumber": {
+                        "value": {
+                            "param": {
+                                "regex": ".*",
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "noteId": {
+                        "value": {
+                            "param": {
+                                "regex": ".*",
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "noteReaders": {
+                        "value": {
+                            "param": {
+                                "type": "string[]",
+                                "regex": f"{venue.id}/.*|everyone"
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    "edit": {
+                        "note": {
+                            "readers": ['${5/content/noteReaders/value}']
+                        }
+                    }
+                }
+            }
+        )
+        client_v2.post_invitation_edit(invitations=meta_invitation_id,
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            replacement=False,
+            invitation=reviewer_checklist_invitation
+        )
+
     workflow_stages = [
         ARRStage(
             type=ARRStage.Type.REGISTRATION_STAGE,
@@ -351,7 +466,8 @@ def process(client, note, invitation):
             due_date=note.content.get('reviewer_checklist_due_date'),
             exp_date=note.content.get('reviewer_checklist_exp_date'),
             process='process/checklist_process.py',
-            preprocess='process/checklist_preprocess.py'
+            preprocess='process/checklist_preprocess.py',
+            extend=extend_reviewer_checklist
         ),
         ARRStage(
             type=ARRStage.Type.CUSTOM_STAGE,
@@ -374,7 +490,8 @@ def process(client, note, invitation):
             due_date=note.content.get('ae_checklist_due_date'),
             exp_date=note.content.get('ae_checklist_exp_date'),
             process='process/checklist_process.py',
-            preprocess='process/checklist_preprocess.py'
+            preprocess='process/checklist_preprocess.py',
+            extend=extend_ae_checklist
         ),
         ARRStage(
             type=ARRStage.Type.CUSTOM_STAGE,
