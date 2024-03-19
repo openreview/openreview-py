@@ -5322,7 +5322,7 @@ note={Expert Certification}
         ## Invite archived reviewers with status unavailable
         paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
             signatures=[joelle_paper13_anon_group.id],
-            head=note_id_13,
+            head=note_id_14,
             tail='~David_Belanger1',
             weight=1,
             label='Invitation Sent'
@@ -5347,7 +5347,7 @@ note={Expert Certification}
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Accepted'         
 
-        assignment_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', head=note_id_13, tail='~David_Belanger1')
+        assignment_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', head=note_id_14, tail='~David_Belanger1')
         assert len(assignment_edges) == 1
 
         helpers.await_queue_edit(openreview_client, edit_id=assignment_edges[0].id)
