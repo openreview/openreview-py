@@ -57,10 +57,9 @@ class Helpers:
         return openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', username = email, password = Helpers.strong_password)
 
     @staticmethod
-    def await_queue(super_client=None):
-        if super_client is None:
-            super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password=Helpers.strong_password)
-            assert super_client is not None, 'Super Client is none'
+    def await_queue():
+
+        super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password=Helpers.strong_password)
 
         while True:
             jobs = super_client.get_jobs_status()
