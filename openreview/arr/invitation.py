@@ -177,6 +177,12 @@ class InvitationBuilder(openreview.venue.InvitationBuilder):
                         'order': 13,
                         'required': False
                     },
+                    'author_consent_due_date': {
+                        'description': 'What should the displayed due date be for the authors consent task? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+                        'order': 13,
+                        'required': False
+                    },
                     'comment_start_date': {
                         'description': 'When should commenting be enabled for the assigned reviewing committee? This is generally enabled early, like on the submission deadline. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
                         'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',

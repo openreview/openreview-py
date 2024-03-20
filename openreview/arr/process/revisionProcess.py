@@ -22,9 +22,10 @@ def process(client, note, invitation):
 
         if invitation_type == 'Revision':
             conference.create_submission_stage()
-            # ARR: Add submission pre-process
+            # ARR: Add submission pre-process and extend submission process
             invitation = client_v2.get_invitation(conference.get_submission_id())
             invitation.preprocess = invitation_builder.get_process_content('process/submission_preprocess.py')
+            invitation.process = invitation.process + invitation_builder.get_process_content('process/submission_process_extension.py')
             conference.invitation_builder.save_invitation(invitation)
 
             submission_deadline = forum_note.content.get('Submission Deadline', '').strip()

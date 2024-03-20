@@ -305,6 +305,40 @@ arr_submission_content = {
             }
         }
     },
+    "author_consent_field": {
+        "order": 22,
+        "description": "Placeholder text, click and drag the bottom right to expand\n\nThe following is the ACL author consent text",
+        "value": {
+            "param": {
+                "type": "string",
+                "enum": [
+                    "yes",
+                    "no"
+                ],
+                "input": "radio",
+                "scroll": True,
+                "optional": True
+            }
+        }
+    },
+}
+
+arr_author_consent_content = {
+    "author_consent_field": {
+        "order": 22,
+        "description": "Placeholder text, click and drag the bottom right to expand\n\nThe following is the ACL author consent text",
+        "value": {
+            "param": {
+                "type": "string",
+                "enum": [
+                    "yes",
+                    "no"
+                ],
+                "input": "radio",
+                "scroll": True
+            }
+        }
+    },
 }
 
 hide_fields = [

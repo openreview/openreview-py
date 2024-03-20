@@ -24,6 +24,7 @@ def process(client, note, invitation):
         arr_metareview_content,
         arr_ethics_review_content,
         arr_review_rating_content,
+        arr_author_consent_content
     )
     from openreview.arr.helpers import ARRStage
     from openreview.venue import matching
@@ -432,6 +433,23 @@ def process(client, note, invitation):
             exp_date=note.content.get('emergency_metareviewing_due_date'),
             process='process/emergency_load_process.py',
             preprocess='process/emergency_load_preprocess.py'
+        ),
+        ARRStage(
+            type=ARRStage.Type.CUSTOM_STAGE,
+            required_fields=['author_consent_due_date', 'form_expiration_date'],
+            super_invitation_id=f"{venue_id}/-/Author_Consent",
+            stage_arguments={
+                'name': 'Author_Consent',
+                'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
+                'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                'invitees': [openreview.stages.CustomStage.Participants.AUTHORS],
+                'readers': [],
+                'content': arr_author_consent_content,
+                'notify_readers': False,
+                'email_sacs': False
+            },
+            due_date=note.content.get('author_consent_due_date'),
+            exp_date=note.content.get('form_expiration_date')   
         ),
         ARRStage(
             type=ARRStage.Type.CUSTOM_STAGE,
