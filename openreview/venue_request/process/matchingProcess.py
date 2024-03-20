@@ -10,7 +10,7 @@ def process(client, note, invitation):
     compute_conflicts_N_years = note.content.get('compute_conflicts_N_years')
 
     matching_group = note.content['matching_group']
-    compute_affinity_scores = note.content.get('compute_affinity_scores') == 'Yes'
+    compute_affinity_scores = note.content.get('compute_affinity_scores', 'No')
     scores = note.content.get('upload_affinity_scores')
     submission_track = note.content.get('submission_track')
 
@@ -22,7 +22,7 @@ def process(client, note, invitation):
     matching_status = {}
 
     try:
-        matching_status = conference.setup_committee_matching(matching_group, compute_affinity_scores, None if compute_conflicts == 'No' else compute_conflicts, int(compute_conflicts_N_years) if compute_conflicts_N_years else None, submission_track=submission_track)
+        matching_status = conference.setup_committee_matching(matching_group, None if compute_affinity_scores == 'No' else compute_affinity_scores, None if compute_conflicts == 'No' else compute_conflicts, int(compute_conflicts_N_years) if compute_conflicts_N_years else None, submission_track=submission_track)
     except Exception as e:
         if 'Submissions not found.' in str(e):
             matching_status['error'] = 'Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button.'

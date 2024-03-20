@@ -2085,9 +2085,9 @@ If you would like to change your decision, please follow the link in the previou
                 'order': 4
             },            
             'compute_affinity_scores': {
-                'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically.',
+                'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically. Select the model you want to use to compute the affinity scores or "No" if you don\'t want to compute affinity scores. Refer to your expertise repository for more information on the models: https://github.com/openreview/openreview-expertise.',
                 'order': 5,
-                'value-radio': ['Yes', 'No'],
+                'value-radio': ['specter+mfr', 'specter2', 'No'],
                 'required': True,
             },
             'upload_affinity_scores': {

@@ -1184,7 +1184,31 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
             signatures=['~Program_ICMLChair1'],
             writers=[]
         ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Paper matching is already being run for this group. Please wait for a status reply in the forum.'):
+            client.post_note(openreview.Note(
+                content={
+                    'title': 'Paper Matching Setup',
+                    'matching_group': 'ICML.cc/2023/Conference/Reviewers',
+                    'compute_conflicts': 'NeurIPS',
+                    'compute_conflicts_N_years': '3',
+                    'compute_affinity_scores': 'No',
+                    'upload_affinity_scores': affinity_scores_url
+                },
+                forum=request_form.id,
+                replyto=request_form.id,
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+                readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+                signatures=['~Program_ICMLChair1'],
+                writers=[]
+            ))
+
         helpers.await_queue()
+
+        # Only 1 reviewer matching note was posted
+        matching_notes = client.get_all_notes(invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup')
+        rev_matching_notes = [note for note in matching_notes if note.content['matching_group'] == 'ICML.cc/2023/Conference/Reviewers']
+        assert len(rev_matching_notes) == 1
 
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Conflict')
 
