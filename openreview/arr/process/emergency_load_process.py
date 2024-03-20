@@ -193,3 +193,11 @@ def process(client, edit, invitation):
             soft_delete=True
         )
         openreview.tools.post_bulk_edges(client, edges_to_post)
+
+    ## Delete availability, assume they can review more than resubmissions
+    client.delete_edges(
+        invitation=f"{role}/-/Available",
+        tail=user,
+        wait_to_finish=True,
+        soft_delete=True
+    )

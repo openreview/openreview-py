@@ -660,7 +660,7 @@ def process(client, note, invitation):
         'Registered_Load',
         'Emergency_Load',
         'Emergency_Area',
-        'Availability',
+        'Available', # Post "only for resubmissions"
     ]
     for role in venue_roles:
         m = matching.Matching(venue, venue.client.get_group(role), None, None)

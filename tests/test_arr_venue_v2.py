@@ -45,6 +45,7 @@ class TestARRVenueV2():
         helpers.create_user('ec1@aclrollingreview.com', 'EthicsChair', 'ARROne')
         helpers.create_user('ac1@aclrollingreview.com', 'AC', 'ARROne')
         helpers.create_user('ac2@aclrollingreview.com', 'AC', 'ARRTwo')
+        helpers.create_user('ac3@aclrollingreview.com', 'AC', 'ARRThree')
         helpers.create_user('reviewer1@aclrollingreview.com', 'Reviewer', 'ARROne')
         helpers.create_user('reviewer2@aclrollingreview.com', 'Reviewer', 'ARRTwo')
         helpers.create_user('reviewer3@aclrollingreview.com', 'Reviewer', 'ARRThree')
@@ -356,7 +357,7 @@ class TestARRVenueV2():
         )
         openreview_client.add_members_to_group(
             venue.get_area_chairs_id(), [
-                f"~AC_ARR{num}1" for num in ['One', 'Two']
+                f"~AC_ARR{num}1" for num in ['One', 'Two', 'Three']
             ]
         )
         openreview_client.add_members_to_group(
@@ -701,7 +702,7 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 content = {
                     'maximum_load': { 'value': '0' },
-                    'maximum_load_resubmission': { 'value': 'Yes' },
+                    'maximum_load_resubmission': { 'value': 'No' },
                     'next_available_month': { 'value': 'August'},
                     'next_available_year': { 'value':  2024}
                 }
@@ -1321,6 +1322,31 @@ class TestARRVenueV2():
         assert '~Reviewer_ARROne1' not in august_reviewer_edges
         assert '~AC_ARRTwo1' not in august_ac_edges
         assert '~SAC_ARRTwo1' not in august_sac_edges
+
+        # Set data for resubmission unavailability
+        reviewer_five_client = openreview.api.OpenReviewClient(username = 'reviewer5@aclrollingreview.com', password=helpers.strong_password)
+        ac_three_client = openreview.api.OpenReviewClient(username = 'ac3@aclrollingreview.com', password=helpers.strong_password)
+
+        reviewer_five_client.post_note_edit(
+            invitation=f'{august_venue.get_reviewers_id()}/-/{max_load_name}',
+            signatures=['~Reviewer_ARRFive1'],
+            note=openreview.api.Note(
+                content = {
+                    'maximum_load': { 'value': '0' },
+                    'maximum_load_resubmission': { 'value': 'Yes' }
+                }
+            )
+        ) 
+        ac_three_client.post_note_edit(
+            invitation=f'{august_venue.get_area_chairs_id()}/-/{max_load_name}',
+            signatures=['~AC_ARRThree1'],
+            note=openreview.api.Note(
+                content = {
+                    'maximum_load': { 'value': '0' },
+                    'maximum_load_resubmission': { 'value': 'Yes' }
+                }
+            )
+        )
         
     def test_reviewer_tasks(self, client, openreview_client, helpers):
         reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@aclrollingreview.com', password=helpers.strong_password)
@@ -1772,9 +1798,9 @@ class TestARRVenueV2():
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Affinity_Score')
 
         affinity_score_count =  openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Affinity_Score')
-        assert affinity_score_count == 101 * 2 ## submissions * ACs
+        assert affinity_score_count == 101 * 3 ## submissions * ACs
 
-        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Conflict') == 4
+        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Conflict') == 6
 
         openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers'))
 
@@ -1895,7 +1921,7 @@ class TestARRVenueV2():
                 )
         openreview.tools.post_bulk_edges(openreview_client, ac_edges_to_post)
 
-        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Aggregate_Score', label='ae-assignments') == 101 * 2
+        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Aggregate_Score', label='ae-assignments') == 101 * 3
         assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score', label='reviewer-assignments') == 101 * 6
 
 
@@ -1963,16 +1989,24 @@ class TestARRVenueV2():
         # Set up June reviewer and area chair groups (for simplicity, map idx 1-to-1 and 2-to-2)
         openreview_client.add_members_to_group(june_venue.get_reviewers_id(number=2), '~Reviewer_ARROne1')
         openreview_client.add_members_to_group(june_venue.get_reviewers_id(number=3), '~Reviewer_ARRTwo1')
+        openreview_client.add_members_to_group(june_venue.get_reviewers_id(number=2), '~Reviewer_ARRFive1')
         openreview_client.add_members_to_group(june_venue.get_area_chairs_id(number=2), '~AC_ARROne1')
         openreview_client.add_members_to_group(june_venue.get_area_chairs_id(number=3), '~AC_ARRTwo1')
+        openreview_client.add_members_to_group(june_venue.get_area_chairs_id(number=2), '~AC_ARRThree1')
 
         reviewer_client_1 = openreview.api.OpenReviewClient(username='reviewer1@aclrollingreview.com', password=helpers.strong_password)
         reviewer_client_2 = openreview.api.OpenReviewClient(username='reviewer2@aclrollingreview.com', password=helpers.strong_password)
+        reviewer_client_5 = openreview.api.OpenReviewClient(username='reviewer5@aclrollingreview.com', password=helpers.strong_password)
+        ac_client_3 = openreview.api.OpenReviewClient(username='ac3@aclrollingreview.com', password=helpers.strong_password)
 
         anon_groups = reviewer_client_1.get_groups(prefix='aclweb.org/ACL/ARR/2023/June/Submission2/Reviewer_', signatory='~Reviewer_ARROne1')
         anon_group_id_1 = anon_groups[0].id
         anon_groups = reviewer_client_2.get_groups(prefix='aclweb.org/ACL/ARR/2023/June/Submission3/Reviewer_', signatory='~Reviewer_ARRTwo1')
         anon_group_id_2 = anon_groups[0].id
+        anon_groups = reviewer_client_5.get_groups(prefix='aclweb.org/ACL/ARR/2023/June/Submission2/Reviewer_', signatory='~Reviewer_ARRFive1')
+        anon_group_id_5 = anon_groups[0].id
+        anon_groups = ac_client_3.get_groups(prefix='aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chair_', signatory='~AC_ARRThree1')
+        anon_group_id_ac = anon_groups[0].id
 
         reviewer_client_1.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/June/Submission2/-/Official_Review',
@@ -2022,6 +2056,49 @@ class TestARRVenueV2():
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
                     "reviewer_certification": {"value": "A Name"}
+                }
+            )
+        )
+
+        reviewer_client_5.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/June/Submission2/-/Official_Review',
+            signatures=[anon_group_id_5],
+            note=openreview.api.Note(
+                content={
+                    "confidence": { "value": 5 },
+                    "paper_summary": { "value": 'some summary' },
+                    "summary_of_strengths": { "value": 'some strengths' },
+                    "summary_of_weaknesses": { "value": 'some weaknesses' },
+                    "comments_suggestions_and_typos": { "value": 'some comments' },
+                    "soundness": { "value": 1 },
+                    "overall_assessment": { "value": 1 },
+                    "best_paper": { "value": "No" },
+                    "ethical_concerns": { "value": "N/A" },
+                    "reproducibility": { "value": 1 },
+                    "datasets": { "value": 1 },
+                    "software": { "value": 1 },
+                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
+                    "Knowledge_of_paper": {"value": "After the review process started"},
+                    "Knowledge_of_paper_source": {"value": ["A research talk"]},
+                    "impact_of_knowledge_of_paper": {"value": "A lot"},
+                    "reviewer_certification": {"value": "A Name"}
+                }
+            )
+        )
+
+        ac_client_3.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/June/Submission2/-/Meta_Review',
+            signatures=[anon_group_id_ac],
+            note=openreview.api.Note(
+                content={
+                    "metareview": { "value": 'a metareview' },
+                    "summary_of_reasons_to_publish": { "value": 'some summary' },
+                    "summary_of_suggested_revisions": { "value": 'some strengths' },
+                    "best_paper_ae": { "value": 'Yes' },
+                    "overall_assessment": { "value": 1 },
+                    "ethical_concerns": { "value": "There are no concerns with this submission" },
+                    "author_identity_guess": { "value": 1 },
+                    "needs_ethics_review": {'value': 'No'}
                 }
             )
         )
@@ -2133,6 +2210,62 @@ class TestARRVenueV2():
         assert len(track_edges.keys()) == 1
         assert '~SAC_ARROne1' in track_edges
         assert len(track_edges['~SAC_ARROne1']) == 101
+
+        # Check for status and available edges
+        status_edges = {
+            g['id']['tail'] : g['values'][0]
+            for g in pc_client_v2.get_grouped_edges(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Status', select='head,id,weight,label', groupby='tail')
+        }
+        assert set(status_edges.keys()) == {'~Reviewer_ARROne1', '~Reviewer_ARRTwo1', '~Reviewer_ARRFive1'}
+        assert status_edges['~Reviewer_ARROne1']['label'] == 'Requested'
+        assert status_edges['~Reviewer_ARRTwo1']['label'] == 'Reassigned'
+        assert status_edges['~Reviewer_ARRFive1']['label'] == 'Requested'
+
+        status_edges = {
+            g['id']['tail'] : g['values'][0]
+            for g in pc_client_v2.get_grouped_edges(invitation=f'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Status', select='head,id,weight,label', groupby='tail')
+        }
+        assert set(status_edges.keys()) == {'~AC_ARROne1', '~AC_ARRTwo1', '~AC_ARRThree1'}
+        assert status_edges['~AC_ARROne1']['label'] == 'Requested'
+        assert status_edges['~AC_ARRTwo1']['label'] == 'Reassigned'
+        assert status_edges['~AC_ARRThree1']['label'] == 'Requested'
+
+        available_edges = {
+            g['id']['tail'] : g['values'][0]
+            for g in pc_client_v2.get_grouped_edges(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Available', select='head,id,weight,label', groupby='tail')
+        }
+        assert set(available_edges.keys()) == {'~Reviewer_ARRFive1'}
+        assert available_edges['~Reviewer_ARRFive1']['label'] == 'For resubmissions only'
+
+        available_edges = {
+            g['id']['tail'] : g['values'][0]
+            for g in pc_client_v2.get_grouped_edges(invitation=f'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Available', select='head,id,weight,label', groupby='tail')
+        }
+        assert set(available_edges.keys()) == {'~AC_ARRThree1'}
+        assert available_edges['~AC_ARRThree1']['label'] == 'For resubmissions only'
+
+        # Check integrity of custom max papers
+        cmp_edges = {
+            g['id']['tail'] : g['values'][0]
+            for g in pc_client_v2.get_grouped_edges(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers', select='head,id,weight,label', groupby='tail')
+        }
+        load_notes = pc_client_v2.get_all_notes(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request')
+        for note in load_notes:
+            if note.signatures[0] == '~Reviewer_ARRFive1':
+                assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load']['value']) + 1
+                continue
+            assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load']['value'])
+
+        cmp_edges = {
+            g['id']['tail'] : g['values'][0]
+            for g in pc_client_v2.get_grouped_edges(invitation=f'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Custom_Max_Papers', select='head,id,weight,label', groupby='tail')
+        }
+        load_notes = pc_client_v2.get_all_notes(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Max_Load_And_Unavailability_Request')
+        for note in load_notes:
+            if note.signatures[0] == '~AC_ARRThree1':
+                assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load']['value']) + 1
+                continue
+            assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load']['value'])
             
 
     def test_sae_ae_assignments(self, client, openreview_client, helpers, test_client, request_page, selenium):

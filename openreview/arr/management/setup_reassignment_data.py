@@ -11,18 +11,32 @@ def process(client, invitation):
             wait_to_finish=True,
             soft_delete=True
         )
-        print(f'{profile_id}->{submission_id},weight={new_weight}')
-        client.post_edge(
-            openreview.api.Edge(
-                invitation=edge_inv,
-                head=submission_id,
-                tail=profile_id,
-                weight=new_weight,
-                readers=edge_readers,
-                writers=[venue_id],
-                signatures=[venue_id]
+        if submission_id:
+            print(f'{profile_id}->{submission_id},weight={new_weight}')
+            client.post_edge(
+                openreview.api.Edge(
+                    invitation=edge_inv,
+                    head=submission_id,
+                    tail=profile_id,
+                    weight=new_weight,
+                    readers=edge_readers,
+                    writers=[venue_id],
+                    signatures=[venue_id]
+                )
             )
-        )
+        else:
+            group_id = edge_inv.split('/-/')[0]
+            client.post_edge(
+                openreview.api.Edge(
+                    invitation=edge_inv,
+                    head=group_id,
+                    tail=profile_id,
+                    weight=new_weight,
+                    readers=edge_readers,
+                    writers=[venue_id],
+                    signatures=[venue_id]
+                )
+            )
 
 
     domain = client.get_group(invitation.domain)
@@ -34,6 +48,8 @@ def process(client, invitation):
     rev_reassignment_field = 'reassignment_request_reviewers'
     ae_affinity_inv = domain.content['area_chairs_affinity_score_id']['value']
     rev_affinity_inv = domain.content['reviewers_affinity_score_id']['value']
+    ae_cmp_inv = domain.content['area_chairs_custom_max_papers_id']['value']
+    rev_cmp_inv = domain.content['reviewers_custom_max_papers_id']['value']
     reviewers_id = domain.content['reviewers_id']['value']
     area_chairs_id = domain.content['area_chairs_id']['value']
     senior_area_chairs_id = domain.content['senior_area_chairs_id']['value']
@@ -42,6 +58,8 @@ def process(client, invitation):
     tracks_inv_name = 'Research_Area'
     registration_name = 'Registration'
     max_load_name = 'Max_Load_And_Unavailability_Request'
+    availability_name = 'Available'
+    status_name = 'Status'
 
     client_v1 = openreview.Client(
         baseurl=openreview.tools.get_base_urls(client)[0],
@@ -60,6 +78,8 @@ def process(client, invitation):
         submissions
     ))
     skip_scores = defaultdict(list)
+    reassignment_status = defaultdict(list)
+    only_resubmissions = []
 
     print(f"records of resubmission: {','.join([s.id for s in resubmissions])}")
 
@@ -75,6 +95,16 @@ def process(client, invitation):
         )
         for name_obj in filtered_names:
             name_to_id[name_obj['username']] = profile.id
+
+    # Build load map
+    id_to_load_note = {}
+    for role_id in [reviewers_id, area_chairs_id, senior_area_chairs_id]:
+        load_notes = client.get_all_notes(invitation=f"{role_id}/-/{max_load_name}") ## Assume only 1 note per user
+        for note in load_notes:
+            if note.signatures[0] not in name_to_id:
+                continue
+            note_signature_id = name_to_id[note.signatures[0]]
+            id_to_load_note[note_signature_id] = note
 
     # Build track map
     track_to_ids = {}
@@ -122,6 +152,35 @@ def process(client, invitation):
                 members=[]
             )
         )
+
+    # Reset custom max papers to ground truth notes
+    for role_id in [reviewers_id, area_chairs_id, senior_area_chairs_id]:
+        cmp_to_post = []
+        role_cmp_inv = f"{role_id}/-/Custom_Max_Papers"
+        for id, note in id_to_load_note.items():
+            load_invitation = [inv for inv in note.invitations if max_load_name in inv][0]
+            if role_id not in load_invitation:
+                continue
+
+            cmp_to_post.append(
+                openreview.api.Edge(
+                    invitation=role_cmp_inv,
+                    head=role_id,
+                    tail=id,
+                    weight=int(note.content['maximum_load']['value']),
+                    readers=track_edge_readers[role_id] + [id],
+                    writers=[venue_id],
+                    signatures=[venue_id]
+                )
+            )
+        client.delete_edges(
+            invitation=role_cmp_inv,
+            soft_delete=True,
+            wait_to_finish=True
+        )
+        openreview.tools.post_bulk_edges(client=client, edges=cmp_to_post)
+    
+
     print('iterating through')
     print(list(resubmissions))
     for submission in resubmissions:
@@ -167,6 +226,11 @@ def process(client, invitation):
             
             if reviewer not in name_to_id or name_to_id[reviewer] not in rev_scores:
                 continue
+            
+            rev_cmp = {
+                g['id']['tail'] : g['values'][0]
+                for g in current_client.get_grouped_edges(invitation=rev_cmp_inv, select='id,weight', groupby='tail')
+            }
 
             reviewer_id = name_to_id[reviewer]
             reviewer_edge = rev_scores[reviewer_id]
@@ -174,8 +238,38 @@ def process(client, invitation):
             if wants_new_reviewers:
                 updated_weight = 0
                 skip_scores[submission.id].append(reviewer_id)
+                reassignment_status[submission.id].append(
+                    {
+                        'role': reviewers_id,
+                        'head': submission.id,
+                        'tail': reviewer_id,
+                        'label': 'Reassigned'
+                    }
+                )
             else:
                 updated_weight = 3
+                reassignment_status[submission.id].append(
+                    {
+                        'role': reviewers_id,
+                        'head': submission.id,
+                        'tail': reviewer_id,
+                        'label': 'Requested'
+                    }
+                )
+                # Handle case where user has max load 0 but accepts resubmissions
+                if id_to_load_note.get(reviewer_id) and int(id_to_load_note[reviewer_id].content['maximum_load']['value']) == 0 and 'Yes' in id_to_load_note[reviewer_id].content['maximum_load_resubmission']['value']:
+                    only_resubmissions.append({
+                        'role': reviewers_id,
+                        'name': reviewer_id
+                    })
+                    reviewer_cmp_edge = rev_cmp[reviewer_id] ##note implies cmp edge
+                    replace_edge(
+                        existing_edge=reviewer_cmp_edge,
+                        edge_inv=rev_cmp_inv,
+                        new_weight=reviewer_cmp_edge['weight'] + 1,
+                        profile_id=reviewer_id,
+                        edge_readers=[venue_id, senior_area_chairs_id, area_chairs_id, reviewer_id]
+                    )
 
             replace_edge(
                 existing_edge=reviewer_edge,
@@ -197,14 +291,49 @@ def process(client, invitation):
             if ae not in name_to_id or name_to_id[ae] not in ae_scores:
                 continue
 
+            ae_cmp = {
+                g['id']['tail'] : g['values'][0]
+                for g in current_client.get_grouped_edges(invitation=ae_cmp_inv, select='id,weight', groupby='tail')
+            }
+
             ae_id = name_to_id[ae]
             ae_edge = ae_scores[ae_id]
 
             if wants_new_ae:
                 updated_weight = 0
                 skip_scores[submission.id].append(ae_id)
+                reassignment_status[submission.id].append(
+                    {
+                        'role': area_chairs_id,
+                        'head': submission.id,
+                        'tail': ae_id,
+                        'label': 'Reassigned'
+                    }
+                )
             else:
                 updated_weight = 3
+                reassignment_status[submission.id].append(
+                    {
+                        'role': area_chairs_id,
+                        'head': submission.id,
+                        'tail': ae_id,
+                        'label': 'Requested'
+                    }
+                )
+                # Handle case where user has max load 0 but accepts resubmissions
+                if id_to_load_note.get(ae_id) and int(id_to_load_note[ae_id].content['maximum_load']['value']) == 0 and 'Yes' in id_to_load_note[ae_id].content['maximum_load_resubmission']['value']:
+                    only_resubmissions.append({
+                        'role': area_chairs_id,
+                        'name': ae_id
+                    })
+                    ae_cmp_edge = ae_cmp[ae_id] ##note implies cmp edge
+                    replace_edge(
+                        existing_edge=ae_cmp_edge,
+                        edge_inv=ae_cmp_inv,
+                        new_weight=ae_cmp_edge['weight'] + 1,
+                        profile_id=ae_id,
+                        edge_readers=[venue_id, senior_area_chairs_id, ae_id]
+                    )
 
             replace_edge(
                 existing_edge=ae_edge,
@@ -239,7 +368,7 @@ def process(client, invitation):
                         head=submission.id,
                         tail=member,
                         weight=1,
-                        readers=track_edge_readers[role_id],
+                        readers=track_edge_readers[role_id] + [member],
                         writers=[venue_id],
                         signatures=[venue_id]
                     )
@@ -250,4 +379,54 @@ def process(client, invitation):
             wait_to_finish=True
         )
         openreview.tools.post_bulk_edges(client=client, edges=track_edges_to_post)
+
+    # 4) Post availability edges
+    for user_info in only_resubmissions:
+        role, name = user_info['role'], user_info['name']
+        availability_inv = f"{role}/-/{availability_name}"
+        client.delete_edges(
+            invitation=availability_inv,
+            tail=name,
+            wait_to_finish=True,
+            soft_delete=True
+        )
+        client.post_edge(
+            openreview.api.Edge(
+                invitation=availability_inv,
+                head=role,
+                tail=name,
+                weight=1,
+                label='For resubmissions only',
+                readers=track_edge_readers[role] + [name],
+                writers=[venue_id],
+                signatures=[venue_id]
+            )
+        )
+
+    # 5) Post status edges
+    for head, edges in reassignment_status.items():
+        for edge_info in edges:
+            role = edge_info['role']
+            status_inv = f"{role}/-/{status_name}"
+            client.delete_edges(
+                invitation=status_inv,
+                tail=edge_info['tail'],
+                head=head,
+                wait_to_finish=True,
+                soft_delete=True
+            )
+            client.post_edge(
+                openreview.api.Edge(
+                    invitation=status_inv,
+                    head=head,
+                    tail=edge_info['tail'],
+                    label=edge_info['label'],
+                    weight=1,
+                    readers=track_edge_readers[role] + [edge_info['tail']],
+                    writers=[venue_id],
+                    signatures=[venue_id]
+                )
+            )
+
+
 
