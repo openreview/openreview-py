@@ -266,7 +266,6 @@ def process(client, note, invitation):
                 'title': venue.get_reviewers_name() + ' ' + arr_registration_task_forum['title'],
                 'additional_fields': arr_registration_task
             },
-            date_levels=1,
             exp_date=note.content.get('form_expiration_date')
         ),
         ARRStage(
@@ -282,7 +281,6 @@ def process(client, note, invitation):
                 'additional_fields': arr_reviewer_ac_recognition_task,
                 'remove_fields': ['profile_confirmed', 'expertise_confirmed']
             },
-            date_levels=1,
             exp_date=note.content.get('form_expiration_date')
         ),
         ARRStage(
@@ -298,7 +296,6 @@ def process(client, note, invitation):
                 'additional_fields': arr_content_license_task,
                 'remove_fields': ['profile_confirmed', 'expertise_confirmed']
             },
-            date_levels=1,
             exp_date=note.content.get('form_expiration_date')
         ),
         ARRStage(
@@ -313,7 +310,6 @@ def process(client, note, invitation):
                 'title': venue.get_area_chairs_name() + ' ' + arr_registration_task_forum['title'],
                 'additional_fields': arr_registration_task
             },
-            date_levels=1,
             exp_date=note.content.get('form_expiration_date')
         ),
         ARRStage(
@@ -329,7 +325,6 @@ def process(client, note, invitation):
                 'additional_fields': arr_reviewer_ac_recognition_task,
                 'remove_fields': ['profile_confirmed', 'expertise_confirmed']
             },
-            date_levels=1,
             exp_date=note.content.get('form_expiration_date')
         ),
         ARRStage(
@@ -344,7 +339,6 @@ def process(client, note, invitation):
                 'title': venue.senior_area_chairs_name.replace('_', ' ') + ' ' + arr_registration_task_forum['title'],
                 'additional_fields': arr_registration_task
             },
-            date_levels=1,
             exp_date=note.content.get('form_expiration_date')
         ),
         ARRStage(
@@ -360,7 +354,6 @@ def process(client, note, invitation):
                 'additional_fields': arr_reviewer_max_load_task,
                 'remove_fields': ['profile_confirmed', 'expertise_confirmed']
             },
-            date_levels=1,
             due_date=note.content.get('maximum_load_due_date'),
             exp_date=note.content.get('maximum_load_exp_date'),
             process='process/max_load_process.py',
@@ -379,7 +372,6 @@ def process(client, note, invitation):
                 'additional_fields': arr_ac_max_load_task,
                 'remove_fields': ['profile_confirmed', 'expertise_confirmed']
             },
-            date_levels=1,
             due_date=note.content.get('maximum_load_due_date'),
             exp_date=note.content.get('maximum_load_exp_date'),
             process='process/max_load_process.py',
@@ -398,7 +390,6 @@ def process(client, note, invitation):
                 'additional_fields': arr_sac_max_load_task,
                 'remove_fields': ['profile_confirmed', 'expertise_confirmed']
             },
-            date_levels=1,
             due_date=note.content.get('maximum_load_due_date'),
             exp_date=note.content.get('maximum_load_exp_date'),
             process='process/max_load_process.py',
@@ -417,7 +408,6 @@ def process(client, note, invitation):
                 'additional_fields': arr_reviewer_emergency_load_task,
                 'remove_fields': ['profile_confirmed', 'expertise_confirmed']
             },
-            date_levels=1,
             start_date=note.content.get('emergency_reviewing_start_date'),
             due_date=note.content.get('emergency_reviewing_due_date'),
             exp_date=note.content.get('emergency_reviewing_due_date'),
@@ -437,7 +427,6 @@ def process(client, note, invitation):
                 'additional_fields': arr_ac_emergency_load_task,
                 'remove_fields': ['profile_confirmed', 'expertise_confirmed']
             },
-            date_levels=1,
             start_date=note.content.get('emergency_metareviewing_start_date'),
             due_date=note.content.get('emergency_metareviewing_due_date'),
             exp_date=note.content.get('emergency_metareviewing_due_date'),
@@ -462,7 +451,6 @@ def process(client, note, invitation):
                 'notify_readers': False,
                 'email_sacs': False
             },
-            date_levels=2,
             due_date=note.content.get('reviewer_checklist_due_date'),
             exp_date=note.content.get('reviewer_checklist_exp_date'),
             process='process/checklist_process.py',
@@ -486,7 +474,6 @@ def process(client, note, invitation):
                 'notify_readers': False,
                 'email_sacs': False
             },
-            date_levels=2,
             due_date=note.content.get('ae_checklist_due_date'),
             exp_date=note.content.get('ae_checklist_exp_date'),
             process='process/checklist_process.py',
@@ -507,7 +494,6 @@ def process(client, note, invitation):
                 'notify_readers': False,
                 'email_sacs': False
             },
-            date_levels=2,
             exp_date=note.content.get('form_expiration_date'),
             process='process/verification_process.py',
             extend=extend_desk_reject_verification
@@ -527,7 +513,6 @@ def process(client, note, invitation):
                 'notify_readers': False,
                 'email_sacs': False
             },
-            date_levels=2,
             exp_date=note.content.get('form_expiration_date'),
             extend=extend_consent
         ),
@@ -548,7 +533,6 @@ def process(client, note, invitation):
                 'notify_readers': False,
                 'email_sacs': False
             },
-            date_levels=2,
             start_date=note.content.get('review_rating_start_date'),
             exp_date=note.content.get('review_rating_exp_date')
         ),
@@ -576,7 +560,6 @@ def process(client, note, invitation):
                 'signatures': ['~Super_User1'],
                 'writers': []
             },
-            date_levels=2,
             start_date=note.content.get('comment_start_date'),
             exp_date=note.content.get('comment_end_date'),
         ),
@@ -602,7 +585,6 @@ def process(client, note, invitation):
                 'signatures': ['~Super_User1'],
                 'writers': []
             },
-            date_levels=2,
             start_date=note.content.get('reviewing_start_date'),
             due_date=note.content.get('reviewing_due_date'),
             exp_date=note.content.get('reviewing_exp_date'),
@@ -627,7 +609,6 @@ def process(client, note, invitation):
                 'signatures': ['~Super_User1'],
                 'writers': []
             },
-            date_levels=2,
             start_date=note.content.get('metareviewing_start_date'),
             due_date=note.content.get('metareviewing_due_date'),
             exp_date=note.content.get('metareviewing_exp_date'),
@@ -654,7 +635,6 @@ def process(client, note, invitation):
                 'signatures': ['~Super_User1'],
                 'writers': []
             },
-            date_levels=2,
             start_date=note.content.get('ethics_reviewing_start_date'),
             due_date=note.content.get('ethics_reviewing_due_date'),
             exp_date=note.content.get('ethics_reviewing_exp_date'),

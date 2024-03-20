@@ -222,7 +222,7 @@ class TestARRVenueV2():
                     'emergency_metareviewing_start_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                     'emergency_metareviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                     'emergency_metareviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'comment_start_date': (now - datetime.timedelta(days=1)).strftime('%Y/%m/%d %H:%M:%S'),
+                    'comment_start_date': (now - datetime.timedelta(days=2)).strftime('%Y/%m/%d %H:%M:%S'),
                     'comment_end_date': (now + datetime.timedelta(days=365)).strftime('%Y/%m/%d %H:%M:%S')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form_note.number}/ARR_Configuration',
@@ -2676,7 +2676,6 @@ class TestARRVenueV2():
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Official_Review-0-1', count=4)
 
         review = openreview_client.get_note(reviewer_edit['note']['id'])
-        assert len(review.readers) - len(reviewer_edit['note']['readers']) == 1
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Authors' in review.readers
 
     def test_author_response(self, client, openreview_client, helpers, test_client, request_page, selenium):

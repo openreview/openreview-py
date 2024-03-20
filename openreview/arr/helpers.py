@@ -41,6 +41,13 @@ class ARRStage(object):
         CUSTOM_STAGE = 1
         STAGE_NOTE = 2
 
+    SUPPORTED_STAGES = {
+        'Official_Review': 'Review_Stage',
+        'Meta_Review': 'Meta_Review_Stage',
+        'Official_Comment': 'Comment_Stage',
+        'Ethics_Review': 'Ethics_Review_Stage'
+    }
+
     def __init__(self,
         type = None,
         group_id = None,
@@ -83,26 +90,32 @@ class ARRStage(object):
             self.stage_arguments['due_date'] = self._format_date(self.due_date)
             self.stage_arguments['exp_date'] = self._format_date(self.exp_date)
         elif self.type == ARRStage.Type.REGISTRATION_STAGE:
-            self.stage_arguments['start_date'] =self.start_date
+            self.stage_arguments['start_date'] = self.start_date
             self.stage_arguments['due_date'] = self.due_date
             self.stage_arguments['expdate'] = self.exp_date
         elif self.type == ARRStage.Type.STAGE_NOTE:
-            format_type = 'strftime'
-            if 'Official_Review' in self.super_invitation_id:
-                self.stage_arguments['content']['review_start_date'] = self._format_date(self.start_date, format_type)
-                self.stage_arguments['content']['review_deadline'] = self._format_date(self.due_date, format_type)
-                self.stage_arguments['content']['review_expiration_date'] = self._format_date(self.exp_date, format_type)
-            elif 'Meta_Review' in self.super_invitation_id:
-                self.stage_arguments['content']['meta_review_start_date'] = self._format_date(self.start_date, format_type)
-                self.stage_arguments['content']['meta_review_deadline'] = self._format_date(self.due_date, format_type)
-                self.stage_arguments['content']['meta_review_expiration_date'] = self._format_date(self.exp_date, format_type)
-            elif 'Ethics_Review' in self.super_invitation_id:
-                self.stage_arguments['content']['ethics_review_start_date'] = self._format_date(self.start_date, format_type)
-                self.stage_arguments['content']['ethics_review_deadline'] = self._format_date(self.due_date, format_type)
-                self.stage_arguments['content']['ethics_review_expiration_date'] = self._format_date(self.exp_date, format_type)
-            elif 'Official_Comment' in self.super_invitation_id:
-                self.stage_arguments['content']['commentary_start_date'] = self._format_date(self.start_date, format_type)
-                self.stage_arguments['content']['commentary_end_date'] = self._format_date(self.exp_date, format_type)
+            stage_dates = self._get_stage_note_dates(format_type='strftime')
+            self.stage_arguments['content'].update(stage_dates)
+
+    def _get_stage_note_dates(self, format_type):
+        dates = {}
+        if 'Official_Review' in self.super_invitation_id:
+            dates['review_start_date'] = self._format_date(self.start_date, format_type)
+            dates['review_deadline'] = self._format_date(self.due_date, format_type)
+            dates['review_expiration_date'] = self._format_date(self.exp_date, format_type)
+        elif 'Meta_Review' in self.super_invitation_id:
+            dates['meta_review_start_date'] = self._format_date(self.start_date, format_type)
+            dates['meta_review_deadline'] = self._format_date(self.due_date, format_type)
+            dates['meta_review_expiration_date'] = self._format_date(self.exp_date, format_type)
+        elif 'Ethics_Review' in self.super_invitation_id:
+            dates['ethics_review_start_date'] = self._format_date(self.start_date, format_type)
+            dates['ethics_review_deadline'] = self._format_date(self.due_date, format_type)
+            dates['ethics_review_expiration_date'] = self._format_date(self.exp_date, format_type)
+        elif 'Official_Comment' in self.super_invitation_id:
+            dates['commentary_start_date'] = self._format_date(self.start_date, format_type)
+            dates['commentary_end_date'] = self._format_date(self.exp_date, format_type)
+
+        return dates
 
     def _format_date(self, date, format_type='millis', date_format='%Y/%m/%d'):
         if date is None:
@@ -117,7 +130,6 @@ class ARRStage(object):
     def _post_new_dates(self, client, venue):
         meta_invitation_id = venue.get_meta_invitation_id()
         venue_id = venue.id
-        levels = self.date_levels
         invitation_id = self.super_invitation_id
 
         invitation_edit_invitation_dates = {}
@@ -127,7 +139,7 @@ class ARRStage(object):
             invitation_edit_invitation_dates['duedate'] = openreview.tools.datetime_millis(self.due_date)
         if self.exp_date:
             invitation_edit_invitation_dates['expdate'] = openreview.tools.datetime_millis(self.exp_date)
-        if levels == 1:
+        if self.type == ARRStage.Type.REGISTRATION_STAGE:
             client.post_invitation_edit(
                 invitations=meta_invitation_id,
                 readers=[venue_id],
@@ -140,7 +152,7 @@ class ARRStage(object):
                     expdate=openreview.tools.datetime_millis(self.exp_date)
                 )
             )
-        elif levels == 2:
+        elif self.type == ARRStage.Type.CUSTOM_STAGE:
             client.post_invitation_edit(
                 invitations=meta_invitation_id,
                 readers=[venue_id],
@@ -153,6 +165,35 @@ class ARRStage(object):
                     }
                 )
             )
+        elif self.type == ARRStage.Type.STAGE_NOTE:
+            domain = client.get_group(venue_id)
+            client_v1 = openreview.Client(
+                baseurl=openreview.tools.get_base_urls(client)[0],
+                token=client.token
+            )
+            request_form = client_v1.get_note(domain.content['request_form_id']['value'])
+            support_group = request_form.invitation.split('/-/')[0]
+            invitation_name = self.super_invitation_id.split('/')[-1]
+            stage_name = ARRStage.SUPPORTED_STAGES[invitation_name]
+
+            latest_reference = client_v1.get_references(
+                referent=request_form.id,
+                invitation=f"{support_group}/-/Request{request_form.number}/{stage_name}"
+            )[0]
+            stage_dates = self._get_stage_note_dates(format_type='strftime')
+            latest_reference.content.update(stage_dates)
+
+            stage_note = openreview.Note(
+                content = latest_reference.content,
+                forum = latest_reference.forum,
+                invitation = latest_reference.invitation,
+                readers = latest_reference.readers,
+                referent = latest_reference.referent,
+                replyto = latest_reference.replyto,
+                signatures = ['~Super_User1'],
+                writers = []
+            )
+            client_v1.post_note(stage_note)
 
     def set_stage(self, client_v1, client, venue, invitation_builder, request_form_note):
         # Find invitation
