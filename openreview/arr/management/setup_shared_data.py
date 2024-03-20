@@ -90,6 +90,21 @@ def process(client, invitation):
         if len(missing_members) > 0:
             client.add_members_to_group(destination_group, list(missing_members))
 
+    # De-duplicate groups (SAEs + AEs -> Reviewers, SAEs -> AEs)
+    saes = client.get_group(domain.content['senior_area_chairs_id']['value'])
+    aes = client.get_group(domain.content['area_chairs_id']['value'])
+    reviewers = client.get_group(domain.content['reviewers_id']['value'])
+    sae_reviewers = set(saes.members).intersection(set(reviewers.members))
+    ae_reviewers = set(aes.members).intersection(set(reviewers.members))
+    sae_aes = set(saes.members).intersection(set(aes.members))
+
+    if len(sae_reviewers) > 0:
+        client.remove_members_from_group(reviewers, list(sae_reviewers))
+    if len(ae_reviewers) > 0:
+        client.remove_members_from_group(reviewers, list(ae_reviewers))
+    if len(sae_aes) > 0:
+        client.remove_members_from_group(aes, list(sae_aes))
+
     # Notes (Registraton Notes)
     roles = [
         domain.content['senior_area_chairs_id']['value'].replace(venue_id, previous_cycle_id),

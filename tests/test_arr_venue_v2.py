@@ -367,6 +367,16 @@ class TestARRVenueV2():
         openreview_client.add_members_to_group(venue.get_ethics_chairs_id(), ['~EthicsChair_ARROne1'])
         openreview_client.add_members_to_group(venue.get_ethics_reviewers_id(), ['~EthicsReviewer_ARROne1'])
 
+        ## Add overlap for deduplication test
+        openreview_client.add_members_to_group(
+            venue.get_reviewers_id(),
+            ['~AC_ARROne1', '~SAC_ARROne1']
+        )
+        openreview_client.add_members_to_group(
+            venue.get_area_chairs_id(),
+            ['~SAC_ARROne1']
+        )
+
         ## Post a submission to get Ethics Stage to work
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
@@ -1066,8 +1076,8 @@ class TestARRVenueV2():
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-0-0', count=2)
 
         # Find August in readers of groups and registration notes
-        assert set(pc_client_v2.get_group(june_venue.get_reviewers_id()).members) == set(pc_client_v2.get_group(august_venue.get_reviewers_id()).members)
-        assert set(pc_client_v2.get_group(june_venue.get_area_chairs_id()).members) == set(pc_client_v2.get_group(august_venue.get_area_chairs_id()).members)
+        assert set(pc_client_v2.get_group(june_venue.get_reviewers_id()).members).difference({'~AC_ARROne1', '~SAC_ARROne1'}) == set(pc_client_v2.get_group(august_venue.get_reviewers_id()).members)
+        assert set(pc_client_v2.get_group(june_venue.get_area_chairs_id()).members).difference({'~SAC_ARROne1'}) == set(pc_client_v2.get_group(august_venue.get_area_chairs_id()).members)
         assert set(pc_client_v2.get_group(june_venue.get_senior_area_chairs_id()).members) == set(pc_client_v2.get_group(august_venue.get_senior_area_chairs_id()).members)
         assert set(pc_client_v2.get_group(june_venue.get_ethics_reviewers_id()).members) == set(pc_client_v2.get_group(august_venue.get_ethics_reviewers_id()).members)
         assert set(pc_client_v2.get_group(june_venue.get_ethics_chairs_id()).members) == set(pc_client_v2.get_group(august_venue.get_ethics_chairs_id()).members)
@@ -1102,6 +1112,10 @@ class TestARRVenueV2():
         for sac, edges in june_sacs_with_edges.items():
             assert sac in august_sacs_with_edges
             assert set(edges) == set(august_sacs_with_edges[sac])
+
+        ## Add overlap for deduplication test
+        assert all(overlap not in openreview_client.get_group(august_venue.get_reviewers_id()).members for overlap in ['~AC_ARROne1', '~SAC_ARROne1'])
+        assert all(overlap not in openreview_client.get_group(august_venue.get_area_chairs_id()).members for overlap in ['~SAC_ARROne1'])
 
     def test_unavailability_process_functions(self, client, openreview_client, helpers):
         # Update the process functions for each of the unavailability forms, set up the custom max papers
