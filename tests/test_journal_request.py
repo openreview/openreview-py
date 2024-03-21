@@ -88,6 +88,10 @@ class TestJournalRequest():
         AE_group = openreview_client.get_group('{}/Action_Editors'.format(request_form['note']['content']['venue_id']['value']))
         assert "var JOURNAL_REQUEST_ID = '{}';".format(request_form['note']['id']) in AE_group.web
 
+        journal = JournalRequest.get_journal(openreview_client, request_form['note']['id'])
+        journal.invitation_builder.expire_reviewer_responsibility_invitations()
+        journal.invitation_builder.expire_assignment_availability_invitations()         
+
     def test_journal_reviewer_recruitment(self, openreview_client, selenium, request_page, helpers, journal_request, journal, journal_number):
 
         rev_template = '''Hi {{fullname}},
