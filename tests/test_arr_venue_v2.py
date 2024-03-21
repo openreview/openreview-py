@@ -186,7 +186,9 @@ class TestARRVenueV2():
 
         submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Submission')
         assert submission_invitation
-        assert 'responsible_NLP_research' in submission_invitation.edit['note']['content']
+        assert 'existing_preprints' in submission_invitation.edit['note']['content']
+        assert 'A1' in submission_invitation.edit['note']['content']
+        assert 'paper_type' in submission_invitation.edit['note']['content']
         assert 'keywords' not in submission_invitation.edit['note']['content']
 
         domain = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August')
@@ -814,16 +816,24 @@ class TestARRVenueV2():
             'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
             'TLDR': { 'value': 'This is a tldr '},
             'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-            'responsible_NLP_research': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
             'paper_type': { 'value': 'short' },
             'research_area': { 'value': 'Generation' },
+            'languages_studied': { 'value': 'A language' },
             'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
             'data': {'value': '/pdf/' + 'p' * 40 +'.zip' },
             'preprint': { 'value': 'yes'},
             'existing_preprints': { 'value': 'existing_preprints' },
             'preferred_venue': { 'value': 'ACL Conference' },
             'consent_to_share_data': { 'value': 'yes' },
-            'consent_to_review': { 'value': 'yes' }
+            'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
+            "A1": { 'value': 'yes' },
+            "A2": { 'value': 'yes' },
+            "A3": { 'value': 'yes' },
+            "B": { 'value': 'yes' },
+            "C": { 'value': 'yes' },
+            "D": { 'value': 'yes' },
+            "E": { 'value': 'yes' },
+            "author_consent_field": { 'value': 'yes' }
         }
 
         now = datetime.datetime.utcnow()
@@ -1461,9 +1471,9 @@ class TestARRVenueV2():
                     'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
                     'TLDR': { 'value': 'This is a tldr ' + str(i) },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'responsible_NLP_research': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'paper_type': { 'value': 'short' },
                     'research_area': { 'value': 'Generation' },
+                    'languages_studied': { 'value': 'A language' },
                     'previous_URL': { 'value': 'https://arxiv.org/abs/1234.56789' },
                     'previous_PDF': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'response_PDF': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
@@ -1476,7 +1486,15 @@ class TestARRVenueV2():
                     'existing_preprints': { 'value': 'existing_preprints' },
                     'preferred_venue': { 'value': 'ACL Conference' },
                     'consent_to_share_data': { 'value': 'yes' },
-                    'consent_to_review': { 'value': 'yes' }
+                    'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
+                    "A1": { 'value': 'yes' },
+                    "A2": { 'value': 'yes' },
+                    "A3": { 'value': 'yes' },
+                    "B": { 'value': 'yes' },
+                    "C": { 'value': 'yes' },
+                    "D": { 'value': 'yes' },
+                    "E": { 'value': 'yes' },
+                    "author_consent_field": { 'value': 'yes' }
                 }
             )
             if i == 1 or i == 101:
@@ -1582,10 +1600,8 @@ class TestARRVenueV2():
         assert submissions[0].content['preprint']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['existing_preprints']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['preferred_venue']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
-        assert submissions[0].content['consent_to_review']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert 'readers' not in submissions[0].content['software']
-        assert 'readers' not in submissions[0].content['responsible_NLP_research']
         assert 'readers' not in submissions[0].content['previous_URL']
         assert 'readers' not in submissions[0].content['previous_PDF']
         assert 'readers' not in submissions[0].content['response_PDF']
@@ -1624,10 +1640,8 @@ class TestARRVenueV2():
         assert submissions[0].content['preprint']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['existing_preprints']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['preferred_venue']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
-        assert submissions[0].content['consent_to_review']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert 'readers' not in submissions[0].content['software']
-        assert 'readers' not in submissions[0].content['responsible_NLP_research']
         assert 'readers' not in submissions[0].content['previous_URL']
         assert 'readers' not in submissions[0].content['previous_PDF']
         assert 'readers' not in submissions[0].content['response_PDF']
@@ -1641,7 +1655,6 @@ class TestARRVenueV2():
         assert submissions[1].content['preprint']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['existing_preprints']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['preferred_venue']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
-        assert submissions[1].content['consent_to_review']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['software']['readers'] == [
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
@@ -1651,13 +1664,6 @@ class TestARRVenueV2():
             "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
         ]
         assert submissions[1].content['data']['readers'] == [
-            "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
-            "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
-            "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
-            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
-            "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
-        ]
-        assert submissions[1].content['responsible_NLP_research']['readers'] == [
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",

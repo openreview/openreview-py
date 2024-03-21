@@ -69,39 +69,25 @@ arr_submission_content = {
             }
         }
     },
-    "responsible_NLP_research": {
-        "order": 7,
-        "description": "Upload a single PDF of your completed responsible NLP research checklist (see https://aclrollingreview.org/responsibleNLPresearch/).",
-        "value": {
-            "param": {
-                "type": "file",
-                "maxSize": 50,
-                "extensions": [
-                    "pdf"
-                ]
-            }
-        }
-    },
     "paper_type": {
-        "order": 8,
-        "description": "Short or long. See the CFP for the requirements for short and long papers.",
         "value": {
             "param": {
-                "type": "string",
+                "input": "radio",
                 "enum": [
                     "long",
                     "short"
                 ],
-                "input": "radio"
+                "optional": False,
+                "type": "string"
             }
-        }
+        },
+        "description": "Short or long. See the CFP for the requirements for short and long papers.",
+        "order": 7
     },
     "research_area": {
-        "order": 9,
-        "description": "Research Areas / Tracks. Select the most relevant research area / track for your paper. This will be used to inform the reviewer and action editor assignment.",
         "value": {
             "param": {
-                "type": "string",
+                "input": "radio",
                 "enum": [
                     "Computational Social Science and Cultural Analytics",
                     "Dialogue and Interactive Systems",
@@ -126,27 +112,64 @@ arr_submission_content = {
                     "Speech recognition, text-to-speech and spoken language understanding",
                     "Summarization",
                     "Syntax: Tagging, Chunking and Parsing / ML",
-                    "NLP Applications"
+                    "NLP Applications",
+                    "Special Theme (conference specific)"
                 ],
-                "input": "radio"
+                "optional": False,
+                "type": "string"
             }
-        }
+        },
+        "description": "Research Areas / Tracks. Select the most relevant research area / track for your paper. This will be used to inform the reviewer and action editor assignment.",
+        "order": 8
+    },
+    "contribution_types": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "Model analysis & interpretability",
+                    "NLP engineering experiment",
+                    "Reproduction study",
+                    "Approaches to low-resource settings",
+                    "Approaches low compute settings-efficiency",
+                    "Publicly available software and/or pre-trained models",
+                    "Data resources",
+                    "Data analysis",
+                    "Position papers",
+                    "Surveys",
+                    "Theory"
+                ],
+                "optional": True,
+                "type": "string[]"
+            }
+        },
+        "description": "Which of the following types of contributions does your paper make? This will inform the reviewers and meta-reviewer about what to look for in your work.",
+        "order": 9
+    },
+    "languages_studied": {
+        "value": {
+            "param": {
+                "regex": ".{1,1000}",
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Please list the languages studied in your paper, separated by commas.",
+        "order": 10
     },
     "previous_URL": {
-        "order": 10,
-        "description": "Provide the URL of your previous submission to ACL Rolling Review if this is a resubmission",
         "value": {
             "param": {
-                "type": "string",
-                "maxLength": 500,
-                "optional": True
+                "regex": ".{1,500}",
+                "optional": True,
+                "type": "string"
             }
-        }
+        },
+        "description": "If this is a resubmission, provide the URL of your previous submission to ACL Rolling Review (this URL will look like https://openreview.net/forum?id=<some string>).",
+        "order": 11
     },
     "previous_PDF": {
-      "description": "If this is a resubmission, upload a single PDF of your previous submission to ACL Rolling Review.",
-      "order": 11,
-      "value": {
+        "value": {
             "param": {
                 "type": "file",
                 "maxSize": 80,
@@ -155,12 +178,12 @@ arr_submission_content = {
                 ],
                 "optional": True
             }
-        }
+        },
+        "description": "If this is a resubmission, upload a single PDF of your previous submission to ACL Rolling Review.",
+        "order": 12
     },
     "response_PDF": {
-      "description": "If this is a resubmission, upload a single PDF describing how you have changed your paper in response to your previous round of reviews. Note: this should NOT be a printout of your comments from the in-cycle author response period. This should be a new document that maintains anonymity and describes changes since your last submission.",
-      "order": 12,
-      "value": {
+        "value": {
             "param": {
                 "type": "file",
                 "maxSize": 80,
@@ -169,52 +192,54 @@ arr_submission_content = {
                 ],
                 "optional": True
             }
-        }
+        },
+        "description": "If this is a resubmission, upload a single PDF describing how you have changed your paper in response to your previous round of reviews. Note: this should NOT be a printout of your comments from the in-cycle author response period. This should be a new document that maintains anonymity and describes changes since your last submission.",
+        "order": 13
     },
     "reassignment_request_action_editor": {
-        "order": 13,
-        "description": "Do you want your submission to go to a different action editor? If you want your submission to go to the same action editor and they are unavailable this cycle, you will be assigned a new action editor.",
         "value": {
             "param": {
-                "type": "string",
+                "input": "radio",
                 "enum": [
                     "Yes, I want a different action editor for our submission",
-                    "No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable"
+                    "No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable",
+                    "This is not a resubmission"
                 ],
-                "input": "radio",
-                "optional": True
+                "optional": True,
+                "type": "string"
             }
-        }
+        },
+        "description": "Do you want your submission to go to a different action editor? If you want your submission to go to the same action editor and they are unavailable this cycle, you will be assigned a new action editor.",
+        "order": 14
     },
     "reassignment_request_reviewers": {
-        "order": 14,
-        "description": "Do you want your submission to go to a different set of reviewers? If you want your submission to go to the same set of reviewers and at least one are unavailable this cycle, you will be assigned new reviewers in their place.",
         "value": {
             "param": {
-                "type": "string",
+                "input": "radio",
                 "enum": [
                     "Yes, I want a different set of reviewers",
-                    "No, I want the same set of reviewers from our previous submission and understand that new reviewers may be assigned if any of the previous ones are unavailable"
+                    "No, I want the same set of reviewers from our previous submission and understand that new reviewers may be assigned if any of the previous ones are unavailable",
+                    "This is not a resubmission"
                 ],
-                "input": "radio",
-                "optional": True
+                "optional": True,
+                "type": "string"
             }
-        }
+        },
+        "description": "Do you want your submission to go to a different set of reviewers? If you want your submission to go to the same set of reviewers and at least one are unavailable this cycle, you will be assigned new reviewers in their place.",
+        "order": 15
     },
     "justification_for_not_keeping_action_editor_or_reviewers": {
-        "order": 15,
-        "description": "Please specify reason for any reassignment request. Reasons may include clear lack of expertise in the area or dismissing the work without any concrete comments regarding correctness of the results or argumentation, limited perceived impact of the methods or findings, lack of clarity in exposition, or other valid criticisms. It is up to the discretion of the action editors or editors in chief regarding whether to heed these requests.",
         "value": {
             "param": {
-                "type": "string",
-                "maxLength": 10000,
-                "optional": True
+                "minLength": 1,
+                "optional": True,
+                "type": "string"
             }
-        }
+        },
+        "description": "Please specify reason for any reassignment request. Reasons may include clear lack of expertise in the area or dismissing the work without any concrete comments regarding correctness of the results or argumentation, limited perceived impact of the methods or findings, lack of clarity in exposition, or other valid criticisms. It is up to the discretion of the action editors or editors in chief regarding whether to heed these requests.",
+        "order": 16
     },
     "software": {
-        "order": 16,
-        "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing software (max. 200MB).",
         "value": {
             "param": {
                 "type": "file",
@@ -225,11 +250,11 @@ arr_submission_content = {
                 ],
                 "optional": True
             }
-        }
+        },
+        "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing software (max. 200MB).",
+        "order": 17
     },
     "data": {
-        "order": 17,
-        "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing data (max. 200MB).",
         "value": {
             "param": {
                 "type": "file",
@@ -240,70 +265,658 @@ arr_submission_content = {
                 ],
                 "optional": True
             }
-        }
+        },
+        "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing data (max. 200MB).",
+        "order": 18
     },
     "preprint": {
-        "order": 18,
-        "description": "Would the authors like to have a public anonymous pre-print of the submission? This includes PDF, abstract and all supplemental material.",
         "value": {
             "param": {
-                "type": "string",
+                "input": "radio",
                 "enum": [
                     "yes",
                     "no"
                 ],
-                "input": "radio"
+                "optional": False,
+                "type": "string"
             }
-        }
+        },
+        "description": "Would the authors like ARR to release a public anonymous pre-print of the submission?",
+        "order": 19
+    },
+    "preprint_status": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "There is a non-anonymous preprint (URL specified in the next question).",
+                    "We plan to release a non-anonymous preprint in the next two months (i.e., during the reviewing process).",
+                    "We are considering releasing a non-anonymous preprint in the next two months (i.e., during the reviewing process).",
+                    "There is no non-anonymous preprint and we do not intend to release one."
+                ],
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "description": "Is there are a publicly available non-anonymous preprints of this paper, or do you plan to release one? Note, all options for this question are permitted under the updated ACL preprint policy. We are collecting this information to help inform the review process.",
+        "order": 20
     },
     "existing_preprints": {
-        "order": 19,
-        "description": "If there are any publicly available non-anonymous preprints of this paper, please list them here (provide the URLs please).",
         "value": {
             "param": {
-                "type": "string",
-                "minLength": 1,
-                "optional": True
+                "regex": ".{1,1000}",
+                "optional": True,
+                "type": "string"
             }
-        }
+        },
+        "description": "If there are any publicly available non-anonymous preprints of this paper, please list them here (provide the URLs please).",
+        "order": 21
     },
     "preferred_venue": {
-        "order": 20,
-        "description": "If you have a venue that you are hoping to submit this paper to, please enter it here. You must enter the designated acronym from this list: https://aclrollingreview.org/dates. Note that entering a preferred venue is not a firm commitment to submit your paper to this venue, but it will help ARR and the venue chairs in planning, so we highly recommend filling in your current intentions. Please enter only your first choice.",
         "value": {
             "param": {
-                "type": "string",
-                "maxLength": 300,
-                "optional": True
+                "regex": ".{1,300}",
+                "optional": True,
+                "type": "string"
             }
-        }
+        },
+        "description": "If you have a venue that you are hoping to submit this paper to, please enter it here. You must enter the designated acronym from this list: https://aclrollingreview.org/dates. Note that entering a preferred venue is not a firm commitment to submit your paper to this venue, but it will help ARR and the venue chairs in planning, so we highly recommend filling in your current intentions. Please enter only your first choice.",
+        "order": 22
     },
     "consent_to_share_data": {
-        "order": 21,
-        "description": "I agree for the anonymized metadata associated with my submission to be included in a publicly available dataset. This dataset WILL include scores, anonymized paper and reviewer IDs that allow grouping the reviews by paper and by reviewer, as well as acceptance decisions and other numerical and categorical metadata. This dataset WILL NOT include any textual or uniquely attributable data like names, submission titles and texts, review texts, author responses, etc. Your decision to opt-in the data does not affect the reviewing of your submission in any way.",
         "value": {
             "param": {
-                "type": "string",
+                "input": "radio",
                 "enum": [
                     "yes",
                     "no"
                 ],
-                "input": "radio"
+                "optional": False,
+                "type": "string"
             }
-        }
+        },
+        "description": "I agree for the anonymized metadata associated with my submission to be included in a publicly available dataset. This dataset WILL include scores, anonymized paper and reviewer IDs that allow grouping the reviews by paper and by reviewer, as well as acceptance decisions and other numerical and categorical metadata. This dataset WILL NOT include any textual or uniquely attributable data like names, submission titles and texts, review texts, author responses, etc. Your decision to opt-in the data does not affect the reviewing of your submission in any way.",
+        "order": 23
     },
-    "consent_to_review": {
-        "order": 22,
-        "description": "By submitting this paper, all authors of this paper agree to serve as reviewers for ACL Rolling Review if eligible and invited.",
+    "consent_to_share_submission_details": {
         "value": {
             "param": {
-                "type": "string",
+                "input": "radio",
                 "enum": [
-                    "yes"
+                    "On behalf of all authors, we agree to the terms above to share our submission details."
                 ],
-                "input": "radio"
+                "optional": False,
+                "type": "string"
             }
-        }
+        },
+        "description": "Upon submitting this paper, authors agree to allow us to share their submission details (such as title, author names, and potentially abstract) with program committees from other conference venues for the purpose of verifying compliance with submission requirements.",
+        "order": 25
+    },
+    "A1": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no",
+                    "n/a"
+                ],
+                "type": "string"
+            }
+        },
+        "description": "Did you discuss the limitations of your work? Note that all ARR papers must now have a Limitations section, as per the CFP, and can be desk rejected if it is missing.",
+        "order": 27
+    },
+    "A1_elaboration_for_yes_or_no": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "description": "For yes, provide a section number. For no, justify why not.",
+        "order": 28
+    },
+    "A2": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no",
+                    "n/a"
+                ],
+                "type": "string"
+            }
+        },
+        "description": "Did you discuss any potential risks of your work?",
+        "order": 30
+    },
+    "A2_elaboration_for_yes_or_no": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "description": "For yes, provide a section number. For no, justify why not.",
+        "order": 31
+    },
+    "A3": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no",
+                    "n/a"
+                ],
+                "type": "string"
+            }
+        },
+        "description": "Do the abstract and introduction summarize the paper's main claims?",
+        "order": 33
+    },
+    "A3_elaboration_for_yes_or_no": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "description": "For yes, provide a section number. For no, justify why not.",
+        "order": 34
+    },
+    "B": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no"
+                ],
+                "type": "string"
+            }
+        },
+        "description": "Did you use or create scientific artifacts?",
+        "order": 36
+    },
+    "B1": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no",
+                    "n/a"
+                ],
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "Did you cite the creators of artifacts you used?",
+        "order": 37
+    },
+    "B1_elaboration_for_yes_or_no": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "For yes, provide a section number. For no, justify why not.",
+        "order": 38
+    },
+    "B2": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no",
+                    "n/a"
+                ],
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "Did you discuss the license or terms for use and/or distribution of any artifacts?",
+        "order": 40
+    },
+    "B2_elaboration_for_yes_or_no": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "For yes, provide a section number. For no, justify why not.",
+        "order": 41
+    },
+    "B3": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no",
+                    "n/a"
+                ],
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "Did you discuss if your use of existing artifact(s) was consistent with their intended use, provided that it was specified? For the artifacts you create, do you specify intended use and whether that is compatible with the original access conditions (in particular, derivatives of data accessed for research purposes should not be used outside of research contexts)?",
+        "order": 43
+    },
+    "B3_elaboration_for_yes_or_no": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "For yes, provide a section number. For no, justify why not.",
+        "order": 44
+    },
+    "B4": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no",
+                    "n/a"
+                ],
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "Did you discuss the steps taken to check whether the data that was collected/used contains any information that names or uniquely identifies individual people or offensive content, and the steps taken to protect/anonymize it?",
+        "order": 46
+    },
+    "B4_elaboration_for_yes_or_no": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "For yes, provide a section number. For no, justify why not.",
+        "order": 47
+    },
+    "B5": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no",
+                    "n/a"
+                ],
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "Did you provide documentation of the artifacts, e.g., coverage of domains, languages, and linguistic phenomena, demographic groups represented, etc.?",
+        "order": 49
+    },
+    "B5_elaboration_for_yes_or_no": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "For yes, provide a section number. For no, justify why not.",
+        "order": 50
+    },
+    "B6": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no",
+                    "n/a"
+                ],
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "Did you report relevant statistics like the number of examples, details of train/test/dev splits, etc. for the data that you used/created?",
+        "order": 52
+    },
+    "B6_elaboration_for_yes_or_no": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "For yes, provide a section number. For no, justify why not.",
+        "order": 53
+    },
+    "C": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no"
+                ],
+                "type": "string"
+            }
+        },
+        "description": "Did you run computational experiments?",
+        "order": 55
+    },
+    "C1": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no",
+                    "n/a"
+                ],
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "Did you report the number of parameters in the models used, the total computational budget (e.g., GPU hours), and computing infrastructure used?",
+        "order": 56
+    },
+    "C1_elaboration_for_yes_or_no": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "For yes, provide a section number. For no, justify why not.",
+        "order": 57
+    },
+    "C2": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no",
+                    "n/a"
+                ],
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "Did you discuss the experimental setup, including hyperparameter search and best-found hyperparameter values?",
+        "order": 59
+    },
+    "C2_elaboration_for_yes_or_no": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "For yes, provide a section number. For no, justify why not.",
+        "order": 60
+    },
+    "C3": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no",
+                    "n/a"
+                ],
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "Did you report descriptive statistics about your results (e.g., error bars around results, summary statistics from sets of experiments), and is it transparent whether you are reporting the max, mean, etc. or just a single run?",
+        "order": 62
+    },
+    "C3_elaboration_for_yes_or_no": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "For yes, provide a section number. For no, justify why not.",
+        "order": 63
+    },
+    "C4": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no",
+                    "n/a"
+                ],
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "If you used existing packages (e.g., for preprocessing, for normalization, or for evaluation), did you report the implementation, model, and parameter settings used (e.g., NLTK, Spacy, ROUGE, etc.)?",
+        "order": 65
+    },
+    "C4_elaboration_for_yes_or_no": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "For yes, provide a section number. For no, justify why not.",
+        "order": 66
+    },
+    "D": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no"
+                ],
+                "type": "string"
+            }
+        },
+        "description": "Did you use human annotators (e.g., crowdworkers) or research with human subjects?",
+        "order": 68
+    },
+    "D1": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no",
+                    "n/a"
+                ],
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "Did you report the full text of instructions given to participants, including e.g., screenshots, disclaimers of any risks to participants or annotators, etc.?",
+        "order": 69
+    },
+    "D1_elaboration_for_yes_or_no": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "For yes, provide a section number. For no, justify why not.",
+        "order": 70
+    },
+    "D2": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no",
+                    "n/a"
+                ],
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "Did you report information about how you recruited (e.g., crowdsourcing platform, students) and paid participants, and discuss if such payment is adequate given the participants' demographic (e.g., country of residence)?",
+        "order": 72
+    },
+    "D2_elaboration_for_yes_or_no": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "For yes, provide a section number. For no, justify why not.",
+        "order": 73
+    },
+    "D3": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no",
+                    "n/a"
+                ],
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "Did you discuss whether and how consent was obtained from people whose data you're using/curating (e.g., did your instructions explain how the data would be used)?",
+        "order": 75
+    },
+    "D3_elaboration_for_yes_or_no": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "For yes, provide a section number. For no, justify why not.",
+        "order": 76
+    },
+    "D4": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no",
+                    "n/a"
+                ],
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "Was the data collection protocol approved (or determined exempt) by an ethics review board?",
+        "order": 78
+    },
+    "D4_elaboration_for_yes_or_no": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "For yes, provide a section number. For no, justify why not.",
+        "order": 79
+    },
+    "D5": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no",
+                    "n/a"
+                ],
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "Did you report the basic demographic and geographic characteristics of the annotator population that is the source of the data?",
+        "order": 81
+    },
+    "D5_elaboration_for_yes_or_no": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "For yes, provide a section number. For no, justify why not.",
+        "order": 82
+    },
+    "E": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no"
+                ],
+                "type": "string"
+            }
+        },
+        "description": "Did you use AI assistants (e.g., ChatGPT, Copilot) in your research, coding, or writing?",
+        "order": 84
+    },
+    "E1": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "yes",
+                    "no",
+                    "n/a"
+                ],
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "Did you include information about your use of AI assistants?",
+        "order": 85
+    },
+    "E1_elaboration_for_yes_or_no": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "type": "string",
+                "optional": True
+            }
+        },
+        "description": "For yes, provide a section number. For no, justify why not.",
+        "order": 86
     },
     "author_consent_field": {
         "order": 22,
@@ -346,20 +959,63 @@ hide_fields = [
     "preprint",
     "existing_preprints",
     "preferred_venue",
-    "consent_to_review",
-    "consent_to_share_data"
+    "consent_to_share_data",
+    "consent_to_share_submission_details",
+    "preprint_status",
+    "existing_preprints",
 ]
 
 hide_fields_from_public = [
     "software",
     "data",
-    "responsible_NLP_research",
     "previous_URL",
     "previous_PDF",
     "response_PDF",
     "reassignment_request_action_editor",
     "reassignment_request_reviewers",
-    "justification_for_not_keeping_action_editor_or_reviewers"
+    "justification_for_not_keeping_action_editor_or_reviewers",
+    "A1",
+    "A1_elaboration_for_yes_or_no",
+    "A2",
+    "A2_elaboration_for_yes_or_no",
+    "A3",
+    "A3_elaboration_for_yes_or_no",
+    "B",
+    "B1",
+    "B1_elaboration_for_yes_or_no",
+    "B2",
+    "B2_elaboration_for_yes_or_no",
+    "B3",
+    "B3_elaboration_for_yes_or_no",
+    "B4",
+    "B4_elaboration_for_yes_or_no",
+    "B5",
+    "B5_elaboration_for_yes_or_no",
+    "B6",
+    "B6_elaboration_for_yes_or_no",
+    "C",
+    "C1",
+    "C1_elaboration_for_yes_or_no",
+    "C2",
+    "C2_elaboration_for_yes_or_no",
+    "C3",
+    "C3_elaboration_for_yes_or_no",
+    "C4",
+    "C4_elaboration_for_yes_or_no",
+    "D",
+    "D1",
+    "D1_elaboration_for_yes_or_no",
+    "D2",
+    "D2_elaboration_for_yes_or_no",
+    "D3",
+    "D3_elaboration_for_yes_or_no",
+    "D4",
+    "D4_elaboration_for_yes_or_no",
+    "D5",
+    "D5_elaboration_for_yes_or_no",
+    "E",
+    "E1",
+    "E1_elaboration_for_yes_or_no"
 ]
 
 arr_official_review_content = {
