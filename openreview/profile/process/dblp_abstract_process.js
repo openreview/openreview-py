@@ -6,7 +6,7 @@ async function process(client, edit, invitation) {
 
   let abstract = null
   if (html) {
-    const extractionResult = await Tools.extractAbstract(html);
+    const extractionResult = await Tools.extractAbstract(html).then(result => result.json());
     abstract = extractionResult.abstract
     console.log('abstract: ' + abstract);
     console.log('pdf: ' + extractionResult.pdf);

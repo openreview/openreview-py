@@ -13,7 +13,7 @@ async function process(client, edit, invitation) {
 
   try {
     if (html) {
-      const { abstract, pdf, error } = await Tools.extractAbstract(html);
+      const { abstract, pdf, error } = await Tools.extractAbstract(html).then(result => result.json());
       console.log('abstract: ' + abstract);
       console.log('pdf: ' + pdf);
       console.log('error: ' + error);
