@@ -1056,7 +1056,7 @@ class TestVenueRequest():
                 'title': 'Paper Matching Setup',
                 'matching_group':  venue['venue_id'] + '/Reviewers',
                 'compute_conflicts': 'Default',
-                'compute_affinity_scores': 'Yes'
+                'compute_affinity_scores': 'specter+mfr'
             },
             forum=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
@@ -1199,7 +1199,7 @@ class TestVenueRequest():
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
                 'compute_conflicts': 'Default',
-                'compute_affinity_scores': 'Yes'
+                'compute_affinity_scores': 'specter+mfr'
             },
             forum=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
@@ -1226,7 +1226,7 @@ class TestVenueRequest():
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
                 'compute_conflicts': 'Default',
-                'compute_affinity_scores': 'Yes'
+                'compute_affinity_scores': 'specter+mfr'
             },
             forum=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
@@ -1259,7 +1259,7 @@ class TestVenueRequest():
                     'title': 'Paper Matching Setup',
                     'matching_group': conference.get_id() + '/Reviewers',
                     'compute_conflicts': 'No',
-                    'compute_affinity_scores': 'Yes',
+                    'compute_affinity_scores': 'specter+mfr',
                     'upload_affinity_scores': url
                 },
                 forum=venue['request_form_note'].forum,
@@ -3200,12 +3200,12 @@ Best,
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=5)
-        revision_stage_note = test_client.post_note(openreview.Note(
+        revision_stage_note = openreview.Note(
             content={
                 'submission_revision_name': 'Camera_Ready_Revision',
                 'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
-                'accepted_submissions_only': 'Enable revision for accepted submissions only',
+                'accepted_submissions_only': 'Enable revision for all submissions',
                 'submission_author_edition': 'Allow reorder of existing authors only',
                 'submission_revision_additional_options': {
                     "submission_type": {
@@ -3232,7 +3232,14 @@ Best,
             replyto=venue['request_form_note'].forum,
             signatures=['~SomeFirstName_User1'],
             writers=[]
-        ))
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The value Enable revision for all submissions in field accepted_submissions_only does not match the invitation definition'):
+            test_client.post_note(revision_stage_note)
+
+        revision_stage_note.content['accepted_submissions_only'] = 'Enable revision for accepted submissions only'
+        test_client.post_note(revision_stage_note)
+
         assert revision_stage_note
 
         helpers.await_queue()
@@ -3357,7 +3364,7 @@ Best,
                 'submission_revision_name':'Supplementary Material',
                 'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
-                'accepted_submissions_only': 'Enable revision for all submissions',
+                'accepted_submissions_only': 'Enable revision for accepted submissions only',
                 'submission_author_edition': 'Allow addition and removal of authors',
                 'submission_revision_remove_options': ['title','authors', 'authorids','abstract','keywords', 'TLDR'],
                 'submission_revision_additional_options': {
@@ -3388,22 +3395,12 @@ Best,
         submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number')
         assert submissions and len(submissions) == 3
 
+        invitations = openreview_client.get_invitations(invitation = 'V2.cc/2030/Conference/-/Supplementary_Material')
+        assert len(invitations) == 1
         revision_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission1/-/Supplementary_Material')
         assert revision_invitation
         assert revision_invitation.edit['readers'] == ['everyone']
         revision_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission2/-/Supplementary_Material')
-        assert revision_invitation.edit['readers'] == ['V2.cc/2030/Conference',
-            'V2.cc/2030/Conference/Submission2/Senior_Area_Chairs',
-            'V2.cc/2030/Conference/Submission2/Area_Chairs',
-            'V2.cc/2030/Conference/Submission2/Reviewers',
-            'V2.cc/2030/Conference/Submission2/Authors']
+        assert not revision_invitation
         revision_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission3/-/Supplementary_Material')
-        assert revision_invitation
-        assert revision_invitation.edit['readers'] == ['V2.cc/2030/Conference',
-            'V2.cc/2030/Conference/Submission3/Senior_Area_Chairs',
-            'V2.cc/2030/Conference/Submission3/Area_Chairs',
-            'V2.cc/2030/Conference/Submission3/Reviewers',
-            'V2.cc/2030/Conference/Submission3/Authors']
-
-        assert all(x not in revision_invitation.edit['note']['content'] for x in ['title','authors', 'authorids','abstract','keywords', 'TLDR'])
-        assert 'supplementary_material' in revision_invitation.edit['note']['content']
+        assert not revision_invitation

@@ -80,7 +80,7 @@ class GroupBuilder(object):
             content['certifications'] = { 'value': self.journal.get_certifications() }
         if self.journal.get_eic_certifications():
             content['eic_certifications'] = { 'value': self.journal.get_eic_certifications() }
-        if self.journal.get_expert_reviewer_certification():
+        if self.journal.has_expert_reviewers():
             content['expert_reviewer_certification'] = { 'value': self.journal.get_expert_reviewer_certification() }
         if self.journal.get_event_certifications():
             content['event_certifications'] = { 'value': self.journal.get_event_certifications() }
@@ -365,6 +365,17 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
                             signatories=[],
                             members=[]))
             
+        ## reviewers volunteers group
+        reviewers_volunteers_id = self.journal.get_reviewers_volunteers_id()
+        reviewers_volunteers_group = openreview.tools.get_group(self.client, reviewers_volunteers_id)
+        if not reviewers_volunteers_group:
+            self.post_group(Group(id=reviewers_volunteers_id,
+                            readers=[venue_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[],
+                            members=[]))            
+            
         ## expert reviewer group
         if self.journal.has_expert_reviewers():
             expert_reviewers_id = self.journal.get_expert_reviewers_id()
@@ -442,7 +453,7 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
                 nonreaders=[authors_group_id],
                 writers=[venue_id],
                 signatures=[venue_id],
-                signatories=[venue_id, action_editors_group_id],
+                signatories=[venue_id],
                 members=[],
                 anonids=True
             ))

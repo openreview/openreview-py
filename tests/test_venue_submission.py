@@ -240,6 +240,20 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
                     }
                 ))
             
+        with pytest.raises(openreview.OpenReviewException, match=r'Profile Not Found: ~Melisa_BokEleven1'):
+            submission_note_2 = author_client.post_note_edit(
+                invitation='TestVenue.cc/-/Submission',
+                signatures= ['~Celeste_MartinezEleven1'],
+                note=Note(
+                    content={
+                        'title': { 'value': 'Paper 2 Title' },
+                        'authors': { 'value': ['Celeste MartinezEleven', 'Melisa BokEleven']},
+                        'authorids': { 'value': ['~Celeste_MartinezEleven1', '~Melisa_BokEleven1']},
+                        'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                        'keywords': {'value': ['aa'] }
+                    }
+                ))            
+            
         helpers.create_user('melisa@maileleven.com', 'Melisa', 'BokEleven')
 
         submission_note_2 = author_client.post_note_edit(
