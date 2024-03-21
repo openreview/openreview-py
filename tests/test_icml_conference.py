@@ -1329,6 +1329,23 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
 
+        with pytest.raises(openreview.OpenReviewException, match=r'Conflicts are not computed between SACs and ACs. Please select "No" for Compute Conflicts.'):
+            client.post_note(openreview.Note(
+                content={
+                    'title': 'Paper Matching Setup',
+                    'matching_group': 'ICML.cc/2023/Conference/Senior_Area_Chairs',
+                    'compute_conflicts': 'Default',
+                    'compute_affinity_scores': 'No',
+                    'upload_affinity_scores': affinity_scores_url
+                },
+                forum=request_form.id,
+                replyto=request_form.id,
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+                readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+                signatures=['~Program_ICMLChair1'],
+                writers=[]
+            ))
+
         ## setup matching to assign SAC to each AC
         client.post_note(openreview.Note(
             content={
@@ -1337,7 +1354,6 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
                 'compute_conflicts': 'No',
                 'compute_affinity_scores': 'No',
                 'upload_affinity_scores': affinity_scores_url
-
             },
             forum=request_form.id,
             replyto=request_form.id,
