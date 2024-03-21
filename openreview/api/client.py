@@ -2511,9 +2511,10 @@ class Invitation(object):
         :return: Dictionary containing all the parameters of a Invitation instance
         :rtype: dict
         """
-        body = {
-            'id': self.id
-        }
+        body = {}
+
+        if self.id:
+            body['id'] = self.id
 
         if self.cdate:
             body['cdate'] = self.cdate
@@ -2796,9 +2797,10 @@ class Group(object):
         :return: Dictionary containing all the parameters of a Group instance
         :rtype: dict
         """
-        body = {
-            'id': self.id
-        }
+        body = {}
+
+        if self.id is not None:
+            body['id'] = self.id
 
         if self.content is not None:
             body['content'] = self.content

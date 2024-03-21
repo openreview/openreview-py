@@ -289,7 +289,7 @@ class SubmissionStage(object):
                     'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.',
                     'value': {
                         'param': {
-                            'type': 'group[]',
+                            'type': 'profile[]',
                             'regex': r'~.*',
                         }
                     }
@@ -338,7 +338,7 @@ class SubmissionStage(object):
         return content
     
     def get_hidden_field_names(self):
-        return (['authors', 'authorids'] if self.double_blind else []) + self.hide_fields
+        return (['authors', 'authorids'] if self.double_blind and not self.author_names_revealed else []) + self.hide_fields
 
     def is_under_submission(self):
         return self.due_date is None or datetime.datetime.utcnow() < self.due_date
@@ -519,8 +519,10 @@ class SubmissionRevisionStage():
                 'order':4
             }
         elif self.allow_author_reorder == AuthorReorder.DISALLOW_EDIT:
-            del content['authors']
-            del content['authorids']
+            if 'authors' in content:
+                del content['authors']
+            if 'authorids' in content:
+                del content['authorids']
 
         if conference:
             invitation_id = conference.get_invitation_id(self.name)
