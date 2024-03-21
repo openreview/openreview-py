@@ -771,6 +771,32 @@ class TestARRVenueV2():
                 label = 'Exclude'
         ))
 
+        # Create past reviewer license
+        license_edit = reviewer_four_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/June/Reviewers/-/License_Agreement',
+            signatures=['~Reviewer_ARRFour1'],
+            note=openreview.api.Note(
+                content = {
+                    "attribution": { "value": "Yes, I wish to be attributed."},
+                    "agreement": { "value": "I agree"}
+                }    
+            )
+        )
+
+        assert reviewer_four_client.get_note(license_edit['note']['id'])
+
+        license_edit = reviewer_five_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/June/Reviewers/-/License_Agreement',
+            signatures=['~Reviewer_ARRFive1'],
+            note=openreview.api.Note(
+                content = {
+                    "agreement": { "value": "I do not agree"}
+                }    
+            )
+        )
+
+        assert reviewer_five_client.get_note(license_edit['note']['id'])
+
     
     def test_submission_preprocess(self, client, openreview_client, test_client, helpers):
         # Update the submission preprocess function and test validation for combinations
@@ -1084,14 +1110,14 @@ class TestARRVenueV2():
         assert set(pc_client_v2.get_group(june_venue.get_ethics_reviewers_id()).members) == set(pc_client_v2.get_group(august_venue.get_ethics_reviewers_id()).members)
         assert set(pc_client_v2.get_group(june_venue.get_ethics_chairs_id()).members) == set(pc_client_v2.get_group(august_venue.get_ethics_chairs_id()).members)
 
-        june_reviewer_registration_notes = pc_client.get_all_notes(invitation=f"{june_venue.get_reviewers_id()}/-/Registration")
-        august_reviewer_registration_notes = pc_client.get_all_notes(invitation=f"{august_venue.get_reviewers_id()}/-/Registration")
+        june_reviewer_registration_notes = pc_client_v2.get_all_notes(invitation=f"{june_venue.get_reviewers_id()}/-/Registration")
+        august_reviewer_registration_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_reviewers_id()}/-/Registration")
         assert all(j.signatures[0] == a.signatures[0] for a, j in zip(june_reviewer_registration_notes, august_reviewer_registration_notes))
-        june_ac_registration_notes = pc_client.get_all_notes(invitation=f"{june_venue.get_area_chairs_id()}/-/Registration")
-        august_ac_registration_notes = pc_client.get_all_notes(invitation=f"{august_venue.get_area_chairs_id()}/-/Registration")
+        june_ac_registration_notes = pc_client_v2.get_all_notes(invitation=f"{june_venue.get_area_chairs_id()}/-/Registration")
+        august_ac_registration_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_area_chairs_id()}/-/Registration")
         assert all(j.signatures[0] == a.signatures[0] for a, j in zip(june_ac_registration_notes, august_ac_registration_notes))
-        june_sac_registration_notes = pc_client.get_all_notes(invitation=f"{june_venue.get_senior_area_chairs_id()}/-/Registration")
-        august_sac_registration_notes = pc_client.get_all_notes(invitation=f"{august_venue.get_senior_area_chairs_id()}/-/Registration")
+        june_sac_registration_notes = pc_client_v2.get_all_notes(invitation=f"{june_venue.get_senior_area_chairs_id()}/-/Registration")
+        august_sac_registration_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_senior_area_chairs_id()}/-/Registration")
         assert all(j.signatures[0] == a.signatures[0] for a, j in zip(june_sac_registration_notes, august_sac_registration_notes))
 
         # Load and check for August in readers of edges
@@ -1118,6 +1144,13 @@ class TestARRVenueV2():
         ## Add overlap for deduplication test
         assert all(overlap not in openreview_client.get_group(august_venue.get_reviewers_id()).members for overlap in ['~AC_ARROne1', '~SAC_ARROne1'])
         assert all(overlap not in openreview_client.get_group(august_venue.get_area_chairs_id()).members for overlap in ['~SAC_ARROne1'])
+
+        # Check reviewer license notes
+        june_reviewer_license_notes = pc_client_v2.get_all_notes(invitation=f"{june_venue.get_reviewers_id()}/-/License_Agreement")
+        august_reviewer_license_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_reviewers_id()}/-/License_Agreement")
+        assert len(june_reviewer_license_notes) > len(august_reviewer_license_notes) ## One June reviewer did not agree
+        assert '~Reviewer_ARRFour1' in [note.signatures[0] for note in august_reviewer_license_notes]
+        assert '~Reviewer_ARRFive1' not in [note.signatures[0] for note in august_reviewer_license_notes]
 
     def test_unavailability_process_functions(self, client, openreview_client, helpers):
         # Update the process functions for each of the unavailability forms, set up the custom max papers

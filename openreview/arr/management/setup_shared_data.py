@@ -4,6 +4,7 @@ def process(client, invitation):
     import time, calendar
     registration_name = 'Registration'
     max_load_name = 'Max_Load_And_Unavailability_Request'
+    reviewer_license_name = 'License_Agreement'
 
     def _is_identical_content(note_to_post, notes):
         for note in notes:
@@ -137,6 +138,37 @@ def process(client, invitation):
                 readers=note.readers,
                 note=note
             )
+
+    # Reviewer License Notes (Registraton Notes)
+    reviewers_id = domain.content['reviewers_id']['value'].replace(venue_id, previous_cycle_id)
+    license_invitation = client.get_invitation(f"{reviewers_id}/-/{reviewer_license_name}")
+    next_license_invitation = client.get_invitation(f"{next_cycle_id}/{reviewers_id.split('/')[-1]}/-/{reviewer_license_name}")
+
+    existing_notes = client.get_all_notes(invitation=next_license_invitation.id)
+    notes = client.get_all_notes(invitation=license_invitation.id)
+
+    for note in notes:
+        if _is_identical_content(note, existing_notes):
+            continue
+        if 'not agree' in note.content['agreement']['value'].lower():
+            continue
+        # Clear note fields
+        note.id = None
+        note.invitations = None
+        note.cdate = None
+        note.mdate = None
+        note.license = None
+        note.readers = [next_cycle_id, note.signatures[0]]
+        note.writers = [next_cycle_id, note.signatures[0]]
+        note.forum = next_license_invitation.edit['note']['forum']
+        note.replyto = next_license_invitation.edit['note']['replyto']
+
+        client.post_note_edit(
+            invitation=f"{next_cycle_id}/{reviewers_id.split('/')[-1]}/-/{reviewer_license_name}",
+            signatures=note.signatures,
+            readers=note.readers,
+            note=note
+        )
 
     # Edges (Expertise Edges)
     for role in roles:
