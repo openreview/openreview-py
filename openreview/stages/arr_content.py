@@ -1797,6 +1797,20 @@ arr_reviewer_max_load_task = {
         "description": "Are you able to review resubmissions of papers you previously reviewed? (even if you answered '0' to the previous question)",
         "order": 2,
     },
+    "meta_data_donation": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes, I consent to donating anonymous metadata of my review for research.",
+                    "No, I do not consent to donating anonymous metadata of my review for research."
+                ],
+                "type": "string",
+            }
+        },
+        "description": "Do you agree for the anonymized metadata associated with your reviews produced in this cycle to be included in a publicly available dataset? This dataset WILL include scores, anonymized paper and reviewer IDs that allow grouping the reviews by paper and by reviewer, as well as meta-review decisions and other numerical and categorical metadata. This dataset WILL NOT include any textual or uniquely attributable data like names, submission titles and texts, review texts, author responses, etc.",
+        "order": 3
+    },
     "next_available_month": {
         "value": {
             "param": {
@@ -1820,7 +1834,7 @@ arr_reviewer_max_load_task = {
             }
         },
         "description": "If you are going to be unavailable for an extended period of time, please indicate the next month that you will be available. Leave",
-        "order": 3,
+        "order": 4,
     },
     "next_available_year": {
         "value": {
@@ -1832,8 +1846,8 @@ arr_reviewer_max_load_task = {
             }
         },
         "description": "If you are going to be unavailable for an extended period of time, please fill out the next year, in combination with the previously filled out month, that you will be available.",
-        "order": 4,
-    },
+        "order": 5,
+    }
 }
 
 arr_ac_max_load_task = deepcopy(arr_reviewer_max_load_task)

@@ -258,7 +258,7 @@ def process(client, note, invitation):
         ARRStage(
             type=ARRStage.Type.REGISTRATION_STAGE,
             group_id=venue.get_reviewers_id(),
-            required_fields=['form_expiration_date'],
+            required_fields=['registration_due_date', 'form_expiration_date'],
             super_invitation_id=f"{venue.get_reviewers_id()}/-/{invitation_builder.REGISTRATION_NAME}",
             stage_arguments={
                 'committee_id': venue.get_reviewers_id(),
@@ -302,7 +302,7 @@ def process(client, note, invitation):
         ARRStage(
             type=ARRStage.Type.REGISTRATION_STAGE,
             group_id=venue.get_area_chairs_id(),
-            required_fields=['form_expiration_date'],
+            required_fields=['registration_due_date', 'form_expiration_date'],
             super_invitation_id=f"{venue.get_area_chairs_id()}/-/{invitation_builder.REGISTRATION_NAME}",
             stage_arguments={
                 'committee_id': venue.get_area_chairs_id(),
@@ -331,7 +331,7 @@ def process(client, note, invitation):
         ARRStage(
             type=ARRStage.Type.REGISTRATION_STAGE,
             group_id=venue.get_senior_area_chairs_id(),
-            required_fields=['form_expiration_date'],
+            required_fields=['registration_due_date', 'form_expiration_date'],
             super_invitation_id=f"{venue.get_senior_area_chairs_id()}/-/{invitation_builder.REGISTRATION_NAME}",
             stage_arguments={
                 'committee_id': venue.get_senior_area_chairs_id(),

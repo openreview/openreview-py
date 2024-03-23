@@ -211,6 +211,7 @@ class TestARRVenueV2():
                 content={
                     'form_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                     'author_consent_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'registration_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                     'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                     'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                     'ae_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
@@ -622,6 +623,7 @@ class TestARRVenueV2():
                 content = {
                     'maximum_load': { 'value': '0' },
                     'maximum_load_resubmission': { 'value': 'No' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     'next_available_month': { 'value': 'August'},
                     'next_available_year': { 'value':  2023}
                 }
@@ -635,6 +637,7 @@ class TestARRVenueV2():
                     content = {
                         'maximum_load': { 'value': '0' },
                         'maximum_load_resubmission': { 'value': 'No' },
+                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'August'}
                     }
                 )
@@ -647,6 +650,7 @@ class TestARRVenueV2():
                     content = {
                         'maximum_load': { 'value': '0' },
                         'maximum_load_resubmission': { 'value': 'No' },
+                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_year': { 'value': 2024}
                     }
                 )
@@ -658,6 +662,7 @@ class TestARRVenueV2():
                     content = {
                         'maximum_load': { 'value': '0' },
                         'maximum_load_resubmission': { 'value': 'No' },
+                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'September'},
                         'next_available_year': { 'value':  2023}
                     }
@@ -670,6 +675,7 @@ class TestARRVenueV2():
                     content = {
                         'maximum_load': { 'value': '0' },
                         'maximum_load_resubmission': { 'value': 'No' },
+                        'meta_data_donation': { 'value': 'No, I do not consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'July'},
                         'next_available_year': { 'value':  2023}
                     }
@@ -682,6 +688,7 @@ class TestARRVenueV2():
                     content = {
                         'maximum_load': { 'value': '0' },
                         'maximum_load_resubmission': { 'value': 'No' },
+                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'August'},
                         'next_available_year': { 'value':  2022}
                     }
@@ -694,6 +701,7 @@ class TestARRVenueV2():
                     content = {
                         'maximum_load': { 'value': '0' },
                         'maximum_load_resubmission': { 'value': 'No' },
+                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'July'},
                         'next_available_year': { 'value':  2022}
                     }
@@ -706,6 +714,7 @@ class TestARRVenueV2():
                 content = {
                     'maximum_load': { 'value': '0' },
                     'maximum_load_resubmission': { 'value': 'No' },
+                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     'next_available_month': { 'value': 'August'},
                     'next_available_year': { 'value':  2024}
                 }
@@ -718,6 +727,7 @@ class TestARRVenueV2():
                 content = {
                     'maximum_load': { 'value': '0' },
                     'maximum_load_resubmission': { 'value': 'Yes' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     'next_available_month': { 'value': 'September'},
                     'next_available_year': { 'value':  2024}
                 }
@@ -1235,7 +1245,8 @@ class TestARRVenueV2():
                 note=openreview.api.Note(
                     content = {
                         'maximum_load': { 'value': '4' },
-                        'maximum_load_resubmission': { 'value': 'No' }
+                        'maximum_load_resubmission': { 'value': 'No' },
+                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     }
                 )
             ) 
@@ -1245,7 +1256,8 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 content = {
                     'maximum_load': { 'value': '6' },
-                    'maximum_load_resubmission': { 'value': 'Yes' }
+                    'maximum_load_resubmission': { 'value': 'Yes' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                 }
             )
         )
@@ -1255,7 +1267,8 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 content = {
                     'maximum_load': { 'value': '10' },
-                    'maximum_load_resubmission': { 'value': 'Yes' }
+                    'maximum_load_resubmission': { 'value': 'Yes' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                 }
             )
         )
@@ -1282,7 +1295,8 @@ class TestARRVenueV2():
                     id = reviewer_note_edit['note']['id'],
                     content = {
                         'maximum_load': { 'value': '5' },
-                        'maximum_load_resubmission': { 'value': 'No' }
+                        'maximum_load_resubmission': { 'value': 'No' },
+                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     }
                 )
             ) 
@@ -1293,7 +1307,8 @@ class TestARRVenueV2():
                 id = ac_note_edit['note']['id'],
                 content = {
                     'maximum_load': { 'value': '7' },
-                    'maximum_load_resubmission': { 'value': 'Yes' }
+                    'maximum_load_resubmission': { 'value': 'Yes' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                 }
             )
         )
@@ -1304,7 +1319,8 @@ class TestARRVenueV2():
                 id = sac_note_edit['note']['id'],
                 content = {
                     'maximum_load': { 'value': '11' },
-                    'maximum_load_resubmission': { 'value': 'Yes' }
+                    'maximum_load_resubmission': { 'value': 'Yes' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                 }
             )
         )
@@ -1332,7 +1348,8 @@ class TestARRVenueV2():
                     ddate = openreview.tools.datetime_millis(now),
                     content = {
                         'maximum_load': { 'value': '5' },
-                        'maximum_load_resubmission': { 'value': 'No' }
+                        'maximum_load_resubmission': { 'value': 'No' },
+                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     }
                 )
             ) 
@@ -1344,7 +1361,8 @@ class TestARRVenueV2():
                 ddate = openreview.tools.datetime_millis(now),
                 content = {
                     'maximum_load': { 'value': '7' },
-                    'maximum_load_resubmission': { 'value': 'Yes' }
+                    'maximum_load_resubmission': { 'value': 'Yes' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                 }
             )
         )
@@ -1356,7 +1374,8 @@ class TestARRVenueV2():
                 ddate = openreview.tools.datetime_millis(now),
                 content = {
                     'maximum_load': { 'value': '11' },
-                    'maximum_load_resubmission': { 'value': 'Yes' }
+                    'maximum_load_resubmission': { 'value': 'Yes' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                 }
             )
         )
@@ -1382,7 +1401,8 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 content = {
                     'maximum_load': { 'value': '0' },
-                    'maximum_load_resubmission': { 'value': 'Yes' }
+                    'maximum_load_resubmission': { 'value': 'Yes' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                 }
             )
         ) 
@@ -1392,7 +1412,8 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 content = {
                     'maximum_load': { 'value': '0' },
-                    'maximum_load_resubmission': { 'value': 'Yes' }
+                    'maximum_load_resubmission': { 'value': 'Yes' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                 }
             )
         )
@@ -3248,7 +3269,8 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 content = {
                     'maximum_load': { 'value': '4' },
-                    'maximum_load_resubmission': { 'value': 'No' }
+                    'maximum_load_resubmission': { 'value': 'No' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                 }
             )
         )
