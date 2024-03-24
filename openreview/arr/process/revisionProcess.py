@@ -26,6 +26,7 @@ def process(client, note, invitation):
             invitation = client_v2.get_invitation(conference.get_submission_id())
             invitation.preprocess = invitation_builder.get_process_content('process/submission_preprocess.py')
             invitation.process = invitation.process + invitation_builder.get_process_content('process/submission_process_extension.py')
+            invitation.signatures=['~Super_User1']
             conference.invitation_builder.save_invitation(invitation)
 
             submission_deadline = forum_note.content.get('Submission Deadline', '').strip()

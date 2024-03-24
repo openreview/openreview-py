@@ -843,7 +843,8 @@ class TestARRVenueV2():
             "C": { 'value': 'yes' },
             "D": { 'value': 'yes' },
             "E": { 'value': 'yes' },
-            "author_consent_field": { 'value': 'yes' }
+            "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I agree" },
+            "section_2_permission_to_publish_peer_reviewers_content_agreement": { 'value': "Authors grant permission for ACL to publish peer reviewers' content" }
         }
 
         now = datetime.datetime.utcnow()
@@ -857,6 +858,7 @@ class TestARRVenueV2():
             openreview.Note(
                 content={
                     'form_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'author_consent_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                     'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                     'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
                     'ae_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
@@ -1482,6 +1484,48 @@ class TestARRVenueV2():
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        request_form_note=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
+        june_submission = openreview_client.get_all_notes(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission')[0]
+
+        pc_client.post_note(openreview.Note(
+            invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision',
+            forum=request_form_note.id,
+            readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form_note.id,
+            replyto=request_form_note.id,
+            signatures=['~Program_ARRChair1'],
+            writers=[],
+            content={
+                'title': 'ACL Rolling Review 2023 - August',
+                'Official Venue Name': 'ACL Rolling Review 2023 - August',
+                'Abbreviated Venue Name': 'ARR - August 2023',
+                'Official Website URL': 'http://aclrollingreview.org',
+                'program_chair_emails': ['editors@aclrollingreview.org', 'pc@aclrollingreview.org'],
+                'contact_email': 'editors@aclrollingreview.org',
+                'Venue Start Date': '2023/08/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'publication_chairs':'No, our venue does not have Publication Chairs',  
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'use_recruitment_template': 'Yes',
+                'Additional Submission Options': arr_submission_content,
+                'remove_submission_options': ['keywords'],
+                'homepage_override': { #TODO: Update
+                    'location': 'Hawaii, USA',
+                    'instructions': 'For author guidelines, please click [here](https://icml.cc/Conferences/2023/StyleAuthorInstructions)'
+                },
+                'hide_fields': hide_fields
+            }
+        ))
+
+        helpers.await_queue()
+
         domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu', 'deepmind.com', 'co.ux', 'apple.com', 'nvidia.com']
         for i in range(1,102):
             note = openreview.api.Note(
@@ -1495,7 +1539,7 @@ class TestARRVenueV2():
                     'paper_type': { 'value': 'short' },
                     'research_area': { 'value': 'Generation' },
                     'languages_studied': { 'value': 'A language' },
-                    'previous_URL': { 'value': 'https://arxiv.org/abs/1234.56789' },
+                    'previous_URL': { 'value': f'http://localhost:3030/forum?id={june_submission.id}' },
                     'previous_PDF': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'response_PDF': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
@@ -1515,7 +1559,8 @@ class TestARRVenueV2():
                     "C": { 'value': 'yes' },
                     "D": { 'value': 'yes' },
                     "E": { 'value': 'yes' },
-                    "author_consent_field": { 'value': 'yes' }
+                    "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I agree" if i % 2 == 0 else 'On behalf of all authors, I do not agree' },
+                    "section_2_permission_to_publish_peer_reviewers_content_agreement": { 'value': "Authors grant permission for ACL to publish peer reviewers' content" }
                 }
             )
             if i == 1 or i == 101:
@@ -1528,7 +1573,7 @@ class TestARRVenueV2():
 
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', count=101)
 
-        submissions = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+        submissions = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc', details='replies')
         assert len(submissions) == 101
         assert ['aclweb.org/ACL/ARR/2023/August', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ARROne1'] == submissions[0].readers
         assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ARROne1'] == submissions[0].content['authorids']['value']
@@ -1537,6 +1582,14 @@ class TestARRVenueV2():
 
         for i in range(1,102):
             assert f'aclweb.org/ACL/ARR/2023/August/Submission{i}/Authors' in authors_group.members
+
+        for submission in submissions:
+            if i % 2 == 0:# "On behalf of all authors, I agree"
+                assert any(
+                    any(
+                        'Blind_Submission_License_Agreement' in inv for inv in reply['invitations']
+                    ) for reply in submission.details['replies']
+                )
 
     def test_post_submission(self, client, openreview_client, helpers):
 

@@ -437,9 +437,9 @@ def process(client, note, invitation):
         ARRStage(
             type=ARRStage.Type.CUSTOM_STAGE,
             required_fields=['author_consent_due_date', 'form_expiration_date'],
-            super_invitation_id=f"{venue_id}/-/Author_Consent",
+            super_invitation_id=f"{venue_id}/-/Blind_Submission_License_Agreement",
             stage_arguments={
-                'name': 'Author_Consent',
+                'name': 'Blind_Submission_License_Agreement',
                 'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
                 'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
                 'invitees': [openreview.stages.CustomStage.Participants.AUTHORS],
