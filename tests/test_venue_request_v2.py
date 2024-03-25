@@ -1226,7 +1226,7 @@ class TestVenueRequest():
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
                 'compute_conflicts': 'Default',
-                'compute_affinity_scores': 'specter+mfr'
+                'compute_affinity_scores': 'specter2+scincl'
             },
             forum=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
