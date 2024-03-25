@@ -58,7 +58,7 @@ def process(client, note, invitation):
 
     # Set stages
     def build_preprint_release_edit(client, venue, builder, request_form):
-        venue_id = venue_id
+        venue_id = venue.id
         submission_stage = venue.submission_stage
 
         submission_id = submission_stage.get_submission_id(venue)
@@ -105,7 +105,7 @@ def process(client, note, invitation):
         if note_content:
             edit['note']['content'] = note_content
 
-        return edit
+        return {'edit': edit}
         
     def extend_desk_reject_verification(client, venue, builder, request_form):
         invitation_builder.set_verification_flag_invitation()
@@ -771,7 +771,9 @@ def process(client, note, invitation):
         'Registered_Load',
         'Emergency_Load',
         'Emergency_Area',
-        'Available', # Post "only for resubmissions"
+        'Available', # Post "only for resubmissions",
+        'Author_In_Current_Cycle',
+        'Seniority'
     ]
     for role in venue_roles:
         m = matching.Matching(venue, venue.client.get_group(role), None, None)

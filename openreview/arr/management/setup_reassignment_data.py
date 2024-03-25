@@ -428,5 +428,9 @@ def process(client, invitation):
                 )
             )
 
+    # 6) Post seniority edges
+            
+    # 7) Post author in cycle edges
+
 
 
