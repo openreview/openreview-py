@@ -881,7 +881,6 @@ url={https://openreview.net/forum?id='''
         ))
 
         helpers.await_queue()
-        helpers.await_queue(openreview_client)
 
         ethics_chairs_group = openreview_client.get_group('EMNLP/2023/Conference/Ethics_Chairs')
         assert '~Ethics_ChairOne1' in ethics_chairs_group.members
@@ -1056,7 +1055,6 @@ url={https://openreview.net/forum?id='''
         )
 
         venue.create_custom_stage()
-        helpers.await_queue(openreview_client)
 
         submissions = openreview_client.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission'}, sort='number:asc')
 
