@@ -41,7 +41,8 @@ We thank you for your cooperation.
 
 The {journal.short_name} Editors-in-Chief
 ''',
-        replyTo=assigned_action_editor if assigned_action_editor else journal.contact_info
+        replyTo=assigned_action_editor if assigned_action_editor else journal.contact_info,
+        signature=journal.venue_id
     )
 
     ## send email to AE
@@ -70,7 +71,8 @@ We thank you for your cooperation.
 
 The {journal.short_name} Editors-in-Chief
 ''',
-                replyTo=journal.contact_info
+                replyTo=journal.contact_info,
+                signature=journal.venue_id
         )
 
     ## send email to EICs
@@ -93,7 +95,8 @@ Link: https://openreview.net/forum?id={submission.id}
 
 OpenReview Team
 ''',
-                replyTo=journal.contact_info
+                replyTo=journal.contact_info,
+                signature=journal.venue_id
         )        
 
     

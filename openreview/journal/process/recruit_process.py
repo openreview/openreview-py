@@ -37,7 +37,7 @@ The {SHORT_PHRASE} editors in chief will be contacting you with more information
 
 If you would like to change your decision, please click the Decline link in the previous invitation email.'''.format(SHORT_PHRASE=SHORT_PHRASE, ACTION_EDITOR_NAME=ACTION_EDITOR_NAME)
 
-            response =  client.post_message(f'{edit.domain}/-/Edit', subject, [user], message, parentGroup=ACTION_EDITOR_ACCEPTED_ID)
+            response =  client.post_message(f'{edit.domain}/-/Edit', subject, [user], message, edit.domain, parentGroup=ACTION_EDITOR_ACCEPTED_ID)
 
         elif (response == 'No'):
             action = 'declined'
@@ -51,7 +51,7 @@ If you would like to change your decision, please click the Accept link in the p
 
 '''.format(ACTION_EDITOR_NAME=ACTION_EDITOR_NAME, SHORT_PHRASE=SHORT_PHRASE)
 
-            response =  client.post_message(f'{edit.domain}/-/Edit', subject, [user], message, parentGroup=ACTION_EDITOR_DECLINED_ID)
+            response =  client.post_message(f'{edit.domain}/-/Edit', subject, [user], message, edit.domain, parentGroup=ACTION_EDITOR_DECLINED_ID)
 
         if JOURNAL_REQUEST_ID:
             journal_request = client.get_note(JOURNAL_REQUEST_ID)

@@ -20,5 +20,6 @@ The authors of paper {submission.number}: {submission.content['title']['value']}
 
 OpenReview Team
 ''',
-        replyTo=journal.contact_info
+        replyTo=journal.contact_info,
+        signature=journal.venue_id
     )

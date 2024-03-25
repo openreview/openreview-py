@@ -18,6 +18,7 @@ def process(client, edit, invitation):
 
     ## Notify the action editors
     client.post_message(
+        journal.get_meta_invitation_id(),
         subject=f'[{journal.short_name}] Decision approved for submission {submission.number}: {submission.content["title"]["value"]}',
         recipients=[journal.get_action_editors_id(number=submission.number)],
         message=f'''Hi {{{{fullname}}}},
@@ -25,7 +26,9 @@ def process(client, edit, invitation):
 Your decision on submission {submission.number}: {submission.content['title']['value']} has been approved by the Editors in Chief. The decision is now public.
 
 To know more about the decision, please follow this link: https://openreview.net/forum?id={submission.id}
-''')
+''',
+        replyTo=journal.contact_info,
+        signature=venue_id)
 
     print('Check rejection')
     print(decision.content)
@@ -111,7 +114,8 @@ To know more about the decision, please follow this link: https://openreview.net
             recipients=[journal.get_authors_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
             message=message,
-            replyTo=journal.contact_info
+            replyTo=journal.contact_info,
+            signature=venue_id
         )
         return
 
@@ -131,5 +135,6 @@ To know more about the decision, please follow this link: https://openreview.net
             recipients=[journal.get_authors_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
             message=message,
-            replyTo=journal.contact_info
+            replyTo=journal.contact_info,
+            signature=venue_id
         )

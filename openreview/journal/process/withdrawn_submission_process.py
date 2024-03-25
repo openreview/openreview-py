@@ -19,7 +19,8 @@ We thank you for your involvement with {journal.short_name}!
 
 The {journal.short_name} Editors-in-Chief
 ''',
-        replyTo=journal.contact_info
+        replyTo=journal.contact_info,
+        signature=journal.venue_id
     )
 
     print('Enable Author deanonymize')

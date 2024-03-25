@@ -23,7 +23,7 @@ def process_update(client, edge, invitation, existing_edge):
             contact_info=journal.contact_info,
         )
 
-        client.post_message(journal.get_meta_invitation_id(), subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info)
+        client.post_message(journal.get_meta_invitation_id(), subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info, signature=journal.venue_id)
 
         return client.remove_members_from_group(group.id, edge.tail)
 
@@ -46,7 +46,7 @@ def process_update(client, edge, invitation, existing_edge):
             number_of_reviewers=journal.get_number_of_reviewers(),
         )
 
-        client.post_message(journal.get_meta_invitation_id(), subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info)
+        client.post_message(journal.get_meta_invitation_id(), subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info, signature=journal.venue_id)
 
         ## expire AE recommendation
         journal.invitation_builder.expire_invitation(journal.get_ae_recommendation_id(number=note.number))
@@ -82,7 +82,7 @@ def process_update(client, edge, invitation, existing_edge):
                     editors_in_chief_email=journal.get_editors_in_chief_email(),
                 )
 
-                client.post_message(journal.get_meta_invitation_id(), subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info)
+                client.post_message(journal.get_meta_invitation_id(), subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info, signature=journal.venue_id)
                 return                                     
 
         return

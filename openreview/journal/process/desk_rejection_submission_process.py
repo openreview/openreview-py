@@ -27,7 +27,8 @@ def process(client, edit, invitation):
         recipients=submission.signatures,
         subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
         message=message,
-        replyTo=journal.contact_info
+        replyTo=journal.contact_info, 
+        signature=journal.venue_id
     )
 
     journal.invitation_builder.expire_paper_invitations(submission)     

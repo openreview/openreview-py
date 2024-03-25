@@ -34,5 +34,6 @@ We thank you for your cooperation.
 
 The {journal.short_name} Editors-in-Chief
 ''',
-        replyTo=assigned_action_editor if assigned_action_editor else journal.contact_info
+        replyTo=assigned_action_editor if assigned_action_editor else journal.contact_info,
+        signature=journal.venue_id
     )

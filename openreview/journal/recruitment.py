@@ -45,7 +45,8 @@ class Recruitment(object):
                         subject,
                         action_editors_invited_id,
                         verbose = False,
-                        invitation = self.journal.get_meta_invitation_id())
+                        invitation = self.journal.get_meta_invitation_id(),
+                        signature=self.journal.venue_id)
                     recruitment_status['invited'].append(invitee)
                     assert self.client.get_groups(id=action_editors_invited_id, member=invitee)
                 except Exception as e:
@@ -98,7 +99,8 @@ class Recruitment(object):
                         reviewers_invited_id,
                         verbose = False,
                         replyTo = replyTo,
-                        invitation = self.journal.get_meta_invitation_id())
+                        invitation = self.journal.get_meta_invitation_id(),
+                        signature=self.journal.venue_id)
                     recruitment_status['invited'].append(invitee)
                 except Exception as e:
                     error_string = repr(e)

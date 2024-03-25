@@ -1623,7 +1623,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def post_message(self, invitation, subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None):
+    def post_message(self, invitation, subject, recipients, message, signature, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None):
         """
         Posts a message to the recipients and consequently sends them emails
 
@@ -1648,16 +1648,27 @@ class OpenReviewClient(object):
         if parentGroup:
             recipients = self.get_group(parentGroup).transform_to_anon_ids(recipients)
 
-        response = self.session.post(self.messages_url, json = {
+        json = {
             'invitation': invitation,
             'groups': recipients,
             'subject': subject ,
             'message': message,
-            'ignoreGroups': ignoreRecipients,
-            'from': sender,
-            'replyTo': replyTo,
-            'parentGroup': parentGroup
-            }, headers = self.headers)
+            'signature': signature
+        }
+
+        if ignoreRecipients:
+            json['ignoreGroups'] = ignoreRecipients
+
+        if sender:
+            json['from'] = sender
+
+        if replyTo:
+            json['replyTo'] = replyTo
+
+        if parentGroup:
+            json['parentGroup'] = parentGroup        
+
+        response = self.session.post(self.messages_url, json = json, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()

@@ -20,7 +20,8 @@ def process(client, edit, invitation):
                 submission_number=note.number,
                 submission_title=note.content['title']['value']
             ),
-            replyTo=journal.contact_info
+            replyTo=journal.contact_info, 
+            signature=journal.venue_id
         )
 
     if note.tcdate == note.tmdate and journal.should_eic_submission_notification():
@@ -33,5 +34,6 @@ def process(client, edit, invitation):
                 short_name=journal.short_name,
                 submission_id=note.id,
             ),
-            replyTo=journal.contact_info
+            replyTo=journal.contact_info, 
+            signature=journal.venue_id
         )   

@@ -40,7 +40,8 @@ def process(client, edit, invitation):
             recipients=[journal.get_action_editors_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Evaluate reviewers and submit decision for {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
             message=message,
-            replyTo=journal.contact_info
+            replyTo=journal.contact_info, 
+            signature=journal.venue_id
         )
 
         journal.invitation_builder.expire_invitation(journal.get_review_rating_enabling_id(submission.number))

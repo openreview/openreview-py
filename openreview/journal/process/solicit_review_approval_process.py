@@ -51,7 +51,8 @@ We thank you for your contribution to {journal.short_name}!
 The {journal.short_name} Editors-in-Chief
 note: replies to this email will go to the AE, {assigned_action_editor.get_preferred_name(pretty=True)}.
 ''',
-            replyTo=assigned_action_editor.get_preferred_email()
+            replyTo=assigned_action_editor.get_preferred_email(),
+            signature=journal.venue_id
         )
 
         return
@@ -72,5 +73,6 @@ Respectfully,
 
 The {journal.short_name} Editors-in-Chief
 ''',
-            replyTo=journal.contact_info
+            replyTo=journal.contact_info,
+            signature=journal.venue_id
         )

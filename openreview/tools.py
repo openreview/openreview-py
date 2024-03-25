@@ -1213,7 +1213,8 @@ def recruit_reviewer(client, user, first,
     contact_info='info@openreview.net',
     verbose=True,
     replyTo=None,
-    invitation=None):
+    invitation=None,
+    signature=None):
     """
     Recruit a reviewer. Sends an email to the reviewer with a link to accept or
     reject the recruitment invitation.
@@ -1271,7 +1272,7 @@ def recruit_reviewer(client, user, first,
 
     # send the email through openreview
     if invitation is not None:
-        response = client.post_message(invitation, recruit_message_subj, [user], personalized_message, parentGroup=reviewers_invited_id, replyTo=replyTo)
+        response = client.post_message(invitation, recruit_message_subj, [user], personalized_message, parentGroup=reviewers_invited_id, replyTo=replyTo, signature=signature)
     else:
         response = client.post_message(recruit_message_subj, [user], personalized_message, parentGroup=reviewers_invited_id, replyTo=replyTo)
 
