@@ -33,8 +33,6 @@ async function process(client, edit, invitation) {
   await client.postNoteEdit({
     invitation: 'DBLP.org/-/Edit',
     signatures: ['DBLP.org/Uploader'],
-    readers: ['everyone'],
-    writers: ['DBLP.org'],
     note: note
   });
 }

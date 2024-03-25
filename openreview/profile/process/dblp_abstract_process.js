@@ -5,12 +5,16 @@ async function process(client, edit, invitation) {
   const html = result.notes?.[0]?.content?.html?.value
 
   let abstract = null
-  if (html) {
-    const extractionResult = await Tools.extractAbstract(html).then(result => result.json());
-    abstract = extractionResult.abstract
-    console.log('abstract: ' + abstract);
-    console.log('pdf: ' + extractionResult.pdf);
-    console.log('error: ' + extractionResult.error);
+  try {
+    if (html) {
+      const extractionResult = await Tools.extractAbstract(html).then(result => result.json());
+      abstract = extractionResult.abstract
+      console.log('abstract: ' + abstract);
+      console.log('pdf: ' + extractionResult.pdf);
+      console.log('error: ' + extractionResult.error);
+    }
+  } catch (error) {
+    console.log('server error: ' + error);
   }
 
   if (!abstract) return
@@ -18,8 +22,6 @@ async function process(client, edit, invitation) {
   await client.postNoteEdit({
     invitation: "DBLP.org/-/Abstract",
     signatures: ["DBLP.org/Uploader"],
-    readers: ["everyone"],
-    writers: ["DBLP.org", "DBLP.org/Uploader"],
     id: edit.id,
     note: {
       id: edit.note.id,
