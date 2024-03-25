@@ -2205,7 +2205,7 @@ class TestARRVenueV2():
             )
         )
 
-        ac_client_3.post_note_edit(
+        ac_edit = ac_client_3.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/June/Submission2/-/Meta_Review',
             signatures=[anon_group_id_ac],
             note=openreview.api.Note(
@@ -2222,7 +2222,7 @@ class TestARRVenueV2():
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=ac_edit['id'])
 
         # Point August submissions idx 1 and 2 to June papers and set submission reassignment requests
         # Let 1 = same and 2 = not same
@@ -2254,9 +2254,6 @@ class TestARRVenueV2():
                 }
             )
         )
-
-        helpers.await_queue()
-        helpers.await_queue(openreview_client)
 
         # Call the stage
         pc_client.post_note(
@@ -2562,7 +2559,7 @@ class TestARRVenueV2():
                 )
             )
 
-            helpers.await_queue(openreview_client)
+            helpers.await_queue_edit(openreview_client, edit_id=chk_edit['id'])
 
             return chk_edit, pc_client_v2.get_note(test_submission.id)
         
@@ -2818,7 +2815,7 @@ class TestARRVenueV2():
                 )
             )
 
-            helpers.await_queue(openreview_client)
+            helpers.await_queue_edit(openreview_client, edit_id=rev_edit['id'])
 
             return rev_edit, pc_client_v2.get_note(test_submission.id)
         
@@ -3135,6 +3132,8 @@ class TestARRVenueV2():
                 for field in override_fields.keys():
                     content[field] = override_fields[field]
             
+            #review_edits = openreview_client.get_process_logs(invitation=rev_inv)
+
             rev_edit = rev_client.post_note_edit(
                 invitation=rev_inv,
                 signatures=[user],
@@ -3145,7 +3144,7 @@ class TestARRVenueV2():
                 )
             )
 
-            helpers.await_queue(openreview_client)
+            helpers.await_queue_edit(openreview_client, edit_id=rev_edit['id'])
 
             return rev_edit, pc_client_v2.get_note(test_submission.id)
         
@@ -3210,6 +3209,8 @@ class TestARRVenueV2():
         assert test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Desk_Reject_Verification').expdate < now()
 
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Ethics_Review_Flag', count=9   )
+
         # Post an ethics review
         ethics_anon_id = ethics_client.get_groups(prefix='aclweb.org/ACL/ARR/2023/August/Submission4/Ethics_Reviewer_', signatory='~EthicsReviewer_ARROne1')[0].id
         assert ethics_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Ethics_Review')
@@ -3262,7 +3263,6 @@ class TestARRVenueV2():
 
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-6-0', count=1)
         helpers.await_queue()
-        helpers.await_queue(openreview_client)
 
         review = openreview_client.get_note(reviewer_edit['note']['id'])
         assert len(review.readers) - len(reviewer_edit['note']['readers']) == 1
