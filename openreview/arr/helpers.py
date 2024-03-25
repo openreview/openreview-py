@@ -233,6 +233,11 @@ class ARRStage(object):
                     client, venue, invitation_builder, request_form_note
                 )
 
+def setup_arr_invitations(arr_invitation_builder):
+    arr_invitation_builder.set_arr_configuration_invitation()
+    arr_invitation_builder.set_arr_scheduler_invitation()
+    arr_invitation_builder.set_preprint_release_submission_invitation()
+
 def flag_submission(
         client,
         edit,

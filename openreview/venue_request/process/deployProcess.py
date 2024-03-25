@@ -622,10 +622,4 @@ If you would like to change your decision, please follow the link in the previou
             },
             signatures=['~Super_User1']
         ))
-            
-    if conference.id.startswith('aclweb.org/ACL/ARR'):
-        invitation_builder = openreview.arr.InvitationBuilder(conference)
-        invitation_builder.set_arr_configuration_invitation()
-        invitation_builder.set_arr_scheduler_invitation()
-        invitation_builder.set_preprint_release_submission_invitation()
 

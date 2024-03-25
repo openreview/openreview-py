@@ -48,27 +48,12 @@ def process(client, note, invitation):
     support_group = request_form.invitation.split('/-/')[0]
     venue = openreview.helpers.get_conference(client, request_form_id, support_group)
     invitation_builder = openreview.arr.InvitationBuilder(venue)
-
-    # Override revision processes
-    replace_processes = [
-        'Revision',
-        'Review_Stage',
-        'Meta_Review_Stage',
-        'Ethics_Review_Stage',
-        'Comment_Stage'
-    ]
     
     request_form = client.get_note(request_form_id)
     support_group = request_form.invitation.split('/-/')[0]
     venue_stage_invitations = client.get_all_invitations(regex=f"{support_group}/-/Request{request_form.number}.*")
     venue = openreview.helpers.get_conference(client, request_form_id, support_group)
     invitation_builder = openreview.arr.InvitationBuilder(venue)
-    venue_stage_invitations = [i for i in venue_stage_invitations if any(i.id.endswith(ending) for ending in replace_processes)]
-    for venue_invitation in venue_stage_invitations:
-        if 'openreview.arr.InvitationBuilder' in venue_invitation.process: ## Only repost the first time
-            continue
-        venue_invitation.process = invitation_builder.get_process_content('process/revisionProcess.py')
-        client.post_invitation(venue_invitation)
 
     # Set V2 setup scripts
     invitation_content = {}
