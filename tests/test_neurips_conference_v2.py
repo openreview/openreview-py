@@ -1557,7 +1557,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
 
         reviewer_client_2 = openreview.api.OpenReviewClient(username='reviewer2@mit.edu', password=helpers.strong_password)
         anon_groups = reviewer_client.get_groups(prefix='NeurIPS.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_MIT1')
@@ -1583,7 +1583,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
 
     def test_comment_stage(self, helpers, openreview_client):
 
@@ -1646,7 +1646,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
 
     def test_ethics_review_stage(self, helpers, openreview_client, request_page, selenium):
 
@@ -1748,7 +1748,6 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         ))
 
         helpers.await_queue()
-        helpers.await_queue(openreview_client)
 
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@neurips.cc', password=helpers.strong_password)
         note = openreview_client.get_notes(invitation='NeurIPS.cc/2023/Conference/-/Submission', number=1)[0]
@@ -2120,7 +2119,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=rebuttal_edit['id'])
 
         rebuttal = openreview_client.get_note(rebuttal_edit['note']['id'])
         assert rebuttal.readers == [
@@ -2203,7 +2202,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=rebuttal_edit['id'])
 
         rebuttal = openreview_client.get_note(rebuttal_edit['note']['id'])
         assert rebuttal.readers == [

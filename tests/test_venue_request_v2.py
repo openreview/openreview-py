@@ -1127,7 +1127,7 @@ class TestVenueRequest():
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
                 'compute_conflicts': 'Default',
-                'compute_affinity_scores': 'specter+mfr'
+                'compute_affinity_scores': 'specter2+scincl'
             },
             forum=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
@@ -1241,10 +1241,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         affinity_scores = openreview_client.get_edges_count(invitation=scores_invitation.id)
         assert affinity_scores == 6
 
-        last_message = client.get_messages(to='support@openreview.net')[-1]
-        assert 'Paper Matching Setup Status' not in last_message['content']['text']
-        last_message = client.get_messages(to='test@mail.com')[-1]
-        assert 'Paper Matching Setup Status' in last_message['content']['subject']
+        assert not client.get_messages(to='support@openreview.net', subject='Paper Matching Setup Status for service: Test 2030 Venue V2 Updated')
+        assert client.get_messages(to='test@mail.com', subject='Paper Matching Setup Status for service: Test 2030 Venue V2 Updated')
 
         ## Test assignment config
         assignment_config_invitation = openreview_client.get_invitation(conference.get_invitation_id('Assignment_Configuration', prefix=reviewer_group.id))
