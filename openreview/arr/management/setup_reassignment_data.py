@@ -4,6 +4,13 @@ def process(client, invitation):
     from openreview.venue import matching
     from collections import defaultdict
 
+    def get_title(profile):
+        d = profile.content.get('history', [{}])
+        if len(d) > 0:
+            return d[0].get('position', 'Student')
+        else:
+            return ''
+
     def replace_edge(existing_edge=None, edge_inv=None, new_weight=None, submission_id=None, profile_id=None, edge_readers=None):
         client.delete_edges(
             invitation=edge_inv,
@@ -60,6 +67,7 @@ def process(client, invitation):
     max_load_name = 'Max_Load_And_Unavailability_Request'
     availability_name = 'Available'
     status_name = 'Status'
+    seniority_name = 'Seniority'
 
     client_v1 = openreview.Client(
         baseurl=openreview.tools.get_base_urls(client)[0],
@@ -84,10 +92,14 @@ def process(client, invitation):
     print(f"records of resubmission: {','.join([s.id for s in resubmissions])}")
 
     # Fetch profiles and map names to profile IDs - account for change in preferred names
+    reviewer_profiles = []
     all_profiles = []
     name_to_id = {}
     for role_id in [reviewers_id, area_chairs_id, senior_area_chairs_id]:
-        all_profiles.extend(openreview.tools.get_profiles(client, client.get_group(role_id).members))
+        profiles = openreview.tools.get_profiles(client, client.get_group(role_id).members)
+        if role_id == reviewers_id:
+            reviewer_profiles.extend(profiles) ## Cache reviewer profiles for seniority
+        all_profiles.extend(profiles)
     for profile in all_profiles:
         filtered_names = filter(
             lambda obj: 'username' in obj and len(obj['username']) > 0,
@@ -429,6 +441,24 @@ def process(client, invitation):
             )
 
     # 6) Post seniority edges
+    seniority_edges = []
+    seniority_inv = f"{reviewers_id}/-/{seniority_name}"
+    for profile in reviewer_profiles:
+        if 'student' not in get_title(profile).lower():
+            seniority_edges.append(
+                openreview.api.Edge(
+                    invitation=seniority_inv,
+                    head=reviewers_id,
+                    tail=profile.id,
+                    label='Senior',
+                    weight=1,
+                    readers=track_edge_readers[reviewers_id] + [profile.id],
+                    writers=[venue_id],
+                    signatures=[venue_id]
+                )
+            )
+    client.delete_edges(invitation=seniority_inv, wait_to_finish=True, soft_delete=True)
+    openreview.tools.post_bulk_edges(client, seniority_edges)
             
     # 7) Post author in cycle edges
 

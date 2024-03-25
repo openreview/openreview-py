@@ -46,13 +46,38 @@ class TestARRVenueV2():
         helpers.create_user('ac1@aclrollingreview.com', 'AC', 'ARROne')
         helpers.create_user('ac2@aclrollingreview.com', 'AC', 'ARRTwo')
         helpers.create_user('ac3@aclrollingreview.com', 'AC', 'ARRThree')
-        helpers.create_user('reviewer1@aclrollingreview.com', 'Reviewer', 'ARROne')
         helpers.create_user('reviewer2@aclrollingreview.com', 'Reviewer', 'ARRTwo')
         helpers.create_user('reviewer3@aclrollingreview.com', 'Reviewer', 'ARRThree')
         helpers.create_user('reviewer4@aclrollingreview.com', 'Reviewer', 'ARRFour')
         helpers.create_user('reviewer5@aclrollingreview.com', 'Reviewer', 'ARRFive')
         helpers.create_user('reviewer6@aclrollingreview.com', 'Reviewer', 'ARRSix')
         helpers.create_user('reviewerethics@aclrollingreview.com', 'EthicsReviewer', 'ARROne')
+
+        # Manually create Reviewer ARROne as a professor
+        fullname = f'Reviewer ARROne'
+        res = openreview_client.register_user(email = 'reviewer1@aclrollingreview.com', fullname = fullname, password = helpers.strong_password)
+        username = res.get('id')
+        profile_content={
+            'names': [
+                    {
+                        'fullname': fullname,
+                        'username': username,
+                        'preferred': True
+                    }
+                ],
+            'emails': ['reviewer1@aclrollingreview.com'],
+            'preferredEmail': 'reviewer1@aclrollingreview.com'
+        }
+        profile_content['history'] = [{
+            'position': 'Full Professor',
+            'start': 2017,
+            'end': None,
+            'institution': {
+                'domain': 'aclrollingreview.com',
+            }
+        }]
+        rev_client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001')
+        rev_client.activate_user('reviewer1@aclrollingreview.com', profile_content)
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
@@ -2375,6 +2400,14 @@ class TestARRVenueV2():
                 assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load']['value']) + 1
                 continue
             assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load']['value'])
+
+        # Check for seniority edges
+        seniority_edges = {
+            g['id']['tail'] : g['values'][0]
+            for g in pc_client_v2.get_grouped_edges(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Seniority', select='head,id,weight,label', groupby='tail')
+        }
+        assert set(seniority_edges.keys()) == {'~Reviewer_ARROne1'}
+        assert seniority_edges['~Reviewer_ARROne1']['label'] == 'Senior'
             
 
     def test_sae_ae_assignments(self, client, openreview_client, helpers, test_client, request_page, selenium):
