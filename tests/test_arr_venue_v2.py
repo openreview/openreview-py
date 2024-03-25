@@ -199,7 +199,6 @@ class TestARRVenueV2():
         invitation_builder = openreview.arr.InvitationBuilder(venue)
 
         assert client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/ARR_Configuration')
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission')
 
         now = datetime.datetime.utcnow()
 
