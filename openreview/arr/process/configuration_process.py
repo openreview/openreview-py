@@ -24,7 +24,8 @@ def process(client, note, invitation):
         arr_metareview_content,
         arr_ethics_review_content,
         arr_review_rating_content,
-        arr_author_consent_content
+        arr_author_consent_content,
+        hide_fields_from_public
     )
     from openreview.arr.helpers import ARRStage
     from openreview.venue import matching
@@ -55,31 +56,56 @@ def process(client, note, invitation):
     venue = openreview.helpers.get_conference(client, request_form_id, support_group)
     invitation_builder = openreview.arr.InvitationBuilder(venue)
 
-    # Set V2 setup scripts
-    invitation_content = {}
-    invitation_content['configuration_note_id'] = { 'value' : note.id }
-    for field, raw_value in note.content.items():
-        if 'date' in field:
-            value = openreview.tools.datetime_millis(
-                datetime.strptime(raw_value.strip(), '%Y/%m/%d %H:%M:%S')
-            )
-            invitation_content[field] = { 'value' : value}
-        else:
-            invitation_content[field] = { 'value' : raw_value}
-
-    if len(note.content.keys()) > 0:
-        client_v2.post_invitation_edit(
-            invitations=meta_invitation_id,
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            invitation=openreview.api.Invitation(
-                id=f'{venue_id}/-/ARR_Scheduler',
-                content=invitation_content
-            )
-        )
-
     # Set stages
+    def build_preprint_release_edit(client, venue, builder, request_form):
+        venue_id = venue_id
+        submission_stage = venue.submission_stage
+
+        submission_id = submission_stage.get_submission_id(venue)
+
+        hidden_field_names = hide_fields_from_public
+        committee_members = venue.get_committee(number='${{4/id}/number}', with_authors=True)
+        note_content = { f: { 'readers': committee_members } for f in hidden_field_names }
+
+        edit = {
+            'signatures': [venue_id],
+            'readers': [venue_id, venue.get_authors_id('${{2/note/id}/number}')],
+            'writers': [venue_id],
+            'note': {
+                'id': {
+                    'param': {
+                        'withInvitation': submission_id,
+                        'optional': True
+                    }
+                },
+                'odate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'signatures': [ venue.get_authors_id('${{2/id}/number}') ],
+                'readers': ['everyone'],
+                'writers': [venue_id, venue.get_authors_id('${{2/id}/number}')],
+            }
+        }
+
+        note_content['_bibtex'] = {
+            'value': {
+                'param': {
+                    'type': 'string',
+                    'maxLength': 200000,
+                    'input': 'textarea',
+                    'optional': True
+                }
+            }
+        }
+
+        if note_content:
+            edit['note']['content'] = note_content
+
+        return edit
         
     def extend_desk_reject_verification(client, venue, builder, request_form):
         invitation_builder.set_verification_flag_invitation()
@@ -240,6 +266,88 @@ def process(client, note, invitation):
         )
 
     workflow_stages = [
+        ARRStage(
+            type=ARRStage.Type.PROCESS_INVITATION,
+            required_fields=['preprint_release_submission_date'],
+            super_invitation_id=f"{venue_id}/-/Preprint_Release_{venue.submission_stage.name}",
+            stage_arguments={},
+            start_date=note.content.get('preprint_release_submission_date'),
+            process='process/preprint_release_submission_process.py',
+            build_edit=build_preprint_release_edit
+        ),
+        ARRStage(
+            type=ARRStage.Type.PROCESS_INVITATION,
+            required_fields=['setup_shared_data_date', 'previous_cycle'],
+            super_invitation_id=f"{venue_id}/-/Share_Data",
+            stage_arguments={
+                'content': {
+                    'previous_cycle': {'value': note.content.get('previous_cycle')}
+                }
+            },
+            start_date=note.content.get('setup_shared_data_date'),
+            process='management/setup_shared_data.py'
+        ),
+        ARRStage(
+            type=ARRStage.Type.PROCESS_INVITATION,
+            required_fields=['sae_affinity_scores'],
+            super_invitation_id=f"{venue_id}/-/Setup_SAE_Matching",
+            stage_arguments={
+                'content': {
+                    'sae_affinity_scores': {'value': note.content.get('sae_affinity_scores')},
+                    'configuration_note_id': {'value': note.id}
+                }
+            },
+            start_date=ARRStage.immediate_start_date(),
+            process='management/setup_matching.py'
+        ),
+        ARRStage(
+            type=ARRStage.Type.PROCESS_INVITATION,
+            required_fields=['setup_tracks_and_reassignment_date'],
+            super_invitation_id=f"{venue_id}/-/Setup_Tracks_And_Reassignments",
+            stage_arguments={},
+            start_date=note.content.get('setup_tracks_and_reassignment_date'),
+            process='management/setup_reassignment_data.py'
+        ),
+        ARRStage(
+            type=ARRStage.Type.PROCESS_INVITATION,
+            required_fields=['setup_sae_ae_assignment_date'],
+            super_invitation_id=f"{venue_id}/-/Enable_SAE_AE_Assignments",
+            stage_arguments={},
+            start_date=note.content.get('setup_sae_ae_assignment_date'),
+            process='management/setup_sae_ae_assignments.py'
+        ),
+        ARRStage(
+            type=ARRStage.Type.PROCESS_INVITATION,
+            required_fields=['setup_review_release_date'],
+            super_invitation_id=f"{venue_id}/-/Release_Official_Reviews",
+            stage_arguments={},
+            start_date=note.content.get('setup_review_release_date'),
+            process='management/setup_review_release.py'
+        ),
+        ARRStage(
+            type=ARRStage.Type.PROCESS_INVITATION,
+            required_fields=['setup_meta_review_release_date'],
+            super_invitation_id=f"{venue_id}/-/Release_Meta_Reviews",
+            stage_arguments={},
+            start_date=note.content.get('setup_meta_review_release_date'),
+            process='management/setup_metareview_release.py'
+        ),
+        ARRStage(
+            type=ARRStage.Type.PROCESS_INVITATION,
+            required_fields=['setup_author_response_date'],
+            super_invitation_id=f"{venue_id}/-/Enable_Author_Response",
+            stage_arguments={},
+            start_date=note.content.get('setup_author_response_date'),
+            process='management/setup_rebuttal_start.py'
+        ),
+        ARRStage(
+            type=ARRStage.Type.PROCESS_INVITATION,
+            required_fields=['close_author_response_date'],
+            super_invitation_id=f"{venue_id}/-/Close_Author_Response",
+            stage_arguments={},
+            start_date=note.content.get('close_author_response_date'),
+            process='management/setup_rebuttal_end.py'
+        ),
         ARRStage(
             type=ARRStage.Type.REGISTRATION_STAGE,
             group_id=venue.get_reviewers_id(),

@@ -244,12 +244,6 @@ class InvitationBuilder(object):
                         'order': 15,
                         'required': False
                     },
-                    'setup_sae_matching_date': {
-                        'description': 'When should conflicts be computed and the matching data for SAEs be set up? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
-                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
-                        'order': 16,
-                        'required': False
-                    },
                     'sae_affinity_scores': {
                         'description': 'Upload a CSV file containing affinity scores for SAC-paper pairs (one SAC-paper pair per line in the format: submission_id, SAC_id, affinity_score)',
                         'order': 17,
@@ -481,71 +475,28 @@ class InvitationBuilder(object):
             ]
         )
 
-        self.save_invitation(scheduler_inv, replacement=False) 
+        self.save_invitation(scheduler_inv, replacement=False)
 
-    def set_preprint_release_submission_invitation(self):
+    def set_process_invitation(self, arr_stage):
         venue_id = self.venue_id
-        submission_stage = self.venue.submission_stage
-        submission_name = submission_stage.name
+        process_invitation_id = arr_stage.super_invitation_id
 
-        submission_id = submission_stage.get_submission_id(self.venue)
-        post_submission_id = f'{venue_id}/-/Preprint_Release_{submission_name}'
-        post_submission_cdate = tools.datetime_millis(submission_stage.exp_date + datetime.timedelta(minutes=30)) if submission_stage.exp_date else None
-
-        hidden_field_names = hide_fields_from_public
-        committee_members = self.venue.get_committee(number='${{4/id}/number}', with_authors=True)
-        note_content = { f: { 'readers': committee_members } for f in hidden_field_names }
-
-        submission_invitation = Invitation(
-            id=post_submission_id,
+        process_invitation = Invitation(
+            id=process_invitation_id,
             invitees = [venue_id],
-            signatures = [venue_id],
+            signatures = ['~Super_User1'],
             readers = ['everyone'],
-            writers = [venue_id],
+            writers = ['~Super_User1'],
+            cdate = openreview.tools.datetime_millis(arr_stage.start_date),
             date_processes=[{ 
-                'dates': ["#{4/cdate}", self.update_date_string],
-                'script': self.get_process_content('process/preprint_release_submission_process.py')              
+                'dates': ["#{4/cdate}"],
+                'script': self.get_process_content(arr_stage.process)
             }],            
-            edit = {
-                'signatures': [venue_id],
-                'readers': [venue_id, self.venue.get_authors_id('${{2/note/id}/number}')],
-                'writers': [venue_id],
-                'note': {
-                    'id': {
-                        'param': {
-                            'withInvitation': submission_id,
-                            'optional': True
-                        }
-                    },
-                    'odate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True,
-                            'deletable': True
-                        }
-                    },
-                    'signatures': [ self.venue.get_authors_id('${{2/id}/number}') ],
-                    'readers': ['everyone'],
-                    'writers': [venue_id, self.venue.get_authors_id('${{2/id}/number}')],
-                }
-            }
+            **arr_stage.stage_arguments
         )
 
-        note_content['_bibtex'] = {
-            'value': {
-                'param': {
-                    'type': 'string',
-                    'maxLength': 200000,
-                    'input': 'textarea',
-                    'optional': True
-                }
-            }
-        }
-
-        if note_content:
-            submission_invitation.edit['note']['content'] = note_content
-
-        submission_invitation = self.save_invitation(submission_invitation, replacement=False)
+        process_invitation = self.save_invitation(process_invitation, replacement=False)
+        return process_invitation
         
     def save_invitation(self, invitation, replacement=None):
         return self.venue_invitation_builder.save_invitation(invitation, replacement)

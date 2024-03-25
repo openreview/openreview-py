@@ -1,6 +1,6 @@
 import openreview
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class ARRStage(object):
     """
@@ -33,13 +33,15 @@ class ARRStage(object):
         Enum defining the possible types of stages within the process.
 
         Attributes:
-            REGISTRATION_STAGE (0): Represents a registration phase.
-            CUSTOM_STAGE (1): Represents a custom-configured phase.
-            STAGE_NOTE (2): Represents an informational or note-taking phase.
+            REGISTRATION_STAGE (0): A form that requires a response to a per-group forum
+            CUSTOM_STAGE (1): Some customized stage of the ARR workflow
+            STAGE_NOTE (2): Built-in OpenReview stage that's available on the request form
+            PROCESS_INVITATION (3): An invitation that stores an ARR script in the form of a process function
         """
         REGISTRATION_STAGE = 0
         CUSTOM_STAGE = 1
         STAGE_NOTE = 2
+        PROCESS_INVITATION = 3
 
     SUPPORTED_STAGES = {
         'Official_Review': 'Review_Stage',
@@ -47,6 +49,7 @@ class ARRStage(object):
         'Official_Comment': 'Comment_Stage',
         'Ethics_Review': 'Ethics_Review_Stage'
     }
+    UPDATE_WAIT_TIME = 5
 
     def __init__(self,
         type = None,
@@ -60,6 +63,7 @@ class ARRStage(object):
         exp_date = None,
         process = None,
         preprocess = None,
+        build_edit = None,
         extend = None
     ):
         self.type : ARRStage.Type = type
@@ -68,6 +72,7 @@ class ARRStage(object):
         self.super_invitation_id: str = super_invitation_id
         self.stage_arguments: dict = stage_arguments
         self.date_levels: int = date_levels
+        self.build_edit: function = build_edit ## Use the build_edit function to build process invitation edits dynamically
         self.extend: function = extend
         self.process: str = process
         self.preprocess: str = preprocess
@@ -139,7 +144,7 @@ class ARRStage(object):
             invitation_edit_invitation_dates['duedate'] = openreview.tools.datetime_millis(self.due_date)
         if self.exp_date:
             invitation_edit_invitation_dates['expdate'] = openreview.tools.datetime_millis(self.exp_date)
-        if self.type == ARRStage.Type.REGISTRATION_STAGE:
+        if self.type == ARRStage.Type.REGISTRATION_STAGE or self.type == ARRStage.Type.PROCESS_INVITATION:
             client.post_invitation_edit(
                 invitations=meta_invitation_id,
                 readers=[venue_id],
@@ -227,16 +232,25 @@ class ARRStage(object):
             elif self.type == ARRStage.Type.STAGE_NOTE:
                 stage_note = openreview.Note(**self.stage_arguments)
                 client_v1.post_note(stage_note)
+            elif self.type == ARRStage.Type.PROCESS_INVITATION:
+                if self.build_edit:
+                    self.stage_arguments = self.build_edit(
+                        client, venue, invitation_builder, request_form_note
+                    )
+                invitation_builder.set_process_invitation(self)
 
             if self.extend:
                 self.extend(
                     client, venue, invitation_builder, request_form_note
                 )
+    @staticmethod
+    def immediate_start_date():
+        return (
+            datetime.utcnow() + timedelta(seconds=ARRStage.UPDATE_WAIT_TIME)
+        ).strftime('%Y/%m/%d %H:%M:%S')
 
 def setup_arr_invitations(arr_invitation_builder):
     arr_invitation_builder.set_arr_configuration_invitation()
-    arr_invitation_builder.set_arr_scheduler_invitation()
-    arr_invitation_builder.set_preprint_release_submission_invitation()
 
 def flag_submission(
         client,

@@ -200,7 +200,6 @@ class TestARRVenueV2():
 
         assert client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/ARR_Configuration')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission')
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler')
 
         now = datetime.datetime.utcnow()
 
@@ -852,8 +851,6 @@ class TestARRVenueV2():
 
         invitation_builder = openreview.arr.InvitationBuilder(june_venue)
 
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/June/-/ARR_Scheduler')
-
         pc_client.post_note(
             openreview.Note(
                 content={
@@ -1104,7 +1101,7 @@ class TestARRVenueV2():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-0-0', count=1)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Share_Data-0-0', count=1)
 
         # Call twice to ensure data only gets copied once
         pc_client.post_note(
@@ -1123,7 +1120,7 @@ class TestARRVenueV2():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-0-0', count=2)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Share_Data-0-0', count=2)
 
         # Find August in readers of groups and registration notes
         assert set(pc_client_v2.get_group(june_venue.get_reviewers_id()).members).difference({'~AC_ARROne1', '~SAC_ARROne1'}) == set(pc_client_v2.get_group(august_venue.get_reviewers_id()).members)
@@ -1699,9 +1696,7 @@ class TestARRVenueV2():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-1-0', count=1)
-
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission-0-0', count=1)
 
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')       
 
@@ -1860,7 +1855,6 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_sae_matching_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S'),
                     'sae_affinity_scores': affinity_scores_url
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
@@ -1873,7 +1867,7 @@ class TestARRVenueV2():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-2-0', count=1)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Setup_SAE_Matching-0-0', count=1)
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Conflict')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Affinity_Score')
@@ -2271,7 +2265,7 @@ class TestARRVenueV2():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-3-0', count=1)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Setup_Tracks_And_Reassignments-0-0', count=1)
         # For 1, assert that the affinity scores on June reviewers/aes is 3
         ac_scores = {
             g['id']['tail'] : g['values'][0]
@@ -2450,7 +2444,7 @@ class TestARRVenueV2():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-4-0', count=1)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Enable_SAE_AE_Assignments-0-0', count=1)
 
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Emergency_Area_Chairs')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment').content['sync_sac_id']['value'] == ''
@@ -2560,6 +2554,8 @@ class TestARRVenueV2():
             )
 
             helpers.await_queue_edit(openreview_client, edit_id=chk_edit['id'])
+
+            time.sleep(2) ## Wait for flag process functions
 
             return chk_edit, pc_client_v2.get_note(test_submission.id)
         
@@ -2817,6 +2813,8 @@ class TestARRVenueV2():
 
             helpers.await_queue_edit(openreview_client, edit_id=rev_edit['id'])
 
+            time.sleep(2) ## Wait for flag process functions
+
             return rev_edit, pc_client_v2.get_note(test_submission.id)
         
         def now():
@@ -2921,7 +2919,7 @@ class TestARRVenueV2():
 
         time.sleep(5)
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-5-0', count=1)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Release_Official_Reviews-0-0', count=1)
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Official_Review-0-1', count=4)
 
         review = openreview_client.get_note(reviewer_edit['note']['id'])
@@ -2952,7 +2950,7 @@ class TestARRVenueV2():
 
         helpers.await_queue()
         time.sleep(3)
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-7-0', count=1)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Enable_Author_Response-0-0', count=1)
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Official_Comment-0-1', count=3)
 
         for s in submissions:
@@ -2980,7 +2978,7 @@ class TestARRVenueV2():
 
         helpers.await_queue()
         time.sleep(6)
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-8-0', count=1)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Close_Author_Response-0-0', count=1)
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Official_Comment-0-1', count=4)
 
         for s in submissions:
@@ -3146,6 +3144,8 @@ class TestARRVenueV2():
 
             helpers.await_queue_edit(openreview_client, edit_id=rev_edit['id'])
 
+            time.sleep(2) ## Wait for flag process functions
+
             return rev_edit, pc_client_v2.get_note(test_submission.id)
         
         def now():
@@ -3261,7 +3261,7 @@ class TestARRVenueV2():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/ARR_Scheduler-6-0', count=1)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Release_Meta_Reviews-0-0', count=1)
         helpers.await_queue()
 
         review = openreview_client.get_note(reviewer_edit['note']['id'])
