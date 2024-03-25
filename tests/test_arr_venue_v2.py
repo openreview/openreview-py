@@ -7,6 +7,7 @@ import random
 import os
 import csv
 import sys
+from copy import deepcopy
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 from openreview import ProfileManagement
@@ -405,18 +406,73 @@ class TestARRVenueV2():
             ['~SAC_ARROne1']
         )
 
+        # Update submission fields
+        pc_client.post_note(openreview.Note(
+            invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision',
+            forum=request_form_note.id,
+            readers=['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form_note.id,
+            replyto=request_form_note.id,
+            signatures=['~Program_ARRChair1'],
+            writers=[],
+            content={
+                'title': 'ACL Rolling Review 2023 - June',
+                'Official Venue Name': 'ACL Rolling Review 2023 - June',
+                'Abbreviated Venue Name': 'ARR - June 2023',
+                'Official Website URL': 'http://aclrollingreview.org',
+                'program_chair_emails': ['editors@aclrollingreview.org', 'pc@aclrollingreview.org'],
+                'contact_email': 'editors@aclrollingreview.org',
+                'Venue Start Date': '2023/08/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'publication_chairs':'No, our venue does not have Publication Chairs',  
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'use_recruitment_template': 'Yes',
+                'Additional Submission Options': arr_submission_content,
+                'remove_submission_options': ['keywords'],
+                'homepage_override': { #TODO: Update
+                    'location': 'Hawaii, USA',
+                    'instructions': 'For author guidelines, please click [here](https://icml.cc/Conferences/2023/StyleAuthorInstructions)'
+                },
+                'hide_fields': hide_fields
+            }
+        ))
+
+        helpers.await_queue_edit(client, invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision')
+
         ## Post a submission to get Ethics Stage to work
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
         note = openreview.api.Note(
             content = {
-                'title': { 'value': 'Paper title ' + str(1) },
-                'abstract': { 'value': 'This is an abstract ' + str(1) },
-                'keywords': { 'value': ['keyword1']},
-                'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@umass.edu']},
+                'title': { 'value': 'Paper title '},
+                'abstract': { 'value': 'This is an abstract ' },
+                'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@meta.com']},
+                'reviewing_volunteers': { 'value': ['~SomeFirstName_User1']},
                 'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
-                'TLDR': { 'value': 'This is a tldr ' + str(1) },
-                'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' }
+                'TLDR': { 'value': 'This is a tldr '},
+                'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                'paper_type': { 'value': 'short' },
+                'research_area': { 'value': 'Generation' },
+                'languages_studied': { 'value': 'A language' },
+                'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
+                'data': {'value': '/pdf/' + 'p' * 40 +'.zip' },
+                'preprint': { 'value': 'yes'},
+                'existing_preprints': { 'value': 'existing_preprints' },
+                'preferred_venue': { 'value': 'ACL Conference' },
+                'consent_to_share_data': { 'value': 'yes' },
+                'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
+                "A1": { 'value': 'yes' },
+                "A2": { 'value': 'yes' },
+                "A3": { 'value': 'yes' },
+                "B": { 'value': 'yes' },
+                "C": { 'value': 'yes' },
+                "D": { 'value': 'yes' },
+                "E": { 'value': 'yes' },
+                "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I do not agree" },
+                "section_2_permission_to_publish_peer_reviewers_content_agreement": { 'value': "Authors grant permission for ACL to publish peer reviewers' content" }
             }
         )
 
@@ -846,6 +902,7 @@ class TestARRVenueV2():
             'title': { 'value': 'Paper title '},
             'abstract': { 'value': 'This is an abstract ' },
             'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@meta.com']},
+            'reviewing_volunteers': { 'value': ['~SomeFirstName_User1']},
             'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
             'TLDR': { 'value': 'This is a tldr '},
             'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
@@ -898,42 +955,6 @@ class TestARRVenueV2():
         )
 
         helpers.await_queue()
-
-        # Update submission fields
-        pc_client.post_note(openreview.Note(
-            invitation=f'openreview.net/Support/-/Request{request_form.number}/Revision',
-            forum=request_form.id,
-            readers=['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'openreview.net/Support'],
-            referent=request_form.id,
-            replyto=request_form.id,
-            signatures=['~Program_ARRChair1'],
-            writers=[],
-            content={
-                'title': 'ACL Rolling Review 2023 - June',
-                'Official Venue Name': 'ACL Rolling Review 2023 - June',
-                'Abbreviated Venue Name': 'ARR - June 2023',
-                'Official Website URL': 'http://aclrollingreview.org',
-                'program_chair_emails': ['editors@aclrollingreview.org', 'pc@aclrollingreview.org'],
-                'contact_email': 'editors@aclrollingreview.org',
-                'Venue Start Date': '2023/08/01',
-                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
-                'publication_chairs':'No, our venue does not have Publication Chairs',  
-                'Location': 'Virtual',
-                'submission_reviewer_assignment': 'Automatic',
-                'How did you hear about us?': 'ML conferences',
-                'Expected Submissions': '100',
-                'use_recruitment_template': 'Yes',
-                'Additional Submission Options': arr_submission_content,
-                'remove_submission_options': ['keywords'],
-                'homepage_override': { #TODO: Update
-                    'location': 'Hawaii, USA',
-                    'instructions': 'For author guidelines, please click [here](https://icml.cc/Conferences/2023/StyleAuthorInstructions)'
-                },
-                'hide_fields': hide_fields
-            }
-        ))
-
-        helpers.await_queue_edit(client, invitation=f'openreview.net/Support/-/Request{request_form.number}/Revision')
 
         # Allow: submission with no previous URL
         note = openreview.api.Note(
@@ -1053,6 +1074,42 @@ class TestARRVenueV2():
                 content = {
                     **generic_note_content,
                     'previous_URL': { 'value': f"http://localhost:3030/forum?id={allowed_note['note']['id']}" },
+                    'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
+                }
+            )
+        )
+        
+        # Not allowed: no volunteers
+        with pytest.raises(openreview.OpenReviewException, match=r'reviewing_volunteers value must NOT have fewer than 1 items'):
+            case_content = deepcopy(generic_note_content)
+            case_content['reviewing_volunteers'] = {'value': []}
+
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+                signatures=['~SomeFirstName_User1'],
+                note=openreview.api.Note(
+                content = {
+                    **case_content,
+                    'previous_URL': { 'value': f"http://localhost:3030/forum?id={allowed_note['note']['id']}" },
+                    'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                    'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
+                }
+            )
+        )
+            
+        # Not allowed: non-author volunteer
+        with pytest.raises(openreview.OpenReviewException, match=r'Volunteer ~Program_ARRChair1 is not an author of this submission'):
+            case_content = deepcopy(generic_note_content)
+            case_content['reviewing_volunteers'] = {'value': ['~Program_ARRChair1']}
+
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+                signatures=['~SomeFirstName_User1'],
+                note=openreview.api.Note(
+                content = {
+                    **case_content,
+                    'previous_URL': { 'value': f"http://localhost:3030/forum?id={allowed_note['note']['id']}" },
+                    'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
                     'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
                     'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
                 }
@@ -1555,6 +1612,7 @@ class TestARRVenueV2():
                     'abstract': { 'value': 'This is an abstract ' + str(i) },
                     'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i % 10]] },
                     'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
+                    'reviewing_volunteers': { 'value': ['~SomeFirstName_User1']},
                     'TLDR': { 'value': 'This is a tldr ' + str(i) },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'paper_type': { 'value': 'short' },
@@ -1969,11 +2027,12 @@ class TestARRVenueV2():
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict')
 
-        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict') == 12 # All 6 reviewers will conflict with submissions 1/101 because of domain of SAC
+        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict') == 12 + 101 # All 6 reviewers will conflict with submissions 1/101 because of domain of SAC
+        ## Extra 101 conflicts from new reviewer which is an author of all submissions
 
         affinity_scores =  openreview_client.get_grouped_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Affinity_Score', groupby='id')
         assert affinity_scores
-        assert len(affinity_scores) == 101 * 6 ## submissions * reviewers
+        assert len(affinity_scores) == 101 * 7 ## submissions * reviewers
 
         # Post assignment configuration notes
         openreview_client.post_note_edit(
@@ -2059,7 +2118,7 @@ class TestARRVenueV2():
         openreview.tools.post_bulk_edges(openreview_client, ac_edges_to_post)
 
         assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Aggregate_Score', label='ae-assignments') == 101 * 3
-        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score', label='reviewer-assignments') == 101 * 6
+        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score', label='reviewer-assignments') == 101 * 7
 
 
     def test_resubmission_and_track_matching_data(self, client, openreview_client, helpers, test_client, request_page, selenium):
@@ -2408,7 +2467,13 @@ class TestARRVenueV2():
         }
         assert set(seniority_edges.keys()) == {'~Reviewer_ARROne1'}
         assert seniority_edges['~Reviewer_ARROne1']['label'] == 'Senior'
-            
+
+        # Check for author in cycle edges
+        author_edges = {
+            g['id']['tail'] : g['values'][0]
+            for g in pc_client_v2.get_grouped_edges(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Author_In_Current_Cycle', select='head,id,weight,label', groupby='tail')
+        }
+        assert set(author_edges.keys()) == {'~SomeFirstName_User1'}
 
     def test_sae_ae_assignments(self, client, openreview_client, helpers, test_client, request_page, selenium):
 

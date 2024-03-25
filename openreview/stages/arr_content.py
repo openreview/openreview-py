@@ -27,7 +27,17 @@ arr_submission_content = {
         "description": "Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.",
         "value": {
             "param": {
-            "type": "group[]",
+            "type": "profile[]",
+            "regex": "^~\\S+$|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})"
+            }
+        }
+    },
+    "reviewing_volunteers": {
+        "order": 3,
+        "description": "From the list of authors, enter the authors that are going to be responsible for reviewing for this cycle.",
+        "value": {
+            "param": {
+            "type": "profile[]",
             "regex": "^~\\S+$|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})"
             }
         }

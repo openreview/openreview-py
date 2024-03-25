@@ -5,6 +5,8 @@ def process(client, edit, invitation):
     reviewer_reassignment_field = edit.note.content.get('reassignment_request_reviewers', {}).get('value', '')
     reviewer_reassignment_request = len(reviewer_reassignment_field) > 0 and 'not a resubmission' not in reviewer_reassignment_field
     paper_link = edit.note.content.get('previous_URL', {}).get('value')
+    volunteers = edit.note.content.get('reviewing_volunteers').get('value')
+    authorids = edit.note.content.get('authorids').get('value')
 
     if paper_link:
         paper_forum = paper_link.split('=')[-1]
@@ -34,3 +36,7 @@ def process(client, edit, invitation):
     # If no previous URL but selected reassignment
     if not paper_link and (editor_reassignment_request or reviewer_reassignment_request):
       raise openreview.OpenReviewException('You have selected a reassignment request with no previous URL. Please enter a URL or close and re-open the submission form to clear your reassignment request')
+    
+    for v in volunteers:
+        if v not in authorids:
+            raise openreview.OpenReviewException(f'Volunteer {v} is not an author of this submission')
