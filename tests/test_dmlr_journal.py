@@ -67,7 +67,9 @@ class TestDMLRJournal():
                                 "faq": "https://data.mlr.press/"
                             },
                             "editors_email": "dmlr@jmlr.org",
+                            "skip_reviewer_assignment_acknowledgement": True,
                             "skip_ac_recommendation": True,
+                            "skip_camera_ready_revision": True,
                             "number_of_reviewers": 2,
                             "reviewers_max_papers": 6,
                             "ae_recommendation_period": 1,
@@ -451,7 +453,7 @@ note={Under review}
 
 With this email, we request that you submit, within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}) a review for your newly assigned DMLR submission "1: Paper title".
 
-Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_1}&invitationId=DMLR/Paper1/Reviewers/-/~David_Bo1/Assignment/Acknowledgement
+Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_1}
 
 As a reminder, reviewers are **expected to accept all assignments** for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another DMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).
 
@@ -470,6 +472,7 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
         assert messages[0]['content']['replyTo'] == 'andrew@dmlrzero.com'
 
         assert openreview.tools.get_invitation(openreview_client, 'DMLR/Reviewers/-/~David_Bo1/Responsibility/Acknowledgement')
+        assert not openreview.tools.get_invitation(openreview_client, 'DMLR/Paper1/Reviewers/-/~David_Bo1/Assignment/Acknowledgement')
 
         ## Carlos Gardel
         paper_assignment_edge = andrew_client.post_edge(openreview.Edge(invitation='DMLR/Reviewers/-/Assignment',
@@ -730,38 +733,6 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
         assert decision_note.readers == ['DMLR/Editors_In_Chief', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
         assert decision_note.nonreaders == []
 
-        ## Authors enter the camera ready revision
-        test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
-        revision_note = test_client.post_note_edit(invitation=f'DMLR/Paper1/-/Camera_Ready_Revision',
-            signatures=["DMLR/Paper1/Authors"],
-            note=Note(
-                content={
-                    'title': { 'value': 'Paper title VERSION 2' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melisa Ane']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_Ane1']},
-                    'abstract': { 'value': 'Paper abstract' },
-                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
-                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'},
-                    'video': { 'value': 'https://youtube.com/dfenxkw'}
-                }
-            )
-        )
-
-        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
-
-        ## AE verifies the camera ready revision
-        verification_note = andrew_client.post_note_edit(invitation='DMLR/Paper1/-/Camera_Ready_Verification',
-                            signatures=[andrew_paper1_anon_group.id],
-                            note=Note(
-                                signatures=[andrew_paper1_anon_group.id],
-                                content= {
-                                    'verification': { 'value': 'I confirm that camera ready manuscript complies with the DMLR stylefile and, if appropriate, includes the minor revisions that were requested.' }
-                                 }
-                            ))
-
-        helpers.await_queue_edit(openreview_client, edit_id=verification_note['id'])
         helpers.await_queue_edit(openreview_client, invitation='DMLR/-/Accepted')
 
         note = openreview_client.get_note(note_id_1)
@@ -769,7 +740,7 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
         assert note.forum == note_id_1
         assert note.replyto is None
         assert note.pdate
-        assert note.invitations == ['DMLR/-/Submission', 'DMLR/-/Under_Review', 'DMLR/-/Edit', 'DMLR/Paper1/-/Camera_Ready_Revision', 'DMLR/-/Accepted']
+        assert note.invitations == ['DMLR/-/Submission', 'DMLR/-/Under_Review', 'DMLR/-/Edit', 'DMLR/-/Accepted']
         assert note.readers == ['everyone']
         assert note.writers == ['DMLR']
         assert note.signatures == ['DMLR/Paper1/Authors']
@@ -780,12 +751,12 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
         assert note.content['authors'].get('readers') is None
         assert note.content['venue']['value'] == 'Accepted by DMLR'
         assert note.content['venueid']['value'] == 'DMLR'
-        assert note.content['title']['value'] == 'Paper title VERSION 2'
+        assert note.content['title']['value'] == 'Paper title'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['certifications']['value'] == ['Featured Certification', 'Reproducibility Certification']
         assert note.content['_bibtex']['value'] == '''@article{
 user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
-title={Paper title {VERSION} 2},
+title={Paper title},
 author={SomeFirstName User and Melisa Ane},
 journal={Journal of Data-centric Machine Learning Research},
 issn={XXXX-XXXX},
@@ -799,5 +770,9 @@ note={Featured Certification, Reproducibility Certification}
         for review in reviews:
             assert review.readers == ['everyone']
             assert review.signatures == [review.signatures[0]]
+
+        journal.invitation_builder.expire_paper_invitations(note)
+        journal.invitation_builder.expire_reviewer_responsibility_invitations()
+        journal.invitation_builder.expire_assignment_availability_invitations()            
 
 

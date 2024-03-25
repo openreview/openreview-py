@@ -57,6 +57,11 @@ class InvitationBuilder(object):
             'script': self.get_super_dateprocess_content('ae_edge_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'one week', 2: 'one month' })
         }
 
+        self.eic_reminder_process = {
+            'dates': ["#{4/duedate} + " + str(week), "#{4/duedate} + " + str(one_month)],
+            'script': self.get_super_dateprocess_content('eic_reminder_script', self.journal.get_meta_invitation_id(), { 0: 'one week', 1: 'one month' })
+        }        
+
     def set_invitations(self, assignment_delay):
         self.set_ae_recruitment_invitation()
         self.set_reviewer_recruitment_invitation()
@@ -251,6 +256,9 @@ class InvitationBuilder(object):
                     },
                     'author_edge_reminder_script': {
                         'value': self.get_process_content('process/author_edge_reminder_process.py')
+                    },
+                    'eic_reminder_script': {
+                        'value': self.get_process_content('process/eic_reminder_process.py')
                     }
                 },
                 edit=True
@@ -632,6 +640,9 @@ If you have questions after reviewing the points below that are not answered on 
     
     def set_reviewer_assignment_acknowledgement_invitation(self):
 
+        if self.journal.should_skip_reviewer_assignment_acknowledgement():
+            return         
+
         venue_id=self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
 
@@ -903,7 +914,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'authorids': {
                             'value': {
                                 'param': {
-                                    'type': "group[]",
+                                    'type': "profile[]",
                                     'regex': r'~.*'
                                 }
                             },
@@ -2544,6 +2555,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'maxReplies': 1,
             'process': self.process_script,
             'duedate': '${2/content/duedate/value}',
+            'dateprocesses': [self.eic_reminder_process],
             'edit': {
                 'signatures': [editors_in_chief_id],
                 'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
@@ -5369,6 +5381,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         )
     
     def set_camera_ready_revision_invitation(self):
+
+        if self.journal.should_skip_camera_ready_revision():
+            return
+
         venue_id = self.journal.venue_id
         short_name = self.journal.short_name
 
@@ -5748,7 +5764,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'authorids': {
                             'value': {
                                 'param': {
-                                    'type': "group[]",
+                                    'type': "profile[]",
                                     'regex': r'~.*'
                                 }
                             },

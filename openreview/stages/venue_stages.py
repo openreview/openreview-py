@@ -289,7 +289,7 @@ class SubmissionStage(object):
                     'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.',
                     'value': {
                         'param': {
-                            'type': 'group[]',
+                            'type': 'profile[]',
                             'regex': r'~.*',
                         }
                     }

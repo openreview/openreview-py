@@ -361,7 +361,7 @@ class TestICLRConference():
             )
         )
 
-        helpers.await_queue(openreview_client)        
+        helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])        
 
     def test_comment_stage(self, openreview_client, helpers):
 

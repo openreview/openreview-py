@@ -19,6 +19,7 @@ def process(client, edit, invitation):
         profile = client.get_profile(solicit_request.signatures[0])
         
         client.add_members_to_group(journal.get_solicit_reviewers_id(number=submission.number), profile.id)
+        client.add_members_to_group(journal.get_reviewers_volunteers_id(), profile.id)
         client.post_edge(openreview.api.Edge(invitation=journal.get_reviewer_assignment_id(),
             signatures=[journal.venue_id],
             head=submission.id,
