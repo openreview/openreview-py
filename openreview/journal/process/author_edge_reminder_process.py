@@ -16,6 +16,7 @@ def process(client, invitation):
     ## send email to authors
     print('send email to authors')
     client.post_message(
+        invitation=journal.get_meta_invitation_id(),
         recipients=[journal.get_authors_id(submission.number)],
         subject=f'''[{journal.short_name}] You are late in performing a task for your paper {submission.number}: {submission.content['title']['value']}''',
         message=f'''Hi {{{{fullname}}}},
@@ -33,5 +34,6 @@ We thank you for your cooperation.
 
 The {journal.short_name} Editors-in-Chief
 ''',
-        replyTo=assigned_action_editor if assigned_action_editor else journal.contact_info
+        replyTo=assigned_action_editor if assigned_action_editor else journal.contact_info,
+        signature=journal.venue_id
     )

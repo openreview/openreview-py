@@ -9,7 +9,9 @@ def process(client, edit, invitation):
     preferred_name = profile.get_preferred_name(pretty=True)
     
     if 'Rejected' == request_note.content['status']['value']:
-        client.post_message(subject='Profile name removal request has been rejected', 
+        client.post_message(
+        invitation=f'{edit.domain}/-/Edit',
+        subject='Profile name removal request has been rejected', 
         recipients=[profile.id], 
         message=f'''Hi {{{{fullname}}}},
 
@@ -300,7 +302,9 @@ The OpenReview Team.
         print('Remove tilde id group')
         client.delete_group(username)
 
-    client.post_message(subject='Profile name removal request has been accepted', 
+    client.post_message(
+    invitation=f'{edit.domain}/-/Edit',
+    subject='Profile name removal request has been accepted', 
     recipients=[profile.id], 
     message=f'''Hi {{{{fullname}}}},
 

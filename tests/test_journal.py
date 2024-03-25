@@ -239,6 +239,7 @@ class TestJournal():
         journal = JournalRequest.get_journal(openreview_client, request_note_id)
 
         recruitment_status = journal.invite_action_editors(message='Test {{fullname}},  {{accept_url}}, {{decline_url}}', subject='Invitation to be an Action Editor', invitees=['User@mail.com', 'joelle@mailseven.com', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
+        print(recruitment_status)
         assert len(recruitment_status['invited']) == 9
         assert recruitment_status['errors'] == {}
         invited_group = openreview_client.get_group('TMLR/Action_Editors/Invited')
@@ -2342,6 +2343,9 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 Your decision on submission 1: Paper title UPDATED has been approved by the Editors in Chief. The decision is now public.
 
 To know more about the decision, please follow this link: https://openreview.net/forum?id={note_id_1}
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''        
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission 1: Paper title UPDATED')
@@ -5271,7 +5275,7 @@ note={Expert Certification}
             ))
 
         ## Invite reviewer that is already in the pool
-        with pytest.raises(openreview.OpenReviewException, match=r'Reviewer Javier Burroni is an official reviewer, please use the "Assign" button to make the assignment.'):
+        with pytest.raises(openreview.OpenReviewException, match=r'tail "javier@mailtwo.com" is member of TMLR/Reviewers'):
             paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
                 signatures=[joelle_paper13_anon_group.id],
                 head=note_id_14,

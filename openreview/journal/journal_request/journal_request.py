@@ -213,6 +213,7 @@ class JournalRequest():
         with open(os.path.join(os.path.dirname(__file__), 'process/comment_process.py')) as f:
             content = f.read()
             content = content.replace("SUPPORT_GROUP = ''", "SUPPORT_GROUP = '" + self.support_group_id + "'")
+            content = content.replace("VENUE_ID = ''", "VENUE_ID = '" + venue_id + "'")
             invitation = openreview.api.Invitation(
                 id = request_comment_invitation_id,
                 invitees = [venue_id, self.support_group_id],

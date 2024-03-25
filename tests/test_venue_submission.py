@@ -280,10 +280,12 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Post_Submission-0-0')
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/Reviewers/-/Submission_Group-0-0')
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/Area_Chairs/-/Submission_Group-0-0')
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/Reviewers/-/Submission_Message-0-0')
 
         assert openreview_client.get_group('TestVenue.cc/Submission1/Authors')
         assert openreview_client.get_group('TestVenue.cc/Submission1/Reviewers')
         assert openreview_client.get_group('TestVenue.cc/Submission1/Area_Chairs')
+        assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Message')
 
         submissions = venue.get_submissions(sort='number:asc')
         assert len(submissions) == 2
@@ -833,7 +835,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         updated_note = author_client.get_note(id=submissions[0].forum)
 
-        messages = client.get_messages(to = 'celeste@maileleven.com', subject='TV 22 has received a new revision of your submission titled Paper 1 Title REVISED AGAIN')
+        messages = openreview_client.get_messages(to = 'celeste@maileleven.com', subject='TV 22 has received a new revision of your submission titled Paper 1 Title REVISED AGAIN')
         assert messages and len(messages) == 1
         assert messages[0]['content']['replyTo'] == 'testvenue@contact.com'
 

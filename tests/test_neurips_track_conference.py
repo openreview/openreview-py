@@ -150,7 +150,7 @@ class TestNeurIPSTrackConference():
         ## finish submission deadline
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
-        first_date = now - datetime.timedelta(minutes=28)               
+        first_date = now - datetime.timedelta(minutes=27)               
 
         venue_revision_note = openreview.Note(
             content={

@@ -120,6 +120,7 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
     #send tauthor email
     if edit.tauthor.lower() != 'openreview.net':
         client.post_message(
+            meta_invitation_id,
             subject=author_subject,
             message=author_message,
             recipients=[edit.tauthor],
@@ -130,6 +131,7 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
     if ('authorids' in note.content and len(note.content['authorids']['value'])):
         author_message += f'''\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at {edit.tauthor}'''
         client.post_message(
+            meta_invitation_id,
             subject=author_subject,
             message=author_message,
             recipients=note.content['authorids']['value'],
@@ -139,6 +141,7 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
 
     if email_pcs:
         client.post_message(
+            meta_invitation_id,
             subject=f'''{short_phrase} has received a new submission titled {note.content['title']['value']}''',
             message=f'''A submission to {short_phrase} has been {action}.
 
