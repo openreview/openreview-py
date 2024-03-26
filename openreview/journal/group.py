@@ -173,11 +173,11 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             publication_chairs_id = self.journal.get_publication_chairs_id()
             publication_chairs_group = openreview.tools.get_group(self.client, publication_chairs_id)
             if not publication_chairs_group:
-                action_editor_group=self.post_group(Group(id=publication_chairs_id,
+                publication_chairs_group=self.post_group(Group(id=publication_chairs_id,
                                 readers=['everyone'],
                                 writers=[venue_id],
                                 signatures=[venue_id],
-                                signatories=[venue_id],
+                                signatories=[venue_id, publication_chairs_id],
                                 members=[]))
 
         ## action editors group
