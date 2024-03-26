@@ -59,7 +59,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
         venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date, include_option=include_expertise_selection)
 
-        if venue.id.startswith('aclweb.org/ACL/ARR'):
+        if isinstance(venue, openreview.arr.ARR):
             venue.copy_to_venue()
 
         if setup:
