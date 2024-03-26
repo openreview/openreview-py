@@ -228,19 +228,3 @@ class TestReactNoteEditor():
         assert openreview_client.get_group('ReactVenue.cc')
         assert openreview_client.get_group('ReactVenue.cc/Authors')
 
-
-        invitations = openreview_client.get_invitations(prefix = 'ReactVenue.cc', type = 'all')
-        for invitation in invitations:
-            if 'ReactVenue.cc/-/Edit' not in invitation.id:
-                openreview_client.post_invitation_edit(
-                    invitations='ReactVenue.cc/-/Edit',
-                    signatures=['ReactVenue.cc'],
-                    invitation=openreview.api.Invitation(
-                        id=invitation.id,
-                        expdate=openreview.tools.datetime_millis(datetime.datetime.utcnow())
-                    )
-                )
-
-        helpers.await_queue(openreview_client)
-
-

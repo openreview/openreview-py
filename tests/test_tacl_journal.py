@@ -755,3 +755,7 @@ note={Withdrawn}
         invitations = openreview_client.get_invitations(replyForum=note_id_2, prefix='TACL/Paper2')
         assert len(invitations) == 1
         assert "TACL/Paper2/-/Official_Comment" in [i.id for i in invitations]
+
+        journal.invitation_builder.expire_paper_invitations(note)
+        journal.invitation_builder.expire_reviewer_responsibility_invitations()
+        journal.invitation_builder.expire_assignment_availability_invitations()        

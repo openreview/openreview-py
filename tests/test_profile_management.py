@@ -430,6 +430,7 @@ class TestProfileManagement():
                 },
                 license = 'CC BY-SA 4.0'
         ))
+        note_number = edit['note']['number']
 
         ## Enable comment invitation
         openreview_client.post_invitation_edit(
@@ -459,7 +460,7 @@ class TestProfileManagement():
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview Archive] John Alternate Last commented on your submission. Paper Title: "Paper title 1"')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''John Alternate Last commented on your submission.\n    \nPaper number: 1\n\nPaper title: Paper title 1\n\nComment: more details about our submission\n\nTo view the comment, click here: https://openreview.net/forum?id={edit['note']['forum']}&noteId={edit['note']['id']}'''        
+        assert messages[0]['content']['text'] == f'''John Alternate Last commented on your submission.\n    \nPaper number: {note_number}\n\nPaper title: Paper title 1\n\nComment: more details about our submission\n\nTo view the comment, click here: https://openreview.net/forum?id={edit['note']['forum']}&noteId={edit['note']['id']}'''        
 
 
         john_client.post_note_edit(
