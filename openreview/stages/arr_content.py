@@ -1819,7 +1819,7 @@ arr_max_load_task_forum = {
     "instructions": "Please complete this form to indicate your (un)availability for reviewing. If you do not complete this form, you will receive the default load of this cycle.\n\nIf you wish to change your maximum load, please delete your previous request using the trash can icon, refresh the page and submit a new request."
 }
 
-arr_reviewer_max_load_task = {
+arr_max_load_task = {
     "maximum_load": {
         "value": {
             "param": {
@@ -1843,20 +1843,6 @@ arr_reviewer_max_load_task = {
         },
         "description": "Are you able to review resubmissions of papers you previously reviewed? (even if you answered '0' to the previous question)",
         "order": 2,
-    },
-    "meta_data_donation": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes, I consent to donating anonymous metadata of my review for research.",
-                    "No, I do not consent to donating anonymous metadata of my review for research."
-                ],
-                "type": "string",
-            }
-        },
-        "description": "Do you agree for the anonymized metadata associated with your reviews produced in this cycle to be included in a publicly available dataset? This dataset WILL include scores, anonymized paper and reviewer IDs that allow grouping the reviews by paper and by reviewer, as well as meta-review decisions and other numerical and categorical metadata. This dataset WILL NOT include any textual or uniquely attributable data like names, submission titles and texts, review texts, author responses, etc.",
-        "order": 3
     },
     "next_available_month": {
         "value": {
@@ -1897,7 +1883,24 @@ arr_reviewer_max_load_task = {
     }
 }
 
-arr_ac_max_load_task = deepcopy(arr_reviewer_max_load_task)
+arr_reviewer_max_load_task = deepcopy(arr_max_load_task)
+
+arr_reviewer_max_load_task["meta_data_donation"] = {
+    "value": {
+        "param": {
+            "input": "radio",
+            "enum": [
+                "Yes, I consent to donating anonymous metadata of my review for research.",
+                "No, I do not consent to donating anonymous metadata of my review for research."
+            ],
+            "type": "string",
+        }
+    },
+    "description": "Do you agree for the anonymized metadata associated with your reviews produced in this cycle to be included in a publicly available dataset? This dataset WILL include scores, anonymized paper and reviewer IDs that allow grouping the reviews by paper and by reviewer, as well as meta-review decisions and other numerical and categorical metadata. This dataset WILL NOT include any textual or uniquely attributable data like names, submission titles and texts, review texts, author responses, etc.",
+    "order": 3
+}
+
+arr_ac_max_load_task = deepcopy(arr_max_load_task)
 arr_ac_max_load_task["maximum_load"] = {
         "value": {
             "param": {
@@ -1910,7 +1913,7 @@ arr_ac_max_load_task["maximum_load"] = {
         "description": "Enter your maximum reviewing load for papers in this cycle. This refers only to the specific role mentioned at the top of this page. A load of '0' indicates you are unable to review new submissions.",
         "order": 1,
     }
-arr_sac_max_load_task = deepcopy(arr_reviewer_max_load_task)
+arr_sac_max_load_task = deepcopy(arr_max_load_task)
 arr_sac_max_load_task["maximum_load"] = {
     "value": {
         "param": {"regex": "[0-9]{0,3}", "optional": False, "type": "string"}
