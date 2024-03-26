@@ -505,6 +505,10 @@ def get_bid_stages(request_forum):
         ac_bid_stage = openreview.stages.BidStage(request_forum.content['venue_id'] + '/Area_Chairs', start_date = bid_start_date, due_date = bid_due_date, request_count = int(request_forum.content.get('bid_count', 50)))
         bid_stages.append(ac_bid_stage)
 
+    if 'Yes, our venue has Senior Area Chairs' in request_forum.content.get('senior_area_chairs', '') and 'Yes' in request_forum.content.get('sac_bidding', ''):
+        sac_bid_stage = openreview.stages.BidStage(request_forum.content['venue_id'] + '/Senior_Area_Chairs', start_date = bid_start_date, due_date = bid_due_date, request_count = int(request_forum.content.get('bid_count', 50)))
+        bid_stages.append(sac_bid_stage)
+
     return bid_stages
 
 def get_review_stage(request_forum):

@@ -99,7 +99,7 @@ class TestSACAssignments():
                 signatures=['~SomeFirstName_User1'],
                 note=note)  
             
-        #close submissions
+        #close submissions and hide pdfs for bidding
         now = datetime.datetime.utcnow()
         due_date = now - datetime.timedelta(days=1)
 
@@ -122,6 +122,7 @@ class TestSACAssignments():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '50',
                 'use_recruitment_template': 'Yes',
+                'hide_fields': ['pdf']
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
@@ -137,9 +138,12 @@ class TestSACAssignments():
     def test_setup_matching(self, client, openreview_client, helpers):
 
         pc_client = openreview.Client(username='pc@matching.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@matching.org', password=helpers.strong_password)
 
-        submissions = openreview_client.get_notes(invitation='TSACM/2024/Conference/-/Submission', sort='number:asc')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
+        venue = openreview.helpers.get_conference(client, request_form.forum, 'openreview.net/Support', setup=False)
+
+        submissions = venue.get_submissions(sort='number:asc')
 
         ## setup matching with no SACs
         matching_setup_note = pc_client.post_note(openreview.Note(
@@ -168,6 +172,58 @@ class TestSACAssignments():
             'TSACM/2024/Conference/Senior_Area_Chairs', 
             ['~SAC_MatchingOne1', '~SAC_MatchingTwo1', '~SAC_MatchingThree1']
         )
+
+        # enable bidding
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=1)
+        bid_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'bid_start_date': now.strftime('%Y/%m/%d'),
+                'bid_due_date': due_date.strftime('%Y/%m/%d'),
+                'bid_count': 5,
+                'sac_bidding': 'Yes'
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Bid_Stage',
+            readers=['TSACM/2024/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_MatchingChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        invitation = openreview_client.get_invitation('TSACM/2024/Conference/Senior_Area_Chairs/-/Bid')
+        assert invitation.edit['tail']['param']['options']['group'] == 'TSACM/2024/Conference/Senior_Area_Chairs'
+        assert invitation.edit['head']['param']['type'] == 'note'
+        assert invitation.edit['head']['param']['withInvitation'] == 'TSACM/2024/Conference/-/Submission'
+        invitation = openreview_client.get_invitation('TSACM/2024/Conference/Area_Chairs/-/Bid')
+        assert invitation.edit['tail']['param']['options']['group'] == 'TSACM/2024/Conference/Area_Chairs'
+        invitation = openreview_client.get_invitation('TSACM/2024/Conference/Reviewers/-/Bid')
+        assert invitation.edit['tail']['param']['options']['group'] == 'TSACM/2024/Conference/Reviewers'
+
+        sac1_client = openreview.api.OpenReviewClient(username='sac@umass.edu', password=helpers.strong_password)
+
+        sac1_client.post_edge(openreview.api.Edge(invitation = venue.get_bid_id(venue.get_senior_area_chairs_id()),
+            readers = [venue.id, '~SAC_MatchingOne1'],
+            writers = [venue.id, '~SAC_MatchingOne1'],
+            signatures = ['~SAC_MatchingOne1'],
+            head = submissions[0].id,
+            tail = '~SAC_MatchingOne1',
+            label = 'High'
+        ))
+        sac1_client.post_edge(openreview.api.Edge(invitation = venue.get_bid_id(venue.get_senior_area_chairs_id()),
+            readers = [venue.id, '~SAC_MatchingOne1'],
+            writers = [venue.id, '~SAC_MatchingOne1'],
+            signatures = ['~SAC_MatchingOne1'],
+            head = submissions[2].id,
+            tail = '~SAC_MatchingOne1',
+            label = 'Low'
+        ))
+
+        bid_edges_count = openreview_client.get_edges_count(invitation='TSACM/2024/Conference/Senior_Area_Chairs/-/Bid')
+        assert bid_edges_count == 2
 
         with open(os.path.join(os.path.dirname(__file__), 'data/sac_scores_matching.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
@@ -209,7 +265,16 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         affinity_scores = openreview_client.get_edges_count(invitation=scores_invitation.id)
         assert affinity_scores == 9
 
-        conflict_invitation = openreview_client.get_invitation('TSACM/2024/Conference/Senior_Area_Chairs/-/Conflict')
+        conflict_invitation = pc_client_v2.get_invitation('TSACM/2024/Conference/Senior_Area_Chairs/-/Conflict')
         assert conflict_invitation
-        conflicts = openreview_client.get_edges_count(invitation=conflict_invitation.id)
+        conflicts = pc_client_v2.get_edges_count(invitation=conflict_invitation.id)
         assert conflicts
+
+        assignment_config_inv = pc_client_v2.get_invitation('TSACM/2024/Conference/Senior_Area_Chairs/-/Assignment_Configuration')
+        assert assignment_config_inv
+        assert 'scores_specification' in assignment_config_inv.edit['note']['content']
+        assert 'TSACM/2024/Conference/Senior_Area_Chairs/-/Bid' in assignment_config_inv.edit['note']['content']['scores_specification']['value']['param']['default']
+        assert 'TSACM/2024/Conference/Senior_Area_Chairs/-/Affinity_Score' in assignment_config_inv.edit['note']['content']['scores_specification']['value']['param']['default']
+        assert assignment_config_inv.edit['note']['content']['paper_invitation']['value']['param']['regex'] == 'TSACM/2024/Conference/-/Submission.*'
+        assert assignment_config_inv.edit['note']['content']['paper_invitation']['value']['param']['default'] == 'TSACM/2024/Conference/-/Submission&content.venueid=TSACM/2024/Conference/Submission'
+        assert conflict_invitation.id in assignment_config_inv.edit['note']['content']['conflicts_invitation']['value']['param']['default']
