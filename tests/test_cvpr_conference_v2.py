@@ -49,6 +49,7 @@ class TestCVPRConference():
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
+                'senior_area_chairs_assignment': 'Area Chairs',
                 'secondary_area_chairs': 'Yes, our venue has Secondary Area Chairs',
                 'Venue Start Date': '2024/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
