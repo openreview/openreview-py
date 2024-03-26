@@ -9,13 +9,12 @@ from tqdm import tqdm
 import openreview
 from openreview import tools
 from .invitation import InvitationBuilder
+from .helpers import ARRWorkflow
 from openreview.venue.group import GroupBuilder
 from openreview.api import Group
 from openreview.api import Note
 from openreview.api import Invitation
 from openreview.venue.recruitment import Recruitment
-from openreview.stages.arr_content import hide_fields_from_public
-
 from openreview.arr.helpers import (
     setup_arr_invitations
 )
@@ -123,6 +122,16 @@ class ARR(object):
         self.venue.custom_stage = self.custom_stage
 
         self.venue.expertise_selection_stage = self.expertise_selection_stage
+
+    def set_arr_stages(self, configuration_note):
+        workflow = ARRWorkflow(
+            self.client,
+            self,
+            configuration_note,
+            self.request_form_id,
+            self.support_user
+        )
+        workflow.set_workflow()
 
     def get_id(self):
         return self.venue.get_id()

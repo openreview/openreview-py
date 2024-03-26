@@ -1,6 +1,1111 @@
 import openreview
 from enum import Enum
 from datetime import datetime, timedelta
+from openreview.venue import matching
+
+
+from openreview.stages.arr_content import (
+    arr_registration_task_forum,
+    arr_registration_task,
+    arr_content_license_task_forum,
+    arr_content_license_task,
+    arr_reviewer_ac_recognition_task_forum,
+    arr_reviewer_ac_recognition_task,
+    arr_max_load_task_forum,
+    arr_reviewer_max_load_task,
+    arr_ac_max_load_task,
+    arr_sac_max_load_task,
+    arr_reviewer_emergency_load_task_forum,
+    arr_reviewer_emergency_load_task,
+    arr_ac_emergency_load_task_forum,
+    arr_ac_emergency_load_task,
+    arr_reviewer_checklist,
+    arr_ae_checklist,
+    arr_desk_reject_verification,
+    arr_reviewer_consent_content,
+    arr_official_review_content,
+    arr_metareview_content,
+    arr_ethics_review_content,
+    arr_review_rating_content,
+    arr_author_consent_content,
+    arr_metareview_license_task,
+    arr_metareview_license_task_forum,
+    hide_fields_from_public
+)
+
+class ARRWorkflow(object):
+    CONFIGURATION_INVITATION_CONTENT = {
+        'form_expiration_date': {
+            'description': 'What should the default expiration date be? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 13,
+            'required': False
+        },
+        'registration_due_date': {
+            'description': 'What should the displayed due date be for registering? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 13,
+            'required': False
+        },
+        'author_consent_due_date': {
+            'description': 'What should the displayed due date be for the authors consent task? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 13,
+            'required': False
+        },
+        'comment_start_date': {
+            'description': 'When should commenting be enabled for the assigned reviewing committee? This is generally enabled early, like on the submission deadline. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 13,
+            'required': False
+        },
+        'comment_end_date': {
+            'description': 'When should commenting be disabled? Official comments are usually enabled for 1 year. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 13,
+            'required': False
+        },
+        'previous_cycle': {
+            'description': 'What is the previous cycle? This will be used to fetch data and copy it into the current venue.',
+            'value-regex': '.*',
+            'order': 10,
+            'required': False
+        },
+        'maximum_load_due_date': {
+            'description': 'What should be the displayed deadline for the maximum load tasks? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 12,
+            'required': False
+        },
+        'maximum_load_exp_date': {
+            'description': 'When should we stop accepting any maximum load responses? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 13,
+            'required': False
+        },
+        'setup_proposed_assignments_date': {
+            'description': 'When should the proposed reviewer assignments be shared to the SAEs/AEs? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 12,
+            'required': False
+        },
+        'reviewer_assignments_title': {
+            'description': 'What is the title of the finalized reviewer assignments?',
+            'value-regex': '.*',
+            'order': 13,
+            'required': False
+        },
+        'ae_checklist_due_date': {
+            'description': 'What should be the displayed deadline for the maximum load tasks? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 12,
+            'required': False
+        },
+        'ae_checklist_exp_date': {
+            'description': 'When should we stop accepting any maximum load responses? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 13,
+            'required': False
+        },
+        'reviewer_checklist_due_date': {
+            'description': 'What should be the displayed deadline for the maximum load tasks? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 12,
+            'required': False
+        },
+        'reviewer_checklist_exp_date': {
+            'description': 'When should we stop accepting any maximum load responses? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 13,
+            'required': False
+        },
+        'setup_shared_data_date': {
+            'description': 'When should the data be copied over? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 14,
+            'required': False
+        },
+        'preprint_release_submission_date': {
+            'description': 'When should submissions be copied over and the opt-in papers be revealed to the public? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 15,
+            'required': False
+        },
+        'sae_affinity_scores': {
+            'description': 'Upload a CSV file containing affinity scores for SAC-paper pairs (one SAC-paper pair per line in the format: submission_id, SAC_id, affinity_score)',
+            'order': 17,
+            'value-file': {
+                'fileTypes': ['csv'],
+                'size': 50
+            },
+            'required': False
+        },
+        'setup_tracks_and_reassignment_date': {
+            'description': 'When will submission track and reassignment data be finalized? This will modify the affinity scores and indicate which reviewers and action editors have matching tracks. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 18,
+            'required': False
+        },
+        'setup_sae_ae_assignment_date': {
+            'description': 'When will both SAE and AE assignments be deployed? This must happen after both assignments are deployed to give SAEs access to the AE assignments. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 19,
+            'required': False
+        },
+        'reviewing_start_date': {
+            'description': 'When should reviewing start? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 20,
+            'required': False
+        },
+        'reviewing_due_date': {
+            'description': 'When should reviewing end? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 21,
+            'required': False
+        },
+        'reviewing_exp_date': {
+            'description': 'When should the reviewing forms be disabled? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 22,
+            'required': False
+        },
+        'metareviewing_start_date': {
+            'description': 'When should metareviewing start? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 23,
+            'required': False
+        },
+        'metareviewing_due_date': {
+            'description': 'When should metareviewing end? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 24,
+            'required': False
+        },
+        'metareviewing_exp_date': {
+            'description': 'When should the metareviewing forms be disabled? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 25,
+            'required': False
+        },
+        'ethics_reviewing_start_date': {
+            'description': 'When should ethics reviewing start? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 26,
+            'required': False
+        },
+        'ethics_reviewing_due_date': {
+            'description': 'When should ethics reviewing end? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 27,
+            'required': False
+        },
+        'ethics_reviewing_exp_date': {
+            'description': 'When should the ethics reviewing forms be disabled? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 28,
+            'required': False
+        },
+        'emergency_reviewing_start_date': {
+            'description': 'When should the emergency reviewing opt-in form open? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 20,
+            'required': False
+        },
+        'emergency_reviewing_due_date': {
+            'description': 'What due date should be advertised to the reviewers for emergency reviewing? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 21,
+            'required': False
+        },
+        'emergency_reviewing_exp_date': {
+            'description': 'When should the emergency reviewing forms be disabled? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 22,
+            'required': False
+        },
+        'setup_review_release_date': {
+            'description': 'When should the reviews be released to the authors? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 23,
+            'required': False
+        },
+        'setup_author_response_date': {
+            'description': 'When should the author response period be enabled? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 24,
+            'required': False
+        },
+        'close_author_response_date': {
+            'description': 'When should the author response period close? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 25,
+            'required': False
+        },
+        'emergency_metareviewing_start_date': {
+            'description': 'When should the emergency metareviewing opt-in form open? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 26,
+            'required': False
+        },
+        'emergency_metareviewing_due_date': {
+            'description': 'What due date should be advertised to the action editors for emergency reviewing? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 27,
+            'required': False
+        },
+        'emergency_metareviewing_exp_date': {
+            'description': 'When should the emergency metareviewing forms be disabled? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 28,
+            'required': False
+        },
+        'setup_meta_review_release_date': {
+            'description': 'The meta reviews be released to the authors? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 29,
+            'required': False
+        },
+        'review_rating_start_date': {
+            'description': 'When should the review rating form open? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 30,
+            'required': False
+        },
+        'review_rating_exp_date': {
+            'description': 'When should the review rating form close? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+            'order': 31,
+            'required': False
+        }
+    }
+
+    @staticmethod
+    def _build_preprint_release_edit(client, venue, builder, request_form):
+        venue_id = venue.id
+        submission_stage = venue.submission_stage
+
+        submission_id = submission_stage.get_submission_id(venue)
+
+        hidden_field_names = hide_fields_from_public
+        committee_members = venue.get_committee(number='${{4/id}/number}', with_authors=True)
+        note_content = { f: { 'readers': committee_members } for f in hidden_field_names }
+
+        edit = {
+            'signatures': [venue_id],
+            'readers': [venue_id, venue.get_authors_id('${{2/note/id}/number}')],
+            'writers': [venue_id],
+            'note': {
+                'id': {
+                    'param': {
+                        'withInvitation': submission_id,
+                        'optional': True
+                    }
+                },
+                'odate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'signatures': [ venue.get_authors_id('${{2/id}/number}') ],
+                'readers': ['everyone'],
+                'writers': [venue_id, venue.get_authors_id('${{2/id}/number}')],
+            }
+        }
+
+        note_content['_bibtex'] = {
+            'value': {
+                'param': {
+                    'type': 'string',
+                    'maxLength': 200000,
+                    'input': 'textarea',
+                    'optional': True
+                }
+            }
+        }
+
+        if note_content:
+            edit['note']['content'] = note_content
+
+        return {'edit': edit}
+    
+    @staticmethod
+    def _extend_desk_reject_verification(client, venue, builder, request_form):
+        venue.invitation_builder.set_verification_flag_invitation()
+
+    @staticmethod
+    def _extend_consent(client, venue, builder, request_form):
+        consent_invitation = openreview.api.Invitation(
+            id = f"{venue.id}/-/Consent",
+            edit = {
+                'invitation': {
+                    'edit': {}
+                },
+                'content': {}
+            }
+        )
+        consent_invitation.edit['content']['replytoSignatures'] = {
+            "value": {
+                "param": {
+                    "regex": ".*",
+                    "type": "string"
+                }
+            }
+        }
+        consent_invitation.edit['invitation']['invitees'] = [
+        "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
+        "${3/content/replytoSignatures/value}"
+        ]
+        consent_invitation.edit['invitation']['edit']['signatures'] = {
+            "param": {
+                "items": [
+                    {
+                    "prefix": "aclweb.org/ACL/ARR/2023/August/Submission${7/content/noteNumber/value}/Reviewer_.*",
+                    "optional": True
+                    }
+                ]
+            }
+        }
+        client.post_invitation_edit(invitations=venue.get_meta_invitation_id(),
+            readers=[venue.id],
+            writers=[venue.id],
+            signatures=[venue.id],
+            replacement=False,
+            invitation=consent_invitation
+        )
+
+    @staticmethod
+    def _extend_ae_checklist(client, venue, builder, request_form):
+        ae_checklist_invitation = openreview.api.Invitation(
+            id = f"{venue.id}/-/Action_Editor_Checklist",
+            content = {
+            "review_readers": {
+                "value": [
+                        venue.id + "/Program_Chairs",
+                        venue.id + "/Submission{number}/Senior_Area_Chairs",
+                        venue.id + "/Submission{number}/Area_Chairs",
+                        venue.id + "/Submission{number}/Reviewers/Submitted"
+                    ]
+                }
+            },
+            edit = {
+                'content':  {
+                    "noteNumber": {
+                        "value": {
+                            "param": {
+                                "regex": ".*",
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "noteId": {
+                        "value": {
+                            "param": {
+                                "regex": ".*",
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "noteReaders": {
+                        "value": {
+                            "param": {
+                                "type": "string[]",
+                                "regex": f"{venue.id}/.*|everyone"
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    "edit": {
+                        "note": {
+                            "readers": ['${5/content/noteReaders/value}']
+                        }
+                    }
+                }
+            }
+        )
+        ae_checklist_invitation.edit['invitation']['edit']['note']['readers'] = ['${5/content/noteReaders/value}']
+        client.post_invitation_edit(invitations=venue.get_meta_invitation_id(),
+            readers=[venue.id],
+            writers=[venue.id],
+            signatures=[venue.id],
+            replacement=False,
+            invitation=ae_checklist_invitation
+        )
+
+    @staticmethod
+    def _extend_reviewer_checklist(client, venue, builder, request_form):
+        reviewer_checklist_invitation = openreview.api.Invitation(
+            id = f"{venue.id}/-/Reviewer_Checklist",
+            content = {
+            "review_readers": {
+                "value": [
+                        venue.id + "/Program_Chairs",
+                        venue.id + "/Submission{number}/Senior_Area_Chairs",
+                        venue.id + "/Submission{number}/Area_Chairs",
+                        venue.id + "/Submission{number}/Reviewers/Submitted"
+                    ]
+                }
+            },
+            edit = {
+                'content':  {
+                        "noteNumber": {
+                        "value": {
+                            "param": {
+                                "regex": ".*",
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "noteId": {
+                        "value": {
+                            "param": {
+                                "regex": ".*",
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "noteReaders": {
+                        "value": {
+                            "param": {
+                                "type": "string[]",
+                                "regex": f"{venue.id}/.*|everyone"
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    "edit": {
+                        "note": {
+                            "readers": ['${5/content/noteReaders/value}']
+                        }
+                    }
+                }
+            }
+        )
+        client.post_invitation_edit(invitations=venue.get_meta_invitation_id(),
+            readers=[venue.id],
+            writers=[venue.id],
+            signatures=[venue.id],
+            replacement=False,
+            invitation=reviewer_checklist_invitation
+        )
+
+    def __init__(self, client_v2, venue, configuration_note, request_form_id, support_user):
+        self.client_v2 = client_v2
+        self.client = openreview.Client(
+            baseurl=openreview.tools.get_base_urls(client_v2)[0],
+            token=client_v2.token
+        )
+        self.venue = venue
+        self.venue_id = venue.id
+        self.invitation_builder = venue.invitation_builder
+        self.configuration_note = configuration_note
+        self.request_form_id = request_form_id
+        self.support_user = support_user
+        request_form = self.client.get_note(request_form_id)
+
+        self.workflow_stages = [
+            ARRStage(
+                type=ARRStage.Type.PROCESS_INVITATION,
+                required_fields=['preprint_release_submission_date'],
+                super_invitation_id=f"{self.venue_id}/-/Preprint_Release_{venue.submission_stage.name}",
+                stage_arguments={},
+                start_date=self.configuration_note.content.get('preprint_release_submission_date'),
+                process='process/preprint_release_submission_process.py',
+                build_edit=ARRWorkflow._build_preprint_release_edit
+            ),
+            ARRStage(
+                type=ARRStage.Type.PROCESS_INVITATION,
+                required_fields=['setup_shared_data_date', 'previous_cycle'],
+                super_invitation_id=f"{self.venue_id}/-/Share_Data",
+                stage_arguments={
+                    'content': {
+                        'previous_cycle': {'value': self.configuration_note.content.get('previous_cycle')}
+                    }
+                },
+                start_date=self.configuration_note.content.get('setup_shared_data_date'),
+                process='management/setup_shared_data.py'
+            ),
+            ARRStage(
+                type=ARRStage.Type.PROCESS_INVITATION,
+                required_fields=['sae_affinity_scores'],
+                super_invitation_id=f"{self.venue_id}/-/Setup_SAE_Matching",
+                stage_arguments={
+                    'content': {
+                        'sae_affinity_scores': {'value': self.configuration_note.content.get('sae_affinity_scores')},
+                        'configuration_note_id': {'value': self.configuration_note.id}
+                    }
+                },
+                start_date=ARRStage.immediate_start_date(),
+                process='management/setup_matching.py'
+            ),
+            ARRStage(
+                type=ARRStage.Type.PROCESS_INVITATION,
+                required_fields=['setup_tracks_and_reassignment_date'],
+                super_invitation_id=f"{self.venue_id}/-/Setup_Tracks_And_Reassignments",
+                stage_arguments={},
+                start_date=self.configuration_note.content.get('setup_tracks_and_reassignment_date'),
+                process='management/setup_reassignment_data.py'
+            ),
+            ARRStage(
+                type=ARRStage.Type.PROCESS_INVITATION,
+                required_fields=['setup_sae_ae_assignment_date'],
+                super_invitation_id=f"{self.venue_id}/-/Enable_SAE_AE_Assignments",
+                stage_arguments={},
+                start_date=self.configuration_note.content.get('setup_sae_ae_assignment_date'),
+                process='management/setup_sae_ae_assignments.py'
+            ),
+            ARRStage(
+                type=ARRStage.Type.PROCESS_INVITATION,
+                required_fields=['setup_proposed_assignments_date', 'reviewer_assignments_title'],
+                super_invitation_id=f"{self.venue_id}/-/Share_Proposed_Assignments",
+                stage_arguments={
+                    'content': {
+                        'reviewer_assignments_title': {'value': self.configuration_note.content.get('reviewer_assignments_title')}
+                    }
+                },
+                start_date=self.configuration_note.content.get('setup_proposed_assignments_date'),
+                process='management/setup_proposed_assignments.py'
+            ),
+            ARRStage(
+                type=ARRStage.Type.PROCESS_INVITATION,
+                required_fields=['setup_review_release_date'],
+                super_invitation_id=f"{self.venue_id}/-/Release_Official_Reviews",
+                stage_arguments={},
+                start_date=self.configuration_note.content.get('setup_review_release_date'),
+                process='management/setup_review_release.py'
+            ),
+            ARRStage(
+                type=ARRStage.Type.PROCESS_INVITATION,
+                required_fields=['setup_meta_review_release_date'],
+                super_invitation_id=f"{self.venue_id}/-/Release_Meta_Reviews",
+                stage_arguments={},
+                start_date=self.configuration_note.content.get('setup_meta_review_release_date'),
+                process='management/setup_metareview_release.py'
+            ),
+            ARRStage(
+                type=ARRStage.Type.PROCESS_INVITATION,
+                required_fields=['setup_author_response_date'],
+                super_invitation_id=f"{self.venue_id}/-/Enable_Author_Response",
+                stage_arguments={},
+                start_date=self.configuration_note.content.get('setup_author_response_date'),
+                process='management/setup_rebuttal_start.py'
+            ),
+            ARRStage(
+                type=ARRStage.Type.PROCESS_INVITATION,
+                required_fields=['close_author_response_date'],
+                super_invitation_id=f"{self.venue_id}/-/Close_Author_Response",
+                stage_arguments={},
+                start_date=self.configuration_note.content.get('close_author_response_date'),
+                process='management/setup_rebuttal_end.py'
+            ),
+            ARRStage(
+                type=ARRStage.Type.REGISTRATION_STAGE,
+                group_id=venue.get_reviewers_id(),
+                required_fields=['registration_due_date', 'form_expiration_date'],
+                super_invitation_id=f"{venue.get_reviewers_id()}/-/{self.invitation_builder.REGISTRATION_NAME}",
+                stage_arguments={
+                    'committee_id': venue.get_reviewers_id(),
+                    'name': self.invitation_builder.REGISTRATION_NAME,
+                    'instructions': arr_registration_task_forum['instructions'],
+                    'title': venue.get_reviewers_name() + ' ' + arr_registration_task_forum['title'],
+                    'additional_fields': arr_registration_task
+                },
+                exp_date=self.configuration_note.content.get('form_expiration_date')
+            ),
+            ARRStage(
+                type=ARRStage.Type.REGISTRATION_STAGE,
+                group_id=venue.get_reviewers_id(),
+                required_fields=['form_expiration_date'],
+                super_invitation_id=f"{venue.get_reviewers_id()}/-/{self.invitation_builder.RECOGNITION_NAME}",
+                stage_arguments={
+                    'committee_id': venue.get_reviewers_id(),
+                    'name': self.invitation_builder.RECOGNITION_NAME,
+                    'instructions': arr_reviewer_ac_recognition_task_forum['instructions'],
+                    'title': venue.get_reviewers_name() + ' ' + arr_reviewer_ac_recognition_task_forum['title'],
+                    'additional_fields': arr_reviewer_ac_recognition_task,
+                    'remove_fields': ['profile_confirmed', 'expertise_confirmed']
+                },
+                exp_date=self.configuration_note.content.get('form_expiration_date')
+            ),
+            ARRStage(
+                type=ARRStage.Type.REGISTRATION_STAGE,
+                group_id=venue.get_reviewers_id(),
+                required_fields=['form_expiration_date'],
+                super_invitation_id=f"{venue.get_reviewers_id()}/-/{self.invitation_builder.REVIEWER_LICENSE_NAME}",
+                stage_arguments={
+                    'committee_id': venue.get_reviewers_id(),
+                    'name': self.invitation_builder.REVIEWER_LICENSE_NAME,
+                    'instructions': arr_content_license_task_forum['instructions'],
+                    'title': arr_content_license_task_forum['title'],
+                    'additional_fields': arr_content_license_task,
+                    'remove_fields': ['profile_confirmed', 'expertise_confirmed']
+                },
+                exp_date=self.configuration_note.content.get('form_expiration_date')
+            ),
+            ARRStage(
+                type=ARRStage.Type.REGISTRATION_STAGE,
+                group_id=venue.get_area_chairs_id(),
+                required_fields=['registration_due_date', 'form_expiration_date'],
+                super_invitation_id=f"{venue.get_area_chairs_id()}/-/{self.invitation_builder.REGISTRATION_NAME}",
+                stage_arguments={
+                    'committee_id': venue.get_area_chairs_id(),
+                    'name': self.invitation_builder.REGISTRATION_NAME,
+                    'instructions': arr_registration_task_forum['instructions'],
+                    'title': venue.get_area_chairs_name() + ' ' + arr_registration_task_forum['title'],
+                    'additional_fields': arr_registration_task
+                },
+                exp_date=self.configuration_note.content.get('form_expiration_date')
+            ),
+            ARRStage(
+                type=ARRStage.Type.REGISTRATION_STAGE,
+                group_id=venue.get_area_chairs_id(),
+                required_fields=['form_expiration_date'],
+                super_invitation_id=f"{venue.get_area_chairs_id()}/-/{self.invitation_builder.RECOGNITION_NAME}",
+                stage_arguments={
+                    'committee_id': venue.get_area_chairs_id(),
+                    'name': self.invitation_builder.RECOGNITION_NAME,
+                    'instructions': arr_reviewer_ac_recognition_task_forum['instructions'],
+                    'title': venue.get_area_chairs_name() + ' ' + arr_reviewer_ac_recognition_task_forum['title'],
+                    'additional_fields': arr_reviewer_ac_recognition_task,
+                    'remove_fields': ['profile_confirmed', 'expertise_confirmed']
+                },
+                exp_date=self.configuration_note.content.get('form_expiration_date')
+            ),
+            ARRStage(
+                type=ARRStage.Type.REGISTRATION_STAGE,
+                group_id=venue.get_area_chairs_id(),
+                required_fields=['form_expiration_date'],
+                super_invitation_id=f"{venue.get_area_chairs_id()}/-/{self.invitation_builder.METAREVIEWER_LICENSE_NAME}",
+                stage_arguments={
+                    'committee_id': venue.get_area_chairs_id(),
+                    'name': self.invitation_builder.METAREVIEWER_LICENSE_NAME,
+                    'instructions': arr_metareview_license_task_forum['instructions'],
+                    'title': venue.get_area_chairs_name() + ' ' + arr_metareview_license_task_forum['title'],
+                    'additional_fields': arr_metareview_license_task,
+                    'remove_fields': ['profile_confirmed', 'expertise_confirmed']
+                },
+                exp_date=self.configuration_note.content.get('form_expiration_date')
+            ),
+            ARRStage(
+                type=ARRStage.Type.REGISTRATION_STAGE,
+                group_id=venue.get_senior_area_chairs_id(),
+                required_fields=['registration_due_date', 'form_expiration_date'],
+                super_invitation_id=f"{venue.get_senior_area_chairs_id()}/-/{self.invitation_builder.REGISTRATION_NAME}",
+                stage_arguments={
+                    'committee_id': venue.get_senior_area_chairs_id(),
+                    'name': self.invitation_builder.REGISTRATION_NAME,
+                    'instructions': arr_registration_task_forum['instructions'],
+                    'title': venue.senior_area_chairs_name.replace('_', ' ') + ' ' + arr_registration_task_forum['title'],
+                    'additional_fields': arr_registration_task
+                },
+                exp_date=self.configuration_note.content.get('form_expiration_date')
+            ),
+            ARRStage(
+                type=ARRStage.Type.REGISTRATION_STAGE,
+                group_id=venue.get_reviewers_id(),
+                required_fields=['maximum_load_due_date', 'maximum_load_exp_date'],
+                super_invitation_id=f"{venue.get_reviewers_id()}/-/{self.invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME}",
+                stage_arguments={
+                    'committee_id': venue.get_reviewers_id(),
+                    'name': self.invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME,
+                    'instructions': arr_max_load_task_forum['instructions'],
+                    'title': venue.get_reviewers_name() + ' ' + arr_max_load_task_forum['title'],
+                    'additional_fields': arr_reviewer_max_load_task,
+                    'remove_fields': ['profile_confirmed', 'expertise_confirmed']
+                },
+                due_date=self.configuration_note.content.get('maximum_load_due_date'),
+                exp_date=self.configuration_note.content.get('maximum_load_exp_date'),
+                process='process/max_load_process.py',
+                preprocess='process/max_load_preprocess.py'
+            ),
+            ARRStage(
+                type=ARRStage.Type.REGISTRATION_STAGE,
+                group_id=venue.get_area_chairs_id(),
+                required_fields=['maximum_load_due_date', 'maximum_load_exp_date'],
+                super_invitation_id=f"{venue.get_area_chairs_id()}/-/{self.invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME}",
+                stage_arguments={
+                    'committee_id': venue.get_area_chairs_id(),
+                    'name': self.invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME,
+                    'instructions': arr_max_load_task_forum['instructions'],
+                    'title': venue.get_area_chairs_name() + ' ' + arr_max_load_task_forum['title'],
+                    'additional_fields': arr_ac_max_load_task,
+                    'remove_fields': ['profile_confirmed', 'expertise_confirmed']
+                },
+                due_date=self.configuration_note.content.get('maximum_load_due_date'),
+                exp_date=self.configuration_note.content.get('maximum_load_exp_date'),
+                process='process/max_load_process.py',
+                preprocess='process/max_load_preprocess.py'
+            ),
+            ARRStage(
+                type=ARRStage.Type.REGISTRATION_STAGE,
+                group_id=venue.get_senior_area_chairs_id(),
+                required_fields=['maximum_load_due_date', 'maximum_load_exp_date'],
+                super_invitation_id=f"{venue.get_senior_area_chairs_id()}/-/{self.invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME}",
+                stage_arguments={   
+                    'committee_id': venue.get_senior_area_chairs_id(),
+                    'name': self.invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME,
+                    'instructions': arr_max_load_task_forum['instructions'],
+                    'title': venue.senior_area_chairs_name.replace('_', ' ') + ' ' + arr_max_load_task_forum['title'],
+                    'additional_fields': arr_sac_max_load_task,
+                    'remove_fields': ['profile_confirmed', 'expertise_confirmed']
+                },
+                due_date=self.configuration_note.content.get('maximum_load_due_date'),
+                exp_date=self.configuration_note.content.get('maximum_load_exp_date'),
+                process='process/max_load_process.py',
+                preprocess='process/max_load_preprocess.py'
+            ),
+            ARRStage(
+                type=ARRStage.Type.REGISTRATION_STAGE,
+                group_id=venue.get_reviewers_id(),
+                required_fields=['emergency_reviewing_start_date', 'emergency_reviewing_due_date', 'emergency_reviewing_due_date'],
+                super_invitation_id=f"{venue.get_reviewers_id()}/-/{self.invitation_builder.EMERGENCY_REVIEWING_NAME}",
+                stage_arguments={   
+                    'committee_id': venue.get_reviewers_id(),
+                    'name': self.invitation_builder.EMERGENCY_REVIEWING_NAME,
+                    'instructions': arr_reviewer_emergency_load_task_forum['instructions'],
+                    'title': venue.get_reviewers_name() + ' ' + arr_reviewer_emergency_load_task_forum['title'],
+                    'additional_fields': arr_reviewer_emergency_load_task,
+                    'remove_fields': ['profile_confirmed', 'expertise_confirmed']
+                },
+                start_date=self.configuration_note.content.get('emergency_reviewing_start_date'),
+                due_date=self.configuration_note.content.get('emergency_reviewing_due_date'),
+                exp_date=self.configuration_note.content.get('emergency_reviewing_due_date'),
+                process='process/emergency_load_process.py',
+                preprocess='process/emergency_load_preprocess.py'
+            ),
+            ARRStage(
+                type=ARRStage.Type.REGISTRATION_STAGE,
+                group_id=venue.get_area_chairs_id(),
+                required_fields=['emergency_metareviewing_start_date', 'emergency_metareviewing_due_date', 'emergency_metareviewing_due_date'],
+                super_invitation_id=f"{venue.get_area_chairs_id()}/-/{self.invitation_builder.EMERGENCY_METAREVIEWING_NAME}",
+                stage_arguments={   
+                    'committee_id': venue.get_area_chairs_id(),
+                    'name': self.invitation_builder.EMERGENCY_METAREVIEWING_NAME,
+                    'instructions': arr_ac_emergency_load_task_forum['instructions'],
+                    'title': venue.get_area_chairs_name() + ' ' + arr_ac_emergency_load_task_forum['title'],
+                    'additional_fields': arr_ac_emergency_load_task,
+                    'remove_fields': ['profile_confirmed', 'expertise_confirmed']
+                },
+                start_date=self.configuration_note.content.get('emergency_metareviewing_start_date'),
+                due_date=self.configuration_note.content.get('emergency_metareviewing_due_date'),
+                exp_date=self.configuration_note.content.get('emergency_metareviewing_due_date'),
+                process='process/emergency_load_process.py',
+                preprocess='process/emergency_load_preprocess.py'
+            ),
+            ARRStage(
+                type=ARRStage.Type.CUSTOM_STAGE,
+                required_fields=['author_consent_due_date', 'form_expiration_date'],
+                super_invitation_id=f"{self.venue_id}/-/Blind_Submission_License_Agreement",
+                stage_arguments={
+                    'name': 'Blind_Submission_License_Agreement',
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
+                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                    'invitees': [openreview.stages.CustomStage.Participants.AUTHORS],
+                    'readers': [],
+                    'content': arr_author_consent_content,
+                    'notify_readers': False,
+                    'email_sacs': False
+                },
+                due_date=self.configuration_note.content.get('author_consent_due_date'),
+                exp_date=self.configuration_note.content.get('form_expiration_date')   
+            ),
+            ARRStage(
+                type=ARRStage.Type.CUSTOM_STAGE,
+                required_fields=['reviewer_checklist_due_date', 'reviewer_checklist_exp_date'],
+                super_invitation_id=f"{self.venue_id}/-/Reviewer_Checklist",
+                stage_arguments={
+                    'name': 'Reviewer_Checklist',
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
+                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                    'invitees': [openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED],
+                    'readers': [
+                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED
+                    ],
+                    'content': arr_reviewer_checklist,
+                    'notify_readers': False,
+                    'email_sacs': False
+                },
+                due_date=self.configuration_note.content.get('reviewer_checklist_due_date'),
+                exp_date=self.configuration_note.content.get('reviewer_checklist_exp_date'),
+                process='process/checklist_process.py',
+                preprocess='process/checklist_preprocess.py',
+                extend=ARRWorkflow._extend_reviewer_checklist
+            ),
+            ARRStage(
+                type=ARRStage.Type.CUSTOM_STAGE,
+                required_fields=['ae_checklist_due_date', 'ae_checklist_exp_date'],
+                super_invitation_id=f"{self.venue_id}/-/Action_Editor_Checklist",
+                stage_arguments={
+                    'name': 'Action_Editor_Checklist',
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
+                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                    'invitees': [openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
+                    'readers': [
+                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED
+                    ],
+                    'content': arr_ae_checklist,
+                    'notify_readers': False,
+                    'email_sacs': False
+                },
+                due_date=self.configuration_note.content.get('ae_checklist_due_date'),
+                exp_date=self.configuration_note.content.get('ae_checklist_exp_date'),
+                process='process/checklist_process.py',
+                preprocess='process/checklist_preprocess.py',
+                extend=ARRWorkflow._extend_ae_checklist
+            ),
+            ARRStage(
+                type=ARRStage.Type.CUSTOM_STAGE,
+                required_fields=['form_expiration_date'],
+                super_invitation_id=f"{self.venue_id}/-/Desk_Reject_Verification",
+                stage_arguments={
+                    'name': 'Desk_Reject_Verification',
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
+                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                    'invitees': [],
+                    'readers': [],
+                    'content': arr_desk_reject_verification,
+                    'notify_readers': False,
+                    'email_sacs': False
+                },
+                exp_date=self.configuration_note.content.get('form_expiration_date'),
+                process='process/verification_process.py',
+                extend=ARRWorkflow._extend_desk_reject_verification
+            ),
+            ARRStage(
+                type=ARRStage.Type.CUSTOM_STAGE,
+                required_fields=['form_expiration_date'],
+                super_invitation_id=f"{self.venue_id}/-/Consent",
+                stage_arguments={
+                    'name': 'Consent',
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.REVIEWS,
+                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                    'reply_type': openreview.stages.CustomStage.ReplyType.REPLY,
+                    'invitees': [],
+                    'readers': [],
+                    'content': arr_reviewer_consent_content,
+                    'notify_readers': False,
+                    'email_sacs': False
+                },
+                exp_date=self.configuration_note.content.get('form_expiration_date'),
+                extend=ARRWorkflow._extend_consent
+            ),
+            ARRStage(
+                type=ARRStage.Type.CUSTOM_STAGE,
+                required_fields=['review_rating_start_date', 'review_rating_exp_date'],
+                super_invitation_id=f"{self.venue_id}/-/Review_Rating",
+                stage_arguments={
+                    'name': 'Review_Rating',
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.REVIEWS,
+                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                    'invitees': [openreview.stages.CustomStage.Participants.AUTHORS],
+                    'readers': [
+                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED
+                    ],
+                    'content': arr_review_rating_content,
+                    'notify_readers': False,
+                    'email_sacs': False
+                },
+                start_date=self.configuration_note.content.get('review_rating_start_date'),
+                exp_date=self.configuration_note.content.get('review_rating_exp_date')
+            ),
+            ARRStage(
+                type=ARRStage.Type.STAGE_NOTE,
+                required_fields=['comment_start_date', 'comment_end_date'],
+                super_invitation_id=f"{self.venue_id}/-/Official_Comment",
+                stage_arguments={
+                    'content': {
+                        'participants': [
+                            'Program Chairs',
+                            'Assigned Senior Area Chairs',
+                            'Assigned Area Chairs',
+                            'Assigned Reviewers',
+                            'Assigned Submitted Reviewers'
+                        ],
+                        'additional_readers':['Program Chairs'],
+                        'email_program_chairs_about_official_comments': 'No, do not email PCs for each official comment made in the venue'
+                    },
+                    'forum': request_form_id,
+                    'invitation': '{}/-/Request{}/Comment_Stage'.format(support_user, request_form.number),
+                    'readers': ['{}/Program_Chairs'.format(self.venue_id), support_user],
+                    'referent': request_form_id,
+                    'replyto': request_form_id,
+                    'signatures': ['~Super_User1'],
+                    'writers': []
+                },
+                start_date=self.configuration_note.content.get('comment_start_date'),
+                exp_date=self.configuration_note.content.get('comment_end_date'),
+            ),
+            ARRStage(
+                type=ARRStage.Type.STAGE_NOTE,
+                required_fields=['reviewing_start_date', 'reviewing_due_date', 'reviewing_exp_date'],
+                super_invitation_id=f"{self.venue_id}/-/Official_Review",
+                stage_arguments={
+                    'content': {
+                        'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
+                        'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
+                        'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                        'remove_review_form_options': 'title,rating,review',
+                        'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews',
+                        'review_rating_field_name': 'overall_assessment',
+                        'additional_review_form_options': arr_official_review_content
+                    },
+                    'forum': request_form_id,
+                    'invitation': '{}/-/Request{}/Review_Stage'.format(support_user, request_form.number),
+                    'readers': ['{}/Program_Chairs'.format(self.venue_id), support_user],
+                    'referent': request_form_id,
+                    'replyto': request_form_id,
+                    'signatures': ['~Super_User1'],
+                    'writers': []
+                },
+                start_date=self.configuration_note.content.get('reviewing_start_date'),
+                due_date=self.configuration_note.content.get('reviewing_due_date'),
+                exp_date=self.configuration_note.content.get('reviewing_exp_date'),
+            ),
+            ARRStage(
+                type=ARRStage.Type.STAGE_NOTE,
+                required_fields=['metareviewing_start_date', 'metareviewing_due_date', 'metareviewing_exp_date'],
+                super_invitation_id=f"{self.venue_id}/-/Meta_Review",
+                stage_arguments={
+                    'content': {
+                        'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
+                        'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
+                        'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                        'additional_meta_review_form_options': arr_metareview_content,
+                        'remove_meta_review_form_options': ['recommendation', 'confidence']
+                    },
+                    'forum': request_form_id,
+                    'invitation': '{}/-/Request{}/Meta_Review_Stage'.format(support_user, request_form.number),
+                    'readers': ['{}/Program_Chairs'.format(self.venue_id), support_user],
+                    'referent': request_form_id,
+                    'replyto': request_form_id,
+                    'signatures': ['~Super_User1'],
+                    'writers': []
+                },
+                start_date=self.configuration_note.content.get('metareviewing_start_date'),
+                due_date=self.configuration_note.content.get('metareviewing_due_date'),
+                exp_date=self.configuration_note.content.get('metareviewing_exp_date'),
+            ),
+            ARRStage(
+                type=ARRStage.Type.STAGE_NOTE,
+                required_fields=['ethics_reviewing_start_date', 'ethics_reviewing_due_date', 'ethics_reviewing_exp_date'],
+                super_invitation_id=f"{self.venue_id}/-/Ethics_Review",
+                stage_arguments={
+                    'content': {
+                        'make_ethics_reviews_public': 'No, ethics reviews should NOT be revealed publicly when they are posted',
+                        'release_ethics_reviews_to_authors': 'No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors',
+                        'release_ethics_reviews_to_reviewers': 'Ethics reviews should be immediately revealed to the paper\'s reviewers and ethics reviewers',
+                        'additional_ethics_review_form_options': arr_ethics_review_content,
+                        'remove_ethics_review_form_options': 'ethics_review',
+                        "release_submissions_to_ethics_reviewers": "We confirm we want to release the submissions and reviews to the ethics reviewers",
+                        'enable_comments_for_ethics_reviewers': 'Yes, enable commenting for ethics reviewers.',
+                    },
+                    'forum': request_form_id,
+                    'invitation': '{}/-/Request{}/Ethics_Review_Stage'.format(support_user, request_form.number),
+                    'readers': ['{}/Program_Chairs'.format(self.venue_id), support_user],
+                    'referent': request_form_id,
+                    'replyto': request_form_id,
+                    'signatures': ['~Super_User1'],
+                    'writers': []
+                },
+                start_date=self.configuration_note.content.get('ethics_reviewing_start_date'),
+                due_date=self.configuration_note.content.get('ethics_reviewing_due_date'),
+                exp_date=self.configuration_note.content.get('ethics_reviewing_exp_date'),
+            )
+        ]
+
+        # Create custom max papers, load and area invitations
+        venue_roles = [
+            venue.get_reviewers_id(),
+            venue.get_area_chairs_id(),
+            venue.get_senior_area_chairs_id()
+        ]
+        edge_invitation_names = [
+            'Custom_Max_Papers',
+            'Registered_Load',
+            'Emergency_Load',
+            'Emergency_Area',
+            'Reviewing_Resubmissions', # Post "only for resubmissions",
+            'Author_In_Current_Cycle',
+            'Seniority'
+        ]
+        for role in venue_roles:
+            m = matching.Matching(venue, self.client_v2.get_group(role), None, None)
+            if not openreview.tools.get_invitation(self.client_v2, venue.get_custom_max_papers_id(role)):
+                m._create_edge_invitation(venue.get_custom_max_papers_id(m.match_group.id))
+                cmp_inv = self.client_v2.get_invitation(venue.get_custom_max_papers_id(m.match_group.id))
+                cmp_inv.edit['weight']['param']['optional'] = True
+                if 'enum' in cmp_inv.edit['weight']['param']:
+                    del cmp_inv.edit['weight']['param']['enum']
+                    cmp_inv.edit['weight']['param']['minimum'] = 0
+                    cmp_inv.edit['weight']['param']['default'] = 0
+
+                self.client_v2.post_invitation_edit(
+                    invitations=venue.get_meta_invitation_id(),
+                    readers=[venue.id],
+                    writers=[venue.id],
+                    signatures=[venue.id],
+                    invitation=cmp_inv
+                )
+            
+            if not openreview.tools.get_invitation(self.client_v2, f"{role}/-/Status"): # Hold "Requested" or "Reassigned", head=submission ID
+                m._create_edge_invitation(f"{role}/-/Status")
+                stat_inv = self.client_v2.get_invitation(f"{role}/-/Status")
+                stat_inv.edit['weight']['param']['optional'] = True
+                stat_inv.edit['label'] = {
+                    "param": {
+                        "regex": ".*",
+                        "optional": True,
+                        "deletable": True
+                    }
+                }
+                self.client_v2.post_invitation_edit(
+                    invitations=venue.get_meta_invitation_id(),
+                    readers=[venue.id],
+                    writers=[venue.id],
+                    signatures=[venue.id],
+                    invitation=stat_inv
+                )
+
+            for name in edge_invitation_names:
+                if not openreview.tools.get_invitation(self.client_v2, f"{role}/-/{name}"):
+                    cmp_inv = self.client_v2.get_invitation(venue.get_custom_max_papers_id(m.match_group.id))
+                    cmp_inv.id = f"{role}/-/{name}"
+                    cmp_inv.edit['id']['param']['withInvitation'] = f"{role}/-/{name}"
+                    cmp_inv.edit['weight']['param']['optional'] = True
+                    cmp_inv.edit['label'] = {
+                        "param": {
+                            "regex": ".*",
+                            "optional": True,
+                            "deletable": True
+                        }
+                    }
+                    if 'default' in cmp_inv.edit['weight']['param']:
+                        del cmp_inv.edit['weight']['param']['default']
+                    self.client_v2.post_invitation_edit(
+                        invitations=venue.get_meta_invitation_id(),
+                        readers=[venue.id],
+                        writers=[venue.id],
+                        signatures=[venue.id],
+                        invitation=cmp_inv
+                    )
+
+    def set_workflow(self):
+        for stage in self.workflow_stages:
+            print(f"checking {stage.super_invitation_id}")
+            if all(field in self.configuration_note.content for field in stage.required_fields):
+                print(f"building {stage.super_invitation_id}")
+                stage.set_stage(
+                    self.client, self.client_v2, self.venue, self.invitation_builder, self.request_form_id
+                )
+
 
 class ARRStage(object):
     """
