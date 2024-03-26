@@ -29,6 +29,7 @@ def process(client, edit, invitation):
     edge_readers += [user]
 
     CUSTOM_MAX_PAPERS_ID = f"{role}/-/Custom_Max_Papers"
+    AVAILABILITY_ID = f"{role}/-/Reviewing_Resubmissions"
     
 
     client.delete_edges(
@@ -51,9 +52,42 @@ def process(client, edit, invitation):
       )
     )
 
+    client.delete_edges(
+      invitation=AVAILABILITY_ID,
+      head=role,
+      tail=user,
+      wait_to_finish=True,
+      soft_delete=True
+    )
+
+    availability_label = None
+    if 'yes' in edit.note.content['maximum_load_resubmission']['value'].lower() and int(edit.note.content['maximum_load']['value']) == 0:
+      availability_label = 'Only Reviewing Resubmissions'
+    elif 'yes' in edit.note.content['maximum_load_resubmission']['value'].lower():
+      availability_label = 'Yes'
+    elif 'no' in edit.note.content['maximum_load_resubmission']['value'].lower():
+      availability_label = 'No'
+
+    client.post_edge(
+      openreview.api.Edge(
+        invitation=AVAILABILITY_ID,
+        readers=edge_readers,
+        writers=[CONFERENCE_ID],
+        signatures=[CONFERENCE_ID],
+        head=role,
+        tail=user,
+        label=availability_label
+      )
+    )
+
     if edit.note.ddate:
         client.delete_edges(
           invitation=CUSTOM_MAX_PAPERS_ID,
+          head=role,
+          tail=user
+        )
+        client.delete_edges(
+          invitation=AVAILABILITY_ID,
           head=role,
           tail=user
         )

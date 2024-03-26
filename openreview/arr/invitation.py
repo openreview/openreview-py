@@ -209,6 +209,18 @@ class InvitationBuilder(object):
                         'order': 13,
                         'required': False
                     },
+                    'setup_proposed_assignments_date': {
+                        'description': 'When should the proposed reviewer assignments be shared to the SAEs/AEs? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',
+                        'order': 12,
+                        'required': False
+                    },
+                    'reviewer_assignments_title': {
+                        'description': 'What is the title of the finalized reviewer assignments?',
+                        'value-regex': '.*',
+                        'order': 13,
+                        'required': False
+                    },
                     'ae_checklist_due_date': {
                         'description': 'What should be the displayed deadline for the maximum load tasks? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM:SS (e.g. 2019/01/31 23:59:59)',
                         'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\s+)?$',

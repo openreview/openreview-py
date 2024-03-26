@@ -65,7 +65,7 @@ def process(client, invitation):
     tracks_inv_name = 'Research_Area'
     registration_name = 'Registration'
     max_load_name = 'Max_Load_And_Unavailability_Request'
-    availability_name = 'Available'
+    availability_name = 'Reviewing_Resubmissions'
     status_name = 'Status'
     seniority_name = 'Seniority'
     authors_in_cycle_name = 'Author_In_Current_Cycle'
@@ -381,6 +381,7 @@ def process(client, invitation):
                         head=submission.id,
                         tail=member,
                         weight=1,
+                        label=submission_track,
                         readers=track_edge_readers[role_id] + [member],
                         writers=[venue_id],
                         signatures=[venue_id]
@@ -392,29 +393,6 @@ def process(client, invitation):
             wait_to_finish=True
         )
         openreview.tools.post_bulk_edges(client=client, edges=track_edges_to_post)
-
-    # 4) Post availability edges
-    for user_info in only_resubmissions:
-        role, name = user_info['role'], user_info['name']
-        availability_inv = f"{role}/-/{availability_name}"
-        client.delete_edges(
-            invitation=availability_inv,
-            tail=name,
-            wait_to_finish=True,
-            soft_delete=True
-        )
-        client.post_edge(
-            openreview.api.Edge(
-                invitation=availability_inv,
-                head=role,
-                tail=name,
-                weight=1,
-                label='For resubmissions only',
-                readers=track_edge_readers[role] + [name],
-                writers=[venue_id],
-                signatures=[venue_id]
-            )
-        )
 
     # 5) Post status edges
     for head, edges in reassignment_status.items():
@@ -434,7 +412,6 @@ def process(client, invitation):
                     head=head,
                     tail=edge_info['tail'],
                     label=edge_info['label'],
-                    weight=1,
                     readers=track_edge_readers[role] + [edge_info['tail']],
                     writers=[venue_id],
                     signatures=[venue_id]
@@ -475,7 +452,6 @@ def process(client, invitation):
             invitation=authors_inv,
             head=reviewers_id,
             tail=user,
-            weight=1,
             readers=track_edge_readers[reviewers_id] + [user],
             writers=[venue_id],
             signatures=[venue_id]

@@ -320,6 +320,18 @@ def process(client, note, invitation):
         ),
         ARRStage(
             type=ARRStage.Type.PROCESS_INVITATION,
+            required_fields=['setup_proposed_assignments_date', 'reviewer_assignments_title'],
+            super_invitation_id=f"{venue_id}/-/Share_Proposed_Assignments",
+            stage_arguments={
+                'content': {
+                    'reviewer_assignments_title': {'value': note.content.get('reviewer_assignments_title')}
+                }
+            },
+            start_date=note.content.get('setup_proposed_assignments_date'),
+            process='management/setup_proposed_assignments.py'
+        ),
+        ARRStage(
+            type=ARRStage.Type.PROCESS_INVITATION,
             required_fields=['setup_review_release_date'],
             super_invitation_id=f"{venue_id}/-/Release_Official_Reviews",
             stage_arguments={},
@@ -788,7 +800,7 @@ def process(client, note, invitation):
         'Registered_Load',
         'Emergency_Load',
         'Emergency_Area',
-        'Available', # Post "only for resubmissions",
+        'Reviewing_Resubmissions', # Post "only for resubmissions",
         'Author_In_Current_Cycle',
         'Seniority'
     ]
@@ -796,9 +808,39 @@ def process(client, note, invitation):
         m = matching.Matching(venue, venue.client.get_group(role), None, None)
         if not openreview.tools.get_invitation(client_v2, venue.get_custom_max_papers_id(role)):
             m._create_edge_invitation(venue.get_custom_max_papers_id(m.match_group.id))
+            cmp_inv = client_v2.get_invitation(venue.get_custom_max_papers_id(m.match_group.id))
+            cmp_inv.edit['weight']['param']['optional'] = True
+            if 'enum' in cmp_inv.edit['weight']['param']:
+                del cmp_inv.edit['weight']['param']['enum']
+                cmp_inv.edit['weight']['param']['minimum'] = 0
+                cmp_inv.edit['weight']['param']['default'] = 0
+
+            client_v2.post_invitation_edit(
+                invitations=meta_invitation_id,
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitation=cmp_inv
+            )
         
         if not openreview.tools.get_invitation(client_v2, f"{role}/-/Status"): # Hold "Requested" or "Reassigned", head=submission ID
             m._create_edge_invitation(f"{role}/-/Status")
+            stat_inv = client_v2.get_invitation(f"{role}/-/Status")
+            stat_inv.edit['weight']['param']['optional'] = True
+            stat_inv.edit['label'] = {
+                "param": {
+                    "regex": ".*",
+                    "optional": True,
+                    "deletable": True
+                }
+            }
+            client_v2.post_invitation_edit(
+                invitations=meta_invitation_id,
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitation=stat_inv
+            )
 
         for name in edge_invitation_names:
             if not openreview.tools.get_invitation(client_v2, f"{role}/-/{name}"):
@@ -813,6 +855,8 @@ def process(client, note, invitation):
                         "deletable": True
                     }
                 }
+                if 'default' in cmp_inv.edit['weight']['param']:
+                    del cmp_inv.edit['weight']['param']['default']
                 client_v2.post_invitation_edit(
                     invitations=meta_invitation_id,
                     readers=[venue_id],

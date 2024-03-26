@@ -196,7 +196,7 @@ def process(client, edit, invitation):
 
     ## Delete availability, assume they can review more than resubmissions
     client.delete_edges(
-        invitation=f"{role}/-/Available",
+        invitation=f"{role}/-/Reviewing_Resubmissions",
         tail=user,
         wait_to_finish=True,
         soft_delete=True

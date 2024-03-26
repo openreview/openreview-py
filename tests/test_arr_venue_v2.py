@@ -1497,6 +1497,19 @@ class TestARRVenueV2():
                 }
             )
         )
+
+        # Increase load again for AC2
+        ac_note_edit = ac_client.post_note_edit(
+            invitation=f'{august_venue.get_area_chairs_id()}/-/{max_load_name}',
+            signatures=['~AC_ARRTwo1'],
+            note=openreview.api.Note(
+                content = {
+                    'maximum_load': { 'value': '6' },
+                    'maximum_load_resubmission': { 'value': 'Yes' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
+                }
+            )
+        )
         
     def test_reviewer_tasks(self, client, openreview_client, helpers):
         reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@aclrollingreview.com', password=helpers.strong_password)
@@ -2439,17 +2452,20 @@ class TestARRVenueV2():
 
         available_edges = {
             g['id']['tail'] : g['values'][0]
-            for g in pc_client_v2.get_grouped_edges(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Available', select='head,id,weight,label', groupby='tail')
+            for g in pc_client_v2.get_grouped_edges(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Reviewing_Resubmissions', select='head,id,weight,label', groupby='tail')
         }
-        assert set(available_edges.keys()) == {'~Reviewer_ARRFive1'}
-        assert available_edges['~Reviewer_ARRFive1']['label'] == 'For resubmissions only'
+        assert set(available_edges.keys()) == {'~Reviewer_ARRTwo1', '~Reviewer_ARRFive1'}
+        assert available_edges['~Reviewer_ARRTwo1']['label'] == 'No'
+        assert available_edges['~Reviewer_ARRFive1']['label'] == 'Only Reviewing Resubmissions'
 
         available_edges = {
             g['id']['tail'] : g['values'][0]
-            for g in pc_client_v2.get_grouped_edges(invitation=f'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Available', select='head,id,weight,label', groupby='tail')
+            for g in pc_client_v2.get_grouped_edges(invitation=f'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Reviewing_Resubmissions', select='head,id,weight,label', groupby='tail')
         }
-        assert set(available_edges.keys()) == {'~AC_ARRThree1'}
-        assert available_edges['~AC_ARRThree1']['label'] == 'For resubmissions only'
+        assert set(available_edges.keys()) == {'~AC_ARROne1','~AC_ARRThree1', '~AC_ARRTwo1'}
+        assert available_edges['~AC_ARRThree1']['label'] == 'Only Reviewing Resubmissions'
+        assert available_edges['~AC_ARRTwo1']['label'] == 'Yes'
+        assert available_edges['~AC_ARROne1']['label'] == 'No'
 
         # Check integrity of custom max papers
         cmp_edges = {
@@ -2540,6 +2556,25 @@ class TestARRVenueV2():
 
         august_venue.set_assignments(assignment_title='ac-matching', committee_id='aclweb.org/ACL/ARR/2023/August/Area_Chairs')
 
+        openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers',
+            head = 'aclweb.org/ACL/ARR/2023/August/Reviewers',
+            tail = '~Reviewer_ARRFour1',
+            signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            weight = 1,
+        ))
+
+        openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Proposed_Assignment',
+            head = submissions[0].id,
+            tail = '~Reviewer_ARRFour1',
+            signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            weight = 1,
+            label = 'reviewer-assignments'
+        ))
+
+        august_venue.set_assignments(assignment_title='reviewer-assignments', committee_id='aclweb.org/ACL/ARR/2023/August/Reviewers')
+
         pc_client.post_note(
             openreview.Note(
                 content={
@@ -2582,6 +2617,24 @@ class TestARRVenueV2():
         assert len(sac_client.get_edges(invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment', head=submissions[1].id, tail='~AC_ARROne1')) == 1
         assert len(sac_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs').members) == 1
         assert sac_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs').members[0] == '~AC_ARROne1'
+
+        pc_client.post_note(
+            openreview.Note(
+                content={
+                    'setup_proposed_assignments_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S'),
+                    'reviewer_assignments_title': 'reviewer-assignments'
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Share_Proposed_Assignments-0-0', count=1)
 
     def test_checklists(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
