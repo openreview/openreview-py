@@ -3,6 +3,7 @@ import os
 import random
 import openreview
 import datetime
+from openreview.api import Edge
 
 class TestSACAssignments():
 
@@ -278,3 +279,61 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert assignment_config_inv.edit['note']['content']['paper_invitation']['value']['param']['regex'] == 'TSACM/2024/Conference/-/Submission.*'
         assert assignment_config_inv.edit['note']['content']['paper_invitation']['value']['param']['default'] == 'TSACM/2024/Conference/-/Submission&content.venueid=TSACM/2024/Conference/Submission'
         assert conflict_invitation.id in assignment_config_inv.edit['note']['content']['conflicts_invitation']['value']['param']['default']
+
+    def test_set_assignments(self, client, openreview_client, helpers):
+        
+        pc_client = openreview.Client(username='pc@matching.org', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@matching.org', password=helpers.strong_password)
+
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
+        venue = openreview.helpers.get_conference(client, request_form.forum, 'openreview.net/Support', setup=False)
+
+        submissions = venue.get_submissions(sort='number:asc')
+
+        edges = pc_client_v2.get_edges_count(
+            invitation='TSACM/2024/Conference/Senior_Area_Chairs/-/Proposed_Assignment',
+            label='sac-matching'
+        )
+        assert 0 == edges
+
+        #SAC-paper assignments
+        pc_client_v2.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_senior_area_chairs_id()),
+            readers = ['TSACM/2024/Conference', '~SAC_MatchingTwo1'],
+            nonreaders = [f'TSACM/2024/Conference/Submission{submissions[0].number}/Authors'],
+            writers = ['TSACM/2024/Conference'],
+            signatures = ['TSACM/2024/Conference/Program_Chairs'],
+            head = submissions[0].id,
+            tail = '~SAC_MatchingTwo1',
+            label = 'sac-matching',
+            weight = 0.75
+        ))
+
+        pc_client_v2.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_senior_area_chairs_id()),
+            readers = ['TSACM/2024/Conference', '~SAC_MatchingTwo1'],
+            nonreaders = [f'TSACM/2024/Conference/Submission{submissions[1].number}/Authors'],
+            writers = ['TSACM/2024/Conference'],
+            signatures = ['TSACM/2024/Conference/Program_Chairs'],
+            head = submissions[1].id,
+            tail = '~SAC_MatchingTwo1',
+            label = 'sac-matching',
+            weight = 0.98
+        ))
+
+        pc_client_v2.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_senior_area_chairs_id()),
+            readers = ['TSACM/2024/Conference', '~SAC_MatchingOne1'],
+            nonreaders = [f'TSACM/2024/Conference/Submission{submissions[2].number}/Authors'],
+            writers = ['TSACM/2024/Conference'],
+            signatures = ['TSACM/2024/Conference/Program_Chairs'],
+            head = submissions[2].id,
+            tail = '~SAC_MatchingOne1',
+            label = 'sac-matching',
+            weight = 0.88
+        ))
+
+        edges = pc_client_v2.get_edges_count(
+            invitation='TSACM/2024/Conference/Senior_Area_Chairs/-/Proposed_Assignment',
+            label='sac-matching'
+        )
+        assert 3 == edges
+
+        # venue.set_assignments(assignment_title='sac-matching', committee_id=venue.get_senior_area_chairs_id())

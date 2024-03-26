@@ -187,6 +187,8 @@ class Matching(object):
                     'withVenueid': venue.get_submission_venue_id()
                 }
             }
+            edge_nonreaders = [venue.get_authors_id(number=paper_number)]
+
         if self.submission_content:
             edge_head['param']['withContent'] = self.submission_content
 
