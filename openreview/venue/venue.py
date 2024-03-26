@@ -194,21 +194,21 @@ class Venue(object):
     def get_committee(self, number = None, submitted_reviewers = False, with_authors = False):
         committee = []
 
-        committee.append(self.get_program_chairs_id())
-
-        if self.use_senior_area_chairs:
-            committee.append(self.get_senior_area_chairs_id(number))
-
-        if self.use_area_chairs:
-            committee.append(self.get_area_chairs_id(number))
+        if with_authors:
+            committee.append(self.get_authors_id(number))
 
         if submitted_reviewers:
             committee.append(self.get_reviewers_id(number, submitted=True))
         else:
             committee.append(self.get_reviewers_id(number))
 
-        if with_authors:
-            committee.append(self.get_authors_id(number))
+        if self.use_area_chairs:
+            committee.append(self.get_area_chairs_id(number))
+
+        if self.use_senior_area_chairs:
+            committee.append(self.get_senior_area_chairs_id(number))
+
+        committee.append(self.get_program_chairs_id())
 
         return committee
 
@@ -475,14 +475,14 @@ class Venue(object):
                 only_accepted=False,
                 multiReply=True,
                 allow_author_reorder=stage.author_reorder_after_first_deadline
-            
             )
-            self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)                        
+            self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)
+            self.invitation_builder.set_submission_deletion_invitation(submission_revision_stage)
 
     def create_post_submission_stage(self):
 
         self.invitation_builder.set_post_submission_invitation()
-    
+
     def create_submission_revision_stage(self):
         return self.invitation_builder.set_submission_revision_invitation()
 
