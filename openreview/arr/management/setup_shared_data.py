@@ -150,7 +150,7 @@ def process(client, invitation):
     for note in notes:
         if _is_identical_content(note, existing_notes):
             continue
-        if 'not agree' in note.content['agreement']['value'].lower():
+        if 'agree for this cycle and all future cycles' not in note.content['agreement']['value'].lower():
             continue
         # Clear note fields
         note.id = None

@@ -869,7 +869,7 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 content = {
                     "attribution": { "value": "Yes, I wish to be attributed."},
-                    "agreement": { "value": "I agree"}
+                    "agreement": { "value": "I agree for this cycle and all future cycles until I explicitly revoke my decision"}
                 }    
             )
         )
@@ -1557,6 +1557,20 @@ class TestARRVenueV2():
         )
 
         assert reviewer_two_client.get_note(license_edit['note']['id'])
+
+        license_edit = ac_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Metareview_License_Agreement',
+            signatures=['~AC_ARROne1'],
+            note=openreview.api.Note(
+                content = {
+                    "agreement":{
+                        "value": "I agree"
+                    }
+                }    
+            )
+        )
+
+        assert ac_client.get_note(license_edit['note']['id'])
 
     def test_submissions(self, client, openreview_client, helpers, test_client):
 

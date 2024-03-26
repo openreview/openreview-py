@@ -25,6 +25,8 @@ def process(client, note, invitation):
         arr_ethics_review_content,
         arr_review_rating_content,
         arr_author_consent_content,
+        arr_metareview_license_task,
+        arr_metareview_license_task_forum,
         hide_fields_from_public
     )
     from openreview.arr.helpers import ARRStage
@@ -417,6 +419,21 @@ def process(client, note, invitation):
                 'instructions': arr_reviewer_ac_recognition_task_forum['instructions'],
                 'title': venue.get_area_chairs_name() + ' ' + arr_reviewer_ac_recognition_task_forum['title'],
                 'additional_fields': arr_reviewer_ac_recognition_task,
+                'remove_fields': ['profile_confirmed', 'expertise_confirmed']
+            },
+            exp_date=note.content.get('form_expiration_date')
+        ),
+        ARRStage(
+            type=ARRStage.Type.REGISTRATION_STAGE,
+            group_id=venue.get_area_chairs_id(),
+            required_fields=['form_expiration_date'],
+            super_invitation_id=f"{venue.get_area_chairs_id()}/-/{invitation_builder.METAREVIEWER_LICENSE_NAME}",
+            stage_arguments={
+                'committee_id': venue.get_area_chairs_id(),
+                'name': invitation_builder.METAREVIEWER_LICENSE_NAME,
+                'instructions': arr_metareview_license_task_forum['instructions'],
+                'title': venue.get_area_chairs_name() + ' ' + arr_metareview_license_task_forum['title'],
+                'additional_fields': arr_metareview_license_task,
                 'remove_fields': ['profile_confirmed', 'expertise_confirmed']
             },
             exp_date=note.content.get('form_expiration_date')

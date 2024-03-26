@@ -2088,6 +2088,42 @@ arr_content_license_task = {
                 "type": "string",
                 "enum": [
                     "I agree",
+                    "I agree for this cycle and all future cycles until I explicitly revoke my decision",
+                    "I do not agree"
+                ],
+                "input": "radio",
+                "optional": False
+            }
+        }
+    }
+}
+
+arr_metareview_license_task_forum = {
+    "title": "Association for Computational Linguistics - Meta-reviewer Content License Agreement",
+    "instructions": "If you have not meta-reviewed for this cycle, please ignore this task. If you have meta-reviewed, please read and decide whether to transfer the license to your meta-reviewing data for this iteration of ARR.\n\n*** DISCLAIMER ***\nYour participation is strictly voluntary. By transferring this license you grant ACL the right to distribute the text of your review. In particular, we may include your review text and scores in research datasets without revealing the OpenReview identifier that produced the review. Keep in mind that as with any text, your identity might be approximated using author profiling techniques. Only reviews for accepted papers will be eventually made publicly available. The authors of the papers will have to agree to the release of the textual review data associated with their papers.\n\nThis Meta-reviewer Content License Agreement (“Agreement”) is entered into between the Association for Computational Linguistics (“ACL”) and the Meta-reviewer listed above in connection with content developed and contributed by meta-reviewer during the peer review process (referred as “Meta-review Content”). In exchange of adequate consideration, ACL and the Meta-reviewer agree as follows:\n\nSection 1: Grant Of License\nMeta-reviewer grants ACL a worldwide, irrevocable, and royalty-free license to use the Meta-review Content developed and prepared by meta-reviewer in connection with the peer review process for the ACL Conference listed above, including but not limited to text, review form scores and metadata, charts, graphics, spreadsheets, and any other materials according to the following terms: A. For Meta-review Content associated with papers accepted for publication, and subject to the Authors permission, ACL may reproduce, publish, distribute, prepare derivative work, and otherwise make use of the Meta-review Content, and to sub-license the Meta-review Content to the public according to terms of the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License. B. For Meta-review Content associated with papers not accepted for publication, ACL may use the Meta-review Content for internal research, program analysis, and record- keeping purposes. Notwithstanding the foregoing, the Parties acknowledge and agree that this Agreement does not transfer to ACL the ownership of any proprietary rights pertaining to the Meta-review Content, and that Meta-reviewer retains respective ownership in and to the Meta-review Content.\n\nSection 2 Attribution and Public Access License\nA.The Parties agree that for purpose of administering the public access license, ACL will be identified as the licensor of the Content with the following copyright notice: Copyright © 2022 administered by the Association for Computational Linguistics (ACL) on behalf of ACL content contributors: ______________ (name of meta-reviewer who wishes to be attributed), and other contributors who wish to remain anonymous. Content displayed on this webpage is made available under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License. B.In the event Meta-reviewer intends to modify the attribution displayed in connection with the copyright notice above, ACL will use reasonable efforts to modify the copyright notice after receipt of Meta-reviewer’s written request. Notwithstanding the foregoing, Meta-reviewer acknowledges and agrees that any modification in connection with attribution will not be retroactively applied. C.The Parties understand and acknowledge that the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License is irrevocable once granted unless the licensee breaches the public access license terms.\n\nSection 3 Warranty\nMeta-reviewer represents and warrants that the Content is Meta-reviewer’s original work and does not infringe on the proprietary rights of others. Meta-reviewer further warrants that he or she has obtained all necessary permissions from any persons or organizations whose materials are included in the Content, and that the Content includes appropriate citations that give credit to the original sources.\n\nSection 4 Legal Relationship\nThe Parties agree that this Agreement is not intended to create any joint venture, partnership, or agency relationship of any kind; and both agree not to contract any obligations in the name of the other."
+}
+
+arr_metareview_license_task = {
+    "attribution": {
+        "order": 1,
+        "description": "Unless the meta-reviewer elects to be attributed according to Section 2, the meta-reviewer’s name will not be identified in connection with publication of the Meta-review Content. If you wish to be attributed, please check the box below. ATTENTION: this will allow you to get credit for your reviews, but it will also DEANONYMIZE your reviews. Please select after careful consideration.",
+         "value": {
+            "param": {
+                "type": "string",
+                "enum": ["Yes, I wish to be attributed."],
+                "input": "radio",
+                "optional": True
+            }
+        }
+    },
+    "agreement": {
+      "description": "By selecting 'I agree' below you confirm that you agree to this license agreement.",
+      "order": 2,
+      "value": {
+            "param": {
+                "type": "string",
+                "enum": [
+                    "I agree",
                     "I do not agree"
                 ],
                 "input": "radio",
