@@ -95,6 +95,8 @@ def process(client, invitation):
 
         def updated_content_readers(note, paper_inv):
             updated_content = {}
+            if 'content' not in paper_inv.edit['note']:
+                return updated_content
             invitation_content = paper_inv.edit['note']['content']
             for key in invitation_content.keys():
                 content_readers = invitation_content[key].get('readers', [])

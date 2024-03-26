@@ -1,6 +1,6 @@
 def process(client, note, invitation):
 
-    if 'Double-blind' not in note.content['Author and Reviewer Anonymity']:
+    if note.content.get('api_version', '1') == '1' and 'Double-blind' not in note.content['Author and Reviewer Anonymity']:
         if 'No' in note.content['withdrawn_submissions_author_anonymity']:
             raise openreview.OpenReviewException('Author identities of withdrawn submissions can only be anonymized for double-blind submissions')
 
