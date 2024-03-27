@@ -22,7 +22,7 @@ def process(client, invitation):
     print('send email to reviewers', late_invitees)
     is_ack = invitation.id.endswith('Assignment/Acknowledgement')
     client.post_message(
-        journal.get_meta_invitation_id(),
+        invitation=journal.get_meta_invitation_id(),
         recipients=late_invitees,
         subject=f'''[{journal.short_name}] You are late in performing a task for assigned paper {submission.number}: {submission.content['title']['value']}''',
         message=f'''Hi {{{{fullname}}}},
@@ -53,7 +53,7 @@ The {journal.short_name} Editors-in-Chief
         print('send email to action editors')
         for profile in profiles:
             client.post_message(
-                journal.get_meta_invitation_id(),
+                invitation=journal.get_meta_invitation_id(),
                 recipients=[journal.get_action_editors_id(number=submission.number)],
                 subject=f'''[{journal.short_name}] Reviewer is late in performing a task for assigned paper {submission.number}: {submission.content['title']['value']}''',
                 message=f'''Hi {{{{fullname}}}},
@@ -80,7 +80,7 @@ The {journal.short_name} Editors-in-Chief
         profiles = openreview.tools.get_profiles(client, late_invitees)
         for profile in profiles:
             client.post_message(
-                journal.get_meta_invitation_id(),
+                invitation=journal.get_meta_invitation_id(),
                 recipients=[journal.get_editors_in_chief_id()],
                 ignoreRecipients=[journal.get_authors_id(number=submission.number)],
                 subject=f'''[{journal.short_name}] Reviewer is late in performing a task for assigned paper {submission.number}: {submission.content['title']['value']}''',

@@ -20,11 +20,12 @@ def process(client, edit, invitation):
     if (domain.get_content_value('decision_email_authors') and ('everyone' in decision.readers or paper_authors_id in decision.readers)):
 
         client.post_message(
-            meta_invitation_id,
+            invitation=meta_invitation_id,
             recipients=[paper_authors_id],
             subject=f'''[{short_name}] Decision {action} your submission - Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''To view the decision, click here: https://openreview.net/forum?id={submission.id}&noteId={decision.id}''',
-            replyTo=contact
+            replyTo=contact,
+            signature=venue_id
         )
 
     if (authors_accepted_id):      

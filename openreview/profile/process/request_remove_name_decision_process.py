@@ -24,7 +24,8 @@ We can not remove the name from the profile for the following reason:
 Regards,
 
 The OpenReview Team.
-''')
+''',
+        signature=edit.domain)
         return       
 
     baseurl_v1 = 'http://localhost:3000'
@@ -315,4 +316,5 @@ The name has been removed from your profile. Please check that the information l
 Thanks,
 
 The OpenReview Team.
-''')
+''',
+    signature=edit.domain)

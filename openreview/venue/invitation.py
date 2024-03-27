@@ -3421,10 +3421,13 @@ class InvitationBuilder(object):
         cdate=tools.datetime_millis(self.venue.submission_stage.second_due_date_exp_date if self.venue.submission_stage.second_due_date_exp_date else self.venue.submission_stage.exp_date)
 
         committee = [venue_id]
+        committee_signatures = [venue_id, self.venue.get_program_chairs_id()]
         if self.venue.use_senior_area_chairs:
             committee.append(self.venue.get_senior_area_chairs_id('${3/content/noteNumber/value}'))
+            committee_signatures.append(self.venue.get_senior_area_chairs_id('${4/content/noteNumber/value}'))
         if self.venue.use_area_chairs:
             committee.append(self.venue.get_area_chairs_id('${3/content/noteNumber/value}'))
+            committee_signatures.append(self.venue.get_area_chairs_id('${4/content/noteNumber/value}', anon=True))
 
         invitation = Invitation(id=invitation_id,
             invitees=[venue_id],
@@ -3471,7 +3474,8 @@ class InvitationBuilder(object):
                         'message': { 'param': { 'minLength': 1 } },
                         'groups': { 'param': { 'inGroup': self.venue.get_reviewers_id('${3/content/noteNumber/value}') } },
                         'parentGroup': { 'param': { 'const': self.venue.get_reviewers_id('${3/content/noteNumber/value}') } },
-                        'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } } 
+                        'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
+                        'signature': { 'param': { 'enum': committee_signatures } }
                     }
                 }
 
@@ -3493,7 +3497,8 @@ class InvitationBuilder(object):
                 'message': { 'param': { 'minLength': 1 } },
                 'groups': { 'param': { 'inGroup': self.venue.get_reviewers_id() } },
                 'parentGroup': { 'param': { 'const': self.venue.get_reviewers_id() } },
-                'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } } 
+                'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
+                'signature': { 'param': { 'enum': [venue_id, self.venue.get_program_chairs_id()] } }
             }
         )
 
@@ -3512,7 +3517,8 @@ class InvitationBuilder(object):
                     'message': { 'param': { 'minLength': 1 } },
                     'groups': { 'param': { 'inGroup': self.venue.get_area_chairs_id() } },
                     'parentGroup': { 'param': { 'const': self.venue.get_area_chairs_id() } },
-                    'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } } 
+                    'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
+                    'signature': { 'param': { 'enum': [venue_id, self.venue.get_program_chairs_id(), '~.*'] } } 
                 }
             )
 

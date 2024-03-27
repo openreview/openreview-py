@@ -23,11 +23,12 @@ Title: {submission.content['title']['value']}
 To view your submission, click here: https://openreview.net/forum?id={submission.forum}'''
 
     client.post_message(
-        meta_invitation_id,
+        invitation=meta_invitation_id,
         subject=subject,
         recipients=submission.content['authorids']['value'],
         message=message,
-        replyTo=contact
+        replyTo=contact,
+        signature=venue_id
     )
 
     if 'authorids' in submission.content:

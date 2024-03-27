@@ -62,4 +62,4 @@ Thank you,
 
 {signature}'''
 
-        client.post_message(meta_invitation_id, subject, recipients, message, parentGroup=group.id, replyTo=contact)
+        client.post_message(subject, recipients, message, invitation=meta_invitation_id, signature=venue_id, parentGroup=group.id, replyTo=contact)

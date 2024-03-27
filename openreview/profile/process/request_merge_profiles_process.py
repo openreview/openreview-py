@@ -15,4 +15,5 @@ We will evaluate your request and you will receive another email with the reques
 Thanks,
 
 The OpenReview Team.
-''')
+''',
+    signature=edit.domain)

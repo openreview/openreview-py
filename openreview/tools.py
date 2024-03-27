@@ -1272,7 +1272,7 @@ def recruit_reviewer(client, user, first,
 
     # send the email through openreview
     if invitation is not None:
-        response = client.post_message(invitation, recruit_message_subj, [user], personalized_message, parentGroup=reviewers_invited_id, replyTo=replyTo, signature=signature)
+        response = client.post_message(recruit_message_subj, [user], personalized_message, parentGroup=reviewers_invited_id, replyTo=replyTo, invitation=invitation, signature=signature)
     else:
         response = client.post_message(recruit_message_subj, [user], personalized_message, parentGroup=reviewers_invited_id, replyTo=replyTo)
 

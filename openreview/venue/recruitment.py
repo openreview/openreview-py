@@ -153,7 +153,8 @@ class Recruitment(object):
                         committee_invited_id,
                         contact_info,
                         verbose=False,
-                        invitation = self.venue.get_meta_invitation_id())
+                        invitation = self.venue.get_meta_invitation_id(),
+                        signature=venue_id)
                     recruitment_status['invited'].append(email)
                 except Exception as e:
                     error_string = repr(e)

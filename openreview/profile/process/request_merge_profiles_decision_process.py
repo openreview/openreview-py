@@ -19,7 +19,8 @@ We can not merge your profiles for the following reason:
 Regards,
 
 The OpenReview Team.
-''')
+''',
+        signature=edit.domain)
         return       
     
     if 'Accepted' == request_note.content['status']['value']:
@@ -36,4 +37,7 @@ The profiles have been merged. Please check that the information listed in your 
 Thanks,
 
 The OpenReview Team.
-''')
+''',
+        signature=edit.domain
+        )
+        

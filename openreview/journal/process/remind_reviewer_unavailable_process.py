@@ -32,7 +32,7 @@ The {journal.short_name} Editors-in-Chief
         if edge.tmdate < reminder_period:
             print(f"remind: {edge.tail}")
             recipients=[edge.tail]
-            client.post_message(journal.get_meta_invitation_id(), subject, recipients, message, journal.venue_id, replyTo=journal.contact_info)
+            client.post_message(subject, recipients, message, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, replyTo=journal.contact_info)
             ## update edge to reset the reminder counter
             client.post_edge(edge)
 

@@ -33,7 +33,7 @@ The {SHORT_PHRASE} editors in chief will be contacting you with more information
 
 If you would like to change your decision, please click the Decline link in the previous invitation email.'''.format(SHORT_PHRASE=SHORT_PHRASE, ACTION_EDITOR_NAME=ACTION_EDITOR_NAME)
 
-            return client.post_message(f'{edit.domain}/-/Edit', subject, [user], message, edit.domain, parentGroup=ACTION_EDITOR_ACCEPTED_ID)
+            return client.post_message(subject, [user], message, invitation=f'{edit.domain}/-/Edit', signature=edit.domain, parentGroup=ACTION_EDITOR_ACCEPTED_ID)
 
         if (response == 'No'):
             client.remove_members_from_group(ACTION_EDITOR_ACCEPTED_ID, user)
@@ -46,6 +46,6 @@ If you would like to change your decision, please click the Accept link in the p
 
 '''.format(ACTION_EDITOR_NAME=ACTION_EDITOR_NAME, SHORT_PHRASE=SHORT_PHRASE)
 
-            return client.post_message(f'{edit.domain}/-/Edit', subject, [user], message, edit.domain, parentGroup=ACTION_EDITOR_DECLINED_ID)
+            return client.post_message(subject, [user], message, invitation=f'{edit.domain}/-/Edit', signature=edit.domain, parentGroup=ACTION_EDITOR_DECLINED_ID)
     else:
         raise openreview.OpenReviewException(f'Invalid key or user no invited {user}')

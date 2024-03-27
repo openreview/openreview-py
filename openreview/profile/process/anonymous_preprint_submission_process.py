@@ -60,7 +60,8 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
             invitation=f'{venue_id}/-/Edit',
             subject=author_subject,
             message=author_message,
-            recipients=[edit.tauthor]
+            recipients=[edit.tauthor],
+            signature=venue_id
         )
 
     # send co-author emails
@@ -71,4 +72,5 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
         message=author_message,
         recipients=note.content['authorids']['value'],
         ignoreRecipients=[edit.tauthor]
+        signature=venue_id
     )

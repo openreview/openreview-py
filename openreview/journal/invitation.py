@@ -6387,7 +6387,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'groups': { 'param': { 'inGroup': self.journal.get_reviewers_id('${3/content/noteNumber/value}') } },
                         'parentGroup': { 'param': { 'const': self.journal.get_reviewers_id('${3/content/noteNumber/value}') } },
                         'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
-                        'signature': { 'param': { 'enum': [ venue_id, self.journal.get_action_editors_id('${4/content/noteNumber/value}')]} }
+                        'signature': { 'param': { 'enum': [ venue_id, '~.*']} }
                     }
                 }
 

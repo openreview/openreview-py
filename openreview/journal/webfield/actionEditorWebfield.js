@@ -510,6 +510,7 @@ var renderData = function(venueStatusData) {
         '\n\nThank you,\n' + SHORT_PHRASE + ' Action Editor',
       replyTo: user && user.id,
       messageInvitationId: VENUE_ID + '/Paper{number}/-/Message',
+      messageSignature: user && user.profile.id,
       menu: [{
         id: 'all-reviewers',
         name: 'All reviewers of selected papers',

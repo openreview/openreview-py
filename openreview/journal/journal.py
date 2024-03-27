@@ -1657,7 +1657,7 @@ A conflict was detected between you and the submission authors and the assignmen
 If you have any questions, please contact us as info@openreview.net.
 
 OpenReview Team'''
-            response = client.post_message(journal.get_meta_invitation_id(), subject, [edge.tail], message, replyTo=journal.contact_info, signature=journal.venue_id)
+            response = client.post_message(subject, [edge.tail], message, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id)
 
             ## Send email to inviter
             subject=f"[{journal.short_name}] Conflict detected between reviewer {user_profile.get_preferred_name(pretty=True)} and paper {submission.number}: {submission.content['title']['value']}"
@@ -1669,7 +1669,7 @@ If you have any questions, please contact us as info@openreview.net.
 OpenReview Team'''
 
             ## - Send email
-            response = client.post_message(journal.get_meta_invitation_id(), subject, edge.signatures, message, replyTo=journal.contact_info, signature=journal.venue_id)            
+            response = client.post_message(subject, edge.signatures, message, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id)            
         
         def mark_as_accepted(journal, edge, submission, user_profile):
 
@@ -1710,7 +1710,7 @@ If you would like to change your decision, please click the Decline link in the 
 OpenReview Team'''
 
                 ## - Send email
-                response = client.post_message(journal.get_meta_invitation_id(), subject, [edge.tail], message, replyTo=journal.contact_info, signature=journal.venue_id)
+                response = client.post_message(subject, [edge.tail], message, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id)
 
                 ## Send email to inviter
                 subject=f'[{short_phrase}] {reviewer_name} {user_profile.get_preferred_name(pretty=True)} signed up and is assigned to paper {submission.number}: {submission.content["title"]["value"]}'
@@ -1720,7 +1720,7 @@ The {reviewer_name} {user_profile.get_preferred_name(pretty=True)}({user_profile
 OpenReview Team'''
 
                 ## - Send email
-                response = client.post_message(journal.get_meta_invitation_id(), subject, edge.signatures, message, replyTo=journal.contact_info, signature=journal.venue_id)            
+                response = client.post_message(subject, edge.signatures, message, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id)            
         
         journal_requests = client.get_all_notes(invitation=f'{support_group_id}/-/Journal_Request')
 

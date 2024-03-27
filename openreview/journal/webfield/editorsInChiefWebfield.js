@@ -984,6 +984,7 @@ var renderTable = function(container, rows) {
         'Thank you,\n' + SHORT_PHRASE + ' Editor-in-Chief',
       replyTo: EDITORS_IN_CHIEF_EMAIL,
       messageInvitationId: VENUE_ID + '/-/Edit',
+      messageSignature: VENUE_ID,
       menu: [{
         id: 'all-reviewers',
         name: 'All reviewers of selected papers',

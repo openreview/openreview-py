@@ -43,7 +43,8 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
     program_chairs_id = domain.get_content_value('program_chairs_id')
     if email_pcs and (program_chairs_id in note.readers or 'everyone' in note.readers):
         client.post_message(
-            meta_invitation_id,
+            invitation=meta_invitation_id,
+            signature=venue_id,
             recipients=[program_chairs_id],
             ignoreRecipients = ignore_groups,
             subject=f'''[{short_name}] A {invitation_name} has been received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
@@ -55,7 +56,8 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
 
     #email tauthor
     client.post_message(
-        meta_invitation_id,
+        invitation=meta_invitation_id,
+        signature=venue_id,
         recipients=note.signatures,
         replyTo=contact,
         subject=f'''[{short_name}] Your {invitation_name} has been received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
@@ -71,7 +73,8 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
     send_SACS_emails = senior_area_chairs_name and email_sacs
     if send_SACS_emails and ('everyone' in note.readers or senior_area_chairs_id in note.readers or paper_senior_area_chairs_id in note.readers):
         client.post_message(
-            meta_invitation_id,
+            invitation=meta_invitation_id,
+            signature=venue_id,
             recipients=[paper_senior_area_chairs_id],
             ignoreRecipients = ignore_groups,
             replyTo=contact,
@@ -87,7 +90,8 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
     paper_area_chairs_id = f'{paper_group_id}/{area_chairs_name}'
     if area_chairs_name and ('everyone' in note.readers or area_chairs_id in note.readers or paper_area_chairs_id in note.readers):
         client.post_message(
-            meta_invitation_id,
+            invitation=meta_invitation_id,
+            signature=venue_id,
             recipients=[paper_area_chairs_id],
             ignoreRecipients = ignore_groups,
             replyTo=contact,
@@ -105,7 +109,8 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
     paper_reviewers_submitted_id = f'{paper_group_id}/{reviewers_submitted_name}'
     if 'everyone' in note.readers or reviewers_id in note.readers or paper_reviewers_id in note.readers:
         client.post_message(
-            meta_invitation_id,
+            invitation=meta_invitation_id,
+            signature=venue_id,
             recipients=[paper_reviewers_id],
             ignoreRecipients=ignore_groups,
             replyTo=contact,
@@ -117,7 +122,8 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
         )
     elif paper_reviewers_submitted_id in note.readers:
         client.post_message(
-            meta_invitation_id,
+            invitation=meta_invitation_id,
+            signature=venue_id,
             recipients=[paper_reviewers_submitted_id],
             ignoreRecipients=ignore_groups,
             replyTo=contact,
@@ -133,7 +139,8 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
     paper_authors_id = f'{paper_group_id}/{authors_name}'
     if paper_authors_id in note.readers or 'everyone' in note.readers:
         client.post_message(
-            meta_invitation_id,
+            invitation=meta_invitation_id,
+            signature=venue_id,
             recipients=submission.content['authorids']['value'],
             ignoreRecipients=ignore_groups,
             replyTo=contact,

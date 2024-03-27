@@ -18,7 +18,7 @@ def process(client, edit, invitation):
 
     ## Notify the action editors
     client.post_message(
-        journal.get_meta_invitation_id(),
+        invitation=journal.get_meta_invitation_id(),
         subject=f'[{journal.short_name}] Decision approved for submission {submission.number}: {submission.content["title"]["value"]}',
         recipients=[journal.get_action_editors_id(number=submission.number)],
         message=f'''Hi {{{{fullname}}}},
@@ -110,7 +110,7 @@ To know more about the decision, please follow this link: https://openreview.net
             contact_info=journal.contact_info
         )
         client.post_message(
-            journal.get_meta_invitation_id(),
+            invitation=journal.get_meta_invitation_id(),
             recipients=[journal.get_authors_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
             message=message,
@@ -131,7 +131,7 @@ To know more about the decision, please follow this link: https://openreview.net
             contact_info=journal.contact_info
         )        
         client.post_message(
-            journal.get_meta_invitation_id(),
+            invitation=journal.get_meta_invitation_id(),
             recipients=[journal.get_authors_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
             message=message,

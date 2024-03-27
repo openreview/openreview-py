@@ -95,7 +95,7 @@ Thanks,
             client.add_members_to_group(committee_invited_id, [user_profile.id])
 
         ## - Send email
-        response = client.post_message(meta_invitation_id, subject, [user_profile.id], message, parentGroup=committee_invited_id, replyTo=contact)
+        response = client.post_message(subject, [user_profile.id], message, invitation=meta_invitation_id, signature=domain.id, parentGroup=committee_invited_id, replyTo=contact)
 
         ## - Update edge to INVITED_LABEL
         edge.label=invited_label
@@ -151,4 +151,4 @@ Thanks,
 {inviter_id}
 {inviter_preferred_name} ({edge.tauthor})'''
 
-        response = client.post_message(meta_invitation_id, subject, [user_profile.id], message)
+        response = client.post_message(subject, [user_profile.id], message, invitation=meta_invitation_id, signature=domain.id, replyTo=contact)

@@ -65,4 +65,4 @@ def process(client, edit, invitation):
 For more information, click here https://openreview.net/forum?id={submission.id}
 '''
 
-    client.post_message(meta_invitation_id, email_subject, final_committee, email_body, ignoreRecipients=ignoreRecipients, replyTo=contact)
+    client.post_message(email_subject, final_committee, email_body, invitation=meta_invitation_id, signature=venue_id, ignoreRecipients=ignoreRecipients, replyTo=contact)
