@@ -2552,7 +2552,7 @@ class InvitationBuilder(object):
                 edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
 
 
-        if is_senior_area_chair:
+        if is_senior_area_chair and not venue.sac_paper_assignments:
             edge_head = {
                 'param': {
                     'type': 'profile',
@@ -2563,6 +2563,23 @@ class InvitationBuilder(object):
             preprocess=None
             content=None
             edge_readers.append('${2/head}')
+        elif is_senior_area_chair and venue.sac_paper_assignments:
+            edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')]
+            preprocess=self.get_process_content('process/sac_paper_assignment_pre_process.js')
+            content = {
+                'reviewers_id': {
+                    'value': venue.get_senior_area_chairs_id()
+                },
+                'reviewers_name': {
+                    'value': venue.senior_area_chairs_name
+                },
+                'sync_sac_id': {
+                    'value': ''
+                },
+                'sac_assignment_id': {
+                    'value': ''
+                }
+            }
 
         edge_readers.append('${2/tail}')
 
