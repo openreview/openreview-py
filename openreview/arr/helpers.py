@@ -33,6 +33,8 @@ from openreview.stages.arr_content import (
     hide_fields_from_public
 )
 
+from openreview.stages.default_content import comment_v2
+
 class ARRWorkflow(object):
     CONFIGURATION_INVITATION_CONTENT = {
         "form_expiration_date": {
@@ -807,13 +809,38 @@ class ARRWorkflow(object):
                     'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
                     'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
                     'invitees': [openreview.stages.CustomStage.Participants.AUTHORS],
-                    'readers': [],
+                    'readers': [openreview.stages.CustomStage.Participants.AUTHORS],
                     'content': arr_author_consent_content,
                     'notify_readers': False,
                     'email_sacs': False
                 },
                 due_date=self.configuration_note.content.get('author_consent_due_date'),
                 exp_date=self.configuration_note.content.get('form_expiration_date')   
+            ),
+            ARRStage(
+                type=ARRStage.Type.CUSTOM_STAGE,
+                required_fields=['comment_start_date', 'comment_end_date'],
+                super_invitation_id=f"{self.venue_id}/-/Author-Editor_Confidential_Comment",
+                stage_arguments={
+                    'name': 'Author-Editor_Confidential_Comment',
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.WITHFORUM,
+                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                    'invitees': [
+                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.AUTHORS,
+                    ],
+                    'readers': [
+                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.AUTHORS,
+                    ],
+                    'content': comment_v2,
+                    'notify_readers': False,
+                    'email_sacs': False
+                },
+                start_date=self.configuration_note.content.get('comment_start_date'),
+                exp_date=self.configuration_note.content.get('comment_end_date')   
             ),
             ARRStage(
                 type=ARRStage.Type.CUSTOM_STAGE,

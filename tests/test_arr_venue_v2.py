@@ -793,7 +793,6 @@ class TestARRVenueV2():
                 content = {
                     'maximum_load': { 'value': '0' },
                     'maximum_load_resubmission': { 'value': 'No' },
-                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     'next_available_month': { 'value': 'August'},
                     'next_available_year': { 'value':  2024}
                 }
@@ -806,7 +805,6 @@ class TestARRVenueV2():
                 content = {
                     'maximum_load': { 'value': '0' },
                     'maximum_load_resubmission': { 'value': 'Yes' },
-                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     'next_available_month': { 'value': 'September'},
                     'next_available_year': { 'value':  2024}
                 }
@@ -1337,7 +1335,6 @@ class TestARRVenueV2():
                 content = {
                     'maximum_load': { 'value': '6' },
                     'maximum_load_resubmission': { 'value': 'Yes' },
-                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                 }
             )
         )
@@ -1348,7 +1345,6 @@ class TestARRVenueV2():
                 content = {
                     'maximum_load': { 'value': '10' },
                     'maximum_load_resubmission': { 'value': 'Yes' },
-                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                 }
             )
         )
@@ -1387,8 +1383,7 @@ class TestARRVenueV2():
                 id = ac_note_edit['note']['id'],
                 content = {
                     'maximum_load': { 'value': '7' },
-                    'maximum_load_resubmission': { 'value': 'Yes' },
-                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
+                    'maximum_load_resubmission': { 'value': 'Yes' }
                 }
             )
         )
@@ -1399,8 +1394,7 @@ class TestARRVenueV2():
                 id = sac_note_edit['note']['id'],
                 content = {
                     'maximum_load': { 'value': '11' },
-                    'maximum_load_resubmission': { 'value': 'Yes' },
-                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
+                    'maximum_load_resubmission': { 'value': 'Yes' }
                 }
             )
         )
@@ -1441,8 +1435,7 @@ class TestARRVenueV2():
                 ddate = openreview.tools.datetime_millis(now),
                 content = {
                     'maximum_load': { 'value': '7' },
-                    'maximum_load_resubmission': { 'value': 'Yes' },
-                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
+                    'maximum_load_resubmission': { 'value': 'Yes' }
                 }
             )
         )
@@ -1454,8 +1447,7 @@ class TestARRVenueV2():
                 ddate = openreview.tools.datetime_millis(now),
                 content = {
                     'maximum_load': { 'value': '11' },
-                    'maximum_load_resubmission': { 'value': 'Yes' },
-                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
+                    'maximum_load_resubmission': { 'value': 'Yes' }
                 }
             )
         )
@@ -1492,8 +1484,7 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 content = {
                     'maximum_load': { 'value': '0' },
-                    'maximum_load_resubmission': { 'value': 'Yes' },
-                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
+                    'maximum_load_resubmission': { 'value': 'Yes' }
                 }
             )
         )
@@ -1505,8 +1496,7 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 content = {
                     'maximum_load': { 'value': '6' },
-                    'maximum_load_resubmission': { 'value': 'Yes' },
-                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
+                    'maximum_load_resubmission': { 'value': 'Yes' }
                 }
             )
         )
@@ -1697,7 +1687,7 @@ class TestARRVenueV2():
                     ) for reply in submission.details['replies']
                 )
 
-    def test_post_submission(self, client, openreview_client, helpers):
+    def test_post_submission(self, client, openreview_client, helpers, test_client):
 
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
@@ -1834,62 +1824,62 @@ class TestARRVenueV2():
         assert submissions[1].content['existing_preprints']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['preferred_venue']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
-        assert submissions[1].content['software']['readers'] == [
+        assert set(submissions[1].content['software']['readers']) == {
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
-        ]
-        assert submissions[1].content['data']['readers'] == [
+        }
+        assert set(submissions[1].content['data']['readers']) == {
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
-        ]
-        assert submissions[1].content['previous_URL']['readers'] == [
+        }
+        assert set(submissions[1].content['previous_URL']['readers']) == {
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
-        ]
-        assert submissions[1].content['previous_PDF']['readers'] == [
+        }
+        assert set(submissions[1].content['previous_PDF']['readers']) == {
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
-        ]
-        assert submissions[1].content['response_PDF']['readers'] == [
+        }
+        assert set(submissions[1].content['response_PDF']['readers']) == {
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
-        ]  
-        assert submissions[1].content['reassignment_request_action_editor']['readers'] == [
+        }  
+        assert set(submissions[1].content['reassignment_request_action_editor']['readers']) == {
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
-        ]  
-        assert submissions[1].content['reassignment_request_reviewers']['readers'] == [
+        }  
+        assert set(submissions[1].content['reassignment_request_reviewers']['readers']) == {
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
-        ]  
-        assert submissions[1].content['justification_for_not_keeping_action_editor_or_reviewers']['readers'] == [
+        }  
+        assert set(submissions[1].content['justification_for_not_keeping_action_editor_or_reviewers']['readers']) == {
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
-        ]
+        }
 
         # Post comment as PCs to all submissions
         for submission in submissions:
@@ -1903,6 +1893,27 @@ class TestARRVenueV2():
                         'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
                         f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Senior_Area_Chairs',
                         f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Area_Chairs'
+                    ],
+                    content={
+                        "comment": { "value": "This is a comment"}
+                    }
+                )
+            )
+
+        # Post comment as authors to chairs
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+        for submission in submissions:
+            pc_client_v2.post_note_edit(
+                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/-/Author-Editor_Confidential_Comment",
+                writers=['aclweb.org/ACL/ARR/2023/August', f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Authors'],
+                signatures=[f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Authors'],
+                note=openreview.api.Note(
+                    replyto=submission.id,
+                    readers=[
+                        'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Senior_Area_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Area_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Authors'
                     ],
                     content={
                         "comment": { "value": "This is a comment"}
