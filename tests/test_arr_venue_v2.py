@@ -3012,17 +3012,6 @@ class TestARRVenueV2():
         assert 'flagged_for_desk_reject_verification' not in test_submission.content
         _, test_submission = post_official_review(user_client, review_inv, user, ddate=now(), existing_note=edit['note'])
 
-        # Check for existence of rebuttal invitation
-        assert user_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/Official_Review1/-/Consent')
-        consent_edit = user_client.post_note_edit(
-                invitation='aclweb.org/ACL/ARR/2023/August/Submission3/Official_Review1/-/Consent',
-                signatures=[user],
-                note=openreview.api.Note(
-                    content = {
-                        'consent': {'value': 'Yes, I consent to donating anonymous metadata of my review for research.'}
-                    }
-                )
-            )
 
         # Post checklist with no ethics flag and a violation field - check for DSV flag
         edit, test_submission = post_official_review(user_client, review_inv, user, tested_field=violation_fields[0])

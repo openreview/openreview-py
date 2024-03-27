@@ -22,7 +22,6 @@ from openreview.stages.arr_content import (
     arr_reviewer_checklist,
     arr_ae_checklist,
     arr_desk_reject_verification,
-    arr_reviewer_consent_content,
     arr_official_review_content,
     arr_metareview_content,
     arr_ethics_review_content,
@@ -338,47 +337,6 @@ class ARRWorkflow(object):
     @staticmethod
     def _extend_desk_reject_verification(client, venue, builder, request_form):
         venue.invitation_builder.set_verification_flag_invitation()
-
-    @staticmethod
-    def _extend_consent(client, venue, builder, request_form):
-        consent_invitation = openreview.api.Invitation(
-            id = f"{venue.id}/-/Consent",
-            edit = {
-                'invitation': {
-                    'edit': {}
-                },
-                'content': {}
-            }
-        )
-        consent_invitation.edit['content']['replytoSignatures'] = {
-            "value": {
-                "param": {
-                    "regex": ".*",
-                    "type": "string"
-                }
-            }
-        }
-        consent_invitation.edit['invitation']['invitees'] = [
-        "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
-        "${3/content/replytoSignatures/value}"
-        ]
-        consent_invitation.edit['invitation']['edit']['signatures'] = {
-            "param": {
-                "items": [
-                    {
-                    "prefix": "aclweb.org/ACL/ARR/2023/August/Submission${7/content/noteNumber/value}/Reviewer_.*",
-                    "optional": True
-                    }
-                ]
-            }
-        }
-        client.post_invitation_edit(invitations=venue.get_meta_invitation_id(),
-            readers=[venue.id],
-            writers=[venue.id],
-            signatures=[venue.id],
-            replacement=False,
-            invitation=consent_invitation
-        )
 
     @staticmethod
     def _extend_ae_checklist(client, venue, builder, request_form):
@@ -906,24 +864,6 @@ class ARRWorkflow(object):
                 exp_date=self.configuration_note.content.get('form_expiration_date'),
                 process='process/verification_process.py',
                 extend=ARRWorkflow._extend_desk_reject_verification
-            ),
-            ARRStage(
-                type=ARRStage.Type.CUSTOM_STAGE,
-                required_fields=['form_expiration_date'],
-                super_invitation_id=f"{self.venue_id}/-/Consent",
-                stage_arguments={
-                    'name': 'Consent',
-                    'reply_to': openreview.stages.CustomStage.ReplyTo.REVIEWS,
-                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
-                    'reply_type': openreview.stages.CustomStage.ReplyType.REPLY,
-                    'invitees': [],
-                    'readers': [],
-                    'content': arr_reviewer_consent_content,
-                    'notify_readers': False,
-                    'email_sacs': False
-                },
-                exp_date=self.configuration_note.content.get('form_expiration_date'),
-                extend=ARRWorkflow._extend_consent
             ),
             ARRStage(
                 type=ARRStage.Type.CUSTOM_STAGE,
