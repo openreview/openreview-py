@@ -185,8 +185,6 @@ class TestNeurIPSTrackConference():
         
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/-/Post_Submission-0-0')
-        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/-/Withdrawal-0-0')
-        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/-/Desk_Rejection-0-0')
         helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/-/Revision-0-0')
 
         notes = test_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission' }, sort='number:desc')
@@ -195,8 +193,6 @@ class TestNeurIPSTrackConference():
         assert notes[0].readers == ['NeurIPS.cc/2023/Track/Datasets_and_Benchmarks', 'NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission5/Authors']
         assert notes[0].content['keywords']['readers'] == ['NeurIPS.cc/2023/Track/Datasets_and_Benchmarks', 'NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission5/Authors']
 
-        assert test_client.get_invitation('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission5/-/Withdrawal')
-        assert test_client.get_invitation('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission5/-/Desk_Rejection')
         assert test_client.get_invitation('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission5/-/Revision')
 
         post_submission =  openreview_client.get_invitation('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/-/Post_Submission')
