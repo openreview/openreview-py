@@ -5,7 +5,7 @@ async function process(client, edge, invitation) {
     const domain = groups[0]
     const venueId = domain.id
     const submissionName = domain.content.submission_name?.value
-    const sacsName = invitation.content.senior_area_chairs_name?.value
+    const sacsName = invitation.content.reviewers_name?.value
 
     const { notes } = await client.getNotes({ id: edge.head })
     const submission = notes[0]
