@@ -323,6 +323,28 @@ If you would like to change your decision, please follow the link in the previou
     client.post_invitation(recruitment_invitation)
     client.post_invitation(remind_recruitment_invitation)
 
+    bid_stage_content = {
+        'bid_start_date': {
+            'description': 'When does bidding on submissions begin? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$'
+        },
+        'bid_due_date': {
+            'description': 'When does bidding on submissions end? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+            'required': True
+        },
+        'bid_count': {
+            'description': 'Minimum bids one should make to mark bidding task completed for them. Default is 50.',
+            'value-regex': '[0-9]*'
+        }
+    }
+    if 'Yes' in forum.content.get('senior_area_chairs', 'No') and 'Submissions' == forum.content.get('senior_area_chairs_assignment', 'Area Chairs'):
+        bid_stage_content['sac_bidding']= {
+            'description': 'Do you want to allow senior area chairs to bid on papers?',
+            'value-radio': ['Yes', 'No'],
+            'default': 'No',
+            'required': False
+        }
     client.post_invitation(openreview.Invitation(
         id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Bid_Stage',
         super = SUPPORT_GROUP + '/-/Bid_Stage',
@@ -330,10 +352,11 @@ If you would like to change your decision, please follow the link in the previou
         reply = {
             'forum': forum.id,
             'referent': forum.id,
-            'readers' : {
+            'readers': {
                 'description': 'The users who will be allowed to read the above content.',
                 'values' : readers
-            }
+            },
+            'content': bid_stage_content
         },
         signatures = ['~Super_User1']
     ))

@@ -21,7 +21,7 @@ def process(client, note, invitation):
 
     if forum_note.content.get('api_version', '1') == '2':
         senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
-        if senior_area_chairs_name and matching_group.endswith(senior_area_chairs_name):
+        if senior_area_chairs_name and matching_group.endswith(senior_area_chairs_name) and forum_note.content.get('senior_area_chairs_assignment', 'Area Chairs') == 'Area Chairs':
             if compute_conflicts:
                 raise openreview.OpenReviewException('Conflicts are not computed between SACs and ACs. Please select "No" for Compute Conflicts.')
             return
