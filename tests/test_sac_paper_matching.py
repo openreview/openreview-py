@@ -352,7 +352,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         sac_paper3 = pc_client_v2.get_group('TSACM/2024/Conference/Submission3/Senior_Area_Chairs')
         assert ['~SAC_MatchingTwo1'] == sac_paper3.members
 
-        #create new assignments and deploy, overwriting previous assignments
+        #create new proposed assignments and deploy, overwriting previous assignments
         pc_client_v2.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_senior_area_chairs_id()),
             readers = ['TSACM/2024/Conference', '~SAC_MatchingTwo1'],
             nonreaders = [f'TSACM/2024/Conference/Submission{submissions[0].number}/Authors'],
@@ -407,3 +407,29 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         sac_paper3 = pc_client_v2.get_group('TSACM/2024/Conference/Submission3/Senior_Area_Chairs')
         assert ['~SAC_MatchingOne1'] == sac_paper3.members
+
+        # change assigned SAC
+        edge = pc_client_v2.get_edges(invitation='TSACM/2024/Conference/Senior_Area_Chairs/-/Assignment', head=submissions[0].id, tail='~SAC_MatchingTwo1')[0]
+        assert edge
+        edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        pc_client_v2.post_edge(edge)
+
+        helpers.await_queue_edit(openreview_client, edge.id)
+
+        sac_paper1 = pc_client_v2.get_group('TSACM/2024/Conference/Submission1/Senior_Area_Chairs')
+        assert not sac_paper1.members
+
+        edge = pc_client_v2.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_senior_area_chairs_id(), deployed=True),
+            readers = ['TSACM/2024/Conference', '~SAC_MatchingThree1'],
+            nonreaders = [f'TSACM/2024/Conference/Submission{submissions[0].number}/Authors'],
+            writers = ['TSACM/2024/Conference'],
+            signatures = ['TSACM/2024/Conference/Program_Chairs'],
+            head = submissions[0].id,
+            tail = '~SAC_MatchingThree1',
+            weight = 0.75
+        ))
+
+        helpers.await_queue_edit(openreview_client, edge.id)
+
+        sac_paper1 = pc_client_v2.get_group('TSACM/2024/Conference/Submission1/Senior_Area_Chairs')
+        assert ['~SAC_MatchingThree1'] ==  sac_paper1.members
