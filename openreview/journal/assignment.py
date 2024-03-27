@@ -165,6 +165,7 @@ class Assignment(object):
         submitted_submissions = self.client.get_notes(invitation= journal.get_author_submission_id(), content = { 'venueid': journal.submitted_venue_id })
         assigning_AE_submissions = self.client.get_notes(invitation= journal.get_author_submission_id(), content = { 'venueid': journal.assigning_AE_venue_id })
         matching_submissions = submitted_submissions + assigning_AE_submissions
+        action_editors = self.client.get_group(journal.get_action_editors_id()).members
         
         print(f'Found {len(matching_submissions)} submissions to assign an AE')
         for submitted_submission in tqdm(matching_submissions):
@@ -194,24 +195,25 @@ class Assignment(object):
                         previous_forum_id = previous_forum_url.split('&')[0]
                         previous_assignments = self.client.get_edges(invitation=journal.get_ae_assignment_id(), head = previous_forum_id)
                         for assignment in previous_assignments:
-                            self.client.post_edge(openreview.api.Edge(
-                                invitation=journal.get_ae_resubmission_score_id(),
-                                head=submitted_submission.id,
-                                tail=assignment.tail,
-                                weight=1
-                            ))
+                            if assignment.tail in action_editors and not self.client.get_edges(invitation=journal.get_ae_resubmission_score_id(), head=submitted_submission.id, tail=assignment.tail):
+                                self.client.post_edge(openreview.api.Edge(
+                                    invitation=journal.get_ae_resubmission_score_id(),
+                                    head=submitted_submission.id,
+                                    tail=assignment.tail,
+                                    weight=1
+                                ))
                         previous_archived_assignments = self.client.get_edges(invitation=journal.get_ae_assignment_id(archived=True), head = previous_forum_id)
                         for assignment in previous_archived_assignments:
-                            self.client.post_edge(openreview.api.Edge(
-                                invitation=journal.get_ae_resubmission_score_id(),
-                                head=submitted_submission.id,
-                                tail=assignment.tail,
-                                weight=1
-                            ))                        
+                            if assignment.tail in action_editors and not self.client.get_edges(invitation=journal.get_ae_resubmission_score_id(), head=submitted_submission.id, tail=assignment.tail):
+                                self.client.post_edge(openreview.api.Edge(
+                                    invitation=journal.get_ae_resubmission_score_id(),
+                                    head=submitted_submission.id,
+                                    tail=assignment.tail,
+                                    weight=1
+                                ))                        
 
         ## Compute the AE quota and use invitation: TMLR/Action_Editors/-/Local_Custom_Max_Papers:
         all_submissions = { s.id: s for s in self.client.get_all_notes(invitation= journal.get_author_submission_id(), details='directReplies')}
-        action_editors = self.client.get_group(journal.get_action_editors_id()).members
         available_edges = { e['id']['tail']: e['values'][0]['label'] for e in self.client.get_grouped_edges(invitation=journal.get_ae_availability_id(), groupby='tail', select='label') }
         quota_edges = { e['id']['tail']: e['values'][0]['weight'] for e in self.client.get_grouped_edges(invitation=journal.get_ae_custom_max_papers_id(), groupby='tail', select='weight') }
         assignments_by_ae = { e['id']['tail']: [v['head'] for v in e['values']] for e in self.client.get_grouped_edges(invitation=journal.get_ae_assignment_id(), groupby='tail', select='head') }

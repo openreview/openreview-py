@@ -4,6 +4,7 @@ def process(client, note, invitation):
     forum_note = client.get_note(note.forum)
     venue_id = forum_note.content.get('venue_id', '')
     domain = client_v2.get_group(venue_id)
+    compute_conflicts = note.content.get('compute_conflicts') != 'No'
     compute_affinity_scores = note.content.get('compute_affinity_scores') != 'No'
 
     if compute_affinity_scores and 'upload_affinity_scores' in note.content:
@@ -21,6 +22,8 @@ def process(client, note, invitation):
     if forum_note.content.get('api_version', '1') == '2':
         senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
         if senior_area_chairs_name and matching_group.endswith(senior_area_chairs_name):
+            if compute_conflicts:
+                raise openreview.OpenReviewException('Conflicts are not computed between SACs and ACs. Please select "No" for Compute Conflicts.')
             return
 
         submission_venue_id = domain.get_content_value('submission_venue_id')
