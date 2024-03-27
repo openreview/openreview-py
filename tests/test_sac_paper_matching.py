@@ -336,4 +336,18 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         )
         assert 3 == edges
 
-        # venue.set_assignments(assignment_title='sac-matching', committee_id=venue.get_senior_area_chairs_id())
+        venue.set_assignments(assignment_title='sac-matching', committee_id=venue.get_senior_area_chairs_id())
+
+        edges = pc_client_v2.get_edges_count(
+            invitation='TSACM/2024/Conference/Senior_Area_Chairs/-/Assignment'
+        )
+        assert 3 == edges
+
+        sac_paper1 = pc_client_v2.get_group('TSACM/2024/Conference/Submission1/Senior_Area_Chairs')
+        assert ['~SAC_MatchingTwo1'] == sac_paper1.members
+
+        sac_paper2 = pc_client_v2.get_group('TSACM/2024/Conference/Submission2/Senior_Area_Chairs')
+        assert ['~SAC_MatchingTwo1'] == sac_paper2.members
+
+        sac_paper3 = pc_client_v2.get_group('TSACM/2024/Conference/Submission3/Senior_Area_Chairs')
+        assert ['~SAC_MatchingOne1'] == sac_paper3.members
