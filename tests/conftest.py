@@ -111,6 +111,9 @@ class Helpers:
 
         buttons = container.find_elements(By.TAG_NAME, "button")
 
+        for button in buttons:
+            assert button.is_enabled()      
+
         if quota and accept:
             if len(buttons) == 3: ## Accept with quota
                 buttons[1].click()

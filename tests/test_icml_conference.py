@@ -3583,7 +3583,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
                 'commentary_end_date': end_date.strftime('%Y/%m/%d'),
                 'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
                 'additional_readers': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Assigned Submitted Reviewers'],
-                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
+                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue',
+                'enable_chat_between_committee_members': 'Yes, enable chat between committee members'
             },
             forum=request_form.forum,
             invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment_Stage',
@@ -3595,7 +3596,12 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         ))
 
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Comment-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Chat-0-1', count=1)
 
+        chat_invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Chat')
+        assert len(chat_invitations) == 100
+        
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Comment')
         assert invitation
         assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers' in invitation.invitees
@@ -4523,8 +4529,9 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         invitations_container = selenium.find_element(By.CLASS_NAME, 'invitations-container')
         invitation_buttons = invitations_container.find_element(By.CLASS_NAME, 'invitation-buttons')
         buttons = invitation_buttons.find_elements(By.TAG_NAME, 'button')
-        assert len(buttons) ==  1
+        assert len(buttons) ==  2
         assert buttons[0].text == 'Official Comment'
+        assert buttons[1].text == 'Chat'
 
         ## SAC can edit the meta review
         meta_review_edit = sac_client.post_note_edit(
@@ -5039,107 +5046,10 @@ Best,
 
     def test_forum_chat(self, openreview_client, helpers):
 
-        openreview_client.post_invitation_edit(
-            invitations='ICML.cc/2023/Conference/-/Edit',
-            readers = ['ICML.cc/2023/Conference'],
-            writers = ['ICML.cc/2023/Conference'],
-            signatures = ['ICML.cc/2023/Conference'],
-            invitation = openreview.api.Invitation(
-                id = 'ICML.cc/2023/Conference/-/Submission',
-                reply_forum_views = [
-                    {
-                        'id': 'all',
-                        'label': 'All'
-                    },
-                    {
-                        'id': 'discussion',
-                        'label': 'Discussion',
-                        'filter': '-invitations:ICML.cc/2023/Conference/Submission${note.number}/-/Chat',
-                        'nesting': 3,
-                        'sort': 'date-desc',
-                        'layout': 'default',
-                        'live': True
-                    },
-                    {
-                        'id': 'reviewers-chat',
-                        'label': 'Reviewers Chat',
-                        'filter': 'invitations:ICML.cc/2023/Conference/Submission${note.number}/-/Chat,ICML.cc/2023/Conference/Submission${note.number}/-/Official_Review',
-                        'nesting': 1,
-                        'sort': 'date-asc',
-                        'layout': 'chat',
-                        'live': True,
-                        'expandedInvitations': ['ICML.cc/2023/Conference/Submission${note.number}/-/Chat']
-                    }
-                ]
-            )
-        )
-
         submission_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Submission')
         assert len(submission_invitation.reply_forum_views)
 
         submission = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', number=1)[0]
-
-        openreview_client.post_invitation_edit(
-            invitations='ICML.cc/2023/Conference/-/Edit',
-            readers = ['ICML.cc/2023/Conference'],
-            writers = ['ICML.cc/2023/Conference'],
-            signatures = ['ICML.cc/2023/Conference'],
-            invitation = openreview.api.Invitation(
-                id = 'ICML.cc/2023/Conference/Submission1/-/Chat',
-                readers = ['everyone'],
-                writers = ['ICML.cc/2023/Conference'],
-                signatures = ['ICML.cc/2023/Conference'],
-                invitees = ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission1/Area_Chairs', 'ICML.cc/2023/Conference/Submission1/Reviewers'],
-                edit = {
-                    'readers': ['ICML.cc/2023/Conference', '${2/signatures}'],
-                    'writers': ['ICML.cc/2023/Conference'],
-                    'signatures': {
-                        'param': {
-                            'enum': [
-                                'ICML.cc/2023/Conference/Program_Chairs',
-                                'ICML.cc/2023/Conference/Submission1/Area_Chair_.*',
-                                'ICML.cc/2023/Conference/Submission1/Reviewer_.*',
-                            ]
-                        }
-                    },
-                    'note': {
-                        'id': {
-                            'param': {
-                                'withInvitation': 'ICML.cc/2023/Conference/Submission1/-/Chat',
-                                'optional': True
-                            }
-                        },
-                        'readers': ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission1/Area_Chairs', 'ICML.cc/2023/Conference/Submission1/Reviewers'],
-                        'writers': ['ICML.cc/2023/Conference'],
-                        'signatures': ['${3/signatures}'],
-                        'ddate': {
-                            'param': {
-                                'range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'deletable': True
-                            }
-                        },
-                        'forum': submission.id,
-                        'replyto': {
-                            'param': {
-                                'withForum': submission.id
-                            }
-                        },
-                        'content': {
-                            'message': {
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 50000,
-                                        'markdown': True
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            )
-        )
 
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
 
@@ -5157,6 +5067,8 @@ Best,
             )
         )
 
+        helpers.await_queue_edit(openreview_client, edit_id=note_edit['id'])
+
         pc_client=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
 
         note_edit = pc_client.post_note_edit(
@@ -5169,3 +5081,5 @@ Best,
                 }
             )
         )
+
+        helpers.await_queue_edit(openreview_client, edit_id=note_edit['id'])
