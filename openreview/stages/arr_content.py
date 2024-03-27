@@ -1898,6 +1898,7 @@ arr_ac_max_load_task["maximum_load"] = {
         "order": 1,
     }
 arr_sac_max_load_task = deepcopy(arr_max_load_task)
+del arr_sac_max_load_task["maximum_load_resubmission"]
 arr_sac_max_load_task["maximum_load"] = {
     "value": {
         "param": {"regex": "[0-9]{0,3}", "optional": False, "type": "string"}

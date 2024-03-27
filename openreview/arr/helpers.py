@@ -72,69 +72,33 @@ class ARRWorkflow(object):
             "order": 6,
             "required": False
         },
+        "setup_shared_data_date": {
+            "description": "When should the data be copied over?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
+            "order": 7,
+            "required": False
+        },
         "maximum_load_due_date": {
             "description": "What should be the displayed deadline for the maximum load tasks?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
-            "order": 7,
+            "order": 8,
             "required": False
         },
         "maximum_load_exp_date": {
             "description": "When should we stop accepting any maximum load responses?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
-            "order": 8,
-            "required": False
-        },
-        "setup_proposed_assignments_date": {
-            "description": "When should the proposed reviewer assignments be shared to the SAEs/AEs?",
-            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
             "order": 9,
-            "required": False
-        },
-        "reviewer_assignments_title": {
-            "description": "What is the title of the finalized reviewer assignments?",
-            "value-regex": ".*",
-            "order": 10,
-            "required": False
-        },
-        "ae_checklist_due_date": {
-            "description": "What should be the displayed deadline for the maximum load tasks?",
-            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
-            "order": 11,
-            "required": False
-        },
-        "ae_checklist_exp_date": {
-            "description": "When should we stop accepting any maximum load responses?",
-            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
-            "order": 12,
-            "required": False
-        },
-        "reviewer_checklist_due_date": {
-            "description": "What should be the displayed deadline for the maximum load tasks?",
-            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
-            "order": 13,
-            "required": False
-        },
-        "reviewer_checklist_exp_date": {
-            "description": "When should we stop accepting any maximum load responses?",
-            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
-            "order": 14,
-            "required": False
-        },
-        "setup_shared_data_date": {
-            "description": "When should the data be copied over?",
-            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
-            "order": 15,
             "required": False
         },
         "preprint_release_submission_date": {
             "description": "When should submissions be copied over and the opt-in papers be revealed to the public?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
-            "order": 16,
+            "order": 10,
             "required": False
         },
         "sae_affinity_scores": {
             "description": "Upload a CSV file containing affinity scores for SAC-paper pairs (one SAC-paper pair per line in the format: submission_id, SAC_id, affinity_score)",
-            "order": 17,
+            "order": 11,
             "value-file": {
                 "fileTypes": [
                     "csv"
@@ -146,11 +110,47 @@ class ARRWorkflow(object):
         "setup_tracks_and_reassignment_date": {
             "description": "When will submission track and reassignment data be finalized? This will modify the affinity scores and indicate which reviewers and action editors have matching tracks.",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
-            "order": 18,
+            "order": 12,
             "required": False
         },
         "setup_sae_ae_assignment_date": {
             "description": "When will both SAE and AE assignments be deployed? This must happen after both assignments are deployed to give SAEs access to the AE assignments.",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
+            "order": 13,
+            "required": False
+        },
+        "setup_proposed_assignments_date": {
+            "description": "When should the proposed reviewer assignments be shared to the SAEs/AEs?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
+            "order": 14,
+            "required": False
+        },
+        "reviewer_assignments_title": {
+            "description": "What is the title of the finalized reviewer assignments?",
+            "value-regex": ".*",
+            "order": 15,
+            "required": False
+        },
+        "ae_checklist_due_date": {
+            "description": "What should be the displayed deadline for the maximum load tasks?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
+            "order": 16,
+            "required": False
+        },
+        "ae_checklist_exp_date": {
+            "description": "When should we stop accepting any maximum load responses?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
+            "order": 17,
+            "required": False
+        },
+        "reviewer_checklist_due_date": {
+            "description": "What should be the displayed deadline for the maximum load tasks?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
+            "order": 18,
+            "required": False
+        },
+        "reviewer_checklist_exp_date": {
+            "description": "When should we stop accepting any maximum load responses?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
             "order": 19,
             "required": False

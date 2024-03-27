@@ -804,7 +804,6 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 content = {
                     'maximum_load': { 'value': '0' },
-                    'maximum_load_resubmission': { 'value': 'Yes' },
                     'next_available_month': { 'value': 'September'},
                     'next_available_year': { 'value':  2024}
                 }
@@ -1344,7 +1343,6 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 content = {
                     'maximum_load': { 'value': '10' },
-                    'maximum_load_resubmission': { 'value': 'Yes' },
                 }
             )
         )
@@ -1393,8 +1391,7 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 id = sac_note_edit['note']['id'],
                 content = {
-                    'maximum_load': { 'value': '11' },
-                    'maximum_load_resubmission': { 'value': 'Yes' }
+                    'maximum_load': { 'value': '11' }
                 }
             )
         )
@@ -1446,8 +1443,7 @@ class TestARRVenueV2():
                 id = sac_note_edit['note']['id'],
                 ddate = openreview.tools.datetime_millis(now),
                 content = {
-                    'maximum_load': { 'value': '11' },
-                    'maximum_load_resubmission': { 'value': 'Yes' }
+                    'maximum_load': { 'value': '11' }
                 }
             )
         )

@@ -1,5 +1,6 @@
 def process(client, edit, invitation):
     import time
+    
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     submission_venue_id = domain.content['submission_venue_id']['value']
@@ -30,6 +31,19 @@ def process(client, edit, invitation):
 
     CUSTOM_MAX_PAPERS_ID = f"{role}/-/Custom_Max_Papers"
     AVAILABILITY_ID = f"{role}/-/Reviewing_Resubmissions"
+
+    if edit.note.ddate:
+      client.delete_edges(
+        invitation=CUSTOM_MAX_PAPERS_ID,
+        head=role,
+        tail=user
+      )
+      client.delete_edges(
+        invitation=AVAILABILITY_ID,
+        head=role,
+        tail=user
+      )
+      return
     
 
     client.delete_edges(
@@ -51,6 +65,9 @@ def process(client, edit, invitation):
         weight=int(edit.note.content['maximum_load']['value'])
       )
     )
+
+    if role == SAC_ID:
+      return
 
     client.delete_edges(
       invitation=AVAILABILITY_ID,
@@ -79,16 +96,4 @@ def process(client, edit, invitation):
         label=availability_label
       )
     )
-
-    if edit.note.ddate:
-        client.delete_edges(
-          invitation=CUSTOM_MAX_PAPERS_ID,
-          head=role,
-          tail=user
-        )
-        client.delete_edges(
-          invitation=AVAILABILITY_ID,
-          head=role,
-          tail=user
-        )
     
