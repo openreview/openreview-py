@@ -30,3 +30,9 @@ def process(client, note, invitation):
         _, num_submissions = client_v2.get_notes(content={ 'venueid':submission_venue_id }, limit=1, with_count=True)
         if compute_affinity_scores and num_submissions >= 2000:
             raise openreview.OpenReviewException(f'Can not compute affinity scores for venues with 2000+ papers. Please contact us at info@openreview.net to compute your scores.')
+
+        area_chairs_name = domain.get_content_value('area_chairs_name')
+        if compute_conflicts and senior_area_chairs_name and area_chairs_name and matching_group.endswith(area_chairs_name):
+            num_edges = client_v2.get_edges_count(invitation=f'{venue_id}/{senior_area_chairs_name}/-/Assignment')
+            if not num_edges:
+                raise openreview.OpenReviewException(f'Please deploy SAC assignments before computing AC conflicts.')
