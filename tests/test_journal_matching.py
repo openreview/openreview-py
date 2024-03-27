@@ -310,7 +310,6 @@ class TestJournalMatching():
         openreview_client.add_members_to_group('CARP/Action_Editors/Archived', ['~Paul_McCartney1'])
 
         assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Ana_Prada1')[0].weight == 5
-        #assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Paul_McCartney1')[0].weight == 11
         assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~John_Lennon1')[0].weight == 11
         assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Janis_Joplin1')[0].weight == 12
         assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Diego_Armando1')[0].weight == 12
