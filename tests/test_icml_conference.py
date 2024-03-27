@@ -1126,6 +1126,24 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
+        with pytest.raises(openreview.OpenReviewException, match=r'Please deploy SAC assignments before computing AC conflicts.'):
+            client.post_note(openreview.Note(
+                content={
+                    'title': 'Paper Matching Setup',
+                    'matching_group': 'ICML.cc/2023/Conference/Area_Chairs',
+                    'compute_conflicts': 'NeurIPS',
+                    'compute_conflicts_N_years': '3',
+                    'compute_affinity_scores': 'No'
+
+                },
+                forum=request_form.id,
+                replyto=request_form.id,
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+                readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+                signatures=['~Program_ICMLChair1'],
+                writers=[]
+            ))
+
         openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group('ICML.cc/2023/Conference/Senior_Area_Chairs'))
 
         with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
