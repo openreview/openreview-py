@@ -1182,15 +1182,20 @@ class Matching(object):
         if role_name in venue.area_chair_roles:
             reviewer_name = venue.area_chairs_name
             review_name = 'Meta_Review'
+        elif self.is_senior_area_chair:
+            reviewer_name = venue.senior_area_chairs_name
             
         papers = self._get_submissions()
-        reviews = client.get_notes(invitation=venue.get_invitation_id(review_name, number='.*'), limit=1)
+        sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.senior_area_chairs_id, deployed=True),
+            groupby='head', select=None)} if not venue.sac_paper_assignments else {}
+        reviews = []
         proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id),
             label=assignment_title, groupby='head', select=None)}
         assignment_invitation_id = venue.get_assignment_id(self.match_group.id, deployed=True)
         current_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None)}
 
-        sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.senior_area_chairs_id, deployed=True), groupby='head', select=None)}
+        if not self.is_senior_area_chair:
+            reviews = client.get_notes(invitation=venue.get_invitation_id(review_name, number='.*'), limit=1)
 
         if overwrite:
             if reviews:
