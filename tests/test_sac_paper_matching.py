@@ -1,9 +1,12 @@
-import csv
 import os
+import csv
+import pytest
 import random
-import openreview
 import datetime
+import openreview
 from openreview.api import Edge
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
 
 class TestSACAssignments():
 
@@ -280,7 +283,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert assignment_config_inv.edit['note']['content']['paper_invitation']['value']['param']['default'] == 'TSACM/2024/Conference/-/Submission&content.venueid=TSACM/2024/Conference/Submission'
         assert conflict_invitation.id in assignment_config_inv.edit['note']['content']['conflicts_invitation']['value']['param']['default']
 
-    def test_set_assignments(self, client, openreview_client, helpers):
+    def test_set_assignments(self, client, openreview_client, helpers, selenium, request_page):
         
         pc_client = openreview.Client(username='pc@matching.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@matching.org', password=helpers.strong_password)
@@ -433,3 +436,13 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         sac_paper1 = pc_client_v2.get_group('TSACM/2024/Conference/Submission1/Senior_Area_Chairs')
         assert ['~SAC_MatchingThree1'] ==  sac_paper1.members
+
+        sac_client = openreview.api.OpenReviewClient(username = 'sac@umass.edu', password=helpers.strong_password)
+
+        request_page(selenium, 'http://localhost:3030/group?id=TSACM/2024/Conference/Senior_Area_Chairs', sac_client.token, by=By.CLASS_NAME, wait_for_element='tabs-container')
+        tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
+        assert tabs
+        assert tabs.find_element(By.LINK_TEXT, "Paper Status")
+        assert tabs.find_element(By.LINK_TEXT, "Senior Area Chair Tasks")
+        with pytest.raises(NoSuchElementException):
+            tabs.find_element(By.LINK_TEXT, "Area Chair Status")

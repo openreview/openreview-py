@@ -83,6 +83,7 @@ class ARR(object):
         self.submission_license = None
         self.use_publication_chairs = False
         self.source_submissions_query_mapping = {}
+        self.sac_paper_assignments = False
 
     def copy_to_venue(self):
 
@@ -129,6 +130,7 @@ class ARR(object):
         self.venue.senior_area_chair_identity_readers = self.senior_area_chair_identity_readers
         self.venue.decision_heading_map = self.decision_heading_map
         self.venue.source_submissions_query_mapping = self.source_submissions_query_mapping
+        self.venue.sac_paper_assignments = self.sac_paper_assignments
 
         self.venue.submission_stage = self.submission_stage
         self.venue.review_stage = self.review_stage

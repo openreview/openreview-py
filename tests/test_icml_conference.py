@@ -577,7 +577,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         header = selenium.find_element(By.ID, 'header')
         assert 'You have agreed to review up to 1 papers' in header.text
 
-    def test_registrations(self, client, openreview_client, helpers, test_client):
+    def test_registrations(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -636,6 +636,13 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         venue.create_registration_stages()
 
         sac_client = openreview.api.OpenReviewClient(username = 'sac1@gmail.com', password=helpers.strong_password)
+
+        request_page(selenium, 'http://localhost:3030/group?id=ICML.cc/2023/Conference/Senior_Area_Chairs', sac_client.token, by=By.CLASS_NAME, wait_for_element='tabs-container')
+        tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
+        assert tabs
+        assert tabs.find_element(By.LINK_TEXT, "Paper Status")
+        assert tabs.find_element(By.LINK_TEXT, "Area Chair Status")
+        assert tabs.find_element(By.LINK_TEXT, "Senior Area Chair Tasks")
 
         registration_forum = sac_client.get_notes(invitation='ICML.cc/2023/Conference/Senior_Area_Chairs/-/Registration_Form')
         assert len(registration_forum) == 1
