@@ -80,7 +80,8 @@ class Recruitment(object):
                             committee_invited_id,
                             contact_info,
                             verbose = False,
-                            invitation = self.venue.get_meta_invitation_id())
+                            invitation = self.venue.get_meta_invitation_id(),
+                            signature = venue_id)
                         recruitment_status['reminded'].append(invited_user)
                     except Exception as e:
                         self.client.remove_members_from_group(committee_invited_id, invited_user)
