@@ -10,6 +10,10 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         urls = openreview.tools.get_base_urls(client)
         openreview_client = openreview.api.OpenReviewClient(baseurl = urls[1], token=client.token)
         venue = openreview.venue.Venue(openreview_client, note.content['venue_id'], support_user)
+
+        if note.content['venue_id'].startswith('aclweb.org/ACL/ARR'):
+            venue = openreview.arr.ARR(openreview_client, note.content['venue_id'], support_user, venue=venue)
+
         venue_group = openreview.tools.get_group(openreview_client, note.content['venue_id'])
         venue_content = venue_group.content if venue_group else {}
         
@@ -54,6 +58,9 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
 
         include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
         venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date, include_option=include_expertise_selection)
+
+        if isinstance(venue, openreview.arr.ARR):
+            venue.copy_to_venue()
 
         if setup:
             venue.setup(note.content.get('program_chair_emails'), note.content.get('publication_chairs_emails'))
