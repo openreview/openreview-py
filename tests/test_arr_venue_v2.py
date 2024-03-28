@@ -150,7 +150,7 @@ class TestARRVenueV2():
         location_tag = header_div.find_element(By.CLASS_NAME, 'venue-location')
         assert location_tag and location_tag.text == 'Virtual'
         description = header_div.find_element(By.CLASS_NAME, 'description')
-        assert description and 'For author guidelines, please click ' in description.text        
+        assert description and 'Please see the venue website for more information.' in description.text        
 
         sac_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
@@ -210,13 +210,13 @@ class TestARRVenueV2():
                 'remove_submission_options': ['keywords'],
                 'homepage_override': { #TODO: Update
                     'location': 'Hawaii, USA',
-                    'instructions': 'Edited: For author guidelines, please click [here](https://icml.cc/Conferences/2023/StyleAuthorInstructions)'
+                    'instructions': 'For author guidelines, please click [here](https://icml.cc/Conferences/2023/StyleAuthorInstructions)'
                 },
                 'hide_fields': hide_fields
             }
         ))
 
-        helpers.await_queue(client)
+        helpers.await_queue_edit(client, invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision')
 
         request_page(selenium, 'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August', pc_client.token, wait_for_element='header')
         header_div = selenium.find_element(By.ID, 'header')
@@ -224,7 +224,7 @@ class TestARRVenueV2():
         location_tag = header_div.find_element(By.CLASS_NAME, 'venue-location')
         assert location_tag and location_tag.text == 'Hawaii, USA'
         description = header_div.find_element(By.CLASS_NAME, 'description')
-        assert description and 'Edited: For author guidelines, please click ' in description.text          
+        assert description and 'For author guidelines, please click ' in description.text          
 
         submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Submission')
         assert submission_invitation
