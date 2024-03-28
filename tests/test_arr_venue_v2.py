@@ -3185,8 +3185,6 @@ class TestARRVenueV2():
             openreview.Note(
                 content={
                     'form_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M'),
-                    'author_consent_start_date': (now).strftime('%Y/%m/%d %H:%M'),
-                    'author_consent_end_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
