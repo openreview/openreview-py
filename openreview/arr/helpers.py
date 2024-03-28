@@ -794,6 +794,7 @@ class ARRWorkflow(object):
                         openreview.stages.CustomStage.Participants.AUTHORS,
                     ],
                     'content': comment_v2,
+                    'multi_reply': True,
                     'notify_readers': False,
                     'email_sacs': False
                 },
