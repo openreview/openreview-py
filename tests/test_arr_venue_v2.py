@@ -233,26 +233,26 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'form_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'author_consent_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'registration_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'ae_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'reviewer_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'reviewer_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'ethics_review_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
-                    'ethics_review_deadline': (now).strftime('%Y/%m/%d %H:%M:%S'),
-                    'ethics_review_expiration_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
-                    'emergency_reviewing_start_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'emergency_reviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'emergency_reviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'emergency_metareviewing_start_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'emergency_metareviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'emergency_metareviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'commentary_start_date': (now - datetime.timedelta(days=2)).strftime('%Y/%m/%d %H:%M:%S'),
-                    'commentary_end_date': (now + datetime.timedelta(days=365)).strftime('%Y/%m/%d %H:%M:%S')
+                    'form_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'author_consent_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'registration_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'ae_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'reviewer_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'reviewer_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'ethics_review_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'ethics_review_deadline': (now).strftime('%Y/%m/%d %H:%M'),
+                    'ethics_review_expiration_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'emergency_reviewing_start_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'emergency_reviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'emergency_reviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'emergency_metareviewing_start_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'emergency_metareviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'emergency_metareviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'commentary_start_date': (now - datetime.timedelta(days=2)).strftime('%Y/%m/%d %H:%M'),
+                    'commentary_end_date': (now + datetime.timedelta(days=365)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form_note.number}/ARR_Configuration',
                 forum=request_form_note.id,
@@ -932,14 +932,14 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'form_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'author_consent_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'ae_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'reviewer_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'reviewer_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'form_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'author_consent_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'ae_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'reviewer_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'reviewer_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -1167,7 +1167,7 @@ class TestARRVenueV2():
             openreview.Note(
                 content={
                     'previous_cycle': 'aclweb.org/ACL/ARR/2023/June',
-                    'setup_shared_data_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=10)).strftime('%Y/%m/%d %H:%M:%S')
+                    'setup_shared_data_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=10)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -1186,7 +1186,7 @@ class TestARRVenueV2():
             openreview.Note(
                 content={
                     'previous_cycle': 'aclweb.org/ACL/ARR/2023/June',
-                    'setup_shared_data_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S')
+                    'setup_shared_data_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -1732,8 +1732,8 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'commentary_start_date': (now - datetime.timedelta(days=1)).strftime('%Y/%m/%d %H:%M:%S'),
-                    'commentary_end_date': (now + datetime.timedelta(days=365)).strftime('%Y/%m/%d %H:%M:%S')
+                    'commentary_start_date': (now - datetime.timedelta(days=1)).strftime('%Y/%m/%d %H:%M'),
+                    'commentary_end_date': (now + datetime.timedelta(days=365)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -1779,7 +1779,7 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'preprint_release_submission_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S')
+                    'preprint_release_submission_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -1932,19 +1932,19 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'ae_checklist_due_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
-                    'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'reviewer_checklist_due_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
-                    'reviewer_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'review_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
-                    'review_deadline': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'review_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'meta_review_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
-                    'meta_review_deadline': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'meta_review_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'ethics_review_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
-                    'ethics_review_deadline': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'ethics_review_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'ae_checklist_due_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'reviewer_checklist_due_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'reviewer_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'review_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'review_deadline': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'review_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'meta_review_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'meta_review_deadline': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'meta_review_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'ethics_review_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'ethics_review_deadline': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'ethics_review_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -2173,15 +2173,15 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'review_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
-                    'review_deadline': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'review_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'meta_review_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
-                    'meta_review_deadline': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'meta_review_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'ethics_review_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
-                    'ethics_review_deadline': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'ethics_review_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'review_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'review_deadline': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'review_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'meta_review_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'meta_review_deadline': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'meta_review_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'ethics_review_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'ethics_review_deadline': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'ethics_review_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                 },
                 invitation=f"openreview.net/Support/-/Request{june_request_form.number}/ARR_Configuration",
                 forum=june_request_form.id,
@@ -2370,7 +2370,7 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_tracks_and_reassignment_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S')
+                    'setup_tracks_and_reassignment_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -2585,7 +2585,7 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_sae_ae_assignment_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S')
+                    'setup_sae_ae_assignment_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -2628,7 +2628,7 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_proposed_assignments_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S'),
+                    'setup_proposed_assignments_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_assignments_title': 'reviewer-assignments'
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
@@ -3065,7 +3065,7 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_review_release_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S')
+                    'setup_review_release_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -3096,7 +3096,7 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_author_response_date': (datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M:%S')
+                    'setup_author_response_date': (datetime.datetime.utcnow() + datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -3124,7 +3124,7 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'close_author_response_date': (datetime.datetime.utcnow() + datetime.timedelta(seconds=6)).strftime('%Y/%m/%d %H:%M:%S')
+                    'close_author_response_date': (datetime.datetime.utcnow() + datetime.timedelta(seconds=6)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -3183,20 +3183,20 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'form_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'author_consent_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'ae_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'reviewer_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'reviewer_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'review_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
-                    'review_deadline': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'review_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'meta_review_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
-                    'meta_review_deadline': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'meta_review_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'form_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'author_consent_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'ae_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'reviewer_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'reviewer_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'review_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'review_deadline': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'review_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'meta_review_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'meta_review_deadline': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'meta_review_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form_note.number}/ARR_Configuration',
                 forum=request_form_note.id,
@@ -3409,7 +3409,7 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_meta_review_release_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=6)).strftime('%Y/%m/%d %H:%M:%S')
+                    'setup_meta_review_release_date': (openreview.tools.datetime.datetime.utcnow() + datetime.timedelta(seconds=6)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -3446,12 +3446,12 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'emergency_reviewing_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
-                    'emergency_reviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'emergency_reviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'emergency_metareviewing_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
-                    'emergency_metareviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
-                    'emergency_metareviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S'),
+                    'emergency_reviewing_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'emergency_reviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'emergency_reviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'emergency_metareviewing_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'emergency_metareviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'emergency_metareviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -3640,8 +3640,8 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'review_rating_start_date': (now).strftime('%Y/%m/%d %H:%M:%S'),
-                    'review_rating_exp_date': (due_date).strftime('%Y/%m/%d %H:%M:%S')
+                    'review_rating_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'review_rating_exp_date': (due_date).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
