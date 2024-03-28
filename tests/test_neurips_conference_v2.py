@@ -363,13 +363,13 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         #setup matching for SACs with empty SAC group
         with pytest.raises(openreview.OpenReviewException, match=r'The match group is empty'):
-            venue.setup_committee_matching(committee_id=venue.get_senior_area_chairs_id(), compute_conflicts=True, alternate_matching_group=venue.get_area_chairs_id())
+            venue.setup_committee_matching(committee_id=venue.get_senior_area_chairs_id(), compute_conflicts=True)
 
         openreview_client.add_members_to_group('NeurIPS.cc/2023/Conference/Senior_Area_Chairs', ['sac1@google.com','sac2@gmail.com'])
 
         #setup matching for SACs with empty AC group
         with pytest.raises(openreview.OpenReviewException, match=r'The alternate match group is empty'):
-            venue.setup_committee_matching(committee_id=venue.get_senior_area_chairs_id(), compute_conflicts=True, alternate_matching_group=venue.get_area_chairs_id())
+            venue.setup_committee_matching(committee_id=venue.get_senior_area_chairs_id(), compute_conflicts=True)
 
         openreview_client.add_members_to_group('NeurIPS.cc/2023/Conference/Area_Chairs', ['~Area_IBMChair1', '~Area_GoogleChair1', '~Area_UMassChair1', 'ac1@mit.edu'])
 
@@ -380,7 +380,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
-        venue.setup_committee_matching(committee_id='NeurIPS.cc/2023/Conference/Senior_Area_Chairs', compute_conflicts=False, alternate_matching_group=venue.get_area_chairs_id(), compute_affinity_scores=os.path.join(os.path.dirname(__file__), 'data/sac_affinity_scores.csv'))
+        venue.setup_committee_matching(committee_id='NeurIPS.cc/2023/Conference/Senior_Area_Chairs', compute_conflicts=False, compute_affinity_scores=os.path.join(os.path.dirname(__file__), 'data/sac_affinity_scores.csv'))
         now = datetime.datetime.utcnow()
         venue.bid_stages = [openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2023/Conference/Senior_Area_Chairs', score_ids=['NeurIPS.cc/2023/Conference/Senior_Area_Chairs/-/Affinity_Score'])]
         venue.create_bid_stages()
