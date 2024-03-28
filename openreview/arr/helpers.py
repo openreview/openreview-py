@@ -1197,7 +1197,7 @@ class ARRStage(object):
 
         return dates
 
-    def _format_date(self, date, format_type='millis', date_format='%Y/%m/%d'):
+    def _format_date(self, date, format_type='millis', date_format='%Y/%m/%d %H:%M'):
         if date is None:
             return None
         if format_type == 'millis':
