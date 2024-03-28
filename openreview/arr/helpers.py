@@ -54,13 +54,13 @@ class ARRWorkflow(object):
             "order": 3,
             "required": False
         },
-        "comment_start_date": {
+        "commentary_start_date": {
             "description": "When should commenting be enabled for the assigned reviewing committee? This is generally enabled early, like on the submission deadline.",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
             "order": 4,
             "required": False
         },
-        "comment_end_date": {
+        "commentary_end_date": {
             "description": "When should commenting be disabled? Official comments are usually enabled for 1 year.",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
             "order": 5,
@@ -155,55 +155,55 @@ class ARRWorkflow(object):
             "order": 19,
             "required": False
         },
-        "reviewing_start_date": {
+        "review_start_date": {
             "description": "When should reviewing start?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
             "order": 20,
             "required": False
         },
-        "reviewing_due_date": {
+        "review_deadline": {
             "description": "When should reviewing end?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
             "order": 21,
             "required": False
         },
-        "reviewing_exp_date": {
+        "review_expiration_date": {
             "description": "When should the reviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
             "order": 22,
             "required": False
         },
-        "metareviewing_start_date": {
+        "meta_review_start_date": {
             "description": "When should metareviewing start?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
             "order": 23,
             "required": False
         },
-        "metareviewing_due_date": {
+        "meta_review_deadline": {
             "description": "When should metareviewing end?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
             "order": 24,
             "required": False
         },
-        "metareviewing_exp_date": {
+        "meta_review_expiration_date": {
             "description": "When should the metareviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
             "order": 25,
             "required": False
         },
-        "ethics_reviewing_start_date": {
+        "ethics_review_start_date": {
             "description": "When should ethics reviewing start?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
             "order": 26,
             "required": False
         },
-        "ethics_reviewing_due_date": {
+        "ethics_review_deadline": {
             "description": "When should ethics reviewing end?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
             "order": 27,
             "required": False
         },
-        "ethics_reviewing_exp_date": {
+        "ethics_review_expiration_date": {
             "description": "When should the ethics reviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9](:[0-5][0-9])?)?(\\s+)?$",
             "order": 28,
