@@ -362,20 +362,22 @@ class ARR(object):
         self.venue.review_stage = self.review_stage
         stage_value = self.venue.create_review_stage()
         invitation = self.client.get_invitation(self.get_invitation_id(self.review_stage.name))
-        invitation.content = {
-            'review_process_script': {
-                'value': self.invitation_builder.get_process_content('process/review_process.py')
+        
+        if invitation.edit.get('invitation', {}).get('preprocess') is None:
+            invitation.content = {
+                'review_process_script': {
+                    'value': self.invitation_builder.get_process_content('process/review_process.py')
+                }
             }
-        }
-        invitation.edit['invitation']['preprocess'] = self.invitation_builder.get_process_content('process/review_preprocess.py')
-        self.client.post_invitation_edit(
-            invitations=self.venue.get_meta_invitation_id(),
-            readers=[self.venue_id],
-            writers=[self.venue_id],
-            signatures=[self.venue_id],
-            replacement=False,
-            invitation=invitation
-        )
+            invitation.edit['invitation']['preprocess'] = self.invitation_builder.get_process_content('process/review_preprocess.py')
+            self.client.post_invitation_edit(
+                invitations=self.venue.get_meta_invitation_id(),
+                readers=[self.venue_id],
+                writers=[self.venue_id],
+                signatures=[self.venue_id],
+                replacement=False,
+                invitation=invitation
+            )
         return stage_value
 
     def create_review_rebuttal_stage(self):
