@@ -3325,7 +3325,13 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         reviews = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Official_Review')
         assert reviews and len(reviews) == 2
         for review in reviews:
-            assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers' in review.readers
+            assert review.readers == [
+                'ICML.cc/2023/Conference/Program_Chairs',
+                'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+                'ICML.cc/2023/Conference/Submission1/Area_Chairs',
+                'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers',
+                review.signatures[0]
+            ]
 
         invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Ethics_Review')
         assert len(invitations) == 2
@@ -3430,7 +3436,13 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         reviews = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Official_Review')
         assert reviews and len(reviews) == 2
         for review in reviews:
-            assert 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers' in review.readers
+            assert review.readers == [
+                'ICML.cc/2023/Conference/Program_Chairs',
+                'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+                'ICML.cc/2023/Conference/Submission1/Area_Chairs',
+                'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers',
+                review.signatures[0]
+            ]
 
         invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Ethics_Review')
         assert len(invitations) == 6
@@ -3472,8 +3484,6 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assert invitation.invitees == ['ICML.cc/2023/Conference', 'openreview.net/Support', 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers']
 
         # post ethics review
-        #ethics_group = openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Submission5/Ethics_Reviewers')
-        # 'Reviewer', 'ICMLOne')
         openreview_client.add_members_to_group('ICML.cc/2023/Conference/Submission5/Ethics_Reviewers', '~Reviewer_ICMLOne1')
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
 
@@ -4245,6 +4255,35 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
             'ICML.cc/2023/Conference/Submission1/Authors',
         ]
 
+        # flag a paper after reviews are released and assert readers are correct
+        note = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', number=[2])[0]
+        note_edit = pc_client_v2.post_note_edit(
+                invitation='ICML.cc/2023/Conference/-/Ethics_Review_Flag',
+                note=openreview.api.Note(
+                    id=note.id,
+                    content = {
+                        'flagged_for_ethics_review': { 'value': True },
+                        'ethics_comments': { 'value': 'These are ethics comments visible to ethics chairs and ethics reviewers' }
+                    }
+                ),
+                signatures=['ICML.cc/2023/Conference']
+            )
+
+        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, edit_id=note_edit['id'])
+
+        reviews = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission2/-/Official_Review')
+        for review in reviews:
+            assert review.readers == [
+                'ICML.cc/2023/Conference/Program_Chairs',
+                'ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs',
+                'ICML.cc/2023/Conference/Submission2/Area_Chairs',
+                'ICML.cc/2023/Conference/Submission2/Reviewers/Submitted',
+                'ICML.cc/2023/Conference/Submission2/Authors',
+                'ICML.cc/2023/Conference/Submission2/Ethics_Reviewers',
+                review.signatures[0]
+            ]
+
     def test_release_rebuttals(self, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
@@ -4761,7 +4800,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
             "ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs",
             "ICML.cc/2023/Conference/Submission2/Area_Chairs",
             "ICML.cc/2023/Conference/Submission2/Reviewers",
-            "ICML.cc/2023/Conference/Submission2/Authors"
+            "ICML.cc/2023/Conference/Submission2/Authors",
+            'ICML.cc/2023/Conference/Submission2/Ethics_Reviewers'
         ]
         assert not submissions[0].odate
         assert not submissions[1].odate

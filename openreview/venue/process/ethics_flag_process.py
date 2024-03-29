@@ -32,8 +32,9 @@ def process(client, edit, invitation):
             )
         
         # edit review invitation and reviews if invitation exists
-        if openreview.tools.get_invitation(client, f'{venue_id}/-/{review_name}'):
-            review_readers = invitation.content['review_readers']['value']
+        review_invitation = openreview.tools.get_invitation(client, f'{venue_id}/-/{review_name}')
+        if review_invitation:
+            review_readers = review_invitation.content['review_readers']['value']
             final_readers = []
             final_readers.extend(review_readers)
             final_readers = [reader.replace('{number}', str(submission.number)) for reader in final_readers]
@@ -44,7 +45,7 @@ def process(client, edit, invitation):
 
             print('review_name:', review_name)
             paper_invitation_edit = client.post_invitation_edit(
-                    invitations=f'{venue_id}/-/{review_name}',
+                    invitations=review_invitation.id,
                     readers=[venue_id],
                     writers=[venue_id],
                     signatures=[venue_id],
@@ -103,17 +104,17 @@ def process(client, edit, invitation):
         )
 
         # edit comment invitation
-        comment_invitation = openreview.tools.get_invitation(client, f'{venue_id}/{submission_name}{submission.number}/-/Official_Comment')
-        if comment_invitation and 'comment_readers' in invitation.content:
-            comment_readers = invitation.content['comment_readers']['value']
+        comment_invitation = openreview.tools.get_invitation(client, f'{venue_id}/-/Official_Comment')
+        if comment_invitation and 'comment_readers' in comment_invitation.content:
+            comment_readers = comment_invitation.content['comment_readers']['value']
             final_readers = []
             final_readers.extend(comment_readers)
             final_readers = [reader.replace('{number}', str(submission.number)) for reader in final_readers]
-            if 'everyone' not in final_readers or invitation.content.get('reader_selection',{}).get('value'):
+            if 'everyone' not in final_readers or comment_invitation.content.get('reader_selection',{}).get('value'):
                 final_readers.append(f'{venue_id}/{submission_name}{submission.number}/{ethics_reviewers_name}')
 
             paper_invitation_edit = client.post_invitation_edit(
-                    invitations=f'{venue_id}/-/Official_Comment',
+                    invitations=comment_invitation.id,
                     readers=[venue_id],
                     writers=[venue_id],
                     signatures=[venue_id],
