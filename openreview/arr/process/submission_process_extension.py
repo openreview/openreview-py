@@ -8,8 +8,7 @@
                 replacement=False,
                 invitation=openreview.api.Invitation(
                     id=f"{venue_id}/Submission{note.number}/-/Blind_Submission_License_Agreement",
-                    duedate=None,
-                    expdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                    duedate={"delete": True},
                     signatures=[venue_id]
                 )
             )

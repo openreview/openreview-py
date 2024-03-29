@@ -1698,7 +1698,7 @@ class TestARRVenueV2():
             if submission.number % 2 == 0:# "On behalf of all authors, I agree"
                 assert openreview_client.get_invitation(
                     f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/-/Blind_Submission_License_Agreement'
-                ).expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+                ).duedate == None
 
     def test_post_submission(self, client, openreview_client, helpers, test_client):
 
