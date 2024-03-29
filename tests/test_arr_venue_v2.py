@@ -1185,7 +1185,7 @@ class TestARRVenueV2():
             openreview.Note(
                 content={
                     'previous_cycle': 'aclweb.org/ACL/ARR/2023/June',
-                    'setup_shared_data_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(seconds=10)).strftime('%Y/%m/%d %H:%M')
+                    'setup_shared_data_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(minutes=10)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -1204,7 +1204,7 @@ class TestARRVenueV2():
             openreview.Note(
                 content={
                     'previous_cycle': 'aclweb.org/ACL/ARR/2023/June',
-                    'setup_shared_data_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M')
+                    'setup_shared_data_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(minutes=3)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -1796,7 +1796,7 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'preprint_release_submission_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M')
+                    'preprint_release_submission_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(minutes=2)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -1988,7 +1988,8 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'sae_affinity_scores': affinity_scores_url
+                    'sae_affinity_scores': affinity_scores_url,
+                    'setup_sae_matching_date': (now).strftime('%Y/%m/%d %H:%M'),
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -2387,7 +2388,7 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_tracks_and_reassignment_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M')
+                    'setup_tracks_and_reassignment_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(minutes=3)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -2602,7 +2603,7 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_sae_ae_assignment_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M')
+                    'setup_sae_ae_assignment_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(minutes=3)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -2645,7 +2646,7 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_proposed_assignments_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M'),
+                    'setup_proposed_assignments_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(minutes=3)).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_assignments_title': 'reviewer-assignments'
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
@@ -3082,7 +3083,7 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_review_release_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M')
+                    'setup_review_release_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(minutes=3)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -3113,7 +3114,7 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_author_response_date': (datetime.datetime.utcnow() - datetime.timedelta(seconds=3)).strftime('%Y/%m/%d %H:%M')
+                    'setup_author_response_date': (datetime.datetime.utcnow() - datetime.timedelta(minutes=3)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -3141,7 +3142,7 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'close_author_response_date': (datetime.datetime.utcnow() - datetime.timedelta(seconds=6)).strftime('%Y/%m/%d %H:%M')
+                    'close_author_response_date': (datetime.datetime.utcnow() - datetime.timedelta(minutes=6)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -3425,7 +3426,7 @@ class TestARRVenueV2():
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_meta_review_release_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(seconds=6)).strftime('%Y/%m/%d %H:%M')
+                    'setup_meta_review_release_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(minutes=6)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
