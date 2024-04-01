@@ -17,7 +17,7 @@ def process_update(client, edge, invitation, existing_edge):
 
 
     note=client.get_note(edge.head)
-    group=client.get_group(f'{venue_id}/{submission_name}{note.number}/{area_chairs_id}')
+    group=client.get_group(f'{venue_id}/{submission_name}{note.number}/{senior_area_chairs_id}')
     if edge.ddate and edge.tail in group.members:
         assignment_edges = client.get_edges(invitation=edge.invitation, head=edge.head, tail=edge.tail)
         if assignment_edges:
