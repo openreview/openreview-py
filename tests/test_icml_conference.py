@@ -1126,7 +1126,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Please deploy SAC assignments before computing AC conflicts.'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Please deploy SAC-AC assignments first. SAC-submission conflicts must be transferred to assigned ACs before computing AC-submission conflicts.'):
             client.post_note(openreview.Note(
                 content={
                     'title': 'Paper Matching Setup',

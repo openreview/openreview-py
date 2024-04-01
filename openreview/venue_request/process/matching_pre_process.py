@@ -36,4 +36,4 @@ def process(client, note, invitation):
             senior_area_chairs_assignment_id = domain.get_content_value('senior_area_chairs_assignment_id')
             num_edges = client_v2.get_edges_count(invitation=senior_area_chairs_assignment_id)
             if not num_edges:
-                raise openreview.OpenReviewException(f'Please deploy SAC assignments before computing AC conflicts.')
+                raise openreview.OpenReviewException(f'Please deploy SAC-AC assignments first. SAC-submission conflicts must be transferred to assigned ACs before computing AC-submission conflicts.')
