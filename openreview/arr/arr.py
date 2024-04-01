@@ -90,6 +90,27 @@ class ARR(object):
             self.venue.invitation_builder.update_wait_time = 2000
             self.venue.invitation_builder.update_date_string = "#{4/mdate} + 2000"
 
+        self.venue.name = self.name 
+        self.venue.short_name = self.short_name
+        self.venue.website = self.website
+        self.venue.contact = self.contact
+        self.venue.location = self.location
+        self.venue.instructions = self.instructions  
+        self.venue.start_date = self.start_date
+        self.venue.date = self.date
+        self.venue.program_chairs_name = self.program_chairs_name
+        self.venue.reviewers_name = self.reviewers_name
+        self.venue.reviewer_roles = self.reviewer_roles
+        self.venue.area_chair_roles = self.area_chair_roles
+        self.venue.senior_area_chair_roles = self.senior_area_chair_roles
+        self.venue.area_chairs_name = self.area_chairs_name
+        self.venue.secondary_area_chairs_name = self.secondary_area_chairs_name
+        self.venue.senior_area_chairs_name = self.senior_area_chairs_name
+        self.venue.ethics_chairs_name = self.ethics_chairs_name
+        self.venue.ethics_reviewers_name = self.ethics_reviewers_name
+        self.venue.authors_name = self.authors_name
+        self.venue.recommendation_name = self.recommendation_name                 
+
         self.venue.request_form_id = self.request_form_id
         self.venue.use_area_chairs = self.use_area_chairs
         self.venue.use_senior_area_chairs = self.use_senior_area_chairs

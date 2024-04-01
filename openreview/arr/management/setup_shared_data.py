@@ -1,6 +1,14 @@
 def process(client, invitation):
     # TODO: Store registration and max load names in domain content to parameterize them
 
+    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    cdate = invitation.cdate
+
+    if cdate > now:
+        ## invitation is in the future, do not process
+        print('invitation is not yet active and no child invitations created', cdate)
+        return
+
     import time, calendar
     registration_name = 'Registration'
     max_load_name = 'Max_Load_And_Unavailability_Request'
