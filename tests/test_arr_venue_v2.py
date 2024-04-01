@@ -1677,6 +1677,14 @@ class TestARRVenueV2():
                 note.content['authors']['value'].append('SAC ARROne')
                 note.content['authorids']['value'].append('~SAC_ARROne1')
 
+            if i == 6: ## Remove resubmission information from content
+                del note.content['previous_URL']
+                del note.content['previous_PDF']
+                del note.content['response_PDF']
+                del note.content['reassignment_request_action_editor']
+                del note.content['reassignment_request_reviewers']
+                del note.content['justification_for_not_keeping_action_editor_or_reviewers']
+
             test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=note)
