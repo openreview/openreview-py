@@ -48,34 +48,6 @@ def process(client, invitation):
             if len(missing_members) > 0:
                 client.add_members_to_group(submission_group, list(missing_members))
 
-    # Add SAE as readers of the SAE assignment invitation
-    client.post_invitation_edit(
-        invitations=meta_invitation_id,
-        readers=[venue_id],
-        writers=[venue_id],
-        signatures=[venue_id],
-        invitation=openreview.api.Invitation(
-            id=f"{sac_id}/-/Assignment",
-            readers=[venue_id, sac_id],
-            signatures=[venue_id]
-        )
-    )
-
-    # Updates AE assignment process function to not remove SAC members
-    client.post_invitation_edit(
-        invitations=meta_invitation_id,
-        readers=[venue_id],
-        writers=[venue_id],
-        signatures=[venue_id],
-        invitation=openreview.api.Invitation(
-            id=f"{ac_id}/-/Assignment",
-            content={
-                'sync_sac_id': { 'value': ''}
-            },
-            signatures=[venue_id]
-        )
-    )
-
     # Enable outside reviewers
     hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
     conference_matching.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=f'Emergency_{venue.get_area_chairs_name(pretty=False)}')

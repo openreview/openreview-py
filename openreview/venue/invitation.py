@@ -2471,7 +2471,7 @@ class InvitationBuilder(object):
                 'value': venue.get_anon_reviewers_name() if is_reviewer else venue.get_anon_area_chairs_name()
             },
             'sync_sac_id': {
-                'value': venue.get_senior_area_chairs_id(number='{number}') if committee_name == venue.area_chairs_name and venue.use_senior_area_chairs else ''
+                'value': venue.get_senior_area_chairs_id(number='{number}') if committee_name == venue.area_chairs_name and venue.use_senior_area_chairs and not venue.sac_paper_assignments else ''
             },
             'sac_assignment_id': {
                 'value': venue.get_assignment_id(senior_area_chairs_id, deployed=True) if is_area_chair and venue.use_senior_area_chairs else ''
@@ -2564,6 +2564,7 @@ class InvitationBuilder(object):
             content=None
             edge_readers.append('${2/head}')
         elif is_senior_area_chair and venue.sac_paper_assignments:
+            invitation_readers.append(senior_area_chairs_id)
             edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')]
             preprocess=self.get_process_content('process/sac_paper_assignment_pre_process.js')
             content = {
