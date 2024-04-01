@@ -5271,7 +5271,7 @@ note={Expert Certification}
             ))
 
         ## Invite reviewer that is already in the pool
-        with pytest.raises(openreview.OpenReviewException, match=r'Reviewer Javier Burroni is an official reviewer, please use the "Assign" button to make the assignment.'):
+        with pytest.raises(openreview.OpenReviewException, match=r'tail "javier@mailtwo.com" is member of TMLR/Reviewers'):
             paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
                 signatures=[joelle_paper13_anon_group.id],
                 head=note_id_14,
