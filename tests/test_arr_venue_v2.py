@@ -1985,30 +1985,31 @@ class TestARRVenueV2():
                 for sac in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs').members:
                     writer.writerow([submission.id, sac, round(random.random(), 2)])
 
-        affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration', 'sae_affinity_scores')
+        affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
 
-        pc_client.post_note(
-            openreview.Note(
-                content={
-                    'sae_affinity_scores': affinity_scores_url,
-                    'setup_sae_matching_date': (now).strftime('%Y/%m/%d %H:%M'),
-                },
-                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
-                forum=request_form.id,
-                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
-                referent=request_form.id,
-                replyto=request_form.id,
-                signatures=['~Program_ARRChair1'],
-                writers=[],
-            )
-        )
-
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Setup_SAE_Matching-0-1', count=1)
+        client.post_note(openreview.Note(
+            content={
+                'title': 'Paper Matching Setup',
+                'matching_group': 'aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs',
+                'compute_conflicts': 'Default',
+                'compute_affinity_scores': 'No',
+                'upload_affinity_scores': affinity_scores_url
+            },
+            forum=request_form.id,
+            replyto=request_form.id,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+            readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Conflict')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Affinity_Score')
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Proposed_Assignment')
-        # assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Assignment')
+        proposed_inv = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Proposed_Assignment')
+        assert proposed_inv
+        assert proposed_inv.edit['head']['param']['type'] == 'note'
+        assert proposed_inv.edit['head']['param']['withVenueid'] == 'aclweb.org/ACL/ARR/2023/August/Submission'
 
         affinity_score_count =  openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Affinity_Score')
         assert affinity_score_count == 101 * 2 ## submissions * ACs
