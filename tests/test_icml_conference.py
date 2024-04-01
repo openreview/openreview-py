@@ -1026,6 +1026,13 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         helpers.await_queue_edit(openreview_client, edit_id=withdrawal_note['id'])
         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/-/Withdrawn_Submission')
 
+        withdrawn_submission = openreview_client.get_note(withdrawal_note['note']['forum'])
+        assert withdrawn_submission.readers == ['ICML.cc/2023/Conference/Program_Chairs',
+        'ICML.cc/2023/Conference/Submission101/Senior_Area_Chairs',
+        'ICML.cc/2023/Conference/Submission101/Area_Chairs',
+        'ICML.cc/2023/Conference/Submission101/Reviewers',
+        'ICML.cc/2023/Conference/Submission101/Authors']
+
         assert withdrawal_note['readers'] == [
             "ICML.cc/2023/Conference/Program_Chairs",
             f"ICML.cc/2023/Conference/Submission{submission.number}/Senior_Area_Chairs",
@@ -1039,7 +1046,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
-        assert len(submissions) == 101
+        assert len(submissions) == 100      #withdrawn papers are no longer visible to ACs because ACs have not been assigned yet
         assert ['ICML.cc/2023/Conference',
         'ICML.cc/2023/Conference/Senior_Area_Chairs',
         'ICML.cc/2023/Conference/Area_Chairs',
@@ -1241,7 +1248,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
-        assert len(submissions) == 101
+        assert len(submissions) == 100
         assert ['ICML.cc/2023/Conference',
         'ICML.cc/2023/Conference/Senior_Area_Chairs',
         'ICML.cc/2023/Conference/Area_Chairs',
@@ -1298,7 +1305,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
-        assert len(submissions) == 101
+        assert len(submissions) == 100
         assert ['ICML.cc/2023/Conference',
         'ICML.cc/2023/Conference/Senior_Area_Chairs',
         'ICML.cc/2023/Conference/Area_Chairs',
@@ -1329,6 +1336,23 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
 
+        with pytest.raises(openreview.OpenReviewException, match=r'Conflicts are not computed between SACs and ACs. Please select "No" for Compute Conflicts.'):
+            client.post_note(openreview.Note(
+                content={
+                    'title': 'Paper Matching Setup',
+                    'matching_group': 'ICML.cc/2023/Conference/Senior_Area_Chairs',
+                    'compute_conflicts': 'Default',
+                    'compute_affinity_scores': 'No',
+                    'upload_affinity_scores': affinity_scores_url
+                },
+                forum=request_form.id,
+                replyto=request_form.id,
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+                readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+                signatures=['~Program_ICMLChair1'],
+                writers=[]
+            ))
+
         ## setup matching to assign SAC to each AC
         client.post_note(openreview.Note(
             content={
@@ -1337,7 +1361,6 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
                 'compute_conflicts': 'No',
                 'compute_affinity_scores': 'No',
                 'upload_affinity_scores': affinity_scores_url
-
             },
             forum=request_form.id,
             replyto=request_form.id,
@@ -2258,7 +2281,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
-        assert len(submissions) == 59
+        assert len(submissions) == 58
         assert ['ICML.cc/2023/Conference',
         'ICML.cc/2023/Conference/Submission2/Senior_Area_Chairs',
         'ICML.cc/2023/Conference/Submission2/Area_Chairs',

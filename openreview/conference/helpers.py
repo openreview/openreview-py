@@ -10,6 +10,10 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         urls = openreview.tools.get_base_urls(client)
         openreview_client = openreview.api.OpenReviewClient(baseurl = urls[1], token=client.token)
         venue = openreview.venue.Venue(openreview_client, note.content['venue_id'], support_user)
+
+        if note.content['venue_id'].startswith('aclweb.org/ACL/ARR'):
+            venue = openreview.arr.ARR(openreview_client, note.content['venue_id'], support_user, venue=venue)
+
         venue_group = openreview.tools.get_group(openreview_client, note.content['venue_id'])
         venue_content = venue_group.content if venue_group else {}
         
@@ -54,6 +58,9 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
 
         include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
         venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date, include_option=include_expertise_selection)
+
+        if isinstance(venue, openreview.arr.ARR):
+            venue.copy_to_venue()
 
         if setup:
             venue.setup(note.content.get('program_chair_emails'), note.content.get('publication_chairs_emails'))
@@ -437,6 +444,10 @@ def get_submission_stage(request_forum, venue):
     else:
         withdraw_submission_exp_date = None
 
+    withdrawn_submission_public = 'Yes' in request_forum.content.get('withdrawn_submissions_visibility', '')
+    desk_rejected_submission_public = 'Yes' in request_forum.content.get('desk_rejected_submissions_visibility', '')
+    withdrawn_submission_reveal_authors = 'Yes' in request_forum.content.get('withdrawn_submissions_author_anonymity', '')
+    desk_rejected_submission_reveal_authors = 'Yes' in request_forum.content.get('desk_rejected_submissions_author_anonymity', '')
     commitments_venue = request_forum.content.get('commitments_venue', 'No') == 'Yes'
 
     return openreview.stages.SubmissionStage(name = name,
@@ -450,6 +461,10 @@ def get_submission_stage(request_forum, venue):
         subject_areas=subject_areas,
         create_groups=create_groups,
         withdraw_submission_exp_date=withdraw_submission_exp_date,
+        withdrawn_submission_public=withdrawn_submission_public,
+        withdrawn_submission_reveal_authors=withdrawn_submission_reveal_authors,
+        desk_rejected_submission_public=desk_rejected_submission_public,
+        desk_rejected_submission_reveal_authors=desk_rejected_submission_reveal_authors,
         author_names_revealed=author_names_revealed,
         papers_released=papers_released,
         readers=readers,
