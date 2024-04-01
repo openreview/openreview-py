@@ -1,5 +1,12 @@
 def process(client, invitation):
 
+    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    cdate = invitation.cdate
+
+    if cdate > now:
+        ## invitation is in the future, do not process
+        print('invitation is not yet active and no child invitations created', cdate)
+        return
 
     from openreview.venue import matching
     from collections import defaultdict
