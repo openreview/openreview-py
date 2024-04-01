@@ -259,9 +259,9 @@ class TestARRVenueV2():
                     'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
-                    'ethics_review_start_date': (now).strftime('%Y/%m/%d %H:%M'),
-                    'ethics_review_deadline': (now + datetime.timedelta(minutes=10)).strftime('%Y/%m/%d %H:%M'),
-                    'ethics_review_expiration_date': (now + datetime.timedelta(minutes=10)).strftime('%Y/%m/%d %H:%M'),
+                    'ethics_review_start_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'ethics_review_deadline': (due_date + datetime.timedelta(minutes=10)).strftime('%Y/%m/%d %H:%M'),
+                    'ethics_review_expiration_date': (due_date + datetime.timedelta(minutes=10)).strftime('%Y/%m/%d %H:%M'),
                     'emergency_reviewing_start_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'emergency_reviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'emergency_reviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
@@ -3375,7 +3375,7 @@ class TestARRVenueV2():
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Desk_Reject_Verification').expdate < now()
 
         # Check that ethics reviewing is not available
-        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2023/August/Submission4/-/Ethics_Review has expired'):
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2023/August/Submission4/-/Ethics_Review was not found'):
             ethics_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Ethics_Review')
 
         # Edit with ethics flag and no violation field - check DSV flag is false and ethics flag exists and is True
