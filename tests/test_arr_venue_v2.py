@@ -1677,7 +1677,7 @@ class TestARRVenueV2():
                 note.content['authors']['value'].append('SAC ARROne')
                 note.content['authorids']['value'].append('~SAC_ARROne1')
 
-            if i == 3: ## Remove resubmission information from content
+            if i == 6: ## Remove resubmission information from content
                 del note.content['previous_URL']
                 del note.content['previous_PDF']
                 del note.content['response_PDF']
@@ -2231,7 +2231,7 @@ class TestARRVenueV2():
 
         # Getting resubmissions should pass
         previous_url_field = 'previous_URL'
-        resubmissions = resubmissions = openreview.arr.helpers.get_resubmissions(submissions, previous_url_field)
+        resubmissions = openreview.arr.helpers.get_resubmissions(submissions, previous_url_field)
 
         # Remove resubmission information from all but submissions 2 and 3
         for submission in submissions:
