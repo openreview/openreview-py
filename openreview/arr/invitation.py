@@ -177,7 +177,7 @@ class InvitationBuilder(object):
             writers = ['~Super_User1'],
             cdate = openreview.tools.datetime_millis(arr_stage.start_date),
             date_processes=[{ 
-                'dates': ["#{4/cdate}"],
+                'dates': ["#{4/cdate}", self.update_date_string],
                 'script': self.get_process_content(arr_stage.process)
             }],            
             **arr_stage.stage_arguments
