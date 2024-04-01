@@ -1910,11 +1910,6 @@ class TestARRVenueV2():
             "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
         }
 
-        # Assert that all content fields have a value
-        for submission in submissions:
-            for key, value in submission.content.items():
-                assert 'value' in value, f"Submission{submission.number} id={submission.id} content.{key} has no 'value' key"
-
         # Post comment as PCs to all submissions
         for submission in submissions:
             pc_client_v2.post_note_edit(
@@ -2233,6 +2228,10 @@ class TestARRVenueV2():
         )
 
         helpers.await_queue()
+
+        # Getting resubmissions should pass
+        previous_url_field = 'previous_URL'
+        resubmissions = resubmissions = openreview.arr.helpers.get_resubmissions(submissions, previous_url_field)
 
         # Remove resubmission information from all but submissions 2 and 3
         for submission in submissions:

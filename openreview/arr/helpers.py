@@ -1548,3 +1548,8 @@ def flag_submission(
                 'Ethics_Review',
                 value = False
             )
+def get_resubmissions(submissions, previous_url_field):
+    return list(filter(
+        lambda s: previous_url_field in s.content and len(s.content[previous_url_field]['value']) > 0, 
+        submissions
+    ))
