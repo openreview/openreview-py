@@ -580,6 +580,8 @@ class ReviewStage(object):
         self.process_path = process_path
         self.source_submissions_query = source_submissions_query
         self.child_invitations_name = child_invitations_name
+        self.process_path = 'process/review_process.py'
+        self.preprocess_path = None
 
     def _get_reviewer_readers(self, conference, number, review_signature=None):
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
@@ -696,6 +698,9 @@ class EthicsReviewStage(object):
         self.remove_fields = remove_fields
         self.submission_numbers = submission_numbers
         self.enable_comments = enable_comments
+        self.process_path = 'process/ethics_review_process.py'
+        self.flag_process_path = 'process/ethics_flag_process.py'
+        self.preprocess_path = None        
 
     def get_readers(self, conference, number, ethics_review_signature=None):
 
@@ -1096,6 +1101,8 @@ class MetaReviewStage(object):
         self.remove_fields = remove_fields
         self.process = None
         self.recommendation_field_name = recommendation_field_name
+        self.process_path = 'process/metareview_process.py'
+        self.preprocess_path = None        
 
     def _get_reviewer_readers(self, conference, number):
         if self.release_to_reviewers is MetaReviewStage.Readers.REVIEWERS:
