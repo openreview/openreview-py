@@ -557,7 +557,6 @@ class ReviewStage(object):
         remove_fields = [],
         rating_field_name = 'rating',
         confidence_field_name = 'confidence',
-        process_path = None,
         source_submissions_query = {},
         child_invitations_name = 'Official_Review'
     ):
@@ -577,7 +576,6 @@ class ReviewStage(object):
         self.remove_fields = remove_fields
         self.rating_field_name = rating_field_name
         self.confidence_field_name = confidence_field_name
-        self.process_path = process_path
         self.source_submissions_query = source_submissions_query
         self.child_invitations_name = child_invitations_name
         self.process_path = 'process/review_process.py'

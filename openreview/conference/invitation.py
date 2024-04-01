@@ -889,7 +889,7 @@ class ReviewInvitation(openreview.Invitation):
             if field in content:
                 del content[field]
 
-        process_file = review_stage.process_path if review_stage.process_path else os.path.join(os.path.dirname(__file__), 'templates/reviewProcess.js')
+        process_file = os.path.join(os.path.dirname(__file__), 'templates/reviewProcess.js')
         with open(process_file) as f:
             file_content = f.read()
 
