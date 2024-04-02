@@ -1550,6 +1550,6 @@ def flag_submission(
             )
 def get_resubmissions(submissions, previous_url_field):
     return list(filter(
-        lambda s: previous_url_field in s.content and len(s.content[previous_url_field]['value']) > 0, 
+        lambda s: previous_url_field in s.content and 'value' in s.content[previous_url_field] and len(s.content[previous_url_field]['value']) > 0, 
         submissions
     ))

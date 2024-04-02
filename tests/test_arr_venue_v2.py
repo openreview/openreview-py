@@ -2229,6 +2229,10 @@ class TestARRVenueV2():
 
         helpers.await_queue()
 
+        # Getting resubmissions should pass
+        previous_url_field = 'previous_URL'
+        resubmissions = openreview.arr.helpers.get_resubmissions(submissions, previous_url_field)
+
         # Remove resubmission information from all but submissions 2 and 3
         for submission in submissions:
             if submission.number in [2, 3]:
