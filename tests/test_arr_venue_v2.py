@@ -2564,6 +2564,12 @@ class TestARRVenueV2():
 
         august_venue.set_assignments(assignment_title='sac-matching', committee_id='aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs')
 
+        sac2_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs')
+        assert sac2_group.members == ['~SAC_ARRTwo1']
+
+        sac3_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs')
+        assert sac3_group.members == ['~SAC_ARRTwo1']
+
         openreview_client.post_edge(openreview.api.Edge(
             invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Proposed_Assignment',
             head = submissions[1].id,
