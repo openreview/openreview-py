@@ -1651,16 +1651,14 @@ class OpenReviewClient(object):
         json = {
             'groups': recipients,
             'subject': subject ,
-            'message': message,
-            'invitation': invitation,
-            'signature': signature
+            'message': message
         }
 
-        # if invitation:
-        #     json['invitation'] = invitation
+        if invitation:
+            json['invitation'] = invitation
 
-        # if signature:
-        #     json['signature'] = signature
+        if signature:
+            json['signature'] = signature
 
         if ignoreRecipients:
             json['ignoreGroups'] = ignoreRecipients
