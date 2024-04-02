@@ -2561,7 +2561,6 @@ class InvitationBuilder(object):
         elif is_senior_area_chair and venue.sac_paper_assignments:
             invitation_readers.append(senior_area_chairs_id)
             edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')]
-            preprocess=self.get_process_content('process/sac_paper_assignment_pre_process.js')
             content = {
                 'reviewers_id': {
                     'value': venue.get_senior_area_chairs_id()
