@@ -341,6 +341,10 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         venue.set_assignments(assignment_title='sac-matching', committee_id=venue.get_senior_area_chairs_id())
 
+        assignment_invitation = pc_client_v2.get_invitation('TSACM/2024/Conference/Senior_Area_Chairs/-/Assignment')
+        assert assignment_invitation
+        assert 'sync_sac_id' not in assignment_invitation.content
+
         edges = pc_client_v2.get_edges_count(
             invitation='TSACM/2024/Conference/Senior_Area_Chairs/-/Assignment'
         )

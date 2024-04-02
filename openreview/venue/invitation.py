@@ -2469,14 +2469,15 @@ class InvitationBuilder(object):
             },
             'reviewers_anon_name': {
                 'value': venue.get_anon_reviewers_name() if is_reviewer else venue.get_anon_area_chairs_name()
-            },
-            'sync_sac_id': {
-                'value': venue.get_senior_area_chairs_id(number='{number}') if committee_name == venue.area_chairs_name and venue.use_senior_area_chairs and not venue.sac_paper_assignments else ''
-            },
-            'sac_assignment_id': {
-                'value': venue.get_assignment_id(senior_area_chairs_id, deployed=True) if is_area_chair and venue.use_senior_area_chairs else ''
             }
         }
+        if committee_name == venue.area_chairs_name and venue.use_senior_area_chairs and not venue.sac_paper_assignments:
+            content['sync_sac_id'] = {
+                'value': venue.get_senior_area_chairs_id(number='{number}')
+            }
+            content['sac_assignment_id'] = {
+                'value': venue.get_assignment_id(senior_area_chairs_id, deployed=True) if is_area_chair and venue.use_senior_area_chairs else ''
+            }
 
         if is_ethics_reviewer:
             content = {
@@ -2491,12 +2492,6 @@ class InvitationBuilder(object):
                 },
                 'reviewers_anon_name': {
                     'value': venue.anon_ethics_reviewers_name()
-                },
-                'sync_sac_id': {
-                    'value': ''
-                },
-                'sac_assignment_id': {
-                    'value': ''
                 }
             }
 
@@ -2573,12 +2568,6 @@ class InvitationBuilder(object):
                 },
                 'reviewers_name': {
                     'value': venue.senior_area_chairs_name
-                },
-                'sync_sac_id': {
-                    'value': ''
-                },
-                'sac_assignment_id': {
-                    'value': ''
                 }
             }
 
