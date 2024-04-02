@@ -1007,10 +1007,10 @@ hide_fields = [
     "preferred_venue",
     "consent_to_share_data",
     "consent_to_share_submission_details",
-    "preprint_status",
     "existing_preprints",
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement",
-    "section_2_permission_to_publish_peer_reviewers_content_agreement"
+    "section_2_permission_to_publish_peer_reviewers_content_agreement",
+    "reviewing_volunteers"
 ]
 
 hide_fields_from_public = [
