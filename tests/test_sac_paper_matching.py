@@ -177,6 +177,59 @@ class TestSACAssignments():
             ['~SAC_MatchingOne1', '~SAC_MatchingTwo1', '~SAC_MatchingThree1']
         )
 
+        with open(os.path.join(os.path.dirname(__file__), 'data/sac_scores_matching.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in submissions:
+                for sac in openreview_client.get_group('TSACM/2024/Conference/Senior_Area_Chairs').members:
+                    writer.writerow([submission.id, sac, round(random.random(), 2)])
+
+        affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/sac_scores_matching.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
+        
+        ## setup matching to assign SAC to papers
+        matching_setup_note = client.post_note(openreview.Note(
+            content={
+                'title': 'Paper Matching Setup',
+                'matching_group': 'TSACM/2024/Conference/Senior_Area_Chairs',
+                'compute_conflicts': 'Default',
+                'compute_affinity_scores': 'No',
+                'upload_affinity_scores': affinity_scores_url
+
+            },
+            forum=request_form.id,
+            replyto=request_form.id,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+            readers=['TSACM/2024/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_MatchingChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        comment_invitation_id = f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup_Status'
+        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=request_form.forum, sort='tmdate')[0]
+        assert matching_status
+        assert matching_status.content['comment'] == '''Affinity scores and/or conflicts were successfully computed. To run the matcher, click on the 'Senior Area Chairs Paper Assignment' link in the PC console: https://openreview.net/group?id=TSACM/2024/Conference/Program_Chairs
+
+Please refer to the documentation for instructions on how to run the matcher: https://docs.openreview.net/how-to-guides/paper-matching-and-assignment/how-to-do-automatic-assignments'''
+
+        scores_invitation = openreview_client.get_invitation('TSACM/2024/Conference/Senior_Area_Chairs/-/Affinity_Score')
+        assert scores_invitation
+        affinity_scores = openreview_client.get_edges_count(invitation=scores_invitation.id)
+        assert affinity_scores == 9
+
+        conflict_invitation = pc_client_v2.get_invitation('TSACM/2024/Conference/Senior_Area_Chairs/-/Conflict')
+        assert conflict_invitation
+        conflicts = pc_client_v2.get_edges_count(invitation=conflict_invitation.id)
+        assert conflicts
+
+        assignment_config_inv = pc_client_v2.get_invitation('TSACM/2024/Conference/Senior_Area_Chairs/-/Assignment_Configuration')
+        assert assignment_config_inv
+        assert 'scores_specification' in assignment_config_inv.edit['note']['content']
+        assert 'TSACM/2024/Conference/Senior_Area_Chairs/-/Affinity_Score' in assignment_config_inv.edit['note']['content']['scores_specification']['value']['param']['default']
+        assert assignment_config_inv.edit['note']['content']['paper_invitation']['value']['param']['regex'] == 'TSACM/2024/Conference/-/Submission.*'
+        assert assignment_config_inv.edit['note']['content']['paper_invitation']['value']['param']['default'] == 'TSACM/2024/Conference/-/Submission&content.venueid=TSACM/2024/Conference/Submission'
+        assert conflict_invitation.id in assignment_config_inv.edit['note']['content']['conflicts_invitation']['value']['param']['default']
+
         # enable bidding
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=1)
@@ -228,60 +281,6 @@ class TestSACAssignments():
 
         bid_edges_count = openreview_client.get_edges_count(invitation='TSACM/2024/Conference/Senior_Area_Chairs/-/Bid')
         assert bid_edges_count == 2
-
-        with open(os.path.join(os.path.dirname(__file__), 'data/sac_scores_matching.csv'), 'w') as file_handle:
-            writer = csv.writer(file_handle)
-            for submission in submissions:
-                for sac in openreview_client.get_group('TSACM/2024/Conference/Senior_Area_Chairs').members:
-                    writer.writerow([submission.id, sac, round(random.random(), 2)])
-
-        affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/sac_scores_matching.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
-        
-        ## setup matching to assign SAC to papers
-        matching_setup_note = client.post_note(openreview.Note(
-            content={
-                'title': 'Paper Matching Setup',
-                'matching_group': 'TSACM/2024/Conference/Senior_Area_Chairs',
-                'compute_conflicts': 'Default',
-                'compute_affinity_scores': 'No',
-                'upload_affinity_scores': affinity_scores_url
-
-            },
-            forum=request_form.id,
-            replyto=request_form.id,
-            invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
-            readers=['TSACM/2024/Conference/Program_Chairs', 'openreview.net/Support'],
-            signatures=['~Program_MatchingChair1'],
-            writers=[]
-        ))
-
-        helpers.await_queue()
-
-        comment_invitation_id = f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup_Status'
-        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=request_form.forum, sort='tmdate')[0]
-        assert matching_status
-        assert matching_status.content['comment'] == '''Affinity scores and/or conflicts were successfully computed. To run the matcher, click on the 'Senior Area Chairs Paper Assignment' link in the PC console: https://openreview.net/group?id=TSACM/2024/Conference/Program_Chairs
-
-Please refer to the documentation for instructions on how to run the matcher: https://docs.openreview.net/how-to-guides/paper-matching-and-assignment/how-to-do-automatic-assignments'''
-
-        scores_invitation = openreview_client.get_invitation('TSACM/2024/Conference/Senior_Area_Chairs/-/Affinity_Score')
-        assert scores_invitation
-        affinity_scores = openreview_client.get_edges_count(invitation=scores_invitation.id)
-        assert affinity_scores == 9
-
-        conflict_invitation = pc_client_v2.get_invitation('TSACM/2024/Conference/Senior_Area_Chairs/-/Conflict')
-        assert conflict_invitation
-        conflicts = pc_client_v2.get_edges_count(invitation=conflict_invitation.id)
-        assert conflicts
-
-        assignment_config_inv = pc_client_v2.get_invitation('TSACM/2024/Conference/Senior_Area_Chairs/-/Assignment_Configuration')
-        assert assignment_config_inv
-        assert 'scores_specification' in assignment_config_inv.edit['note']['content']
-        assert 'TSACM/2024/Conference/Senior_Area_Chairs/-/Bid' in assignment_config_inv.edit['note']['content']['scores_specification']['value']['param']['default']
-        assert 'TSACM/2024/Conference/Senior_Area_Chairs/-/Affinity_Score' in assignment_config_inv.edit['note']['content']['scores_specification']['value']['param']['default']
-        assert assignment_config_inv.edit['note']['content']['paper_invitation']['value']['param']['regex'] == 'TSACM/2024/Conference/-/Submission.*'
-        assert assignment_config_inv.edit['note']['content']['paper_invitation']['value']['param']['default'] == 'TSACM/2024/Conference/-/Submission&content.venueid=TSACM/2024/Conference/Submission'
-        assert conflict_invitation.id in assignment_config_inv.edit['note']['content']['conflicts_invitation']['value']['param']['default']
 
     def test_set_assignments(self, client, openreview_client, helpers, selenium, request_page):
         
