@@ -390,6 +390,38 @@ class OpenReviewClient(object):
         else:
             raise OpenReviewException(['Profile Not Found'])
 
+    def get_profiles(self, trash=None, with_blocked=None, offset=None, limit=None, sort=None):
+        """
+        Get a list of Profiles
+
+        :param trash: Indicates if the returned profiles are trashed
+        :type trash: bool, optional
+        :param with_blocked: Indicates if the returned profiles are blocked
+        :type with_blocked: bool, optional
+        :param offset: Indicates the position to start retrieving Profiles
+        :type offset: int, optional
+        :param limit: Maximum amount of Profiles that this method will return
+        :type limit: int, optional
+
+        :return: List of Profile objects
+        :rtype: list[Profile]
+        """
+        params = {}
+        if trash == True:
+            params['trash'] = True
+        if with_blocked == True:
+            params['withBlocked'] = True
+        if offset is not None:
+            params['offset'] = offset
+        if limit is not None:
+            params['limit'] = limit
+        if sort is not None:
+            params['sort'] = sort
+
+        response = self.session.get(self.profiles_url, params=tools.format_params(params), headers = self.headers)
+        response = self.__handle_response(response)
+        return [Profile.from_json(p) for p in response.json()['profiles']]
+    
     def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None, fullname=None, relation=None, use_ES = False):
         """
         Gets a list of profiles using either their ids or corresponding emails
