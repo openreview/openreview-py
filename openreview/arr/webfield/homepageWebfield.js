@@ -14,7 +14,7 @@ const tabs = [{
         'readers': 'everyone'
       },
       hideWhenEmpty: true,
-			pageSize: 1000
+      pageSize: 1000
     }
   })
   
