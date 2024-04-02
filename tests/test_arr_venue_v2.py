@@ -259,9 +259,9 @@ class TestARRVenueV2():
                     'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
-                    'ethics_review_start_date': (due_date).strftime('%Y/%m/%d %H:%M'),
-                    'ethics_review_deadline': (due_date + datetime.timedelta(minutes=10)).strftime('%Y/%m/%d %H:%M'),
-                    'ethics_review_expiration_date': (due_date + datetime.timedelta(minutes=10)).strftime('%Y/%m/%d %H:%M'),
+                    'ethics_review_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'ethics_review_deadline': (now + datetime.timedelta(minutes=10)).strftime('%Y/%m/%d %H:%M'),
+                    'ethics_review_expiration_date': (now + datetime.timedelta(minutes=10)).strftime('%Y/%m/%d %H:%M'),
                     'emergency_reviewing_start_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'emergency_reviewing_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'emergency_reviewing_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
@@ -536,6 +536,9 @@ class TestARRVenueV2():
         ))
         
         helpers.await_queue_edit(client, invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Ethics_Review_Stage')
+
+        ethics_review_invitations = openreview_client.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Ethics_Review')
+        assert len(ethics_review_invitations) == 0
 
         venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
         venue.create_ethics_review_stage()
@@ -3386,7 +3389,7 @@ class TestARRVenueV2():
         assert test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Desk_Reject_Verification').expdate < now()
 
-        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Ethics_Review_Flag', count=9   )
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Ethics_Review_Flag', count=9)
 
         # Post an ethics review
         ethics_anon_id = ethics_client.get_groups(prefix='aclweb.org/ACL/ARR/2023/August/Submission4/Ethics_Reviewer_', signatory='~EthicsReviewer_ARROne1')[0].id
