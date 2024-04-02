@@ -1677,6 +1677,14 @@ class TestARRVenueV2():
                 note.content['authors']['value'].append('SAC ARROne')
                 note.content['authorids']['value'].append('~SAC_ARROne1')
 
+            if i == 6: ## Remove resubmission information from content
+                del note.content['previous_URL']
+                del note.content['previous_PDF']
+                del note.content['response_PDF']
+                del note.content['reassignment_request_action_editor']
+                del note.content['reassignment_request_reviewers']
+                del note.content['justification_for_not_keeping_action_editor_or_reviewers']
+
             test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=note)
@@ -1822,6 +1830,10 @@ class TestARRVenueV2():
         assert submissions[0].content['existing_preprints']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['preferred_venue']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
+        assert submissions[0].content['consent_to_share_submission_details']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
+        assert submissions[0].content['Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
+        assert submissions[0].content['section_2_permission_to_publish_peer_reviewers_content_agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
+        assert submissions[0].content['reviewing_volunteers']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert 'readers' not in submissions[0].content['software']
         assert 'readers' not in submissions[0].content['previous_URL']
         assert 'readers' not in submissions[0].content['previous_PDF']
@@ -1837,6 +1849,10 @@ class TestARRVenueV2():
         assert submissions[1].content['existing_preprints']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['preferred_venue']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+        assert submissions[1].content['consent_to_share_submission_details']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+        assert submissions[1].content['Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+        assert submissions[1].content['section_2_permission_to_publish_peer_reviewers_content_agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+        assert submissions[1].content['reviewing_volunteers']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert set(submissions[1].content['software']['readers']) == {
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
@@ -2212,6 +2228,11 @@ class TestARRVenueV2():
         )
 
         helpers.await_queue()
+
+        # Getting resubmissions should pass
+        previous_url_field = 'previous_URL'
+        resubmissions = openreview.arr.helpers.get_resubmissions(submissions, previous_url_field)
+        assert 6 not in [submission.number for submission in resubmissions]
 
         # Remove resubmission information from all but submissions 2 and 3
         for submission in submissions:

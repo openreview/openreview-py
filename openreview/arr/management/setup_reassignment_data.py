@@ -9,6 +9,7 @@ def process(client, invitation):
         return
 
     from openreview.venue import matching
+    from openreview.arr.helpers import get_resubmissions
     from collections import defaultdict
 
     def get_title(profile):
@@ -89,10 +90,7 @@ def process(client, invitation):
     invitation_builder = openreview.arr.InvitationBuilder(venue)
     submissions = venue.get_submissions()
 
-    resubmissions = list(filter(
-        lambda s: previous_url_field in s.content and len(s.content[previous_url_field]['value']) > 0, 
-        submissions
-    ))
+    resubmissions = get_resubmissions(submissions, previous_url_field)
     skip_scores = defaultdict(list)
     reassignment_status = defaultdict(list)
     only_resubmissions = []
