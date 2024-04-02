@@ -1113,12 +1113,37 @@ class ARRStage(object):
         PROCESS_INVITATION = 3
         SUBMISSION_REVISION_STAGE = 4
 
+    class Participants(Enum):
+        EVERYONE = 0
+        SENIOR_AREA_CHAIRS = 1
+        SENIOR_AREA_CHAIRS_ASSIGNED = 2
+        AREA_CHAIRS = 3
+        AREA_CHAIRS_ASSIGNED = 4
+        SECONDARY_AREA_CHAIRS = 5
+        REVIEWERS = 6
+        REVIEWERS_ASSIGNED = 7
+        REVIEWERS_SUBMITTED = 8
+        AUTHORS = 9
+        ETHICS_CHAIRS = 10
+        ETHICS_REVIEWERS_ASSIGNED = 11
+
     SUPPORTED_STAGES = {
         'Official_Review': 'Review_Stage',
         'Meta_Review': 'Meta_Review_Stage',
         'Official_Comment': 'Comment_Stage',
         'Ethics_Review': 'Ethics_Review_Stage',
         'Blind_Submission_License_Agreement': 'Submission_Revision_Stage'
+    }
+    FIELD_READERS = {
+        'Official_Review': {
+            'content_name': 'additional_review_form_options',
+            'fields': {
+                'reviewer_certification': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ]
+            }
+        }
     }
     UPDATE_WAIT_TIME = 5
 
@@ -1172,6 +1197,46 @@ class ARRStage(object):
         elif self.type == ARRStage.Type.STAGE_NOTE:
             stage_dates = self._get_stage_note_dates(format_type='strftime')
             self.stage_arguments['content'].update(stage_dates)
+
+    def _set_field_readers(self, venue):
+        for suffix, stage_info in ARRStage.FIELD_READERS.items():
+            if self.super_invitation_id.endswith(f"/{suffix}"):
+                if self.type == ARRStage.Type.REGISTRATION_STAGE:
+                    raise openreview.OpenReviewException('Registration stages do not support custom readers per field')
+                
+                content_name = stage_info['content_name']
+                for field_name, readers in stage_info['fields'].items():
+                    field_readers = [venue.get_program_chairs_id()]
+
+                    if ARRStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED in readers:
+                        field_readers.append(venue.get_senior_area_chairs_id('${{4/forum}/number}'))
+
+                    if ARRStage.Participants.AREA_CHAIRS_ASSIGNED in readers:
+                        field_readers.append(venue.get_area_chairs_id('${{4/forum}/number}'))
+
+                    if ARRStage.Participants.SECONDARY_AREA_CHAIRS in readers:
+                        field_readers.append(venue.get_secondary_area_chairs_id('${{4/forum}/number}'))
+
+                    if ARRStage.Participants.REVIEWERS_ASSIGNED in readers:
+                        field_readers.append(venue.get_reviewers_id('${{4/forum}/number}'))
+
+                    if ARRStage.Participants.REVIEWERS_SUBMITTED in readers:
+                        field_readers.append(venue.get_reviewers_id('${{4/forum}/number}') + '/Submitted')
+
+                    if ARRStage.Participants.AUTHORS in readers:
+                        field_readers.append(venue.get_authors_id('${{4/forum}/number}'))
+
+                    if ARRStage.Participants.ETHICS_CHAIRS in readers:
+                        field_readers.append(venue.get_ethics_chairs_id())
+
+                    if ARRStage.Participants.ETHICS_REVIEWERS_ASSIGNED in readers:
+                        field_readers.append(venue.get_ethics_reviewers_id('${{4/forum}/number}'))
+
+                    print(f"setting readers for {content_name}/{field_name} in {self.super_invitation_id}")
+                    if self.type == ARRStage.Type.STAGE_NOTE:
+                        self.stage_arguments['content'][content_name][field_name]['readers'] = field_readers
+                    else:
+                        self.stage_arguments[content_name][field_name]['readers'] = field_readers
 
     def _get_stage_note_dates(self, format_type):
         dates = {}
@@ -1308,6 +1373,8 @@ class ARRStage(object):
         if current_invitation:
             self._post_new_dates(client, venue, current_invitation)
         else:
+            self._set_field_readers(venue)
+
             if self.type == ARRStage.Type.REGISTRATION_STAGE:
                 venue.registration_stages = [openreview.stages.RegistrationStage(**self.stage_arguments)]
                 venue.create_registration_stages()
@@ -1518,3 +1585,8 @@ def flag_submission(
                 'Ethics_Review',
                 value = False
             )
+def get_resubmissions(submissions, previous_url_field):
+    return list(filter(
+        lambda s: previous_url_field in s.content and 'value' in s.content[previous_url_field] and len(s.content[previous_url_field]['value']) > 0, 
+        submissions
+    ))

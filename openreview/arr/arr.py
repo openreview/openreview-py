@@ -362,23 +362,10 @@ class ARR(object):
 
     def create_review_stage(self):
         self.venue.review_stage = self.review_stage
-        stage_value = self.venue.create_review_stage()
-        invitation = self.client.get_invitation(self.get_invitation_id(self.review_stage.name))
-        invitation.content = {
-            'review_process_script': {
-                'value': self.invitation_builder.get_process_content('process/review_process.py')
-            }
-        }
-        invitation.edit['invitation']['preprocess'] = self.invitation_builder.get_process_content('process/review_preprocess.py')
-        self.client.post_invitation_edit(
-            invitations=self.venue.get_meta_invitation_id(),
-            readers=[self.venue_id],
-            writers=[self.venue_id],
-            signatures=[self.venue_id],
-            replacement=False,
-            invitation=invitation
-        )
-        return stage_value
+        self.venue.review_stage.process_path = '../arr/process/review_process.py'
+        self.venue.review_stage.preprocess_path = '../arr/process/review_preprocess.py'
+
+        return self.venue.create_review_stage()
 
     def create_review_rebuttal_stage(self):
         self.venue.review_rebuttal_stage = None
@@ -386,23 +373,10 @@ class ARR(object):
 
     def create_meta_review_stage(self):
         self.venue.meta_review_stage = self.meta_review_stage
-        stage_value = self.venue.create_meta_review_stage()
-        invitation = self.client.get_invitation(self.get_invitation_id(self.meta_review_stage.name))
-        invitation.content = {
-            'meta_review_process_script': {
-                'value': self.invitation_builder.get_process_content('process/metareview_process.py')
-            }
-        }
-        invitation.edit['invitation']['preprocess'] = self.invitation_builder.get_process_content('process/review_preprocess.py')
-        self.client.post_invitation_edit(
-            invitations=self.venue.get_meta_invitation_id(),
-            readers=[self.venue_id],
-            writers=[self.venue_id],
-            signatures=[self.venue_id],
-            replacement=False,
-            invitation=invitation
-        )
-        return stage_value
+        self.venue.meta_review_stage.process_path = '../arr/process/metareview_process.py'
+        self.venue.meta_review_stage.preprocess_path = '../arr/process/review_preprocess.py'
+
+        return self.venue.create_meta_review_stage()
 
     def create_registration_stages(self):
         self.venue.registration_stages = self.registration_stages
@@ -435,18 +409,9 @@ class ARR(object):
 
     def create_ethics_review_stage(self):
         self.venue.ethics_review_stage = self.ethics_review_stage
-        stage_value = self.venue.create_ethics_review_stage()
-        invitation = self.client.get_invitation(f"{self.venue_id}/-/{self.ethics_review_stage.name}_Flag")
-        invitation.process = self.invitation_builder.get_process_content('process/ethics_flag_process.py')
-        self.client.post_invitation_edit(
-            invitations=self.venue.get_meta_invitation_id(),
-            readers=[self.venue_id],
-            writers=[self.venue_id],
-            signatures=[self.venue_id],
-            replacement=False,
-            invitation=invitation
-        )
-        return stage_value
+        self.venue.ethics_review_stage.flag_process_path = '../arr/process/ethics_flag_process.py'
+        
+        return self.venue.create_ethics_review_stage()
 
     def update_conflict_policies(self, committee_id, compute_conflicts, compute_conflicts_n_years):
         return self.venue.update_conflict_policies(committee_id,  compute_conflicts,  compute_conflicts_n_years)
