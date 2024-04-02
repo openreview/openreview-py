@@ -24,6 +24,7 @@ setup(
         'openreview/journal',
         'openreview/journal/journal_request',
         'openreview/stages',
+        'openreview/arr',
         'openreview.api'
     ],
     install_requires=[
