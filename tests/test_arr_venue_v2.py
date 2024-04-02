@@ -3015,6 +3015,13 @@ class TestARRVenueV2():
 
             time.sleep(2) ## Wait for flag process functions
 
+            review = pc_client_v2.get_note(id=rev_edit['note']['id'])
+            assert set(review.content['reviewer_certification']['readers']) == {
+                'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                f"aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Senior_Area_Chairs",
+                f"aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Area_Chairs",
+            } 
+
             return rev_edit, pc_client_v2.get_note(test_submission.id)
         
         def now():
