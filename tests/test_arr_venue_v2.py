@@ -537,6 +537,13 @@ class TestARRVenueV2():
         
         helpers.await_queue_edit(client, invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Ethics_Review_Stage')
 
+        ethics_review_invitations = openreview_client.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Ethics_Review')
+        assert len(ethics_review_invitations) == 0
+
+        flag_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Ethics_Review_Flag')
+        assert flag_invitation.process
+        assert 'official_review_name, ae_checklist_name, reviewer_checklist_name' in flag_invitation.process
+
         venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
         venue.create_ethics_review_stage()
 
@@ -1677,6 +1684,14 @@ class TestARRVenueV2():
                 note.content['authors']['value'].append('SAC ARROne')
                 note.content['authorids']['value'].append('~SAC_ARROne1')
 
+            if i == 6: ## Remove resubmission information from content
+                del note.content['previous_URL']
+                del note.content['previous_PDF']
+                del note.content['response_PDF']
+                del note.content['reassignment_request_action_editor']
+                del note.content['reassignment_request_reviewers']
+                del note.content['justification_for_not_keeping_action_editor_or_reviewers']
+
             test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=note)
@@ -1822,6 +1837,10 @@ class TestARRVenueV2():
         assert submissions[0].content['existing_preprints']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['preferred_venue']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
+        assert submissions[0].content['consent_to_share_submission_details']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
+        assert submissions[0].content['Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
+        assert submissions[0].content['section_2_permission_to_publish_peer_reviewers_content_agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
+        assert submissions[0].content['reviewing_volunteers']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert 'readers' not in submissions[0].content['software']
         assert 'readers' not in submissions[0].content['previous_URL']
         assert 'readers' not in submissions[0].content['previous_PDF']
@@ -1837,6 +1856,10 @@ class TestARRVenueV2():
         assert submissions[1].content['existing_preprints']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['preferred_venue']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+        assert submissions[1].content['consent_to_share_submission_details']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+        assert submissions[1].content['Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+        assert submissions[1].content['section_2_permission_to_publish_peer_reviewers_content_agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+        assert submissions[1].content['reviewing_volunteers']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert set(submissions[1].content['software']['readers']) == {
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
@@ -2212,6 +2235,11 @@ class TestARRVenueV2():
         )
 
         helpers.await_queue()
+
+        # Getting resubmissions should pass
+        previous_url_field = 'previous_URL'
+        resubmissions = openreview.arr.helpers.get_resubmissions(submissions, previous_url_field)
+        assert 6 not in [submission.number for submission in resubmissions]
 
         # Remove resubmission information from all but submissions 2 and 3
         for submission in submissions:
@@ -2936,6 +2964,13 @@ class TestARRVenueV2():
         default_fields['needs_ethics_review'] = False
         test_submission = submissions[2]
 
+        review_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Review')
+        assert review_invitation.preprocess
+        assert review_invitation.process
+        super_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Official_Review')
+        assert 'Knowledge_of_or_educated_guess_at_author_identity' in super_invitation.content['review_process_script']['value']
+        assert 'You have indicated that this submission needs an ethics review. Please enter a brief justification for your flagging' in super_invitation.content['review_preprocess_script']['value']
+
         openreview_client.add_members_to_group(venue.get_reviewers_id(number=3), ['~Reviewer_ARROne1'])
 
         reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@aclrollingreview.com', password=helpers.strong_password)
@@ -3105,7 +3140,7 @@ class TestARRVenueV2():
         time.sleep(5)
 
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Release_Official_Reviews-0-1', count=1)
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Official_Review-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Official_Review-0-1', count=2)
 
         review = openreview_client.get_note(reviewer_edit['note']['id'])
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Authors' in review.readers
@@ -3268,6 +3303,13 @@ class TestARRVenueV2():
         default_fields['needs_ethics_review'] = False
         test_submission = submissions[3]
 
+        review_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Meta_Review')
+        assert review_invitation.preprocess
+        assert review_invitation.process
+        super_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Meta_Review')
+        assert 'violation_fields' in super_invitation.content['metareview_process_script']['value']
+        assert 'You have indicated that this submission needs an ethics review. Please enter a brief justification for your flagging' in super_invitation.content['metareview_preprocess_script']['value']
+
         openreview_client.add_members_to_group(venue.get_area_chairs_id(number=4), ['~AC_ARROne1'])
         openreview_client.add_members_to_group(venue.get_ethics_reviewers_id(number=4), ['~EthicsReviewer_ARROne1'])
 
@@ -3382,7 +3424,7 @@ class TestARRVenueV2():
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Desk_Reject_Verification').expdate < now()
 
         # Check that ethics reviewing is not available
-        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2023/August/Submission4/-/Ethics_Review has expired'):
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2023/August/Submission4/-/Ethics_Review was not found'):
             ethics_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Ethics_Review')
 
         # Edit with ethics flag and no violation field - check DSV flag is false and ethics flag exists and is True
@@ -3393,7 +3435,7 @@ class TestARRVenueV2():
         assert test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Desk_Reject_Verification').expdate < now()
 
-        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Ethics_Review_Flag', count=9   )
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Ethics_Review_Flag', count=9)
 
         # Post an ethics review
         ethics_anon_id = ethics_client.get_groups(prefix='aclweb.org/ACL/ARR/2023/August/Submission4/Ethics_Reviewer_', signatory='~EthicsReviewer_ARROne1')[0].id
