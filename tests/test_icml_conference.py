@@ -4410,11 +4410,11 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
 
-        anon_groups = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission2/Area_Chair_', signatory='~AC_ICMLOne1')
+        anon_groups = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission4/Area_Chair_', signatory='~AC_ICMLOne1')
         anon_group_id = anon_groups[0].id
 
         meta_review_edit = ac_client.post_note_edit(
-            invitation='ICML.cc/2023/Conference/Submission2/-/Meta_Review',
+            invitation='ICML.cc/2023/Conference/Submission4/-/Meta_Review',
             signatures=[anon_group_id],
             note=openreview.api.Note(
                 content={
@@ -4446,7 +4446,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         )
 
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Position_Paper_Meta_Review-0-1', count=2)
-        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Meta_Review')
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Meta_Review')
         assert invitation.expdate == new_exp_date
 
     def test_meta_review_agreement(self, client, openreview_client, helpers, selenium, request_page):
@@ -4549,7 +4549,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         helpers.await_queue_edit(openreview_client, edit_id=meta_review_edit['id'])
 
-        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review_Agreement')) == 2
+        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review_Agreement')) == 3
 
         invitation_id = 'ICML.cc/2023/Conference/Submission2/Meta_Review1/-/Meta_Review_Agreement'
         sac_client = openreview.api.OpenReviewClient(username = 'sac1@gmail.com', password=helpers.strong_password)
