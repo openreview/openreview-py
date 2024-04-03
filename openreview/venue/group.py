@@ -414,10 +414,11 @@ class GroupBuilder(object):
     def create_ethics_reviewers_group(self):
         venue_id = self.venue.id
         ethics_reviewers_id = self.venue.get_ethics_reviewers_id()
+        ethics_chairs_id = self.venue.get_ethics_chairs_id()
         ethics_reviewers_group = openreview.tools.get_group(self.client, ethics_reviewers_id)
         if not ethics_reviewers_group:
             ethics_reviewers_group = Group(id=ethics_reviewers_id,
-                            readers=[venue_id, ethics_reviewers_id],
+                            readers=[venue_id, ethics_reviewers_id, ethics_chairs_id],
                             writers=[venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id],
@@ -508,10 +509,13 @@ class GroupBuilder(object):
                             members=[]
                             ))
 
+        invited_group_readers = [venue_id, committee_invited_id]
+        if committee_name == self.venue.ethics_reviewers_name:
+            invited_group_readers.append(self.venue.get_ethics_chairs_id())
         committee_invited_group = tools.get_group(self.client, committee_invited_id)
         if not committee_invited_group:
             committee_invited_group=self.post_group(Group(id=committee_invited_id,
-                            readers=[venue_id, committee_invited_id],
+                            readers=invited_group_readers,
                             writers=[venue_id, pc_group_id],
                             signatures=[venue_id],
                             signatories=[venue_id, committee_invited_id],
