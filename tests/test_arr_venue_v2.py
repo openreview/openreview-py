@@ -1715,7 +1715,7 @@ class TestARRVenueV2():
                     f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/-/Blind_Submission_License_Agreement'
                 ).duedate == None
 
-    def test_post_submission(self, client, openreview_client, helpers, test_client):
+    def test_post_submission(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
@@ -1824,6 +1824,17 @@ class TestARRVenueV2():
         )
 
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission-0-1', count=1)
+
+        request_page(selenium, 'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August', None, wait_for_element='header')
+        
+        tabs = selenium.find_element(By.CLASS_NAME, 'nav-tabs').find_elements(By.TAG_NAME, 'li')
+        assert len(tabs) == 2
+        assert tabs[0].text == 'Anonymous Pre-prints'
+        assert tabs[1].text == 'Recent Activity'
+
+        notes = selenium.find_element(By.ID, 'anonymous-pre-prints').find_elements(By.CLASS_NAME, 'note')
+        assert len(notes) == 50
+        assert notes[0].find_element(By.TAG_NAME, 'h4').text == 'Paper title 100'
 
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')       
 
