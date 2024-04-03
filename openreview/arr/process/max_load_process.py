@@ -78,11 +78,11 @@ def process(client, edit, invitation):
     )
 
     availability_label = None
-    if 'yes' in edit.note.content['maximum_load_resubmission']['value'].lower() and int(edit.note.content['maximum_load']['value']) == 0:
+    if 'yes' in edit.note.content['maximum_load_this_cycle_for_resubmissions']['value'].lower() and int(edit.note.content['maximum_load']['value']) == 0:
       availability_label = 'Only Reviewing Resubmissions'
-    elif 'yes' in edit.note.content['maximum_load_resubmission']['value'].lower():
+    elif 'yes' in edit.note.content['maximum_load_this_cycle_for_resubmissions']['value'].lower():
       availability_label = 'Yes'
-    elif 'no' in edit.note.content['maximum_load_resubmission']['value'].lower():
+    elif 'no' in edit.note.content['maximum_load_this_cycle_for_resubmissions']['value'].lower():
       availability_label = 'No'
 
     client.post_edge(
