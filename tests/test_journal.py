@@ -58,7 +58,7 @@ class TestJournal():
         helpers.create_user('david@mailone.com', 'David', 'Belanger')
         helpers.create_user('javier@mailtwo.com', 'Javier', 'Burroni')
         helpers.create_user('carlos@mailthree.com', 'Carlos', 'Mondragon')
-        helpers.create_user('andrewmc@mailfour.com', 'Andrew', 'McCallum')
+        helpers.create_user('andrewmc@mailfour.com', 'Andrew', 'McCallumm')
         helpers.create_user('hugo@mailsix.com', 'Hugo', 'Larochelle')
         helpers.create_user('david_2@mailone.com', 'David K', 'Belanger')
         openreview_client.merge_profiles('~David_Belanger1', '~David_K_Belanger1')
@@ -198,7 +198,7 @@ class TestJournal():
 
         helpers.await_queue_edit(openreview_client, request_form['id'])
 
-        openreview_client.add_members_to_group('TMLR/Expert_Reviewers', ['~Andrew_McCallum1'])
+        openreview_client.add_members_to_group('TMLR/Expert_Reviewers', ['~Andrew_McCallumm1'])
 
         tmlr =  openreview_client.get_group('TMLR')
         assert tmlr
@@ -282,9 +282,9 @@ class TestJournal():
         request_note_id = request_notes[0].id
         journal = JournalRequest.get_journal(openreview_client, request_note_id)
 
-        journal.invite_reviewers(message='Test {{fullname}},  {{accept_url}}, {{decline_url}}', subject='Invitation to be an Reviewer', invitees=['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1'])
+        journal.invite_reviewers(message='Test {{fullname}},  {{accept_url}}, {{decline_url}}', subject='Invitation to be an Reviewer', invitees=['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallumm1', '~Hugo_Larochelle1'])
         invited_group = openreview_client.get_group('TMLR/Reviewers/Invited')
-        assert invited_group.members == ['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1']
+        assert invited_group.members == ['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallumm1', '~Hugo_Larochelle1']
 
         messages = openreview_client.get_messages(subject = 'Invitation to be an Reviewer')
         assert len(messages) == 6
@@ -356,7 +356,7 @@ class TestJournal():
                     'title': { 'value': 'Paper title' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['SomeFirstName User', 'Melissa Eight', 'Andrew McCallum']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Eight1', '~Andrew_McCallum1']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Eight1', '~Andrew_McCallumm1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     #'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -409,7 +409,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper1/Authors")
         assert author_group
-        assert author_group.members == ['~SomeFirstName_User1', '~Melissa_Eight1', '~Andrew_McCallum1']
+        assert author_group.members == ['~SomeFirstName_User1', '~Melissa_Eight1', '~Andrew_McCallumm1']
         assert openreview_client.get_group(f"{venue_id}/Paper1/Reviewers")
         assert openreview_client.get_group(f"{venue_id}/Paper1/Action_Editors")
 
@@ -419,7 +419,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert note.readers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Eight1', '~Andrew_McCallum1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Eight1', '~Andrew_McCallumm1']
         assert note.content['venue']['value'] == 'Submitted to TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Submitted'
 
@@ -552,12 +552,12 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert note.content['venueid']['value'] == 'TMLR/Submitted'
         assert note.content['supplementary_material']['value'] == '/attachment/zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz.zip'
         assert note.content['supplementary_material']['readers'] == ["TMLR", "TMLR/Paper1/Action_Editors", "TMLR/Paper1/Reviewers", "TMLR/Paper1/Authors"]
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Eight1', '~Andrew_McCallum1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Eight1', '~Andrew_McCallumm1']
         assert note.content['authorids']['readers'] == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper1/Authors")
         assert author_group
-        assert author_group.members == ['~SomeFirstName_User1', '~Melissa_Eight1', '~Andrew_McCallum1']
+        assert author_group.members == ['~SomeFirstName_User1', '~Melissa_Eight1', '~Andrew_McCallumm1']
 
         ## Post the submission 2
         submission_note_2 = test_client.post_note_edit(invitation='TMLR/-/Submission',
@@ -596,7 +596,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                                             'title': { 'value': 'Paper title 3' },
                                             'abstract': { 'value': 'Paper abstract 3' },
                                             'authors': { 'value': ['SomeFirstName User', 'Andrew McCallum']},
-                                            'authorids': { 'value': ['~SomeFirstName_User1', '~Andrew_McCallum1']},
+                                            'authorids': { 'value': ['~SomeFirstName_User1', '~Andrew_McCallumm1']},
                                             'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                                             'human_subjects_reporting': { 'value': 'Not applicable'},
                                             'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' },
@@ -613,7 +613,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper3/Authors")
         assert author_group
-        assert author_group.members == ['~SomeFirstName_User1', '~Andrew_McCallum1']
+        assert author_group.members == ['~SomeFirstName_User1', '~Andrew_McCallumm1']
         assert openreview_client.get_group(f"{venue_id}/Paper3/Reviewers")
         assert openreview_client.get_group(f"{venue_id}/Paper3/Action_Editors")
 
@@ -724,7 +724,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Eight1', '~Andrew_McCallum1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Eight1', '~Andrew_McCallumm1']
         assert note.content['venue']['value'] == 'Under review for TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Under_Review'
         assert note.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'
@@ -961,7 +961,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert note.readers == ['TMLR', 'TMLR/Paper3/Action_Editors', 'TMLR/Paper3/Authors']
         assert note.writers == ['TMLR', 'TMLR/Paper3/Authors']
         assert note.signatures == ['TMLR/Paper3/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Andrew_McCallum1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Andrew_McCallumm1']
         assert note.content['venue']['value'] == 'Withdrawn by Authors'
         assert note.content['venueid']['value'] == 'TMLR/Withdrawn_Submission'
         assert note.content['_bibtex']['value'] == '''@article{
@@ -2391,7 +2391,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                 content={
                     'title': { 'value': 'Paper title VERSION 2' },
                     'authors': { 'value': ['Melissa Eight', 'SomeFirstName User', 'Andrew McCallum'] },
-                    'authorids': { 'value': ['~Melissa_Eight1', '~SomeFirstName_User1', '~Andrew_McCallum1'] },
+                    'authorids': { 'value': ['~Melissa_Eight1', '~SomeFirstName_User1', '~Andrew_McCallumm1'] },
                     'abstract': { 'value': 'Paper abstract' },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -2429,7 +2429,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~Melissa_Eight1', '~SomeFirstName_User1', '~Andrew_McCallum1']
+        assert note.content['authorids']['value'] == ['~Melissa_Eight1', '~SomeFirstName_User1', '~Andrew_McCallumm1']
         assert note.content['authors']['value'] == ['Melissa Eight', 'SomeFirstName User', 'Andrew McCallum']
         assert note.content['venue']['value'] == 'Decision pending for TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Decision_Pending'
@@ -2551,7 +2551,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~Melissa_Eight1', '~SomeFirstName_User1', '~Andrew_McCallum1']
+        assert note.content['authorids']['value'] == ['~Melissa_Eight1', '~SomeFirstName_User1', '~Andrew_McCallumm1']
         assert note.content['authors']['value'] == ['Melissa Eight', 'SomeFirstName User', 'Andrew McCallum']
         # Check with cArlos
         assert note.content['authorids'].get('readers') is None
@@ -2562,7 +2562,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['certifications']['value'] == ['Featured Certification', 'Reproducibility Certification', 'Expert Certification']
-        assert note.content['expert_reviewers']['value'] == ['~Andrew_McCallum1']
+        assert note.content['expert_reviewers']['value'] == ['~Andrew_McCallumm1']
         assert note.content['_bibtex']['value'] == '''@article{
 eight''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
@@ -2592,7 +2592,7 @@ note={Featured Certification, Reproducibility Certification, Expert Certificatio
                 content={
                     'title': { 'value': 'Paper title VERSION 2' },
                     'authors': { 'value': ['Melissa Eight', 'SomeFirstName User', 'Celeste Ana Martinez', 'Andrew McCallum'] },
-                    'authorids': { 'value': ['~Melissa_Eight1', '~SomeFirstName_User1', '~Celeste_Ana_Martinez1', '~Andrew_McCallum1'] },
+                    'authorids': { 'value': ['~Melissa_Eight1', '~SomeFirstName_User1', '~Celeste_Ana_Martinez1', '~Andrew_McCallumm1'] },
                     'abstract': { 'value': 'Paper abstract' },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -2614,7 +2614,7 @@ note={Featured Certification, Reproducibility Certification, Expert Certificatio
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~Melissa_Eight1', '~SomeFirstName_User1', '~Celeste_Ana_Martinez1', '~Andrew_McCallum1']
+        assert note.content['authorids']['value'] == ['~Melissa_Eight1', '~SomeFirstName_User1', '~Celeste_Ana_Martinez1', '~Andrew_McCallumm1']
         assert note.content['authors']['value'] == ['Melissa Eight', 'SomeFirstName User', 'Celeste Ana Martinez', 'Andrew McCallum']
         # Check with cArlos
         assert note.content['authorids'].get('readers') is None
@@ -2699,7 +2699,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~Melissa_Eight1', '~SomeFirstName_User1', '~Celeste_Ana_Martinez1', '~Andrew_McCallum1']
+        assert note.content['authorids']['value'] == ['~Melissa_Eight1', '~SomeFirstName_User1', '~Celeste_Ana_Martinez1', '~Andrew_McCallumm1']
         # Check with cArlos
         assert note.content['authorids'].get('readers') is None
         assert note.content['authors'].get('readers') is None
@@ -5079,7 +5079,7 @@ note={}
 
         helpers.await_queue_edit(openreview_client, edit_id=edit_group['id'])
 
-        assert openreview_client.get_group('TMLR/Expert_Reviewers').members == ['~Andrew_McCallum1', '~Hugo_Larochelle1']
+        assert openreview_client.get_group('TMLR/Expert_Reviewers').members == ['~Andrew_McCallumm1', '~Hugo_Larochelle1']
 
         note = openreview_client.get_note(note_id_13)
         assert note.content['certifications']['value'] == ['Expert Certification']
@@ -5098,8 +5098,6 @@ note={Expert Certification}
   
         note = openreview_client.get_note(note_id_13)
         journal.invitation_builder.expire_paper_invitations(note)
-        journal.invitation_builder.expire_reviewer_responsibility_invitations()
-        journal.invitation_builder.expire_assignment_availability_invitations()
 
         ## Add Event certification
         raia_client.post_note_edit(invitation='TMLR/-/Event_Certification',
@@ -5137,8 +5135,8 @@ note={Expert Certification}
             ))
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_14['id'])
-        note_id_13=submission_note_14['note']['id']
-        submission = openreview_client.get_note(note_id_13)
+        note_id_14=submission_note_14['note']['id']
+        submission = openreview_client.get_note(note_id_14)
 
         Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
 
@@ -5152,7 +5150,7 @@ note={Expert Certification}
             readers=[venue_id, editor_in_chief_group_id, '~Samy_Bengio1'],
             writers=[venue_id, editor_in_chief_group_id],
             signatures=[editor_in_chief_group_id],
-            head=note_id_13,
+            head=note_id_14,
             tail='~Samy_Bengio1',
             weight=1
         ))
@@ -5175,7 +5173,7 @@ note={Expert Certification}
 
         helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
 
-        edits = openreview_client.get_note_edits(note_id_13, invitation='TMLR/-/Under_Review')
+        edits = openreview_client.get_note_edits(note_id_14, invitation='TMLR/-/Under_Review')
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
 
         helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Under_Review')
@@ -5183,7 +5181,7 @@ note={Expert Certification}
         ## Invite external reviewer with profile
         paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
             signatures=[joelle_paper13_anon_group.id],
-            head=note_id_13,
+            head=note_id_14,
             tail='melisa@mailten.com',
             weight=1,
             label='Invitation Sent'
@@ -5191,7 +5189,7 @@ note={Expert Certification}
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
-        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_13, tail='~Melisa_Bok1')
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_14, tail='~Melisa_Bok1')
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Invitation Sent'         
 
@@ -5204,11 +5202,11 @@ note={Expert Certification}
 
         helpers.await_queue_edit(openreview_client, invitation='TMLR/Reviewers/-/Assignment_Recruitment', count=1)
 
-        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_13, tail='~Melisa_Bok1')
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_14, tail='~Melisa_Bok1')
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Accepted'         
 
-        assignment_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', head=note_id_13, tail='~Melisa_Bok1')
+        assignment_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', head=note_id_14, tail='~Melisa_Bok1')
         assert len(assignment_edges) == 1
 
         helpers.await_queue_edit(openreview_client, edit_id=assignment_edges[0].id)
@@ -5230,7 +5228,7 @@ note={Expert Certification}
         ## Invite external reviewer with no profile
         paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
             signatures=[joelle_paper13_anon_group.id],
-            head=note_id_13,
+            head=note_id_14,
             tail='harold@hotmail.com',
             weight=1,
             label='Invitation Sent'
@@ -5247,11 +5245,11 @@ note={Expert Certification}
 
         helpers.await_queue_edit(openreview_client, invitation='TMLR/Reviewers/-/Assignment_Recruitment', count=2)
 
-        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_13, tail='harold@hotmail.com')
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_14, tail='harold@hotmail.com')
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Pending Sign Up'         
 
-        assignment_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', head=note_id_13, tail='harold@hotmail.com')
+        assignment_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', head=note_id_14, tail='harold@hotmail.com')
         assert len(assignment_edges) == 0
 
         messages = openreview_client.get_messages(to = 'harold@hotmail.com', subject = f'[TMLR] Reviewers Invitation accepted for paper {submission.number}: Paper title 14, assignment pending')
@@ -5266,17 +5264,17 @@ note={Expert Certification}
         with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for harold@mail'):
             paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
                 signatures=[joelle_paper13_anon_group.id],
-                head=note_id_13,
+                head=note_id_14,
                 tail='harold@mail.com',
                 weight=1,
                 label='Invitation Sent'
             ))
 
         ## Invite reviewer that is already in the pool
-        with pytest.raises(openreview.OpenReviewException, match=r'Reviewer Javier Burroni is an official reviewer, please use the "Assign" button to make the assignment.'):
+        with pytest.raises(openreview.OpenReviewException, match=r'tail "javier@mailtwo.com" is member of TMLR/Reviewers'):
             paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
                 signatures=[joelle_paper13_anon_group.id],
-                head=note_id_13,
+                head=note_id_14,
                 tail='javier@mailtwo.com',
                 weight=1,
                 label='Invitation Sent'
@@ -5286,7 +5284,7 @@ note={Expert Certification}
         with pytest.raises(openreview.OpenReviewException, match=r'Already invited as ~Melisa_Bok1'):
             paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
                 signatures=[joelle_paper13_anon_group.id],
-                head=note_id_13,
+                head=note_id_14,
                 tail='melisa@mailten.com',
                 weight=1,
                 label='Invitation Sent'
@@ -5295,7 +5293,7 @@ note={Expert Certification}
         ## Run Job
         openreview.journal.Journal.check_new_profiles(openreview_client, support_group_id = 'openreview.net/Support')                        
 
-        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_13, tail='harold@hotmail.com')
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_14, tail='harold@hotmail.com')
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Pending Sign Up'
 
@@ -5304,9 +5302,9 @@ note={Expert Certification}
         ## Run Job
         openreview.journal.Journal.check_new_profiles(openreview_client, support_group_id = 'openreview.net/Support')                        
 
-        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_13, tail='harold@hotmail.com')
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_14, tail='harold@hotmail.com')
         assert len(invite_edges) == 0
-        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_13, tail='~Harold_Red1')
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_14, tail='~Harold_Red1')
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Accepted'
 
@@ -5318,10 +5316,13 @@ note={Expert Certification}
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\nThe Reviewer Harold Red(harold@hotmail.com) that you invited to review paper {submission.number} has accepted the invitation, signed up and is now assigned to the paper {submission.number}.\n\nOpenReview Team\n\nPlease note that responding to this email will direct your reply to tmlr@jmlr.org.\n'''
 
+        assignment_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', head=note_id_14, tail='~Harold_Red1')
+        helpers.await_queue_edit(openreview_client, edit_id=assignment_edges[0].id)
+
         ## Invite archived reviewers with status unavailable
         paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
             signatures=[joelle_paper13_anon_group.id],
-            head=note_id_13,
+            head=note_id_14,
             tail='~David_Belanger1',
             weight=1,
             label='Invitation Sent'
@@ -5329,7 +5330,7 @@ note={Expert Certification}
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
-        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_13, tail='~David_Belanger1')
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_14, tail='~David_Belanger1')
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Invitation Sent'         
 
@@ -5342,11 +5343,16 @@ note={Expert Certification}
 
         helpers.await_queue_edit(openreview_client, invitation='TMLR/Reviewers/-/Assignment_Recruitment', count=3)
 
-        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_13, tail='~David_Belanger1')
+        invite_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Invite_Assignment', head=note_id_14, tail='~David_Belanger1')
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Accepted'         
 
-        assignment_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', head=note_id_13, tail='~David_Belanger1')
+        assignment_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', head=note_id_14, tail='~David_Belanger1')
         assert len(assignment_edges) == 1
 
-        helpers.await_queue_edit(openreview_client, edit_id=assignment_edges[0].id)                
+        helpers.await_queue_edit(openreview_client, edit_id=assignment_edges[0].id)
+        
+        note = openreview_client.get_note(note_id_14)
+        journal.invitation_builder.expire_paper_invitations(note)
+        journal.invitation_builder.expire_reviewer_responsibility_invitations()
+        journal.invitation_builder.expire_assignment_availability_invitations()        

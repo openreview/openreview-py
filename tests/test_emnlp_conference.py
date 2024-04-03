@@ -208,6 +208,7 @@ class TestEMNLPConference():
         assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['submission_type']['value']['param']
         assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['supplementary_materials']['value']['param']
         assert 'TLDR' not in revision_invitation.edit['invitation']['edit']['note']['content']
+        assert 'ddate' not in revision_invitation.edit['invitation']['edit']['note']
 
     def test_submit_papers(self, test_client, client, openreview_client, helpers):
 
@@ -324,11 +325,14 @@ class TestEMNLPConference():
 
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Post_Submission-0-0')
-        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Withdrawal-0-0')
-        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Desk_Rejection-0-0')
         helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Revision-0-0')
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Deletion-0-0')
 
         invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Revision')
+        assert len(invitations) == 5
+        assert invitations[0].duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))
+
+        invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Deletion')
         assert len(invitations) == 5
         assert invitations[0].duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))
 
@@ -341,90 +345,78 @@ class TestEMNLPConference():
             'EMNLP/2023/Conference/Submission5/Authors'
         ]
 
-        ## withdraw submission
-        withdraw_note = test_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Withdrawal',
+        authors_group = openreview_client.get_group('EMNLP/2023/Conference/Authors')
+        assert 'EMNLP/2023/Conference/Submission5/Authors' in authors_group.members
+
+        ## delete and revert submission
+        deletion_edit = test_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Deletion',
             signatures=['EMNLP/2023/Conference/Submission5/Authors'],
             note=openreview.api.Note(
-                content={
-                    'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
-                }
+                ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
             ))
+        helpers.await_queue_edit(openreview_client, edit_id=deletion_edit['id'])
 
-        helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
-        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Withdrawn_Submission')
+        edit = openreview_client.get_note_edit(deletion_edit['id'])
+        assert edit.readers == [
+            'EMNLP/2023/Conference',
+            'EMNLP/2023/Conference/Submission5/Authors'
+        ]
 
-        withdrawn_submission = openreview_client.get_notes(invitation='EMNLP/2023/Conference/-/Withdrawn_Submission')
-        assert len(withdrawn_submission) == 1
-
-        year = datetime.datetime.now().year
-        valid_bibtex = '''@misc{
-anonymous'''+str(year)+'''test,
-title={Test Paper Title 5},
-author={Anonymous},
-year={'''+str(year)+'''},
-url={https://openreview.net/forum?id='''
-
-        valid_bibtex = valid_bibtex + withdrawn_submission[0].forum + '''}
-}'''
-
-        assert '_bibtex' in withdrawn_submission[0].content and withdrawn_submission[0].content['_bibtex']['value'] == valid_bibtex
-
-        messages = client.get_messages(subject='[EMNLP 2023]: Paper #5 withdrawn by paper authors')
-        assert messages and len(messages) == 3
+        messages = client.get_messages(subject='[EMNLP 2023] Your submission titled "Test Paper Title 5" has been deleted')
+        assert messages and len(messages) == 2
         recipients = [msg['content']['to'] for msg in messages]
-        assert 'pc@emnlp.org' in recipients
+        assert 'test@mail.com' in recipients
+        assert 'john@meta.com' in recipients
+        assert messages[0]['content']['text'] == f'''Your submission to EMNLP 2023 has been deleted.
 
-        pc_openreview_client = openreview.api.OpenReviewClient(username='pc@emnlp.org', password=helpers.strong_password)
+Submission Number: 5
 
-        # reverse withdrawal
-        withdrawal_reversion_note = pc_openreview_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Withdrawal_Reversion',
-                                    signatures=['EMNLP/2023/Conference/Program_Chairs'],
-                                    note=openreview.api.Note(
-                                        content={
-                                            'revert_withdrawal_confirmation': { 'value': 'We approve the reversion of withdrawn submission.' },
-                                        }
-                                    ))
+Title: Test Paper Title 5
 
-        helpers.await_queue_edit(openreview_client, edit_id=withdrawal_reversion_note['id'])
-        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/Submission5/-/Withdrawal_Reversion')
+Abstract: This is a test abstract 5
 
-        #desk-reject paper
-        desk_reject_note = pc_openreview_client.post_note_edit(invitation=f'EMNLP/2023/Conference/Submission5/-/Desk_Rejection',
-                                    signatures=['EMNLP/2023/Conference/Program_Chairs'],
-                                    note=openreview.api.Note(
-                                        content={
-                                            'desk_reject_comments': { 'value': 'No pdf.' },
-                                        }
-                                    ))
+You can restore your submission from the submission's forum: https://openreview.net/forum?id={submissions[4].id}
 
-        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
-        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Desk_Rejected_Submission')
+Please note that responding to this email will direct your reply to pc@emnlp.org.
+'''
 
-        desk_rejected_submission = openreview_client.get_notes(invitation='EMNLP/2023/Conference/-/Desk_Rejected_Submission')
-        assert len(desk_rejected_submission) == 1
+        notes = test_client.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission' }, sort='number:desc')
+        assert len(notes) == 4
 
-        valid_bibtex = '''@misc{
-anonymous'''+str(year)+'''test,
-title={Test Paper Title 5},
-author={Anonymous},
-year={'''+str(year)+'''},
-url={https://openreview.net/forum?id='''
+        authors_group = openreview_client.get_group('EMNLP/2023/Conference/Authors')
+        assert 'EMNLP/2023/Conference/Submission5/Authors' not in authors_group.members
 
-        valid_bibtex = valid_bibtex + desk_rejected_submission[0].forum + '''}
-}'''
+        # restore submission
+        deletion_edit = test_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Deletion',
+            signatures=['EMNLP/2023/Conference/Submission5/Authors'],
+            note=openreview.api.Note(
+                ddate = {'delete': True}
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=deletion_edit['id'])
 
-        assert '_bibtex' in desk_rejected_submission[0].content and desk_rejected_submission[0].content['_bibtex']['value'] == valid_bibtex
+        messages = client.get_messages(subject='[EMNLP 2023] Your submission titled "Test Paper Title 5" has been restored')
+        assert messages and len(messages) == 2
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'test@mail.com' in recipients
+        assert 'john@meta.com' in recipients
+        assert messages[0]['content']['text'] == f'''Your submission to EMNLP 2023 has been restored.
 
-        desk_rejection_reversion_note = pc_openreview_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Desk_Rejection_Reversion',
-                                    signatures=['EMNLP/2023/Conference/Program_Chairs'],
-                                    note=openreview.api.Note(
-                                        content={
-                                            'revert_desk_rejection_confirmation': { 'value': 'We approve the reversion of desk-rejected submission.' },
-                                        }
-                                    ))
+Submission Number: 5
 
-        helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_reversion_note['id'])
-        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/Submission5/-/Desk_Rejection_Reversion')
+Title: Test Paper Title 5
+
+Abstract: This is a test abstract 5
+
+To view your submission, click here: https://openreview.net/forum?id={submissions[4].id}
+
+Please note that responding to this email will direct your reply to pc@emnlp.org.
+'''
+
+        notes = test_client.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission' }, sort='number:desc')
+        assert len(notes) == 5
+
+        authors_group = openreview_client.get_group('EMNLP/2023/Conference/Authors')
+        assert 'EMNLP/2023/Conference/Submission5/Authors' in authors_group.members
 
         revision_due_date = now + datetime.timedelta(days=10)
 
@@ -475,12 +467,14 @@ url={https://openreview.net/forum?id='''
         assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['submission_type']['value']['param']
         assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['supplementary_materials']['value']['param']
         assert 'TLDR' not in revision_invitation.edit['invitation']['edit']['note']['content']
+        assert 'ddate' not in revision_invitation.edit['invitation']['edit']['note']
 
         # assert supplementary material content does not have any extra fields
         supplementary_material_invitation = openreview_client.get_invitation('EMNLP/2023/Conference/-/Supplementary_Material')
         assert revision_invitation.edit['invitation']['duedate'] == supplementary_material_invitation.edit['invitation']['cdate']
         content_keys = supplementary_material_invitation.edit['invitation']['edit']['note']['content'].keys()
         assert ['supplementary_materials'] == list(content_keys)
+        assert 'ddate' not in supplementary_material_invitation.edit['invitation']['edit']['note']
 
         #close submissions
         due_date = now - datetime.timedelta(days=1)
@@ -571,6 +565,10 @@ url={https://openreview.net/forum?id='''
 
         helpers.await_queue()
 
+        # assert Deletion invitations are expired
+        invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Deletion')
+        assert len(invitations) == 0
+
         # open revisions
         revision_due_date = now + datetime.timedelta(days=10)
 
@@ -611,6 +609,95 @@ url={https://openreview.net/forum?id='''
         ))
         assert revision_stage_note
 
+    def test_withdrawal_and_desk_rejection(self, test_client, client, openreview_client, helpers):
+
+        test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+
+        ## withdraw submission
+        withdraw_note = test_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Withdrawal',
+            signatures=['EMNLP/2023/Conference/Submission5/Authors'],
+            note=openreview.api.Note(
+                content={
+                    'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Withdrawn_Submission')
+
+        withdrawn_submission = openreview_client.get_notes(invitation='EMNLP/2023/Conference/-/Withdrawn_Submission')
+        assert len(withdrawn_submission) == 1
+
+        year = datetime.datetime.now().year
+        valid_bibtex = '''@misc{
+anonymous'''+str(year)+'''test,
+title={Test Paper Title 5},
+author={Anonymous},
+year={'''+str(year)+'''},
+url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + withdrawn_submission[0].forum + '''}
+}'''
+
+        assert '_bibtex' in withdrawn_submission[0].content and withdrawn_submission[0].content['_bibtex']['value'] == valid_bibtex
+
+        messages = client.get_messages(subject='[EMNLP 2023]: Paper #5 withdrawn by paper authors')
+        assert messages and len(messages) == 3
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'pc@emnlp.org' in recipients
+
+        pc_openreview_client = openreview.api.OpenReviewClient(username='pc@emnlp.org', password=helpers.strong_password)
+
+        # reverse withdrawal
+        withdrawal_reversion_note = pc_openreview_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Withdrawal_Reversion',
+                                    signatures=['EMNLP/2023/Conference/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'revert_withdrawal_confirmation': { 'value': 'We approve the reversion of withdrawn submission.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=withdrawal_reversion_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/Submission5/-/Withdrawal_Reversion')
+
+        #desk-reject paper
+        desk_reject_note = pc_openreview_client.post_note_edit(invitation=f'EMNLP/2023/Conference/Submission5/-/Desk_Rejection',
+                                    signatures=['EMNLP/2023/Conference/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'desk_reject_comments': { 'value': 'No pdf.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/-/Desk_Rejected_Submission')
+
+        desk_rejected_submission = openreview_client.get_notes(invitation='EMNLP/2023/Conference/-/Desk_Rejected_Submission')
+        assert len(desk_rejected_submission) == 1
+
+        valid_bibtex = '''@misc{
+anonymous'''+str(year)+'''test,
+title={Test Paper Title 5},
+author={Anonymous},
+year={'''+str(year)+'''},
+url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + desk_rejected_submission[0].forum + '''}
+}'''
+
+        assert '_bibtex' in desk_rejected_submission[0].content and desk_rejected_submission[0].content['_bibtex']['value'] == valid_bibtex
+
+        desk_rejection_reversion_note = pc_openreview_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Desk_Rejection_Reversion',
+                                    signatures=['EMNLP/2023/Conference/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'revert_desk_rejection_confirmation': { 'value': 'We approve the reversion of desk-rejected submission.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_reversion_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/Submission5/-/Desk_Rejection_Reversion')
+
     def test_desk_rejection_by_SAC(self, test_client, client, openreview_client, helpers):
 
         #update desk-rejection invitation
@@ -649,7 +736,7 @@ url={https://openreview.net/forum?id='''
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Desk_Rejection-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Desk_Rejection-0-1', count=4)
         invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission1/-/Desk_Rejection')
         assert invitation.invitees == [
             'EMNLP/2023/Conference/Program_Chairs',
@@ -845,8 +932,6 @@ url={https://openreview.net/forum?id='''
                 f"EMNLP/2023/Conference/Submission{submission.number}/Reviewers",
                 f"EMNLP/2023/Conference/Submission{submission.number}/Authors"
             ]
-        #     assert submission.odate
-        #     assert '_bibtex' in submission.content
 
     def test_enable_ethics_reviewers(self, client, openreview_client, helpers):
 
@@ -881,7 +966,6 @@ url={https://openreview.net/forum?id='''
         ))
 
         helpers.await_queue()
-        helpers.await_queue(openreview_client)
 
         ethics_chairs_group = openreview_client.get_group('EMNLP/2023/Conference/Ethics_Chairs')
         assert '~Ethics_ChairOne1' in ethics_chairs_group.members
@@ -1056,7 +1140,6 @@ url={https://openreview.net/forum?id='''
         )
 
         venue.create_custom_stage()
-        helpers.await_queue(openreview_client)
 
         submissions = openreview_client.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission'}, sort='number:asc')
 

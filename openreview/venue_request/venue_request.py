@@ -2085,9 +2085,9 @@ If you would like to change your decision, please follow the link in the previou
                 'order': 4
             },            
             'compute_affinity_scores': {
-                'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically. Select the model you want to use to compute the affinity scores or "No" if you don\'t want to compute affinity scores. Refer to your expertise repository for more information on the models: https://github.com/openreview/openreview-expertise.',
+                'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically. Select the model you want to use to compute the affinity scores or "No" if you don\'t want to compute affinity scores. The model "specter2+scincl" has the best performance, refer to our expertise repository for more information on the models: https://github.com/openreview/openreview-expertise.',
                 'order': 5,
-                'value-radio': ['specter+mfr', 'specter2', 'No'],
+                'value-radio': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl','No'],
                 'required': True,
             },
             'upload_affinity_scores': {

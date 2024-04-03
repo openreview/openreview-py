@@ -663,6 +663,10 @@ class Matching(object):
     def _build_config_invitation(self, scores_specification):
         venue = self.venue
 
+        default_paper_invitation = self.alternate_matching_group if self.alternate_matching_group else (f'{venue.get_submission_id()}&content.venueid={venue.get_submission_venue_id()}' + self._get_submission_content_query())
+        if self.match_group.id == venue.get_ethics_reviewers_id():
+            default_paper_invitation = f'{venue.get_submission_id()}&content.venueid={venue.get_submission_venue_id()}' + self._get_submission_content_query() + '&content.flagged_for_ethics_review=true'
+
         config_inv = Invitation(
             id = '{}/-/{}'.format(self.match_group.id, 'Assignment_Configuration'),
             invitees = [venue.id, venue.support_user],
@@ -750,7 +754,7 @@ class Matching(object):
                                 'param': {
                                     'type': 'string',
                                     'regex': self.alternate_matching_group if self.alternate_matching_group else venue.get_submission_id() + '.*',
-                                    'default': self.alternate_matching_group if self.alternate_matching_group else (f'{venue.get_submission_id()}&content.venueid={venue.get_submission_venue_id()}' + self._get_submission_content_query()),
+                                    'default': default_paper_invitation
                                 }
                             }
                         },
@@ -1008,7 +1012,7 @@ class Matching(object):
         type_affinity_scores = type(compute_affinity_scores)
 
         if type_affinity_scores == str:
-            if compute_affinity_scores in ['specter+mfr', 'specter2']:
+            if compute_affinity_scores in ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl']:
                 invitation, matching_status = self._compute_scores(
                     venue.get_affinity_score_id(self.match_group.id),
                     submissions,

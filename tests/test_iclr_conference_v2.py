@@ -73,6 +73,10 @@ class TestICLRConference():
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
                 'Open Reviewing Policy': 'Submissions and reviews should both be public.',
                 'submission_readers': 'Everyone (submissions are public)',
+                'withdrawn_submissions_visibility': 'Yes, withdrawn submissions should be made public.',
+                'withdrawn_submissions_author_anonymity': 'Yes, author identities of withdrawn submissions should be revealed.',
+                'desk_rejected_submissions_visibility':'Yes, desk rejected submissions should be made public.',
+                'desk_rejected_submissions_author_anonymity':'Yes, author identities of desk rejected submissions should be revealed.',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
@@ -257,8 +261,8 @@ class TestICLRConference():
 
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Post_Submission-0-1', count=2)
-        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Withdrawal-0-1', count=2)
-        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Desk_Rejection-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Withdrawal-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Desk_Rejection-0-1', count=1)
 
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@iclr.cc', password=helpers.strong_password)
         submission_invitation = pc_client_v2.get_invitation('ICLR.cc/2024/Conference/-/Submission')
@@ -309,8 +313,8 @@ class TestICLRConference():
 
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Post_Submission-0-1', count=3)
-        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Withdrawal-0-1', count=3)
-        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Desk_Rejection-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Withdrawal-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Desk_Rejection-0-1', count=2)
 
         client.get_group('ICLR.cc/2024/Conference/Submission1/Reviewers')    
 
@@ -361,7 +365,77 @@ class TestICLRConference():
             )
         )
 
-        helpers.await_queue(openreview_client)        
+        helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])        
+
+    def test_submission_withdrawal(self, client, openreview_client, helpers, test_client):
+
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+
+        withdraw_note = test_client.post_note_edit(invitation='ICLR.cc/2024/Conference/Submission11/-/Withdrawal',
+                                    signatures=['ICLR.cc/2024/Conference/Submission11/Authors'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
+
+        note = test_client.get_note(withdraw_note['note']['forum'])
+        assert note
+        assert note.invitations == ['ICLR.cc/2024/Conference/-/Submission', 'ICLR.cc/2024/Conference/-/Post_Submission', 'ICLR.cc/2024/Conference/-/Withdrawn_Submission']
+        assert note.readers == ['everyone']
+        assert note.writers == ['ICLR.cc/2024/Conference', 'ICLR.cc/2024/Conference/Submission11/Authors']
+        assert note.signatures == ['ICLR.cc/2024/Conference/Submission11/Authors']
+        assert note.content['venue']['value'] == 'ICLR 2024 Conference Withdrawn Submission'
+        assert note.content['venueid']['value'] == 'ICLR.cc/2024/Conference/Withdrawn_Submission'
+        assert 'readers' not in note.content['authors']
+        assert 'readers' not in note.content['authorids']
+
+        helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2024/Conference/-/Withdrawn_Submission')
+
+        pc_openreview_client = openreview.api.OpenReviewClient(username='pc@iclr.cc', password=helpers.strong_password)
+
+        # reverse withdrawal
+        withdrawal_reversion_note = pc_openreview_client.post_note_edit(invitation='ICLR.cc/2024/Conference/Submission11/-/Withdrawal_Reversion',
+                                    signatures=['ICLR.cc/2024/Conference/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'revert_withdrawal_confirmation': { 'value': 'We approve the reversion of withdrawn submission.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=withdrawal_reversion_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2024/Conference/Submission11/-/Withdrawal_Reversion')
+
+        #desk-reject paper
+        desk_reject_note = pc_openreview_client.post_note_edit(invitation=f'ICLR.cc/2024/Conference/Submission11/-/Desk_Rejection',
+                                    signatures=['ICLR.cc/2024/Conference/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'desk_reject_comments': { 'value': 'Wrong format.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2024/Conference/-/Desk_Rejected_Submission')
+
+        note = test_client.get_note(desk_reject_note['note']['forum'])
+        assert note
+        assert note.invitations == ['ICLR.cc/2024/Conference/-/Submission', 
+                                    'ICLR.cc/2024/Conference/-/Post_Submission', 
+                                    'ICLR.cc/2024/Conference/-/Withdrawn_Submission', 
+                                    'ICLR.cc/2024/Conference/-/Desk_Rejected_Submission']
+
+        assert note.readers == ["everyone"]
+        assert note.writers == ['ICLR.cc/2024/Conference', 'ICLR.cc/2024/Conference/Submission11/Authors']
+        assert note.signatures == ['ICLR.cc/2024/Conference/Submission11/Authors']
+        assert note.content['venue']['value'] == 'ICLR 2024 Conference Desk Rejected Submission'
+        assert note.content['venueid']['value'] == 'ICLR.cc/2024/Conference/Desk_Rejected_Submission'
+        assert 'readers' not in note.content['authors']
+        assert 'readers' not in note.content['authorids']
+
+        helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2024/Conference/-/Desk_Rejected_Submission')
 
     def test_comment_stage(self, openreview_client, helpers):
 
