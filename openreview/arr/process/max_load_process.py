@@ -62,7 +62,7 @@ def process(client, edit, invitation):
         signatures=[CONFERENCE_ID],
         head=role,
         tail=user,
-        weight=int(edit.note.content['maximum_load']['value'])
+        weight=int(edit.note.content['maximum_load_this_cycle']['value'])
       )
     )
 
@@ -78,7 +78,7 @@ def process(client, edit, invitation):
     )
 
     availability_label = None
-    if 'yes' in edit.note.content['maximum_load_this_cycle_for_resubmissions']['value'].lower() and int(edit.note.content['maximum_load']['value']) == 0:
+    if 'yes' in edit.note.content['maximum_load_this_cycle_for_resubmissions']['value'].lower() and int(edit.note.content['maximum_load_this_cycle']['value']) == 0:
       availability_label = 'Only Reviewing Resubmissions'
     elif 'yes' in edit.note.content['maximum_load_this_cycle_for_resubmissions']['value'].lower():
       availability_label = 'Yes'

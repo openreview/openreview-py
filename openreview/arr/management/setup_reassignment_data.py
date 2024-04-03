@@ -185,7 +185,7 @@ def process(client, invitation):
                     invitation=role_cmp_inv,
                     head=role_id,
                     tail=id,
-                    weight=int(note.content['maximum_load']['value']),
+                    weight=int(note.content['maximum_load_this_cycle']['value']),
                     readers=track_edge_readers[role_id] + [id],
                     writers=[venue_id],
                     signatures=[venue_id]
@@ -275,7 +275,7 @@ def process(client, invitation):
                     }
                 )
                 # Handle case where user has max load 0 but accepts resubmissions
-                if id_to_load_note.get(reviewer_id) and int(id_to_load_note[reviewer_id].content['maximum_load']['value']) == 0 and 'Yes' in id_to_load_note[reviewer_id].content['maximum_load_this_cycle_for_resubmissions']['value']:
+                if id_to_load_note.get(reviewer_id) and int(id_to_load_note[reviewer_id].content['maximum_load_this_cycle']['value']) == 0 and 'Yes' in id_to_load_note[reviewer_id].content['maximum_load_this_cycle_for_resubmissions']['value']:
                     only_resubmissions.append({
                         'role': reviewers_id,
                         'name': reviewer_id
@@ -339,7 +339,7 @@ def process(client, invitation):
                     }
                 )
                 # Handle case where user has max load 0 but accepts resubmissions
-                if id_to_load_note.get(ae_id) and int(id_to_load_note[ae_id].content['maximum_load']['value']) == 0 and 'Yes' in id_to_load_note[ae_id].content['maximum_load_this_cycle_for_resubmissions']['value']:
+                if id_to_load_note.get(ae_id) and int(id_to_load_note[ae_id].content['maximum_load_this_cycle']['value']) == 0 and 'Yes' in id_to_load_note[ae_id].content['maximum_load_this_cycle_for_resubmissions']['value']:
                     only_resubmissions.append({
                         'role': area_chairs_id,
                         'name': ae_id

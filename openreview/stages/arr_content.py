@@ -1790,7 +1790,7 @@ arr_max_load_task_forum = {
 }
 
 arr_max_load_task = {
-    "maximum_load": {
+    "maximum_load_this_cycle": {
         "value": {
             "param": {
                 "input": "radio",
@@ -1871,7 +1871,7 @@ arr_reviewer_max_load_task["meta_data_donation"] = {
 }
 
 arr_ac_max_load_task = deepcopy(arr_max_load_task)
-arr_ac_max_load_task["maximum_load"] = {
+arr_ac_max_load_task["maximum_load_this_cycle"] = {
         "value": {
             "param": {
                 "input": "radio",
@@ -1885,7 +1885,7 @@ arr_ac_max_load_task["maximum_load"] = {
     }
 arr_sac_max_load_task = deepcopy(arr_max_load_task)
 del arr_sac_max_load_task["maximum_load_this_cycle_for_resubmissions"]
-arr_sac_max_load_task["maximum_load"] = {
+arr_sac_max_load_task["maximum_load_this_cycle"] = {
     "value": {
         "param": {"regex": "[0-9]{0,3}", "optional": False, "type": "string"}
     },

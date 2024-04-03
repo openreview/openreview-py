@@ -746,7 +746,7 @@ class TestARRVenueV2():
             signatures=['~Reviewer_ARROne1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load': { 'value': '0' },
+                    'maximum_load_this_cycle': { 'value': '0' },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     'next_available_month': { 'value': 'August'},
@@ -760,7 +760,7 @@ class TestARRVenueV2():
                 signatures=['~Reviewer_ARRTwo1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load': { 'value': '0' },
+                        'maximum_load_this_cycle': { 'value': '0' },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'August'}
@@ -773,7 +773,7 @@ class TestARRVenueV2():
                 signatures=['~Reviewer_ARRTwo1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load': { 'value': '0' },
+                        'maximum_load_this_cycle': { 'value': '0' },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_year': { 'value': 2024}
@@ -785,7 +785,7 @@ class TestARRVenueV2():
                 signatures=['~Reviewer_ARRTwo1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load': { 'value': '0' },
+                        'maximum_load_this_cycle': { 'value': '0' },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'September'},
@@ -798,7 +798,7 @@ class TestARRVenueV2():
                 signatures=['~Reviewer_ARRThree1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load': { 'value': '0' },
+                        'maximum_load_this_cycle': { 'value': '0' },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'No, I do not consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'July'},
@@ -811,7 +811,7 @@ class TestARRVenueV2():
                 signatures=['~Reviewer_ARRFour1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load': { 'value': '0' },
+                        'maximum_load_this_cycle': { 'value': '0' },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'August'},
@@ -824,7 +824,7 @@ class TestARRVenueV2():
                 signatures=['~Reviewer_ARRFive1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load': { 'value': '0' },
+                        'maximum_load_this_cycle': { 'value': '0' },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'July'},
@@ -837,7 +837,7 @@ class TestARRVenueV2():
             signatures=['~AC_ARROne1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load': { 'value': '0' },
+                    'maximum_load_this_cycle': { 'value': '0' },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     'next_available_month': { 'value': 'August'},
                     'next_available_year': { 'value':  2024}
@@ -849,7 +849,7 @@ class TestARRVenueV2():
             signatures=['~SAC_ARROne1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load': { 'value': '0' },
+                    'maximum_load_this_cycle': { 'value': '0' },
                     'next_available_month': { 'value': 'September'},
                     'next_available_year': { 'value':  2024}
                 }
@@ -1324,19 +1324,19 @@ class TestARRVenueV2():
         august_reviewer_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_reviewers_id()}/-/{max_load_name}")
         assert len(august_reviewer_notes) == len(migrated_reviewers)
         assert set([note.signatures[0] for note in august_reviewer_notes]) == migrated_reviewers
-        assert all(note.content['maximum_load']['value'] == '0' for note in august_reviewer_notes)
+        assert all(note.content['maximum_load_this_cycle']['value'] == '0' for note in august_reviewer_notes)
 
         migrated_acs = {'~AC_ARROne1'}
         august_ac_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_area_chairs_id()}/-/{max_load_name}")
         assert len(august_ac_notes) == len(migrated_acs)
         assert set([note.signatures[0] for note in august_ac_notes]) == migrated_acs
-        assert all(note.content['maximum_load']['value'] == '0' for note in august_ac_notes)
+        assert all(note.content['maximum_load_this_cycle']['value'] == '0' for note in august_ac_notes)
 
         migrated_sacs = {'~SAC_ARROne1'}
         august_sacs_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_senior_area_chairs_id()}/-/{max_load_name}")
         assert len(august_sacs_notes) == len(migrated_sacs)
         assert set([note.signatures[0] for note in august_sacs_notes]) == migrated_sacs
-        assert all(note.content['maximum_load']['value'] == '0' for note in august_sacs_notes)
+        assert all(note.content['maximum_load_this_cycle']['value'] == '0' for note in august_sacs_notes)
 
         august_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         august_ac_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_area_chairs_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
@@ -1371,7 +1371,7 @@ class TestARRVenueV2():
                 signatures=['~Reviewer_ARROne1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load': { 'value': '4' },
+                        'maximum_load_this_cycle': { 'value': '4' },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     }
@@ -1382,7 +1382,7 @@ class TestARRVenueV2():
             signatures=['~AC_ARRTwo1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load': { 'value': '6' },
+                    'maximum_load_this_cycle': { 'value': '6' },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' },
                 }
             )
@@ -1392,7 +1392,7 @@ class TestARRVenueV2():
             signatures=['~SAC_ARRTwo1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load': { 'value': '10' },
+                    'maximum_load_this_cycle': { 'value': '10' },
                 }
             )
         )
@@ -1418,7 +1418,7 @@ class TestARRVenueV2():
                 note=openreview.api.Note(
                     id = reviewer_note_edit['note']['id'],
                     content = {
-                        'maximum_load': { 'value': '5' },
+                        'maximum_load_this_cycle': { 'value': '5' },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     }
@@ -1430,7 +1430,7 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 id = ac_note_edit['note']['id'],
                 content = {
-                    'maximum_load': { 'value': '7' },
+                    'maximum_load_this_cycle': { 'value': '7' },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
                 }
             )
@@ -1441,7 +1441,7 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 id = sac_note_edit['note']['id'],
                 content = {
-                    'maximum_load': { 'value': '11' }
+                    'maximum_load_this_cycle': { 'value': '11' }
                 }
             )
         )
@@ -1468,7 +1468,7 @@ class TestARRVenueV2():
                     id = reviewer_note_edit['note']['id'],
                     ddate = openreview.tools.datetime_millis(now),
                     content = {
-                        'maximum_load': { 'value': '5' },
+                        'maximum_load_this_cycle': { 'value': '5' },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     }
@@ -1481,7 +1481,7 @@ class TestARRVenueV2():
                 id = ac_note_edit['note']['id'],
                 ddate = openreview.tools.datetime_millis(now),
                 content = {
-                    'maximum_load': { 'value': '7' },
+                    'maximum_load_this_cycle': { 'value': '7' },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
                 }
             )
@@ -1493,7 +1493,7 @@ class TestARRVenueV2():
                 id = sac_note_edit['note']['id'],
                 ddate = openreview.tools.datetime_millis(now),
                 content = {
-                    'maximum_load': { 'value': '11' }
+                    'maximum_load_this_cycle': { 'value': '11' }
                 }
             )
         )
@@ -1518,7 +1518,7 @@ class TestARRVenueV2():
             signatures=['~Reviewer_ARRFive1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load': { 'value': '0' },
+                    'maximum_load_this_cycle': { 'value': '0' },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' },
                     'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                 }
@@ -1529,7 +1529,7 @@ class TestARRVenueV2():
             signatures=['~AC_ARRThree1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load': { 'value': '0' },
+                    'maximum_load_this_cycle': { 'value': '0' },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
                 }
             )
@@ -1541,7 +1541,7 @@ class TestARRVenueV2():
             signatures=['~AC_ARRTwo1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load': { 'value': '6' },
+                    'maximum_load_this_cycle': { 'value': '6' },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
                 }
             )
@@ -2589,9 +2589,9 @@ class TestARRVenueV2():
         load_notes = pc_client_v2.get_all_notes(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request')
         for note in load_notes:
             if note.signatures[0] == '~Reviewer_ARRFive1':
-                assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load']['value']) + 1
+                assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load_this_cycle']['value']) + 1
                 continue
-            assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load']['value'])
+            assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load_this_cycle']['value'])
 
         cmp_edges = {
             g['id']['tail'] : g['values'][0]
@@ -2600,9 +2600,9 @@ class TestARRVenueV2():
         load_notes = pc_client_v2.get_all_notes(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Max_Load_And_Unavailability_Request')
         for note in load_notes:
             if note.signatures[0] == '~AC_ARRThree1':
-                assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load']['value']) + 1
+                assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load_this_cycle']['value']) + 1
                 continue
-            assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load']['value'])
+            assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load_this_cycle']['value'])
 
         # Check for seniority edges
         seniority_edges = {
@@ -3608,7 +3608,7 @@ class TestARRVenueV2():
             signatures=['~Reviewer_ARROne1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load': { 'value': '4' },
+                    'maximum_load_this_cycle': { 'value': '4' },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                 }
