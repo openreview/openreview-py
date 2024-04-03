@@ -665,7 +665,7 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
 
-        messages = client.get_messages(to='reviewer_one_tilde@mail.com')
+        messages = client.get_messages(to='reviewer_one_tilde@mail.com', subject="[TestVenue@OR'2030] Invitation to serve as Reviewer")
         assert messages and len(messages) == 1
 
         assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
@@ -680,7 +680,7 @@ class TestVenueRequest():
         assert messages and len(messages) == 1
         assert 'Please complete your registration and expertise selection tasks here: https://openreview.net/tasks' in messages[0]['content']['text']
 
-        messages = client.get_messages(to='reviewer_two_tilde@mail.com')
+        messages = client.get_messages(to='reviewer_two_tilde@mail.com', subject="[TestVenue@OR'2030] Invitation to serve as Reviewer")
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
         assert messages[0]['content']['text'].startswith('Dear Reviewer TwoTilde,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
@@ -825,7 +825,7 @@ class TestVenueRequest():
 
         helpers.await_queue()
 
-        messages = client.get_messages(to='reviewer_three_tilde@mail.com')
+        messages = client.get_messages(to='reviewer_three_tilde@mail.com', subject="[TestVenue@OR'2030 Modified] Invitation to serve as Reviewer")
         assert messages and len(messages) == 1
 
         assert messages[0]['content']['subject'] == "[TestVenue@OR'2030 Modified] Invitation to serve as Reviewer"
@@ -851,11 +851,11 @@ class TestVenueRequest():
         assert remind_recruitment_note
         helpers.await_queue()
 
-        messages = client.get_messages(to='reviewer_three_tilde@mail.com')
-        assert messages and len(messages) == 2
+        messages = client.get_messages(to='reviewer_three_tilde@mail.com', subject="Reminder: [TestVenue@OR'2030 Modified] Invitation to serve as Reviewer")
+        assert messages and len(messages) == 1
 
-        assert messages[1]['content']['subject'] == "Reminder: [TestVenue@OR'2030 Modified] Invitation to serve as Reviewer"
-        assert "You have been nominated by the program chair committee of TestVenue@OR'2030 Modified to serve as Reviewer." in messages[1]['content']['text']
+        assert messages[0]['content']['subject'] == "Reminder: [TestVenue@OR'2030 Modified] Invitation to serve as Reviewer"
+        assert "You have been nominated by the program chair committee of TestVenue@OR'2030 Modified to serve as Reviewer." in messages[0]['content']['text']
 
         venue_revision_note = test_client.post_note(openreview.Note(
             content={

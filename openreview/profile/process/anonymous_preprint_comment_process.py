@@ -29,6 +29,6 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
         recipients=[paper_authors_id],
         ignoreRecipients=[edit.tauthor],
         subject=f'''[Anonymous Preprint Server] {pretty_signature} commented on your submission. Paper Title: "{submission.content['title']['value']}"''',
-        message=f'''{pretty_signature} commented on your submission.{content}'''
+        message=f'''{pretty_signature} commented on your submission.{content}''',
         signature=submission.domain
     )

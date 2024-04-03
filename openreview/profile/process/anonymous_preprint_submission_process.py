@@ -71,6 +71,6 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
         subject=author_subject,
         message=author_message,
         recipients=note.content['authorids']['value'],
-        ignoreRecipients=[edit.tauthor]
+        ignoreRecipients=[edit.tauthor],
         signature=venue_id
     )
