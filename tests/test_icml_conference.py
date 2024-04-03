@@ -4497,7 +4497,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         venue.create_custom_stage()
 
-        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review_Agreement')) == 1
+        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review_Agreement')) == 2
 
         sac_client = openreview.api.OpenReviewClient(username = 'sac2@icml.cc', password=helpers.strong_password)
         submissions = sac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
