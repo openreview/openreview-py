@@ -4372,12 +4372,18 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         venue.create_meta_review_stage()
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Position_Paper_Meta_Review-0-1', count=1)
 
-        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Position_Paper_Meta_Review')) == 50
+        invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Position_Paper_Meta_Review')
+        assert len(invitations) == 50
+
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Meta_Review')
         assert invitation
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Meta_Review')
+        assert invitation.edit['note']['id']['param']['withInvitation'] == invitations[0].id
         assert 'metareview' in invitation.edit['note']['content']
         assert 'suggestions' not in invitation.edit['note']['content']
+
+        invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review_SAC_Revision')
+        assert len(invitations) == 2
+        assert invitation.edit['note']['id']['param']['withInvitation'] == invitations[0].id
 
         ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
