@@ -4343,12 +4343,17 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         venue.create_meta_review_stage()
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Meta_Review-0-1', count=1)
 
-        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review')) == 50
+        invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review')
+        assert len(invitations) == 50
+
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Meta_Review')
+        assert invitation
+        assert invitation.edit['note']['id']['param']['withInvitation'] == invitations[0].id
         assert 'suggestions' in invitation.edit['note']['content']
 
         invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review_SAC_Revision')
         assert len(invitations) == 50
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Meta_Review_SAC_Revision')
         assert invitation.edit['note']['id']['param']['withInvitation'] == invitations[0].id
 
         # duedate + 2 days
@@ -4388,6 +4393,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Position_Paper_Meta_Review_SAC_Revision')
         assert len(invitations) == 50
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Meta_Review_SAC_Revision')
         assert invitation.edit['note']['id']['param']['withInvitation'] == invitations[0].id
 
         ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password=helpers.strong_password)
