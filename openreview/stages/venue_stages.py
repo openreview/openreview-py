@@ -1086,7 +1086,7 @@ class MetaReviewStage(object):
         REVIEWERS_SUBMITTED = 2
         NO_REVIEWERS = 3
 
-    def __init__(self, name='Meta_Review', start_date = None, due_date = None, exp_date = None, public = False, release_to_authors = False, release_to_reviewers = Readers.NO_REVIEWERS, additional_fields = {}, remove_fields=[], process = None, recommendation_field_name = 'recommendation'):
+    def __init__(self, name='Meta_Review', start_date = None, due_date = None, exp_date = None, public = False, release_to_authors = False, release_to_reviewers = Readers.NO_REVIEWERS, additional_fields = {}, remove_fields=[], process = None, recommendation_field_name = 'recommendation', source_submissions_query = {}, child_invitations_name = 'Meta_Review'):
 
         self.start_date = start_date
         self.due_date = due_date
@@ -1101,6 +1101,8 @@ class MetaReviewStage(object):
         self.recommendation_field_name = recommendation_field_name
         self.process_path = 'process/metareview_process.py'
         self.preprocess_path = None        
+        self.source_submissions_query = source_submissions_query
+        self.child_invitations_name = child_invitations_name
 
     def _get_reviewer_readers(self, conference, number):
         if self.release_to_reviewers is MetaReviewStage.Readers.REVIEWERS:
