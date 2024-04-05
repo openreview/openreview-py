@@ -3246,6 +3246,9 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         helpers.await_queue()
 
+        configuration_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Ethics_Reviewers/-/Assignment_Configuration')
+        assert configuration_invitation.edit['note']['content']['paper_invitation']['value']['param']['default'] == 'ICML.cc/2023/Conference/-/Submission&content.venueid=ICML.cc/2023/Conference/Submission&content.flagged_for_ethics_review=true'
+
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
         notes = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', number=[1,5])
         for note in notes:
