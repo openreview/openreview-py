@@ -53,7 +53,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
 
     #email tauthor
     client.post_message(
-        recipients=note.signatures,
+        recipients=[edit.tauthor],
         replyTo=contact,
         subject=f'''[{short_name}] Your {invitation_name} has been received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
         message=f'''We have received your {invitation_name} on a submission to {short_name}.
