@@ -4345,16 +4345,15 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review')
         assert len(invitations) == 50
+        assert invitations[0].edit['note']['id']['param']['withInvitation'] == invitations[0].id
 
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Meta_Review')
         assert invitation
-        assert invitation.edit['note']['id']['param']['withInvitation'] == invitations[0].id
         assert 'suggestions' in invitation.edit['note']['content']
 
         invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review_SAC_Revision')
         assert len(invitations) == 50
-        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Meta_Review_SAC_Revision')
-        assert invitation.edit['note']['id']['param']['withInvitation'] == invitations[0].id
+        assert invitations[0].edit['note']['id']['param']['withInvitation'] == invitations[0].id
 
         # duedate + 2 days
         exp_date = invitation.duedate + (2*24*60*60*1000)
@@ -4384,17 +4383,16 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Position_Paper_Meta_Review')
         assert len(invitations) == 50
+        assert invitations[0].edit['note']['id']['param']['withInvitation'] == invitations[0].id
 
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Meta_Review')
         assert invitation
-        assert invitation.edit['note']['id']['param']['withInvitation'] == invitations[0].id
         assert 'metareview' in invitation.edit['note']['content']
         assert 'suggestions' not in invitation.edit['note']['content']
 
         invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Position_Paper_Meta_Review_SAC_Revision')
         assert len(invitations) == 50
-        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Meta_Review_SAC_Revision')
-        assert invitation.edit['note']['id']['param']['withInvitation'] == invitations[0].id
+        assert invitations[0].edit['note']['id']['param']['withInvitation'] == invitations[0].id
 
         ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
