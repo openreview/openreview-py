@@ -4610,7 +4610,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
                 id=metareviews[0].id,
                 content={
                     'metareview': { 'value': 'I reverted the AC decision' },
-                    'recommendation': { 'value': 'Accept'}
+                    'recommendation': { 'value': 'Accept (Oral)'}
                 }
             )
         )
