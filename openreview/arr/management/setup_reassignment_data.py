@@ -442,28 +442,5 @@ def process(client, invitation):
             )
     client.delete_edges(invitation=seniority_inv, wait_to_finish=True, soft_delete=True)
     openreview.tools.post_bulk_edges(client, seniority_edges)
-            
-    # 7) Post author in cycle edges
-    authors = set()
-    authors_inv = f"{reviewers_id}/-/{authors_in_cycle_name}"
-    for submission in submissions:
-        authors.update(
-            set(
-                [name_to_id[name] for name in submission.content['reviewing_volunteers']['value']]
-            )
-        )
-    author_edges = [
-        openreview.api.Edge(
-            invitation=authors_inv,
-            head=reviewers_id,
-            tail=user,
-            readers=track_edge_readers[reviewers_id] + [user],
-            writers=[venue_id],
-            signatures=[venue_id]
-        ) for user in authors
-    ]
-    client.delete_edges(invitation=authors_inv, wait_to_finish=True, soft_delete=True)
-    openreview.tools.post_bulk_edges(client, author_edges)
-
 
 

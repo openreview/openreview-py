@@ -1675,8 +1675,6 @@ class TestARRVenueV2():
                     'abstract': { 'value': 'This is an abstract ' + str(i) },
                     'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i % 10]] },
                     'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
-                    'reviewing_volunteers': { 'value': ['~SomeFirstName_User1']},
-                    'reviewing_no_volunteers_reason': { 'value': 'N/A - An author was provided in the previous question.'},
                     'TLDR': { 'value': 'This is a tldr ' + str(i) },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'paper_type': { 'value': 'Short' },
@@ -1725,6 +1723,20 @@ class TestARRVenueV2():
                     "section_2_permission_to_publish_peer_reviewers_content_agreement": { 'value': "Authors grant permission for ACL to publish peer reviewers' content" }
                 }
             )
+
+            if i % 2 == 0:
+                note.content['reviewing_volunteers'] = { 'value': ['~SomeFirstName_User1']}
+                note.content['reviewing_no_volunteers_reason'] = { 'value': 'N/A - An author was provided in the previous question.'}
+            else:
+                note.content['reviewing_no_volunteers_reason'] = {
+                    'value': random.choice([
+                        "All authors are new to the ACL community.",
+                        "None of the authors are sufficiently qualified to review.",
+                        "All qualified authors are already involved in the reviewing process in some capacity (as Area Chairs, as Senior Area Chairs, etc.).",
+                        "Another reason - if you select this option the editors may contact you to confirm the reason is suitable."
+                    ])
+                }
+
             if i == 1 or i == 101:
                 note.content['authors']['value'].append('SAC ARROne')
                 note.content['authorids']['value'].append('~SAC_ARROne1')
@@ -2163,12 +2175,12 @@ class TestARRVenueV2():
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict')
 
-        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict') == 12 + 101 # All 6 reviewers will conflict with submissions 1/101 because of domain of SAC
+        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict') == 12 # All 6 reviewers will conflict with submissions 1/101 because of domain of SAC
         ## Extra 101 conflicts from new reviewer which is an author of all submissions
 
         affinity_scores =  openreview_client.get_grouped_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Affinity_Score', groupby='id')
         assert affinity_scores
-        assert len(affinity_scores) == 101 * 7 ## submissions * reviewers
+        assert len(affinity_scores) == 101 * 6 ## submissions * reviewers
 
         # Post assignment configuration notes
         openreview_client.post_note_edit(
@@ -2254,7 +2266,7 @@ class TestARRVenueV2():
         openreview.tools.post_bulk_edges(openreview_client, ac_edges_to_post)
 
         assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Aggregate_Score', label='ae-assignments') == 101 * 3
-        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score', label='reviewer-assignments') == 101 * 7
+        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score', label='reviewer-assignments') == 101 * 6
 
 
     def test_resubmission_and_track_matching_data(self, client, openreview_client, helpers, test_client, request_page, selenium):
@@ -2612,12 +2624,6 @@ class TestARRVenueV2():
         assert set(seniority_edges.keys()) == {'~Reviewer_ARROne1'}
         assert seniority_edges['~Reviewer_ARROne1']['label'] == 'Senior'
 
-        # Check for author in cycle edges
-        author_edges = {
-            g['id']['tail'] : g['values'][0]
-            for g in pc_client_v2.get_grouped_edges(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Author_In_Current_Cycle', select='head,id,weight,label', groupby='tail')
-        }
-        assert set(author_edges.keys()) == {'~SomeFirstName_User1'}
 
     def test_sae_ae_assignments(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
