@@ -213,6 +213,8 @@ class GroupBuilder(object):
             content['senior_area_chairs_assignment_id'] = { 'value': self.venue.get_assignment_id(self.venue.get_senior_area_chairs_id(), deployed=True) }
             content['senior_area_chairs_affinity_score_id'] = { 'value': self.venue.get_affinity_score_id(self.venue.get_senior_area_chairs_id()) }
             content['senior_area_chairs_name'] = { 'value': self.venue.senior_area_chairs_name }
+            content['sac_paper_assignments'] = { 'value': self.venue.sac_paper_assignments}
+            content['senior_area_chairs_conflict_id'] = { 'value': self.venue.get_conflict_score_id(self.venue.get_senior_area_chairs_id()) }
 
         if self.venue.bid_stages:
             content['bid_name'] = { 'value': self.venue.bid_stages[0].name }
