@@ -1,5 +1,6 @@
 import csv
 import json
+import os
 from json import tool
 import datetime
 from io import StringIO
@@ -329,6 +330,18 @@ class ARR(object):
 
     def setup(self, program_chair_ids=[], publication_chairs_ids=[]):
         setup_value = self.venue.setup(program_chair_ids, publication_chairs_ids)
+
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
+            content = f.read()
+            self.client.post_group_edit(
+                invitation=self.get_meta_invitation_id(),
+                signatures=[self.venue_id],
+                group=openreview.api.Group(
+                    id=self.venue_id,
+                    web=content
+                )
+            )
+
         setup_arr_invitations(self.invitation_builder)
         return setup_value
 

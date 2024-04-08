@@ -284,6 +284,33 @@ class TestVenueRequest():
         last_comment = client.get_notes(invitation=comment_invitation, sort='tmdate')[-1]
         assert 'V2.cc/2022/Conference/Program_Chairs' in last_comment.readers
 
+        venue = openreview.helpers.get_conference(client, request_form_note.id, setup=False)
+        meta_invitation = openreview_client.get_invitation('V2.cc/2022/Conference/-/Edit')
+        assert meta_invitation
+        assert 'invitation_edit_script' in meta_invitation.content
+
+        process = venue.invitation_builder.get_process_content('process/invitation_edit_process.py')
+        assert process == meta_invitation.content['invitation_edit_script']['value']
+
+        # post edit to edit the invitation_edit_process
+        openreview_client.post_invitation_edit(
+            invitations=None,
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id=meta_invitation.id,
+                content={
+                    'invitation_edit_script': {
+                        'value': 'def process(client, invitation, existing_invitation):\n    pass'
+                    }
+                },
+                edit=True
+            )
+        )
+
+        meta_invitation = openreview_client.get_invitation('V2.cc/2022/Conference/-/Edit')
+        assert process != meta_invitation.content['invitation_edit_script']['value']
+        assert meta_invitation.content['invitation_edit_script']['value'] == 'def process(client, invitation, existing_invitation):\n    pass'
+
         #test revision pre-process
 
         venue_revision_note = openreview.Note(
@@ -313,7 +340,6 @@ class TestVenueRequest():
         signatures=['~ProgramChair_User1'],
         writers=[]
         )
-
         client.post_note(venue_revision_note)
 
         venue_revision_note.content['abstract_registration_deadline'] = (now - datetime.timedelta(days=1)).strftime('%Y/%m/%d %H:%M')
@@ -331,6 +357,10 @@ class TestVenueRequest():
         assert not error_comments
 
         assert openreview_client.get_invitation('V2.cc/2022/Conference/-/Submission_Test')
+
+        #check invitation_edit_process was updated afetr posting a Revision
+        meta_invitation = openreview_client.get_invitation('V2.cc/2022/Conference/-/Edit')
+        assert process == meta_invitation.content['invitation_edit_script']['value']
 
         venue = openreview.helpers.get_conference(client, request_form_note.id, setup=False)
         assert venue.submission_stage.withdrawn_submission_public == False

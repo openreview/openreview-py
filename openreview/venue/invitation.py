@@ -44,6 +44,14 @@ class InvitationBuilder(object):
     funcs['process'](client, invitation)
 '''
 
+    def _should_update_meta_invitation(self, invitation):
+        if 'invitation_edit_script' not in invitation.content or 'group_edit_script' not in invitation.content:
+            return True
+        if invitation.content['invitation_edit_script']['value'] != self.get_process_content('process/invitation_edit_process.py'):
+            return True
+        if invitation.content['group_edit_script']['value'] != self.get_process_content('process/group_edit_process.py'):
+            return True
+
     def save_invitation(self, invitation, replacement=None):
         self.client.post_invitation_edit(invitations=self.venue.get_meta_invitation_id(),
             readers=[self.venue_id],
@@ -85,12 +93,12 @@ class InvitationBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
             process = f.read()
             return process
-
+        
     def set_meta_invitation(self):
         venue_id=self.venue_id
         meta_invitation = openreview.tools.get_invitation(self.client, self.venue.get_meta_invitation_id())
         
-        if meta_invitation is None or 'invitation_edit_script' not in meta_invitation.content or 'group_edit_script' not in meta_invitation.content:
+        if meta_invitation is None or self._should_update_meta_invitation(meta_invitation):
             self.client.post_invitation_edit(invitations=None,
                 readers=[venue_id],
                 writers=[venue_id],
@@ -792,6 +800,13 @@ class InvitationBuilder(object):
 
         content = meta_review_stage.get_content(api_version='2', conference=self.venue)
 
+        previous_query = {}
+        invitation = tools.get_invitation(self.client, meta_review_invitation_id)
+        if invitation:
+            previous_query = invitation.content.get('source_submissions_query', {}).get('value', {})
+
+        source_submissions_query = meta_review_stage.source_submissions_query if meta_review_stage.source_submissions_query else previous_query
+
         invitation = Invitation(id=meta_review_invitation_id,
             invitees=[venue_id],
             readers=[venue_id],
@@ -825,7 +840,7 @@ class InvitationBuilder(object):
                 },
                 'replacement': True,
                 'invitation': {
-                    'id': self.venue.get_invitation_id(meta_review_stage.name, '${2/content/noteNumber/value}'),
+                    'id': self.venue.get_invitation_id(meta_review_stage.child_invitations_name, '${2/content/noteNumber/value}'),
                     'signatures': [ venue_id ],
                     'readers': ['everyone'],
                     'writers': [venue_id],
@@ -845,7 +860,7 @@ class InvitationBuilder(object):
                         'note': {
                             'id': {
                                 'param': {
-                                    'withInvitation': self.venue.get_invitation_id(meta_review_stage.name, '${6/content/noteNumber/value}'),
+                                    'withInvitation': self.venue.get_invitation_id(meta_review_stage.child_invitations_name, '${6/content/noteNumber/value}'),
                                     'optional': True
                                 }
                             },
@@ -901,7 +916,12 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['duedate'] = meta_review_duedate
 
         if meta_review_expdate:
-            invitation.edit['invitation']['expdate'] = meta_review_expdate         
+            invitation.edit['invitation']['expdate'] = meta_review_expdate
+
+        if source_submissions_query:
+            invitation.content['source_submissions_query'] = {
+                'value': source_submissions_query
+            }
 
         self.save_invitation(invitation, replacement=False)
 
@@ -942,7 +962,7 @@ class InvitationBuilder(object):
                     },
                     'replacement': True,
                     'invitation': {
-                        'id': self.venue.get_invitation_id(meta_review_stage.name + '_SAC_Revision', '${2/content/noteNumber/value}'),
+                        'id': self.venue.get_invitation_id(meta_review_stage.child_invitations_name + '_SAC_Revision', '${2/content/noteNumber/value}'),
                         'signatures': [ venue_id ],
                         'readers': ['everyone'],
                         'writers': [venue_id],
@@ -962,7 +982,7 @@ class InvitationBuilder(object):
                             'note': {
                                 'id': {
                                     'param': {
-                                        'withInvitation': self.venue.get_invitation_id(meta_review_stage.name, '${6/content/noteNumber/value}')
+                                        'withInvitation': self.venue.get_invitation_id(meta_review_stage.child_invitations_name, '${6/content/noteNumber/value}')
                                     }
                                 },
                                 'forum': '${4/content/noteId/value}',
@@ -975,6 +995,11 @@ class InvitationBuilder(object):
 
             if meta_review_expdate:
                 invitation.edit['invitation']['expdate'] = meta_review_expdate
+
+            if source_submissions_query:
+                invitation.content['source_submissions_query'] = {
+                    'value': source_submissions_query
+                }
 
             self.save_invitation(invitation, replacement=False)
 
