@@ -4,111 +4,72 @@ def process(client, edit, invitation):
     venue_id = domain.id
     short_name = domain.get_content_value('subtitle')
     contact = domain.get_content_value('contact')
-    authors_name = domain.get_content_value('authors_name')
-    submission_name = domain.get_content_value('submission_name')
-    reviewers_name = domain.get_content_value('reviewers_name')
-    reviewers_anon_name = domain.get_content_value('reviewers_anon_name')
-    reviewers_submitted_name = domain.get_content_value('reviewers_submitted_name')
+    meta_invitation_id = domain.get_content_value('meta_invitation_id')
 
     submission = client.get_note(edit.note.forum)
     comment = client.get_note(edit.note.id)
-    paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
 
-    ### TODO: Fix this, we should notify the use when the review is updated
-    if comment.tcdate != comment.tmdate:
-        return    
+    if comment.number == 1:
+        print('Send initial comment email')
 
-    ignore_groups = comment.nonreaders if comment.nonreaders else []
-    ignore_groups.append(edit.tauthor)
-
-    signature = comment.signatures[0].split('/')[-1]
-    pretty_signature = openreview.tools.pretty_id(signature)
-    pretty_signature = 'An author' if pretty_signature == 'Authors' else pretty_signature
-
-    content = f'''
-    
-Paper number: {submission.number}
-
-Message: {comment.content['message']['value']}
-
-To view the comment, click here: https://openreview.net/forum?id={submission.id}&noteId={comment.id}'''
-
-    program_chairs_id = domain.get_content_value('program_chairs_id')
-    if domain.get_content_value('comment_email_pcs') and (program_chairs_id in comment.readers or 'everyone' in comment.readers):
         client.post_message(
-            recipients=[program_chairs_id],
-            ignoreRecipients = ignore_groups,
-            subject=f'''[{short_name}] {pretty_signature} commented on a paper. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''{pretty_signature} commented on a paper for which you are serving as Program Chair.{content}'''
+            subject = f'[{short_name}] New conversation in comittee members chat for submission {submission.number}: {submission.content["title"]["value"]}',
+            recipients = comment.readers,
+            message = f'''Hi {{{{fullname}}}},
+            
+A new conversation has been started in the {short_name} forum for submission {submission.number}: {submission.content['title']['value']}
+
+You can view the conversation here: https://openreview.net/forum?id={submission.id}&noteId={comment.id}#committee-chat
+''',
+            replyTo = contact,
+            ignoreRecipients = comment.signatures
         )
 
-    senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
-    paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'
-    email_SAC = len(comment.readers)==3 and paper_senior_area_chairs_id in comment.readers and program_chairs_id in comment.readers
-    if senior_area_chairs_name and email_SAC:
-        client.post_message(
-            recipients=[paper_senior_area_chairs_id],
-            ignoreRecipients = ignore_groups,
-            subject=f'''[{short_name}] {pretty_signature} commented on a paper in your area. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''{pretty_signature} commented on a paper for which you are serving as Senior Area Chair.{content}''',
-            replyTo=contact
-        )
-
-    area_chairs_name = domain.get_content_value('area_chairs_name')
-    paper_area_chairs_id = f'{paper_group_id}/{area_chairs_name}'
-    if area_chairs_name and (paper_area_chairs_id in comment.readers or 'everyone' in comment.readers):
-        client.post_message(
-            recipients=[paper_area_chairs_id],
-            ignoreRecipients=ignore_groups,
-            subject=f'''[{short_name}] {pretty_signature} commented on a paper in your area. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''{pretty_signature} commented on a paper for which you are serving as Area Chair.{content}''',
-            replyTo=contact
-        )
-
-    paper_reviewers_id = f'{paper_group_id}/{reviewers_name}'
-    paper_reviewers_submitted_id = f'{paper_reviewers_id}/{reviewers_submitted_name}'
-    if 'everyone' in comment.readers or paper_reviewers_id in comment.readers:
-        client.post_message(
-            recipients=[paper_reviewers_id],
-            ignoreRecipients=ignore_groups,
-            subject=f'''[{short_name}] {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''{pretty_signature} commented on a paper for which you are serving as Reviewer.{content}''',
-            replyTo=contact
-        )
-    elif paper_reviewers_submitted_id in comment.readers:
-        client.post_message(
-            recipients=[paper_reviewers_submitted_id],
-            ignoreRecipients=ignore_groups,
-            subject=f'''[{short_name}] {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''{pretty_signature} commented on a paper for which you are serving as Reviewer.{content}''',
-            replyTo=contact
-        )
-    else:
-        anon_reviewers = [reader for reader in comment.readers if reader.find(reviewers_anon_name) >=0]
-        if anon_reviewers:
-            client.post_message(
-                recipients=anon_reviewers,
-                ignoreRecipients=ignore_groups,
-                subject=f'''[{short_name}] {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-                message=f'''{pretty_signature} commented on a paper for which you are serving as Reviewer.{content}''',
-                replyTo=contact
+        client.post_invitation_edit (
+            invitations=meta_invitation_id,
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=invitation.id,
+                content={
+                    'last_notified_id': { 'value': comment.id }
+                }
             )
+        )
 
-    #send email to author of comment
-    client.post_message(
-        recipients=[edit.tauthor] if edit.tauthor != 'OpenReview.net' else [],
-        subject=f'''[{short_name}] Your comment was received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-        message=f'''Your comment was received on a submission to {short_name}.{content}''',
-        replyTo=contact
-    )
+    else:
 
-    #send email to paper authors
-    paper_authors_id = f'{paper_group_id}/{authors_name}'
-    if paper_authors_id in comment.readers or 'everyone' in comment.readers:
+        print('Send follow up comment email')
+
+        last_notified_id = invitation.content.get('last_notified_id', {}).get('value') if invitation.content else None
+
+        last_notified_comment = client.get_note(last_notified_id) if last_notified_id else comment
+
+        new_comments = client.get_notes(invitation=invitation.id, forum=submission.id, mintcdate=last_notified_comment.tcdate, sort='tcdate:asc')
+
+        print(f'New comments: {len(new_comments)}')
+        if len(new_comments) < 5:
+            return
+        
         client.post_message(
-            recipients=submission.content['authorids']['value'],
-            ignoreRecipients=ignore_groups,
-            subject=f'''[{short_name}] {pretty_signature} commented on your submission. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''{pretty_signature} commented on your submission.{content}''',
-            replyTo=contact
+            subject = f'[{short_name}] New messages in comittee members chat for submission {submission.number}: {submission.content["title"]["value"]}',
+            recipients = comment.readers,
+            message = f'''Hi {{{{fullname}}}},
+            
+New comments have been posted for the conversation in the {short_name} forum for submission {submission.number}: {submission.content['title']['value']}
+
+You can view the conversation here: https://openreview.net/forum?id={submission.id}&noteId={new_comments[0].id}#committee-chat
+''',
+            replyTo = contact,
+            ignoreRecipients = comment.signatures
+        )
+
+        client.post_invitation_edit (
+            invitations=meta_invitation_id,
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=invitation.id,
+                content={
+                    'last_notified_id': { 'value': comment.id }
+                }
+            )
         )
