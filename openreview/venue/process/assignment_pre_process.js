@@ -9,10 +9,6 @@ async function process(client, edge, invitation) {
   const reviewersAnonName = invitation.content.reviewers_anon_name?.value
   const reviewersName = invitation.content.reviewers_name?.value
 
-  if (!reviewName) {
-    return
-  }
-
   const { notes } = await client.getNotes({ id: edge.head })
   const submission = notes[0]
   const submissionGroupId = `${venueId}/${submissionName}${submission.number}`
@@ -25,18 +21,17 @@ async function process(client, edge, invitation) {
     return
   }
 
-  const { groups: anonGroups, count: groupCount } = await client.getGroups({ prefix: `${submissionGroupId}/${reviewersAnonName}`, signatory: edge.tail })
+  if (reviewersAnonName) {
+    const { groups: anonGroups, count: groupCount } = await client.getGroups({ prefix: `${submissionGroupId}/${reviewersAnonName}`, signatory: edge.tail })
 
-  if (groupCount === 0) { 
-    return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can remove assignment, signatory groups not found for ${edge.tail}` }))
+    if (groupCount === 0) { 
+      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can remove assignment, signatory groups not found for ${edge.tail}` }))
+    }
+
+    const { count: noteCount } = await client.getNotes({ invitation: `${submissionGroupId}/-/` + reviewName, signatures: anonGroups[0].id })
+
+    if (noteCount > 0) {
+      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not remove assignment, the user ${edge.tail} already posted a ${reviewName.replace('_', ' ')}` }))
+    }
   }
-
-  const { count: noteCount } = await client.getNotes({ invitation: `${submissionGroupId}/-/` + reviewName, signatures: anonGroups[0].id })
-
-  if (noteCount > 0) {
-    return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not remove assignment, the user ${edge.tail} already posted a ${reviewName.replace('_', ' ')}` }))
-  }
-
-
 }
-
