@@ -15,6 +15,7 @@ from openreview.venue import matching
 from openreview.stages.arr_content import (
     arr_submission_content,
     hide_fields,
+    hide_fields_from_public,
     arr_registration_task_forum,
     arr_registration_task,
     arr_content_license_task_forum,
@@ -97,6 +98,7 @@ class TestARRVenueV2():
                 'contact_email': 'editors@aclrollingreview.org',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
+                'senior_area_chairs_assignment': 'Submissions',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/08/01',
@@ -229,7 +231,7 @@ class TestARRVenueV2():
         submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Submission')
         assert submission_invitation
         assert 'existing_preprints' in submission_invitation.edit['note']['content']
-        assert 'A1' in submission_invitation.edit['note']['content']
+        assert 'A1_limitations_section' in submission_invitation.edit['note']['content']
         assert 'paper_type' in submission_invitation.edit['note']['content']
         assert 'keywords' not in submission_invitation.edit['note']['content']
 
@@ -349,6 +351,7 @@ class TestARRVenueV2():
                 'contact_email': 'editors@aclrollingreview.org',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
+                'senior_area_chairs_assignment': 'Submissions',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/06/01',
@@ -468,26 +471,47 @@ class TestARRVenueV2():
                 'abstract': { 'value': 'This is an abstract ' },
                 'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@meta.com']},
                 'reviewing_volunteers': { 'value': ['~SomeFirstName_User1']},
+                'reviewing_no_volunteers_reason': { 'value': 'N/A - An author was provided in the previous question.'},
                 'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
                 'TLDR': { 'value': 'This is a tldr '},
                 'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                'paper_type': { 'value': 'short' },
+                'paper_type': { 'value': 'Short' },
                 'research_area': { 'value': 'Generation' },
+                'research_area_keywords': { 'value': 'A keyword' },
                 'languages_studied': { 'value': 'A language' },
+                'reassignment_request_action_editor': { 'value': 'This is not a resubmission' },
+                'reassignment_request_reviewers': { 'value': 'This is not a resubmission' },
                 'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
                 'data': {'value': '/pdf/' + 'p' * 40 +'.zip' },
                 'preprint': { 'value': 'yes'},
+                'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one.'},
                 'existing_preprints': { 'value': 'existing_preprints' },
                 'preferred_venue': { 'value': 'ACL Conference' },
                 'consent_to_share_data': { 'value': 'yes' },
                 'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
-                "A1": { 'value': 'yes' },
-                "A2": { 'value': 'yes' },
-                "A3": { 'value': 'yes' },
-                "B": { 'value': 'yes' },
-                "C": { 'value': 'yes' },
-                "D": { 'value': 'yes' },
-                "E": { 'value': 'yes' },
+                "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
+                "A2_potential_risks": { 'value': 'Yes' },
+                "A3_abstract_and_introduction_summarize_claims": { 'value': 'Yes' },
+                "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
+                "B1_cite_creators_of_artifacts": { 'value': 'Yes' },
+                "B2_discuss_the_license_for_artifacts": { 'value': 'Yes' },
+                "B3_artifact_use_consistent_with_intended_use": { 'value': 'Yes' },
+                "B4_data_contains_personally_identifying_info_or_offensive_content": { 'value': 'Yes' },
+                "B5_documentation_of_artifacts": { 'value': 'Yes' },
+                "B6_statistics_for_data": { 'value': 'Yes' },
+                "C_computational_experiments": { 'value': 'Yes' },
+                "C1_model_size_and_budget": { 'value': 'Yes' },
+                "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
+                "C3_descriptive_statistics": { 'value': 'Yes' },
+                "C4_parameters_for_packages": { 'value': 'Yes' },
+                "D_human_subjects_including_annotators": { 'value': 'Yes' },
+                "D1_instructions_given_to_participants": { 'value': 'Yes' },
+                "D2_recruitment_and_payment": { 'value': 'Yes' },
+                "D3_data_consent": { 'value': 'Yes' },
+                "D4_ethics_review_board_approval": { 'value': 'Yes' },
+                "D5_characteristics_of_annotators": { 'value': 'Yes' },
+                "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
+                "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
                 "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I do not agree" },
                 "section_2_permission_to_publish_peer_reviewers_content_agreement": { 'value': "Authors grant permission for ACL to publish peer reviewers' content" }
             }
@@ -724,8 +748,8 @@ class TestARRVenueV2():
             signatures=['~Reviewer_ARROne1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load': { 'value': '0' },
-                    'maximum_load_resubmission': { 'value': 'No' },
+                    'maximum_load_this_cycle': { 'value': '0' },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     'next_available_month': { 'value': 'August'},
                     'next_available_year': { 'value':  2023}
@@ -738,8 +762,8 @@ class TestARRVenueV2():
                 signatures=['~Reviewer_ARRTwo1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load': { 'value': '0' },
-                        'maximum_load_resubmission': { 'value': 'No' },
+                        'maximum_load_this_cycle': { 'value': '0' },
+                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'August'}
                     }
@@ -751,8 +775,8 @@ class TestARRVenueV2():
                 signatures=['~Reviewer_ARRTwo1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load': { 'value': '0' },
-                        'maximum_load_resubmission': { 'value': 'No' },
+                        'maximum_load_this_cycle': { 'value': '0' },
+                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_year': { 'value': 2024}
                     }
@@ -763,8 +787,8 @@ class TestARRVenueV2():
                 signatures=['~Reviewer_ARRTwo1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load': { 'value': '0' },
-                        'maximum_load_resubmission': { 'value': 'No' },
+                        'maximum_load_this_cycle': { 'value': '0' },
+                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'September'},
                         'next_available_year': { 'value':  2023}
@@ -776,8 +800,8 @@ class TestARRVenueV2():
                 signatures=['~Reviewer_ARRThree1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load': { 'value': '0' },
-                        'maximum_load_resubmission': { 'value': 'No' },
+                        'maximum_load_this_cycle': { 'value': '0' },
+                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'No, I do not consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'July'},
                         'next_available_year': { 'value':  2023}
@@ -789,8 +813,8 @@ class TestARRVenueV2():
                 signatures=['~Reviewer_ARRFour1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load': { 'value': '0' },
-                        'maximum_load_resubmission': { 'value': 'No' },
+                        'maximum_load_this_cycle': { 'value': '0' },
+                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'August'},
                         'next_available_year': { 'value':  2022}
@@ -802,8 +826,8 @@ class TestARRVenueV2():
                 signatures=['~Reviewer_ARRFive1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load': { 'value': '0' },
-                        'maximum_load_resubmission': { 'value': 'No' },
+                        'maximum_load_this_cycle': { 'value': '0' },
+                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'July'},
                         'next_available_year': { 'value':  2022}
@@ -815,8 +839,8 @@ class TestARRVenueV2():
             signatures=['~AC_ARROne1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load': { 'value': '0' },
-                    'maximum_load_resubmission': { 'value': 'No' },
+                    'maximum_load_this_cycle': { 'value': '0' },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     'next_available_month': { 'value': 'August'},
                     'next_available_year': { 'value':  2024}
                 }
@@ -827,7 +851,7 @@ class TestARRVenueV2():
             signatures=['~SAC_ARROne1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load': { 'value': '0' },
+                    'maximum_load_this_cycle': { 'value': '0' },
                     'next_available_month': { 'value': 'September'},
                     'next_available_year': { 'value':  2024}
                 }
@@ -924,27 +948,48 @@ class TestARRVenueV2():
             'abstract': { 'value': 'This is an abstract ' },
             'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@meta.com']},
             'reviewing_volunteers': { 'value': ['~SomeFirstName_User1']},
+            'reviewing_no_volunteers_reason': { 'value': 'N/A - An author was provided in the previous question.'},
             'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
             'TLDR': { 'value': 'This is a tldr '},
             'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-            'paper_type': { 'value': 'short' },
+            'paper_type': { 'value': 'Short' },
             'research_area': { 'value': 'Generation' },
+            'research_area_keywords': { 'value': 'A keyword' },
             'languages_studied': { 'value': 'A language' },
+            'reassignment_request_action_editor': { 'value': 'This is not a resubmission' },
+            'reassignment_request_reviewers': { 'value': 'This is not a resubmission' },
             'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
             'data': {'value': '/pdf/' + 'p' * 40 +'.zip' },
             'preprint': { 'value': 'yes'},
+            'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one.'},
             'existing_preprints': { 'value': 'existing_preprints' },
             'preferred_venue': { 'value': 'ACL Conference' },
             'consent_to_share_data': { 'value': 'yes' },
             'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
-            "A1": { 'value': 'yes' },
-            "A2": { 'value': 'yes' },
-            "A3": { 'value': 'yes' },
-            "B": { 'value': 'yes' },
-            "C": { 'value': 'yes' },
-            "D": { 'value': 'yes' },
-            "E": { 'value': 'yes' },
-            "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I agree" },
+            "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
+            "A2_potential_risks": { 'value': 'Yes' },
+            "A3_abstract_and_introduction_summarize_claims": { 'value': 'Yes' },
+            "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
+            "B1_cite_creators_of_artifacts": { 'value': 'Yes' },
+            "B2_discuss_the_license_for_artifacts": { 'value': 'Yes' },
+            "B3_artifact_use_consistent_with_intended_use": { 'value': 'Yes' },
+            "B4_data_contains_personally_identifying_info_or_offensive_content": { 'value': 'Yes' },
+            "B5_documentation_of_artifacts": { 'value': 'Yes' },
+            "B6_statistics_for_data": { 'value': 'Yes' },
+            "C_computational_experiments": { 'value': 'Yes' },
+            "C1_model_size_and_budget": { 'value': 'Yes' },
+            "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
+            "C3_descriptive_statistics": { 'value': 'Yes' },
+            "C4_parameters_for_packages": { 'value': 'Yes' },
+            "D_human_subjects_including_annotators": { 'value': 'Yes' },
+            "D1_instructions_given_to_participants": { 'value': 'Yes' },
+            "D2_recruitment_and_payment": { 'value': 'Yes' },
+            "D3_data_consent": { 'value': 'Yes' },
+            "D4_ethics_review_board_approval": { 'value': 'Yes' },
+            "D5_characteristics_of_annotators": { 'value': 'Yes' },
+            "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
+            "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
+            "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I do not agree" },
             "section_2_permission_to_publish_peer_reviewers_content_agreement": { 'value': "Authors grant permission for ACL to publish peer reviewers' content" }
         }
 
@@ -1096,24 +1141,6 @@ class TestARRVenueV2():
                 content = {
                     **generic_note_content,
                     'previous_URL': { 'value': f"http://localhost:3030/forum?id={allowed_note['note']['id']}" },
-                    'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
-                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
-                }
-            )
-        )
-        
-        # Not allowed: no volunteers
-        with pytest.raises(openreview.OpenReviewException, match=r'reviewing_volunteers value must NOT have fewer than 1 items'):
-            case_content = deepcopy(generic_note_content)
-            case_content['reviewing_volunteers'] = {'value': []}
-
-            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
-                signatures=['~SomeFirstName_User1'],
-                note=openreview.api.Note(
-                content = {
-                    **case_content,
-                    'previous_URL': { 'value': f"http://localhost:3030/forum?id={allowed_note['note']['id']}" },
-                    'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
                     'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
                     'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
                 }
@@ -1299,19 +1326,19 @@ class TestARRVenueV2():
         august_reviewer_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_reviewers_id()}/-/{max_load_name}")
         assert len(august_reviewer_notes) == len(migrated_reviewers)
         assert set([note.signatures[0] for note in august_reviewer_notes]) == migrated_reviewers
-        assert all(note.content['maximum_load']['value'] == '0' for note in august_reviewer_notes)
+        assert all(note.content['maximum_load_this_cycle']['value'] == '0' for note in august_reviewer_notes)
 
         migrated_acs = {'~AC_ARROne1'}
         august_ac_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_area_chairs_id()}/-/{max_load_name}")
         assert len(august_ac_notes) == len(migrated_acs)
         assert set([note.signatures[0] for note in august_ac_notes]) == migrated_acs
-        assert all(note.content['maximum_load']['value'] == '0' for note in august_ac_notes)
+        assert all(note.content['maximum_load_this_cycle']['value'] == '0' for note in august_ac_notes)
 
         migrated_sacs = {'~SAC_ARROne1'}
         august_sacs_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_senior_area_chairs_id()}/-/{max_load_name}")
         assert len(august_sacs_notes) == len(migrated_sacs)
         assert set([note.signatures[0] for note in august_sacs_notes]) == migrated_sacs
-        assert all(note.content['maximum_load']['value'] == '0' for note in august_sacs_notes)
+        assert all(note.content['maximum_load_this_cycle']['value'] == '0' for note in august_sacs_notes)
 
         august_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         august_ac_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_area_chairs_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
@@ -1346,8 +1373,8 @@ class TestARRVenueV2():
                 signatures=['~Reviewer_ARROne1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load': { 'value': '4' },
-                        'maximum_load_resubmission': { 'value': 'No' },
+                        'maximum_load_this_cycle': { 'value': '4' },
+                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     }
                 )
@@ -1357,8 +1384,8 @@ class TestARRVenueV2():
             signatures=['~AC_ARRTwo1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load': { 'value': '6' },
-                    'maximum_load_resubmission': { 'value': 'Yes' },
+                    'maximum_load_this_cycle': { 'value': '6' },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' },
                 }
             )
         )
@@ -1367,7 +1394,7 @@ class TestARRVenueV2():
             signatures=['~SAC_ARRTwo1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load': { 'value': '10' },
+                    'maximum_load_this_cycle': { 'value': '10' },
                 }
             )
         )
@@ -1393,8 +1420,8 @@ class TestARRVenueV2():
                 note=openreview.api.Note(
                     id = reviewer_note_edit['note']['id'],
                     content = {
-                        'maximum_load': { 'value': '5' },
-                        'maximum_load_resubmission': { 'value': 'No' },
+                        'maximum_load_this_cycle': { 'value': '5' },
+                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     }
                 )
@@ -1405,8 +1432,8 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 id = ac_note_edit['note']['id'],
                 content = {
-                    'maximum_load': { 'value': '7' },
-                    'maximum_load_resubmission': { 'value': 'Yes' }
+                    'maximum_load_this_cycle': { 'value': '7' },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
                 }
             )
         )
@@ -1416,7 +1443,7 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 id = sac_note_edit['note']['id'],
                 content = {
-                    'maximum_load': { 'value': '11' }
+                    'maximum_load_this_cycle': { 'value': '11' }
                 }
             )
         )
@@ -1443,8 +1470,8 @@ class TestARRVenueV2():
                     id = reviewer_note_edit['note']['id'],
                     ddate = openreview.tools.datetime_millis(now),
                     content = {
-                        'maximum_load': { 'value': '5' },
-                        'maximum_load_resubmission': { 'value': 'No' },
+                        'maximum_load_this_cycle': { 'value': '5' },
+                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     }
                 )
@@ -1456,8 +1483,8 @@ class TestARRVenueV2():
                 id = ac_note_edit['note']['id'],
                 ddate = openreview.tools.datetime_millis(now),
                 content = {
-                    'maximum_load': { 'value': '7' },
-                    'maximum_load_resubmission': { 'value': 'Yes' }
+                    'maximum_load_this_cycle': { 'value': '7' },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
                 }
             )
         )
@@ -1468,7 +1495,7 @@ class TestARRVenueV2():
                 id = sac_note_edit['note']['id'],
                 ddate = openreview.tools.datetime_millis(now),
                 content = {
-                    'maximum_load': { 'value': '11' }
+                    'maximum_load_this_cycle': { 'value': '11' }
                 }
             )
         )
@@ -1493,8 +1520,8 @@ class TestARRVenueV2():
             signatures=['~Reviewer_ARRFive1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load': { 'value': '0' },
-                    'maximum_load_resubmission': { 'value': 'Yes' },
+                    'maximum_load_this_cycle': { 'value': '0' },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' },
                     'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                 }
             )
@@ -1504,8 +1531,8 @@ class TestARRVenueV2():
             signatures=['~AC_ARRThree1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load': { 'value': '0' },
-                    'maximum_load_resubmission': { 'value': 'Yes' }
+                    'maximum_load_this_cycle': { 'value': '0' },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
                 }
             )
         )
@@ -1516,8 +1543,8 @@ class TestARRVenueV2():
             signatures=['~AC_ARRTwo1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load': { 'value': '6' },
-                    'maximum_load_resubmission': { 'value': 'Yes' }
+                    'maximum_load_this_cycle': { 'value': '6' },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
                 }
             )
         )
@@ -1650,14 +1677,15 @@ class TestARRVenueV2():
                     'abstract': { 'value': 'This is an abstract ' + str(i) },
                     'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i % 10]] },
                     'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
-                    'reviewing_volunteers': { 'value': ['~SomeFirstName_User1']},
                     'TLDR': { 'value': 'This is a tldr ' + str(i) },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'paper_type': { 'value': 'short' },
+                    'paper_type': { 'value': 'Short' },
                     'research_area': { 'value': 'Generation' },
+                    'research_area_keywords': { 'value': 'A keyword' },
                     'languages_studied': { 'value': 'A language' },
+                    'reassignment_request_action_editor': { 'value': 'This is not a resubmission' },
+                    'reassignment_request_reviewers': { 'value': 'This is not a resubmission' },
                     'previous_URL': { 'value': f'http://localhost:3030/forum?id={june_submission.id}' },
-                    'previous_PDF': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'response_PDF': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
@@ -1665,31 +1693,61 @@ class TestARRVenueV2():
                     'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
                     'data': {'value': '/pdf/' + 'p' * 40 +'.zip' },
                     'preprint': { 'value': 'yes' if i % 2 == 0 else 'no' },
+                    'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one.'},
                     'existing_preprints': { 'value': 'existing_preprints' },
                     'preferred_venue': { 'value': 'ACL Conference' },
                     'consent_to_share_data': { 'value': 'yes' },
                     'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
-                    "A1": { 'value': 'yes' },
-                    "A2": { 'value': 'yes' },
-                    "A3": { 'value': 'yes' },
-                    "B": { 'value': 'yes' },
-                    "C": { 'value': 'yes' },
-                    "D": { 'value': 'yes' },
-                    "E": { 'value': 'yes' },
+                    "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
+                    "A2_potential_risks": { 'value': 'Yes' },
+                    "A3_abstract_and_introduction_summarize_claims": { 'value': 'Yes' },
+                    "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
+                    "B1_cite_creators_of_artifacts": { 'value': 'Yes' },
+                    "B2_discuss_the_license_for_artifacts": { 'value': 'Yes' },
+                    "B3_artifact_use_consistent_with_intended_use": { 'value': 'Yes' },
+                    "B4_data_contains_personally_identifying_info_or_offensive_content": { 'value': 'Yes' },
+                    "B5_documentation_of_artifacts": { 'value': 'Yes' },
+                    "B6_statistics_for_data": { 'value': 'Yes' },
+                    "C_computational_experiments": { 'value': 'Yes' },
+                    "C1_model_size_and_budget": { 'value': 'Yes' },
+                    "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
+                    "C3_descriptive_statistics": { 'value': 'Yes' },
+                    "C4_parameters_for_packages": { 'value': 'Yes' },
+                    "D_human_subjects_including_annotators": { 'value': 'Yes' },
+                    "D1_instructions_given_to_participants": { 'value': 'Yes' },
+                    "D2_recruitment_and_payment": { 'value': 'Yes' },
+                    "D3_data_consent": { 'value': 'Yes' },
+                    "D4_ethics_review_board_approval": { 'value': 'Yes' },
+                    "D5_characteristics_of_annotators": { 'value': 'Yes' },
+                    "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
+                    "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
                     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I agree" if i % 2 == 0 else 'On behalf of all authors, I do not agree' },
                     "section_2_permission_to_publish_peer_reviewers_content_agreement": { 'value': "Authors grant permission for ACL to publish peer reviewers' content" }
                 }
             )
+
+            if i % 2 == 0:
+                note.content['reviewing_volunteers'] = { 'value': ['~SomeFirstName_User1']}
+                note.content['reviewing_no_volunteers_reason'] = { 'value': 'N/A - An author was provided in the previous question.'}
+            else:
+                note.content['reviewing_no_volunteers_reason'] = {
+                    'value': random.choice([
+                        "All authors are new to the ACL community.",
+                        "None of the authors are sufficiently qualified to review.",
+                        "All qualified authors are already involved in the reviewing process in some capacity (as Area Chairs, as Senior Area Chairs, etc.).",
+                        "Another reason - if you select this option the editors may contact you to confirm the reason is suitable."
+                    ])
+                }
+
             if i == 1 or i == 101:
                 note.content['authors']['value'].append('SAC ARROne')
                 note.content['authorids']['value'].append('~SAC_ARROne1')
 
             if i == 6: ## Remove resubmission information from content
                 del note.content['previous_URL']
-                del note.content['previous_PDF']
                 del note.content['response_PDF']
-                del note.content['reassignment_request_action_editor']
-                del note.content['reassignment_request_reviewers']
+                note.content['reassignment_request_reviewers']['value'] = 'This is not a resubmission'
+                note.content['reassignment_request_action_editor']['value'] = 'This is not a resubmission'
                 del note.content['justification_for_not_keeping_action_editor_or_reviewers']
 
             test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
@@ -1715,7 +1773,7 @@ class TestARRVenueV2():
                     f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/-/Blind_Submission_License_Agreement'
                 ).duedate == None
 
-    def test_post_submission(self, client, openreview_client, helpers, test_client):
+    def test_post_submission(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
@@ -1801,7 +1859,6 @@ class TestARRVenueV2():
         assert submissions[0].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert 'readers' not in submissions[0].content['software']
         assert 'readers' not in submissions[0].content['previous_URL']
-        assert 'readers' not in submissions[0].content['previous_PDF']
         assert 'readers' not in submissions[0].content['response_PDF']
         assert 'readers' not in submissions[0].content['reassignment_request_action_editor']
         assert 'readers' not in submissions[0].content['reassignment_request_reviewers']
@@ -1825,6 +1882,17 @@ class TestARRVenueV2():
 
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission-0-1', count=1)
 
+        request_page(selenium, 'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August', None, wait_for_element='header')
+        
+        tabs = selenium.find_element(By.CLASS_NAME, 'nav-tabs').find_elements(By.TAG_NAME, 'li')
+        assert len(tabs) == 2
+        assert tabs[0].text == 'Anonymous Pre-prints'
+        assert tabs[1].text == 'Recent Activity'
+
+        notes = selenium.find_element(By.ID, 'anonymous-pre-prints').find_elements(By.CLASS_NAME, 'note')
+        assert len(notes) == 50
+        assert notes[0].find_element(By.TAG_NAME, 'h4').text == 'Paper title 100'
+
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')       
 
         assert submissions[0].readers == ['aclweb.org/ACL/ARR/2023/August', 
@@ -1841,9 +1909,10 @@ class TestARRVenueV2():
         assert submissions[0].content['Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['section_2_permission_to_publish_peer_reviewers_content_agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['reviewing_volunteers']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
+        assert submissions[0].content['reviewing_no_volunteers_reason']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
+        assert submissions[0].content['preprint_status']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert 'readers' not in submissions[0].content['software']
         assert 'readers' not in submissions[0].content['previous_URL']
-        assert 'readers' not in submissions[0].content['previous_PDF']
         assert 'readers' not in submissions[0].content['response_PDF']
         assert 'readers' not in submissions[0].content['reassignment_request_action_editor']
         assert 'readers' not in submissions[0].content['reassignment_request_reviewers']
@@ -1860,6 +1929,9 @@ class TestARRVenueV2():
         assert submissions[1].content['Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['section_2_permission_to_publish_peer_reviewers_content_agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['reviewing_volunteers']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+        assert submissions[1].content['reviewing_no_volunteers_reason']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+        assert submissions[1].content['preprint_status']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
+
         assert set(submissions[1].content['software']['readers']) == {
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
@@ -1875,13 +1947,6 @@ class TestARRVenueV2():
             "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
         }
         assert set(submissions[1].content['previous_URL']['readers']) == {
-            "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
-            "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
-            "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
-            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
-            "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
-        }
-        assert set(submissions[1].content['previous_PDF']['readers']) == {
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
@@ -1916,6 +1981,16 @@ class TestARRVenueV2():
             "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
         }
+
+        responsible_checklist_fields = [field for field in hide_fields_from_public if len(field.split('_')[0]) <= 2] ## Any field that looks like A_, A1_, etc.
+        for field in responsible_checklist_fields:
+            assert set(submissions[1].content[field]['readers']) == {
+                "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
+                "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
+                "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
+                "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
+                "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
+            }
 
         # Post comment as PCs to all submissions
         for submission in submissions:
@@ -2006,30 +2081,31 @@ class TestARRVenueV2():
                 for sac in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs').members:
                     writer.writerow([submission.id, sac, round(random.random(), 2)])
 
-        affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration', 'sae_affinity_scores')
+        affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
 
-        pc_client.post_note(
-            openreview.Note(
-                content={
-                    'sae_affinity_scores': affinity_scores_url,
-                    'setup_sae_matching_date': (now).strftime('%Y/%m/%d %H:%M'),
-                },
-                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
-                forum=request_form.id,
-                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
-                referent=request_form.id,
-                replyto=request_form.id,
-                signatures=['~Program_ARRChair1'],
-                writers=[],
-            )
-        )
-
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Setup_SAE_Matching-0-1', count=1)
+        client.post_note(openreview.Note(
+            content={
+                'title': 'Paper Matching Setup',
+                'matching_group': 'aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs',
+                'compute_conflicts': 'Default',
+                'compute_affinity_scores': 'No',
+                'upload_affinity_scores': affinity_scores_url
+            },
+            forum=request_form.id,
+            replyto=request_form.id,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+            readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Conflict')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Affinity_Score')
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Proposed_Assignment')
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Assignment')
+        proposed_inv = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Proposed_Assignment')
+        assert proposed_inv
+        assert proposed_inv.edit['head']['param']['type'] == 'note'
+        assert proposed_inv.edit['head']['param']['withVenueid'] == 'aclweb.org/ACL/ARR/2023/August/Submission'
 
         affinity_score_count =  openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Affinity_Score')
         assert affinity_score_count == 101 * 2 ## submissions * ACs
@@ -2102,12 +2178,12 @@ class TestARRVenueV2():
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict')
 
-        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict') == 12 + 101 # All 6 reviewers will conflict with submissions 1/101 because of domain of SAC
+        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict') == 12 # All 6 reviewers will conflict with submissions 1/101 because of domain of SAC
         ## Extra 101 conflicts from new reviewer which is an author of all submissions
 
         affinity_scores =  openreview_client.get_grouped_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Affinity_Score', groupby='id')
         assert affinity_scores
-        assert len(affinity_scores) == 101 * 7 ## submissions * reviewers
+        assert len(affinity_scores) == 101 * 6 ## submissions * reviewers
 
         # Post assignment configuration notes
         openreview_client.post_note_edit(
@@ -2193,7 +2269,7 @@ class TestARRVenueV2():
         openreview.tools.post_bulk_edges(openreview_client, ac_edges_to_post)
 
         assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Aggregate_Score', label='ae-assignments') == 101 * 3
-        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score', label='reviewer-assignments') == 101 * 7
+        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score', label='reviewer-assignments') == 101 * 6
 
 
     def test_resubmission_and_track_matching_data(self, client, openreview_client, helpers, test_client, request_page, selenium):
@@ -2528,9 +2604,9 @@ class TestARRVenueV2():
         load_notes = pc_client_v2.get_all_notes(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request')
         for note in load_notes:
             if note.signatures[0] == '~Reviewer_ARRFive1':
-                assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load']['value']) + 1
+                assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load_this_cycle']['value']) + 1
                 continue
-            assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load']['value'])
+            assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load_this_cycle']['value'])
 
         cmp_edges = {
             g['id']['tail'] : g['values'][0]
@@ -2539,9 +2615,9 @@ class TestARRVenueV2():
         load_notes = pc_client_v2.get_all_notes(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Max_Load_And_Unavailability_Request')
         for note in load_notes:
             if note.signatures[0] == '~AC_ARRThree1':
-                assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load']['value']) + 1
+                assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load_this_cycle']['value']) + 1
                 continue
-            assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load']['value'])
+            assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load_this_cycle']['value'])
 
         # Check for seniority edges
         seniority_edges = {
@@ -2551,12 +2627,6 @@ class TestARRVenueV2():
         assert set(seniority_edges.keys()) == {'~Reviewer_ARROne1'}
         assert seniority_edges['~Reviewer_ARROne1']['label'] == 'Senior'
 
-        # Check for author in cycle edges
-        author_edges = {
-            g['id']['tail'] : g['values'][0]
-            for g in pc_client_v2.get_grouped_edges(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Author_In_Current_Cycle', select='head,id,weight,label', groupby='tail')
-        }
-        assert set(author_edges.keys()) == {'~SomeFirstName_User1'}
 
     def test_sae_ae_assignments(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
@@ -2588,6 +2658,12 @@ class TestARRVenueV2():
         ))
 
         august_venue.set_assignments(assignment_title='sac-matching', committee_id='aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs')
+
+        sac2_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs')
+        assert sac2_group.members == ['~SAC_ARRTwo1']
+
+        sac3_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs')
+        assert sac3_group.members == ['~SAC_ARRTwo1']
 
         openreview_client.post_edge(openreview.api.Edge(
             invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Proposed_Assignment',
@@ -2646,7 +2722,8 @@ class TestARRVenueV2():
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Enable_SAE_AE_Assignments-0-1', count=1)
 
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Emergency_Area_Chairs')
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment').content['sync_sac_id']['value'] == ''
+        assignment_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment')
+        assert 'sync_sac_id' not in assignment_invitation.content
 
         # Remove an AC and replace
         sac_client = openreview.api.OpenReviewClient(username = 'sac2@aclrollingreview.com', password=helpers.strong_password)
@@ -3547,8 +3624,8 @@ class TestARRVenueV2():
             signatures=['~Reviewer_ARROne1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load': { 'value': '4' },
-                    'maximum_load_resubmission': { 'value': 'No' },
+                    'maximum_load_this_cycle': { 'value': '4' },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                 }
             )

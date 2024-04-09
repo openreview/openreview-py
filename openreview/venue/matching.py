@@ -187,6 +187,8 @@ class Matching(object):
                     'withVenueid': venue.get_submission_venue_id()
                 }
             }
+            edge_nonreaders = [venue.get_authors_id(number=paper_number)]
+
         if self.submission_content:
             edge_head['param']['withContent'] = self.submission_content
 
@@ -307,9 +309,7 @@ class Matching(object):
 
     def _build_conflicts(self, submissions, user_profiles, get_profile_info, compute_conflicts_n_years):
         if self.alternate_matching_group:
-            other_matching_group = self.client.get_group(self.alternate_matching_group)
-            other_matching_profiles = tools.get_profiles(self.client, other_matching_group.members, with_publications=True, with_relations=True)
-            return self._build_profile_conflicts(other_matching_profiles, user_profiles, compute_conflicts_n_years)
+            return
         return self._build_note_conflicts(submissions, user_profiles, get_profile_info, compute_conflicts_n_years)
 
     def _build_note_conflicts(self, submissions, user_profiles, get_profile_info, compute_conflicts_n_years):
@@ -1041,11 +1041,10 @@ class Matching(object):
         if compute_conflicts:
             self._build_conflicts(submissions, user_profiles, openreview.tools.get_neurips_profile_info if compute_conflicts == 'NeurIPS' else openreview.tools.get_profile_info, compute_conflicts_n_years)
 
-
         if venue.automatic_reviewer_assignment:
             invitation = self._create_edge_invitation(venue.get_assignment_id(self.match_group.id))
             
-            if not self.is_senior_area_chair:
+            if not self.alternate_matching_group:
                 with open(os.path.join(os.path.dirname(__file__), 'process/proposed_assignment_pre_process.js')) as f:
                     content = f.read()
                     invitation.content = { 'committee_name': { 'value': self.match_group_name }}
@@ -1187,15 +1186,20 @@ class Matching(object):
         if role_name in venue.area_chair_roles:
             reviewer_name = venue.area_chairs_name
             review_name = 'Meta_Review'
+        elif self.is_senior_area_chair:
+            reviewer_name = venue.senior_area_chairs_name
             
         papers = self._get_submissions()
-        reviews = client.get_notes(invitation=venue.get_invitation_id(review_name, number='.*'), limit=1)
+        sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.senior_area_chairs_id, deployed=True),
+            groupby='head', select=None)} if not venue.sac_paper_assignments else {}
+        reviews = []
         proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id),
             label=assignment_title, groupby='head', select=None)}
         assignment_invitation_id = venue.get_assignment_id(self.match_group.id, deployed=True)
         current_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None)}
 
-        sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.senior_area_chairs_id, deployed=True), groupby='head', select=None)}
+        if not self.is_senior_area_chair:
+            reviews = client.get_notes(invitation=venue.get_invitation_id(review_name, number='.*'), limit=1)
 
         if overwrite:
             if reviews:
@@ -1306,7 +1310,7 @@ class Matching(object):
         self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id))
         
         ## Deploy assignments creating groups and assignment edges
-        if self.is_senior_area_chair:
+        if self.is_senior_area_chair and not self.venue.sac_paper_assignments:
             self.deploy_sac_assignments(assignment_title, overwrite)
         else:
             self.deploy_assignments(assignment_title, overwrite)

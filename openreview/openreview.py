@@ -2784,7 +2784,7 @@ class Profile(object):
     :param tauthor: True author
     :type tauthor: str, optional
     """
-    def __init__(self, id=None, active=None, password=None, number=None, tcdate=None, tmdate=None, referent=None, packaging=None, invitation=None, readers=None, nonreaders=None, signatures=None, writers=None, content=None, metaContent=None, tauthor=None):
+    def __init__(self, id=None, active=None, password=None, number=None, tcdate=None, tmdate=None, referent=None, packaging=None, invitation=None, readers=None, nonreaders=None, signatures=None, writers=None, content=None, metaContent=None, tauthor=None, state=None):
         self.id = id
         self.number = number
         self.tcdate = tcdate
@@ -2802,6 +2802,8 @@ class Profile(object):
         self.password = password
         if tauthor:
             self.tauthor = tauthor
+        if state:
+            self.state = state
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -2899,7 +2901,8 @@ class Profile(object):
         writers=n.get('writers'),
         content=n.get('content'),
         metaContent=n.get('metaContent'),
-        tauthor=n.get('tauthor')
+        tauthor=n.get('tauthor'),
+        state=n.get('state')
         )
         return profile
 

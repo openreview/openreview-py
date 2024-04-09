@@ -1,5 +1,6 @@
 import csv
 import json
+import os
 from json import tool
 import datetime
 from io import StringIO
@@ -83,6 +84,7 @@ class ARR(object):
         self.submission_license = None
         self.use_publication_chairs = False
         self.source_submissions_query_mapping = {}
+        self.sac_paper_assignments = False
 
     def copy_to_venue(self):
 
@@ -129,6 +131,7 @@ class ARR(object):
         self.venue.senior_area_chair_identity_readers = self.senior_area_chair_identity_readers
         self.venue.decision_heading_map = self.decision_heading_map
         self.venue.source_submissions_query_mapping = self.source_submissions_query_mapping
+        self.venue.sac_paper_assignments = self.sac_paper_assignments
 
         self.venue.submission_stage = self.submission_stage
         self.venue.review_stage = self.review_stage
@@ -327,6 +330,18 @@ class ARR(object):
 
     def setup(self, program_chair_ids=[], publication_chairs_ids=[]):
         setup_value = self.venue.setup(program_chair_ids, publication_chairs_ids)
+
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
+            content = f.read()
+            self.client.post_group_edit(
+                invitation=self.get_meta_invitation_id(),
+                signatures=[self.venue_id],
+                group=openreview.api.Group(
+                    id=self.venue_id,
+                    web=content
+                )
+            )
+
         setup_arr_invitations(self.invitation_builder)
         return setup_value
 

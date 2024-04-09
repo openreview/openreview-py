@@ -109,7 +109,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
     def test_setup(self, venue, openreview_client, helpers):
 
-        venue.setup(program_chair_ids=['venue_pc@mail.com'])
+        venue.setup(program_chair_ids=['venue_pc@mail.com', 'venue_pc2@mail.com'])
         venue.create_submission_stage()
         venue.create_review_stage()
         venue.create_review_rebuttal_stage()
@@ -909,6 +909,12 @@ Please follow this link: https://openreview.net/forum?id={submissions[0].id}&not
 
 Please note that responding to this email will direct your reply to testvenue@contact.com.
 '''
+        
+        messages = openreview_client.get_messages(subject='[TV 22] A camera ready verification has been received on Paper Number: 1, Paper Title: "Paper 1 Title REVISED AGAIN"')
+        assert len(messages) == 1
+        assert 'venue_pc2@mail.com' in messages[0]['content']['to']
+        assert messages[0]['content']['text'] == f'''The camera ready verification for submission number {str(submissions[0].number)} has been posted.
+Please follow this link: https://openreview.net/forum?id={submissions[0].id}&noteId={verification_note.id}'''
 
         messages = openreview_client.get_messages(subject='[TV 22] Your camera ready verification has been received on Paper Number: 1, Paper Title: "Paper 1 Title REVISED AGAIN"')
         assert len(messages) == 1

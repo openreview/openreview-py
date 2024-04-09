@@ -49,6 +49,7 @@ class TestEMNLPConference():
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
+                'senior_area_chairs_assignment': 'Area Chairs',
                 'Venue Start Date': '2023/07/01',
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d %H:%M'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
