@@ -12,5 +12,3 @@
                     signatures=[venue_id]
                 )
             )
-
-    client.add_members_to_group(domain.content['reviewers_id']['value'], note.content.get('reviewing_volunteers').get('value'))

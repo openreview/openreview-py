@@ -800,6 +800,13 @@ class InvitationBuilder(object):
 
         content = meta_review_stage.get_content(api_version='2', conference=self.venue)
 
+        previous_query = {}
+        invitation = tools.get_invitation(self.client, meta_review_invitation_id)
+        if invitation:
+            previous_query = invitation.content.get('source_submissions_query', {}).get('value', {})
+
+        source_submissions_query = meta_review_stage.source_submissions_query if meta_review_stage.source_submissions_query else previous_query
+
         invitation = Invitation(id=meta_review_invitation_id,
             invitees=[venue_id],
             readers=[venue_id],
@@ -833,7 +840,7 @@ class InvitationBuilder(object):
                 },
                 'replacement': True,
                 'invitation': {
-                    'id': self.venue.get_invitation_id(meta_review_stage.name, '${2/content/noteNumber/value}'),
+                    'id': self.venue.get_invitation_id(meta_review_stage.child_invitations_name, '${2/content/noteNumber/value}'),
                     'signatures': [ venue_id ],
                     'readers': ['everyone'],
                     'writers': [venue_id],
@@ -853,7 +860,7 @@ class InvitationBuilder(object):
                         'note': {
                             'id': {
                                 'param': {
-                                    'withInvitation': self.venue.get_invitation_id(meta_review_stage.name, '${6/content/noteNumber/value}'),
+                                    'withInvitation': self.venue.get_invitation_id(meta_review_stage.child_invitations_name, '${6/content/noteNumber/value}'),
                                     'optional': True
                                 }
                             },
@@ -909,7 +916,12 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['duedate'] = meta_review_duedate
 
         if meta_review_expdate:
-            invitation.edit['invitation']['expdate'] = meta_review_expdate         
+            invitation.edit['invitation']['expdate'] = meta_review_expdate
+
+        if source_submissions_query:
+            invitation.content['source_submissions_query'] = {
+                'value': source_submissions_query
+            }
 
         self.save_invitation(invitation, replacement=False)
 
@@ -950,7 +962,7 @@ class InvitationBuilder(object):
                     },
                     'replacement': True,
                     'invitation': {
-                        'id': self.venue.get_invitation_id(meta_review_stage.name + '_SAC_Revision', '${2/content/noteNumber/value}'),
+                        'id': self.venue.get_invitation_id(meta_review_stage.child_invitations_name + '_SAC_Revision', '${2/content/noteNumber/value}'),
                         'signatures': [ venue_id ],
                         'readers': ['everyone'],
                         'writers': [venue_id],
@@ -970,7 +982,7 @@ class InvitationBuilder(object):
                             'note': {
                                 'id': {
                                     'param': {
-                                        'withInvitation': self.venue.get_invitation_id(meta_review_stage.name, '${6/content/noteNumber/value}')
+                                        'withInvitation': self.venue.get_invitation_id(meta_review_stage.child_invitations_name, '${6/content/noteNumber/value}')
                                     }
                                 },
                                 'forum': '${4/content/noteId/value}',
@@ -983,6 +995,11 @@ class InvitationBuilder(object):
 
             if meta_review_expdate:
                 invitation.edit['invitation']['expdate'] = meta_review_expdate
+
+            if source_submissions_query:
+                invitation.content['source_submissions_query'] = {
+                    'value': source_submissions_query
+                }
 
             self.save_invitation(invitation, replacement=False)
 
@@ -1117,7 +1134,7 @@ class InvitationBuilder(object):
                     'withInvitation': venue.submission_stage.get_submission_id(venue)
                 }
             }
-            if match_group_id == venue.get_senior_area_chairs_id():
+            if match_group_id == venue.get_senior_area_chairs_id() and not venue.sac_paper_assignments:
                 head = {
                     'param': {
                         'type': 'profile',
@@ -1129,7 +1146,7 @@ class InvitationBuilder(object):
 
             bid_invitation_id = venue.get_invitation_id(bid_stage.name, prefix=match_group_id)
 
-            template_name = 'profileBidWebfield.js' if match_group_id == venue.get_senior_area_chairs_id() else 'paperBidWebfield.js'
+            template_name = 'profileBidWebfield.js' if match_group_id == venue.get_senior_area_chairs_id() and not venue.sac_paper_assignments else 'paperBidWebfield.js'
             with open(os.path.join(os.path.dirname(__file__), 'webfield/' + template_name)) as webfield_reader:
                 webfield_content = webfield_reader.read()
 
@@ -2507,14 +2524,15 @@ class InvitationBuilder(object):
             },
             'reviewers_anon_name': {
                 'value': venue.get_anon_reviewers_name() if is_reviewer else venue.get_anon_area_chairs_name()
-            },
-            'sync_sac_id': {
-                'value': venue.get_senior_area_chairs_id(number='{number}') if committee_name == venue.area_chairs_name and venue.use_senior_area_chairs else ''
-            },
-            'sac_assignment_id': {
-                'value': venue.get_assignment_id(senior_area_chairs_id, deployed=True) if is_area_chair and venue.use_senior_area_chairs else ''
             }
         }
+        if committee_name == venue.area_chairs_name and venue.use_senior_area_chairs and not venue.sac_paper_assignments:
+            content['sync_sac_id'] = {
+                'value': venue.get_senior_area_chairs_id(number='{number}')
+            }
+            content['sac_assignment_id'] = {
+                'value': venue.get_assignment_id(senior_area_chairs_id, deployed=True) if is_area_chair and venue.use_senior_area_chairs else ''
+            }
 
         if is_ethics_reviewer:
             content = {
@@ -2529,12 +2547,6 @@ class InvitationBuilder(object):
                 },
                 'reviewers_anon_name': {
                     'value': venue.anon_ethics_reviewers_name()
-                },
-                'sync_sac_id': {
-                    'value': ''
-                },
-                'sac_assignment_id': {
-                    'value': ''
                 }
             }
 
@@ -2590,7 +2602,7 @@ class InvitationBuilder(object):
                 edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
 
 
-        if is_senior_area_chair:
+        if is_senior_area_chair and not venue.sac_paper_assignments:
             edge_head = {
                 'param': {
                     'type': 'profile',
@@ -2601,6 +2613,17 @@ class InvitationBuilder(object):
             preprocess=None
             content=None
             edge_readers.append('${2/head}')
+        elif is_senior_area_chair and venue.sac_paper_assignments:
+            invitation_readers.append(senior_area_chairs_id)
+            edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')]
+            content = {
+                'reviewers_id': {
+                    'value': venue.get_senior_area_chairs_id()
+                },
+                'reviewers_name': {
+                    'value': venue.senior_area_chairs_name
+                }
+            }
 
         edge_readers.append('${2/tail}')
 
