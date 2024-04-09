@@ -1,4 +1,4 @@
-def process(client, note, invitation):
+def process(client, edit, invitation):
     from Crypto.Hash import HMAC, SHA256
     import urllib.parse
     SHORT_PHRASE = ''
@@ -8,7 +8,7 @@ def process(client, note, invitation):
     ACTION_EDITOR_DECLINED_ID = ''
     HASH_SEED = ''
 
-    if hasattr(note, 'note'):
+    if hasattr(edit, 'note'):
         note=edit.note
         user=note.content['user']['value']
         key=note.content['key']['value']
