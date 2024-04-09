@@ -445,7 +445,9 @@ class TestICMLConference():
         helpers.await_queue()
 
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Senior_Area_Chairs').members) == 0
-        assert len(openreview_client.get_group('ICML.cc/2023/Conference/Senior_Area_Chairs/Invited').members) == 2
+        group = openreview_client.get_group('ICML.cc/2023/Conference/Senior_Area_Chairs/Invited')
+        assert len(group.members) == 2
+        assert group.readers == ['ICML.cc/2023/Conference', 'ICML.cc/2023/Conference/Senior_Area_Chairs/Invited']
 
         messages = openreview_client.get_messages(subject = '[ICML 2023] Invitation to serve as Senior Area Chair')
         assert len(messages) == 2
@@ -3203,12 +3205,15 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assert recruitment_note
         helpers.await_queue()        
               
-        assert openreview_client.get_group('ICML.cc/2023/Conference/Ethics_Reviewers')
+        group = openreview_client.get_group('ICML.cc/2023/Conference/Ethics_Reviewers')
+        assert group
+        assert 'ICML.cc/2023/Conference/Ethics_Chairs' in group.readers
         assert openreview_client.get_group('ICML.cc/2023/Conference/Ethics_Reviewers/Declined')
         group = openreview_client.get_group('ICML.cc/2023/Conference/Ethics_Reviewers/Invited')
         assert group
         assert len(group.members) == 1
         assert 'reviewerethics@yahoo.com' in group.members
+        assert 'ICML.cc/2023/Conference/Ethics_Chairs' in group.readers
 
         messages = openreview_client.get_messages(to='reviewerethics@yahoo.com', subject='[ICML 2023] Invitation to serve as Ethics Reviewer')
         assert messages and len(messages) == 1
