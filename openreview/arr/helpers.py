@@ -103,195 +103,178 @@ class ARRWorkflow(object):
             "order": 11,
             "required": False
         },
-        "sae_affinity_scores": {
-            "description": "Upload a CSV file containing affinity scores for SAC-paper pairs (one SAC-paper pair per line in the format: submission_id, SAC_id, affinity_score)",
-            "order": 12,
-            "value-file": {
-                "fileTypes": [
-                    "csv"
-                ],
-                "size": 50
-            },
-            "required": False
-        },
-        "setup_sae_matching_date": {
-            "description": "When should the SAE matching data be set up?",
-            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 13,
-            "required": False
-        },
         "setup_tracks_and_reassignment_date": {
             "description": "When will submission track and reassignment data be finalized? This will modify the affinity scores and indicate which reviewers and action editors have matching tracks.",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 14,
+            "order": 12,
             "required": False
         },
         "setup_sae_ae_assignment_date": {
             "description": "When will both SAE and AE assignments be deployed? This must happen after both assignments are deployed to give SAEs access to the AE assignments.",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 15,
+            "order": 13,
             "required": False
         },
         "setup_proposed_assignments_date": {
             "description": "When should the proposed reviewer assignments be shared to the SAEs/AEs?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 16,
+            "order": 14,
             "required": False
         },
         "reviewer_assignments_title": {
             "description": "What is the title of the finalized reviewer assignments?",
             "value-regex": ".*",
-            "order": 17,
+            "order": 15,
             "required": False
         },
         "ae_checklist_due_date": {
             "description": "What should be the displayed deadline for the maximum load tasks?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 18,
+            "order": 16,
             "required": False
         },
         "ae_checklist_exp_date": {
             "description": "When should we stop accepting any maximum load responses?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 19,
+            "order": 17,
             "required": False
         },
         "reviewer_checklist_due_date": {
             "description": "What should be the displayed deadline for the maximum load tasks?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 20,
+            "order": 18,
             "required": False
         },
         "reviewer_checklist_exp_date": {
             "description": "When should we stop accepting any maximum load responses?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 21,
+            "order": 19,
             "required": False
         },
         "review_start_date": {
             "description": "When should reviewing start?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 22,
+            "order": 20,
             "required": False
         },
         "review_deadline": {
             "description": "When should reviewing end?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 23,
+            "order": 21,
             "required": False
         },
         "review_expiration_date": {
             "description": "When should the reviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 24,
+            "order": 22,
             "required": False
         },
         "meta_review_start_date": {
             "description": "When should metareviewing start?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 25,
+            "order": 23,
             "required": False
         },
         "meta_review_deadline": {
             "description": "When should metareviewing end?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 26,
+            "order": 24,
             "required": False
         },
         "meta_review_expiration_date": {
             "description": "When should the metareviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 27,
+            "order": 25,
             "required": False
         },
         "ethics_review_start_date": {
             "description": "When should ethics reviewing start?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 28,
+            "order": 26,
             "required": False
         },
         "ethics_review_deadline": {
             "description": "When should ethics reviewing end?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 29,
+            "order": 27,
             "required": False
         },
         "ethics_review_expiration_date": {
             "description": "When should the ethics reviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 30,
+            "order": 28,
             "required": False
         },
         "emergency_reviewing_start_date": {
             "description": "When should the emergency reviewing opt-in form open?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 31,
+            "order": 29,
             "required": False
         },
         "emergency_reviewing_due_date": {
             "description": "What due date should be advertised to the reviewers for emergency reviewing?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 32,
+            "order": 30,
             "required": False
         },
         "emergency_reviewing_exp_date": {
             "description": "When should the emergency reviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 33,
+            "order": 31,
             "required": False
         },
         "setup_review_release_date": {
             "description": "When should the reviews be released to the authors?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 34,
+            "order": 32,
             "required": False
         },
         "setup_author_response_date": {
             "description": "When should the author response period be enabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 35,
+            "order": 33,
             "required": False
         },
         "close_author_response_date": {
             "description": "When should the author response period close?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 36,
+            "order": 34,
             "required": False
         },
         "emergency_metareviewing_start_date": {
             "description": "When should the emergency metareviewing opt-in form open?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 37,
+            "order": 35,
             "required": False
         },
         "emergency_metareviewing_due_date": {
             "description": "What due date should be advertised to the action editors for emergency reviewing?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 38,
+            "order": 36,
             "required": False
         },
         "emergency_metareviewing_exp_date": {
             "description": "When should the emergency metareviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 39,
+            "order": 37,
             "required": False
         },
         "setup_meta_review_release_date": {
             "description": "The meta reviews be released to the authors?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 40,
+            "order": 38,
             "required": False
         },
         "review_rating_start_date": {
             "description": "When should the review rating form open?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 41,
+            "order": 39,
             "required": False
         },
         "review_rating_exp_date": {
             "description": "When should the review rating form close?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 42,
+            "order": 40,
             "required": False
         }
     }
@@ -504,19 +487,6 @@ class ARRWorkflow(object):
                 },
                 start_date=self.configuration_note.content.get('setup_shared_data_date'),
                 process='management/setup_shared_data.py'
-            ),
-            ARRStage(
-                type=ARRStage.Type.PROCESS_INVITATION,
-                required_fields=['sae_affinity_scores', 'setup_sae_matching_date'],
-                super_invitation_id=f"{self.venue_id}/-/Setup_SAE_Matching",
-                stage_arguments={
-                    'content': {
-                        'sae_affinity_scores': {'value': self.configuration_note.content.get('sae_affinity_scores')},
-                        'configuration_note_id': {'value': self.configuration_note.id}
-                    }
-                },
-                start_date=self.configuration_note.content.get('setup_sae_matching_date'),
-                process='management/setup_matching.py'
             ),
             ARRStage(
                 type=ARRStage.Type.PROCESS_INVITATION,
@@ -1143,12 +1113,37 @@ class ARRStage(object):
         PROCESS_INVITATION = 3
         SUBMISSION_REVISION_STAGE = 4
 
+    class Participants(Enum):
+        EVERYONE = 0
+        SENIOR_AREA_CHAIRS = 1
+        SENIOR_AREA_CHAIRS_ASSIGNED = 2
+        AREA_CHAIRS = 3
+        AREA_CHAIRS_ASSIGNED = 4
+        SECONDARY_AREA_CHAIRS = 5
+        REVIEWERS = 6
+        REVIEWERS_ASSIGNED = 7
+        REVIEWERS_SUBMITTED = 8
+        AUTHORS = 9
+        ETHICS_CHAIRS = 10
+        ETHICS_REVIEWERS_ASSIGNED = 11
+
     SUPPORTED_STAGES = {
         'Official_Review': 'Review_Stage',
         'Meta_Review': 'Meta_Review_Stage',
         'Official_Comment': 'Comment_Stage',
         'Ethics_Review': 'Ethics_Review_Stage',
         'Blind_Submission_License_Agreement': 'Submission_Revision_Stage'
+    }
+    FIELD_READERS = {
+        'Official_Review': {
+            'content_name': 'additional_review_form_options',
+            'fields': {
+                'reviewer_certification': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ]
+            }
+        }
     }
     UPDATE_WAIT_TIME = 5
 
@@ -1202,6 +1197,46 @@ class ARRStage(object):
         elif self.type == ARRStage.Type.STAGE_NOTE:
             stage_dates = self._get_stage_note_dates(format_type='strftime')
             self.stage_arguments['content'].update(stage_dates)
+
+    def _set_field_readers(self, venue):
+        for suffix, stage_info in ARRStage.FIELD_READERS.items():
+            if self.super_invitation_id.endswith(f"/{suffix}"):
+                if self.type == ARRStage.Type.REGISTRATION_STAGE:
+                    raise openreview.OpenReviewException('Registration stages do not support custom readers per field')
+                
+                content_name = stage_info['content_name']
+                for field_name, readers in stage_info['fields'].items():
+                    field_readers = [venue.get_program_chairs_id()]
+
+                    if ARRStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED in readers:
+                        field_readers.append(venue.get_senior_area_chairs_id('${{4/forum}/number}'))
+
+                    if ARRStage.Participants.AREA_CHAIRS_ASSIGNED in readers:
+                        field_readers.append(venue.get_area_chairs_id('${{4/forum}/number}'))
+
+                    if ARRStage.Participants.SECONDARY_AREA_CHAIRS in readers:
+                        field_readers.append(venue.get_secondary_area_chairs_id('${{4/forum}/number}'))
+
+                    if ARRStage.Participants.REVIEWERS_ASSIGNED in readers:
+                        field_readers.append(venue.get_reviewers_id('${{4/forum}/number}'))
+
+                    if ARRStage.Participants.REVIEWERS_SUBMITTED in readers:
+                        field_readers.append(venue.get_reviewers_id('${{4/forum}/number}') + '/Submitted')
+
+                    if ARRStage.Participants.AUTHORS in readers:
+                        field_readers.append(venue.get_authors_id('${{4/forum}/number}'))
+
+                    if ARRStage.Participants.ETHICS_CHAIRS in readers:
+                        field_readers.append(venue.get_ethics_chairs_id())
+
+                    if ARRStage.Participants.ETHICS_REVIEWERS_ASSIGNED in readers:
+                        field_readers.append(venue.get_ethics_reviewers_id('${{4/forum}/number}'))
+
+                    print(f"setting readers for {content_name}/{field_name} in {self.super_invitation_id}")
+                    if self.type == ARRStage.Type.STAGE_NOTE:
+                        self.stage_arguments['content'][content_name][field_name]['readers'] = field_readers
+                    else:
+                        self.stage_arguments[content_name][field_name]['readers'] = field_readers
 
     def _get_stage_note_dates(self, format_type):
         dates = {}
@@ -1338,6 +1373,8 @@ class ARRStage(object):
         if current_invitation:
             self._post_new_dates(client, venue, current_invitation)
         else:
+            self._set_field_readers(venue)
+
             if self.type == ARRStage.Type.REGISTRATION_STAGE:
                 venue.registration_stages = [openreview.stages.RegistrationStage(**self.stage_arguments)]
                 venue.create_registration_stages()
@@ -1548,3 +1585,8 @@ def flag_submission(
                 'Ethics_Review',
                 value = False
             )
+def get_resubmissions(submissions, previous_url_field):
+    return list(filter(
+        lambda s: previous_url_field in s.content and 'value' in s.content[previous_url_field] and len(s.content[previous_url_field]['value']) > 0, 
+        submissions
+    ))

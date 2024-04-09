@@ -61,6 +61,7 @@ class TestICMLConference():
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
+                'senior_area_chairs_assignment': 'Area Chairs',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
@@ -576,7 +577,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         header = selenium.find_element(By.ID, 'header')
         assert 'You have agreed to review up to 1 papers' in header.text
 
-    def test_registrations(self, client, openreview_client, helpers, test_client):
+    def test_registrations(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -635,6 +636,13 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         venue.create_registration_stages()
 
         sac_client = openreview.api.OpenReviewClient(username = 'sac1@gmail.com', password=helpers.strong_password)
+
+        request_page(selenium, 'http://localhost:3030/group?id=ICML.cc/2023/Conference/Senior_Area_Chairs', sac_client.token, by=By.CLASS_NAME, wait_for_element='tabs-container')
+        tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
+        assert tabs
+        assert tabs.find_element(By.LINK_TEXT, "Paper Status")
+        assert tabs.find_element(By.LINK_TEXT, "Area Chair Status")
+        assert tabs.find_element(By.LINK_TEXT, "Senior Area Chair Tasks")
 
         registration_forum = sac_client.get_notes(invitation='ICML.cc/2023/Conference/Senior_Area_Chairs/-/Registration_Form')
         assert len(registration_forum) == 1
@@ -4334,72 +4342,104 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         ]
 
     def test_meta_review_stage(self, client, openreview_client, helpers):
-
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         exp_date = due_date + datetime.timedelta(days=2)
-        pc_client.post_note(openreview.Note(
-            content={
-                'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
-                'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
-                'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
-                'meta_review_expiration_date': exp_date.strftime('%Y/%m/%d'),
-                'recommendation_options': 'Accept, Reject',
-                'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
-                'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
-                'additional_meta_review_form_options': {
-                    'recommendation': {
-                        'description': 'Please select a recommendation for the paper',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'enum': ['Accept', 'Reject'],
-                                'input': 'select'
-                            }
-                        },
-                        'order': 2
+
+        venue = openreview.helpers.get_conference(client, request_form.id, setup=False)
+        venue.meta_review_stage = openreview.stages.MetaReviewStage(
+            start_date=start_date,
+            due_date=due_date,
+            exp_date=exp_date,
+            additional_fields={
+                'recommendation': {
+                    'description': 'Please select a recommendation for the paper',
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'enum': ['Accept', 'Reject'],
+                            'input': 'select'
+                        }
                     },
-                    'suggestions': {
-                        'description': 'Please provide suggestions on how to improve the paper',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 5000,
-                                'input': 'textarea',
-                                'optional': True,
-                                'deletable': True
-                            }
+                    'order': 2
+                },
+                'suggestions': {
+                    'description': 'Please provide suggestions on how to improve the paper',
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'maxLength': 5000,
+                            'input': 'textarea',
+                            'optional': True,
+                            'deletable': True
                         }
                     }
-                },
-                'remove_meta_review_form_options': ['confidence']
+                }
             },
-            forum=request_form.forum,
-            invitation=f'openreview.net/Support/-/Request{request_form.number}/Meta_Review_Stage',
-            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
-            replyto=request_form.forum,
-            referent=request_form.forum,
-            signatures=['~Program_ICMLChair1'],
-            writers=[]
-        ))
+            remove_fields=['confidence'],
+            source_submissions_query={
+                'position_paper_track': 'No'
+            }
+        )
 
+        venue.create_meta_review_stage()
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Meta_Review-0-1', count=1)
 
-        helpers.await_queue()
+        invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review')
+        assert len(invitations) == 50
+        assert invitations[0].edit['note']['id']['param']['withInvitation'] == invitations[0].id
 
+        invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review_SAC_Revision')
+        assert len(invitations) == 50
+
+        sac_revision_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Meta_Review_SAC_Revision')
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Meta_Review')
+        assert sac_revision_invitation.edit['note']['id']['param']['withInvitation'] == invitation.id
+        assert 'suggestions' in invitation.edit['note']['content']
+
         # duedate + 2 days
         exp_date = invitation.duedate + (2*24*60*60*1000)
         assert invitation.expdate == exp_date
 
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Meta_Review')
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Meta_Review')
+        assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Submission2/-/Meta_Review')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission3/-/Meta_Review')
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Meta_Review')
+        assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Submission4/-/Meta_Review')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Meta_Review')
+
+        ## Create position paper meta reviews
+        venue = openreview.helpers.get_conference(client, request_form.id, setup=False)
+        venue.meta_review_stage = openreview.stages.MetaReviewStage(
+            start_date=start_date,
+            due_date=due_date,
+            exp_date=exp_date,
+            remove_fields=['confidence'],
+            name='Position_Paper_Meta_Review',
+            source_submissions_query={
+                'position_paper_track': 'Yes'
+            }
+        )
+
+        venue.create_meta_review_stage()
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Position_Paper_Meta_Review-0-1', count=1)
+
+        invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Position_Paper_Meta_Review')
+        assert len(invitations) == 50
+        assert invitations[0].edit['note']['id']['param']['withInvitation'] == invitations[0].id
+
+        invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Position_Paper_Meta_Review_SAC_Revision')
+        assert len(invitations) == 50
+
+        sac_revision_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Meta_Review_SAC_Revision')
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Meta_Review')
+        assert sac_revision_invitation.edit['note']['id']['param']['withInvitation'] == invitation.id
+        assert 'metareview' in invitation.edit['note']['content']
+        assert 'suggestions' not in invitation.edit['note']['content']
 
         ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
@@ -4421,14 +4461,55 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         helpers.await_queue_edit(openreview_client, edit_id=meta_review_edit['id'])
 
         #try to delete AC assignment of paper with a submitted metareview
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
-
         assignment = pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Assignment', head=submissions[0].id, tail='~AC_ICMLTwo1')[0]
         assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
         assignment.cdate = None
 
         with pytest.raises(openreview.OpenReviewException, match=r'Can not remove assignment, the user ~AC_ICMLTwo1 already posted a Meta Review.'):
             pc_client_v2.post_edge(assignment)
+
+        ## Post meta review to position paper
+        ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password=helpers.strong_password)
+        submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
+
+        anon_groups = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission4/Area_Chair_', signatory='~AC_ICMLOne1')
+        anon_group_id = anon_groups[0].id
+
+        meta_review_edit = ac_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission4/-/Meta_Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'metareview': { 'value': 'This is a good paper' },
+                    'recommendation': { 'value': 'Accept (Oral)'}
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=meta_review_edit['id'])
+
+        ## Extend deadline using a meta invitation and propagate the change to all the children
+        new_due_date = openreview.tools.datetime_millis(now + datetime.timedelta(days=10))
+        new_exp_date = openreview.tools.datetime_millis(now + datetime.timedelta(days=15))
+        pc_client_v2.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            readers=['ICML.cc/2023/Conference'],
+            writers=['ICML.cc/2023/Conference'],
+            signatures=['ICML.cc/2023/Conference'],
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Position_Paper_Meta_Review',
+                edit={
+                    'invitation': {
+                        'duedate': new_due_date,
+                        'expdate': new_exp_date
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Position_Paper_Meta_Review-0-1', count=2)
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Meta_Review')
+        assert invitation.expdate == new_exp_date
 
     def test_meta_review_agreement(self, client, openreview_client, helpers, selenium, request_page):
 
@@ -4478,7 +4559,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         venue.create_custom_stage()
 
-        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review_Agreement')) == 1
+        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review_Agreement')) == 2
 
         sac_client = openreview.api.OpenReviewClient(username = 'sac2@icml.cc', password=helpers.strong_password)
         submissions = sac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
@@ -4530,7 +4611,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         helpers.await_queue_edit(openreview_client, edit_id=meta_review_edit['id'])
 
-        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review_Agreement')) == 2
+        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Meta_Review_Agreement')) == 3
 
         invitation_id = 'ICML.cc/2023/Conference/Submission2/Meta_Review1/-/Meta_Review_Agreement'
         sac_client = openreview.api.OpenReviewClient(username = 'sac1@gmail.com', password=helpers.strong_password)
@@ -4576,7 +4657,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
                 id=metareviews[0].id,
                 content={
                     'metareview': { 'value': 'I reverted the AC decision' },
-                    'recommendation': { 'value': 'Accept'}
+                    'recommendation': { 'value': 'Accept (Oral)'}
                 }
             )
         )

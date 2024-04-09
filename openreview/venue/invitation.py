@@ -44,6 +44,14 @@ class InvitationBuilder(object):
     funcs['process'](client, invitation)
 '''
 
+    def _should_update_meta_invitation(self, invitation):
+        if 'invitation_edit_script' not in invitation.content or 'group_edit_script' not in invitation.content:
+            return True
+        if invitation.content['invitation_edit_script']['value'] != self.get_process_content('process/invitation_edit_process.py'):
+            return True
+        if invitation.content['group_edit_script']['value'] != self.get_process_content('process/group_edit_process.py'):
+            return True
+
     def save_invitation(self, invitation, replacement=None):
         self.client.post_invitation_edit(invitations=self.venue.get_meta_invitation_id(),
             readers=[self.venue_id],
@@ -85,12 +93,12 @@ class InvitationBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
             process = f.read()
             return process
-
+        
     def set_meta_invitation(self):
         venue_id=self.venue_id
         meta_invitation = openreview.tools.get_invitation(self.client, self.venue.get_meta_invitation_id())
         
-        if meta_invitation is None or 'invitation_edit_script' not in meta_invitation.content or 'group_edit_script' not in meta_invitation.content:
+        if meta_invitation is None or self._should_update_meta_invitation(meta_invitation):
             self.client.post_invitation_edit(invitations=None,
                 readers=[venue_id],
                 writers=[venue_id],
@@ -444,11 +452,7 @@ class InvitationBuilder(object):
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process              
             }],
-            content={
-                'review_process_script': {
-                    'value': self.get_process_content('process/review_process.py')
-                }
-            },
+            content={},
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -478,15 +482,6 @@ class InvitationBuilder(object):
                     'invitees': [venue_id, self.venue.get_reviewers_id(number='${3/content/noteNumber/value}')],
                     'maxReplies': 1,
                     'cdate': review_cdate,
-                    'process': '''def process(client, edit, invitation):
-    meta_invitation = client.get_invitation(invitation.invitations[0])
-    script = meta_invitation.content['review_process_script']['value']
-    funcs = {
-        'openreview': openreview
-    }
-    exec(script, funcs)
-    funcs['process'](client, edit, invitation)
-''',
                     'edit': {
                         'signatures': { 
                             'param': { 
@@ -523,6 +518,34 @@ class InvitationBuilder(object):
 
             }
         )
+
+        if review_stage.process_path:
+            invitation.content['review_process_script'] = {
+               'value': self.get_process_content(review_stage.process_path)
+            }
+            invitation.edit['invitation']['process'] = '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['review_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+'''
+        
+        if review_stage.preprocess_path:
+            invitation.content['review_preprocess_script'] = {
+                'value': self.get_process_content(review_stage.preprocess_path)
+            }
+            invitation.edit['invitation']['preprocess'] = '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['review_preprocess_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+'''           
 
         if review_duedate:
             invitation.edit['invitation']['duedate'] = review_duedate
@@ -777,6 +800,13 @@ class InvitationBuilder(object):
 
         content = meta_review_stage.get_content(api_version='2', conference=self.venue)
 
+        previous_query = {}
+        invitation = tools.get_invitation(self.client, meta_review_invitation_id)
+        if invitation:
+            previous_query = invitation.content.get('source_submissions_query', {}).get('value', {})
+
+        source_submissions_query = meta_review_stage.source_submissions_query if meta_review_stage.source_submissions_query else previous_query
+
         invitation = Invitation(id=meta_review_invitation_id,
             invitees=[venue_id],
             readers=[venue_id],
@@ -787,11 +817,7 @@ class InvitationBuilder(object):
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process              
             }],
-            content = {
-                'meta_review_process_script': {
-                    'value': self.get_process_content('process/metareview_process.py')
-                }
-            },
+            content = {},
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -814,7 +840,7 @@ class InvitationBuilder(object):
                 },
                 'replacement': True,
                 'invitation': {
-                    'id': self.venue.get_invitation_id(meta_review_stage.name, '${2/content/noteNumber/value}'),
+                    'id': self.venue.get_invitation_id(meta_review_stage.child_invitations_name, '${2/content/noteNumber/value}'),
                     'signatures': [ venue_id ],
                     'readers': ['everyone'],
                     'writers': [venue_id],
@@ -822,15 +848,6 @@ class InvitationBuilder(object):
                     'noninvitees': [self.venue.get_authors_id(number='${3/content/noteNumber/value}')] + ([self.venue.get_secondary_area_chairs_id('${3/content/noteNumber/value}')] if self.venue.use_secondary_area_chairs else []),
                     'maxReplies': 1,
                     'cdate': meta_review_cdate,
-                    'process': '''def process(client, edit, invitation):
-    meta_invitation = client.get_invitation(invitation.invitations[0])
-    script = meta_invitation.content['meta_review_process_script']['value']
-    funcs = {
-        'openreview': openreview
-    }
-    exec(script, funcs)
-    funcs['process'](client, edit, invitation)
-''',
                     'edit': {
                         'signatures': { 
                             'param': { 
@@ -843,7 +860,7 @@ class InvitationBuilder(object):
                         'note': {
                             'id': {
                                 'param': {
-                                    'withInvitation': self.venue.get_invitation_id(meta_review_stage.name, '${6/content/noteNumber/value}'),
+                                    'withInvitation': self.venue.get_invitation_id(meta_review_stage.child_invitations_name, '${6/content/noteNumber/value}'),
                                     'optional': True
                                 }
                             },
@@ -867,11 +884,44 @@ class InvitationBuilder(object):
             }
         )
 
+        if meta_review_stage.process_path:
+            invitation.content['metareview_process_script'] = {
+               'value': self.get_process_content(meta_review_stage.process_path)
+            }
+            invitation.edit['invitation']['process'] = '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['metareview_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+'''
+        
+        if meta_review_stage.preprocess_path:
+            invitation.content['metareview_preprocess_script'] = {
+                'value': self.get_process_content(meta_review_stage.preprocess_path)
+            }
+            invitation.edit['invitation']['preprocess'] = '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['metareview_preprocess_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+'''           
+
         if meta_review_duedate:
             invitation.edit['invitation']['duedate'] = meta_review_duedate
 
         if meta_review_expdate:
-            invitation.edit['invitation']['expdate'] = meta_review_expdate         
+            invitation.edit['invitation']['expdate'] = meta_review_expdate
+
+        if source_submissions_query:
+            invitation.content['source_submissions_query'] = {
+                'value': source_submissions_query
+            }
 
         self.save_invitation(invitation, replacement=False)
 
@@ -912,7 +962,7 @@ class InvitationBuilder(object):
                     },
                     'replacement': True,
                     'invitation': {
-                        'id': self.venue.get_invitation_id(meta_review_stage.name + '_SAC_Revision', '${2/content/noteNumber/value}'),
+                        'id': self.venue.get_invitation_id(meta_review_stage.child_invitations_name + '_SAC_Revision', '${2/content/noteNumber/value}'),
                         'signatures': [ venue_id ],
                         'readers': ['everyone'],
                         'writers': [venue_id],
@@ -932,7 +982,7 @@ class InvitationBuilder(object):
                             'note': {
                                 'id': {
                                     'param': {
-                                        'withInvitation': self.venue.get_invitation_id(meta_review_stage.name, '${6/content/noteNumber/value}')
+                                        'withInvitation': self.venue.get_invitation_id(meta_review_stage.child_invitations_name, '${6/content/noteNumber/value}')
                                     }
                                 },
                                 'forum': '${4/content/noteId/value}',
@@ -945,6 +995,11 @@ class InvitationBuilder(object):
 
             if meta_review_expdate:
                 invitation.edit['invitation']['expdate'] = meta_review_expdate
+
+            if source_submissions_query:
+                invitation.content['source_submissions_query'] = {
+                    'value': source_submissions_query
+                }
 
             self.save_invitation(invitation, replacement=False)
 
@@ -1079,7 +1134,7 @@ class InvitationBuilder(object):
                     'withInvitation': venue.submission_stage.get_submission_id(venue)
                 }
             }
-            if match_group_id == venue.get_senior_area_chairs_id():
+            if match_group_id == venue.get_senior_area_chairs_id() and not venue.sac_paper_assignments:
                 head = {
                     'param': {
                         'type': 'profile',
@@ -1091,7 +1146,7 @@ class InvitationBuilder(object):
 
             bid_invitation_id = venue.get_invitation_id(bid_stage.name, prefix=match_group_id)
 
-            template_name = 'profileBidWebfield.js' if match_group_id == venue.get_senior_area_chairs_id() else 'paperBidWebfield.js'
+            template_name = 'profileBidWebfield.js' if match_group_id == venue.get_senior_area_chairs_id() and not venue.sac_paper_assignments else 'paperBidWebfield.js'
             with open(os.path.join(os.path.dirname(__file__), 'webfield/' + template_name)) as webfield_reader:
                 webfield_content = webfield_reader.read()
 
@@ -2469,14 +2524,15 @@ class InvitationBuilder(object):
             },
             'reviewers_anon_name': {
                 'value': venue.get_anon_reviewers_name() if is_reviewer else venue.get_anon_area_chairs_name()
-            },
-            'sync_sac_id': {
-                'value': venue.get_senior_area_chairs_id(number='{number}') if committee_name == venue.area_chairs_name and venue.use_senior_area_chairs else ''
-            },
-            'sac_assignment_id': {
-                'value': venue.get_assignment_id(senior_area_chairs_id, deployed=True) if is_area_chair and venue.use_senior_area_chairs else ''
             }
         }
+        if committee_name == venue.area_chairs_name and venue.use_senior_area_chairs and not venue.sac_paper_assignments:
+            content['sync_sac_id'] = {
+                'value': venue.get_senior_area_chairs_id(number='{number}')
+            }
+            content['sac_assignment_id'] = {
+                'value': venue.get_assignment_id(senior_area_chairs_id, deployed=True) if is_area_chair and venue.use_senior_area_chairs else ''
+            }
 
         if is_ethics_reviewer:
             content = {
@@ -2491,12 +2547,6 @@ class InvitationBuilder(object):
                 },
                 'reviewers_anon_name': {
                     'value': venue.anon_ethics_reviewers_name()
-                },
-                'sync_sac_id': {
-                    'value': ''
-                },
-                'sac_assignment_id': {
-                    'value': ''
                 }
             }
 
@@ -2552,7 +2602,7 @@ class InvitationBuilder(object):
                 edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
 
 
-        if is_senior_area_chair:
+        if is_senior_area_chair and not venue.sac_paper_assignments:
             edge_head = {
                 'param': {
                     'type': 'profile',
@@ -2563,6 +2613,17 @@ class InvitationBuilder(object):
             preprocess=None
             content=None
             edge_readers.append('${2/head}')
+        elif is_senior_area_chair and venue.sac_paper_assignments:
+            invitation_readers.append(senior_area_chairs_id)
+            edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')]
+            content = {
+                'reviewers_id': {
+                    'value': venue.get_senior_area_chairs_id()
+                },
+                'reviewers_name': {
+                    'value': venue.senior_area_chairs_name
+                }
+            }
 
         edge_readers.append('${2/tail}')
 
@@ -3154,9 +3215,6 @@ class InvitationBuilder(object):
             content={
                 'source': {
                     'value': 'flagged_for_ethics_review'
-                },
-                'ethics_review_process_script': {
-                    'value': self.get_process_content('process/ethics_review_process.py')
                 }
             },
             edit={
@@ -3188,15 +3246,6 @@ class InvitationBuilder(object):
                     'invitees': [venue_id, self.venue.get_ethics_reviewers_id(number='${3/content/noteNumber/value}')],
                     'maxReplies': 1,
                     'cdate': ethics_review_cdate,
-                    'process': '''def process(client, edit, invitation):
-    meta_invitation = client.get_invitation(invitation.invitations[0])
-    script = meta_invitation.content['ethics_review_process_script']['value']
-    funcs = {
-        'openreview': openreview
-    }
-    exec(script, funcs)
-    funcs['process'](client, edit, invitation)
-''',
                     'edit': {
                         'signatures': { 
                             'param': { 
@@ -3233,6 +3282,34 @@ class InvitationBuilder(object):
 
             }
         )
+
+        if ethics_review_stage.process_path:
+            invitation.content['ethics_review_process_script'] = {
+               'value': self.get_process_content(ethics_review_stage.process_path)
+            }
+            invitation.edit['invitation']['process'] = '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['ethics_review_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+'''
+        
+        if ethics_review_stage.preprocess_path:
+            invitation.content['ethics_review_preprocess_script'] = {
+                'value': self.get_process_content(ethics_review_stage.preprocess_path)
+            }
+            invitation.edit['invitation']['preprocess'] = '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['ethics_review_preprocess_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+'''        
 
         if ethics_review_duedate:
             invitation.edit['invitation']['duedate'] = ethics_review_duedate
@@ -3303,9 +3380,11 @@ class InvitationBuilder(object):
                         }
                     }
                 }
-            },
-            process=self.get_process_content('process/ethics_flag_process.py')
+            }
         )
+
+        if ethics_review_stage.flag_process_path:
+            ethics_stage_invitation.process = self.get_process_content(ethics_review_stage.flag_process_path)
 
         if 'everyone' not in self.venue.submission_stage.get_readers(self.venue, '${{2/id}/number}'):
             ethics_stage_invitation.edit['note']['readers'] = {
