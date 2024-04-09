@@ -1953,9 +1953,6 @@ class OpenReviewClient(object):
         if content is not None:
             edit_json['content'] = content
 
-        if content is not None:
-            edit_json['content'] = content
-
         if replacement is not None:
             edit_json['replacement'] = replacement
 

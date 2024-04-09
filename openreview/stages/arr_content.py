@@ -34,16 +34,35 @@ arr_submission_content = {
     },
     "reviewing_volunteers": {
         "order": 4,
-        "description": "From the list of authors, enter the authors that are going to be responsible for reviewing for this cycle.",
+        "description": "From the list of authors, enter the authors that are going to be responsible for reviewing for this cycle. See this blog post for further information: https://aclrollingreview.org/reviewing-workload-requirement/ .",
         "value": {
             "param": {
                 "type": "profile[]",
-                "regex": "^~\\S+$|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})"
+                "regex": "^~\\S+$|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})",
+                "optional": True
+            }
+        }
+    },
+    "reviewing_no_volunteers_reason": {
+        "order": 5,
+        "description": "If no authors were provided in the previous question, please indicate the reason:",
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "All authors are new to the ACL community.",
+                    "None of the authors are sufficiently qualified to review.",
+                    "All qualified authors are already involved in the reviewing process in some capacity (as Area Chairs, as Senior Area Chairs, etc.).",
+                    "Another reason - if you select this option the editors may contact you to confirm the reason is suitable.",
+                    "N/A - An author was provided in the previous question."
+                ],
+                "optional": False,
+                "type": "string"
             }
         }
     },
     "TLDR": {
-        "order": 5,
+        "order": 6,
         "description": "\"Too Long; Didn't Read\": a short sentence describing your paper",
         "value": {
             "param": {
@@ -55,7 +74,7 @@ arr_submission_content = {
         }
     },
     "abstract": {
-        "order": 6,
+        "order": 7,
         "description": "Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.",
         "value": {
             "param": {
@@ -67,7 +86,7 @@ arr_submission_content = {
         }
     },
     "pdf": {
-        "order": 7,
+        "order": 8,
         "description": "Upload a PDF file that ends with .pdf.",
         "value": {
             "param": {
@@ -84,15 +103,15 @@ arr_submission_content = {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "long",
-                    "short"
+                    "Long",
+                    "Short"
                 ],
                 "optional": False,
                 "type": "string"
             }
         },
-        "description": "Short or long. See the CFP for the requirements for short and long papers.",
-        "order": 8
+        "description": "Long or short. See the CFP for the requirements for long and short papers.",
+        "order": 9
     },
     "research_area": {
         "value": {
@@ -105,24 +124,25 @@ arr_submission_content = {
                     "Efficient/Low-Resource Methods for NLP",
                     "Ethics, Bias, and Fairness",
                     "Generation",
+                    "Human-Centered NLP",
                     "Information Extraction",
                     "Information Retrieval and Text Mining",
                     "Interpretability and Analysis of Models for NLP",
+                    "Language Modeling",
                     "Linguistic theories, Cognitive Modeling and Psycholinguistics",
                     "Machine Learning for NLP",
                     "Machine Translation",
-                    "Multilinguality and Language Diversity",
+                    "Multilingualism and Cross-Lingual NLP",
                     "Multimodality and Language Grounding to Vision, Robotics and Beyond",
+                    "NLP Applications",
                     "Phonology, Morphology and Word Segmentation",
                     "Question Answering",
                     "Resources and Evaluation",
                     "Semantics: Lexical",
                     "Semantics: Sentence-level Semantics, Textual Inference and Other areas",
                     "Sentiment Analysis, Stylistic Analysis, and Argument Mining",
-                    "Speech recognition, text-to-speech and spoken language understanding",
                     "Summarization",
-                    "Syntax: Tagging, Chunking and Parsing / ML",
-                    "NLP Applications",
+                    "Syntax: Tagging, Chunking and Parsing",
                     "Special Theme (conference specific)"
                 ],
                 "optional": False,
@@ -130,7 +150,17 @@ arr_submission_content = {
             }
         },
         "description": "Research Areas / Tracks. Select the most relevant research area / track for your paper. This will be used to inform the reviewer and action editor assignment.",
-        "order": 9
+        "order": 10
+    },
+    "research_area_keywords": {
+        "order": 11,
+        "description": "Area-specific keywords. Please provide a comma-separated list of keywords from this page: https://aclrollingreview.org/areas",
+        "value": {
+            "param": {
+                "type": "string",
+                "regex": "^.{1,250}$"
+            }
+        }
     },
     "contribution_types": {
         "value": {
@@ -154,7 +184,7 @@ arr_submission_content = {
             }
         },
         "description": "Which of the following types of contributions does your paper make? This will inform the reviewers and meta-reviewer about what to look for in your work.",
-        "order": 10
+        "order": 12
     },
     "languages_studied": {
         "value": {
@@ -165,7 +195,7 @@ arr_submission_content = {
             }
         },
         "description": "Please list the languages studied in your paper, separated by commas.",
-        "order": 11
+        "order": 13
     },
     "previous_URL": {
         "value": {
@@ -176,21 +206,7 @@ arr_submission_content = {
             }
         },
         "description": "If this is a resubmission, provide the URL of your previous submission to ACL Rolling Review (this URL will look like https://openreview.net/forum?id=<some string>).",
-        "order": 12
-    },
-    "previous_PDF": {
-        "value": {
-            "param": {
-                "type": "file",
-                "maxSize": 80,
-                "extensions": [
-                    "pdf"
-                ],
-                "optional": True
-            }
-        },
-        "description": "If this is a resubmission, upload a single PDF of your previous submission to ACL Rolling Review.",
-        "order": 13
+        "order": 14
     },
     "response_PDF": {
         "value": {
@@ -204,7 +220,7 @@ arr_submission_content = {
             }
         },
         "description": "If this is a resubmission, upload a single PDF describing how you have changed your paper in response to your previous round of reviews. Note: this should NOT be a printout of your comments from the in-cycle author response period. This should be a new document that maintains anonymity and describes changes since your last submission.",
-        "order": 14
+        "order": 15
     },
     "reassignment_request_action_editor": {
         "value": {
@@ -215,12 +231,11 @@ arr_submission_content = {
                     "No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable",
                     "This is not a resubmission"
                 ],
-                "optional": True,
                 "type": "string"
             }
         },
         "description": "Do you want your submission to go to a different action editor? If you want your submission to go to the same action editor and they are unavailable this cycle, you will be assigned a new action editor.",
-        "order": 15
+        "order": 16
     },
     "reassignment_request_reviewers": {
         "value": {
@@ -231,12 +246,11 @@ arr_submission_content = {
                     "No, I want the same set of reviewers from our previous submission and understand that new reviewers may be assigned if any of the previous ones are unavailable",
                     "This is not a resubmission"
                 ],
-                "optional": True,
                 "type": "string"
             }
         },
         "description": "Do you want your submission to go to a different set of reviewers? If you want your submission to go to the same set of reviewers and at least one are unavailable this cycle, you will be assigned new reviewers in their place.",
-        "order": 16
+        "order": 17
     },
     "justification_for_not_keeping_action_editor_or_reviewers": {
         "value": {
@@ -247,7 +261,7 @@ arr_submission_content = {
             }
         },
         "description": "Please specify reason for any reassignment request. Reasons may include clear lack of expertise in the area or dismissing the work without any concrete comments regarding correctness of the results or argumentation, limited perceived impact of the methods or findings, lack of clarity in exposition, or other valid criticisms. It is up to the discretion of the action editors or editors in chief regarding whether to heed these requests.",
-        "order": 17
+        "order": 18
     },
     "software": {
         "value": {
@@ -262,7 +276,7 @@ arr_submission_content = {
             }
         },
         "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing software (max. 200MB).",
-        "order": 18
+        "order": 19
     },
     "data": {
         "value": {
@@ -277,7 +291,7 @@ arr_submission_content = {
             }
         },
         "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing data (max. 200MB).",
-        "order": 19
+        "order": 20
     },
     "preprint": {
         "value": {
@@ -292,7 +306,7 @@ arr_submission_content = {
             }
         },
         "description": "Would the authors like ARR to release a public anonymous pre-print of the submission?",
-        "order": 20
+        "order": 21
     },
     "preprint_status": {
         "value": {
@@ -304,12 +318,11 @@ arr_submission_content = {
                     "We are considering releasing a non-anonymous preprint in the next two months (i.e., during the reviewing process).",
                     "There is no non-anonymous preprint and we do not intend to release one."
                 ],
-                "optional": True,
                 "type": "string"
             }
         },
         "description": "Is there are a publicly available non-anonymous preprints of this paper, or do you plan to release one? Note, all options for this question are permitted under the updated ACL preprint policy. We are collecting this information to help inform the review process.",
-        "order": 21
+        "order": 22
     },
     "existing_preprints": {
         "value": {
@@ -320,7 +333,7 @@ arr_submission_content = {
             }
         },
         "description": "If there are any publicly available non-anonymous preprints of this paper, please list them here (provide the URLs please).",
-        "order": 22
+        "order": 23
     },
     "preferred_venue": {
         "value": {
@@ -331,7 +344,7 @@ arr_submission_content = {
             }
         },
         "description": "If you have a venue that you are hoping to submit this paper to, please enter it here. You must enter the designated acronym from this list: https://aclrollingreview.org/dates. Note that entering a preferred venue is not a firm commitment to submit your paper to this venue, but it will help ARR and the venue chairs in planning, so we highly recommend filling in your current intentions. Please enter only your first choice.",
-        "order": 23
+        "order": 24
     },
     "consent_to_share_data": {
         "value": {
@@ -346,7 +359,7 @@ arr_submission_content = {
             }
         },
         "description": "I agree for the anonymized metadata associated with my submission to be included in a publicly available dataset. This dataset WILL include scores, anonymized paper and reviewer IDs that allow grouping the reviews by paper and by reviewer, as well as acceptance decisions and other numerical and categorical metadata. This dataset WILL NOT include any textual or uniquely attributable data like names, submission titles and texts, review texts, author responses, etc. Your decision to opt-in the data does not affect the reviewing of your submission in any way.",
-        "order": 24
+        "order": 25
     },
     "consent_to_share_submission_details": {
         "value": {
@@ -360,50 +373,38 @@ arr_submission_content = {
             }
         },
         "description": "Upon submitting this paper, authors agree to allow us to share their submission details (such as title, author names, and potentially abstract) with program committees from other conference venues for the purpose of verifying compliance with submission requirements.",
-        "order": 25
-    },
-    "A1": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "yes",
-                    "no",
-                    "n/a"
-                ],
-                "type": "string"
-            }
-        },
-        "description": "Did you discuss the limitations of your work? Note that all ARR papers must now have a Limitations section, as per the CFP, and can be desk rejected if it is missing.",
         "order": 26
     },
-    "A1_elaboration_for_yes_or_no": {
+    "A1_limitations_section": {
         "value": {
             "param": {
-                "minLength": 1,
-                "optional": True,
+                "input": "checkbox",
+                "enum": [
+                    "This paper has a limitations section."
+                ],
+                "optional": False,
                 "type": "string"
             }
         },
-        "description": "For yes, provide a section number. For no, justify why not.",
+        "description": "Authors are required to discuss the limitations of their work in a dedicated section titled \"Limitations\". Papers without this section will be desk rejected. Please confirm that your paper has a limitations section by checking this box.",
         "order": 27
     },
-    "A2": {
+    "A2_potential_risks": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no",
-                    "n/a"
+                    "Yes",
+                    "No",
+                    "N/A"
                 ],
                 "type": "string"
             }
         },
-        "description": "Did you discuss any potential risks of your work?",
+        "description": "Did you discuss any potential risks of your work? Note, this question, and those that follow, are from the Responsible Research Checklist (details here: https://aclrollingreview.org/responsibleNLPresearch/ )",
         "order": 28
     },
-    "A2_elaboration_for_yes_or_no": {
+    "A2_elaboration": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -414,14 +415,14 @@ arr_submission_content = {
         "description": "For yes, provide a section number. For no, justify why not.",
         "order": 29
     },
-    "A3": {
+    "A3_abstract_and_introduction_summarize_claims": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no",
-                    "n/a"
+                    "Yes",
+                    "No",
+                    "N/A"
                 ],
                 "type": "string"
             }
@@ -429,7 +430,7 @@ arr_submission_content = {
         "description": "Do the abstract and introduction summarize the paper's main claims?",
         "order": 30
     },
-    "A3_elaboration_for_yes_or_no": {
+    "A3_elaboration": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -440,13 +441,13 @@ arr_submission_content = {
         "description": "For yes, provide a section number. For no, justify why not.",
         "order": 31
     },
-    "B": {
+    "B_use_or_create_scientific_artifacts": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no"
+                    "Yes",
+                    "No"
                 ],
                 "type": "string"
             }
@@ -454,23 +455,22 @@ arr_submission_content = {
         "description": "Did you use or create scientific artifacts?",
         "order": 32
     },
-    "B1": {
+    "B1_cite_creators_of_artifacts": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no",
-                    "n/a"
+                    "Yes",
+                    "No",
+                    "N/A"
                 ],
-                "type": "string",
-                "optional": True
+                "type": "string"
             }
         },
         "description": "Did you cite the creators of artifacts you used?",
         "order": 33
     },
-    "B1_elaboration_for_yes_or_no": {
+    "B1_elaboration": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -481,23 +481,22 @@ arr_submission_content = {
         "description": "For yes, provide a section number. For no, justify why not.",
         "order": 34
     },
-    "B2": {
+    "B2_discuss_the_license_for_artifacts": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no",
-                    "n/a"
+                    "Yes",
+                    "No",
+                    "N/A"
                 ],
-                "type": "string",
-                "optional": True
+                "type": "string"
             }
         },
         "description": "Did you discuss the license or terms for use and/or distribution of any artifacts?",
         "order": 35
     },
-    "B2_elaboration_for_yes_or_no": {
+    "B2_elaboration": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -508,23 +507,22 @@ arr_submission_content = {
         "description": "For yes, provide a section number. For no, justify why not.",
         "order": 36
     },
-    "B3": {
+    "B3_artifact_use_consistent_with_intended_use": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no",
-                    "n/a"
+                    "Yes",
+                    "No",
+                    "N/A"
                 ],
-                "type": "string",
-                "optional": True
+                "type": "string"
             }
         },
         "description": "Did you discuss if your use of existing artifact(s) was consistent with their intended use, provided that it was specified? For the artifacts you create, do you specify intended use and whether that is compatible with the original access conditions (in particular, derivatives of data accessed for research purposes should not be used outside of research contexts)?",
         "order": 37
     },
-    "B3_elaboration_for_yes_or_no": {
+    "B3_elaboration": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -535,23 +533,22 @@ arr_submission_content = {
         "description": "For yes, provide a section number. For no, justify why not.",
         "order": 38
     },
-    "B4": {
+    "B4_data_contains_personally_identifying_info_or_offensive_content": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no",
-                    "n/a"
+                    "Yes",
+                    "No",
+                    "N/A"
                 ],
-                "type": "string",
-                "optional": True
+                "type": "string"
             }
         },
         "description": "Did you discuss the steps taken to check whether the data that was collected/used contains any information that names or uniquely identifies individual people or offensive content, and the steps taken to protect/anonymize it?",
         "order": 39
     },
-    "B4_elaboration_for_yes_or_no": {
+    "B4_elaboration": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -562,23 +559,22 @@ arr_submission_content = {
         "description": "For yes, provide a section number. For no, justify why not.",
         "order": 40
     },
-    "B5": {
+    "B5_documentation_of_artifacts": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no",
-                    "n/a"
+                    "Yes",
+                    "No",
+                    "N/A"
                 ],
-                "type": "string",
-                "optional": True
+                "type": "string"
             }
         },
         "description": "Did you provide documentation of the artifacts, e.g., coverage of domains, languages, and linguistic phenomena, demographic groups represented, etc.?",
         "order": 41
     },
-    "B5_elaboration_for_yes_or_no": {
+    "B5_elaboration": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -589,23 +585,22 @@ arr_submission_content = {
         "description": "For yes, provide a section number. For no, justify why not.",
         "order": 42
     },
-    "B6": {
+    "B6_statistics_for_data": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no",
-                    "n/a"
+                    "Yes",
+                    "No",
+                    "N/A"
                 ],
-                "type": "string",
-                "optional": True
+                "type": "string"
             }
         },
         "description": "Did you report relevant statistics like the number of examples, details of train/test/dev splits, etc. for the data that you used/created?",
         "order": 43
     },
-    "B6_elaboration_for_yes_or_no": {
+    "B6_elaboration": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -616,13 +611,13 @@ arr_submission_content = {
         "description": "For yes, provide a section number. For no, justify why not.",
         "order": 44
     },
-    "C": {
+    "C_computational_experiments": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no"
+                    "Yes",
+                    "No"
                 ],
                 "type": "string"
             }
@@ -630,23 +625,22 @@ arr_submission_content = {
         "description": "Did you run computational experiments?",
         "order": 45
     },
-    "C1": {
+    "C1_model_size_and_budget": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no",
-                    "n/a"
+                    "Yes",
+                    "No",
+                    "N/A"
                 ],
-                "type": "string",
-                "optional": True
+                "type": "string"
             }
         },
         "description": "Did you report the number of parameters in the models used, the total computational budget (e.g., GPU hours), and computing infrastructure used?",
         "order": 46
     },
-    "C1_elaboration_for_yes_or_no": {
+    "C1_elaboration": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -657,23 +651,22 @@ arr_submission_content = {
         "description": "For yes, provide a section number. For no, justify why not.",
         "order": 47
     },
-    "C2": {
+    "C2_experimental_setup_and_hyperparameters": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no",
-                    "n/a"
+                    "Yes",
+                    "No",
+                    "N/A"
                 ],
-                "type": "string",
-                "optional": True
+                "type": "string"
             }
         },
         "description": "Did you discuss the experimental setup, including hyperparameter search and best-found hyperparameter values?",
         "order": 48
     },
-    "C2_elaboration_for_yes_or_no": {
+    "C2_elaboration": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -684,23 +677,22 @@ arr_submission_content = {
         "description": "For yes, provide a section number. For no, justify why not.",
         "order": 49
     },
-    "C3": {
+    "C3_descriptive_statistics": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no",
-                    "n/a"
+                    "Yes",
+                    "No",
+                    "N/A"
                 ],
-                "type": "string",
-                "optional": True
+                "type": "string"
             }
         },
         "description": "Did you report descriptive statistics about your results (e.g., error bars around results, summary statistics from sets of experiments), and is it transparent whether you are reporting the max, mean, etc. or just a single run?",
         "order": 50
     },
-    "C3_elaboration_for_yes_or_no": {
+    "C3_elaboration": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -711,23 +703,22 @@ arr_submission_content = {
         "description": "For yes, provide a section number. For no, justify why not.",
         "order": 51
     },
-    "C4": {
+    "C4_parameters_for_packages": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no",
-                    "n/a"
+                    "Yes",
+                    "No",
+                    "N/A"
                 ],
-                "type": "string",
-                "optional": True
+                "type": "string"
             }
         },
         "description": "If you used existing packages (e.g., for preprocessing, for normalization, or for evaluation), did you report the implementation, model, and parameter settings used (e.g., NLTK, Spacy, ROUGE, etc.)?",
         "order": 52
     },
-    "C4_elaboration_for_yes_or_no": {
+    "C4_elaboration": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -738,13 +729,13 @@ arr_submission_content = {
         "description": "For yes, provide a section number. For no, justify why not.",
         "order": 53
     },
-    "D": {
+    "D_human_subjects_including_annotators": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no"
+                    "Yes",
+                    "No"
                 ],
                 "type": "string"
             }
@@ -752,23 +743,22 @@ arr_submission_content = {
         "description": "Did you use human annotators (e.g., crowdworkers) or research with human subjects?",
         "order": 54
     },
-    "D1": {
+    "D1_instructions_given_to_participants": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no",
-                    "n/a"
+                    "Yes",
+                    "No",
+                    "N/A"
                 ],
-                "type": "string",
-                "optional": True
+                "type": "string"
             }
         },
         "description": "Did you report the full text of instructions given to participants, including e.g., screenshots, disclaimers of any risks to participants or annotators, etc.?",
         "order": 55
     },
-    "D1_elaboration_for_yes_or_no": {
+    "D1_elaboration": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -779,23 +769,22 @@ arr_submission_content = {
         "description": "For yes, provide a section number. For no, justify why not.",
         "order": 56
     },
-    "D2": {
+    "D2_recruitment_and_payment": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no",
-                    "n/a"
+                    "Yes",
+                    "No",
+                    "N/A"
                 ],
-                "type": "string",
-                "optional": True
+                "type": "string"
             }
         },
         "description": "Did you report information about how you recruited (e.g., crowdsourcing platform, students) and paid participants, and discuss if such payment is adequate given the participants' demographic (e.g., country of residence)?",
         "order": 57
     },
-    "D2_elaboration_for_yes_or_no": {
+    "D2_elaboration": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -806,23 +795,22 @@ arr_submission_content = {
         "description": "For yes, provide a section number. For no, justify why not.",
         "order": 58
     },
-    "D3": {
+    "D3_data_consent": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no",
-                    "n/a"
+                    "Yes",
+                    "No",
+                    "N/A"
                 ],
-                "type": "string",
-                "optional": True
+                "type": "string"
             }
         },
         "description": "Did you discuss whether and how consent was obtained from people whose data you're using/curating (e.g., did your instructions explain how the data would be used)?",
         "order": 59
     },
-    "D3_elaboration_for_yes_or_no": {
+    "D3_elaboration": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -833,23 +821,22 @@ arr_submission_content = {
         "description": "For yes, provide a section number. For no, justify why not.",
         "order": 60
     },
-    "D4": {
+    "D4_ethics_review_board_approval": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no",
-                    "n/a"
+                    "Yes",
+                    "No",
+                    "N/A"
                 ],
-                "type": "string",
-                "optional": True
+                "type": "string"
             }
         },
         "description": "Was the data collection protocol approved (or determined exempt) by an ethics review board?",
         "order": 61
     },
-    "D4_elaboration_for_yes_or_no": {
+    "D4_elaboration": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -860,23 +847,22 @@ arr_submission_content = {
         "description": "For yes, provide a section number. For no, justify why not.",
         "order": 62
     },
-    "D5": {
+    "D5_characteristics_of_annotators": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no",
-                    "n/a"
+                    "Yes",
+                    "No",
+                    "N/A"
                 ],
-                "type": "string",
-                "optional": True
+                "type": "string"
             }
         },
         "description": "Did you report the basic demographic and geographic characteristics of the annotator population that is the source of the data?",
         "order": 63
     },
-    "D5_elaboration_for_yes_or_no": {
+    "D5_elaboration": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -887,13 +873,13 @@ arr_submission_content = {
         "description": "For yes, provide a section number. For no, justify why not.",
         "order": 64
     },
-    "E": {
+    "E_ai_assistants_in_research_or_writing": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no"
+                    "Yes",
+                    "No"
                 ],
                 "type": "string"
             }
@@ -901,23 +887,22 @@ arr_submission_content = {
         "description": "Did you use AI assistants (e.g., ChatGPT, Copilot) in your research, coding, or writing?",
         "order": 65
     },
-    "E1": {
+    "E1_information_about_use_of_ai_assistants": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "yes",
-                    "no",
-                    "n/a"
+                    "Yes",
+                    "No",
+                    "N/A"
                 ],
-                "type": "string",
-                "optional": True
+                "type": "string"
             }
         },
         "description": "Did you include information about your use of AI assistants?",
         "order": 66
     },
-    "E1_elaboration_for_yes_or_no": {
+    "E1_elaboration": {
         "value": {
             "param": {
                 "minLength": 1,
@@ -930,7 +915,7 @@ arr_submission_content = {
     },
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": {
         "order": 68,
-        "description": "Association for Computational Linguistics - Blind Submission License Agreement\n\nPlease read and decide whether to transfer the license to your blind submission draft and its associated peer reviewing data in the current and/or previous iterations of ARR.\n*** DISCLAIMER ***\nYour participation is strictly voluntary. By transferring this license you grant ACL the right to distribute your draft and associated peer reviews. In particular, we may include your draft with donated review texts and scores in research datasets. Please note, to attribute authors for their draft, the author names are explicitly listed along with the draft and its associated peer reviews. Only reviews for accepted papers will be made publicly available directly after acceptance. For papers that are not accepted, the donated data will be kept confidential for the two years following the submission date and then released to the public. The reviewers have to agree to the release of the textual review data associated with your submission.\n\nName of the ACL Conference: ACL Rolling Review\n\nBlind Submission Title: as stated above\n\nAuthors' names: as stated above\n\nThis Blind Submission License Agreement (“Agreement”) is entered into between the Association for Computational Linguistics (“ACL”) and the Authors listed in connection with Authors’ blind submission paper listed above (referred as “Blind Submission Content”).\n\nIn exchange of adequate consideration, ACL and the Authors agree as follows:\n\nSection 1: Grant of License\nAfter the peer review process is concluded, Authors grant ACL a worldwide, irrevocable, and royalty-free license to use the blind submission paper version and, if applicable, the associated amendment notes and author responses to reviewers’ inquiries  (referred as “Content”). The foregoing license grants ACL the right to reproduce, publish, distribute, prepare derivative work, and otherwise make use of the Content, and to sub-license the Content to the public according to terms of the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.\nNotwithstanding the foregoing, the Parties acknowledge and agree that this Agreement does not transfer to ACL the ownership of any proprietary rights pertaining to the Content, and that the Authors retain their respective ownership in and to the Content.\n\nSection 2: Permission to Publish Peer Reviewers' Content\nAfter the peer review process is concluded, Authors have the option to grant ACL permission to publish peer reviewers content associated with the Content, which may include text, review form scores and metadata, charts, graphics, spreadsheets, and any other materials developed by peer reviewers in connection with the peer review process.\n\nSection 3: Attribution and Public Access License\nA. The Parties agree that for purpose of administering the public access license, ACL will be identified as the licensor of the Content with the following copyright notice:\n\nCopyright © 2024 administered by the Association for Computational Linguistics (ACL) on behalf of the authors and content contributors. Content displayed on this webpage is made available under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.\n\nB. The Parties understand and acknowledge that the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License is irrevocable once granted unless the licensee breaches the public access license terms.\n\nSection 4: Effective Date\nThe grant of license pursuant to Section 1 and permission to publish peer reviewers content pursuant to Section 2 becomes effective in the event Authors’ blind submission paper is accepted for publication by ACL, or upon the passing of two years from the date of submission, whichever event occurs first. If the blind submission paper is not accepted, the Content and associated peer reviewers content will remain confidential until the two years from the date of submission have passed.\n\nSection 5: Warranty\nAuthors represent and warrant that the Content is Authors’ original work and does not infringe on the proprietary rights of others. Authors further warrant that they have obtained all necessary permissions from any persons or organizations whose materials are included in the Content, and that the Content includes appropriate citations that give credit to the original sources.\n\nSection 6: Legal Relationship\nThe Parties agree that this Agreement is not intended to create any joint venture, partnership, or agency relationship of any kind; and both agree not to contract any obligations in the name of the other.\n\nAgreement\n\nBy selecting 'On behalf of all authors, I agree' below, I confirm that all Authors have agreed to the above terms and that I am authorized to execute this Agreement on their behalf. Optionally, if you wish to transfer the license to the peer reviewing and blind submission data of all previous versions of this paper submitted to ARR, please select 'On behalf of all authors, I agree for all previous versions of this submission'.",
+        "description": "Please read and decide whether to transfer the license to your blind submission draft and its associated peer reviewing data in the current and/or previous iterations of ARR.\n*** DISCLAIMER ***\nYour participation is strictly voluntary. By transferring this license you grant ACL the right to distribute your draft and associated peer reviews. In particular, we may include your draft with donated review texts and scores in research datasets. Please note, to attribute authors for their draft, the author names are explicitly listed along with the draft and its associated peer reviews. Only reviews for accepted papers will be eventually made publicly available. The reviewers have to agree to the release of the textual review data associated with your submission.\n\nThis Blind Submission License Agreement (\"Agreement\") is entered into between the Association for Computational Linguistics (\"ACL\") and the Authors listed in connection with Authors\u2019 blind submission paper listed above (referred as \"Blind Submission Content\").\nIn exchange of adequate consideration, ACL and the Authors agree as follows:\n\nSection 1: Grant of License\nAfter the peer review process is concluded and upon acceptance of the paper, Authors grant ACL a worldwide, irrevocable, and royalty-free license to use the blind submission paper version and, if applicable, the associated amendment notes and author responses to reviewers\u2019 inquiries  (referred as \"Content\"). The foregoing license grants ACL the right to reproduce, publish, distribute, prepare derivative work, and otherwise make use of the Content, and to sub-license the Content to the public according to terms of the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.\nNotwithstanding the foregoing, the Parties acknowledge and agree that this Agreement does not transfer to ACL the ownership of any proprietary rights pertaining to the Content, and that the Authors retain their respective ownership in and to the Content.\n\nSection 2: Permission to Publish Peer Reviewers Content\nAfter the peer review process is concluded and upon acceptance of the paper, Authors have the option to grant ACL permission to publish peer reviewers content associated with the Content, which may include text, review form\nscores and metadata, charts, graphics, spreadsheets, and any other materials developed by peer reviewers in connection with the peer review process.\n\nSection 3: Attribution and Public Access License\nA. The Parties agree that for purpose of administering the public access license, ACL will be\nidentified as the licensor of the Content with the following copyright notice:\n\nCopyright \u00a9 2023 administered by the Association for Computational Linguistics (ACL) on behalf of the authors and content contributors. Content displayed on this webpage is made available under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.\n\nB. The Parties understand and acknowledge that the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License is irrevocable once granted unless the licensee breaches the public access license terms.\n\nSection 4: Effective Date\nThe grant of license pursuant to Section 1 and permission to publish peer reviewers content pursuant to Section 2 becomes effective in the event Authors\u2019 blind submission paper has passed through this ACL Rolling Review cycle's peer review process and the cycle has ended; the end of a cycle is marked by the fact that authors received both the assigned peer review reports and the final meta-review report for this submission.\n\nSection 5: Warranty\nAuthors represent and warrant that the Content is Authors\u2019 original work and does not infringe on the proprietary rights of others. Authors further warrant that they have\nobtained all necessary permissions from any persons or organizations whose materials are included in the Content, and that the Content includes appropriate citations that give credit to the original sources.\n\nSection 6: Legal Relationship\nThe Parties agree that this Agreement is not intended to create any joint venture, partnership, or agency relationship of any kind; and both agree not to contract any obligations in the name of the other.\n\nBy selecting 'On behalf of all authors, I agree' below, I confirm that all Authors have agreed to the above terms and that I am authorized to execute this Agreement on their behalf. Optionally, if you wish to transfer the license to the peer reviewing and blind submission data of all previous versions of this paper submitted to ARR, please select 'On behalf of all authors, I agree for all previous versions of this submission'.",
         "value": {
             "param": {
                 "type": "string",
@@ -947,7 +932,7 @@ arr_submission_content = {
     },
     "section_2_permission_to_publish_peer_reviewers_content_agreement": {
         "order": 69,
-        "description": "After the peer review process is concluded and upon acceptance of the paper, Authors have the option to grant ACL permission to publish peer reviewers content associated with the Content, which may include text, review form\nscores and metadata, charts, graphics, spreadsheets, and any other materials developed by peer reviewers in connection with the peer review process.",
+        "description": "After the peer review process is concluded and upon acceptance of the paper, Authors have the option to grant ACL permission to publish peer reviewers content associated with the Content (as defined in the previous question), which may include text, review form\nscores and metadata, charts, graphics, spreadsheets, and any other materials developed by peer reviewers in connection with the peer review process.",
         "value": {
             "param": {
                 "type": "string",
@@ -962,6 +947,7 @@ arr_submission_content = {
         }
     }
 }
+
 
 
 arr_author_consent_content = {
@@ -1007,63 +993,63 @@ hide_fields = [
     "preferred_venue",
     "consent_to_share_data",
     "consent_to_share_submission_details",
-    "preprint_status",
     "existing_preprints",
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement",
-    "section_2_permission_to_publish_peer_reviewers_content_agreement"
+    "section_2_permission_to_publish_peer_reviewers_content_agreement",
+    "reviewing_volunteers",
+    "reviewing_no_volunteers_reason",
+    "preprint_status",
 ]
 
 hide_fields_from_public = [
     "software",
     "data",
     "previous_URL",
-    "previous_PDF",
     "response_PDF",
     "reassignment_request_action_editor",
     "reassignment_request_reviewers",
     "justification_for_not_keeping_action_editor_or_reviewers",
-    "A1",
-    "A1_elaboration_for_yes_or_no",
-    "A2",
-    "A2_elaboration_for_yes_or_no",
-    "A3",
-    "A3_elaboration_for_yes_or_no",
-    "B",
-    "B1",
-    "B1_elaboration_for_yes_or_no",
-    "B2",
-    "B2_elaboration_for_yes_or_no",
-    "B3",
-    "B3_elaboration_for_yes_or_no",
-    "B4",
-    "B4_elaboration_for_yes_or_no",
-    "B5",
-    "B5_elaboration_for_yes_or_no",
-    "B6",
-    "B6_elaboration_for_yes_or_no",
-    "C",
-    "C1",
-    "C1_elaboration_for_yes_or_no",
-    "C2",
-    "C2_elaboration_for_yes_or_no",
-    "C3",
-    "C3_elaboration_for_yes_or_no",
-    "C4",
-    "C4_elaboration_for_yes_or_no",
-    "D",
-    "D1",
-    "D1_elaboration_for_yes_or_no",
-    "D2",
-    "D2_elaboration_for_yes_or_no",
-    "D3",
-    "D3_elaboration_for_yes_or_no",
-    "D4",
-    "D4_elaboration_for_yes_or_no",
-    "D5",
-    "D5_elaboration_for_yes_or_no",
-    "E",
-    "E1",
-    "E1_elaboration_for_yes_or_no"
+    "A1_limitations_section",
+    "A2_potential_risks",
+    "A2_elaboration",
+    "A3_abstract_and_introduction_summarize_claims",
+    "A3_elaboration",
+    "B_use_or_create_scientific_artifacts",
+    "B1_cite_creators_of_artifacts",
+    "B1_elaboration",
+    "B2_discuss_the_license_for_artifacts",
+    "B2_elaboration",
+    "B3_artifact_use_consistent_with_intended_use",
+    "B3_elaboration",
+    "B4_data_contains_personally_identifying_info_or_offensive_content",
+    "B4_elaboration",
+    "B5_documentation_of_artifacts",
+    "B5_elaboration",
+    "B6_statistics_for_data",
+    "B6_elaboration",
+    "C_computational_experiments",
+    "C1_model_size_and_budget",
+    "C1_elaboration",
+    "C2_experimental_setup_and_hyperparameters",
+    "C2_elaboration",
+    "C3_descriptive_statistics",
+    "C3_elaboration",
+    "C4_parameters_for_packages",
+    "C4_elaboration",
+    "D_human_subjects_including_annotators",
+    "D1_instructions_given_to_participants",
+    "D1_elaboration",
+    "D2_recruitment_and_payment",
+    "D2_elaboration",
+    "D3_data_consent",
+    "D3_elaboration",
+    "D4_ethics_review_board_approval",
+    "D4_elaboration",
+    "D5_characteristics_of_annotators",
+    "D5_elaboration",
+    "E_ai_assistants_in_research_or_writing",
+    "E1_information_about_use_of_ai_assistants",
+    "E1_elaboration",
 ]
 
 arr_official_review_content = {
@@ -1804,7 +1790,7 @@ arr_max_load_task_forum = {
 }
 
 arr_max_load_task = {
-    "maximum_load": {
+    "maximum_load_this_cycle": {
         "value": {
             "param": {
                 "input": "radio",
@@ -1816,7 +1802,7 @@ arr_max_load_task = {
         "description": "Enter your maximum reviewing load for papers in this cycle. This refers only to the specific role mentioned at the top of this page. A load of '0' indicates you are unable to review new submissions.",
         "order": 1,
     },
-    "maximum_load_resubmission": {
+    "maximum_load_this_cycle_for_resubmissions": {
         "value": {
             "param": {
                 "input": "radio",
@@ -1885,7 +1871,7 @@ arr_reviewer_max_load_task["meta_data_donation"] = {
 }
 
 arr_ac_max_load_task = deepcopy(arr_max_load_task)
-arr_ac_max_load_task["maximum_load"] = {
+arr_ac_max_load_task["maximum_load_this_cycle"] = {
         "value": {
             "param": {
                 "input": "radio",
@@ -1898,8 +1884,8 @@ arr_ac_max_load_task["maximum_load"] = {
         "order": 1,
     }
 arr_sac_max_load_task = deepcopy(arr_max_load_task)
-del arr_sac_max_load_task["maximum_load_resubmission"]
-arr_sac_max_load_task["maximum_load"] = {
+del arr_sac_max_load_task["maximum_load_this_cycle_for_resubmissions"]
+arr_sac_max_load_task["maximum_load_this_cycle"] = {
     "value": {
         "param": {"regex": "[0-9]{0,3}", "optional": False, "type": "string"}
     },

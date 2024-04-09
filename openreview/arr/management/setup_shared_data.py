@@ -236,7 +236,7 @@ def process(client, invitation):
                 note.writers = [next_cycle_id, note.signatures[0]]
                 note.forum = next_load_invitation.edit['note']['forum']
                 note.replyto = next_load_invitation.edit['note']['replyto']
-                note.content['maximum_load'] = {'value': '0'}
+                note.content['maximum_load_this_cycle'] = {'value': '0'}
                 note.content['next_available_month'] = {'value': next_available_date[0]}
                 note.content['next_available_year'] = {'value': next_available_date[1]}
                 

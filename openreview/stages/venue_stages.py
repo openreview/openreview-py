@@ -557,7 +557,6 @@ class ReviewStage(object):
         remove_fields = [],
         rating_field_name = 'rating',
         confidence_field_name = 'confidence',
-        process_path = None,
         source_submissions_query = {},
         child_invitations_name = 'Official_Review'
     ):
@@ -577,9 +576,10 @@ class ReviewStage(object):
         self.remove_fields = remove_fields
         self.rating_field_name = rating_field_name
         self.confidence_field_name = confidence_field_name
-        self.process_path = process_path
         self.source_submissions_query = source_submissions_query
         self.child_invitations_name = child_invitations_name
+        self.process_path = 'process/review_process.py'
+        self.preprocess_path = None
 
     def _get_reviewer_readers(self, conference, number, review_signature=None):
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
@@ -696,6 +696,9 @@ class EthicsReviewStage(object):
         self.remove_fields = remove_fields
         self.submission_numbers = submission_numbers
         self.enable_comments = enable_comments
+        self.process_path = 'process/ethics_review_process.py'
+        self.flag_process_path = 'process/ethics_flag_process.py'
+        self.preprocess_path = None        
 
     def get_readers(self, conference, number, ethics_review_signature=None):
 
@@ -1083,7 +1086,7 @@ class MetaReviewStage(object):
         REVIEWERS_SUBMITTED = 2
         NO_REVIEWERS = 3
 
-    def __init__(self, name='Meta_Review', start_date = None, due_date = None, exp_date = None, public = False, release_to_authors = False, release_to_reviewers = Readers.NO_REVIEWERS, additional_fields = {}, remove_fields=[], process = None, recommendation_field_name = 'recommendation'):
+    def __init__(self, name='Meta_Review', start_date = None, due_date = None, exp_date = None, public = False, release_to_authors = False, release_to_reviewers = Readers.NO_REVIEWERS, additional_fields = {}, remove_fields=[], process = None, recommendation_field_name = 'recommendation', source_submissions_query = {}, child_invitations_name = 'Meta_Review'):
 
         self.start_date = start_date
         self.due_date = due_date
@@ -1096,6 +1099,10 @@ class MetaReviewStage(object):
         self.remove_fields = remove_fields
         self.process = None
         self.recommendation_field_name = recommendation_field_name
+        self.process_path = 'process/metareview_process.py'
+        self.preprocess_path = None        
+        self.source_submissions_query = source_submissions_query
+        self.child_invitations_name = child_invitations_name
 
     def _get_reviewer_readers(self, conference, number):
         if self.release_to_reviewers is MetaReviewStage.Readers.REVIEWERS:
