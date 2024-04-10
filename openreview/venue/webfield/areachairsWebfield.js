@@ -46,7 +46,7 @@ return {
       edgeBrowserDeployedUrl: `/edges/browse?start=${startParam}&traverse=${traverseParam}&edit=${replaceReviewerName(domain.content.reviewers_invite_assignment_id?.value)}&browse=${browseInvitations.join(';')}${otherParams}`,
     },
     submissionInvitationId: domain.content.submission_id?.value,
-    reviewersMessageSubmissionInvitationId: domain.content.reviewers_message_submission_id?.value,
+    messageSubmissionReviewersInvitationId: domain.content.reviewers_message_submission_id?.value,
     seniorAreaChairsId: domain.content.senior_area_chairs_id?.value,
     areaChairName: domain.content.area_chairs_name?.value,
     secondaryAreaChairName: domain.content.secondary_area_chairs_name?.value,
