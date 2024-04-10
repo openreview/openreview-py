@@ -422,9 +422,24 @@ class ARR(object):
 
     def create_ethics_review_stage(self):
         self.venue.ethics_review_stage = self.ethics_review_stage
-        self.venue.ethics_review_stage.flag_process_path = '../arr/process/ethics_flag_process.py'
-        
-        return self.venue.create_ethics_review_stage()
+        stage_value = self.venue.create_ethics_review_stage()
+        self.client.post_invitation_edit(
+            invitations=self.venue.get_meta_invitation_id(),
+            signatures=[self.venue_id],
+            replacement=False,
+            invitation=openreview.api.Invitation(
+                id=f"{self.venue_id}/-/{self.ethics_review_stage.name}_Flag",
+                content={
+                    'ae_checklist_name': {
+                        'value': 'Action_Editor_Checklist'
+                    },
+                    'reviewer_checklist_name': {
+                        'value': 'Reviewer_Checklist'
+                    }
+                }
+            )
+        )
+        return stage_value
 
     def update_conflict_policies(self, committee_id, compute_conflicts, compute_conflicts_n_years):
         return self.venue.update_conflict_policies(committee_id,  compute_conflicts,  compute_conflicts_n_years)
