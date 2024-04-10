@@ -2151,6 +2151,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment_Recruitment', count=4)
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment', count=2)
 
         # try to delete Invite Assignment edge after reviewer Accepted
         with pytest.raises(openreview.OpenReviewException, match=r'Cannot cancel the invitation since it has status: "Accepted"'):
