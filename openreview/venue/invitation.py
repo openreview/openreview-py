@@ -1134,7 +1134,7 @@ class InvitationBuilder(object):
                     'withInvitation': venue.submission_stage.get_submission_id(venue)
                 }
             }
-            if match_group_id == venue.get_senior_area_chairs_id():
+            if match_group_id == venue.get_senior_area_chairs_id() and not venue.sac_paper_assignments:
                 head = {
                     'param': {
                         'type': 'profile',
@@ -1146,7 +1146,7 @@ class InvitationBuilder(object):
 
             bid_invitation_id = venue.get_invitation_id(bid_stage.name, prefix=match_group_id)
 
-            template_name = 'profileBidWebfield.js' if match_group_id == venue.get_senior_area_chairs_id() else 'paperBidWebfield.js'
+            template_name = 'profileBidWebfield.js' if match_group_id == venue.get_senior_area_chairs_id() and not venue.sac_paper_assignments else 'paperBidWebfield.js'
             with open(os.path.join(os.path.dirname(__file__), 'webfield/' + template_name)) as webfield_reader:
                 webfield_content = webfield_reader.read()
 
@@ -2667,14 +2667,15 @@ class InvitationBuilder(object):
             },
             'reviewers_anon_name': {
                 'value': venue.get_anon_reviewers_name() if is_reviewer else venue.get_anon_area_chairs_name()
-            },
-            'sync_sac_id': {
-                'value': venue.get_senior_area_chairs_id(number='{number}') if committee_name == venue.area_chairs_name and venue.use_senior_area_chairs else ''
-            },
-            'sac_assignment_id': {
-                'value': venue.get_assignment_id(senior_area_chairs_id, deployed=True) if is_area_chair and venue.use_senior_area_chairs else ''
             }
         }
+        if committee_name == venue.area_chairs_name and venue.use_senior_area_chairs and not venue.sac_paper_assignments:
+            content['sync_sac_id'] = {
+                'value': venue.get_senior_area_chairs_id(number='{number}')
+            }
+            content['sac_assignment_id'] = {
+                'value': venue.get_assignment_id(senior_area_chairs_id, deployed=True) if is_area_chair and venue.use_senior_area_chairs else ''
+            }
 
         if is_ethics_reviewer:
             content = {
@@ -2689,12 +2690,6 @@ class InvitationBuilder(object):
                 },
                 'reviewers_anon_name': {
                     'value': venue.anon_ethics_reviewers_name()
-                },
-                'sync_sac_id': {
-                    'value': ''
-                },
-                'sac_assignment_id': {
-                    'value': ''
                 }
             }
 
@@ -2750,7 +2745,7 @@ class InvitationBuilder(object):
                 edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
 
 
-        if is_senior_area_chair:
+        if is_senior_area_chair and not venue.sac_paper_assignments:
             edge_head = {
                 'param': {
                     'type': 'profile',
@@ -2761,6 +2756,17 @@ class InvitationBuilder(object):
             preprocess=None
             content=None
             edge_readers.append('${2/head}')
+        elif is_senior_area_chair and venue.sac_paper_assignments:
+            invitation_readers.append(senior_area_chairs_id)
+            edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')]
+            content = {
+                'reviewers_id': {
+                    'value': venue.get_senior_area_chairs_id()
+                },
+                'reviewers_name': {
+                    'value': venue.senior_area_chairs_name
+                }
+            }
 
         edge_readers.append('${2/tail}')
 

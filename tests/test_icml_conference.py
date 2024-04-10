@@ -61,6 +61,7 @@ class TestICMLConference():
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
+                'senior_area_chairs_assignment': 'Area Chairs',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
@@ -444,7 +445,9 @@ class TestICMLConference():
         helpers.await_queue()
 
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Senior_Area_Chairs').members) == 0
-        assert len(openreview_client.get_group('ICML.cc/2023/Conference/Senior_Area_Chairs/Invited').members) == 2
+        group = openreview_client.get_group('ICML.cc/2023/Conference/Senior_Area_Chairs/Invited')
+        assert len(group.members) == 2
+        assert group.readers == ['ICML.cc/2023/Conference', 'ICML.cc/2023/Conference/Senior_Area_Chairs/Invited']
 
         messages = openreview_client.get_messages(subject = '[ICML 2023] Invitation to serve as Senior Area Chair')
         assert len(messages) == 2
@@ -576,7 +579,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         header = selenium.find_element(By.ID, 'header')
         assert 'You have agreed to review up to 1 papers' in header.text
 
-    def test_registrations(self, client, openreview_client, helpers, test_client):
+    def test_registrations(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -635,6 +638,13 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         venue.create_registration_stages()
 
         sac_client = openreview.api.OpenReviewClient(username = 'sac1@gmail.com', password=helpers.strong_password)
+
+        request_page(selenium, 'http://localhost:3030/group?id=ICML.cc/2023/Conference/Senior_Area_Chairs', sac_client.token, by=By.CLASS_NAME, wait_for_element='tabs-container')
+        tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
+        assert tabs
+        assert tabs.find_element(By.LINK_TEXT, "Paper Status")
+        assert tabs.find_element(By.LINK_TEXT, "Area Chair Status")
+        assert tabs.find_element(By.LINK_TEXT, "Senior Area Chair Tasks")
 
         registration_forum = sac_client.get_notes(invitation='ICML.cc/2023/Conference/Senior_Area_Chairs/-/Registration_Form')
         assert len(registration_forum) == 1
@@ -3195,12 +3205,15 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assert recruitment_note
         helpers.await_queue()        
               
-        assert openreview_client.get_group('ICML.cc/2023/Conference/Ethics_Reviewers')
+        group = openreview_client.get_group('ICML.cc/2023/Conference/Ethics_Reviewers')
+        assert group
+        assert 'ICML.cc/2023/Conference/Ethics_Chairs' in group.readers
         assert openreview_client.get_group('ICML.cc/2023/Conference/Ethics_Reviewers/Declined')
         group = openreview_client.get_group('ICML.cc/2023/Conference/Ethics_Reviewers/Invited')
         assert group
         assert len(group.members) == 1
         assert 'reviewerethics@yahoo.com' in group.members
+        assert 'ICML.cc/2023/Conference/Ethics_Chairs' in group.readers
 
         messages = openreview_client.get_messages(to='reviewerethics@yahoo.com', subject='[ICML 2023] Invitation to serve as Ethics Reviewer')
         assert messages and len(messages) == 1

@@ -5,7 +5,7 @@ def process(client, edit, invitation):
     reviewer_reassignment_field = edit.note.content.get('reassignment_request_reviewers', {}).get('value', '')
     reviewer_reassignment_request = len(reviewer_reassignment_field) > 0 and 'not a resubmission' not in reviewer_reassignment_field
     paper_link = edit.note.content.get('previous_URL', {}).get('value')
-    volunteers = edit.note.content.get('reviewing_volunteers').get('value')
+    volunteers = edit.note.content.get('reviewing_volunteers', {}).get('value', [])
     authorids = edit.note.content.get('authorids').get('value')
 
     if paper_link:
