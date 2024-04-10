@@ -10,6 +10,7 @@ async function process(client, edit, invitation) {
   }
 
   const html = note.content.html?.value;
+  let abstractError = false;
 
   try {
     if (html) {
@@ -26,13 +27,18 @@ async function process(client, edit, invitation) {
     }
   } catch (error) {
     console.log('error: ' + error);
+    abstractError = error;
   }
-
-
 
   await client.postNoteEdit({
     invitation: 'DBLP.org/-/Edit',
     signatures: ['DBLP.org/Uploader'],
+    readers: ['everyone'],
+    writers: ['DBLP.org'],
     note: note
   });
+
+  if (abstractError) {
+    throw abstractError;
+  }
 }

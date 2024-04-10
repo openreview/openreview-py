@@ -5,16 +5,12 @@ async function process(client, edit, invitation) {
   const html = result.notes?.[0]?.content?.html?.value
 
   let abstract = null
-  try {
-    if (html) {
-      const extractionResult = await Tools.extractAbstract(html).then(result => result.json());
-      abstract = extractionResult.abstract
-      console.log('abstract: ' + abstract);
-      console.log('pdf: ' + extractionResult.pdf);
-      console.log('error: ' + extractionResult.error);
-    }
-  } catch (error) {
-    console.log('server error: ' + error);
+  if (html) {
+    const extractionResult = await Tools.extractAbstract(html).then(result => result.json());
+    abstract = extractionResult.abstract
+    console.log('abstract: ' + abstract);
+    console.log('pdf: ' + extractionResult.pdf);
+    console.log('error: ' + extractionResult.error);
   }
 
   if (!abstract) return
