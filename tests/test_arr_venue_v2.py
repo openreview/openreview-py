@@ -566,7 +566,9 @@ class TestARRVenueV2():
 
         flag_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Ethics_Review_Flag')
         assert flag_invitation.process
-        assert 'official_review_name, ae_checklist_name, reviewer_checklist_name' in flag_invitation.process
+        assert 'for invitation_name in [review_name, ae_checklist_name, reviewer_checklist_name]:' in flag_invitation.process
+        assert 'ae_checklist_name' in flag_invitation.content
+        assert 'reviewer_checklist_name' in flag_invitation.content
 
         venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
         venue.create_ethics_review_stage()
