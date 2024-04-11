@@ -104,6 +104,12 @@ class TestEMNLPConference():
         assert 'second_deadline_additional_options' in revision.reply['content']
         assert 'second_deadline_remove_options' in revision.reply['content']
 
+        # check Post_Submission hide_fields has all default fields
+        post_submission_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/Post_Submission')
+        assert post_submission_invitation
+        assert 'values-dropdown' in post_submission_invitation.reply['content']['hide_fields']
+        assert ['keywords', 'TLDR', 'abstract', 'pdf'] == post_submission_invitation.reply['content']['hide_fields']['values-dropdown']
+
         pc_client.post_note(openreview.Note(
             invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision',
             forum=request_form_note.id,
@@ -210,6 +216,12 @@ class TestEMNLPConference():
         assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['supplementary_materials']['value']['param']
         assert 'TLDR' not in revision_invitation.edit['invitation']['edit']['note']['content']
         assert 'ddate' not in revision_invitation.edit['invitation']['edit']['note']
+
+        # check Post_Submission hide_fields has all fields in second_deadline_additional_options as well
+        post_submission_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/Post_Submission')
+        assert post_submission_invitation
+        assert 'values-dropdown' in post_submission_invitation.reply['content']['hide_fields']
+        assert ['keywords', 'abstract', 'supplementary_materials', 'pdf', 'submission_type'] == post_submission_invitation.reply['content']['hide_fields']['values-dropdown']
 
     def test_submit_papers(self, test_client, client, openreview_client, helpers):
 
