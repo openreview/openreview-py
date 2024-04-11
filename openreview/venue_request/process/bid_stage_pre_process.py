@@ -6,4 +6,4 @@ def process(client, note, invitation):
         raise openreview.OpenReviewException('Papers should be visible to all program committee if bidding is enabled')
     
     if 'pdf' not in request_form.content.get('hide_fields', []):
-        raise openreview.OpenReviewException('The pdf field should be hidden during the bidding stage')
+        raise openreview.OpenReviewException('The pdf field should be hidden during the bidding stage. Please use the Post Submission button to hide pdfs.')
