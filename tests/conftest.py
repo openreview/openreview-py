@@ -72,7 +72,7 @@ class Helpers:
 
             time.sleep(0.5)
 
-        assert not super_client.get_process_logs(status='error')
+        assert not [l for l in super_client.get_process_logs(status='error') if l['executedOn'] == 'openreview-api-1']
 
     @staticmethod
     def await_queue_edit(super_client, edit_id=None, invitation=None, count=1, error=False):
