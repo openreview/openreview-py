@@ -31,8 +31,11 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.use_publication_chairs = note.content.get('publication_chairs', 'No, our venue does not have Publication Chairs') == 'Yes, our venue has Publication Chairs'
         venue.automatic_reviewer_assignment = note.content.get('submission_reviewer_assignment', '') == 'Automatic'
         venue.senior_area_chair_roles = note.content.get('senior_area_chair_roles', ['Senior_Area_Chairs'])
+        venue.senior_area_chair_name = venue.senior_area_chair_roles[0]
         venue.area_chair_roles = note.content.get('area_chair_roles', ['Area_Chairs'])
+        venue.area_chairs_name = venue.area_chair_roles[0]
         venue.reviewer_roles = note.content.get('reviewer_roles', ['Reviewers'])
+        venue.reviewers_name = venue.reviewer_roles[0]
         venue.allow_gurobi_solver = venue_content.get('allow_gurobi_solver', {}).get('value', False)
         venue.submission_license = note.content.get('submission_license', ['CC BY 4.0'])
         set_homepage_options(note, venue)

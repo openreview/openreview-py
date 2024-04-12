@@ -32,13 +32,13 @@ class Venue(object):
         self.date = 'TBD'
         self.id = venue_id # get compatibility with conference
         self.program_chairs_name = 'Program_Chairs'
-        self.reviewers_name = 'Reviewers'
         self.reviewer_roles = ['Reviewers']
+        self.reviewers_name = self.reviewer_roles[0]
         self.area_chair_roles = ['Area_Chairs']
+        self.area_chairs_name = self.area_chair_roles[0]
         self.senior_area_chair_roles = ['Senior_Area_Chairs']        
-        self.area_chairs_name = 'Area_Chairs'
+        self.senior_area_chairs_name = self.senior_area_chair_roles[0]
         self.secondary_area_chairs_name = 'Secondary_Area_Chairs'
-        self.senior_area_chairs_name = 'Senior_Area_Chairs'
         self.ethics_chairs_name = 'Ethics_Chairs'
         self.ethics_reviewers_name = 'Ethics_Reviewers'
         self.authors_name = 'Authors'

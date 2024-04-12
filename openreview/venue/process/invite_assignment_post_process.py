@@ -11,7 +11,7 @@ def process_update(client, edge, invitation, existing_edge):
     assignment_invitation_id = invitation.content['assignment_invitation_id']['value']
     paper_reviewer_invited_id = invitation.content['paper_reviewer_invited_id']['value']
     email_template = invitation.content['email_template']['value']
-    is_reviewer = 'Reviewers' in assignment_invitation_id
+    is_reviewer = assignment_invitation_id.start_with(f"{domain.content['reviewers_id']['value']}/-/")
     action_string = 'to review' if is_reviewer else 'to serve as area chair for'
     print(edge.id)
 
