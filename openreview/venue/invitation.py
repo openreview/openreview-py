@@ -3341,11 +3341,6 @@ class InvitationBuilder(object):
             signatures = [venue_id],
             readers = ['everyone'],
             writers = [venue_id],
-            content = {
-                'review_readers': {
-                    'value': self.venue.review_stage.get_readers(self.venue, '{number}')
-                }
-            },
             edit = {
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -3398,14 +3393,6 @@ class InvitationBuilder(object):
                         'append': [self.venue.get_ethics_reviewers_id('${{3/id}/number}')]
                     }
                 }
-            }
-
-        if ethics_review_stage.enable_comments:
-            ethics_stage_invitation.content['comment_readers'] = {
-                'value': self.venue.comment_stage.get_readers(self.venue, '{number}')
-            }
-            ethics_stage_invitation.content['readers_selection'] = {
-                'value': self.venue.comment_stage.reader_selection
             }
 
         self.save_invitation(ethics_stage_invitation, replacement=False)
