@@ -71,6 +71,7 @@ class OpenReviewClient(object):
         self.bulk_edges_url = self.baseurl + '/edges/bulk'
         self.edges_count_url = self.baseurl + '/edges/count'
         self.edges_rename = self.baseurl + '/edges/rename'
+        self.edges_archive = self.baseurl + '/edges/archive'
         self.profiles_url = self.baseurl + '/profiles'
         self.profiles_search_url = self.baseurl + '/profiles/search'
         self.profiles_merge_url = self.baseurl + '/profiles/merge'
@@ -1531,6 +1532,23 @@ class OpenReviewClient(object):
         json = response.json()
         return json['groupedEdges'] # a list of JSON objects holding information about an edge
 
+    def get_edges_archive(self, invitation):
+        """
+        Returns a list of Edge objects based on the filters provided.
+
+        :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
+        """
+        params = {'invitation': invitation}
+
+        print('tools.format_params(params)', tools.format_params(params))
+        response = self.session.get(self.edges_archive, params=tools.format_params(params), headers = self.headers)
+        response = self.__handle_response(response)
+
+        edges = [Edge.from_json(e) for e in response.json()['edges']]
+
+        return edges
+    
+    
     def post_edge(self, edge):
         """
         Posts the edge. Upon success, returns the posted Edge object.
