@@ -923,16 +923,16 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         revision_inv =  test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Revision')
         assert revision_inv
         assert ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Submission5/Authors'] == revision_inv.readers
-        # assert 'readers' in revision_inv.edit['note']['content']['authors']
-        # assert  revision_inv.edit['note']['content']['authors']['readers'] == [
-        #     "NeurIPS.cc/2023/Conference",
-        #     "NeurIPS.cc/2023/Conference/Submission5/Authors"
-        # ]
-        # assert 'readers' in revision_inv.edit['note']['content']['authorids']
-        # assert  revision_inv.edit['note']['content']['authorids']['readers'] == [
-        #     "NeurIPS.cc/2023/Conference",
-        #     "NeurIPS.cc/2023/Conference/Submission5/Authors"
-        # ]
+        assert 'readers' in revision_inv.edit['note']['content']['authors']
+        assert  revision_inv.edit['note']['content']['authors']['readers'] == [
+            "NeurIPS.cc/2023/Conference",
+            "NeurIPS.cc/2023/Conference/Submission5/Authors"
+        ]
+        assert 'readers' in revision_inv.edit['note']['content']['authorids']
+        assert  revision_inv.edit['note']['content']['authorids']['readers'] == [
+            "NeurIPS.cc/2023/Conference",
+            "NeurIPS.cc/2023/Conference/Submission5/Authors"
+        ]
 
         post_submission =  openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Post_Submission')
         assert 'authors' in post_submission.edit['note']['content']
