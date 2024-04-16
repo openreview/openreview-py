@@ -3,6 +3,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import openreview
 import datetime
 import time
+import re
+from selenium.webdriver.common.by import By
 from openreview import ProfileManagement
 from openreview.api import OpenReviewClient
 from openreview.api import Note
@@ -2232,3 +2234,66 @@ The OpenReview Team.
 
         messages = openreview_client.get_messages(subject='[Anonymous Preprint Server] Carlos Last commented on your submission. Paper Title: "Paper title 1"')
         assert len(messages) == 2
+
+
+    def test_confirm_alternate_email(self, profile_management, openreview_client, helpers, request_page, selenium):
+
+        xukun_client = helpers.create_user('xukun@profile.org', 'Xukun', 'First', alternates=[], institution='google.com')
+
+        profile = xukun_client.get_profile()
+        profile.content['homepage'] = 'https://xukun.com'
+        profile.content['emails'].append('xukun@gmail.com')
+        xukun_client.post_profile(profile)
+
+        response = xukun_client.confirm_alternate_email('~Xukun_First1', 'xukun@gmail.com')
+
+        ## As guest user
+        request_page(selenium, 'http://localhost:3030/confirm?token=xukun@gmail.com', None, by=By.CLASS_NAME, wait_for_element='important_message')
+
+        message = selenium.find_element(By.CLASS_NAME, 'important_message')
+        assert 'Please login to access /confirm?token=xukun@gmail.com' == message.text
+
+        profile = xukun_client.get_profile()
+        assert profile.content['emailsConfirmed'] == ['xukun@profile.org']
+
+        ## As super user
+        request_page(selenium, 'http://localhost:3030/confirm?token=xukun@gmail.com', openreview_client.token, wait_for_element='header')
+
+        message = selenium.find_element(By.TAG_NAME, 'header')
+        assert 'Error 403' == message.text              
+    
+        ## As owner of the profile
+        request_page(selenium, 'http://localhost:3030/confirm?token=xukun@gmail.com', xukun_client.token, by=By.CLASS_NAME, wait_for_element='main')
+
+        content = selenium.find_element(By.ID, 'content')
+        assert 'Click submit button below to confirm adding xukun@gmail.com to your account.' in content.text
+
+        content.find_element(By.TAG_NAME, 'button').click()
+
+        time.sleep(2)
+
+        message = selenium.find_element(By.CLASS_NAME, 'important_message')
+        assert 'Thank you for confirming your email xukun@gmail.com' == message.text        
+        
+        profile = xukun_client.get_profile()
+        assert profile.content['emailsConfirmed'] == ['xukun@profile.org', 'xukun@gmail.com']   
+    
+    def test_merge_profies_automatically(self, profile_management, openreview_client, helpers, request_page, selenium):
+
+        akshat_client_1 = helpers.create_user('akshat_1@profile.org', 'Akshat', 'First', alternates=[], institution='google.com')
+        akshat_client_2 = helpers.create_user('akshat_2@profile.org', 'Akshat', 'Last', alternates=[], institution='google.com')
+
+        profile = akshat_client_1.get_profile()
+        profile.content['homepage'] = 'https://google.com'
+        profile.content['emails'].append('akshat_2@profile.org')
+        akshat_client_1.post_profile(profile)
+    
+        akshat_client_1.post_profile(profile)
+        
+        response = akshat_client_1.confirm_alternate_email('~Akshat_First1', 'akshat_2@profile.org')
+
+        messages = openreview_client.get_messages(subject='OpenReview Account Merge', to='akshat_2@profile.org')
+        assert len(messages) == 1
+
+        request_page(selenium, 'http://localhost:3030/merge?token=akshat_2@profile.orgt', akshat_client_1.token, wait_for_element='header')
+        assert False
