@@ -2295,5 +2295,21 @@ The OpenReview Team.
         messages = openreview_client.get_messages(subject='OpenReview Account Merge', to='akshat_2@profile.org')
         assert len(messages) == 1
 
-        request_page(selenium, 'http://localhost:3030/merge?token=akshat_2@profile.orgt', akshat_client_1.token, wait_for_element='header')
-        assert False
+        request_page(selenium, 'http://localhost:3030/merge?token=akshat_2@profile.org', akshat_client_1.token, wait_for_element='main')
+
+        content = selenium.find_element(By.ID, 'content')
+        assert 'Click submit button below to confirm the profile merge' in content.text
+
+        content.find_element(By.TAG_NAME, 'button').click()
+
+        time.sleep(2)
+
+        message = selenium.find_element(By.CLASS_NAME, 'important_message')
+        assert 'Thank you for confirming your email' == message.text        
+        
+        profile = akshat_client_1.get_profile()
+        assert profile.content['emailsConfirmed'] == ['akshat_1@profile.org', 'akshat_2@profile.org']
+        assert len(profile.content['names']) == 2
+        assert profile.content['names'][0]['username'] == '~Akshat_First1'
+        assert profile.content['names'][1]['username'] == '~Akshat_Last1'
+
