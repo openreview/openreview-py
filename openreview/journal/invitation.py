@@ -6381,7 +6381,6 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'invitees': [ venue_id, self.journal.get_action_editors_id('${3/content/noteNumber/value}')],
                     'message': {
                         'replyTo': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
-                        'sendAt': { 'param': { 'minimum': 0, 'optional': True } },
                         'subject': { 'param': { 'minLength': 1 } },
                         'message': { 'param': { 'minLength': 1 } },
                         'groups': { 'param': { 'inGroup': self.journal.get_reviewers_id('${3/content/noteNumber/value}') } },

@@ -3665,7 +3665,6 @@ class InvitationBuilder(object):
                     'cdate': cdate,
                     'message': {
                         'replyTo': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
-                        'sendAt': { 'param': { 'minimum': 0, 'optional': True } },
                         'subject': { 'param': { 'minLength': 1 } },
                         'message': { 'param': { 'minLength': 1 } },
                         'groups': { 'param': { 'inGroup': self.venue.get_reviewers_id('${3/content/noteNumber/value}') } },
@@ -3688,7 +3687,6 @@ class InvitationBuilder(object):
             signatures=[venue_id],
             message = {
                 'replyTo': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
-                'sendAt': { 'param': { 'minimum': 0, 'optional': True } },
                 'subject': { 'param': { 'minLength': 1 } },
                 'message': { 'param': { 'minLength': 1 } },
                 'groups': { 'param': { 'inGroup': self.venue.get_reviewers_id() } },
@@ -3708,7 +3706,6 @@ class InvitationBuilder(object):
                 signatures=[venue_id],
                 message = {
                     'replyTo': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
-                    'sendAt': { 'param': { 'minimum': 0, 'optional': True } },
                     'subject': { 'param': { 'minLength': 1 } },
                     'message': { 'param': { 'minLength': 1 } },
                     'groups': { 'param': { 'inGroup': self.venue.get_area_chairs_id() } },
