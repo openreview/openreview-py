@@ -125,8 +125,7 @@ class TestSACAssignments():
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '50',
-                'use_recruitment_template': 'Yes',
-                'hide_fields': ['pdf']
+                'use_recruitment_template': 'Yes'
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
@@ -135,6 +134,24 @@ class TestSACAssignments():
             replyto=request_form.forum,
             signatures=['~Program_MatchingChair1'],
             writers=[]
+        ))
+
+        helpers.await_queue()
+
+        # hide pdf for bidding
+        post_submission_note=pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'hide_fields': ['pdf'],
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)'
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['TSACM/2024/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_MatchingChair1'],
+            writers= [],
         ))
 
         helpers.await_queue()
