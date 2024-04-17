@@ -134,8 +134,8 @@ def process(client, invitation):
     def post_invitation(note):
 
         if isinstance(note, tuple):
-            note = note[0]
             paper_number = note[1]
+            note = note[0]
             content = {
                 'noteId': {
                     'value': note.forum
