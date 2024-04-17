@@ -10,10 +10,11 @@ async function process(client, edit, invitation) {
   }
 
   const html = note.content.html?.value;
+  let abstractError = false;
 
   try {
     if (html) {
-      const { abstract, pdf, error } = await Tools.extractAbstract(html).then(result => result.json());
+      const { abstract, pdf, error } = await Tools.extractAbstract(html);
       console.log('abstract: ' + abstract);
       console.log('pdf: ' + pdf);
       console.log('error: ' + error);
@@ -25,14 +26,19 @@ async function process(client, edit, invitation) {
       }
     }
   } catch (error) {
-    console.log('error: ' + error);
+    console.log('error: ' + JSON.stringify(error.toJson()));
+    abstractError = error;
   }
-
-
 
   await client.postNoteEdit({
     invitation: 'DBLP.org/-/Edit',
     signatures: ['DBLP.org/Uploader'],
+    readers: ['everyone'],
+    writers: ['DBLP.org'],
     note: note
   });
+
+  if (abstractError) {
+    throw abstractError;
+  }
 }

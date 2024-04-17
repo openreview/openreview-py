@@ -398,8 +398,7 @@ class TestVenueRequest():
                 'contact_email': venue['request_form_note'].content['contact_email'],
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
-                'submission_email': 'Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}} \n\nIf you have any questions, please contact the PCs at test@mail.com',
-                'hide_fields': ['pdf']
+                'submission_email': 'Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}} \n\nIf you have any questions, please contact the PCs at test@mail.com'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -423,6 +422,24 @@ class TestVenueRequest():
         title_tag = header_div.find_element(By.TAG_NAME, 'h1')
         assert title_tag
         assert title_tag.text == '{} Updated'.format(venue['request_form_note'].content['title'])
+
+        # hide pdf
+        post_submission_note=test_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'hide_fields': ['pdf'],
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)'
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Post_Submission'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers= ['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures= ['~SomeFirstName_User1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
 
     def test_venue_recruitment_email_error(self, client, test_client, selenium, request_page, venue, helpers):
 
