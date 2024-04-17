@@ -1011,7 +1011,7 @@ class InvitationBuilder(object):
         invitation_content = {
             'hash_seed': { 'value': '1234', 'readers': [ venue.venue_id ]},
             'venue_id': { 'value': self.venue_id },
-            'committee_name': { 'value': committee_name.replace('_', ' ')[:-1] },
+            'committee_name': { 'value': venue.get_committee_name(committee_name, pretty=True) },
             'committee_id': { 'value': venue.get_committee_id(committee_name) },
             'committee_invited_id': { 'value': venue.get_committee_id_invited(committee_name) },
             'committee_declined_id': { 'value': venue.get_committee_id_declined(committee_name) },

@@ -31,7 +31,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.use_publication_chairs = note.content.get('publication_chairs', 'No, our venue does not have Publication Chairs') == 'Yes, our venue has Publication Chairs'
         venue.automatic_reviewer_assignment = note.content.get('submission_reviewer_assignment', '') == 'Automatic'
         venue.senior_area_chair_roles = note.content.get('senior_area_chair_roles', ['Senior_Area_Chairs'])
-        venue.senior_area_chair_name = venue.senior_area_chair_roles[0]
+        venue.senior_area_chairs_name = venue.senior_area_chair_roles[0]
         venue.area_chair_roles = note.content.get('area_chair_roles', ['Area_Chairs'])
         venue.area_chairs_name = venue.area_chair_roles[0]
         venue.reviewer_roles = note.content.get('reviewer_roles', ['Reviewers'])
