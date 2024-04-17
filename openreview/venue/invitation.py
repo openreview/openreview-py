@@ -2187,9 +2187,14 @@ class InvitationBuilder(object):
         content = revision_stage.get_content(api_version='2', conference=self.venue)
 
         hidden_field_names = self.venue.submission_stage.get_hidden_field_names()
+        existing_invitation = tools.get_invitation(self.client, revision_invitation_id)
+        invitation_content = existing_invitation.edit['invitation']['edit']['note']['content'] if existing_invitation else {}
+
         for field in content:
             if field in hidden_field_names:
                 content[field]['readers'] = [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
+            if field not in hidden_field_names and invitation_content.get(field, {}).get('readers', []):
+                content[field]['readers'] = { 'delete': True }
 
         invitation = Invitation(id=revision_invitation_id,
             invitees=[venue_id],
