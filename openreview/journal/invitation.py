@@ -1599,7 +1599,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id, '${2/tail}'],
                 'signatures': {
                     'param': {
-                        'regex': f'{editor_in_chief_id}|~.*'
+                        'items': [
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'prefix': '~.*', 'optional': True }
+                        ]
                     }
                 },
                 'head': {
@@ -1715,7 +1718,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id, '${2/tail}'],
                 'signatures': {
                     'param': {
-                        'regex': f'{editor_in_chief_id}|~.*'
+                        'items': [
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'prefix': '~.*', 'optional': True }
+                        ]
                     }
                 },
                 'head': {
@@ -1915,7 +1921,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}')],
                 'signatures': {
                     'param': {
-                        'regex': venue_id + '|' + editor_in_chief_id + '|' + self.journal.get_action_editors_id(number='.*', anon=True)
+                        'items': [
+                            { 'value': venue_id, 'optional': True },
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'prefix': self.journal.get_action_editors_id(number='${{3/head}/number}', anon=True), 'optional': True }
+                        ]                        
                     }
                 },
                 'head': {
@@ -1988,7 +1998,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id],
                 'signatures': {
                     'param': {
-                        'regex': venue_id + '|' + editor_in_chief_id
+                        'items': [
+                            { 'value': venue_id, 'optional': True },
+                            { 'value': editor_in_chief_id, 'optional': True }
+                        ]                    
                     }
                 },
                 'head': {
@@ -2056,7 +2069,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id, '${2/tail}'],
                 'signatures': {
                     'param': {
-                        'regex': f'{editor_in_chief_id}|~.*'
+                        'items': [
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'prefix': '~.*', 'optional': True }
+                        ]                   
                     }
                 },
                 'head': {
@@ -2171,7 +2187,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id, '${2/tail}'],
                 'signatures': {
                     'param': {
-                        'regex': f'{editor_in_chief_id}|~.*'
+                        'items': [
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'prefix': '~.*', 'optional': True }
+                        ]                    
                     }
                 },
                 'head': {
