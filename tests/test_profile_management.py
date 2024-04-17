@@ -2266,7 +2266,7 @@ The OpenReview Team.
         request_page(selenium, 'http://localhost:3030/confirm?token=xukun@gmail.com', xukun_client.token, by=By.CLASS_NAME, wait_for_element='main')
 
         content = selenium.find_element(By.ID, 'content')
-        assert 'Click submit button below to confirm adding xukun@gmail.com to your account.' in content.text
+        assert 'Click Confirm Email button below to confirm adding xukun@gmail.com' in content.text
 
         content.find_element(By.TAG_NAME, 'button').click()
 
@@ -2276,7 +2276,17 @@ The OpenReview Team.
         assert 'Thank you for confirming your email xukun@gmail.com' == message.text        
         
         profile = xukun_client.get_profile()
-        assert profile.content['emailsConfirmed'] == ['xukun@profile.org', 'xukun@gmail.com']   
+        assert profile.content['emailsConfirmed'] == ['xukun@profile.org', 'xukun@gmail.com']
+
+        ## create a group and try to confirm
+        openreview_client.add_members_to_group('openreview.net/Support', 'xukun@yahoo.com')
+
+        response = xukun_client.confirm_alternate_email('~Xukun_First1', 'xukun@yahoo.com')
+
+        request_page(selenium, 'http://localhost:3030/confirm?token=xukun@yahoo.com', xukun_client.token, by=By.CLASS_NAME, wait_for_element='main')
+
+        content = selenium.find_element(By.ID, 'content')
+        assert 'Click Confirm Email button below to confirm adding xukun@yahoo.com' in content.text        
     
     def test_merge_profies_automatically(self, profile_management, openreview_client, helpers, request_page, selenium):
 
