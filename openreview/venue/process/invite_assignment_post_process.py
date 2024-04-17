@@ -8,10 +8,9 @@ def process_update(client, edge, invitation, existing_edge):
     invite_label = invitation.content['invite_label']['value']
     invited_label = invitation.content['invited_label']['value']
     hash_seed = invitation.content['hash_seed']['value']
-    assignment_invitation_id = invitation.content['assignment_invitation_id']['value']
     paper_reviewer_invited_id = invitation.content['paper_reviewer_invited_id']['value']
     email_template = invitation.content['email_template']['value']
-    is_reviewer = 'Reviewers' in assignment_invitation_id
+    is_reviewer = invitation.content['is_reviewer']['value']
     action_string = 'to review' if is_reviewer else 'to serve as area chair for'
     print(edge.id)
 
