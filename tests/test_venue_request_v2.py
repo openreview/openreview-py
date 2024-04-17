@@ -2174,6 +2174,114 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert 'V2.cc/2030/Conference/Submission1/Reviewers/Submitted' in meta_reviews[0].readers
         assert 'V2.cc/2030/Conference/Submission1/Authors' not in meta_reviews[0].readers
 
+    def test_ac_identity_reveal(self, client, test_client, openreview_client, selenium, request_page, helpers, venue):
+
+        anon_groups = openreview_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Area_Chair_.*')
+        assert len(anon_groups) == 1
+        assert anon_groups[0].readers == ['V2.cc/2030/Conference', 'V2.cc/2030/Conference/Program_Chairs', 'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs', anon_groups[0].id]
+
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now - datetime.timedelta(hours=1)
+
+        venue_revision_note = test_client.post_note(openreview.Note(
+            content={
+                'title': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Official Venue Name': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Abbreviated Venue Name': venue['request_form_note'].content['Abbreviated Venue Name'],
+                'Official Website URL': venue['request_form_note'].content['Official Website URL'],
+                'program_chair_emails': venue['request_form_note'].content['program_chair_emails'],
+                'Expected Submissions': '100',
+                'How did you hear about us?': 'ML conferences',
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
+                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'contact_email': venue['request_form_note'].content['contact_email'],
+                'publication_chairs':'No, our venue does not have Publication Chairs',
+                'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
+                'reviewer_identity': ['Program Chairs'],
+                'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
+                'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],                
+                'submission_email': 'Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}} \n\nIf you have any questions, please contact the PCs at test@mail.com'
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert venue_revision_note
+
+        helpers.await_queue()        
+
+        anon_groups = openreview_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Area_Chair_.*')
+        assert len(anon_groups) == 1
+        assert anon_groups[0].readers == ['V2.cc/2030/Conference', 
+                                          'V2.cc/2030/Conference/Program_Chairs', 
+                                          'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs',
+                                          'V2.cc/2030/Conference/Submission1/Area_Chairs',
+                                          'V2.cc/2030/Conference/Submission1/Reviewers',
+                                          anon_groups[0].id]
+        
+
+        reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2_@mail.com', password=helpers.strong_password)
+        request_page(selenium=selenium, url="http://localhost:3030/group?id=V2.cc/2030/Conference/Reviewers", token=reviewer_client.token, wait_for_element='header')
+
+        assigned_ac = selenium.find_element(By.ID, 'assigned-papers').find_element(By.CLASS_NAME, 'note-area-chairs')
+        assert 'VenueTwo Ac' in assigned_ac.text
+
+        ## Revert change and hide AC identity
+        venue_revision_note = test_client.post_note(openreview.Note(
+            content={
+                'title': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Official Venue Name': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Abbreviated Venue Name': venue['request_form_note'].content['Abbreviated Venue Name'],
+                'Official Website URL': venue['request_form_note'].content['Official Website URL'],
+                'program_chair_emails': venue['request_form_note'].content['program_chair_emails'],
+                'Expected Submissions': '100',
+                'How did you hear about us?': 'ML conferences',
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
+                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'contact_email': venue['request_form_note'].content['contact_email'],
+                'publication_chairs':'No, our venue does not have Publication Chairs',
+                'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
+                'reviewer_identity': ['Program Chairs'],
+                'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair'],
+                'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],                
+                'submission_email': 'Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}} \n\nIf you have any questions, please contact the PCs at test@mail.com'
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert venue_revision_note
+
+        helpers.await_queue()        
+
+        anon_groups = openreview_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Area_Chair_.*')
+        assert len(anon_groups) == 1
+        assert anon_groups[0].readers == ['V2.cc/2030/Conference', 
+                                          'V2.cc/2030/Conference/Program_Chairs', 
+                                          'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs',
+                                          'V2.cc/2030/Conference/Submission1/Area_Chairs',
+                                          anon_groups[0].id]
+        
+
+        reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2_@mail.com', password=helpers.strong_password)
+        request_page(selenium=selenium, url="http://localhost:3030/group?id=V2.cc/2030/Conference/Reviewers", token=reviewer_client.token, wait_for_element='header')
+
+        assigned_ac = selenium.find_element(By.ID, 'assigned-papers').find_elements(By.CLASS_NAME, 'note-area-chairs')
+        assert len(assigned_ac) == 0
+    
     def test_meta_review_revision_stage(self, client, test_client, helpers, venue, openreview_client):
 
         venue = openreview.get_conference(client, venue['request_form_note'].id, support_user='openreview.net/Support')
