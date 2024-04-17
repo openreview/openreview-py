@@ -1532,7 +1532,7 @@ class OpenReviewClient(object):
         json = response.json()
         return json['groupedEdges'] # a list of JSON objects holding information about an edge
 
-    def get_edges_archive(self, invitation):
+    def get_archived_edges(self, invitation):
         """
         Returns a list of Edge objects based on the filters provided.
 
