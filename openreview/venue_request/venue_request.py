@@ -25,12 +25,6 @@ class VenueStages():
             'value-dict': {},
             'description': 'Configure additional options in the submission form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
         }
-        revision_content['hide_fields'] = {
-                'values-regex': '.*',
-                'required': False,
-                'description': 'Comma separated values of submission fields to be hidden, author names are already hidden. These fields will be hidden from all readers of the submissions, except for program chairs and paper authors. Write the field name exactly as it appears in the submission invitation. For reference, please see: https://docs.openreview.net/reference/default-forms/default-submission-form',
-                'order': 19
-        }
         revision_content['remove_submission_options'] = {
             'order': 20,
             'values-dropdown':  ['abstract','keywords', 'pdf', 'TL;DR'],

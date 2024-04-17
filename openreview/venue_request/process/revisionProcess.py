@@ -214,6 +214,12 @@ def process(client, note, invitation):
                 #update post submission hide_fields
                 submission_content = conference.submission_stage.get_content(api_version='2', conference=conference)
                 hide_fields = [key for key in submission_content.keys() if key not in ['title', 'authors', 'authorids', 'venue', 'venueid'] and 'delete' not in submission_content[key]]
+                second_deadline_fields = forum_note.content.get('second_deadline_additional_options', {})
+                if second_deadline_fields:
+                    fields = list(second_deadline_fields.keys())
+                    for field in fields:
+                        if field not in hide_fields and 'delete' not in second_deadline_fields[field]:
+                            hide_fields.append(field)
                 content = {
                     'submission_readers': {
                         'description': 'Please select who should have access to the submissions after the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
