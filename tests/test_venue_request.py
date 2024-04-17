@@ -922,7 +922,7 @@ class TestVenueRequest():
 
         helpers.await_queue()        
 
-        with pytest.raises(openreview.OpenReviewException, match=r'The pdf field should be hidden during the bidding stage'):
+        with pytest.raises(openreview.OpenReviewException, match=r'The pdf field should be hidden during the bidding stage. Please use the Post Submission button to hide pdfs.'):
     
             bid_stage_note = test_client.post_note(openreview.Note(
                 content={

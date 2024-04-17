@@ -51,9 +51,6 @@ class Recruitment(object):
 
         invitation = venue.invitation_builder.set_recruitment_invitation(committee_name, options)
         
-        role = committee_name.replace('_', ' ')
-        role = role[:-1] if role.endswith('s') else role
-        
         invitation_id = invitation.id
         hash_seed = invitation.content['hash_seed']['value']
 

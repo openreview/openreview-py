@@ -1011,7 +1011,7 @@ class InvitationBuilder(object):
         invitation_content = {
             'hash_seed': { 'value': '1234', 'readers': [ venue.venue_id ]},
             'venue_id': { 'value': self.venue_id },
-            'committee_name': { 'value': committee_name.replace('_', ' ')[:-1] },
+            'committee_name': { 'value': venue.get_committee_name(committee_name, pretty=True) },
             'committee_id': { 'value': venue.get_committee_id(committee_name) },
             'committee_invited_id': { 'value': venue.get_committee_id_invited(committee_name) },
             'committee_declined_id': { 'value': venue.get_committee_id_declined(committee_name) },
@@ -2187,9 +2187,14 @@ class InvitationBuilder(object):
         content = revision_stage.get_content(api_version='2', conference=self.venue)
 
         hidden_field_names = self.venue.submission_stage.get_hidden_field_names()
+        existing_invitation = tools.get_invitation(self.client, revision_invitation_id)
+        invitation_content = existing_invitation.edit['invitation']['edit']['note']['content'] if existing_invitation else {}
+
         for field in content:
             if field in hidden_field_names:
                 content[field]['readers'] = [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
+            if field not in hidden_field_names and invitation_content.get(field, {}).get('readers', []):
+                content[field]['readers'] = { 'delete': True }
 
         invitation = Invitation(id=revision_invitation_id,
             invitees=[venue_id],
@@ -3341,11 +3346,6 @@ class InvitationBuilder(object):
             signatures = [venue_id],
             readers = ['everyone'],
             writers = [venue_id],
-            content = {
-                'review_readers': {
-                    'value': self.venue.review_stage.get_readers(self.venue, '{number}')
-                }
-            },
             edit = {
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -3398,14 +3398,6 @@ class InvitationBuilder(object):
                         'append': [self.venue.get_ethics_reviewers_id('${{3/id}/number}')]
                     }
                 }
-            }
-
-        if ethics_review_stage.enable_comments:
-            ethics_stage_invitation.content['comment_readers'] = {
-                'value': self.venue.comment_stage.get_readers(self.venue, '{number}')
-            }
-            ethics_stage_invitation.content['readers_selection'] = {
-                'value': self.venue.comment_stage.reader_selection
             }
 
         self.save_invitation(ethics_stage_invitation, replacement=False)

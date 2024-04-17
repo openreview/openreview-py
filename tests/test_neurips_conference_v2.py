@@ -881,8 +881,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
-                'Expected Submissions': '100',
-                'hide_fields': ['keywords', 'financial_support']
+                'Expected Submissions': '100'
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
@@ -892,16 +891,28 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             signatures=['~Program_NeurIPSChair1'],
             writers=[]
         )
-
-        with pytest.raises(openreview.OpenReviewException, match=r'Invalid field to hide: financial_support'):
-            pc_client.post_note(venue_revision_note)
-
-        venue_revision_note.content['hide_fields'] = ['keywords']
         pc_client.post_note(venue_revision_note)
 
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Post_Submission-0-0')
         helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Revision-0-0')
+
+        post_submission_note=pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'hide_fields': ['keywords'],
+                'submission_readers': 'Program chairs and paper authors only'
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['NeurIPS.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_NeurIPSChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
 
         notes = test_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Conference/Submission' }, sort='number:desc')
         assert len(notes) == 5
@@ -992,15 +1003,20 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             ))
         helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
 
-        note_edits = openreview_client.get_note_edits(invitation='NeurIPS.cc/2023/Conference/Submission2/-/Revision')
-        assert len(note_edits) == 1
-        assert 'readers' in note_edits[0].note.content['authors']
-        assert  note_edits[0].note.content['authors']['readers'] == [
+        note = openreview_client.get_note(revision_note['note']['id'])
+        assert note
+        assert 'readers' in note.content['authors']
+        assert  note.content['authors']['readers'] == [
         "NeurIPS.cc/2023/Conference",
         "NeurIPS.cc/2023/Conference/Submission2/Authors"
         ]
-        assert 'readers' in note_edits[0].note.content['authors']
-        assert  note_edits[0].note.content['authors']['readers'] == [
+        assert 'readers' in note.content['authors']
+        assert  note.content['authors']['readers'] == [
+        "NeurIPS.cc/2023/Conference",
+        "NeurIPS.cc/2023/Conference/Submission2/Authors"
+        ]
+        assert 'readers' in note.content['keywords']
+        assert  note.content['keywords']['readers'] == [
         "NeurIPS.cc/2023/Conference",
         "NeurIPS.cc/2023/Conference/Submission2/Authors"
         ]
