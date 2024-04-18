@@ -32,13 +32,13 @@ class Venue(object):
         self.date = 'TBD'
         self.id = venue_id # get compatibility with conference
         self.program_chairs_name = 'Program_Chairs'
-        self.reviewers_name = 'Reviewers'
         self.reviewer_roles = ['Reviewers']
+        self.reviewers_name = self.reviewer_roles[0]
         self.area_chair_roles = ['Area_Chairs']
+        self.area_chairs_name = self.area_chair_roles[0]
         self.senior_area_chair_roles = ['Senior_Area_Chairs']        
-        self.area_chairs_name = 'Area_Chairs'
+        self.senior_area_chairs_name = self.senior_area_chair_roles[0]
         self.secondary_area_chairs_name = 'Secondary_Area_Chairs'
-        self.senior_area_chairs_name = 'Senior_Area_Chairs'
         self.ethics_chairs_name = 'Ethics_Chairs'
         self.ethics_reviewers_name = 'Ethics_Reviewers'
         self.authors_name = 'Authors'
@@ -235,8 +235,7 @@ class Venue(object):
 
     def get_reviewers_name(self, pretty=True):
         if pretty:
-            name=self.reviewers_name.replace('_', ' ')
-            return name[:-1] if name.endswith('s') else name
+            return self.get_committee_name(self.reviewers_name, pretty)
         return self.reviewers_name
     
     def get_anon_committee_name(self, name):
@@ -248,8 +247,7 @@ class Venue(object):
 
     def get_ethics_reviewers_name(self, pretty=True):
         if pretty:
-            name=self.ethics_reviewers_name.replace('_', ' ')
-            return name[:-1] if name.endswith('s') else name
+            return self.get_committee_name(self.ethics_reviewers_name, pretty)
         return self.ethics_reviewers_name
 
     def anon_ethics_reviewers_name(self, pretty=True):
@@ -257,8 +255,7 @@ class Venue(object):
 
     def get_area_chairs_name(self, pretty=True):
         if pretty:
-            name=self.area_chairs_name.replace('_', ' ')
-            return name[:-1] if name.endswith('s') else name
+            return self.get_committee_name(self.area_chairs_name, pretty)
         return self.area_chairs_name
 
     def get_anon_area_chairs_name(self, pretty=True):
