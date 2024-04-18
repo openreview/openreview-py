@@ -1,6 +1,7 @@
 def process_update(client, edge, invitation, existing_edge):
 
     domain = client.get_group(invitation.domain)
+    meta_invitation_id = domain.content['meta_invitation_id']['value']
     short_phrase = domain.content['subtitle']['value']
     contact = domain.content['contact']['value']
     recruitment_invitation_id = invitation.content['recruitment_invitation_id']['value']
@@ -93,7 +94,7 @@ Thanks,
             client.add_members_to_group(committee_invited_id, [user_profile.id])
 
         ## - Send email
-        response = client.post_message(subject, [user_profile.id], message, parentGroup=committee_invited_id, replyTo=contact)
+        response = client.post_message(subject, [user_profile.id], message, invitation=meta_invitation_id, signature=domain.id, parentGroup=committee_invited_id, replyTo=contact)
 
         ## - Update edge to INVITED_LABEL
         edge.label=invited_label
@@ -149,4 +150,4 @@ Thanks,
 {inviter_id}
 {inviter_preferred_name} ({edge.tauthor})'''
 
-        response = client.post_message(subject, [user_profile.id], message)
+        response = client.post_message(subject, [user_profile.id], message, invitation=meta_invitation_id, signature=domain.id, replyTo=contact)

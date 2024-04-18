@@ -76,7 +76,9 @@ class Recruitment(object):
                             'Reminder: ' + title,
                             committee_invited_id,
                             contact_info,
-                            verbose = False)
+                            verbose = False,
+                            invitation = self.venue.get_meta_invitation_id(),
+                            signature = venue_id)
                         recruitment_status['reminded'].append(invited_user)
                     except Exception as e:
                         self.client.remove_members_from_group(committee_invited_id, invited_user)
@@ -148,7 +150,9 @@ class Recruitment(object):
                         title,
                         committee_invited_id,
                         contact_info,
-                        verbose=False)
+                        verbose=False,
+                        invitation = self.venue.get_meta_invitation_id(),
+                        signature=venue_id)
                     recruitment_status['invited'].append(email)
                 except Exception as e:
                     error_string = repr(e)

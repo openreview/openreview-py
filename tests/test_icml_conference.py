@@ -460,7 +460,7 @@ class TestICMLConference():
 
         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Senior_Area_Chairs/-/Recruitment', count=2)
 
-        messages = client.get_messages(subject='[ICML 2023] Senior Area Chair Invitation accepted')
+        messages = openreview_client.get_messages(subject='[ICML 2023] Senior Area Chair Invitation accepted')
         assert len(messages) == 2
 
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Senior_Area_Chairs').members) == 2
@@ -504,7 +504,7 @@ class TestICMLConference():
 
         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Area_Chairs/-/Recruitment', count=2)
 
-        messages = client.get_messages(subject='[ICML 2023] Area Chair Invitation accepted')
+        messages = openreview_client.get_messages(subject='[ICML 2023] Area Chair Invitation accepted')
         assert len(messages) == 2
 
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Area_Chairs').members) == 2
@@ -556,7 +556,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Reviewers/-/Recruitment', count=12)
 
-        messages = client.get_messages(subject='[ICML 2023] Reviewer Invitation accepted with reduced load')
+        messages = openreview_client.get_messages(subject='[ICML 2023] Reviewer Invitation accepted with reduced load')
         assert len(messages) == 6
 
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers').members) == 6
@@ -1711,7 +1711,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         time.sleep(5) ## wait until the process function runs   
 
-        messages = client.get_messages(to='emilia@icml.cc', subject='[ICML 2023] Invitation canceled to review paper titled "Paper title 1 Version 2"')
+        messages = openreview_client.get_messages(to='emilia@icml.cc', subject='[ICML 2023] Invitation canceled to review paper titled "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
 
         with pytest.raises(openreview.OpenReviewException, match=r'the user is already invited'):
@@ -1731,7 +1731,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assert not openreview_client.get_groups('ICML.cc/2023/Conference/External_Reviewers', member='melisa@icml.cc')
         assert not openreview_client.get_groups('ICML.cc/2023/Conference/Reviewers', member='melisa@icml.cc')
 
-        messages = client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] Invitation to review paper titled "Paper title 1 Version 2"')
+        messages = openreview_client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] Invitation to review paper titled "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
@@ -1746,7 +1746,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assignment_edges=pc_client_v2.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submissions[0].id)
         assert len(assignment_edges) == 3
 
-        messages = client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] Reviewer Invitation accepted for paper 1, assignment pending')
+        messages = openreview_client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] Reviewer Invitation accepted for paper 1, assignment pending')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi melisa@icml.cc,
 Thank you for accepting the invitation to review the paper number: 1, title: Paper title 1 Version 2.
@@ -1758,7 +1758,7 @@ If you would like to change your decision, please follow the link in the previou
 
 OpenReview Team'''
 
-        messages = client.get_messages(to='ac1@icml.cc', subject='[ICML 2023] Reviewer melisa@icml.cc accepted to review paper 1, assignment pending')
+        messages = openreview_client.get_messages(to='ac1@icml.cc', subject='[ICML 2023] Reviewer melisa@icml.cc accepted to review paper 1, assignment pending')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi AC ICMLOne,
 The Reviewer melisa@icml.cc that you invited to review paper 1 has accepted the invitation.
@@ -1792,7 +1792,7 @@ OpenReview Team'''
         assignment_edges=pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submissions[0].id)
         assert len(assignment_edges) == 4
 
-        messages = client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] Reviewer Assignment confirmed for paper 1')
+        messages = openreview_client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] Reviewer Assignment confirmed for paper 1')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Melisa ICML,
 Thank you for accepting the invitation to review the paper number: 1, title: Paper title 1 Version 2.
@@ -1803,7 +1803,7 @@ If you would like to change your decision, please click the Decline link in the 
 
 OpenReview Team'''
 
-        messages = client.get_messages(to='ac1@icml.cc', subject='[ICML 2023] Reviewer Melisa ICML signed up and is assigned to paper 1')
+        messages = openreview_client.get_messages(to='ac1@icml.cc', subject='[ICML 2023] Reviewer Melisa ICML signed up and is assigned to paper 1')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi AC ICMLOne,
 The Reviewer Melisa ICML(melisa@icml.cc) that you invited to review paper 1 has accepted the invitation, signed up and is now assigned to the paper 1.
@@ -1826,7 +1826,7 @@ OpenReview Team'''
         invite_edges=pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Javier_ICML1')
         assert len(invite_edges) == 1
 
-        messages = client.get_messages(to='javier@icml.cc', subject='[ICML 2023] Invitation to review paper titled "Paper title 1 Version 2"')
+        messages = openreview_client.get_messages(to='javier@icml.cc', subject='[ICML 2023] Invitation to review paper titled "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         with pytest.raises(NoSuchElementException):
@@ -4965,7 +4965,7 @@ Best,
         rejected_submissions = venue.get_submissions(venueid='ICML.cc/2023/Conference/Rejected_Submission', sort='number:asc')
         assert (len(accepted_submissions)+len(rejected_submissions)) == 100
 
-        messages = client.get_messages(subject='[ICML 2023] Decision notification for your submission 1: Paper title 1 Version 2')
+        messages = openreview_client.get_messages(subject='[ICML 2023] Decision notification for your submission 1: Paper title 1 Version 2')
         assert len(messages) == 5
         assert messages[0]['content']['replyTo'] == 'pc@icml.cc'
         recipients = [msg['content']['to'] for msg in messages]
@@ -5156,7 +5156,7 @@ Best,
         assert process_logs[0]['status'] == 'ok'
 
         # check emails were not resent and decision emails status comment was not re-posted
-        messages = client.get_messages(subject='[ICML 2023] Decision notification for your submission 1: Paper title 1 Version 2')
+        messages = openreview_client.get_messages(subject='[ICML 2023] Decision notification for your submission 1: Paper title 1 Version 2')
         assert len(messages) == 5
 
         replies = pc_client.get_notes(forum=request_form.id, invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment')

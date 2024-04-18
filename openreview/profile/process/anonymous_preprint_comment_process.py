@@ -25,8 +25,10 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
     #send email to paper authors
     paper_authors_id = f'{paper_group_id}/Authors'
     client.post_message(
+        invitation=f'{submission.domain}/-/Edit',
         recipients=[paper_authors_id],
         ignoreRecipients=[edit.tauthor],
         subject=f'''[Anonymous Preprint Server] {pretty_signature} commented on your submission. Paper Title: "{submission.content['title']['value']}"''',
-        message=f'''{pretty_signature} commented on your submission.{content}'''
+        message=f'''{pretty_signature} commented on your submission.{content}''',
+        signature=submission.domain
     )
