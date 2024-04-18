@@ -2302,24 +2302,45 @@ The OpenReview Team.
         
         response = akshat_client_1.confirm_alternate_email('~Akshat_First1', 'akshat_2@profile.org')
 
-        messages = openreview_client.get_messages(subject='OpenReview Account Merge', to='akshat_2@profile.org')
+        messages = openreview_client.get_messages(subject='OpenReview Account Linking - Duplicate Profile Found', to='akshat_2@profile.org')
         assert len(messages) == 1
 
-        request_page(selenium, 'http://localhost:3030/merge?token=akshat_2@profile.org', akshat_client_1.token, wait_for_element='main')
+        ## As guest user
+        request_page(selenium, 'http://localhost:3030/profile/merge?token=akshat_2@profile.org', None, by=By.CLASS_NAME, wait_for_element='important_message')
+
+        message = selenium.find_element(By.CLASS_NAME, 'important_message')
+        assert 'Please login to access /profile/merge?token=akshat_2@profile.org' == message.text  
+
+        ## As super user
+        request_page(selenium, 'http://localhost:3030/profile/merge?token=akshat_2@profile.org', openreview_client.token, wait_for_element='header')
+
+        message = selenium.find_element(By.TAG_NAME, 'header')
+        assert 'Error 403' == message.text                
+
+        ## As the other user
+        request_page(selenium, 'http://localhost:3030/profile/merge?token=akshat_2@profile.org', akshat_client_2.token, wait_for_element='header')
+
+        message = selenium.find_element(By.TAG_NAME, 'header')
+        assert 'Error 403' == message.text   
+
+        ## As the owner of the profile
+        request_page(selenium, 'http://localhost:3030/profile/merge?token=akshat_2@profile.org', akshat_client_1.token, wait_for_element='main')
 
         content = selenium.find_element(By.ID, 'content')
-        assert 'Click submit button below to confirm the profile merge' in content.text
+        assert 'Click Confirm Profile Merge button below to confirm merging ~Akshat_Last1 to your profile.' in content.text
 
         content.find_element(By.TAG_NAME, 'button').click()
 
         time.sleep(2)
 
         message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'Thank you for confirming your email' == message.text        
+        assert 'Thank you for confirming the profile merge.' == message.text        
         
         profile = akshat_client_1.get_profile()
         assert profile.content['emailsConfirmed'] == ['akshat_1@profile.org', 'akshat_2@profile.org']
         assert len(profile.content['names']) == 2
         assert profile.content['names'][0]['username'] == '~Akshat_First1'
         assert profile.content['names'][1]['username'] == '~Akshat_Last1'
+
+        
 
