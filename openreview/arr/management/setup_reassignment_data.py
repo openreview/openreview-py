@@ -20,12 +20,13 @@ def process(client, invitation):
             return ''
 
     def replace_edge(existing_edge=None, edge_inv=None, new_weight=None, submission_id=None, profile_id=None, edge_readers=None):
-        client.delete_edges(
-            invitation=edge_inv,
-            id=existing_edge['id'],
-            wait_to_finish=True,
-            soft_delete=True
-        )
+        if existing_edge:
+            client.delete_edges(
+                invitation=edge_inv,
+                id=existing_edge['id'],
+                wait_to_finish=True,
+                soft_delete=True
+            )
         if submission_id:
             print(f'{profile_id}->{submission_id},weight={new_weight}')
             client.post_edge(
@@ -66,7 +67,9 @@ def process(client, invitation):
     ae_cmp_inv = domain.content['area_chairs_custom_max_papers_id']['value']
     rev_cmp_inv = domain.content['reviewers_custom_max_papers_id']['value']
     reviewers_id = domain.content['reviewers_id']['value']
+    reviewers_group = client.get_group(reviewers_id).members
     area_chairs_id = domain.content['area_chairs_id']['value']
+    area_chairs_group = client.get_group(area_chairs_id).members
     senior_area_chairs_id = domain.content['senior_area_chairs_id']['value']
     tracks_field_name = 'research_area'
 
@@ -242,7 +245,7 @@ def process(client, invitation):
             if previous_venue_id in reviewer:
                 reviewer = current_client.get_group(reviewer).members[0] ## De-anonymize
             
-            if reviewer not in name_to_id or name_to_id[reviewer] not in rev_scores:
+            if reviewer not in name_to_id or reviewer not in reviewers_group:
                 continue
             
             rev_cmp = {
@@ -251,7 +254,7 @@ def process(client, invitation):
             }
 
             reviewer_id = name_to_id[reviewer]
-            reviewer_edge = rev_scores[reviewer_id]
+            reviewer_edge = rev_scores[reviewer_id] if reviewer_id in rev_scores else None
 
             if wants_new_reviewers:
                 updated_weight = 0
@@ -306,7 +309,7 @@ def process(client, invitation):
             if previous_venue_id in ae:
                 ae = current_client.get_group(ae).members[0] ## De-anonymize
 
-            if ae not in name_to_id or name_to_id[ae] not in ae_scores:
+            if ae not in name_to_id or ae not in area_chairs_group:
                 continue
 
             ae_cmp = {
@@ -315,7 +318,7 @@ def process(client, invitation):
             }
 
             ae_id = name_to_id[ae]
-            ae_edge = ae_scores[ae_id]
+            ae_edge = ae_scores[ae_id] if ae_id in ae_scores else None
 
             if wants_new_ae:
                 updated_weight = 0
