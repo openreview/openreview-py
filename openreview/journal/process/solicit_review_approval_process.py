@@ -33,6 +33,7 @@ def process(client, edit, invitation):
         assigned_action_editor = client.search_profiles(ids=[submission.content['assigned_action_editor']['value'].split(',')[0]])[0]
 
         client.post_message(
+            invitation=journal.get_meta_invitation_id(),
             recipients=solicit_request.signatures,
             subject=f'''[{journal.short_name}] Request to review {journal.short_name} submission "{submission.number}: {submission.content['title']['value']}" has been accepted''',
             message=f'''Hi {{{{fullname}}}},
@@ -50,7 +51,8 @@ We thank you for your contribution to {journal.short_name}!
 The {journal.short_name} Editors-in-Chief
 note: replies to this email will go to the AE, {assigned_action_editor.get_preferred_name(pretty=True)}.
 ''',
-            replyTo=assigned_action_editor.get_preferred_email()
+            replyTo=assigned_action_editor.get_preferred_email(),
+            signature=journal.venue_id
         )
 
         return
@@ -60,6 +62,7 @@ note: replies to this email will go to the AE, {assigned_action_editor.get_prefe
         solicit_request = client.get_note(note.replyto)
         client.add_members_to_group(journal.get_solicit_reviewers_id(number=submission.number, declined=True), solicit_request.signatures)
         client.post_message(
+            invitation=journal.get_meta_invitation_id(),
             recipients=solicit_request.signatures,
             subject=f'''[{journal.short_name}] Request to review {journal.short_name} submission "{submission.number}: {submission.content['title']['value']}" was not accepted''',
             message=f'''Hi {{{{fullname}}}},
@@ -70,5 +73,6 @@ Respectfully,
 
 The {journal.short_name} Editors-in-Chief
 ''',
-            replyTo=journal.contact_info
+            replyTo=journal.contact_info,
+            signature=journal.venue_id
         )
