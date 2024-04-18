@@ -2490,6 +2490,13 @@ class TestARRVenueV2():
             )
         )
 
+        # Zero out affinity score for reviewer
+        openreview_client.delete_edges(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Affinity_Score',
+            head=submissions[1].id,
+            tail='~Reviewer_ARROne1'
+        )
+
         # Call the stage
         pc_client.post_note(
             openreview.Note(
