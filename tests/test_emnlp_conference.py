@@ -881,7 +881,7 @@ url={https://openreview.net/forum?id='''
         assert desk_rejected_note
         assert 'EMNLP/2023/Conference/Submission1/Senior_Area_Chairs' == desk_rejected_note.signatures[0]
 
-        messages = client.get_messages(subject='[EMNLP 2023]: Paper #1 desk-rejected by Senior Area Chairs')
+        messages = openreview_client.get_messages(subject='[EMNLP 2023]: Paper #1 desk-rejected by Senior Area Chairs')
         assert messages and len(messages) == 5
         recipients = [msg['content']['to'] for msg in messages]
         assert 'pc@emnlp.org' in recipients
@@ -909,7 +909,7 @@ url={https://openreview.net/forum?id='''
         assert desk_rejected_note
 
         pretty_id = openreview.tools.pretty_id(anon_group_id.split('/')[-1])
-        messages = client.get_messages(to='pc@emnlp.org', subject=f'[EMNLP 2023]: Paper #2 desk-rejected by {pretty_id}')
+        messages = openreview_client.get_messages(to='pc@emnlp.org', subject=f'[EMNLP 2023]: Paper #2 desk-rejected by {pretty_id}')
         assert messages and len(messages) == 1
 
     def test_release_submissions(self, test_client, client, openreview_client, helpers):

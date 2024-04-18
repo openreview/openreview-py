@@ -22,8 +22,10 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
 
     #send email to paper authors
     client.post_message(
+        invitation=f'{submission.domain}/-/Edit',
         recipients=submission.content['authorids']['value'],
         ignoreRecipients=[edit.tauthor],
         subject=f'''[OpenReview Archive] {pretty_signature} commented on your submission. Paper Title: "{submission.content['title']['value']}"''',
-        message=f'''{pretty_signature} commented on your submission.{content}'''
+        message=f'''{pretty_signature} commented on your submission.{content}''',
+        signature=submission.domain
     )
