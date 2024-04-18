@@ -653,6 +653,51 @@ class TestICLRConference():
         invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
         client.post_invitation(invitation)
 
+        # Post revision stage note before releasing authors to the public
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=5)
+        revision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'submission_revision_name': 'Camera_Ready_Revision',
+                'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
+                'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
+                'accepted_submissions_only': 'Enable revision for accepted submissions only',
+                'submission_author_edition': 'Allow reorder of existing authors only',
+                'submission_revision_additional_options': {
+                    "submission_type": {
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "Regular Long Paper",
+                                    "Regular Short Paper"
+                                ],
+                                "input": "select"
+                            }
+                        },
+                        "description": "Please enter the category under which the submission should be reviewed. This cannot be changed after the abstract submission deadline.",
+                        "order": 20
+                    }
+                },
+                'submission_revision_remove_options': ['keywords']
+            },
+            forum=request_form.forum,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Submission_Revision_Stage',
+            readers=['ICLR.cc/2024/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_ICLRChair1'],
+            writers=[]
+        ))
+        assert revision_stage_note
+        helpers.await_queue()
+
+        invitation = openreview_client.get_invitation('ICLR.cc/2024/Conference/Submission1/-/Camera_Ready_Revision')
+        assert invitation
+        assert 'authorids' in invitation.edit['note']['content']
+        assert 'readers' in invitation.edit['note']['content']['authorids']
+
         # post a post decision stage note
         short_name = 'ICLR 2024'
         post_decision_stage_note = pc_client.post_note(openreview.Note(
