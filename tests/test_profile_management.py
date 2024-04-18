@@ -2288,7 +2288,7 @@ The OpenReview Team.
         content = selenium.find_element(By.ID, 'content')
         assert 'Click Confirm Email button below to confirm adding xukun@yahoo.com' in content.text        
     
-    def test_merge_profies_automatically(self, profile_management, openreview_client, helpers, request_page, selenium):
+    def test_merge_profiles_automatically(self, profile_management, openreview_client, helpers, request_page, selenium):
 
         akshat_client_1 = helpers.create_user('akshat_1@profile.org', 'Akshat', 'First', alternates=[], institution='google.com')
         akshat_client_2 = helpers.create_user('akshat_2@profile.org', 'Akshat', 'Last', alternates=[], institution='google.com')
@@ -2341,6 +2341,12 @@ The OpenReview Team.
         assert len(profile.content['names']) == 2
         assert profile.content['names'][0]['username'] == '~Akshat_First1'
         assert profile.content['names'][1]['username'] == '~Akshat_Last1'
+
+        ## As the owner of the profile again
+        request_page(selenium, 'http://localhost:3030/profile/merge?token=akshat_2@profile.org', akshat_client_1.token, wait_for_element='main')
+
+        content = selenium.find_element(By.ID, 'content')
+        assert 'Activation token is not valid' in content.text
 
         
 
