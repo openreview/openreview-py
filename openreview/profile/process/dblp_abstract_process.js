@@ -11,6 +11,8 @@ async function process(client, edit, invitation) {
     console.log('abstract: ' + abstract);
     console.log('pdf: ' + extractionResult.pdf);
     console.log('error: ' + extractionResult.error);
+  } else {
+    console.log('html field is empty');
   }
 
   if (!abstract) return
