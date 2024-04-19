@@ -211,7 +211,7 @@ class TestWorkshopV2():
 
         helpers.await_queue_edit(openreview_client, edit_id=edit_note['id'])
                                                                                     
-        messages = client.get_messages(to='peter@mail.com', subject='PRL ICAPS 2023 has received a new revision of your submission titled Paper title No Abstract Version 2')
+        messages = openreview_client.get_messages(to='peter@mail.com', subject='PRL ICAPS 2023 has received a new revision of your submission titled Paper title No Abstract Version 2')
         assert messages and len(messages) == 1
         # Test that abstract doesn't appear in PC Revision email
         assert messages[0]['content']['text'].startswith('Your new revision of the submission to PRL ICAPS 2023 has been posted.\n\nTitle: Paper title No Abstract Version 2\n\nTo view your submission, click here:')
@@ -339,7 +339,7 @@ class TestWorkshopV2():
 
         helpers.await_queue_edit(openreview_client, edit_id=edge.id)
 
-        messages = client.get_messages(to='external_reviewer1@adobe.com', subject='[PRL ICAPS 2023] Invitation to review paper titled "Paper title No Abstract Version 2"')
+        messages = openreview_client.get_messages(to='external_reviewer1@adobe.com', subject='[PRL ICAPS 2023] Invitation to review paper titled "Paper title No Abstract Version 2"')
         assert messages and len(messages) == 1
         # Test that abstract doesn't appear in Invite Assignment email
         assert messages[0]['content']['text'].startswith('Hi External Reviewer Adobe,\n\nYou were invited to review the paper number: 12, title: "Paper title No Abstract Version 2".\n\nPlease respond the invitation clicking the following link:')

@@ -211,7 +211,7 @@ class TestCVPRConference():
         helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
         helpers.await_queue_edit(openreview_client, invitation='thecvf.com/CVPR/2024/Conference/-/Desk_Rejected_Submission', count=1)
 
-        messages = client.get_messages(subject='[CVPR 2024]: Paper #50 desk-rejected by Program Chairs')
+        messages = openreview_client.get_messages(subject='[CVPR 2024]: Paper #50 desk-rejected by Program Chairs')
         assert messages and len(messages) == 3
         recipients = [msg['content']['to'] for msg in messages]
         assert 'pc@cvpr.cc' not in recipients
