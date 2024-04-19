@@ -4,6 +4,7 @@ def process(client, edit, invitation):
     from datetime import datetime
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
+    meta_invitation_id = domain.content['meta_invitation_id']['value']
     short_phrase = domain.content['subtitle']['value']
     submission_name = domain.content['submission_name']['value']
     committee_name = invitation.content['committee_name']['value']
@@ -80,7 +81,7 @@ Confirmation of the assignment is pending until your profile is active and no co
 {decline_instructions}
 
 OpenReview Team'''
-            response = client.post_message(subject, [edge.tail], message)
+            response = client.post_message(subject, [edge.tail], message, invitation=meta_invitation_id, signature=venue_id)
 
             ## Send email to inviter
             subject=f'[{short_phrase}] {committee_name} {preferred_name} accepted to review paper {submission.number}, assignment pending'
@@ -92,7 +93,7 @@ Confirmation of the assignment is pending until the invited reviewer creates a p
 OpenReview Team'''
 
             ## - Send email
-            response = client.post_message(subject, edge.signatures, message)
+            response = client.post_message(subject, edge.signatures, message, invitation=meta_invitation_id, signature=venue_id)
             return
 
         ## Check if there is already an accepted edge for that profile id
@@ -124,7 +125,7 @@ A conflict was detected between you and the submission authors and the assignmen
 If you have any questions, please contact us as info@openreview.net.
 
 OpenReview Team'''
-            response = client.post_message(subject, [edge.tail], message)
+            response = client.post_message(subject, [edge.tail], message, invitation=meta_invitation_id, signature=venue_id)
 
             ## Send email to inviter
             subject=f'[{short_phrase}] Conflict detected between {committee_name} {preferred_name} and paper {submission.number}'
@@ -136,7 +137,7 @@ If you have any questions, please contact us as info@openreview.net.
 OpenReview Team'''
 
             ## - Send email
-            response = client.post_message(subject, edge.signatures, message)
+            response = client.post_message(subject, edge.signatures, message, invitation=meta_invitation_id, signature=venue_id)
             return
 
         edge.label=accepted_label
@@ -188,7 +189,7 @@ Thank you for accepting the invitation to review the paper number: {submission.n
 OpenReview Team'''
 
             ## - Send email
-            response = client.post_message(subject, [edge.tail], message)
+            response = client.post_message(subject, [edge.tail], message, invitation=meta_invitation_id, signature=venue_id)
 
             ## Send email to inviter
             subject=f'[{short_phrase}] {committee_name} {preferred_name} accepted to review paper {submission.number}'
@@ -198,7 +199,7 @@ The {committee_name} {preferred_name}({preferred_email}) that you invited to rev
 OpenReview Team'''
 
             ## - Send email
-            response = client.post_message(subject, edge.signatures, message)
+            response = client.post_message(subject, edge.signatures, message, invitation=meta_invitation_id, signature=venue_id)
 
 
     elif (note.content['response']['value'] == 'No'):
@@ -235,7 +236,7 @@ You have declined the invitation to review the paper number: {submission.number}
 OpenReview Team'''
 
         ## - Send email
-        response = client.post_message(subject, [edge.tail], message)
+        response = client.post_message(subject, [edge.tail], message, invitation=meta_invitation_id, signature=venue_id)
 
         ## Send email to inviter
         subject=f'[{short_phrase}] {committee_name} {preferred_name} declined to review paper {submission.number}'
@@ -247,7 +248,7 @@ To read their response, please click here: https://openreview.net/forum?id={note
 OpenReview Team'''
 
         ## - Send email
-        response = client.post_message(subject, edge.signatures, message)
+        response = client.post_message(subject, edge.signatures, message, invitation=meta_invitation_id, signature=venue_id)
 
     else:
         raise openreview.OpenReviewException(f"Invalid response: {note.content['response']['value']}")

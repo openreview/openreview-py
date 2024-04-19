@@ -176,7 +176,8 @@ def process(client, invitation):
             invitation=openreview.api.Invitation()
         )
         paper_invitation = client.get_invitation(paper_invitation_edit['invitation']['id'])
-        update_note_readers(note, paper_invitation)
+        if paper_invitation.edit and paper_invitation.edit.get('note'):
+            update_note_readers(note, paper_invitation)
 
     notes = get_children_notes()
     print(f'create or update {len(notes)} child invitations')
