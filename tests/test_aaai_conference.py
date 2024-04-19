@@ -269,3 +269,100 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         request_page(selenium, "http://localhost:3030/group?id=AAAI.org/2025/Conference/Program_Committee", reviewer_client.token, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert 'You have agreed to review up to 1 papers' in header.text
+
+    def test_submissions(self, client, openreview_client, helpers, test_client, request_page, selenium):
+
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+
+        domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu', 'deepmind.com', 'co.ux', 'apple.com', 'nvidia.com']
+        subject_areas = ['Algorithms: Approximate Inference', 'Algorithms: Belief Propagation', 'Learning: Deep Learning', 'Learning: General', 'Learning: Nonparametric Bayes', 'Methodology: Bayesian Methods', 'Methodology: Calibration', 'Principles: Causality', 'Principles: Cognitive Models', 'Representation: Constraints', 'Representation: Dempster-Shafer', 'Representation: Other']
+        for i in range(1,11):
+            note = openreview.api.Note(
+                content = {
+                    'title': { 'value': 'Paper title ' + str(i) },
+                    'abstract': { 'value': 'This is an abstract ' + str(i) },
+                    'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i % 10]] },
+                    'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
+                    'keywords': { 'value': ['machine learning', 'nlp'] },
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' }
+                }
+            )
+            test_client.post_note_edit(invitation='AAAI.org/2025/Conference/-/Submission',
+                signatures=['~SomeFirstName_User1'],
+                note=note)
+
+        helpers.await_queue_edit(openreview_client, invitation='AAAI.org/2025/Conference/-/Submission', count=10)
+
+        authors_group = openreview_client.get_group(id='AAAI.org/2025/Conference/Authors')
+
+        for i in range(1,10):
+            assert f'AAAI.org/2025/Conference/Submission{i}/Authors' in authors_group.members
+
+
+    def test_post_submission(self, client, openreview_client, test_client, helpers, request_page, selenium):
+
+        pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+
+        ## close the submissions
+        now = datetime.datetime.utcnow()
+        due_date = now - datetime.timedelta(days=1)
+        exp_date = now + datetime.timedelta(days=10)
+        pc_client.post_note(openreview.Note(
+            content={
+                'title': 'The 39th Annual AAAI Conference on Artificial Intelligence',
+                'Official Venue Name': 'The 39th Annual AAAI Conference on Artificial Intelligence',
+                'Abbreviated Venue Name': 'AAAI 2025',
+                'Official Website URL': 'https://aaai.org/conference/aaai-25/',
+                'program_chair_emails': ['pc@aaai.org'],
+                'contact_email': 'pc@aaai.org',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
+                'Venue Start Date': '2025/07/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Location': 'Philadelphia, PA',
+                'submission_reviewer_assignment': 'Automatic',
+                'reviewer_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair'],
+                'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
+                'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair'],
+                'Expected Submissions': '100',
+                'withdraw_submission_expiration': exp_date.strftime('%Y/%m/%d')
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_AAAIChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+
+        ## make submissions visible to ACs only
+        pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)'
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_AAAIChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
+
+        submissions = openreview_client.get_notes(invitation='AAAI.org/2025/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 10
+        assert ['AAAI.org/2025/Conference',
+        'AAAI.org/2025/Conference/Submission1/Area_Chairs',
+        'AAAI.org/2025/Conference/Submission1/Senior_Program_Committee',
+        'AAAI.org/2025/Conference/Submission1/Program_Committee',
+        'AAAI.org/2025/Conference/Submission1/Authors'] == submissions[0].readers
+
+      
