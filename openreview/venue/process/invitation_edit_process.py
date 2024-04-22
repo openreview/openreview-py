@@ -72,11 +72,11 @@ def process(client, invitation):
                 source_submissions = [s for s in source_submissions if value in s.content.get(key, {}).get('value', '')]
 
         if reply_to == 'reviews':
-            children_notes = [(openreview.api.Note.from_json(reply), s.number) for s in source_submissions for reply in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{review_name}' in reply['invitations']]
+            children_notes = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{review_name}' in reply['invitations']]
         elif reply_to == 'metareviews':
-            children_notes = [(openreview.api.Note.from_json(reply), s.number) for s in source_submissions for reply in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{meta_review_name}' in reply['invitations']]
+            children_notes = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{meta_review_name}' in reply['invitations']]
         else:
-            children_notes = source_submissions
+            children_notes = [(note, note) for note in source_submissions]
 
         return children_notes
     
@@ -133,26 +133,12 @@ def process(client, invitation):
 
     def post_invitation(note):
 
-        if isinstance(note, tuple):
-            paper_number = note[1]
-            note = note[0]
-            content = {
-                'noteId': {
-                    'value': note.forum
-                },
-                'noteNumber': {
-                    'value': paper_number
-                }
-            }
-        else:
-            content = {
-                'noteId': {
-                    'value': note.id
-                },
-                'noteNumber': {
-                    'value': note.number
-                }
-            }
+        note, forumNote = note
+
+        content = {
+            'noteId': { 'value': forumNote.id },
+            'noteNumber': { 'value': forumNote.number }
+        }
 
         if 'replyto' in invitation.edit['content']:
             content['replyto'] = { 'value': note.id }
