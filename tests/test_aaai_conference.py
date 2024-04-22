@@ -365,4 +365,139 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         'AAAI.org/2025/Conference/Submission1/Program_Committee',
         'AAAI.org/2025/Conference/Submission1/Authors'] == submissions[0].readers
 
+    def test_setup_matching(self, client, openreview_client, helpers, test_client):
+
+        pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+
+        openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group('AAAI.org/2025/Conference/Area_Chairs'))
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for sac in openreview_client.get_group('AAAI.org/2025/Conference/Area_Chairs').members:
+                for ac in openreview_client.get_group('AAAI.org/2025/Conference/Senior_Program_Committee').members:
+                    writer.writerow([ac, sac, round(random.random(), 2)])
+
+        affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
+
+        client.post_note(openreview.Note(
+            content={
+                'title': 'Paper Matching Setup',
+                'matching_group': 'AAAI.org/2025/Conference/Area_Chairs',
+                'compute_conflicts': 'No',
+                'compute_affinity_scores': 'No',
+                'upload_affinity_scores': affinity_scores_url
+            },
+            forum=request_form.id,
+            replyto=request_form.id,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+            readers=['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_AAAIChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
+
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aaai.org', password=helpers.strong_password)
+        assert pc_client_v2.get_edges_count(invitation='AAAI.org/2025/Conference/Area_Chairs/-/Affinity_Score') == 4
+
+        openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'AAAI.org/2025/Conference/Area_Chairs/-/Proposed_Assignment',
+            head = '~Senior_Program_Committee_AAAIOne1',
+            tail = '~AC_AAAIOne1',
+            signatures = ['AAAI.org/2025/Conference/Program_Chairs'],
+            weight = 1,
+            label = 'ac-matching'
+        ))
+
+        openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'AAAI.org/2025/Conference/Area_Chairs/-/Proposed_Assignment',
+            head = '~Senior_Program_Committee_AAAITwo1',
+            tail = '~AC_AAAITwo1',
+            signatures = ['AAAI.org/2025/Conference/Program_Chairs'],
+            weight = 1,
+            label = 'ac-matching'
+        ))
+
+        venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
+
+        venue.set_assignments(assignment_title='ac-matching', committee_id='AAAI.org/2025/Conference/Area_Chairs')
+
+        sac_assignment_count = pc_client_v2.get_edges_count(invitation='AAAI.org/2025/Conference/Area_Chairs/-/Assignment')
+        assert sac_assignment_count == 2
+
+        submissions = pc_client_v2.get_notes(invitation='AAAI.org/2025/Conference/-/Submission', sort='number:asc')
+
+        openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group('AAAI.org/2025/Conference/Senior_Program_Committee'))
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in submissions:
+                for ac in openreview_client.get_group('AAAI.org/2025/Conference/Senior_Program_Committee').members:
+                    writer.writerow([submission.id, ac, round(random.random(), 2)])
+
+        affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
+
+        ## setup matching data before starting bidding
+        client.post_note(openreview.Note(
+            content={
+                'title': 'Paper Matching Setup',
+                'matching_group': 'AAAI.org/2025/Conference/Senior_Program_Committee',
+                'compute_conflicts': 'NeurIPS',
+                'compute_conflicts_N_years': '3',
+                'compute_affinity_scores': 'No',
+                'upload_affinity_scores': affinity_scores_url
+            },
+            forum=request_form.id,
+            replyto=request_form.id,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+            readers=['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_AAAIChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
+
+        assert openreview_client.get_invitation('AAAI.org/2025/Conference/Senior_Program_Committee/-/Conflict')
+        assert openreview_client.get_invitation('AAAI.org/2025/Conference/Senior_Program_Committee/-/Affinity_Score')
+
+        affinity_score_count =  openreview_client.get_edges_count(invitation='AAAI.org/2025/Conference/Senior_Program_Committee/-/Affinity_Score')
+        assert affinity_score_count == 10 * 2 ## submissions * ACs
+        assert pc_client_v2.get_edges_count(invitation='AAAI.org/2025/Conference/Senior_Program_Committee/-/Conflict') == 0
+
+        openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group('AAAI.org/2025/Conference/Program_Committee'))
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in submissions:
+                for ac in openreview_client.get_group('AAAI.org/2025/Conference/Program_Committee').members:
+                    writer.writerow([submission.id, ac, round(random.random(), 2)])
+
+        affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
+
+        client.post_note(openreview.Note(
+            content={
+                'title': 'Paper Matching Setup',
+                'matching_group': 'AAAI.org/2025/Conference/Program_Committee',
+                'compute_conflicts': 'NeurIPS',
+                'compute_conflicts_N_years': '3',
+                'compute_affinity_scores': 'No',
+                'upload_affinity_scores': affinity_scores_url
+            },
+            forum=request_form.id,
+            replyto=request_form.id,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+            readers=['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_AAAIChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
+
+        assert openreview_client.get_invitation('AAAI.org/2025/Conference/Program_Committee/-/Conflict')
+
+        assert openreview_client.get_edges_count(invitation='AAAI.org/2025/Conference/Program_Committee/-/Conflict') == 0
+
+        affinity_scores =  openreview_client.get_grouped_edges(invitation='AAAI.org/2025/Conference/Program_Committee/-/Affinity_Score', groupby='id')
+        assert affinity_scores
+        assert len(affinity_scores) == 10 * 3 ## submissions * reviewers
+
       
