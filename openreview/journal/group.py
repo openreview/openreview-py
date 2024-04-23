@@ -71,6 +71,7 @@ class GroupBuilder(object):
             'subtitle': { 'value': self.journal.short_name },
             'website': { 'value': self.journal.website },
             'contact': { 'value': self.journal.contact_info },
+            'message_sender': { 'value': self.venue.get_message_sender() },
             'submission_id': { 'value': self.journal.get_author_submission_id() },
             'under_review_venue_id': { 'value': self.journal.under_review_venue_id },
             'decision_pending_venue_id': { 'value': self.journal.decision_pending_venue_id },

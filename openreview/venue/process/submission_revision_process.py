@@ -7,6 +7,7 @@ def process(client, edit, invitation):
     contact = domain.content['contact']['value']
     authors_name = domain.content['authors_name']['value']
     submission_name = domain.content['submission_name']['value']
+    sender = domain.get_content_value('message_sender')
 
     submission = client.get_note(edit.note.id)
 
@@ -28,7 +29,8 @@ To view your submission, click here: https://openreview.net/forum?id={submission
         recipients=submission.content['authorids']['value'],
         message=message,
         replyTo=contact,
-        signature=venue_id
+        signature=venue_id,
+        sender=sender
     )
 
     if 'authorids' in submission.content:

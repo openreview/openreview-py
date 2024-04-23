@@ -31,5 +31,6 @@ def process(client, edit, invitation):
         subject=f'''[{journal.short_name}] Perform reviewer assignments for {journal.short_name} submission {note.number}: {note.content['title']['value']}''',
         message=message,
         replyTo=journal.contact_info,
-        signature=journal.venue_id
+        signature=journal.venue_id,
+        sender=journal.get_message_sender()
     )

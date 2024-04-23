@@ -37,7 +37,8 @@ We thank you for your cooperation.
 The {journal.short_name} Editors-in-Chief
 ''',
             replyTo=journal.contact_info,
-            signature=journal.venue_id
+            signature=journal.venue_id,
+            sender=journal.get_message_sender()
         )
 
     if date_index == 1 or date_index == 2:
@@ -61,7 +62,8 @@ Link: https://openreview.net/forum?id={submission.id}
 OpenReview Team
 ''',
             replyTo=journal.contact_info,
-            signature=journal.venue_id
+            signature=journal.venue_id,
+            sender=journal.get_message_sender()
         )                    
 
 
