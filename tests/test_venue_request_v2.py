@@ -3561,3 +3561,42 @@ Best,
         assert note.readers == ["everyone"]
         assert 'readers' not in note.content['authors']
         assert 'readers' not in note.content['authorids']
+
+    def test_accepted_papers_meta_review_ratings(self, client, test_client, helpers, venue, openreview_client):
+
+        venue = openreview.get_conference(client, venue['request_form_note'].id, support_user='openreview.net/Support')
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=2)
+        venue.custom_stage = openreview.stages.CustomStage(name='Meta_Review_Rating',
+            reply_to=openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
+            source=openreview.stages.CustomStage.Source.ACCEPTED_SUBMISSIONS,
+            reply_type=openreview.stages.CustomStage.ReplyType.REPLY,
+            due_date=due_date,
+            exp_date=due_date + datetime.timedelta(days=1),
+            invitees=[openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED],
+            content={
+                'review_quality': {
+                    'order': 1,
+                    'description': 'How helpful is this review:',
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'input': 'radio',
+                            'enum': [
+                                'Poor - not very helpful',
+                                'Good',
+                                'Outstanding'
+                            ]
+                        }
+                    }
+                }
+            },
+            allow_de_anonymization=False)
+
+        venue.create_custom_stage()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Meta_Review_Rating-0-1', count=1)
+
+        invitations = openreview_client.get_invitations(invitation='V2.cc/2030/Conference/-/Meta_Review_Rating')
+        assert invitations and len(invitations) == 1
