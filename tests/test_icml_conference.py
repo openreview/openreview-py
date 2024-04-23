@@ -3906,6 +3906,17 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
             'ICML.cc/2023/Conference/Submission1/Authors'
         ]
 
+        # Check messages sent to readers
+        messages = openreview_client.get_messages(subject = '[ICML 2023] A author ac confidential comment has been received on your.*')
+        assert messages and len(messages) == 5
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'test@mail.com'in recipients
+        assert 'andrew@amazon.com' in recipients
+        assert 'sac1@gmail.com' in recipients
+        assert 'melisa@yahoo.com' in recipients
+        assert 'ac2@icml.cc' in recipients
+        assert 'peter@mail.com' not in recipients
+
         ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password=helpers.strong_password)
         anon_groups = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLTwo1')
         anon_group_id = anon_groups[0].id
@@ -3921,6 +3932,11 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
             )
         )
         helpers.await_queue_edit(openreview_client, edit_id=confidential_comment_edit['id'])
+
+        messages = openreview_client.get_messages(subject = '[ICML 2023] A author ac confidential comment has been received on your.*')
+        assert messages and len(messages) == 10
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'peter@mail.com' in recipients
 
     def test_rebuttal_stage(self, client, openreview_client, helpers):
 
