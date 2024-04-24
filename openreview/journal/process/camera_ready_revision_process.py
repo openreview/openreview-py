@@ -42,5 +42,6 @@ def process(client, edit, invitation):
         subject=f'''[{journal.short_name}] Review camera ready version for {journal.short_name} paper {submission.number}: {submission.content['title']['value']}''',
         message=message,
         replyTo=journal.contact_info, 
-        signature=journal.venue_id
+        signature=journal.venue_id,
+        sender=journal.get_message_sender()
     )

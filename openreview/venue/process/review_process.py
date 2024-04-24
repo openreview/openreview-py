@@ -12,6 +12,7 @@ def process(client, edit, invitation):
     senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
     reviewers_submitted_name = domain.get_content_value('reviewers_submitted_name')
     review_name = domain.get_content_value('review_name')
+    sender = domain.get_content_value('message_sender')
 
     submission = client.get_note(edit.note.forum)
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
@@ -61,6 +62,7 @@ def process(client, edit, invitation):
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
+            sender=sender,
             recipients=[domain.get_content_value('program_chairs_id')],
             ignoreRecipients=ignore_groups,
             subject=f'''[{short_name}] A {review_name} has been received on Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
@@ -73,6 +75,7 @@ def process(client, edit, invitation):
     client.post_message(
         invitation=meta_invitation_id,
         signature=venue_id,
+        sender=sender,
         recipients=review.signatures,
         replyTo=contact,
         subject=f'''[{short_name}] Your {review_name} has been received on your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
@@ -89,6 +92,7 @@ Paper title: {submission.content['title']['value']}
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
+            sender=sender,
             recipients=[paper_area_chairs_id],
             ignoreRecipients=ignore_groups,
             replyTo=contact,
@@ -108,6 +112,7 @@ Paper title: {submission.content['title']['value']}
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
+            sender=sender,
             recipients=[paper_reviewers_id],
             ignoreRecipients=ignore_groups,
             replyTo=contact,
@@ -125,6 +130,7 @@ Paper title: {submission.content['title']['value']}
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
+            sender=sender,
             recipients=[paper_reviewers_submitted_id],
             ignoreRecipients=ignore_groups,
             replyTo=contact,
@@ -144,6 +150,7 @@ Paper title: {submission.content['title']['value']}
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
+            sender=sender,
             recipients=[paper_authors_id],
             ignoreRecipients=ignore_groups,
             replyTo=contact,
