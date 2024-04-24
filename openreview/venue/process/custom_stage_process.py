@@ -53,7 +53,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
             recipients=[program_chairs_id],
             ignoreRecipients = ignore_groups,
             subject=f'''[{short_name}] {before_invitation} {invitation_name} has been received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''We have received a {invitation_name} on a submission to {short_name} for which you are serving as Program Chair.
+            message=f'''We have received {before_invitation.lower()} {invitation_name} on a submission to {short_name} for which you are serving as Program Chair.
 
 {content}
 ''' if not email_template else email_template
@@ -86,7 +86,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
             ignoreRecipients = ignore_groups,
             replyTo=contact,
             subject=f'''[{short_name}] {before_invitation} {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''We have received a {invitation_name} on a submission to {short_name} for which you are serving as Senior Area Chair.
+            message=f'''We have received {before_invitation.lower()} {invitation_name} on a submission to {short_name} for which you are serving as Senior Area Chair.
 
 {content}
 ''' if not email_template else email_template
@@ -104,7 +104,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
             ignoreRecipients = ignore_groups,
             replyTo=contact,
             subject=f'''[{short_name}] {before_invitation} {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''We have received a {invitation_name} on a submission to {short_name} for which you are an official area chair.
+            message=f'''We have received {before_invitation.lower()} {invitation_name} on a submission to {short_name} for which you are an official area chair.
 
 {content}
 ''' if not email_template else email_template
@@ -124,7 +124,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
             ignoreRecipients=ignore_groups,
             replyTo=contact,
             subject=f'''[{short_name}] {before_invitation} {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''We have received a {invitation_name} on a submission to {short_name} for which you are serving as reviewer.
+            message=f'''We have received {before_invitation.lower()} {invitation_name} on a submission to {short_name} for which you are serving as reviewer.
 
 {content}
 ''' if not email_template else email_template
@@ -138,7 +138,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
             ignoreRecipients=ignore_groups,
             replyTo=contact,
             subject=f'''[{short_name}] {before_invitation} {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''We have received a {invitation_name} on a submission to {short_name} for which you are serving as reviewer.
+            message=f'''We have received {before_invitation.lower()} {invitation_name} on a submission to {short_name} for which you are serving as reviewer.
 
 {content}
 ''' if not email_template else email_template
@@ -156,7 +156,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
             ignoreRecipients=ignore_groups,
             replyTo=contact,
             subject=f'''[{short_name}] {before_invitation} {invitation_name} has been received on your Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''We have recieved a {invitation_name} on your submission to {short_name}
+            message=f'''We have recieved {before_invitation.lower()} {invitation_name} on your submission to {short_name}.
 
 {content}
 ''' if not email_template else email_template
