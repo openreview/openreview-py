@@ -8,6 +8,7 @@ def process(client, edit, invitation):
     short_phrase = domain.content['subtitle']['value']
     contact = domain.content['contact']['value']
     meta_invitation_id = domain.content['meta_invitation_id']['value']
+    sender = domain.get_content_value('message_sender')
 
     note = client.get_note(edit.note.id)
     action = 'deleted' if note.ddate else 'restored'
@@ -43,7 +44,8 @@ Title: {note.content['title']['value']}{note_abstract}
             subject=author_subject,
             message=author_message,
             recipients=[edit.tauthor],
-            replyTo=contact
+            replyTo=contact,
+            sender=sender
         )
 
     # send co-author emails
@@ -56,5 +58,6 @@ Title: {note.content['title']['value']}{note_abstract}
             message=author_message,
             recipients=note.content['authorids']['value'],
             ignoreRecipients=[edit.tauthor],
-            replyTo=contact
+            replyTo=contact,
+            sender=sender
         )

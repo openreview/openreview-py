@@ -3644,6 +3644,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         invitation_id = self.venue.get_invitation_id(f'{self.venue.submission_stage.name}_Message', prefix=self.venue.get_reviewers_id())
         cdate=tools.datetime_millis(self.venue.submission_stage.second_due_date_exp_date if self.venue.submission_stage.second_due_date_exp_date else self.venue.submission_stage.exp_date)
+        venue_sender = self.venue.get_message_sender()
 
         committee = [venue_id]
         committee_signatures = [venue_id, self.venue.get_program_chairs_id()]
@@ -3699,7 +3700,9 @@ class InvitationBuilder(object):
                         'groups': { 'param': { 'inGroup': self.venue.get_reviewers_id('${3/content/noteNumber/value}') } },
                         'parentGroup': { 'param': { 'const': self.venue.get_reviewers_id('${3/content/noteNumber/value}') } },
                         'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
-                        'signature': { 'param': { 'enum': committee_signatures } }
+                        'signature': { 'param': { 'enum': committee_signatures } },
+                        'fromName': venue_sender['fromName'],
+                        'fromEmail': venue_sender['fromEmail']
                     }
                 }
 
@@ -3721,7 +3724,9 @@ class InvitationBuilder(object):
                 'groups': { 'param': { 'inGroup': self.venue.get_reviewers_id() } },
                 'parentGroup': { 'param': { 'const': self.venue.get_reviewers_id() } },
                 'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
-                'signature': { 'param': { 'enum': [venue_id, self.venue.get_program_chairs_id()] } }
+                'signature': { 'param': { 'enum': [venue_id, self.venue.get_program_chairs_id()] } },
+                'fromName': venue_sender['fromName'],
+                'fromEmail': venue_sender['fromEmail']
             }
         )
 
@@ -3740,7 +3745,9 @@ class InvitationBuilder(object):
                     'groups': { 'param': { 'inGroup': self.venue.get_area_chairs_id() } },
                     'parentGroup': { 'param': { 'const': self.venue.get_area_chairs_id() } },
                     'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
-                    'signature': { 'param': { 'enum': [venue_id, self.venue.get_program_chairs_id(), '~.*'] } } 
+                    'signature': { 'param': { 'enum': [venue_id, self.venue.get_program_chairs_id(), '~.*'] } },
+                    'fromName': venue_sender['fromName'],
+                    'fromEmail': venue_sender['fromEmail']
                 }
             )
 
