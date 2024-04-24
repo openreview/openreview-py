@@ -1736,7 +1736,8 @@ class OpenReviewClient(object):
             json['ignoreGroups'] = ignoreRecipients
 
         if sender:
-            json['from'] = sender
+            json['fromName'] = sender.get('fromName')
+            json['fromEmail'] = sender.get('fromEmail')
 
         if replyTo:
             json['replyTo'] = replyTo

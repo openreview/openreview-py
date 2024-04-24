@@ -28,7 +28,8 @@ Your decision on submission {submission.number}: {submission.content['title']['v
 To know more about the decision, please follow this link: https://openreview.net/forum?id={submission.id}
 ''',
         replyTo=journal.contact_info,
-        signature=venue_id)
+        signature=venue_id,
+        sender=journal.get_message_sender())
 
     print('Check rejection')
     print(decision.content)
@@ -115,7 +116,8 @@ To know more about the decision, please follow this link: https://openreview.net
             subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
             message=message,
             replyTo=journal.contact_info,
-            signature=venue_id
+            signature=venue_id,
+            sender=journal.get_message_sender()
         )
         return
 
@@ -136,5 +138,6 @@ To know more about the decision, please follow this link: https://openreview.net
             subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
             message=message,
             replyTo=journal.contact_info,
-            signature=venue_id
+            signature=venue_id,
+            sender=journal.get_message_sender()
         )

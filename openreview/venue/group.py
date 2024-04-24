@@ -154,6 +154,7 @@ class GroupBuilder(object):
             'subtitle': { 'value': self.venue.short_name if self.venue.short_name else '' },
             'website': { 'value': self.venue.website if self.venue.website else '' },
             'contact': { 'value': self.venue.contact if self.venue.contact else '' },
+            'message_sender': { 'value': self.venue.get_message_sender() },
             'location': { 'value': self.venue.location if self.venue.location else '' },
             'instructions': { 'value': self.venue.instructions if self.venue.instructions else '' },
             'start_date': { 'value': self.venue.start_date if self.venue.start_date else '' },

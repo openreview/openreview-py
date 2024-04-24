@@ -12,6 +12,7 @@ def process(client, edit, invitation):
     email_sacs = meta_invitation.content['email_sacs']['value']
     notify_readers = meta_invitation.content['notify_readers']['value']
     email_template = meta_invitation.content['email_template']['value']
+    sender = domain.get_content_value('message_sender')
 
     submission = client.get_note(edit.note.forum)
     note = client.get_note(edit.note.id)
@@ -45,6 +46,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
+            sender=sender,
             recipients=[program_chairs_id],
             ignoreRecipients = ignore_groups,
             subject=f'''[{short_name}] A {invitation_name} has been received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
@@ -58,6 +60,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
     client.post_message(
         invitation=meta_invitation_id,
         signature=venue_id,
+        sender=sender,
         recipients=[edit.tauthor],
         replyTo=contact,
         subject=f'''[{short_name}] Your {invitation_name} has been received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
@@ -75,6 +78,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
+            sender=sender,
             recipients=[paper_senior_area_chairs_id],
             ignoreRecipients = ignore_groups,
             replyTo=contact,
@@ -92,6 +96,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
+            sender=sender,
             recipients=[paper_area_chairs_id],
             ignoreRecipients = ignore_groups,
             replyTo=contact,
@@ -111,6 +116,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
+            sender=sender,
             recipients=[paper_reviewers_id],
             ignoreRecipients=ignore_groups,
             replyTo=contact,
@@ -124,6 +130,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
+            sender=sender,
             recipients=[paper_reviewers_submitted_id],
             ignoreRecipients=ignore_groups,
             replyTo=contact,
@@ -141,6 +148,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
+            sender=sender,
             recipients=submission.content['authorids']['value'],
             ignoreRecipients=ignore_groups,
             replyTo=contact,
