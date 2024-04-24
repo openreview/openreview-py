@@ -1756,7 +1756,10 @@ Confirmation of the assignment is pending until your profile is active and no co
 
 If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.
 
-OpenReview Team'''
+OpenReview Team
+
+Please note that responding to this email will direct your reply to pc@icml.cc.
+'''
 
         messages = openreview_client.get_messages(to='ac1@icml.cc', subject='[ICML 2023] Reviewer melisa@icml.cc accepted to review paper 1, assignment pending')
         assert messages and len(messages) == 1
@@ -1765,7 +1768,10 @@ The Reviewer melisa@icml.cc that you invited to review paper 1 has accepted the 
 
 Confirmation of the assignment is pending until the invited reviewer creates a profile in OpenReview and no conflicts of interest are detected.
 
-OpenReview Team'''
+OpenReview Team
+
+Please note that responding to this email will direct your reply to pc@icml.cc.
+'''
 
         # try to remove Invite_Assignment edge with label == 'Pending Sign Up'
         with pytest.raises(openreview.OpenReviewException, match=r'Cannot cancel the invitation since it has status: "Pending Sign Up"'):
@@ -1801,14 +1807,20 @@ The ICML 2023 program chairs will be contacting you with more information regard
 
 If you would like to change your decision, please click the Decline link in the previous invitation email.
 
-OpenReview Team'''
+OpenReview Team
+
+Please note that responding to this email will direct your reply to pc@icml.cc.
+'''
 
         messages = openreview_client.get_messages(to='ac1@icml.cc', subject='[ICML 2023] Reviewer Melisa ICML signed up and is assigned to paper 1')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi AC ICMLOne,
 The Reviewer Melisa ICML(melisa@icml.cc) that you invited to review paper 1 has accepted the invitation, signed up and is now assigned to the paper 1.
 
-OpenReview Team'''
+OpenReview Team
+
+Please note that responding to this email will direct your reply to pc@icml.cc.
+'''
 
         assert openreview_client.get_groups('ICML.cc/2023/Conference/Submission1/External_Reviewers', member='melisa@icml.cc')
         assert openreview_client.get_groups('ICML.cc/2023/Conference/External_Reviewers', member='melisa@icml.cc')
@@ -1980,7 +1992,10 @@ Confirmation of the assignment is pending until your profile is active and no co
 
 If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.
 
-OpenReview Team'''
+OpenReview Team
+
+Please note that responding to this email will direct your reply to pc@icml.cc.
+'''
 
         messages = openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] Reviewer carlos@icml.cc accepted to review paper 1, assignment pending')
         assert messages and len(messages) == 1
@@ -1989,7 +2004,10 @@ The Reviewer carlos@icml.cc that you invited to review paper 1 has accepted the 
 
 Confirmation of the assignment is pending until the invited reviewer creates a profile in OpenReview and no conflicts of interest are detected.
 
-OpenReview Team'''
+OpenReview Team
+
+Please note that responding to this email will direct your reply to pc@icml.cc.
+'''
 
         ## External reviewer creates a profile and accepts the invitation again
         helpers.create_user('carlos@icml.cc', 'Carlos', 'ICML', institution='amazon.com')
@@ -2016,7 +2034,10 @@ A conflict was detected between you and the submission authors and the assignmen
 
 If you have any questions, please contact us as info@openreview.net.
 
-OpenReview Team'''
+OpenReview Team
+
+Please note that responding to this email will direct your reply to pc@icml.cc.
+'''
 
         messages = openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] Conflict detected between reviewer Carlos ICML and paper 1')
         assert messages and len(messages) == 1
@@ -2025,7 +2046,10 @@ A conflict was detected between Carlos ICML(carlos@icml.cc) and the paper 1 and 
 
 If you have any questions, please contact us as info@openreview.net.
 
-OpenReview Team'''
+OpenReview Team
+
+Please note that responding to this email will direct your reply to pc@icml.cc.
+'''
 
         assert not openreview_client.get_groups('ICML.cc/2023/Conference/Emergency_Reviewers', member='carlos@icml.cc')
         assert not openreview_client.get_groups('ICML.cc/2023/Conference/Reviewers', member='carlos@icml.cc')
@@ -2074,14 +2098,20 @@ Please go to the ICML 2023 Reviewers Console and check your pending tasks: https
 
 If you would like to change your decision, please click the Decline link in the previous invitation email.
 
-OpenReview Team'''
+OpenReview Team
+
+Please note that responding to this email will direct your reply to pc@icml.cc.
+'''
 
         messages = openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] Reviewer Celeste ICML signed up and is assigned to paper 1')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi AC ICMLTwo,
 The Reviewer Celeste ICML(celeste@icml.cc) that you invited to review paper 1 has accepted the invitation, signed up and is now assigned to the paper 1.
 
-OpenReview Team'''
+OpenReview Team
+
+Please note that responding to this email will direct your reply to pc@icml.cc.
+'''
 
         assignment_edge = pc_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment', head=submissions[0].id, tail='~Celeste_ICML1')[0]
         helpers.await_queue_edit(openreview_client, edit_id=assignment_edge.id)

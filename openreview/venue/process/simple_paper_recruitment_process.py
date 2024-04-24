@@ -6,6 +6,7 @@ def process(client, edit, invitation):
     venue_id = domain.id
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     short_phrase = domain.content['subtitle']['value']
+    sender = domain.get_content_value('message_sender')
     submission_name = domain.content['submission_name']['value']
     committee_name = invitation.content['committee_name']['value']
     edge_readers = invitation.content['edge_readers']['value']
@@ -103,7 +104,7 @@ If you would like to change your decision, please click the Decline link in the 
 OpenReview Team'''
 
             ## - Send email
-            response = client.post_message(subject, [edge.tail], message, invitation=meta_invitation_id, signature=venue_id)
+            response = client.post_message(subject, [edge.tail], message, invitation=meta_invitation_id, signature=venue_id, sender=sender)
 
             ## If reviewer recruitment then send email to the assigned AC
             if is_reviewer:
@@ -113,7 +114,7 @@ The {committee_name} {preferred_name}({preferred_email}) that was invited {actio
 
 OpenReview Team'''
 
-                client.post_message(subject, [f'{venue_id}/Submission{submission.number}/Area_Chairs'], message, invitation=meta_invitation_id, signature=venue_id)
+                client.post_message(subject, [f'{venue_id}/Submission{submission.number}/Area_Chairs'], message, invitation=meta_invitation_id, signature=venue_id, sender=sender)
             return
 
     elif (note.content['response']['value'] == 'No'):
@@ -140,7 +141,7 @@ If you would like to change your decision, please click the Accept link in the p
 OpenReview Team'''
 
         ## - Send email
-        response = client.post_message(subject, [edge.tail], message, invitation=meta_invitation_id, signature=venue_id)
+        response = client.post_message(subject, [edge.tail], message, invitation=meta_invitation_id, signature=venue_id, sender=sender)
 
         if is_reviewer:
             subject=f'[{short_phrase}] {committee_name} {preferred_name} declined {action_string} paper {submission.number}'
@@ -151,7 +152,7 @@ Please go to the Area Chair console: https://openreview.net/group?id={venue_id}/
 
 OpenReview Team'''
 
-            client.post_message(subject, [f'{venue_id}/Submission{submission.number}/Area_Chairs'], message, invitation=meta_invitation_id, signature=venue_id)
+            client.post_message(subject, [f'{venue_id}/Submission{submission.number}/Area_Chairs'], message, invitation=meta_invitation_id, signature=venue_id, sender=sender)
         return
 
     else:
