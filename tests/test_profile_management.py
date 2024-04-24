@@ -2327,7 +2327,7 @@ The OpenReview Team.
         request_page(selenium, 'http://localhost:3030/profile/merge?token=akshat_2@profile.org', akshat_client_1.token, wait_for_element='main')
 
         content = selenium.find_element(By.ID, 'content')
-        assert 'Click Confirm Profile Merge button below to confirm merging ~Akshat_Last1 to your profile.' in content.text
+        assert 'Click the confirm button below to merge ~Akshat_Last1<akshat_2@profile.org> into your user profile.' in content.text
 
         content.find_element(By.TAG_NAME, 'button').click()
 
