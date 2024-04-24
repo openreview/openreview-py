@@ -104,6 +104,12 @@ class TestEMNLPConference():
         assert 'second_deadline_additional_options' in revision.reply['content']
         assert 'second_deadline_remove_options' in revision.reply['content']
 
+        # check Post_Submission hide_fields has all default fields
+        post_submission_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/Post_Submission')
+        assert post_submission_invitation
+        assert 'values-dropdown' in post_submission_invitation.reply['content']['hide_fields']
+        assert ['keywords', 'TLDR', 'abstract', 'pdf'] == post_submission_invitation.reply['content']['hide_fields']['values-dropdown']
+
         pc_client.post_note(openreview.Note(
             invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision',
             forum=request_form_note.id,
@@ -211,6 +217,12 @@ class TestEMNLPConference():
         assert 'TLDR' not in revision_invitation.edit['invitation']['edit']['note']['content']
         assert 'ddate' not in revision_invitation.edit['invitation']['edit']['note']
 
+        # check Post_Submission hide_fields has all fields in second_deadline_additional_options as well
+        post_submission_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/Post_Submission')
+        assert post_submission_invitation
+        assert 'values-dropdown' in post_submission_invitation.reply['content']['hide_fields']
+        assert ['keywords', 'abstract', 'supplementary_materials', 'pdf', 'submission_type'] == post_submission_invitation.reply['content']['hide_fields']['values-dropdown']
+
     def test_submit_papers(self, test_client, client, openreview_client, helpers):
 
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
@@ -312,8 +324,8 @@ class TestEMNLPConference():
                         },
                         "description": "Each submission can optionally be accompanied by a single .tgz or .zip archive containing software, and/or a single .tgz or .zip archive containing data. EMNLP 2023 encourages the submission of these supplementary materials to improve the reproducibility of results and to enable authors to provide additional information that does not fit in the paper. All supplementary materials must be properly anonymized.",
                         "order": 9
-                    }            
-                }   
+                    }
+                }
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
@@ -553,7 +565,7 @@ Please note that responding to this email will direct your reply to pc@emnlp.org
                         "description": "Each submission can optionally be accompanied by a single .tgz or .zip archive containing software, and/or a single .tgz or .zip archive containing data. EMNLP 2023 encourages the submission of these supplementary materials to improve the reproducibility of results and to enable authors to provide additional information that does not fit in the paper. All supplementary materials must be properly anonymized.",
                         "order": 9
                     }            
-                }   
+                }
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
@@ -869,7 +881,7 @@ url={https://openreview.net/forum?id='''
         assert desk_rejected_note
         assert 'EMNLP/2023/Conference/Submission1/Senior_Area_Chairs' == desk_rejected_note.signatures[0]
 
-        messages = client.get_messages(subject='[EMNLP 2023]: Paper #1 desk-rejected by Senior Area Chairs')
+        messages = openreview_client.get_messages(subject='[EMNLP 2023]: Paper #1 desk-rejected by Senior Area Chairs')
         assert messages and len(messages) == 5
         recipients = [msg['content']['to'] for msg in messages]
         assert 'pc@emnlp.org' in recipients
@@ -897,7 +909,7 @@ url={https://openreview.net/forum?id='''
         assert desk_rejected_note
 
         pretty_id = openreview.tools.pretty_id(anon_group_id.split('/')[-1])
-        messages = client.get_messages(to='pc@emnlp.org', subject=f'[EMNLP 2023]: Paper #2 desk-rejected by {pretty_id}')
+        messages = openreview_client.get_messages(to='pc@emnlp.org', subject=f'[EMNLP 2023]: Paper #2 desk-rejected by {pretty_id}')
         assert messages and len(messages) == 1
 
     def test_release_submissions(self, test_client, client, openreview_client, helpers):
@@ -909,7 +921,8 @@ url={https://openreview.net/forum?id='''
         pc_client.post_note(openreview.Note(
             content= {
                 'force': 'Yes',
-                'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)'
+                'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
+                'hide_fields': []
             },
             forum= request_form.id,
             invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
@@ -926,7 +939,7 @@ url={https://openreview.net/forum?id='''
         assert len(submissions) == 3
 
         for submission in submissions:
-            submission.readers = [
+            assert submission.readers == [
                 "EMNLP/2023/Conference",
                 f"EMNLP/2023/Conference/Submission{submission.number}/Senior_Area_Chairs",
                 f"EMNLP/2023/Conference/Submission{submission.number}/Area_Chairs",

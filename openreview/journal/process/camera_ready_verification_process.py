@@ -54,6 +54,7 @@ def process(client, edit, invitation):
     ## Send email to Authors
     print('Send email to Authors')
     client.post_message(
+        invitation=journal.get_meta_invitation_id(),
         recipients=[journal.get_authors_id(number=submission.number)],
         subject=f'''[{journal.short_name}] Camera ready version accepted for your {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
         message=f'''Hi {{{{fullname}}}},
@@ -64,5 +65,7 @@ We thank you again for your contribution to {journal.short_name} and congratulat
 
 The {journal.short_name} Editors-in-Chief
 ''',
-        replyTo=journal.contact_info
+        replyTo=journal.contact_info, 
+        signature=journal.venue_id,
+        sender=journal.get_message_sender()
     )

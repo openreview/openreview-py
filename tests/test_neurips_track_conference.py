@@ -146,11 +146,27 @@ class TestNeurIPSTrackConference():
                 signatures=['~SomeFirstName_User1'],
                 note=note)            
 
+        post_submission_note=pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'hide_fields': ['keywords'],
+                'submission_readers': 'Program chairs and paper authors only'
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_NeurIPSChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
 
         ## finish submission deadline
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
-        first_date = now - datetime.timedelta(minutes=28)               
+        first_date = now - datetime.timedelta(minutes=27)               
 
         venue_revision_note = openreview.Note(
             content={
@@ -169,7 +185,6 @@ class TestNeurIPSTrackConference():
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
-                'hide_fields': ['keywords'],
                 'submission_deadline_author_reorder': 'No'
             },
             forum=request_form.forum,

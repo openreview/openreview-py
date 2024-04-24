@@ -7,6 +7,8 @@ def process(client, edit, invitation):
     submission_name = domain.content['submission_name']['value']
     short_phrase = domain.content['subtitle']['value']
     contact = domain.content['contact']['value']
+    meta_invitation_id = domain.content['meta_invitation_id']['value']
+    sender = domain.get_content_value('message_sender')
 
     note = client.get_note(edit.note.id)
     action = 'deleted' if note.ddate else 'restored'
@@ -37,19 +39,25 @@ Title: {note.content['title']['value']}{note_abstract}
     #send tauthor email
     if edit.tauthor.lower() != 'openreview.net':
         client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
             subject=author_subject,
             message=author_message,
             recipients=[edit.tauthor],
-            replyTo=contact
+            replyTo=contact,
+            sender=sender
         )
 
     # send co-author emails
     if ('authorids' in note.content and len(note.content['authorids']['value'])):
         author_message += f'''\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at {edit.tauthor}'''
         client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
             subject=author_subject,
             message=author_message,
             recipients=note.content['authorids']['value'],
             ignoreRecipients=[edit.tauthor],
-            replyTo=contact
+            replyTo=contact,
+            sender=sender
         )

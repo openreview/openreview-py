@@ -15,6 +15,7 @@ def process(client, edit, invitation):
     solicit_profile = openreview.tools.get_profiles(client, solicit_note.signatures)[0]
 
     client.post_message(
+        invitation=journal.get_meta_invitation_id(),
         recipients=[journal.get_action_editors_id(number=submission.number)],
         subject=f'''[{journal.short_name}] Request to review {journal.short_name} submission "{submission.number}: {submission.content['title']['value']}" has been submitted''',
         message=f'''Hi {{{{fullname}}}},
@@ -31,5 +32,7 @@ We thank you for your contribution to {journal.short_name}!
 
 The {journal.short_name} Editors-in-Chief
 ''',
-        replyTo=journal.contact_info
+        replyTo=journal.contact_info,
+        signature=journal.venue_id,
+        sender=journal.get_message_sender()
     )
