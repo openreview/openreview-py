@@ -128,6 +128,12 @@ class VenueStages():
     def setup_review_stage(self):
 
         review_stage_content = {
+            'review_name': {
+                'description': 'What should be the name of the official review button? Default name: Official Review',
+                'value-regex': '^[a-zA-Z_]+$',
+                'order': 1,
+                'default':'Official_Review'
+            },            
             'review_start_date': {
                 'description': 'When does reviewing of submissions begin? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',

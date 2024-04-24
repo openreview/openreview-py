@@ -561,6 +561,8 @@ def get_review_stage(request_forum):
         release_to_reviewers = readers_map.get(reviewer_readers, openreview.stages.ReviewStage.Readers.REVIEWER_SIGNATURE)
 
     return openreview.stages.ReviewStage(
+        name = request_forum.content.get('review_name', 'Official_Review').strip(),
+        child_invitations_name = request_forum.content.get('review_name', 'Official_Review').strip(),
         start_date = review_start_date,
         due_date = review_due_date,
         exp_date = review_exp_date,
