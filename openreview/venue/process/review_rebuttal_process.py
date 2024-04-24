@@ -8,6 +8,7 @@ def process(client, edit, invitation):
     submission_name = domain.get_content_value('submission_name')
     program_chairs_id = domain.get_content_value('program_chairs_id')
     email_pcs = domain.get_content_value('rebuttal_email_pcs')
+    sender = domain.get_content_value('message_sender')
     
     submission = client.get_note(edit.note.forum)
     rebuttal = client.get_note(edit.note.id)
@@ -36,7 +37,8 @@ Title: {submission.content['title']['value']}
         subject=f'''[{short_name}] Your author rebuttal was {action} on Submission Number: {submission.number}, Submission Title: "{submission.content['title']['value']}"''',
         message=author_message,
         replyTo=contact,
-        signature=venue_id
+        signature=venue_id,
+        sender=sender
     )
 
     #send email to paper authors
@@ -47,13 +49,15 @@ Title: {submission.content['title']['value']}
         subject=f'''[{short_name}] An author rebuttal was {action} on Submission Number: {submission.number}, Submission Title: "{submission.content['title']['value']}"''',
         message=author_message,
         replyTo=contact,
-        signature=venue_id
+        signature=venue_id,
+        sender=sender
     )
 
     if email_pcs:
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
+            sender=sender,
             recipients=program_chairs_id,
             ignoreRecipients=ignore_groups,
             subject=f'''[{short_name}] An author rebuttal was {action} on Submission Number: {submission.number}, Submission Title: "{submission.content['title']['value']}"''',
@@ -73,6 +77,7 @@ Title: {submission.content['title']['value']}
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
+            sender=sender,
             recipients=[paper_area_chairs_id],
             ignoreRecipients=ignore_groups,
             replyTo=contact,
@@ -108,7 +113,8 @@ Title: {submission.content['title']['value']}
             subject=reviewer_subject,
             message=reviewer_message,
             replyTo=contact,
-            signature=venue_id
+            signature=venue_id,
+            sender=sender
         )
     elif paper_reviewers_submitted_id in rebuttal.readers:
         client.post_message(
@@ -118,7 +124,8 @@ Title: {submission.content['title']['value']}
             subject=reviewer_subject,
             message=reviewer_message,
             replyTo=contact,
-            signature=venue_id
+            signature=venue_id,
+            sender=sender
         )
 
     

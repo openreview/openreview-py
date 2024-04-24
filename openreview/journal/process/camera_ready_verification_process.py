@@ -66,5 +66,6 @@ We thank you again for your contribution to {journal.short_name} and congratulat
 The {journal.short_name} Editors-in-Chief
 ''',
         replyTo=journal.contact_info, 
-        signature=journal.venue_id
+        signature=journal.venue_id,
+        sender=journal.get_message_sender()
     )

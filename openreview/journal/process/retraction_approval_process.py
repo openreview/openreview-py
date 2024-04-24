@@ -37,5 +37,6 @@ To view our decision, follow this link: https://openreview.net/forum?id={edit.no
 The {journal.short_name} Editors-in-Chief
 ''',
         replyTo=journal.contact_info,
-        signature=venue_id
+        signature=venue_id,
+        sender=journal.get_message_sender()
     )

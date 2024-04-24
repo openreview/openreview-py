@@ -33,5 +33,6 @@ We thank you for your contribution to {journal.short_name}!
 The {journal.short_name} Editors-in-Chief
 ''',
         replyTo=journal.contact_info,
-        signature=journal.venue_id
+        signature=journal.venue_id,
+        sender=journal.get_message_sender()
     )
