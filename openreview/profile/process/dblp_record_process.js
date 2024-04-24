@@ -24,6 +24,8 @@ async function process(client, edit, invitation) {
       if (pdf) {
         note.content.pdf = { value: pdf };
       }
+    } else {
+      console.log('html field is empty');
     }
   } catch (error) {
     console.log('error: ' + JSON.stringify(error.toJson()));
