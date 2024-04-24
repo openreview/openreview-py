@@ -3937,7 +3937,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         ]
 
         # Check messages sent to readers
-        messages = openreview_client.get_messages(subject = '[ICML 2023] A author ac confidential comment has been received on your.*')
+        messages = openreview_client.get_messages(subject = '[ICML 2023] An author ac confidential comment has been received on your.*')
         assert messages and len(messages) == 5
         recipients = [msg['content']['to'] for msg in messages]
         assert 'test@mail.com'in recipients
@@ -3963,7 +3963,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         )
         helpers.await_queue_edit(openreview_client, edit_id=confidential_comment_edit['id'])
 
-        messages = openreview_client.get_messages(subject = '[ICML 2023] A author ac confidential comment has been received on your.*')
+        messages = openreview_client.get_messages(subject = '[ICML 2023] An author ac confidential comment has been received on your.*')
         assert messages and len(messages) == 10
         recipients = [msg['content']['to'] for msg in messages]
         assert 'peter@mail.com' in recipients
