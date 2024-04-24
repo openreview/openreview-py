@@ -132,7 +132,8 @@ class VenueStages():
                 'description': 'What should be the name of the official review button? Default name: Official Review',
                 'value-regex': '^[a-zA-Z_]+$',
                 'order': 1,
-                'default':'Official_Review'
+                'default':'Official_Review',
+                'required': False
             },            
             'review_start_date': {
                 'description': 'When does reviewing of submissions begin? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
