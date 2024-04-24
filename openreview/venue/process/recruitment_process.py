@@ -2,6 +2,7 @@ def process(client, edit, invitation):
     from Crypto.Hash import HMAC, SHA256
     import urllib.parse
     domain = client.get_group(invitation.domain)
+    meta_invitation_id = domain.content['meta_invitation_id']['value']
     short_phrase = domain.content['subtitle']['value']
     contact = domain.content['contact']['value']
     committee_name = invitation.content['committee_name']['value']
@@ -38,8 +39,8 @@ def process(client, edit, invitation):
                 client.add_members_to_group(committee_declined_id, user)
 
                 subject = f'[{short_phrase}] {committee_name} Invitation not accepted'
-                message = f'''It seems like you already accepted an invitation to serve as a {overlap_committee_name} for {short_phrase}. If you would like to change your decision and serve as a {committee_name}, please decline the invitation to be {overlap_committee_name} and then accept the inviation to be {committee_name}.'''
-                client.post_message(subject, [user], message, replyTo=contact)
+                message = f'''It seems like you already accepted an invitation to serve as a {overlap_committee_name} for {short_phrase}. If you would like to change your decision and serve as a {committee_name}, please decline the invitation to be {overlap_committee_name} and then accept the invitation to be {committee_name}.'''
+                client.post_message(subject, [user], message, invitation=meta_invitation_id, signature=domain.id, replyTo=contact)
                 return
 
             client.remove_members_from_group(committee_declined_id, members_to_remove)
@@ -56,7 +57,7 @@ The {short_phrase} program chairs will be contacting you with more information r
 
 If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
 
-            client.post_message(subject, [user], message, parentGroup=committee_id, replyTo=contact)
+            client.post_message(subject, [user], message, invitation=meta_invitation_id, signature=domain.id, parentGroup=committee_id, replyTo=contact)
             return
 
         if (response == 'No'):
@@ -68,7 +69,7 @@ If you would like to change your decision, please follow the link in the previou
 
 If you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'''
 
-            client.post_message(subject, [user], message, parentGroup=committee_declined_id, replyTo=contact)
+            client.post_message(subject, [user], message, invitation=meta_invitation_id, signature=domain.id, parentGroup=committee_declined_id, replyTo=contact)
 
         else:
             raise openreview.OpenReviewException('Invalid response')

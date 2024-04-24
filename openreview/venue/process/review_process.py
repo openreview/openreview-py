@@ -59,6 +59,8 @@ def process(client, edit, invitation):
 
     if domain.get_content_value('review_email_pcs'):
         client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
             recipients=[domain.get_content_value('program_chairs_id')],
             ignoreRecipients=ignore_groups,
             subject=f'''[{short_name}] A {review_name} has been received on Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
@@ -69,6 +71,8 @@ def process(client, edit, invitation):
         )
 
     client.post_message(
+        invitation=meta_invitation_id,
+        signature=venue_id,
         recipients=review.signatures,
         replyTo=contact,
         subject=f'''[{short_name}] Your {review_name} has been received on your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
@@ -83,6 +87,8 @@ Paper title: {submission.content['title']['value']}
 
     if area_chairs_name and ('everyone' in review.readers or paper_area_chairs_id in review.readers):
         client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
             recipients=[paper_area_chairs_id],
             ignoreRecipients=ignore_groups,
             replyTo=contact,
@@ -100,6 +106,8 @@ Paper title: {submission.content['title']['value']}
     create_group(paper_reviewers_submitted_id, [review.signatures[0]])
     if 'everyone' in review.readers or paper_reviewers_id in review.readers:
         client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
             recipients=[paper_reviewers_id],
             ignoreRecipients=ignore_groups,
             replyTo=contact,
@@ -115,6 +123,8 @@ Paper title: {submission.content['title']['value']}
         )
     elif paper_reviewers_submitted_id in review.readers:
         client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
             recipients=[paper_reviewers_submitted_id],
             ignoreRecipients=ignore_groups,
             replyTo=contact,
@@ -132,6 +142,8 @@ Paper title: {submission.content['title']['value']}
     paper_authors_id = f'{paper_group_id}/{authors_name}'
     if 'everyone' in  review.readers or paper_authors_id in review.readers:
         client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
             recipients=[paper_authors_id],
             ignoreRecipients=ignore_groups,
             replyTo=contact,

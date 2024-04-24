@@ -8,6 +8,7 @@ def process(client, edit, invitation):
 
     print('Send email to AE and Reviewers')
     client.post_message(
+        invitation=journal.get_meta_invitation_id(),
         recipients=[journal.get_action_editors_id(number=note.number), journal.get_reviewers_id(number=note.number)],
         subject=f'''[{journal.short_name}] Authors have withdrawn {journal.short_name} submission {note.number}: {note.content['title']['value']}''',
         message=f'''Hi {{{{fullname}}}},
@@ -18,7 +19,8 @@ We thank you for your involvement with {journal.short_name}!
 
 The {journal.short_name} Editors-in-Chief
 ''',
-        replyTo=journal.contact_info
+        replyTo=journal.contact_info,
+        signature=journal.venue_id
     )
 
     print('Enable Author deanonymize')

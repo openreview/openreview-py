@@ -169,6 +169,9 @@ class Venue(object):
     def get_constraint_label_id(self, committee_id):
         return self.get_invitation_id('Constraint_Label', prefix=committee_id)
 
+    def get_message_id(self, committee_id=None, number=None):
+        return self.get_invitation_id('Message', prefix=committee_id, number=number)
+
     def get_recommendation_id(self, committee_id=None):
         if not committee_id:
             committee_id = self.get_reviewers_id()
@@ -456,6 +459,7 @@ class Venue(object):
         self.invitation_builder.set_post_submission_invitation()
         self.invitation_builder.set_pc_submission_revision_invitation()
         self.invitation_builder.set_submission_reviewer_group_invitation()
+        self.invitation_builder.set_submission_message_invitation()
         if self.use_area_chairs:
             self.invitation_builder.set_submission_area_chair_group_invitation()
         if self.use_senior_area_chairs:
@@ -805,7 +809,7 @@ Total Errors: {len(errors)}
                 message = messages[decision_note['content']['decision']['value']]
                 final_message = message.replace("{{submission_title}}", note.content['title']['value'])
                 final_message = final_message.replace("{{forum_url}}", f'https://openreview.net/forum?id={note.id}')
-                self.client.post_message(subject, recipients=[self.get_authors_id(note.number)], message=final_message, parentGroup=self.get_authors_id(), replyTo=self.contact)
+                self.client.post_message(subject, recipients=[self.get_authors_id(note.number)], message=final_message, parentGroup=self.get_authors_id(), replyTo=self.contact, invitation=self.get_meta_invitation_id(), signature=self.venue_id)
 
         tools.concurrent_requests(send_notification, paper_notes)
 
@@ -984,7 +988,7 @@ A conflict was detected between you and the submission authors and the assignmen
 If you have any questions, please contact us as info@openreview.net.
 
 OpenReview Team'''
-            response = client.post_message(subject, [edge.tail], message)
+            response = client.post_message(subject, [edge.tail], message, invitation=venue_group.content['meta_invitation_id']['value'], signature=venue_group.id)
 
             ## Send email to inviter
             subject=f"[{venue_group.content['subtitle']['value']}] Conflict detected between reviewer {user_profile.get_preferred_name(pretty=True)} and paper {submission.number}"
@@ -996,7 +1000,7 @@ If you have any questions, please contact us as info@openreview.net.
 OpenReview Team'''
 
             ## - Send email
-            response = client.post_message(subject, edge.signatures, message)            
+            response = client.post_message(subject, edge.signatures, message, invitation=venue_group.content['meta_invitation_id']['value'], signature=venue_group.id)            
         
         def mark_as_accepted(venue_group, edge, submission, user_profile, invite_assignment_invitation):
 
@@ -1052,7 +1056,7 @@ If you would like to change your decision, please click the Decline link in the 
 OpenReview Team'''
 
                 ## - Send email
-                response = client.post_message(subject, [edge.tail], message)
+                response = client.post_message(subject, [edge.tail], message, invitation=venue_group.content['meta_invitation_id']['value'], signature=venue_group.id)
 
                 ## Send email to inviter
                 subject=f'[{short_phrase}] {reviewer_name} {user_profile.get_preferred_name(pretty=True)} signed up and is assigned to paper {submission.number}'
@@ -1062,7 +1066,7 @@ The {reviewer_name} {user_profile.get_preferred_name(pretty=True)}({user_profile
 OpenReview Team'''
 
                 ## - Send email
-                response = client.post_message(subject, edge.signatures, message)            
+                response = client.post_message(subject, edge.signatures, message, invitation=venue_group.content['meta_invitation_id']['value'], signature=venue_group.id)            
         
         active_venues = client.get_group('active_venues').members
 

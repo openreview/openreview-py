@@ -384,7 +384,8 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
           id: submission.id,
           noteId: submission.id,
           invitationId: Webfield2.utils.getInvitationId(VENUE_ID, submission.number, REVIEW_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
-        })
+        }),
+        anonymousGroupId: reviewer.anonymousGroupId
       };
     });
 
@@ -508,6 +509,8 @@ var renderData = function(venueStatusData) {
         'Click on the link below to go to the review page:\n\n{{forumUrl}}' +
         '\n\nThank you,\n' + SHORT_PHRASE + ' Action Editor',
       replyTo: user && user.id,
+      messageInvitationId: VENUE_ID + '/Paper{number}/-/Message',
+      messageSignature: user && user.profile.id,
       menu: [{
         id: 'all-reviewers',
         name: 'All reviewers of selected papers',
@@ -520,7 +523,8 @@ var renderData = function(venueStatusData) {
                 : [],
               forumUrl: 'https://openreview.net/forum?' + $.param({
                 id: row.submission.forum
-              })
+              }),
+              number: row.submission.number
             }
           });
         }
