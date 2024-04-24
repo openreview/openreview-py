@@ -13,6 +13,7 @@ def process(client, edit, invitation):
     authors_name = domain.content['authors_name']['value']
     withdrawal_email_pcs = domain.content.get('withdrawal_email_pcs', {}).get('value')
     program_chairs_id = domain.content['program_chairs_id']['value']
+    sender = domain.get_content_value('message_sender')
 
     submission = client.get_note(edit.note.id)
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'    
@@ -62,4 +63,4 @@ def process(client, edit, invitation):
 For more information, click here https://openreview.net/forum?id={submission.id}&noteId={withdrawal_notes[0].id}
 '''
 
-    client.post_message(email_subject, final_committee, email_body, invitation=meta_invitation_id, signature=venue_id, ignoreRecipients=ignoreRecipients, replyTo=contact)
+    client.post_message(email_subject, final_committee, email_body, invitation=meta_invitation_id, signature=venue_id, ignoreRecipients=ignoreRecipients, replyTo=contact, sender=sender)

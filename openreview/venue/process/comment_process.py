@@ -10,6 +10,8 @@ def process(client, edit, invitation):
     reviewers_name = domain.get_content_value('reviewers_name')
     reviewers_anon_name = domain.get_content_value('reviewers_anon_name')
     reviewers_submitted_name = domain.get_content_value('reviewers_submitted_name')
+    sender = domain.get_content_value('message_sender')
+
 
     submission = client.get_note(edit.note.forum)
     comment = client.get_note(edit.note.id)
@@ -44,7 +46,8 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
             ignoreRecipients = ignore_groups,
             subject=f'''[{short_name}] {pretty_signature} commented on a paper. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''{pretty_signature} commented on a paper for which you are serving as Program Chair.{content}''',
-            signature=venue_id
+            signature=venue_id,
+            sender=sender
         )
 
     senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
@@ -59,7 +62,8 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
             subject=f'''[{short_name}] {pretty_signature} commented on a paper in your area. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''{pretty_signature} commented on a paper for which you are serving as Senior Area Chair.{content}''',
             replyTo=contact,
-            signature=venue_id
+            signature=venue_id,
+            sender=sender
         )
 
     area_chairs_name = domain.get_content_value('area_chairs_name')
@@ -73,7 +77,8 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
             subject=f'''[{short_name}] {pretty_signature} commented on a paper in your area. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''{pretty_signature} commented on a paper for which you are serving as Area Chair.{content}''',
             replyTo=contact,
-            signature=venue_id
+            signature=venue_id,
+            sender=sender
         )
 
     paper_reviewers_id = f'{paper_group_id}/{reviewers_name}'
@@ -88,7 +93,8 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
             subject=f'''[{short_name}] {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''{pretty_signature} commented on a paper for which you are serving as Reviewer.{content}''',
             replyTo=contact,
-            signature=venue_id
+            signature=venue_id,
+            sender=sender
         )
     elif paper_reviewers_submitted_group and paper_reviewers_submitted_id in comment.readers:
         client.post_message(
@@ -98,7 +104,8 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
             subject=f'''[{short_name}] {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''{pretty_signature} commented on a paper for which you are serving as Reviewer.{content}''',
             replyTo=contact,
-            signature=venue_id
+            signature=venue_id,
+            sender=sender
         )
     else:
         anon_reviewers = [reader for reader in comment.readers if reader.find(reviewers_anon_name) >=0]
@@ -111,7 +118,8 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
                 subject=f'''[{short_name}] {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
                 message=f'''{pretty_signature} commented on a paper for which you are serving as Reviewer.{content}''',
                 replyTo=contact,
-                signature=venue_id
+                signature=venue_id,
+                sender=sender
             )
 
     #send email to author of comment
@@ -121,7 +129,8 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
         subject=f'''[{short_name}] Your comment was received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
         message=f'''Your comment was received on a submission to {short_name}.{content}''',
         replyTo=contact,
-        signature=venue_id
+        signature=venue_id,
+        sender=sender
     )
 
     #send email to paper authors
@@ -134,5 +143,6 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
             subject=f'''[{short_name}] {pretty_signature} commented on your submission. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''{pretty_signature} commented on your submission.{content}''',
             replyTo=contact,
-            signature=venue_id
+            signature=venue_id,
+            sender=sender
         )
