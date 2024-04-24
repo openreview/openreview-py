@@ -1144,6 +1144,18 @@ class InvitationBuilder(object):
                     }
                 }
 
+            bid_score_spec = {
+                'weight': 1,
+                'default': 0,
+                'translate_map' : {
+                    'Very High': 1.0,
+                    'High': 0.5,
+                    'Neutral': 0.0,
+                    'Low': -0.5,
+                    'Very Low': -1.0
+                }
+            }
+
             bid_invitation_id = venue.get_invitation_id(bid_stage.name, prefix=match_group_id)
 
             template_name = 'profileBidWebfield.js' if match_group_id == venue.get_senior_area_chairs_id() and not venue.sac_paper_assignments else 'paperBidWebfield.js'
@@ -1163,7 +1175,8 @@ class InvitationBuilder(object):
                 minReplies = bid_stage.request_count,
                 web = webfield_content,
                 content = {
-                    'committee_name': { 'value': venue.get_committee_name(match_group_id) }
+                    'committee_name': { 'value': venue.get_committee_name(match_group_id) },
+                    'scores_spec': { 'value': bid_score_spec }
                 },
                 edge = {
                     'id': {
@@ -1217,17 +1230,7 @@ class InvitationBuilder(object):
             if configuration_invitation:
                 scores_spec = configuration_invitation.edit['note']['content']['scores_specification']
                 if bid_invitation.id not in scores_spec['value']['param']['default']:
-                    scores_spec['value']['param']['default'][bid_invitation.id] = {
-                        'weight': 1,
-                        'default': 0,
-                        'translate_map' : {
-                            'Very High': 1.0,
-                            'High': 0.5,
-                            'Neutral': 0.0,
-                            'Low': -0.5,
-                            'Very Low': -1.0
-                        }
-                    }
+                    scores_spec['value']['param']['default'][bid_invitation.id] = bid_score_spec
                     self.client.post_invitation_edit(invitations=venue.get_meta_invitation_id(),
                         signatures=[venue_id],
                         invitation=openreview.api.Invitation(
