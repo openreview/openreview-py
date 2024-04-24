@@ -3968,6 +3968,9 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         recipients = [msg['content']['to'] for msg in messages]
         assert 'peter@mail.com' in recipients
 
+        messages = openreview_client.get_messages(to='peter@mail.com', subject = '[ICML 2023] An author ac confidential comment has been received on your.*')
+        assert messages[0]['content']['text'].startswith('We have received an author ac confidential comment on your submission to ICML 2023.')
+
     def test_rebuttal_stage(self, client, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)

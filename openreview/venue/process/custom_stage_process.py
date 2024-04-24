@@ -156,7 +156,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
             ignoreRecipients=ignore_groups,
             replyTo=contact,
             subject=f'''[{short_name}] {before_invitation} {invitation_name} has been received on your Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''We have recieved {before_invitation.lower()} {invitation_name} on your submission to {short_name}.
+            message=f'''We have received {before_invitation.lower()} {invitation_name} on your submission to {short_name}.
 
 {content}
 ''' if not email_template else email_template
