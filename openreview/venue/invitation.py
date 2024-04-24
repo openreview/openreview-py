@@ -1213,6 +1213,35 @@ class InvitationBuilder(object):
 
             bid_invitation = self.save_invitation(bid_invitation, replacement=True)
 
+            configuration_invitation = tools.get_invitation(self.client, f'{match_group_id}/-/Assignment_Configuration')
+            if configuration_invitation:
+                scores_spec = configuration_invitation.edit['note']['content']['scores_specification']
+                if bid_invitation.id not in scores_spec['value']['param']['default']:
+                    scores_spec['value']['param']['default'][bid_invitation.id] = {
+                        'weight': 1,
+                        'default': 0,
+                        'translate_map' : {
+                            'Very High': 1.0,
+                            'High': 0.5,
+                            'Neutral': 0.0,
+                            'Low': -0.5,
+                            'Very Low': -1.0
+                        }
+                    }
+                    self.client.post_invitation_edit(invitations=venue.get_meta_invitation_id(),
+                        signatures=[venue_id],
+                        invitation=openreview.api.Invitation(
+                            id=configuration_invitation.id,
+                            edit={
+                                'note': {
+                                    'content': {
+                                        'scores_specification': scores_spec
+                                    }
+                                }
+                            }
+                        )
+                    )
+
     def set_official_comment_invitation(self):
         venue_id = self.venue_id
         comment_stage = self.venue.comment_stage
