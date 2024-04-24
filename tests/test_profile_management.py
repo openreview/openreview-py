@@ -2279,7 +2279,7 @@ The OpenReview Team.
         assert profile.content['emailsConfirmed'] == ['xukun@profile.org', 'xukun@gmail.com']
 
         ## create a group and try to confirm
-        openreview_client.add_members_to_group('openreview.net/Support', 'xukun@yahoo.com')
+        openreview_client.add_members_to_group('ICMLR.cc/Reviewers', 'xukun@yahoo.com')
 
         response = xukun_client.confirm_alternate_email('~Xukun_First1', 'xukun@yahoo.com')
 
