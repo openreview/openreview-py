@@ -568,7 +568,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
 
-        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Reviewers/-/Recruitment', count=7)
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Reviewers/-/Recruitment', count=13)
 
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers').members) == 5
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers/Invited').members) == 6
@@ -2177,6 +2177,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment_Recruitment', count=4)
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment', count=2)
 
         # try to delete Invite Assignment edge after reviewer Accepted
         with pytest.raises(openreview.OpenReviewException, match=r'Cannot cancel the invitation since it has status: "Accepted"'):
