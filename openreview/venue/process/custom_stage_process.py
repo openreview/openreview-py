@@ -31,6 +31,9 @@ def process(client, edit, invitation):
     pretty_signature = openreview.tools.pretty_id(signature)
     pretty_signature = 'An author' if pretty_signature == 'Authors' else pretty_signature
 
+    vowels = ['a', 'e', 'i', 'o', 'u']
+    before_invitation = 'An' if invitation_name[0].lower() in vowels else 'A'
+
     ignore_groups = [edit.tauthor]
 
     content = f'''
@@ -49,8 +52,8 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
             sender=sender,
             recipients=[program_chairs_id],
             ignoreRecipients = ignore_groups,
-            subject=f'''[{short_name}] A {invitation_name} has been received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''We have received a {invitation_name} on a submission to {short_name} for which you are serving as Program Chair.
+            subject=f'''[{short_name}] {before_invitation} {invitation_name} has been received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            message=f'''We have received {before_invitation.lower()} {invitation_name} on a submission to {short_name} for which you are serving as Program Chair.
 
 {content}
 ''' if not email_template else email_template
@@ -82,8 +85,8 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
             recipients=[paper_senior_area_chairs_id],
             ignoreRecipients = ignore_groups,
             replyTo=contact,
-            subject=f'''[{short_name}] A {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''We have received a {invitation_name} on a submission to {short_name} for which you are serving as Senior Area Chair.
+            subject=f'''[{short_name}] {before_invitation} {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            message=f'''We have received {before_invitation.lower()} {invitation_name} on a submission to {short_name} for which you are serving as Senior Area Chair.
 
 {content}
 ''' if not email_template else email_template
@@ -100,8 +103,8 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
             recipients=[paper_area_chairs_id],
             ignoreRecipients = ignore_groups,
             replyTo=contact,
-            subject=f'''[{short_name}] A {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''We have received a {invitation_name} on a submission to {short_name} for which you are an official area chair.
+            subject=f'''[{short_name}] {before_invitation} {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            message=f'''We have received {before_invitation.lower()} {invitation_name} on a submission to {short_name} for which you are an official area chair.
 
 {content}
 ''' if not email_template else email_template
@@ -120,8 +123,8 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
             recipients=[paper_reviewers_id],
             ignoreRecipients=ignore_groups,
             replyTo=contact,
-            subject=f'''[{short_name}] A {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''We have received a {invitation_name} on a submission to {short_name} for which you are serving as reviewer.
+            subject=f'''[{short_name}] {before_invitation} {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            message=f'''We have received {before_invitation.lower()} {invitation_name} on a submission to {short_name} for which you are serving as reviewer.
 
 {content}
 ''' if not email_template else email_template
@@ -134,8 +137,8 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
             recipients=[paper_reviewers_submitted_id],
             ignoreRecipients=ignore_groups,
             replyTo=contact,
-            subject=f'''[{short_name}] A {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''We have received a {invitation_name} on a submission to {short_name} for which you are serving as reviewer.
+            subject=f'''[{short_name}] {before_invitation} {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            message=f'''We have received {before_invitation.lower()} {invitation_name} on a submission to {short_name} for which you are serving as reviewer.
 
 {content}
 ''' if not email_template else email_template
@@ -152,8 +155,8 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
             recipients=submission.content['authorids']['value'],
             ignoreRecipients=ignore_groups,
             replyTo=contact,
-            subject=f'''[{short_name}] A {invitation_name} has been received on your Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''We have recieved a {invitation_name} on your submission to {short_name}
+            subject=f'''[{short_name}] {before_invitation} {invitation_name} has been received on your Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            message=f'''We have received {before_invitation.lower()} {invitation_name} on your submission to {short_name}.
 
 {content}
 ''' if not email_template else email_template
