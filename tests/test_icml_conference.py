@@ -42,6 +42,7 @@ class TestICMLConference():
         helpers.create_user('reviewer5@yahoo.com', 'Reviewer', 'ICMLFive')
         helpers.create_user('reviewer6@yahoo.com', 'Reviewer', 'ICMLSix')
         helpers.create_user('reviewerethics@yahoo.com', 'Reviewer', 'ICMLSeven')
+        helpers.create_user('peter@mail.com', 'Peter', 'SomeLastName') # Author
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
@@ -567,7 +568,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
 
-        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Reviewers/-/Recruitment', count=7)
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Reviewers/-/Recruitment', count=13)
 
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers').members) == 5
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers/Invited').members) == 6
@@ -2176,6 +2177,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment_Recruitment', count=4)
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/Reviewers/-/Assignment', count=2)
 
         # try to delete Invite Assignment edge after reviewer Accepted
         with pytest.raises(openreview.OpenReviewException, match=r'Cannot cancel the invitation since it has status: "Accepted"'):
@@ -3859,6 +3861,116 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your comment was received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 2
+
+        # Enable Author-AC confidential comments
+        venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        end_date = now + datetime.timedelta(days=3)
+
+        venue.custom_stage = openreview.stages.CustomStage(name='Author_AC_Confidential_Comment',
+            notify_readers=True,
+            reply_to=openreview.stages.CustomStage.ReplyTo.WITHFORUM,
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            reply_type=openreview.stages.CustomStage.ReplyType.REPLY,
+            invitees=[openreview.stages.CustomStage.Participants.AUTHORS, openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
+            readers=[openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,openreview.stages.CustomStage.Participants.AUTHORS],
+            start_date=start_date,
+            due_date=end_date,
+            content={
+                'title': {
+                    'order': 1,
+                    'description': '(Optional) Brief summary of your comment.',
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'maxLength': 500,
+                            'optional': True,
+                            'deletable': True
+                        }
+                    }
+                },
+                'comment': {
+                    'order': 2,
+                    'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'maxLength': 5000,
+                            'markdown': True,
+                            'input': 'textarea'
+                        }
+                    }
+                }
+            },
+            multi_reply=True
+        )
+        venue.create_custom_stage()
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Author_AC_Confidential_Comment-0-1', count=1)
+
+        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Author_AC_Confidential_Comment')) == 100
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Author_AC_Confidential_Comment')
+        assert invitation.invitees == [
+            'ICML.cc/2023/Conference/Program_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Area_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Authors'
+        ]
+
+        author_client = openreview.api.OpenReviewClient(username='peter@mail.com', password=helpers.strong_password)
+        confidential_comment_edit = author_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission1/-/Author_AC_Confidential_Comment',
+            signatures=['ICML.cc/2023/Conference/Submission1/Authors'],
+            note=openreview.api.Note(
+                replyto=submissions[0].id,
+                content={
+                    'comment': { 'value': 'Author confidential comment to AC' },
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=confidential_comment_edit['id'])
+
+        confidential_comment = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Author_AC_Confidential_Comment')[0]
+        assert confidential_comment.readers == [
+            'ICML.cc/2023/Conference/Program_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Area_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Authors'
+        ]
+
+        # Check messages sent to readers
+        messages = openreview_client.get_messages(subject = '[ICML 2023] An author ac confidential comment has been received on your.*')
+        assert messages and len(messages) == 5
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'test@mail.com'in recipients
+        assert 'andrew@amazon.com' in recipients
+        assert 'sac1@gmail.com' in recipients
+        assert 'melisa@yahoo.com' in recipients
+        assert 'ac2@icml.cc' in recipients
+        assert 'peter@mail.com' not in recipients
+
+        ac_client = openreview.api.OpenReviewClient(username='ac2@icml.cc', password=helpers.strong_password)
+        anon_groups = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Area_Chair_', signatory='~AC_ICMLTwo1')
+        anon_group_id = anon_groups[0].id
+
+        confidential_comment_edit = ac_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission1/-/Author_AC_Confidential_Comment',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                replyto=confidential_comment.id,
+                content={
+                    'comment': { 'value': 'AC confidential reply to Author' },
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=confidential_comment_edit['id'])
+
+        messages = openreview_client.get_messages(subject = '[ICML 2023] An author ac confidential comment has been received on your.*')
+        assert messages and len(messages) == 10
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'peter@mail.com' in recipients
+
+        messages = openreview_client.get_messages(to='peter@mail.com', subject = '[ICML 2023] An author ac confidential comment has been received on your.*')
+        assert messages[0]['content']['text'].startswith('We have received an author ac confidential comment on your submission to ICML 2023.')
 
     def test_rebuttal_stage(self, client, openreview_client, helpers):
 

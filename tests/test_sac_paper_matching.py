@@ -277,6 +277,15 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         invitation = openreview_client.get_invitation('TSACM/2024/Conference/Reviewers/-/Bid')
         assert invitation.edit['tail']['param']['options']['group'] == 'TSACM/2024/Conference/Reviewers'
 
+        # assert nothing changed in Assignment_Configuration, except bid invitation was added
+        assignment_config_inv = pc_client_v2.get_invitation('TSACM/2024/Conference/Senior_Area_Chairs/-/Assignment_Configuration')
+        assert assignment_config_inv
+        assert 'scores_specification' in assignment_config_inv.edit['note']['content']
+        assert 'TSACM/2024/Conference/Senior_Area_Chairs/-/Affinity_Score' in assignment_config_inv.edit['note']['content']['scores_specification']['value']['param']['default']
+        assert 'TSACM/2024/Conference/Senior_Area_Chairs/-/Bid' in assignment_config_inv.edit['note']['content']['scores_specification']['value']['param']['default']
+        assert assignment_config_inv.edit['note']['content']['paper_invitation']['value']['param']['default'] == 'TSACM/2024/Conference/-/Submission&content.venueid=TSACM/2024/Conference/Submission'
+        assert conflict_invitation.id in assignment_config_inv.edit['note']['content']['conflicts_invitation']['value']['param']['default']
+
         sac1_client = openreview.api.OpenReviewClient(username='sac@umass.edu', password=helpers.strong_password)
 
         sac1_client.post_edge(openreview.api.Edge(invitation = venue.get_bid_id(venue.get_senior_area_chairs_id()),
