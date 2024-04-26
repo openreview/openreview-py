@@ -376,7 +376,7 @@ class Venue(object):
                 for note in notes:
                     for reply in note.details['directReplies']:
                         if f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{self.decision_stage.name}' in reply['invitations']:
-                            if 'Accept' in reply['content']['decision']['value']:
+                            if reply['content']['decision']['value'] in self.decision_stage.accept_options:
                                 accepted_notes.append(note)
             return accepted_notes
         else:
@@ -718,7 +718,7 @@ Total Errors: {len(errors)}
             return reveal_all_authors or (reveal_authors_accepted and is_note_accepted)
 
         def decision_to_venueid(decision):
-            if 'Accept' in decision:
+            if decision in self.decision_stage.accept_options:
                 return venue_id
             else:
                 return self.get_rejected_submission_venue_id()
@@ -733,12 +733,12 @@ Total Errors: {len(errors)}
                     if f'{self.venue_id}/{self.submission_stage.name}{submission.number}/-/{self.decision_stage.name}' in reply['invitations']:
                         decision_note = reply
                         break
-            note_accepted = decision_note and 'Accept' in decision_note['content']['decision']['value']
-            submission_readers = self.submission_stage.get_readers(self, submission.number, decision_note['content']['decision']['value'] if decision_note else None)
+            note_accepted = decision_note and decision_note['content']['decision']['value'] in self.decision_stage.accept_options
+            submission_readers = self.submission_stage.get_readers(self, submission.number, decision_note['content']['decision']['value'] if decision_note else None, self.decision_stage.accept_options)
 
             venue = self.short_name
             decision_option = decision_note['content']['decision']['value'] if decision_note else ''
-            venue = tools.decision_to_venue(venue, decision_option)
+            venue = tools.decision_to_venue(venue, decision_option, self.decision_stage.accept_options)
             venueid = decision_to_venueid(decision_option)
 
             content = {

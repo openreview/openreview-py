@@ -8,6 +8,7 @@ def process(client, invitation):
     submission_name = domain.content['submission_name']['value']
     decision_name = domain.content.get('decision_name', {}).get('value')
     decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'Decision')
+    accept_decision_options = domain.content.get('accept_decision_options', []).get('value')
     review_name = domain.content.get('review_name', {}).get('value')
     meta_review_name = domain.content.get('meta_review_name', {}).get('value')
     ethics_chairs_id = domain.content.get('ethics_chairs_id', {}).get('value')
@@ -54,7 +55,7 @@ def process(client, invitation):
             source_submissions = client.get_all_notes(content={ 'venueid': venue_id }, sort='number:asc', details='directReplies')
             if not source_submissions and decision_name:
                 under_review_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='directReplies')
-                source_submissions = [s for s in under_review_submissions if len([r for r in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{decision_name}' in r['invitations'] and 'Accept' in r['content'][decision_field_name]['value']]) > 0]
+                source_submissions = [s for s in under_review_submissions if len([r for r in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{decision_name}' in r['invitations'] and ((not accept_decision_options and 'Accept' in r['content'][decision_field_name]['value']) or r['content'][decision_field_name]['value'] in accept_decision_options)]) > 0]
             expire_existing_invitations()
         else:
             source_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='directReplies')

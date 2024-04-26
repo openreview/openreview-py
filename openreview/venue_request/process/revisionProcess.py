@@ -426,11 +426,12 @@ def process(client, note, invitation):
                     'description': 'Select which submission fields should be hidden. Author names will be hidden for double-blind conferences unless otherwise specified in the "reveal_authors" field above. These fields will be hidden from all readers of the submissions, except for program chairs and paper authors.'
                 }
 
-            decision_options = forum_note.content.get('decision_options')
-            if decision_options:
-                decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
-            else:
-                decision_options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
+            accept_decision_options = forum_note.content.get('accept_decision_options', '').strip()
+            reject_decision_options = forum_note.content.get('reject_decision_options', '').strip()
+
+            accept_decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in accept_decision_options.split(',')]
+            reject_decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in reject_decision_options.split(',')]
+            decision_options = accept_decision_options + reject_decision_options
 
             content['send_decision_notifications'] = {
                 'description': 'Would you like to notify the authors regarding the decision? If yes, please carefully review the template below for each decision option before you click submit to send out the emails. Note that you can only send email notifications from the OpenReview UI once. If you need to send additional emails, you can do so by using the python client.',
@@ -441,12 +442,11 @@ def process(client, note, invitation):
                 'required': True,
                 'default': 'No, I will send the emails to the authors'
             }
-            for decision in decision_options:
-                if 'Accept' in decision:
-                    content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
-                        'value-regex': '[\\S\\s]{1,10000}',
-                        'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
-                        'default': f'''Dear {{{{fullname}}}},
+            for decision in accept_decision_options:
+                content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
+                    'value-regex': '[\\S\\s]{1,10000}',
+                    'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
+                    'default': f'''Dear {{{{fullname}}}},
 
 Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
 You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
@@ -454,33 +454,20 @@ You can find the final reviews for your paper on the submission page in OpenRevi
 Best,
 {short_name} Program Chairs
 '''
-                    }
-                elif 'Reject' in decision:
-                    content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
-                        'value-regex': '[\\S\\s]{1,10000}',
-                        'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
-                        'default': f'''Dear {{{{fullname}}}},
-                        
+                }
+            for decision in reject_decision_options:
+                content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
+                    'value-regex': '[\\S\\s]{1,10000}',
+                    'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
+                    'default': f'''Dear {{{{fullname}}}},
+                    
 Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted.
 You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,
 {short_name} Program Chairs
 '''
-                    }
-                else:
-                    content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
-                        'value-regex': '[\\S\\s]{1,10000}',
-                        'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
-                        'default': f'''Dear {{{{fullname}}}},
-
-Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}.
-You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
-
-Best,
-{short_name} Program Chairs
-'''
-                    }
+                }
 
             content['home_page_tab_names'] = {
                 'description': 'Change the name of the tab that you would like to use to list the papers by decision, please note the key must match with the decision options',
@@ -558,11 +545,11 @@ Best,
 
             conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,decision_heading_map=forum_note.content.get('home_page_tab_names'), submission_readers=submission_readers, hide_fields=forum_note.content.get('hide_fields', []))
             if note.content.get('send_decision_notifications') == 'Yes, send an email notification to the authors':
-                decision_options = forum_note.content.get(
-                    'decision_options',
-                    'Accept (Oral), Accept (Poster), Reject'
-                )
+                accept_decision_options = forum_note.content.get('accept_decision_options', '').strip()
+                reject_decision_options = forum_note.content.get('reject_decision_options', '').strip()
+                decision_options = f'{accept_decision_options}, {reject_decision_options}'
                 decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
+
                 email_messages = {
                     decision: note.content[f'{decision.lower().replace(" ", "_")}_email_content']
                     for decision in decision_options

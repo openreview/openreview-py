@@ -4818,7 +4818,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
             content={
                 'decision_start_date': start_date.strftime('%Y/%m/%d'),
                 'decision_deadline': due_date.strftime('%Y/%m/%d'),
-                'decision_options': 'Accept, Revision Needed, Reject',
+                'accept_decision_options': 'Accept',
+                'reject_decision_options': 'Revision Needed, Reject',
                 'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
                 'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
                 'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
@@ -4884,7 +4885,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
             content={
                 'decision_start_date': start_date.strftime('%Y/%m/%d'),
                 'decision_deadline': due_date.strftime('%Y/%m/%d'),
-                'decision_options': 'Accept, Revision Needed, Reject',
+                'accept_decision_options': 'Accept',
+                'reject_decision_options': 'Revision Needed, Reject',
                 'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
                 'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
                 'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
@@ -4952,7 +4954,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
             content={
                 'decision_start_date': start_date.strftime('%Y/%m/%d'),
                 'decision_deadline': due_date.strftime('%Y/%m/%d'),
-                'decision_options': 'Accept, Revision Needed, Reject',
+                'accept_decision_options': 'Accept',
+                'reject_decision_options': 'Revision Needed, Reject',
                 'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
                 'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
                 'release_decisions_to_reviewers': 'Yes, decisions should be immediately revealed to the paper\'s reviewers',
@@ -5130,7 +5133,7 @@ Best,
             assert 'readers' not in submission.content['financial_aid']
             assert submission.pdate
             assert submission.odate
-            assert submission.content['venue']['value'] == 'ICML 2023'
+            assert submission.content['venue']['value'] == 'ICML 2023 Accept'
             assert submission.content['venueid']['value'] == 'ICML.cc/2023/Conference'
 
         year = datetime.datetime.now().year
