@@ -340,6 +340,22 @@ class TestCVPRConference():
         venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
         venue.set_assignments(assignment_title='ac-matching', committee_id='thecvf.com/CVPR/2024/Conference/Area_Chairs')
 
+        assert '~AC_CVPROne1' in openreview_client.get_group('thecvf.com/CVPR/2024/Conference/Submission1/Area_Chairs').members
+        assert '~SAC_CVPROne1' in openreview_client.get_group('thecvf.com/CVPR/2024/Conference/Submission1/Senior_Area_Chairs').members
+
+        assert '~AC_CVPRTwo1' in openreview_client.get_group('thecvf.com/CVPR/2024/Conference/Submission2/Area_Chairs').members
+        assert '~SAC_CVPROne1' in openreview_client.get_group('thecvf.com/CVPR/2024/Conference/Submission2/Senior_Area_Chairs').members
+
+        venue.unset_assignments(committee_id='thecvf.com/CVPR/2024/Conference/Area_Chairs')
+
+        assert len(openreview_client.get_group('thecvf.com/CVPR/2024/Conference/Submission1/Area_Chairs').members) == 0
+        assert len(openreview_client.get_group('thecvf.com/CVPR/2024/Conference/Submission1/Senior_Area_Chairs').members) == 0
+
+        assert len(openreview_client.get_group('thecvf.com/CVPR/2024/Conference/Submission2/Area_Chairs').members) == 0
+        assert len(openreview_client.get_group('thecvf.com/CVPR/2024/Conference/Submission2/Senior_Area_Chairs').members) == 0
+
+        venue.set_assignments(assignment_title='ac-matching', committee_id='thecvf.com/CVPR/2024/Conference/Area_Chairs')
+
         # open reviewer recommendation
         now = datetime.datetime.utcnow()
         venue.open_reviewer_recommendation_stage(

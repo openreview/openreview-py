@@ -63,9 +63,9 @@ class Matching(object):
                 return False
         return True
 
-    def _get_submissions(self):
+    def _get_submissions(self, details=None):
 
-        submissions = self.venue.get_submissions(sort='number:asc')
+        submissions = self.venue.get_submissions(sort='number:asc', details=details)
         filtered_submissions = [s for s in submissions if self._match_submission_content(s.content)]
         return filtered_submissions
     
@@ -1172,15 +1172,15 @@ class Matching(object):
 
         committee_id=self.match_group.id
         role_name = committee_id.split('/')[-1]
-        review_name = 'Official_Review'
+        review_name = venue.review_stage.child_invitations_name if venue.review_stage else 'Official_Review'
         reviewer_name = venue.reviewers_name
         if role_name in venue.area_chair_roles:
             reviewer_name = venue.area_chairs_name
-            review_name = 'Meta_Review'
+            review_name = venue.meta_review_stage.child_invitations_name if venue.meta_review_stage else 'Meta_Review'
         elif self.is_senior_area_chair:
             reviewer_name = venue.senior_area_chairs_name
             
-        papers = self._get_submissions()
+        papers = self._get_submissions(details='directReplies')
         sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.senior_area_chairs_id, deployed=True),
             groupby='head', select=None)} if not venue.sac_paper_assignments else {}
         reviews = []
@@ -1189,8 +1189,11 @@ class Matching(object):
         assignment_invitation_id = venue.get_assignment_id(self.match_group.id, deployed=True)
         current_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None)}
 
+        print('Check if there are reviews posted')
         if not self.is_senior_area_chair:
-            reviews = client.get_notes(invitation=venue.get_invitation_id(review_name, number='.*'), limit=1)
+            print('get review notes')
+            reviews = [(openreview.api.Note.from_json(reply), s) for s in papers for reply in s.details['directReplies'] if venue.get_invitation_id(name=review_name, number=s.number) in reply['invitations']]
+            print(len(reviews))
 
         if overwrite:
             if reviews:
@@ -1293,6 +1296,60 @@ class Matching(object):
         print('Posting assignments edges', len(assignment_edges))
         openreview.tools.post_bulk_edges(client=client, edges=assignment_edges)
 
+    def undeploy_assignments(self):
+
+        venue = self.venue
+        client = self.client
+
+        committee_id=self.match_group.id
+        role_name = committee_id.split('/')[-1]
+        review_name = venue.review_stage.child_invitations_name if venue.review_stage else 'Official_Review'
+        reviewer_name = venue.reviewers_name
+        if role_name in venue.area_chair_roles:
+            reviewer_name = venue.area_chairs_name
+            review_name = venue.meta_review_stage.child_invitations_name if venue.meta_review_stage else 'Meta_Review'
+        elif self.is_senior_area_chair:
+            reviewer_name = venue.senior_area_chairs_name
+            
+        papers = self._get_submissions(details='directReplies')
+        sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.senior_area_chairs_id, deployed=True),
+            groupby='head', select=None)} if not venue.sac_paper_assignments else {}
+        reviews = []
+        assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id, deployed=True),
+            groupby='head', select=None)}
+
+        print('Check if there are reviews posted')
+        if not self.is_senior_area_chair:
+            print('get review notes')
+            reviews = [(openreview.api.Note.from_json(reply), s) for s in papers for reply in s.details['directReplies'] if venue.get_invitation_id(name=review_name, number=s.number) in reply['invitations']]
+            print(len(reviews))
+
+        if reviews:
+            raise openreview.OpenReviewException('Can not delete assignments when there are reviews posted.')
+
+        def process_paper_assignments(paper):
+            if paper.id in assignment_edges:
+                paper_committee_id = venue.get_committee_id(name=reviewer_name, number=paper.number)
+                paper_assignment_edges=assignment_edges[paper.id]
+                assigned_users = []
+                for assignment_edge in paper_assignment_edges:
+                    assigned_user = assignment_edge['tail']
+                    if self.is_area_chair and sac_assignment_edges:
+                        sac_assignments = sac_assignment_edges.get(assigned_user, [])
+                        for sac_assignment in sac_assignments:
+                            assigned_sac = sac_assignment['tail']
+                            sac_group_id = venue.get_senior_area_chairs_id(number=paper.number)
+                            client.remove_members_from_group(sac_group_id,[assigned_sac])
+                    assigned_users.append(assigned_user)
+                client.remove_members_from_group(paper_committee_id, assigned_users)
+            else:
+                print('assignment not found', paper.id)
+
+        tools.concurrent_requests(process_paper_assignments, papers)
+
+        print('Delete assignment edges')
+        client.delete_edges(venue.get_assignment_id(self.match_group.id, deployed=True), wait_to_finish=True, soft_delete=True)        
+    
     def deploy(self, assignment_title, overwrite=False, enable_reviewer_reassignment=False):
 
         self.venue.invitation_builder.set_assignment_invitation(self.match_group.id, self.submission_content)
@@ -1309,3 +1366,15 @@ class Matching(object):
         if self.is_reviewer and enable_reviewer_reassignment:
             hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
             self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=f'''Emergency_{self.match_group_name}''')
+
+    def undeploy(self):
+
+        ## Undeploy assignments
+        if self.is_senior_area_chair and not self.venue.sac_paper_assignments:
+            self.undeploy_sac_assignments()
+        else:
+            self.undeploy_assignments()  
+            self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id, deployed=True))      
+            self.venue.invitation_builder.unexpire_invitation(self.venue.get_assignment_id(self.match_group.id))     
+            self.venue.invitation_builder.unexpire_invitation(self.venue.get_invitation_id('Proposed_Assignment_Recruitment', prefix=self.match_group.id))
+             
