@@ -6240,7 +6240,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'hidden': True
                                 }
                             }
-                        }                        }, 
+                        }, 
                         'perturbedmaximization_perturbation':  {
                             'order': 23,
                             'description': 'A single float representing the perturbation factor for the Perturbed Maximization Solver. The value should be between 0 and 1, increasing the value will trade assignment quality for randomization.',
