@@ -544,7 +544,8 @@ var renderData = function(venueStatusData) {
                 id: row.submission.forum,
                 noteId: row.submission.forum,
                 invitationId: Webfield2.utils.getInvitationId(VENUE_ID, row.submission.number, REVIEW_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
-              })
+              }),
+              number: row.submission.number
             }
           });
         }
@@ -564,7 +565,8 @@ var renderData = function(venueStatusData) {
                 id: row.submission.forum,
                 noteId: row.submission.forum,
                 invitationId: Webfield2.utils.getInvitationId(VENUE_ID, row.submission.number, OFFICIAL_RECOMMENDATION_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
-              })
+              }),
+              number: row.submission.number
             }
           });
         }
