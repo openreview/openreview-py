@@ -412,7 +412,7 @@ class TestMatching():
         invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Proposed_Assignment')
         assert invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
-        venue.unset_assignments(committee_id=f'{venue.id}/Program_Committee')
+        venue.unset_assignments(assignment_title='rev-matching', committee_id=f'{venue.id}/Program_Committee')
 
         revs_paper0 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[0].number))
         assert 0 == len(revs_paper0.members)
@@ -490,7 +490,7 @@ class TestMatching():
         )
 
         with pytest.raises(openreview.OpenReviewException, match=r'Can not delete assignments when there are reviews posted.'):
-            venue.unset_assignments(committee_id=f'{venue.id}/Program_Committee')
+            venue.unset_assignments(assignment_title='rev-matching', committee_id=f'{venue.id}/Program_Committee')
 
         with pytest.raises(openreview.OpenReviewException, match=r'Can not overwrite assignments when there are reviews posted.'):
             venue.set_assignments(assignment_title='rev-matching', committee_id=f'{venue.id}/Program_Committee', enable_reviewer_reassignment=True, overwrite=True)            
@@ -627,6 +627,39 @@ class TestMatching():
         revs_paper2 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[2].number))
         assert ['r2_venue@google.com'] == revs_paper2.members
 
+        ## Un deploy the first assignment
+        venue.unset_assignments(assignment_title='rev-matching-new', committee_id=f'{venue.id}/Program_Committee')
+
+        revs_paper0 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[0].number))
+        assert len(revs_paper0.members) == 2
+        assert '~Reviewer_Venue1' in revs_paper0.members
+        assert 'r2_venue@mit.edu' in revs_paper0.members
+
+        revs_paper1 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[1].number))
+        assert len(revs_paper1.members) == 1
+        assert 'r2_venue@google.com' in revs_paper1.members
+
+        revs_paper2 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[2].number))
+        assert len(revs_paper2.members) == 0
+        
+        ## Deploy again
+        venue.set_assignments(assignment_title='rev-matching-new', committee_id=f'{venue.id}/Program_Committee')
+
+        revs_paper0 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[0].number))
+        assert len(revs_paper0.members) == 3
+        assert 'r3_venue@fb.com' in revs_paper0.members
+        assert '~Reviewer_Venue1' in revs_paper0.members
+        assert 'r2_venue@mit.edu' in revs_paper0.members
+
+        revs_paper1 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[1].number))
+        assert len(revs_paper1.members) == 2
+        assert 'r2_venue@google.com' in revs_paper1.members
+        assert '~Reviewer_Venue1' in revs_paper1.members
+
+        revs_paper2 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[2].number))
+        assert len(revs_paper2.members) == 1        
+        assert 'r2_venue@google.com' in revs_paper2.members 
+        
         pc_client.remove_members_from_group(f'{venue.id}/Submission1/Program_Committee', ['~Reviewer_Venue1'])
 
         venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
