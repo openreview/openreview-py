@@ -30,8 +30,8 @@ def process(client, edit, invitation):
             sender=sender
         )
 
-    if (authors_accepted_id):
-      if decision.content['decision']['value'] in domain.get_content_value('accept_decision_options'):
+    if (authors_accepted_id):      
+      if ('Accept' in decision.content['decision']['value']):
         client.add_members_to_group(authors_accepted_id, paper_authors_id)
-      else:
+      elif ('Reject' in decision.content['decision']['value']):
         client.remove_members_from_group(authors_accepted_id, paper_authors_id)

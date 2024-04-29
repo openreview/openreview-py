@@ -787,19 +787,16 @@ def get_decision_stage(request_forum):
     else:
         decision_due_date = None
 
-    accept_decision_options = request_forum.content.get('accept_decision_options', '').strip()
-    reject_decision_options = request_forum.content.get('reject_decision_options', '').strip()
-
-    accept_decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in accept_decision_options.split(',')]
-    reject_decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in reject_decision_options.split(',')]
-    decision_options = accept_decision_options + reject_decision_options
-
+    decision_options = request_forum.content.get('decision_options', '').strip()
     decision_form_additional_options = request_forum.content.get('additional_decision_form_options', {})
+
+    if decision_options:
+        decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
+
     decisions_file = request_forum.content.get('decisions_file')
 
     return openreview.stages.DecisionStage(
         options = decision_options,
-        accept_options = accept_decision_options,
         start_date = decision_start_date,
         due_date = decision_due_date,
         public = request_forum.content.get('make_decisions_public', '').startswith('Yes'),
