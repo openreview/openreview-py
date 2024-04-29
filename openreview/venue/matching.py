@@ -896,6 +896,8 @@ class Matching(object):
                                         'Deploying',
                                         'Deployed',
                                         'Deployment Error',
+                                        'Undeploying',
+                                        'Undeployment Error',
                                         'Queued',
                                         'Cancelled'
                                     ],

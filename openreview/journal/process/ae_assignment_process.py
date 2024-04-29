@@ -25,7 +25,26 @@ def process_update(client, edge, invitation, existing_edge):
 
         client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())
 
-        return client.remove_members_from_group(group.id, edge.tail)
+        client.remove_members_from_group(group.id, edge.tail)
+
+        ## update assigned_action_editor if exists in the submission
+        content = {}
+        if 'assigned_action_editor' in note.content:
+            content['assigned_action_editor'] = { 'delete': True }
+
+        if journal.assigned_AE_venue_id == note.content['venueid']['value']:
+            content['venueid'] = { 'value': journal.assigning_AE_venue_id }
+            content['venue'] = { 'delete': True }
+
+
+        if content:
+            client.post_note_edit(invitation= journal.get_meta_invitation_id(),
+                                signatures=[journal.venue_id],
+                                note=openreview.api.Note(id=note.id,
+                                content = content 
+            ))
+
+        return       
 
     if not edge.ddate and edge.tail not in group.members:
         print(f'Add member {edge.tail} to {group.id}')
