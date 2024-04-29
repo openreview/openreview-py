@@ -1268,6 +1268,15 @@ class Matching(object):
                 )
             )
 
+    def undeploy_sac_assignments(self):
+
+        client = self.client
+        venue = self.venue
+
+        print('undeploy_sac_assignments')
+        client.delete_edges(venue.get_assignment_id(self.match_group.id, deployed=True), wait_to_finish=True, soft_delete=True)
+
+    
     def deploy_sac_assignments(self, assignment_title, overwrite):
 
         client = self.client

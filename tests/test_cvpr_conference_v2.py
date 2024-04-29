@@ -276,6 +276,16 @@ class TestCVPRConference():
 
         venue.set_assignments(assignment_title='sac-matching', committee_id='thecvf.com/CVPR/2024/Conference/Senior_Area_Chairs')
 
+        assert openreview_client.get_edges_count(invitation='thecvf.com/CVPR/2024/Conference/Senior_Area_Chairs/-/Assignment') == 3
+
+        venue.unset_assignments(committee_id='thecvf.com/CVPR/2024/Conference/Senior_Area_Chairs')
+
+        assert openreview_client.get_edges_count(invitation='thecvf.com/CVPR/2024/Conference/Senior_Area_Chairs/-/Assignment') == 0
+
+        venue.set_assignments(assignment_title='sac-matching', committee_id='thecvf.com/CVPR/2024/Conference/Senior_Area_Chairs')
+
+        assert openreview_client.get_edges_count(invitation='thecvf.com/CVPR/2024/Conference/Senior_Area_Chairs/-/Assignment') == 3
+
         ## setup matching data
         client.post_note(openreview.Note(
             content={
