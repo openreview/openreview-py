@@ -17,8 +17,8 @@ import re
 import time
 import jwt
 import traceback
-from openreview import Profile
-from openreview import OpenReviewException
+from ..openreview import Profile
+from ..openreview import OpenReviewException
 from .. import tools
 
 class LogRetry(Retry):
