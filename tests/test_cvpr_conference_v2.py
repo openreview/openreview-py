@@ -278,7 +278,7 @@ class TestCVPRConference():
 
         assert openreview_client.get_edges_count(invitation='thecvf.com/CVPR/2024/Conference/Senior_Area_Chairs/-/Assignment') == 3
 
-        venue.unset_assignments(committee_id='thecvf.com/CVPR/2024/Conference/Senior_Area_Chairs')
+        venue.unset_assignments(assignment_title='sac-matching', committee_id='thecvf.com/CVPR/2024/Conference/Senior_Area_Chairs')
 
         assert openreview_client.get_edges_count(invitation='thecvf.com/CVPR/2024/Conference/Senior_Area_Chairs/-/Assignment') == 0
 
@@ -356,7 +356,7 @@ class TestCVPRConference():
         assert '~AC_CVPRTwo1' in openreview_client.get_group('thecvf.com/CVPR/2024/Conference/Submission2/Area_Chairs').members
         assert '~SAC_CVPROne1' in openreview_client.get_group('thecvf.com/CVPR/2024/Conference/Submission2/Senior_Area_Chairs').members
 
-        venue.unset_assignments(committee_id='thecvf.com/CVPR/2024/Conference/Area_Chairs')
+        venue.unset_assignments(assignment_title='ac-matching', committee_id='thecvf.com/CVPR/2024/Conference/Area_Chairs')
 
         assert len(openreview_client.get_group('thecvf.com/CVPR/2024/Conference/Submission1/Area_Chairs').members) == 0
         assert len(openreview_client.get_group('thecvf.com/CVPR/2024/Conference/Submission1/Senior_Area_Chairs').members) == 0
