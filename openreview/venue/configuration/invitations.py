@@ -347,6 +347,11 @@ class VenueConfiguration():
             readers = ['everyone'],
             writers = [support_group_id],
             signatures = [support_group_id],
+            content={
+                'deploy_process_script': {
+                    'value': self.get_process_content('process/deploy_process.py')
+                }
+            },
             edit = {
                 'signatures': [support_group_id],
                 'readers': [support_group_id],
@@ -369,18 +374,27 @@ class VenueConfiguration():
                 'replacement': True,
                 'invitation': {
                     'id': f'{super_user}/Conference_Venue_Request' + '${2/content/noteNumber/value}' + '/-/Deploy',
-                    'signatures': [ support_group_id ],
+                    'signatures': [ '~Super_User1' ],
                     'readers': ['everyone'],
                     'writers': [support_group_id],
                     'invitees': [support_group_id],
                     'maxReplies': 1,
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['deploy_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
                     'edit': {
                         'signatures': { 
                             'param': { 
                                 'items': [ { 'value': support_group_id, 'optional': True } ] 
                             }
                         },
-                        'readers': ['${2/note/readers}'],
+                        'readers': ['${{2/note/id}/readers}'],
                         'writers': [support_group_id],
                         'note': {
                             'id': '${4/content/noteId/value}',

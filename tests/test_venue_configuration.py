@@ -1,4 +1,5 @@
 import pytest
+import datetime
 import openreview
 from openreview.api import Note
 from openreview import ProfileManagement
@@ -18,6 +19,9 @@ class TestVenueConfiguration():
         support_group_id = super_id + '/Support'
         venue_configuration = VenueConfiguration(openreview_client, support_group_id, super_id)
         venue_configuration.setup()
+
+        helpers.create_user('sherry@iclr.cc', 'ProgramChair', 'ICLR')
+        pc_client_v2=openreview.api.OpenReviewClient(username='sherry@iclr.cc', password=helpers.strong_password)
 
         assert openreview_client.get_invitation('openreview.net/-/Edit')
         assert openreview_client.get_invitation('openreview.net/-/Conference_Venue_Request')
@@ -49,3 +53,78 @@ class TestVenueConfiguration():
         request = openreview_client.get_note(conference_request['note']['id'])
         assert openreview_client.get_invitation(f'openreview.net/Conference_Venue_Request{request.number}/-/Comment')
         assert openreview_client.get_invitation(f'openreview.net/Conference_Venue_Request{request.number}/-/Deploy')
+
+        openreview_client.post_note_edit(invitation=f'openreview.net/Conference_Venue_Request{request.number}/-/Deploy',
+            signatures=[support_group_id],
+            note=openreview.api.Note(
+                id=request.id,
+                content={
+                    'venue_id': { 'value': 'ICLR.cc/2025/Conference' }
+                }
+            ))
+        
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Conference_Venue_Request1/-/Deploy')
+        
+        assert openreview.tools.get_group(openreview_client, 'ICLR.cc/2025/Conference')
+        assert openreview.tools.get_group(openreview_client, 'ICLR.cc/2025')
+        submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission')
+        assert submission_inv and not submission_inv.duedate
+        assert not submission_inv.expdate
+        submission_deadline_inv =  openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission/Deadline')
+        assert submission_deadline_inv and submission_inv.id in submission_deadline_inv.edit['invitation']['id']
+        submission_expiration_inv =  openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission/Expiration')
+        assert submission_expiration_inv and submission_inv.id in submission_expiration_inv.edit['invitation']['id']
+
+        now = datetime.datetime.now()
+        duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=1))
+
+        # edit Submission duedate with Submission/Deadline invitation
+        pc_client_v2.post_invitation_edit(
+            invitations=submission_deadline_inv.id,
+            invitation=openreview.api.Invitation(
+                id=submission_inv.id,
+                duedate=duedate
+            )
+        )
+        helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2025/Conference/-/Submission/Deadline')
+
+        # assert submission deadline and expdate get updated
+        submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission')
+        assert submission_inv and submission_inv.duedate == duedate
+        assert submission_inv.expdate == duedate + (30*60*1000)
+
+        # # edit Submission content with Submission/Content invitation
+        # pc_client_v2.post_invitation_edit(
+        #     invitations=submission_deadline_inv.id,
+        #     invitation=openreview.api.Invitation(
+        #         id=submission_inv.id,
+        #         edit={
+        #             'note': {
+        #                 'content': {
+        #                     'subject_area': {
+        #                         'order': 10,
+        #                         "description": "Select one subject area.",
+        #                         'value': {
+        #                             'param': {
+        #                                 'type': 'string',
+        #                                 'enum': [
+        #                                     "3D from multi-view and sensors",
+        #                                     "3D from single images",	
+        #                                     "Adversarial attack and defense",	
+        #                                     "Autonomous driving",
+        #                                     "Biometrics",	
+        #                                     "Computational imaging",	
+        #                                     "Computer vision for social good",	
+        #                                     "Computer vision theory",	
+        #                                     "Datasets and evaluation"
+        #                                 ],
+        #                                 "input": "select"
+        #                             }
+        #                         }
+        #                     }
+        #                 }
+        #             }
+        #         }
+        #     )
+        # )
+        # helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2025/Conference/-/Submission/Deadline')

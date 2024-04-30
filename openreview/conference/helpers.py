@@ -3,6 +3,22 @@ import openreview
 import datetime
 import json
 
+def get_venue(client, venue_note_id, support_user='OpenReview.net/Support'):
+    
+    note = client.get_note(venue_note_id)
+    venue = openreview.venue.Venue(client, note.content['venue_id']['value'], support_user)
+    venue.name = note.content['official_venue_name']['value']
+    venue.short_name = note.content['abbreviated_venue_name']['value']
+    venue.submission_stage = get_submission_stage_v2(note, venue)
+    venue.setup(note.content.get('program_chair_emails',{}).get('value'), note.content.get('publication_chairs_emails', {}).get('value'))
+    return venue
+
+def get_submission_stage_v2(note, venue):
+
+    return openreview.stages.SubmissionStage(name = 'Submission',
+        double_blind=True
+        )
+
 def get_conference(client, request_form_id, support_user='OpenReview.net/Support', setup=False):
 
     note = client.get_note(request_form_id)
