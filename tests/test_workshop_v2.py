@@ -360,7 +360,8 @@ class TestWorkshopV2():
             content={
                 'decision_start_date': start_date.strftime('%Y/%m/%d'),
                 'decision_deadline': due_date.strftime('%Y/%m/%d'),
-                'decision_options': 'Accept, Reject',
+                'decision_options': 'Invite to Venue, Reject',
+                'accept_decision_options': 'Invite to Venue',
                 'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
                 'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
                 'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
@@ -385,7 +386,7 @@ class TestWorkshopV2():
         submissions = openreview_client.get_notes(invitation='PRL/2023/ICAPS/-/Submission', sort='number:asc')
         assert len(submissions) == 12
 
-        decisions = ['Accept', 'Reject']
+        decisions = ['Invite to Venue', 'Reject']
         for idx in range(len(submissions)):
             decision = pc_client_v2.post_note_edit(
                 invitation=f'PRL/2023/ICAPS/Submission{submissions[idx].number}/-/Decision',
@@ -452,11 +453,11 @@ class TestWorkshopV2():
                 'reveal_authors': 'No, I don\'t want to reveal any author identities.',
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'home_page_tab_names': {
-                    'Accept': 'Accept',
+                    'Invite to Venue': 'Invite to Venue',
                     'Reject': 'Submitted'
                 },
-                'send_decision_notifications': 'No, I will send the emails to the authors',
-                'accept_email_content': f'''Dear {{{{fullname}}}},
+                'send_decision_notifications': 'Yes, send an email notification to the authors',
+                'invite_to_venue_email_content': f'''Dear {{{{fullname}}}},
 
 Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
 You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
@@ -500,6 +501,7 @@ Best,
                     f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors',
                     'PRL/2023/ICAPS/Publication_Chairs'
                 ]
+                assert submissions[idx].content['venueid']['value'] == 'PRL/2023/ICAPS'
             else:
                 submissions[idx].readers = [
                     'PRL/2023/ICAPS',
@@ -510,13 +512,20 @@ Best,
                     'PRL/2023/ICAPS',
                     f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors'
                 ]
-                
+                assert submissions[idx].content['venueid']['value'] == 'PRL/2023/ICAPS/Rejected_Submission'
+
         helpers.create_user('publicationchair@mail.com', 'Publication', 'ICAPSChair')
         publication_chair_client_v2=openreview.api.OpenReviewClient(username='publicationchair@mail.com', password=helpers.strong_password)
 
         assert publication_chair_client_v2.get_group('PRL/2023/ICAPS/Authors/Accepted')
         submissions = publication_chair_client_v2.get_notes(invitation='PRL/2023/ICAPS/-/Submission', sort='number:asc')
         assert len(submissions) == 6
+
+        messages = openreview_client.get_messages(subject=f'[PRL ICAPS 2023] Decision notification for your submission 1:.*')
+        assert 'We are delighted to inform you that your submission has been accepted.' in messages[0]['content']['text']
+
+        messages = openreview_client.get_messages(subject=f'[PRL ICAPS 2023] Decision notification for your submission 2:.*')
+        assert 'We regret to inform you that your submission was not accepted.' in messages[0]['content']['text']
 
     def test_enable_camera_ready_revisions(self, client, openreview_client, helpers, selenium, request_page):
 

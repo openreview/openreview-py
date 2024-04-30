@@ -237,6 +237,7 @@ class GroupBuilder(object):
             content['decision_name'] = { 'value': self.venue.decision_stage.name }
             content['decision_email_authors'] = { 'value': self.venue.decision_stage.email_authors }
             content['decision_field_name'] = { 'value': self.venue.decision_stage.decision_field_name }
+            content['accept_decision_options'] = { 'value': self.venue.decision_stage.accept_options }
 
         if self.venue.submission_revision_stage:
             content['submission_revision_accepted'] = { 'value': self.venue.submission_revision_stage.only_accepted }            
