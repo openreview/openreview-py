@@ -123,7 +123,7 @@ class SubmissionStage(object):
             return ['everyone']
 
         submission_readers=[conference.id]
-        is_accepted = decision and ((accept_options and decision in accept_options) or (not accept_options and 'Accept' in decision))#('Accept' in decision if not accept_options else decision in accept_options)
+        is_accepted = decision and ((accept_options and decision in accept_options) or (not accept_options and 'Accept' in decision))
 
         if self.Readers.EVERYONE_BUT_REJECTED in self.readers:
             hide = not decision or not is_accepted
