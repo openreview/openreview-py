@@ -1652,7 +1652,7 @@ class InvitationBuilder(object):
             )
         )
 
-        emoji_chat_invitation = self.venue.get_invitation_id('Chat_Emoji')
+        emoji_chat_invitation = self.venue.get_invitation_id('Chat_Reaction')
 
         invitation = Invitation(id=emoji_chat_invitation,
             invitees=[venue_id],
@@ -1686,7 +1686,7 @@ class InvitationBuilder(object):
                 },
                 'replacement': True,
                 'invitation': {
-                    'id': self.venue.get_invitation_id('Chat_Emoji', '${2/content/noteNumber/value}'),
+                    'id': self.venue.get_invitation_id('Chat_Reaction', '${2/content/noteNumber/value}'),
                     'signatures': [ venue_id ],
                     'readers': ['everyone'],
                     'writers': [venue_id],
@@ -1695,21 +1695,16 @@ class InvitationBuilder(object):
                     'tag': {
                         'id': {
                             'param': {
-                                'withInvitation': self.venue.get_invitation_id('Chat_Emoji', '${5/content/noteNumber/value}'),
+                                'withInvitation': self.venue.get_invitation_id('Chat_Reaction', '${5/content/noteNumber/value}'),
                                 'optional': True
                             }
                         },
                         'forum': '${3/content/noteId/value}',
-                        # 'replyto': { 
-                        #     'param': {
-                        #         'withForum': '${6/content/noteId/value}', 
-                        #     }
-                        # },
                         'replyto': { 
                             'param': {
-                                'withInvitation': self.venue.get_invitation_id('Chat', '${5/content/noteNumber/value}'), 
+                                'withForum': '${5/content/noteId/value}', 
                             }
-                        },                        
+                        },                       
                         'ddate': {
                             'param': {
                                 'range': [ 0, 999999999999 ],
