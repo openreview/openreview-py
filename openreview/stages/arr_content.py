@@ -1,6 +1,34 @@
 from copy import deepcopy
 from datetime import datetime
 
+arr_tracks = [
+    "Computational Social Science and Cultural Analytics",
+    "Dialogue and Interactive Systems",
+    "Discourse and Pragmatics",
+    "Efficient/Low-Resource Methods for NLP",
+    "Ethics, Bias, and Fairness",
+    "Generation",
+    "Human-Centered NLP",
+    "Information Extraction",
+    "Information Retrieval and Text Mining",
+    "Interpretability and Analysis of Models for NLP",
+    "Language Modeling",
+    "Linguistic theories, Cognitive Modeling and Psycholinguistics",
+    "Machine Learning for NLP",
+    "Machine Translation",
+    "Multilingualism and Cross-Lingual NLP",
+    "Multimodality and Language Grounding to Vision, Robotics and Beyond",
+    "NLP Applications",
+    "Phonology, Morphology and Word Segmentation",
+    "Question Answering",
+    "Resources and Evaluation",
+    "Semantics: Lexical and Sentence-Level",
+    "Sentiment Analysis, Stylistic Analysis, and Argument Mining",
+    "Summarization",
+    "Syntax: Tagging, Chunking and Parsing",
+    "Special Theme (conference specific)"
+]
+
 arr_submission_content = {
     "title": {
         "order": 1,
@@ -117,34 +145,7 @@ arr_submission_content = {
         "value": {
             "param": {
                 "input": "radio",
-                "enum": [
-                    "Computational Social Science and Cultural Analytics",
-                    "Dialogue and Interactive Systems",
-                    "Discourse and Pragmatics",
-                    "Efficient/Low-Resource Methods for NLP",
-                    "Ethics, Bias, and Fairness",
-                    "Generation",
-                    "Human-Centered NLP",
-                    "Information Extraction",
-                    "Information Retrieval and Text Mining",
-                    "Interpretability and Analysis of Models for NLP",
-                    "Language Modeling",
-                    "Linguistic theories, Cognitive Modeling and Psycholinguistics",
-                    "Machine Learning for NLP",
-                    "Machine Translation",
-                    "Multilingualism and Cross-Lingual NLP",
-                    "Multimodality and Language Grounding to Vision, Robotics and Beyond",
-                    "NLP Applications",
-                    "Phonology, Morphology and Word Segmentation",
-                    "Question Answering",
-                    "Resources and Evaluation",
-                    "Semantics: Lexical",
-                    "Semantics: Sentence-level Semantics, Textual Inference and Other areas",
-                    "Sentiment Analysis, Stylistic Analysis, and Argument Mining",
-                    "Summarization",
-                    "Syntax: Tagging, Chunking and Parsing",
-                    "Special Theme (conference specific)"
-                ],
+                "enum": arr_tracks,
                 "optional": False,
                 "type": "string"
             }
@@ -1929,32 +1930,7 @@ arr_reviewer_emergency_load_task = {
         "value": {
             "param": {
                 "input": "radio",
-                "enum": [
-                    "Computational Social Science and Cultural Analytics",
-                    "Dialogue and Interactive Systems",
-                    "Discourse and Pragmatics",
-                    "Efficient/Low-Resource Methods for NLP",
-                    "Ethics, Bias, and Fairness",
-                    "Generation",
-                    "Information Extraction",
-                    "Information Retrieval and Text Mining",
-                    "Interpretability and Analysis of Models for NLP",
-                    "Linguistic theories, Cognitive Modeling and Psycholinguistics",
-                    "Machine Learning for NLP",
-                    "Machine Translation",
-                    "Multilinguality and Language Diversity",
-                    "Multimodality and Language Grounding to Vision, Robotics and Beyond",
-                    "Phonology, Morphology and Word Segmentation",
-                    "Question Answering",
-                    "Resources and Evaluation",
-                    "Semantics: Lexical",
-                    "Semantics: Sentence-level Semantics, Textual Inference and Other areas",
-                    "Sentiment Analysis, Stylistic Analysis, and Argument Mining",
-                    "Speech recognition, text-to-speech and spoken language understanding",
-                    "Summarization",
-                    "Syntax: Tagging, Chunking and Parsing / ML",
-                    "NLP Applications"
-                ],
+                "enum": arr_tracks,
                 "optional": True,
                 "type": "string"
             }
@@ -2000,32 +1976,7 @@ arr_ac_emergency_load_task = {
         "value": {
             "param": {
                 "input": "radio",
-                "enum": [
-                    "Computational Social Science and Cultural Analytics",
-                    "Dialogue and Interactive Systems",
-                    "Discourse and Pragmatics",
-                    "Efficient/Low-Resource Methods for NLP",
-                    "Ethics, Bias, and Fairness",
-                    "Generation",
-                    "Information Extraction",
-                    "Information Retrieval and Text Mining",
-                    "Interpretability and Analysis of Models for NLP",
-                    "Linguistic theories, Cognitive Modeling and Psycholinguistics",
-                    "Machine Learning for NLP",
-                    "Machine Translation",
-                    "Multilinguality and Language Diversity",
-                    "Multimodality and Language Grounding to Vision, Robotics and Beyond",
-                    "Phonology, Morphology and Word Segmentation",
-                    "Question Answering",
-                    "Resources and Evaluation",
-                    "Semantics: Lexical",
-                    "Semantics: Sentence-level Semantics, Textual Inference and Other areas",
-                    "Sentiment Analysis, Stylistic Analysis, and Argument Mining",
-                    "Speech recognition, text-to-speech and spoken language understanding",
-                    "Summarization",
-                    "Syntax: Tagging, Chunking and Parsing / ML",
-                    "NLP Applications"
-                ],
+                "enum": arr_tracks,
                 "optional": True,
                 "type": "string"
             }
@@ -2167,32 +2118,7 @@ arr_registration_task = {
         "value": {
             "param": {
                 "type": "string[]",
-                "enum": [
-                    "Computational Social Science and Cultural Analytics",
-                    "Dialogue and Interactive Systems",
-                    "Discourse and Pragmatics",
-                    "Efficient/Low-Resource Methods for NLP",
-                    "Ethics, Bias, and Fairness",
-                    "Generation",
-                    "Information Extraction",
-                    "Information Retrieval and Text Mining",
-                    "Interpretability and Analysis of Models for NLP",
-                    "Linguistic theories, Cognitive Modeling and Psycholinguistics",
-                    "Machine Learning for NLP",
-                    "Machine Translation",
-                    "Multilinguality and Language Diversity",
-                    "Multimodality and Language Grounding to Vision, Robotics and Beyond",
-                    "Phonology, Morphology and Word Segmentation",
-                    "Question Answering",
-                    "Resources and Evaluation",
-                    "Semantics: Lexical",
-                    "Semantics: Sentence-level Semantics, Textual Inference and Other areas",
-                    "Sentiment Analysis, Stylistic Analysis, and Argument Mining",
-                    "Speech recognition, text-to-speech and spoken language understanding",
-                    "Summarization",
-                    "Syntax: Tagging, Chunking and Parsing / ML",
-                    "NLP Applications"
-                ],
+                "enum": arr_tracks,
                 "input": "checkbox",
                 "optional": False
             }

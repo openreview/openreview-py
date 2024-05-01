@@ -1063,17 +1063,7 @@ class Matching(object):
 
             invitation = openreview.tools.get_invitation(self.client, venue.get_bid_id(self.match_group.id))
             if invitation:
-                score_spec[invitation.id] = {
-                    'weight': 1,
-                    'default': 0,
-                    'translate_map' : {
-                        'Very High': 1.0,
-                        'High': 0.5,
-                        'Neutral': 0.0,
-                        'Low': -0.5,
-                        'Very Low': -1.0
-                    }
-                }
+                score_spec[invitation.id] = invitation.content['scores_spec']['value']
 
             invitation = openreview.tools.get_invitation(self.client, venue.get_recommendation_id(self.match_group.id))
             if invitation:
@@ -1119,7 +1109,8 @@ class Matching(object):
             'committee_invited_id': { 'value': venue.get_committee_id(name=invited_committee_name + '/Invited') },
             'paper_reviewer_invited_id': { 'value': venue.get_committee_id(name=invited_committee_name + '/Invited', number='{number}') if assignment_title else ''},
             'hash_seed': { 'value': hash_seed, 'readers': [ venue.venue_id ]},
-            'email_template': { 'value': email_template if email_template else ''}
+            'email_template': { 'value': email_template if email_template else ''},
+            'is_reviewer': { 'value': True if (self.match_group.id.split('/')[-1] in venue.reviewer_roles) else False },
         }
 
         # set invite assignment invitation

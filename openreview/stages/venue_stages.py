@@ -1520,7 +1520,7 @@ class CustomStage(object):
         if self.allow_de_anonymization:
             return ['~.*', conference.get_program_chairs_id()]
 
-        committee = [conference.get_program_chairs_id()]
+        committee = []
 
         if conference.use_senior_area_chairs and self.Participants.SENIOR_AREA_CHAIRS_ASSIGNED in self.invitees:
                 committee.append(conference.get_senior_area_chairs_id(number))
@@ -1539,6 +1539,9 @@ class CustomStage(object):
 
         if conference.use_ethics_reviewers and self.Participants.ETHICS_REVIEWERS_ASSIGNED in self.invitees:
             committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*', name=conference.ethics_reviewers_name))
+
+        if not committee:
+            return [conference.get_program_chairs_id()]
 
         return committee
 

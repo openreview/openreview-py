@@ -103,6 +103,7 @@ class InvitationBuilder(object):
         self.set_expertise_selection_invitations()
         self.set_review_rating_enabling_invitation()
         self.set_expertise_reviewer_invitation()
+        self.set_reviewer_message_invitation()
 
     
     def get_super_process_content(self, field_name):
@@ -6341,3 +6342,64 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         )
 
         self.save_invitation(invitation)
+
+    def set_reviewer_message_invitation(self):
+
+        venue_id = self.journal.venue_id
+
+        invitation = Invitation(id=f'{self.journal.get_reviewers_id()}/-/Reviewer_Message',
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'replacement': True,
+                'invitation': {
+                    'id': self.journal.get_reviewers_message_id(number='${2/content/noteNumber/value}'),
+                    'signatures': [ venue_id ],
+                    'readers': [ venue_id, self.journal.get_action_editors_id('${3/content/noteNumber/value}')],
+                    'writers': [venue_id],
+                    'invitees': [ venue_id, self.journal.get_action_editors_id('${3/content/noteNumber/value}')],
+                    'message': {
+                        'replyTo': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
+                        'subject': { 'param': { 'minLength': 1 } },
+                        'message': { 'param': { 'minLength': 1 } },
+                        'groups': { 'param': { 'inGroup': self.journal.get_reviewers_id('${3/content/noteNumber/value}') } },
+                        'parentGroup': { 'param': { 'const': self.journal.get_reviewers_id('${3/content/noteNumber/value}') } },
+                        'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
+                        'signature': { 'param': { 'enum': [ venue_id, '~.*']} }
+                    }
+                }
+
+            }
+        )
+
+        self.save_invitation(invitation)
+
+    def set_note_reviewer_message_invitation(self, note):
+        return self.client.post_invitation_edit(invitations=f'{self.journal.get_reviewers_id()}/-/Reviewer_Message',
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }
+            },
+            signatures=[self.journal.venue_id]
+        )        

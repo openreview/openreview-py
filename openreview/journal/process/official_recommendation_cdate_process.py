@@ -21,10 +21,13 @@ def process(client, invitation):
         assigned_action_editor=assigned_action_editor.get_preferred_name(pretty=True)
     )
     client.post_message(
+        invitation=journal.get_meta_invitation_id(),
         recipients=[journal.get_reviewers_id(number=submission.number)],
         subject=f'''[{journal.short_name}] Submit official recommendation for {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
         message=message,
-        replyTo=assigned_action_editor.get_preferred_email()
+        replyTo=assigned_action_editor.get_preferred_email(), 
+        signature=journal.venue_id,
+        sender=journal.get_message_sender()
     )
 
     ## send email to action editos
@@ -40,10 +43,13 @@ def process(client, invitation):
         contact_info=journal.contact_info
     )    
     client.post_message(
+        invitation=journal.get_meta_invitation_id(),
         recipients=[journal.get_action_editors_id(number=submission.number)],
         subject=f'''[{journal.short_name}] Reviewers must submit official recommendation for {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
         message=message,
-        replyTo=journal.contact_info
+        replyTo=journal.contact_info, 
+        signature=journal.venue_id,
+        sender=journal.get_message_sender()
     )
 
     print('Let EICs enable the review rating')
@@ -65,8 +71,11 @@ def process(client, invitation):
             assigned_action_editor=assigned_action_editor.get_preferred_name(pretty=True)
         )    
         client.post_message(
+            invitation=journal.get_meta_invitation_id(),
             recipients=[journal.get_authors_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Discussion period ended for {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
             message=message,
-            replyTo=assigned_action_editor.get_preferred_email()
+            replyTo=assigned_action_editor.get_preferred_email(), 
+            signature=journal.venue_id,
+            sender=journal.get_message_sender()
         )

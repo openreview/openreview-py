@@ -213,12 +213,28 @@ class TestARRVenueV2():
                 'homepage_override': { #TODO: Update
                     'location': 'Hawaii, USA',
                     'instructions': 'For author guidelines, please click [here](https://icml.cc/Conferences/2023/StyleAuthorInstructions)'
-                },
-                'hide_fields': hide_fields
+                }
             }
         ))
-
         helpers.await_queue_edit(client, invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision')
+
+        # hide pdf
+        post_submission_note=pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'hide_fields': hide_fields,
+                'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)'
+            },
+            forum=request_form_note.id,
+            invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Post_Submission',
+            readers= ['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form_note.id,
+            replyto=request_form_note.id,
+            signatures= ['~Program_ARRChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
 
         request_page(selenium, 'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August', pc_client.token, wait_for_element='header')
         header_div = selenium.find_element(By.ID, 'header')
@@ -455,8 +471,7 @@ class TestARRVenueV2():
                 'homepage_override': { #TODO: Update
                     'location': 'Hawaii, USA',
                     'instructions': 'For author guidelines, please click [here](https://icml.cc/Conferences/2023/StyleAuthorInstructions)'
-                },
-                'hide_fields': hide_fields
+                }
             }
         ))
 
@@ -566,7 +581,9 @@ class TestARRVenueV2():
 
         flag_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Ethics_Review_Flag')
         assert flag_invitation.process
-        assert 'official_review_name, ae_checklist_name, reviewer_checklist_name' in flag_invitation.process
+        assert 'for invitation_name in [review_name, ae_checklist_name, reviewer_checklist_name]:' in flag_invitation.process
+        assert 'ae_checklist_name' in flag_invitation.content
+        assert 'reviewer_checklist_name' in flag_invitation.content
 
         venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
         venue.create_ethics_review_stage()
@@ -1194,8 +1211,7 @@ class TestARRVenueV2():
                 'homepage_override': { #TODO: Update
                     'location': 'Hawaii, USA',
                     'instructions': 'For author guidelines, please click [here](https://icml.cc/Conferences/2023/StyleAuthorInstructions)'
-                },
-                'hide_fields': hide_fields
+                }
             }
         ))
 
@@ -1662,8 +1678,7 @@ class TestARRVenueV2():
                 'homepage_override': { #TODO: Update
                     'location': 'Hawaii, USA',
                     'instructions': 'For author guidelines, please click [here](https://icml.cc/Conferences/2023/StyleAuthorInstructions)'
-                },
-                'hide_fields': hide_fields
+                }
             }
         ))
 
@@ -1802,8 +1817,7 @@ class TestARRVenueV2():
                 'homepage_override': { #TODO: Update
                     'location': 'Hawaii, USA',
                     'instructions': 'For author guidelines, please click [here](https://icml.cc/Conferences/2023/StyleAuthorInstructions)'
-                },
-                'hide_fields': hide_fields
+                }
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),

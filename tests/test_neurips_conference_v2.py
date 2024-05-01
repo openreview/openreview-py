@@ -203,7 +203,7 @@ Please see our [call for papers](https://nips.cc/Conferences/2023/CallForPapers)
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == 'openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number)
 
-        messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2023] Invitation to serve as Senior Area Chair')
+        messages =  openreview_client.get_messages(to='sac1@google.com', subject='[NeurIPS 2023] Invitation to serve as Senior Area Chair')
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == '[NeurIPS 2023] Invitation to serve as Senior Area Chair'
         assert messages[0]['content']['text'].startswith('Dear SAC One,\n\nYou have been nominated by the program chair committee of NeurIPS 2023 to serve as Senior Area Chair.')
@@ -213,7 +213,7 @@ Please see our [call for papers](https://nips.cc/Conferences/2023/CallForPapers)
 
         helpers.await_queue_edit(openreview_client, invitation='NeurIPS.cc/2023/Conference/Senior_Area_Chairs/-/Recruitment', count=1)
 
-        messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2023] Senior Area Chair Invitation accepted')
+        messages =  openreview_client.get_messages(to='sac1@google.com', subject='[NeurIPS 2023] Senior Area Chair Invitation accepted')
         assert messages and len(messages) == 1
         assert messages[0]['content']['replyTo'] == 'pc@neurips.cc'
         assert messages[0]['content']['text'] == '''Thank you for accepting the invitation to be a Senior Area Chair for NeurIPS 2023.
@@ -225,7 +225,7 @@ If you would like to change your decision, please follow the link in the previou
 Please note that responding to this email will direct your reply to pc@neurips.cc.
 '''
 
-        messages = client.get_messages(to='sac2@gmail.com', subject='[NeurIPS 2023] Invitation to serve as Senior Area Chair')
+        messages =  openreview_client.get_messages(to='sac2@gmail.com', subject='[NeurIPS 2023] Invitation to serve as Senior Area Chair')
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == '[NeurIPS 2023] Invitation to serve as Senior Area Chair'
         assert messages[0]['content']['text'].startswith('Dear SAC Two,\n\nYou have been nominated by the program chair committee of NeurIPS 2023 to serve as Senior Area Chair.')
@@ -272,7 +272,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         helpers.await_queue()
 
-        messages = client.get_messages(to = 'ac1@mit.edu', subject = '[NeurIPS 2023] Invitation to serve as Area Chair')
+        messages =  openreview_client.get_messages(to = 'ac1@mit.edu', subject = '[NeurIPS 2023] Invitation to serve as Area Chair')
         assert len(messages) == 1
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
@@ -293,7 +293,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert len(notes) == 2
         assert notes[0].content['reduced_load']['value'] == '2'
 
-        messages = client.get_messages(to = 'ac1@mit.edu', subject = '[NeurIPS 2023] Area Chair Invitation accepted with reduced load')
+        messages =  openreview_client.get_messages(to = 'ac1@mit.edu', subject = '[NeurIPS 2023] Area Chair Invitation accepted with reduced load')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Thank you for accepting the invitation to be a Area Chair for NeurIPS 2023.
 You have selected a reduced load of 2 submissions to review.
@@ -543,7 +543,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert len(recruitment_status_notes) == 1
         assert {'NeurIPS.cc/2023/Conference/Senior_Area_Chairs/Invited': ['sac1@google.com', 'sac2@gmail.com']} == recruitment_status_notes[0].content['already_invited']
 
-        messages = client.get_messages(to='reviewer1@umass.edu', subject='[NeurIPS 2023] Invitation to serve as Reviewer')
+        messages =  openreview_client.get_messages(to='reviewer1@umass.edu', subject='[NeurIPS 2023] Invitation to serve as Reviewer')
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == '[NeurIPS 2023] Invitation to serve as Reviewer'
         assert messages[0]['content']['text'].startswith('Dear Reviewer UMass,\n\nYou have been nominated by the program chair committee of NeurIPS 2023 to serve as Reviewer.')
@@ -568,7 +568,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert len(group.members) == 1
         assert 'reviewer1@umass.edu' in group.members
 
-        messages = client.get_messages(to='reviewer1@umass.edu', subject='[NeurIPS 2023] Reviewer Invitation declined')
+        messages =  openreview_client.get_messages(to='reviewer1@umass.edu', subject='[NeurIPS 2023] Reviewer Invitation declined')
         assert messages
         assert len(messages)
         assert messages[0]['content']['text'] == 'You have declined the invitation to become a Reviewer for NeurIPS 2023.\n\nIf you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.\n\nPlease note that responding to this email will direct your reply to pc@neurips.cc.\n'
@@ -597,7 +597,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert len(reviewers_group.members) == 1
         assert 'reviewer1@umass.edu' in reviewers_group.members
 
-        messages = client.get_messages(to = 'reviewer1@umass.edu', subject = '[NeurIPS 2023] Reviewer Invitation accepted with reduced load')
+        messages =  openreview_client.get_messages(to = 'reviewer1@umass.edu', subject = '[NeurIPS 2023] Reviewer Invitation accepted with reduced load')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Thank you for accepting the invitation to be a Reviewer for NeurIPS 2023.
 You have selected a reduced load of 4 submissions to review.
@@ -636,7 +636,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         helpers.await_queue()
 
-        messages = client.get_messages(to='reviewer2@mit.edu', subject='Reminder: [NeurIPS 2023] Invitation to serve as Reviewer')
+        messages =  openreview_client.get_messages(to='reviewer2@mit.edu', subject='Reminder: [NeurIPS 2023] Invitation to serve as Reviewer')
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == 'Reminder: [NeurIPS 2023] Invitation to serve as Reviewer'
         assert messages[0]['content']['text'].startswith('Dear invitee,\n\nYou have been nominated by the program chair committee of NeurIPS 2023 to serve as Reviewer.')
@@ -650,7 +650,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert len(group.members) == 1
         assert 'reviewer2@mit.edu' in group.members
 
-        messages = client.get_messages(to='reviewer2@mit.edu', subject='[NeurIPS 2023] Reviewer Invitation declined')
+        messages =  openreview_client.get_messages(to='reviewer2@mit.edu', subject='[NeurIPS 2023] Reviewer Invitation declined')
         assert messages
         assert len(messages)
         assert messages[0]['content']['text'] =='You have declined the invitation to become a Reviewer for NeurIPS 2023.\n\nIf you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.\n\nPlease note that responding to this email will direct your reply to pc@neurips.cc.\n'
@@ -700,7 +700,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         assert pc_client.get_invitation('openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number))
 
-    def test_recruit_ethics_reviewers(self, client, request_page, selenium, helpers):
+    def test_recruit_ethics_reviewers(self, client, request_page, selenium, helpers, openreview_client):
 
         ## Need super user permission to add the venue to the active_venues group
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
@@ -734,7 +734,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert len(group.members) == 1
         assert 'reviewerethics@neurips.com' in group.members
 
-        messages = client.get_messages(to='reviewerethics@neurips.com', subject='[NeurIPS 2023] Invitation to serve as Ethics Reviewer')
+        messages =  openreview_client.get_messages(to='reviewerethics@neurips.com', subject='[NeurIPS 2023] Invitation to serve as Ethics Reviewer')
         assert messages and len(messages) == 1
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
@@ -881,8 +881,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
-                'Expected Submissions': '100',
-                'hide_fields': ['keywords', 'financial_support']
+                'Expected Submissions': '100'
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
@@ -892,16 +891,28 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             signatures=['~Program_NeurIPSChair1'],
             writers=[]
         )
-
-        with pytest.raises(openreview.OpenReviewException, match=r'Invalid field to hide: financial_support'):
-            pc_client.post_note(venue_revision_note)
-
-        venue_revision_note.content['hide_fields'] = ['keywords']
         pc_client.post_note(venue_revision_note)
 
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Post_Submission-0-0')
         helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Revision-0-0')
+
+        post_submission_note=pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'hide_fields': ['keywords'],
+                'submission_readers': 'Program chairs and paper authors only'
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['NeurIPS.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_NeurIPSChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
 
         notes = test_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Conference/Submission' }, sort='number:desc')
         assert len(notes) == 5
@@ -992,15 +1003,20 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             ))
         helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
 
-        note_edits = openreview_client.get_note_edits(invitation='NeurIPS.cc/2023/Conference/Submission2/-/Revision')
-        assert len(note_edits) == 1
-        assert 'readers' in note_edits[0].note.content['authors']
-        assert  note_edits[0].note.content['authors']['readers'] == [
+        note = openreview_client.get_note(revision_note['note']['id'])
+        assert note
+        assert 'readers' in note.content['authors']
+        assert  note.content['authors']['readers'] == [
         "NeurIPS.cc/2023/Conference",
         "NeurIPS.cc/2023/Conference/Submission2/Authors"
         ]
-        assert 'readers' in note_edits[0].note.content['authors']
-        assert  note_edits[0].note.content['authors']['readers'] == [
+        assert 'readers' in note.content['authors']
+        assert  note.content['authors']['readers'] == [
+        "NeurIPS.cc/2023/Conference",
+        "NeurIPS.cc/2023/Conference/Submission2/Authors"
+        ]
+        assert 'readers' in note.content['keywords']
+        assert  note.content['keywords']['readers'] == [
         "NeurIPS.cc/2023/Conference",
         "NeurIPS.cc/2023/Conference/Submission2/Authors"
         ]
