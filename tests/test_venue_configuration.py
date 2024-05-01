@@ -128,3 +128,6 @@ class TestVenueConfiguration():
         #     )
         # )
         # helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2025/Conference/-/Submission/Deadline')
+
+        # submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission')
+        # assert submission_inv and 'subject_area' in submission_inv.edit['note']['content']

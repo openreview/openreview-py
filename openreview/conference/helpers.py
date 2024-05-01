@@ -9,6 +9,13 @@ def get_venue(client, venue_note_id, support_user='OpenReview.net/Support'):
     venue = openreview.venue.Venue(client, note.content['venue_id']['value'], support_user)
     venue.name = note.content['official_venue_name']['value']
     venue.short_name = note.content['abbreviated_venue_name']['value']
+    venue.request_form_id = venue_note_id
+    venue.use_area_chairs = 'Yes' in note.content.get('area_chairs_and_senior_area_chairs', {}).get('value','')
+    venue.use_senior_area_chairs = note.content.get('area_chairs_and_senior_area_chairs', {}).get('value','') == 'Yes, our venue has Area Chairs and Senior Area Chairs'
+    venue.use_secondary_area_chairs = note.content.get('secondary_area_chairs', {}).get('value','') == 'Yes, our venue has Secondary Area Chairs'
+    venue.use_ethics_chairs = venue.use_ethics_reviewers = note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers'
+
+    
     venue.submission_stage = get_submission_stage_v2(note, venue)
     venue.setup(note.content.get('program_chair_emails',{}).get('value'), note.content.get('publication_chairs_emails', {}).get('value'))
     return venue
