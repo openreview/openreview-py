@@ -1632,7 +1632,7 @@ class InvitationBuilder(object):
                     {
                         'id': 'discussion',
                         'label': 'Discussion',
-                        'filter': f'-invitations:{venue_id}/Submission${{note.number}}/-/Chat',
+                        'filter': f'-invitations:{venue_id}/{self.venue.submission_stage.name}${{note.number}}/-/Chat',
                         'nesting': 3,
                         'sort': 'date-desc',
                         'layout': 'default',
@@ -1641,16 +1641,103 @@ class InvitationBuilder(object):
                     {
                         'id': 'committee-chat',
                         'label': 'Committee members Chat',
-                        'filter': f'invitations:{venue_id}/Submission${{note.number}}/-/Chat,{venue_id}/Submission${{note.number}}/-/{self.venue.review_stage.name}',
+                        'filter': f'invitations:{venue_id}/{self.venue.submission_stage.name}${{note.number}}/-/Chat,{venue_id}/{self.venue.submission_stage.name}${{note.number}}/-/{self.venue.review_stage.name}',
                         'nesting': 1,
                         'sort': 'date-asc',
                         'layout': 'chat',
                         'live': True,
-                        'expandedInvitations': [f'{venue_id}/Submission${{note.number}}/-/Chat']
+                        'expandedInvitations': [f'{venue_id}/{self.venue.submission_stage.name}${{note.number}}/-/Chat']
                     }
                 ]
             )
-        )        
+        )
+
+        emoji_chat_invitation = self.venue.get_invitation_id('Chat_Emoji')
+
+        invitation = Invitation(id=emoji_chat_invitation,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            cdate=comment_cdate,
+            date_processes=[{ 
+                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                'script': self.invitation_edit_process              
+            }],
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'replacement': True,
+                'invitation': {
+                    'id': self.venue.get_invitation_id('Chat_Emoji', '${2/content/noteNumber/value}'),
+                    'signatures': [ venue_id ],
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'invitees': comment_stage.get_chat_invitees(self.venue, number='${3/content/noteNumber/value}'),
+                    'cdate': comment_cdate,
+                    'tag': {
+                        'id': {
+                            'param': {
+                                'withInvitation': self.venue.get_invitation_id('Chat_Emoji', '${5/content/noteNumber/value}'),
+                                'optional': True
+                            }
+                        },
+                        'forum': '${3/content/noteId/value}',
+                        # 'replyto': { 
+                        #     'param': {
+                        #         'withForum': '${6/content/noteId/value}', 
+                        #     }
+                        # },
+                        'replyto': { 
+                            'param': {
+                                'withInvitation': self.venue.get_invitation_id('Chat', '${5/content/noteNumber/value}'), 
+                            }
+                        },                        
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'signatures': {
+                            'param': { 
+                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in comment_stage.get_chat_signatures(self.venue, '${7/content/noteNumber/value}')]
+                            }                            
+                        },
+                        'readers': comment_stage.get_chat_readers(self.venue, '${4/content/noteNumber/value}'),
+                        #'writers': [venue_id, '${2/signatures}'],
+                        'tag': {
+                            'param': {
+                                'enum': ['thumbs-up', 'thumbs-down']
+                            }                                
+                        }
+                    }
+                }
+            }
+        )
+
+        if comment_expdate:
+            invitation.edit['invitation']['expdate'] = comment_expdate
+
+        self.save_invitation(invitation, replacement=False)                
         return invitation    
 
     def set_decision_invitation(self):

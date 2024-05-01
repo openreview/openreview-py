@@ -1374,6 +1374,21 @@ class OpenReviewClient(object):
         n = response.json()['edits'][0]
         return Edit.from_json(n)
 
+    def post_tag(self, tag):
+        """
+        Posts the tag. If the tag is unsigned, signs it using the client's default signature.
+
+        :param tag: Tag to be posted
+        :type tag: Tag
+
+        :return Tag: The posted Tag
+        """
+        response = self.session.post(self.tags_url, json = tag.to_json(), headers = self.headers)
+        response = self.__handle_response(response)
+
+        return Tag.from_json(response.json())
+    
+    
     def get_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None, with_count=False):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
@@ -3063,6 +3078,121 @@ class Group(object):
                     elements[index] = self.anon_members[self.members.index(element)]
                 else:
                     elements[index] = element
-        return elements        
+        return elements
+
+
+class Tag(object):
+    """
+    :param tag: Content of the tag
+    :type tag: str
+    :param invitation: Invitation id
+    :type invitation: str
+    :param readers: List of readers in the Invitation, each reader is a Group id
+    :type readers: list[str]
+    :param signatures: List of signatures in the Invitation, each signature is a Group id
+    :type signatures: list[str]
+    :param id: Tag id
+    :type id: str, optional
+    :param cdate: Creation date
+    :type cdate: int, optional
+    :param tcdate: True creation date
+    :type tcdate: int, optional
+    :param ddate: Deletion date
+    :type ddate: int, optional
+    :param forum: Forum id
+    :type forum: str, optional
+    :param replyto: Note id
+    :type replyto: list[str], optional
+    :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
+    :type nonreaders: list[str], optional
+    """
+    def __init__(self, tag, invitation, signatures, readers=None, id=None, cdate=None, tcdate=None, ddate=None, forum=None, replyto=None, nonreaders=None):
+        self.id = id
+        self.cdate = cdate
+        self.tcdate = tcdate
+        self.ddate = ddate
+        self.tag = tag
+        self.forum = forum
+        self.invitation = invitation
+        self.replyto = replyto
+        self.readers = readers
+        self.nonreaders = [] if nonreaders is None else nonreaders
+        self.signatures = signatures
+
+    def to_json(self):
+        """
+        Converts Tag instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
+
+        :return: Dictionary containing all the parameters of a Tag instance
+        :rtype: dict
+        """
+        
+        body = {}
+
+        if self.id:
+            body['id'] = self.id
+
+        if self.cdate:
+            body['cdate'] = self.cdate
+
+        if self.ddate:
+            body['ddate'] = self.ddate
+
+        if self.tag:    
+            body['tag'] = self.tag
+
+        if self.forum:
+            body['forum'] = self.forum
+
+        if self.invitation:
+            body['invitation'] = self.invitation
+
+        if self.replyto:
+            body['replyto'] = self.replyto
+
+        if self.readers:
+            body['readers'] = self.readers
+
+        if self.nonreaders:
+            body['nonreaders'] = self.nonreaders
+
+        if self.signatures:
+            body['signatures'] = self.signatures
+
+        return body
+
+    @classmethod
+    def from_json(Tag, t):
+        """
+        Creates a Tag object from a dictionary that contains keys values equivalent to the name of the instance variables of the Tag class
+
+        :param n: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Tag class
+        :type n: dict
+
+        :return: Tag whose instance variables contain the values from the dictionary
+        :rtype: Tag
+        """
+        tag = Tag(
+            id = t.get('id'),
+            cdate = t.get('cdate'),
+            tcdate = t.get('tcdate'),
+            ddate = t.get('ddate'),
+            tag = t.get('tag'),
+            forum = t.get('forum'),
+            invitation = t.get('invitation'),
+            replyto = t.get('replyto'),
+            readers = t.get('readers'),
+            nonreaders = t.get('nonreaders'),
+            signatures = t.get('signatures'),
+        )
+        return tag
+
+    def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
+        return 'Tag(' + content + ')'
+
+    def __str__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(vars(self))            
 
 

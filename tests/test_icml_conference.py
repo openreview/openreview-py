@@ -3651,9 +3651,13 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Comment-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Chat-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Chat_Emoji-0-1', count=1)
 
         chat_invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Chat')
         assert len(chat_invitations) == 100
+
+        chat_emoji_invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Chat_Emoji')
+        assert len(chat_emoji_invitations) == 100        
         
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Comment')
         assert invitation
@@ -5462,3 +5466,14 @@ Best,
         assert len(openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] New messages in comittee members chat for submission 1: Paper title 1 Version 2')) == 1
         assert len(openreview_client.get_messages(to='sac2@icml.cc', subject='[ICML 2023] New messages in comittee members chat for submission 1: Paper title 1 Version 2')) == 0
         assert len(openreview_client.get_messages(to='pc@icml.cc', subject='[ICML 2023] New messages in comittee members chat for submission 1: Paper title 1 Version 2')) == 1
+
+        ## Add tag emoji
+        sac_client.post_tag(openreview.api.Tag(
+            invitation='ICML.cc/2023/Conference/Submission1/-/Chat_Emoji',
+            signatures=['ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs'],
+            tag='thumbs-up',
+            replyto=note_edit['note']['id']
+        ))
+
+        tags = openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Submission1/-/Chat_Emoji')
+        assert len(tags) == 1
