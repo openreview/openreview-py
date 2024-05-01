@@ -356,6 +356,49 @@ class TestWorkshopV2():
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
 
+        with pytest.raises(openreview.OpenReviewException, match=r'Please specify the accept options in "Accept Decision Options"'):
+            decision_stage_note = pc_client.post_note(openreview.Note(
+                content={
+                    'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                    'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                    'decision_options': 'Invite to Venue, Reject',
+                    'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                    'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
+                    'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
+                    'release_decisions_to_area_chairs': 'No, decisions should not be immediately revealed to the paper\'s area chairs',
+                    'notify_authors': 'Yes, send an email notification to the authors'
+                },
+                forum=request_form.forum,
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/Decision_Stage',
+                readers=['PRL/2023/ICAPS/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.forum,
+                replyto=request_form.forum,
+                signatures=['~Program_ICAPSChair1'],
+                writers=[]
+            ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'All accept decision options must be included in "Decision Options"'):
+            decision_stage_note = pc_client.post_note(openreview.Note(
+                content={
+                    'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                    'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                    'decision_options': 'Invite to Venue, Reject',
+                    'accept_decision_options': 'Invite to Conference',
+                    'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                    'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
+                    'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
+                    'release_decisions_to_area_chairs': 'No, decisions should not be immediately revealed to the paper\'s area chairs',
+                    'notify_authors': 'Yes, send an email notification to the authors'
+                },
+                forum=request_form.forum,
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/Decision_Stage',
+                readers=['PRL/2023/ICAPS/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.forum,
+                replyto=request_form.forum,
+                signatures=['~Program_ICAPSChair1'],
+                writers=[]
+            ))
+        
         decision_stage_note = pc_client.post_note(openreview.Note(
             content={
                 'decision_start_date': start_date.strftime('%Y/%m/%d'),

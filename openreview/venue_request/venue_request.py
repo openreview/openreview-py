@@ -847,6 +847,9 @@ class VenueStages():
                     }
                 ))
 
+        with open(self.venue_request.decision_stage_pre_process, 'r') as pre:
+            pre_process_file_content = pre.read()
+
         return self.venue_request.client.post_invitation(openreview.Invitation(
             id='{}/-/Decision_Stage'.format(self.venue_request.support_group.id),
             readers=['everyone'],
@@ -854,6 +857,7 @@ class VenueStages():
             signatures=[self.venue_request.super_user],
             invitees=['everyone'],
             multiReply=True,
+            preprocess=pre_process_file_content,
             process_string=self.file_content,
             reply={
                 'readers': {
@@ -1165,6 +1169,7 @@ class VenueRequest():
         self.matching_status_process = os.path.join(os.path.dirname(__file__), 'process/matching_status_process.py')
         self.recruitment_status_process = os.path.join(os.path.dirname(__file__), 'process/recruitment_status_process.py')
         self.decision_upload_status_process = os.path.join(os.path.dirname(__file__), 'process/decision_upload_status_process.py')
+        self.decision_stage_pre_process = os.path.join(os.path.dirname(__file__), 'process/decision_stage_pre_process.py')
         self.deploy_process = os.path.join(os.path.dirname(__file__), 'process/deployProcess.py')
         self.recruitment_process = os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py')
         self.remind_recruitment_process = os.path.join(os.path.dirname(__file__), 'process/remindRecruitmentProcess.py')
