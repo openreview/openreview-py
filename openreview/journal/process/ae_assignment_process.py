@@ -70,9 +70,9 @@ def process_update(client, edge, invitation, existing_edge):
         ## expire AE recommendation
         journal.invitation_builder.expire_invitation(journal.get_ae_recommendation_id(number=note.number))
 
-        ## update assigned_action_editor if exists in the submission
+        ## add assigned_action_editor
         content = {}
-        if 'assigned_action_editor' in note.content:
+        if note.content['venueid']['value'] == journal.under_review_venue_id:
             content['assigned_action_editor'] = { 'value': edge.tail}
 
         if journal.assigning_AE_venue_id == note.content['venueid']['value']:

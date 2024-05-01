@@ -4319,6 +4319,8 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         current_assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
         raia_client.post_edge(current_assignment)
 
+        helpers.await_queue_edit(openreview_client, edit_id=current_assignment.id, count=2)
+
         paper_assignment_edge = raia_client.post_edge(openreview.api.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Samy_Bengio1'],
             writers=[venue_id, editor_in_chief_group_id],
