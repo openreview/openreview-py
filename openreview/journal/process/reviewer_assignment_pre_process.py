@@ -49,6 +49,10 @@ def process(client, edge, invitation):
         if client.get_groups(member=edge.tail, id=journal.get_solicit_reviewers_id(number=submission.number)):
             return
         
+        ## Check if it is not an official reviewer and skip the avaliability check and pedning reviews check
+        if not client.get_groups(member=edge.tail, id=journal.get_reviewers_id()):
+            return        
+        
         ## Check availability
         edges = client.get_edges(invitation=journal.get_reviewer_availability_id(), tail=edge.tail)
         if edges and edges[0].label == 'Unavailable':

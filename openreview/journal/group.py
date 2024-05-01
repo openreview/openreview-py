@@ -71,6 +71,7 @@ class GroupBuilder(object):
             'subtitle': { 'value': self.journal.short_name },
             'website': { 'value': self.journal.website },
             'contact': { 'value': self.journal.contact_info },
+            'message_sender': { 'value': self.journal.get_message_sender() },
             'submission_id': { 'value': self.journal.get_author_submission_id() },
             'under_review_venue_id': { 'value': self.journal.under_review_venue_id },
             'decision_pending_venue_id': { 'value': self.journal.decision_pending_venue_id },
@@ -80,7 +81,7 @@ class GroupBuilder(object):
             content['certifications'] = { 'value': self.journal.get_certifications() }
         if self.journal.get_eic_certifications():
             content['eic_certifications'] = { 'value': self.journal.get_eic_certifications() }
-        if self.journal.get_expert_reviewer_certification():
+        if self.journal.has_expert_reviewers():
             content['expert_reviewer_certification'] = { 'value': self.journal.get_expert_reviewer_certification() }
         if self.journal.get_event_certifications():
             content['event_certifications'] = { 'value': self.journal.get_event_certifications() }
@@ -173,11 +174,11 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             publication_chairs_id = self.journal.get_publication_chairs_id()
             publication_chairs_group = openreview.tools.get_group(self.client, publication_chairs_id)
             if not publication_chairs_group:
-                action_editor_group=self.post_group(Group(id=publication_chairs_id,
+                publication_chairs_group=self.post_group(Group(id=publication_chairs_id,
                                 readers=['everyone'],
                                 writers=[venue_id],
                                 signatures=[venue_id],
-                                signatories=[venue_id],
+                                signatories=[venue_id, publication_chairs_id],
                                 members=[]))
 
         ## action editors group
@@ -365,6 +366,17 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
                             signatories=[],
                             members=[]))
             
+        ## reviewers volunteers group
+        reviewers_volunteers_id = self.journal.get_reviewers_volunteers_id()
+        reviewers_volunteers_group = openreview.tools.get_group(self.client, reviewers_volunteers_id)
+        if not reviewers_volunteers_group:
+            self.post_group(Group(id=reviewers_volunteers_id,
+                            readers=[venue_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[],
+                            members=[]))            
+            
         ## expert reviewer group
         if self.journal.has_expert_reviewers():
             expert_reviewers_id = self.journal.get_expert_reviewers_id()
@@ -442,7 +454,7 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
                 nonreaders=[authors_group_id],
                 writers=[venue_id],
                 signatures=[venue_id],
-                signatories=[venue_id, action_editors_group_id],
+                signatories=[venue_id],
                 members=[],
                 anonids=True
             ))
@@ -484,6 +496,6 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
 
     def set_impersonators(self, impersonators):
         return self.post_group(openreview.api.Group(
-            id = self.venue_id,
+            id = self.journal.venue_id,
             impersonators = impersonators
         ))

@@ -6,6 +6,7 @@ import datetime
 import random
 import os
 import re
+from selenium.webdriver.common.by import By
 from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.journal import Journal
@@ -27,7 +28,7 @@ class TestJournal():
     def test_setup(self, openreview_client, request_page, selenium, helpers, journal_request):
 
         ## Support Role
-        helpers.create_user('adalca@mit.edu', 'Adrian', 'Dalca')
+        adrian_client = helpers.create_user('adalca@mit.edu', 'Adrian', 'Dalca')
 
         ## Editors in Chief
         helpers.create_user('msabuncu@cornell.edu', 'Mert', 'Sabuncu')
@@ -71,10 +72,8 @@ class TestJournal():
                             'assignment_delay': 0,
                             'show_conflict_details': True,
                             'has_publication_chairs': True,
+                            'expert_reviewers': False,
                             'submission_additional_fields': {
-                                # 'competing_interests': {
-                                #     'delete': True
-                                # },
                                 'additional_field': {
                                     'order': 98,
                                     'description': 'this is an additional field',
@@ -112,6 +111,13 @@ class TestJournal():
 
         helpers.await_queue_edit(openreview_client, request_form['id'])
 
+        request_page(selenium, 'http://localhost:3030/group?id=MELBA', adrian_client.token, wait_for_element='tabs-container')
+        tabs = selenium.find_element(By.CLASS_NAME, 'nav-tabs').find_elements(By.TAG_NAME, 'li')
+        assert len(tabs) == 4
+        assert tabs[0].text == 'Your Consoles'
+        assert tabs[1].text == 'Accepted Papers'
+        assert tabs[2].text == 'Under Review Submissions'
+        assert tabs[3].text == 'All Submissions'
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
@@ -213,6 +219,9 @@ To do so, please follow this link: https://openreview.net/invitation?id=MELBA/Pa
 For more details and guidelines on the MELBA review process, visit melba-journal.org.
 
 The MELBA Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to editors@melba-journal.org.
 '''
 
     def test_ae_assignment(self, journal, openreview_client, test_client, helpers):
@@ -506,7 +515,11 @@ The MELBA Editors-in-Chief
                                 content= {
                                     'verification': { 'value': 'I confirm that camera ready manuscript complies with the MELBA stylefile and, if appropriate, includes the minor revisions that were requested.' }
                                  }
-                            ))        
+                            ))
+
+        journal.invitation_builder.expire_paper_invitations(note)
+        journal.invitation_builder.expire_reviewer_responsibility_invitations()
+        journal.invitation_builder.expire_assignment_availability_invitations()                
 
 
 

@@ -8,6 +8,7 @@ const startParam = `${replaceAreaChairName(domain.content.area_chairs_assignment
 const traverseParam = `${replaceReviewerName(domain.content.reviewers_assignment_id?.value)}`
 const editParam = `${replaceReviewerName(domain.content.reviewers_invite_assignment_id?.value)}`
 const browseInvitations = []
+const assignmentInvitation = domain.content.sac_paper_assignments?.value ? null : domain.content.senior_area_chairs_assignment_id?.value
 
 if (domain.content.reviewers_affinity_score_id?.value) {
   browseInvitations.push(replaceReviewerName(domain.content.reviewers_affinity_score_id?.value))
@@ -30,7 +31,9 @@ return {
       instructions: `<p class="dark">This page provides information and status updates for the ${domain.content.subtitle?.value}. It will be regularly updated as the conference progresses, so please check back frequently.</p>`
     },
     venueId: domain.id,
-    assignmentInvitation: domain.content.senior_area_chairs_assignment_id?.value,
+    assignmentInvitation: assignmentInvitation,
+    messageSubmissionReviewersInvitationId: domain.content.reviewers_message_submission_id?.value,
+    messageAreaChairsInvitationId: domain.content.area_chairs_message_id?.value,
     submissionId: domain.content.submission_id?.value,
     submissionVenueId: domain.content.submission_venue_id?.value,
     withdrawnVenueId: domain.content.withdrawn_venue_id?.value,

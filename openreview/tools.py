@@ -1212,7 +1212,9 @@ def recruit_reviewer(client, user, first,
     reviewers_invited_id,
     contact_info='info@openreview.net',
     verbose=True,
-    replyTo=None):
+    replyTo=None,
+    invitation=None,
+    signature=None):
     """
     Recruit a reviewer. Sends an email to the reviewer with a link to accept or
     reject the recruitment invitation.
@@ -1269,7 +1271,10 @@ def recruit_reviewer(client, user, first,
         raise e
 
     # send the email through openreview
-    response = client.post_message(recruit_message_subj, [user], personalized_message, parentGroup=reviewers_invited_id, replyTo=replyTo)
+    if invitation is not None:
+        response = client.post_message(recruit_message_subj, [user], personalized_message, parentGroup=reviewers_invited_id, replyTo=replyTo, invitation=invitation, signature=signature)
+    else:
+        response = client.post_message(recruit_message_subj, [user], personalized_message, parentGroup=reviewers_invited_id, replyTo=replyTo)
 
     if verbose:
         print("Sent to the following: ", response)
@@ -1382,7 +1387,7 @@ def get_profile_info(profile, n_years=None):
 
     if n_years:
         cut_off_date = datetime.datetime.now()
-        cut_off_date = cut_off_date.replace(year=cut_off_date.year - n_years)
+        cut_off_date = cut_off_date - datetime.timedelta(days=365 * n_years)
         cut_off_year = cut_off_date.year
     else:
         cut_off_year = -1
@@ -1442,7 +1447,7 @@ def get_neurips_profile_info(profile, n_years=None):
 
     if n_years:
         cut_off_date = datetime.datetime.now()
-        cut_off_date = cut_off_date.replace(year=cut_off_date.year - n_years)
+        cut_off_date = cut_off_date - datetime.timedelta(days=365 * n_years)
         cut_off_year = cut_off_date.year
     else:
         cut_off_year = -1
@@ -1509,7 +1514,7 @@ def get_current_submissions_profile_info(profile, n_years=None, submission_venue
 
     if n_years is not None:
         cut_off_date = datetime.datetime.now()
-        cut_off_date = cut_off_date.replace(year=cut_off_date.year - n_years)
+        cut_off_date = cut_off_date - datetime.timedelta(days=365 * n_years)
         cut_off_year = cut_off_date.year
     else:
         cut_off_year = -1

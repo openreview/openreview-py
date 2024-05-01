@@ -49,6 +49,7 @@ class TestCVPRConference():
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
+                'senior_area_chairs_assignment': 'Area Chairs',
                 'secondary_area_chairs': 'Yes, our venue has Secondary Area Chairs',
                 'Venue Start Date': '2024/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
@@ -210,7 +211,7 @@ class TestCVPRConference():
         helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
         helpers.await_queue_edit(openreview_client, invitation='thecvf.com/CVPR/2024/Conference/-/Desk_Rejected_Submission', count=1)
 
-        messages = client.get_messages(subject='[CVPR 2024]: Paper #50 desk-rejected by Program Chairs')
+        messages = openreview_client.get_messages(subject='[CVPR 2024]: Paper #50 desk-rejected by Program Chairs')
         assert messages and len(messages) == 3
         recipients = [msg['content']['to'] for msg in messages]
         assert 'pc@cvpr.cc' not in recipients
@@ -405,6 +406,22 @@ class TestCVPRConference():
         pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
+        pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['thecvf.com/CVPR/2024/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_CVPRChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()        
+
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
@@ -559,7 +576,7 @@ class TestCVPRConference():
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=rating_edit['id'])
 
         invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/Submission1/Official_Review2/-/Rating')
 
@@ -574,7 +591,7 @@ class TestCVPRConference():
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=rating_edit['id'])
 
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@cvpr.cc', password=helpers.strong_password)
 
@@ -679,6 +696,7 @@ class TestCVPRConference():
                 'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
                 'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_meta_reviews_to_reviewers': 'Meta review should not be revealed to any reviewer',
+                'recommendation_field_name': 'preliminary_recommendation',
                 'remove_meta_review_form_options': ['recommendation', 'confidence'],
                 'additional_meta_review_form_options': {
                     "metareview": {
@@ -719,6 +737,9 @@ class TestCVPRConference():
         ))
 
         helpers.await_queue() 
+
+        domain = openreview_client.get_group('thecvf.com/CVPR/2024/Conference')
+        assert domain.content['meta_review_recommendation']['value'] == 'preliminary_recommendation'
 
         ac1_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)       
         ac2_client = openreview.api.OpenReviewClient(username='ac2@cvpr.cc', password=helpers.strong_password)
@@ -1137,6 +1158,19 @@ class TestCVPRConference():
             )
         )
 
+        ## Try to edit the invitation and don't get prefix group not found error
+        openreview_client.post_invitation_edit(
+            invitations='thecvf.com/CVPR/2024/Conference/-/Edit',
+            readers=[venue.id],
+            writers=[venue.id],
+            signatures=[venue.id],
+            invitation=openreview.api.Invitation(
+                id='thecvf.com/CVPR/2024/Conference/Submission4/Meta_Review1/-/Final_Revision',
+                expdate=openreview.tools.datetime_millis(due_date + datetime.timedelta(days=1))
+            )
+        )
+      
+        
         # Secondary AC can't post meta review revision
         secondary_ac_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)
         secondary_ac_anon_group_id = secondary_ac_client.get_groups(prefix=f'thecvf.com/CVPR/2024/Conference/Submission4/Secondary_Area_Chair_.*', signatory='ac1@cvpr.cc')[0].id

@@ -2,6 +2,7 @@ def process(client, edit, invitation):
 
     domain = client.get_group(edit.domain)
     venue_id = domain.id
+    meta_invitation_id = domain.get_content_value('meta_invitation_id')
     short_name = domain.get_content_value('subtitle')
     contact = domain.get_content_value('contact')
     submission_name = domain.get_content_value('submission_name')
@@ -11,6 +12,7 @@ def process(client, edit, invitation):
     email_sacs = meta_invitation.content['email_sacs']['value']
     notify_readers = meta_invitation.content['notify_readers']['value']
     email_template = meta_invitation.content['email_template']['value']
+    sender = domain.get_content_value('message_sender')
 
     submission = client.get_note(edit.note.forum)
     note = client.get_note(edit.note.id)
@@ -29,6 +31,9 @@ def process(client, edit, invitation):
     pretty_signature = openreview.tools.pretty_id(signature)
     pretty_signature = 'An author' if pretty_signature == 'Authors' else pretty_signature
 
+    vowels = ['a', 'e', 'i', 'o', 'u']
+    before_invitation = 'An' if invitation_name[0].lower() in vowels else 'A'
+
     ignore_groups = [edit.tauthor]
 
     content = f'''
@@ -42,10 +47,13 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
     program_chairs_id = domain.get_content_value('program_chairs_id')
     if email_pcs and (program_chairs_id in note.readers or 'everyone' in note.readers):
         client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
+            sender=sender,
             recipients=[program_chairs_id],
             ignoreRecipients = ignore_groups,
-            subject=f'''[{short_name}] A {invitation_name} has been received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''We have received a {invitation_name} on a submission to {short_name} for which you are serving as Program Chair.
+            subject=f'''[{short_name}] {before_invitation} {invitation_name} has been received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            message=f'''We have received {before_invitation.lower()} {invitation_name} on a submission to {short_name} for which you are serving as Program Chair.
 
 {content}
 ''' if not email_template else email_template
@@ -53,7 +61,10 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
 
     #email tauthor
     client.post_message(
-        recipients=note.signatures,
+        invitation=meta_invitation_id,
+        signature=venue_id,
+        sender=sender,
+        recipients=[edit.tauthor],
         replyTo=contact,
         subject=f'''[{short_name}] Your {invitation_name} has been received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
         message=f'''We have received your {invitation_name} on a submission to {short_name}.
@@ -68,11 +79,14 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
     send_SACS_emails = senior_area_chairs_name and email_sacs
     if send_SACS_emails and ('everyone' in note.readers or senior_area_chairs_id in note.readers or paper_senior_area_chairs_id in note.readers):
         client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
+            sender=sender,
             recipients=[paper_senior_area_chairs_id],
             ignoreRecipients = ignore_groups,
             replyTo=contact,
-            subject=f'''[{short_name}] A {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''We have received a {invitation_name} on a submission to {short_name} for which you are serving as Senior Area Chair.
+            subject=f'''[{short_name}] {before_invitation} {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            message=f'''We have received {before_invitation.lower()} {invitation_name} on a submission to {short_name} for which you are serving as Senior Area Chair.
 
 {content}
 ''' if not email_template else email_template
@@ -83,11 +97,14 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
     paper_area_chairs_id = f'{paper_group_id}/{area_chairs_name}'
     if area_chairs_name and ('everyone' in note.readers or area_chairs_id in note.readers or paper_area_chairs_id in note.readers):
         client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
+            sender=sender,
             recipients=[paper_area_chairs_id],
             ignoreRecipients = ignore_groups,
             replyTo=contact,
-            subject=f'''[{short_name}] A {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''We have received a {invitation_name} on a submission to {short_name} for which you are an official area chair.
+            subject=f'''[{short_name}] {before_invitation} {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            message=f'''We have received {before_invitation.lower()} {invitation_name} on a submission to {short_name} for which you are an official area chair.
 
 {content}
 ''' if not email_template else email_template
@@ -100,22 +117,28 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
     paper_reviewers_submitted_id = f'{paper_group_id}/{reviewers_submitted_name}'
     if 'everyone' in note.readers or reviewers_id in note.readers or paper_reviewers_id in note.readers:
         client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
+            sender=sender,
             recipients=[paper_reviewers_id],
             ignoreRecipients=ignore_groups,
             replyTo=contact,
-            subject=f'''[{short_name}] A {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''We have received a {invitation_name} on a submission to {short_name} for which you are serving as reviewer.
+            subject=f'''[{short_name}] {before_invitation} {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            message=f'''We have received {before_invitation.lower()} {invitation_name} on a submission to {short_name} for which you are serving as reviewer.
 
 {content}
 ''' if not email_template else email_template
         )
     elif paper_reviewers_submitted_id in note.readers:
         client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
+            sender=sender,
             recipients=[paper_reviewers_submitted_id],
             ignoreRecipients=ignore_groups,
             replyTo=contact,
-            subject=f'''[{short_name}] A {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''We have received a {invitation_name} on a submission to {short_name} for which you are serving as reviewer.
+            subject=f'''[{short_name}] {before_invitation} {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            message=f'''We have received {before_invitation.lower()} {invitation_name} on a submission to {short_name} for which you are serving as reviewer.
 
 {content}
 ''' if not email_template else email_template
@@ -126,11 +149,14 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
     paper_authors_id = f'{paper_group_id}/{authors_name}'
     if paper_authors_id in note.readers or 'everyone' in note.readers:
         client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
+            sender=sender,
             recipients=submission.content['authorids']['value'],
             ignoreRecipients=ignore_groups,
             replyTo=contact,
-            subject=f'''[{short_name}] A {invitation_name} has been received on your Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''We have recieved a {invitation_name} on your submission to {short_name}
+            subject=f'''[{short_name}] {before_invitation} {invitation_name} has been received on your Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            message=f'''We have received {before_invitation.lower()} {invitation_name} on your submission to {short_name}.
 
 {content}
 ''' if not email_template else email_template

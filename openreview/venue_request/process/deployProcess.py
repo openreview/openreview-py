@@ -92,7 +92,9 @@ You can use the following links to access the venue:
 If you need to make a change to the information provided in your request form, please feel free to revise it directly using the "Revision" button. You can also control several stages of your venue by using the Stage buttons. Note that any change you make will be immediately applied to your venue.
 If you have any questions, please refer to our FAQ: https://openreview.net/faq
 
-If you need special features that are not included in your request form, you can post a comment here or contact us at info@openreview.net and we will assist you.
+If you need special features that are not included in your request form, you can post a comment here or contact us at info@openreview.net and we will assist you. We recommend reaching out to us well in advance and setting deadlines for a Monday.  
+
+**OpenReview support is responsive from 9AM - 5PM EST Monday through Friday**. Requests made on weekends or US holidays can expect to receive a response on the next business day.
 
 Best,
 
@@ -321,6 +323,28 @@ If you would like to change your decision, please follow the link in the previou
     client.post_invitation(recruitment_invitation)
     client.post_invitation(remind_recruitment_invitation)
 
+    bid_stage_content = {
+        'bid_start_date': {
+            'description': 'When does bidding on submissions begin? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$'
+        },
+        'bid_due_date': {
+            'description': 'When does bidding on submissions end? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+            'required': True
+        },
+        'bid_count': {
+            'description': 'Minimum bids one should make to mark bidding task completed for them. Default is 50.',
+            'value-regex': '[0-9]*'
+        }
+    }
+    if 'Yes' in forum.content.get('senior_area_chairs', 'No') and 'Submissions' == forum.content.get('senior_area_chairs_assignment', 'Area Chairs'):
+        bid_stage_content['sac_bidding']= {
+            'description': 'Do you want to allow senior area chairs to bid on papers?',
+            'value-radio': ['Yes', 'No'],
+            'default': 'No',
+            'required': False
+        }
     client.post_invitation(openreview.Invitation(
         id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Bid_Stage',
         super = SUPPORT_GROUP + '/-/Bid_Stage',
@@ -328,10 +352,11 @@ If you would like to change your decision, please follow the link in the previou
         reply = {
             'forum': forum.id,
             'referent': forum.id,
-            'readers' : {
+            'readers': {
                 'description': 'The users who will be allowed to read the above content.',
                 'values' : readers
-            }
+            },
+            'content': bid_stage_content
         },
         signatures = ['~Super_User1']
     ))
@@ -497,9 +522,9 @@ If you would like to change your decision, please follow the link in the previou
                     'order': 4
                 },            
                 'compute_affinity_scores': {
-                    'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically.',
+                    'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically. Select the model you want to use to compute the affinity scores or "No" if you don\'t want to compute affinity scores. The model "specter2+scincl" has the best performance, refer to our expertise repository for more information on the models: https://github.com/openreview/openreview-expertise.',
                     'order': 5,
-                    'value-radio': ['Yes', 'No'],
+                    'value-radio': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl','No'],
                     'required': True,
                 },
                 'upload_affinity_scores': {

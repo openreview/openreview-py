@@ -2,14 +2,16 @@ def process_update(client, edge, invitation, existing_edge):
 
     domain = client.get_group(edge.domain)
     venue_id = domain.id
+    meta_invitation_id = domain.content['meta_invitation_id']['value']
     short_phrase = domain.content['subtitle']['value']
     contact = domain.content['contact']['value']
     program_chairs_id = domain.content['program_chairs_id']['value']
     submission_name = domain.content['submission_name']['value']
     reviewers_name = invitation.content['reviewers_name']['value']
     reviewers_id = invitation.content['reviewers_id']['value']
-    sync_sac_id = invitation.content['sync_sac_id']['value']
-    sac_assignment_id = invitation.content['sac_assignment_id']['value']
+    sync_sac_id = invitation.content.get('sync_sac_id',{}).get('value')
+    sac_assignment_id = invitation.content.get('sac_assignment_id',{}).get('value')
+    sender = domain.get_content_value('message_sender')
     pretty_name = openreview.tools.pretty_id(reviewers_name)
     pretty_name = pretty_name[:-1] if pretty_name.endswith('s') else pretty_name
 
@@ -61,4 +63,4 @@ Thank you,
 
 {signature}'''
 
-        client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=contact)
+        client.post_message(subject, recipients, message, invitation=meta_invitation_id, signature=venue_id, parentGroup=group.id, replyTo=contact, sender=sender)

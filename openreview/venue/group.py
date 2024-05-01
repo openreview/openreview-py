@@ -154,6 +154,7 @@ class GroupBuilder(object):
             'subtitle': { 'value': self.venue.short_name if self.venue.short_name else '' },
             'website': { 'value': self.venue.website if self.venue.website else '' },
             'contact': { 'value': self.venue.contact if self.venue.contact else '' },
+            'message_sender': { 'value': self.venue.get_message_sender() },
             'location': { 'value': self.venue.location if self.venue.location else '' },
             'instructions': { 'value': self.venue.instructions if self.venue.instructions else '' },
             'start_date': { 'value': self.venue.start_date if self.venue.start_date else '' },
@@ -188,7 +189,9 @@ class GroupBuilder(object):
             'desk_rejection_email_pcs': { 'value': self.venue.submission_stage.email_pcs_on_desk_reject },
             'desk_rejected_submission_reveal_authors': { 'value': self.venue.submission_stage.desk_rejected_submission_reveal_authors },
             'automatic_reviewer_assignment': { 'value': self.venue.automatic_reviewer_assignment },
-            'decision_heading_map': { 'value': self.venue.decision_heading_map }
+            'decision_heading_map': { 'value': self.venue.decision_heading_map },
+            'reviewers_message_submission_id': { 'value': self.venue.get_message_id(number='{number}') },
+            'reviewers_message_id': { 'value': self.venue.get_message_id(committee_id=self.venue.get_reviewers_id()) }
         }
 
         if self.venue.submission_stage.subject_areas:
@@ -203,6 +206,7 @@ class GroupBuilder(object):
             content['area_chairs_conflict_id'] = { 'value': self.venue.get_conflict_score_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_recruitment_id'] = { 'value': self.venue.get_recruitment_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_assignment_id'] = { 'value': self.venue.get_assignment_id(self.venue.get_area_chairs_id(), deployed=True) }
+            content['area_chairs_message_id'] =  { 'value': self.venue.get_message_id(committee_id=self.venue.get_area_chairs_id()) }
 
         if self.venue.use_secondary_area_chairs:
             content['secondary_area_chairs_name'] = { 'value': self.venue.secondary_area_chairs_name }
@@ -213,6 +217,8 @@ class GroupBuilder(object):
             content['senior_area_chairs_assignment_id'] = { 'value': self.venue.get_assignment_id(self.venue.get_senior_area_chairs_id(), deployed=True) }
             content['senior_area_chairs_affinity_score_id'] = { 'value': self.venue.get_affinity_score_id(self.venue.get_senior_area_chairs_id()) }
             content['senior_area_chairs_name'] = { 'value': self.venue.senior_area_chairs_name }
+            content['sac_paper_assignments'] = { 'value': self.venue.sac_paper_assignments}
+            content['senior_area_chairs_conflict_id'] = { 'value': self.venue.get_conflict_score_id(self.venue.get_senior_area_chairs_id()) }
 
         if self.venue.bid_stages:
             content['bid_name'] = { 'value': self.venue.bid_stages[0].name }
@@ -271,7 +277,10 @@ class GroupBuilder(object):
             content['area_chairs_conflict_policy'] = venue_group.content.get('area_chairs_conflict_policy')
 
         if venue_group.content.get('area_chairs_conflict_n_years'):
-            content['area_chairs_conflict_n_years'] = venue_group.content.get('area_chairs_conflict_n_years')            
+            content['area_chairs_conflict_n_years'] = venue_group.content.get('area_chairs_conflict_n_years')
+
+        if self.venue.source_submissions_query_mapping:
+            content['source_submissions_query_mapping'] = { 'value': self.venue.source_submissions_query_mapping }    
 
         update_content = self.get_update_content(venue_group.content, content)
         if update_content:
@@ -411,10 +420,11 @@ class GroupBuilder(object):
     def create_ethics_reviewers_group(self):
         venue_id = self.venue.id
         ethics_reviewers_id = self.venue.get_ethics_reviewers_id()
+        ethics_chairs_id = self.venue.get_ethics_chairs_id()
         ethics_reviewers_group = openreview.tools.get_group(self.client, ethics_reviewers_id)
         if not ethics_reviewers_group:
             ethics_reviewers_group = Group(id=ethics_reviewers_id,
-                            readers=[venue_id, ethics_reviewers_id],
+                            readers=[venue_id, ethics_reviewers_id, ethics_chairs_id],
                             writers=[venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id],
@@ -505,10 +515,13 @@ class GroupBuilder(object):
                             members=[]
                             ))
 
+        invited_group_readers = [venue_id, committee_invited_id]
+        if committee_name == self.venue.ethics_reviewers_name:
+            invited_group_readers.append(self.venue.get_ethics_chairs_id())
         committee_invited_group = tools.get_group(self.client, committee_invited_id)
         if not committee_invited_group:
             committee_invited_group=self.post_group(Group(id=committee_invited_id,
-                            readers=[venue_id, committee_invited_id],
+                            readers=invited_group_readers,
                             writers=[venue_id, pc_group_id],
                             signatures=[venue_id],
                             signatories=[venue_id, committee_invited_id],

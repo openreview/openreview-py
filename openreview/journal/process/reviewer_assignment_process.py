@@ -66,7 +66,7 @@ def process_update(client, edge, invitation, existing_edge):
             assigned_action_editor=assigned_action_editor.get_preferred_name(pretty=True)
         )
 
-        client.post_message(subject, recipients, message, replyTo=assigned_action_editor.get_preferred_email())
+        client.post_message(subject, recipients, message, invitation=journal.get_meta_invitation_id(), signature=venue_id, replyTo=assigned_action_editor.get_preferred_email(), sender=journal.get_message_sender())
 
         if pending_review_edge and pending_review_edge.weight > 0:
             pending_review_edge.weight -= 1
@@ -103,8 +103,10 @@ def process_update(client, edge, invitation, existing_edge):
                 duedate=openreview.tools.datetime_millis(duedate)
         ))
 
-        print('Enable assignment acknowledgement task for', edge.tail)
-        ack_invitation_edit = journal.invitation_builder.set_note_reviewer_assignment_acknowledgement_invitation(note, edge.tail, journal.get_due_date(days = 2), duedate.strftime("%b %d, %Y"))
+        ack_invitation_edit = None
+        if not journal.should_skip_reviewer_assignment_acknowledgement():
+            print('Enable assignment acknowledgement task for', edge.tail)
+            ack_invitation_edit = journal.invitation_builder.set_note_reviewer_assignment_acknowledgement_invitation(note, edge.tail, journal.get_due_date(days = 2), duedate.strftime("%b %d, %Y"))
         
         recipients = [edge.tail]
         subject=f'''[{journal.short_name}] Assignment to review new {journal.short_name} submission {note.number}: {note.content['title']['value']}'''
@@ -119,7 +121,7 @@ def process_update(client, edge, invitation, existing_edge):
             contact_info=journal.contact_info,
             review_period_length=review_period_length,
             review_duedate=duedate.strftime("%b %d"),
-            ack_invitation_url=f'https://openreview.net/forum?id={note.id}&invitationId={ack_invitation_edit["invitation"]["id"]}',
+            ack_invitation_url=f'https://openreview.net/forum?id={note.id}' + (f'&invitationId={ack_invitation_edit["invitation"]["id"]}' if ack_invitation_edit else ''),
             invitation_url=f'https://openreview.net/forum?id={note.id}&invitationId={journal.get_review_id(number=note.number)}',
             number_of_reviewers=number_of_reviewers,
             review_visibility=review_visibility,
@@ -128,7 +130,7 @@ def process_update(client, edge, invitation, existing_edge):
         )
 
         if official_reviewer:
-            client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=assigned_action_editor.get_preferred_email())
+            client.post_message(subject, recipients, message, invitation=journal.get_meta_invitation_id(), signature=venue_id, parentGroup=group.id, replyTo=assigned_action_editor.get_preferred_email(), sender=journal.get_message_sender())
 
     if responsiblity_invitation_edit is not None:
 
@@ -146,5 +148,5 @@ We thank you for your essential contribution to {journal.short_name}!
 
 The {journal.short_name} Editors-in-Chief
 '''
-        client.post_message(subject, recipients, message, ignoreRecipients=ignoreRecipients, parentGroup=group.id, replyTo=journal.contact_info)
+        client.post_message(subject, recipients, message, invitation=journal.get_meta_invitation_id(), signature=venue_id, ignoreRecipients=ignoreRecipients, parentGroup=group.id, replyTo=journal.contact_info, sender=journal.get_message_sender())
 

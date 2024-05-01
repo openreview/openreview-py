@@ -84,6 +84,7 @@ class ProfileManagement():
                 signatures=[dblp_group_id],
                 invitees=['~'],
                 process=file_content,
+                maxReplies=1000,
                 edit={
                     'readers': ['everyone'],
                     'signatures': { 
@@ -238,6 +239,9 @@ class ProfileManagement():
 
         abstract_invitation_id = f'{dblp_group_id}/-/Abstract'
         
+        with open(os.path.join(os.path.dirname(__file__), 'process/dblp_abstract_process.js'), 'r') as f:
+            file_content = f.read()
+
         self.client.post_invitation_edit(
             invitations = meta_invitation_id,
             signatures = [dblp_group_id],
@@ -247,6 +251,7 @@ class ProfileManagement():
                 writers=[dblp_group_id],
                 signatures=[dblp_group_id],
                 invitees=[dblp_uploader_group_id],
+                process=file_content,
                 edit={
                     'readers': ['everyone'],
                     'signatures': [dblp_uploader_group_id],
@@ -634,7 +639,7 @@ class ProfileManagement():
                                 'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
                                 'value': {
                                     'param': {
-                                        'type': 'group[]',
+                                        'type': 'profile[]',
                                         'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
                                         'mismatchError': 'must be a valid email or profile ID'
                                     }
@@ -670,7 +675,7 @@ class ProfileManagement():
                                 'value': {
                                     'param': {
                                         'type': 'string',
-                                        'regex': '"(http|https):\\/\\/.+"',
+                                        'regex': '(http|https):\/\/.+',
                                         'optional': True
                                     }
                                 }
@@ -916,7 +921,7 @@ class ProfileManagement():
                                 'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
                                 'value': {
                                     'param': {
-                                        'type': 'group[]',
+                                        'type': 'profile[]',
                                         'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
                                         'mismatchError': 'must be a valid email or profile ID'
                                     }
@@ -1155,7 +1160,7 @@ class ProfileManagement():
                     id=f'{self.support_group_id}/-/Profile_Merge',
                     readers=['everyone'],
                     writers=[self.support_group_id],
-                    signatures=[self.support_group_id],
+                    signatures=[self.super_user],
                     invitees=['~', '(guest)'],
                     process=file_content,
                     edit={

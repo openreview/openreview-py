@@ -32,7 +32,7 @@ def process_update(client, note, invitation, existing_note):
                 client.add_members_to_group(REVIEWERS_DECLINED_ID, user)
 
                 subject = f'[{SHORT_PHRASE}] {REVIEWER_NAME} Invitation not accepted'
-                message = f'''It seems like you already accepted an invitation to serve as a {AREA_CHAIR_NAME} for {SHORT_PHRASE}. If you would like to change your decision and serve as a {REVIEWER_NAME}, please decline the invitation to be {AREA_CHAIR_NAME} and then accept the inviation to be {REVIEWER_NAME}.'''
+                message = f'''It seems like you already accepted an invitation to serve as a {AREA_CHAIR_NAME} for {SHORT_PHRASE}. If you would like to change your decision and serve as a {REVIEWER_NAME}, please decline the invitation to be {AREA_CHAIR_NAME} and then accept the invitation to be {REVIEWER_NAME}.'''
                 client.post_message(subject, [user], message)
                 return
 
