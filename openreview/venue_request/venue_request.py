@@ -715,12 +715,12 @@ class VenueStages():
                 'required': True
             },
             'decision_options': {
-                'description': 'List all decision options. By default, decisions containing "Accept" are considered Accept options. Otherwise, please specify the accept options in "Accept Decision Options". All other decisions are considered reject options. Provide comma separated values, e.g. "Accept (Best Paper), Invite to Archive, Reject". Leave empty for default options - "Accept (Oral)", "Accept (Poster)", "Reject"',
+                'description': 'List all decision options. By default, decisions containing "Accept" signify acceptance to the venue. Otherwise, please specify the accept options in "Accept Decision Options". All other decisions will be treated as a rejection. Provide comma separated values, e.g. "Accept (Best Paper), Invite to Archive, Reject". Leave empty for default options - "Accept (Oral)", "Accept (Poster)", "Reject"',
                 'value-regex': '.*',
                 'order': 30
             },
             'accept_decision_options': {
-                'description': 'What are the accept decision options? If your accept options do not contain "Accept", please specify them here. Provide comma separated values, e.g. "Accept (Best Paper), Invite to Archive".',
+                'description': 'What are the accept decision options? Please specify all decision options that signify acceptance to the venue. Any decision option not specified here will be treated as a rejection.',
                 'value-regex': '.*',
                 'order': 31,
             },

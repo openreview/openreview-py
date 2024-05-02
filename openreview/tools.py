@@ -32,7 +32,7 @@ def decision_to_venue(venue_id, decision_option, accept_options=None):
     """
     venue = venue_id
     decision = re.sub(r'[()\W]+', '', decision_option)
-    if not accept_options and 'Accept' in decision_option:
+    if 'Accept' in decision_option:
         decision = decision.replace('Accept', '')
         if decision:
             venue += ' ' + decision.strip()

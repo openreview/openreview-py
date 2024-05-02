@@ -345,7 +345,7 @@ class TestWorkshopV2():
         assert messages[0]['content']['text'].startswith('Hi External Reviewer Adobe,\n\nYou were invited to review the paper number: 12, title: "Paper title No Abstract Version 2".\n\nPlease respond the invitation clicking the following link:')
         assert messages[0]['content']['replyTo'] == 'pc@icaps.cc'
 
-    def test_publication_chair(self, client, openreview_client, helpers):
+    def test_publication_chair(self, client, openreview_client, helpers, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@icaps.cc', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icaps.cc', password=helpers.strong_password)
@@ -403,8 +403,8 @@ class TestWorkshopV2():
             content={
                 'decision_start_date': start_date.strftime('%Y/%m/%d'),
                 'decision_deadline': due_date.strftime('%Y/%m/%d'),
-                'decision_options': 'Invite to Venue, Reject',
-                'accept_decision_options': 'Invite to Venue',
+                'decision_options': 'Accept, Invite to Venue, Reject',
+                'accept_decision_options': 'Accept, Invite to Venue',
                 'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
                 'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
                 'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
@@ -429,14 +429,14 @@ class TestWorkshopV2():
         submissions = openreview_client.get_notes(invitation='PRL/2023/ICAPS/-/Submission', sort='number:asc')
         assert len(submissions) == 12
 
-        decisions = ['Invite to Venue', 'Reject']
+        decisions = ['Accept', 'Invite to Venue', 'Reject']
         for idx in range(len(submissions)):
             decision = pc_client_v2.post_note_edit(
                 invitation=f'PRL/2023/ICAPS/Submission{submissions[idx].number}/-/Decision',
                     signatures=['PRL/2023/ICAPS/Program_Chairs'],
                     note=openreview.api.Note(
                         content={
-                            'decision': { 'value': decisions[idx%2] },
+                            'decision': { 'value': decisions[idx%3] },
                             'comment': { 'value': 'Comment by PCs.' }
                         }
                     )
@@ -496,13 +496,22 @@ class TestWorkshopV2():
                 'reveal_authors': 'No, I don\'t want to reveal any author identities.',
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'home_page_tab_names': {
+                    'Accept': 'Accept',
                     'Invite to Venue': 'Invite to Venue',
                     'Reject': 'Submitted'
                 },
                 'send_decision_notifications': 'Yes, send an email notification to the authors',
-                'invite_to_venue_email_content': f'''Dear {{{{fullname}}}},
+                'accept_email_content': f'''Dear {{{{fullname}}}},
 
 Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+
+Best,
+{short_name} Program Chairs
+''',
+                'invite_to_venue_email_content': f'''Dear {{{{fullname}}}},
+
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been invited to the venue. Congratulations!
 You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,
@@ -532,7 +541,7 @@ Best,
         assert len(submissions) == 12
 
         for idx in range(len(submissions)):
-            if idx % 2 == 0:
+            if idx % 3 <= 1:
                 submissions[idx].readers = [
                     'PRL/2023/ICAPS',
                     'PRL/2023/ICAPS/Reviewers',
@@ -545,6 +554,8 @@ Best,
                     'PRL/2023/ICAPS/Publication_Chairs'
                 ]
                 assert submissions[idx].content['venueid']['value'] == 'PRL/2023/ICAPS'
+                submission_venue = 'PRL ICAPS 2023' if idx % 3 == 0 else 'PRL ICAPS 2023 InvitetoVenue'
+                assert submissions[idx].content['venue']['value'] == submission_venue
             else:
                 submissions[idx].readers = [
                     'PRL/2023/ICAPS',
@@ -556,19 +567,45 @@ Best,
                     f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors'
                 ]
                 assert submissions[idx].content['venueid']['value'] == 'PRL/2023/ICAPS/Rejected_Submission'
+                assert submissions[idx].content['venue']['value'] == 'Submitted to PRL ICAPS 2023'
 
         helpers.create_user('publicationchair@mail.com', 'Publication', 'ICAPSChair')
         publication_chair_client_v2=openreview.api.OpenReviewClient(username='publicationchair@mail.com', password=helpers.strong_password)
 
         assert publication_chair_client_v2.get_group('PRL/2023/ICAPS/Authors/Accepted')
         submissions = publication_chair_client_v2.get_notes(invitation='PRL/2023/ICAPS/-/Submission', sort='number:asc')
-        assert len(submissions) == 6
+        assert len(submissions) == 8
 
+        # Check messages
         messages = openreview_client.get_messages(subject=f'[PRL ICAPS 2023] Decision notification for your submission 1:.*')
         assert 'We are delighted to inform you that your submission has been accepted.' in messages[0]['content']['text']
 
         messages = openreview_client.get_messages(subject=f'[PRL ICAPS 2023] Decision notification for your submission 2:.*')
+        assert 'We are delighted to inform you that your submission has been invited to the venue.' in messages[0]['content']['text']
+
+        messages = openreview_client.get_messages(subject=f'[PRL ICAPS 2023] Decision notification for your submission 3:.*')
         assert 'We regret to inform you that your submission was not accepted.' in messages[0]['content']['text']
+
+        # Check homepage tabs
+        request_page(selenium, 'http://localhost:3030/group?id=PRL/2023/ICAPS', by=By.CLASS_NAME, wait_for_element='nav-tabs')
+        tabs = selenium.find_element(By.CLASS_NAME, 'nav-tabs')
+        assert len(tabs) == 4
+        assert tabs[0].text == 'Accept'
+        assert tabs[1].text == 'Invite to Venue'
+        assert tabs[2].text == 'Submitted'
+        assert tabs[3].text == 'Recent Activity'
+
+        notes = selenium.find_element(By.ID, 'Accept').find_elements(By.CLASS_NAME, 'note')
+        assert len(notes) == 4
+        assert notes[0].find_element(By.TAG_NAME, 'h4').text == 'Paper title 10'
+
+        notes = selenium.find_element(By.ID, 'invite-to-venue').find_elements(By.CLASS_NAME, 'note')
+        assert len(notes) == 4
+        assert notes[0].find_element(By.TAG_NAME, 'h4').text == 'Paper title 11'
+
+        notes = selenium.find_element(By.ID, 'submitted').find_elements(By.CLASS_NAME, 'note')
+        assert len(notes) == 4
+        assert notes[0].find_element(By.TAG_NAME, 'h4').text == 'Paper title No Abstract Version 2'
 
     def test_enable_camera_ready_revisions(self, client, openreview_client, helpers, selenium, request_page):
 
@@ -621,7 +658,7 @@ Best,
         assert process_logs[0]['status'] == 'ok'
 
         invitations = openreview_client.get_invitations(invitation='PRL/2023/ICAPS/-/Camera_Ready_Revision')
-        assert len(invitations) == 6
+        assert len(invitations) == 8
         invitation = openreview_client.get_invitation(id='PRL/2023/ICAPS/Submission1/-/Camera_Ready_Revision')
         assert 'authors' not in invitation.edit['note']['content']
         assert 'authorids' not in invitation.edit['note']['content']
