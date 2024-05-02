@@ -721,7 +721,7 @@ class VenueStages():
                 'order': 30
             },
             'accept_decision_options': {
-                'description': 'What are the accept decision options? Please specify all decision options that signify acceptance to the venue. Any decision option not specified here will be treated as a rejection.',
+                'description': 'What are the accept decision options? Please specify all decision options that signify acceptance to the venue. Any decision option not specified here will be treated as a rejection. If left empty, decisions containing "Accept" signify acceptance to the venue.',
                 'value-regex': '.*',
                 'order': 31,
             },
