@@ -1238,9 +1238,17 @@ class InvitationBuilder(object):
 
             configuration_invitation = tools.get_invitation(self.client, f'{match_group_id}/-/Assignment_Configuration')
             if configuration_invitation:
-                scores_spec = configuration_invitation.edit['note']['content']['scores_specification']
-                if bid_invitation.id not in scores_spec['value']['param']['default']:
-                    scores_spec['value']['param']['default'][bid_invitation.id] = bid_score_spec
+                updated_config = False
+                scores_spec_param = configuration_invitation.edit['note']['content']['scores_specification']['value']['param']
+                if 'default' in scores_spec_param and bid_invitation.id not in scores_spec_param:
+                    scores_spec_param['default'][bid_invitation.id] = bid_score_spec
+                    updated_config = True
+                elif 'default' not in scores_spec_param:
+                    scores_spec_param['default'] = {
+                        bid_invitation.id: bid_score_spec
+                    }
+                    updated_config = True
+                if updated_config:
                     self.client.post_invitation_edit(invitations=venue.get_meta_invitation_id(),
                         signatures=[venue_id],
                         invitation=openreview.api.Invitation(
@@ -1248,7 +1256,11 @@ class InvitationBuilder(object):
                             edit={
                                 'note': {
                                     'content': {
-                                        'scores_specification': scores_spec
+                                        'scores_specification': {
+                                            'value': {
+                                                'param': scores_spec_param
+                                            }
+                                        }
                                     }
                                 }
                             }
