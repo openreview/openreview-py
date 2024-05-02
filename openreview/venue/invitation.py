@@ -1718,7 +1718,7 @@ class InvitationBuilder(object):
                             }                            
                         },
                         'readers': comment_stage.get_chat_readers(self.venue, '${4/content/noteNumber/value}'),
-                        #'writers': [venue_id, '${2/signatures}'],
+                        'writers': [venue_id, '${2/signatures}'],
                         'tag': {
                             'param': {
                                 'enum': ['thumbs-up', 'thumbs-down']
