@@ -587,22 +587,25 @@ Best,
         assert 'We regret to inform you that your submission was not accepted.' in messages[0]['content']['text']
 
         # Check homepage tabs
-        request_page(selenium, 'http://localhost:3030/group?id=PRL/2023/ICAPS', by=By.CLASS_NAME, wait_for_element='nav-tabs')
-        tabs = selenium.find_element(By.CLASS_NAME, 'nav-tabs')
+        url = 'http://localhost:3030/group?id=PRL/2023/ICAPS'
+        request_page(selenium, f'{url}', token=openreview_client.token, wait_for_element='header')
+        tabs = selenium.find_element(By.CLASS_NAME, 'nav-tabs').find_elements(By.TAG_NAME, 'li')
         assert len(tabs) == 4
         assert tabs[0].text == 'Accept'
         assert tabs[1].text == 'Invite to Venue'
         assert tabs[2].text == 'Submitted'
         assert tabs[3].text == 'Recent Activity'
 
-        notes = selenium.find_element(By.ID, 'Accept').find_elements(By.CLASS_NAME, 'note')
+        notes = selenium.find_element(By.ID, 'accept').find_elements(By.CLASS_NAME, 'note')
         assert len(notes) == 4
         assert notes[0].find_element(By.TAG_NAME, 'h4').text == 'Paper title 10'
 
+        request_page(selenium, f'{url}#tab-invite-to-venue', token=openreview_client.token, wait_for_element='header')
         notes = selenium.find_element(By.ID, 'invite-to-venue').find_elements(By.CLASS_NAME, 'note')
         assert len(notes) == 4
         assert notes[0].find_element(By.TAG_NAME, 'h4').text == 'Paper title 11'
 
+        request_page(selenium, f'{url}#tab-submitted', token=openreview_client.token, wait_for_element='header')
         notes = selenium.find_element(By.ID, 'submitted').find_elements(By.CLASS_NAME, 'note')
         assert len(notes) == 4
         assert notes[0].find_element(By.TAG_NAME, 'h4').text == 'Paper title No Abstract Version 2'
