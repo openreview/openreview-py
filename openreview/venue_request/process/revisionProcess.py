@@ -632,6 +632,23 @@ Best,
         client.post_invitation(submission_revision_invitation)
 
         print('Conference: ', conference.get_id())
+        comment_note = openreview.Note(
+            invitation=SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Comment',
+            forum=forum_note.id,
+            replyto=forum_note.id,
+            readers=comment_readers,
+            writers=[SUPPORT_GROUP],
+            signatures=[SUPPORT_GROUP],
+            content={
+                'title': f'{invitation_type.replace("_", " ")} Process Completed',
+                'comment': f'''
+The process for the {invitation_type.replace("_", " ")} process has been completed.
+
+More details: https://api.openreview.net/references?id={note.id}'''
+            }
+        )
+
+        client.post_note(comment_note)        
     except Exception as e:
         forum_note = client.get_note(note.forum)
 
