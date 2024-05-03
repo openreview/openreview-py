@@ -6163,7 +6163,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'enum': ['MinMax', 'FairFlow', 'Randomized', 'FairSequence'],
+                                    'enum': ['MinMax', 'FairFlow', 'Randomized', 'FairSequence', 'PerturbedMaximization'],
                                     'input': 'radio'
                                 }
                             }
@@ -6240,6 +6240,31 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'deletable': True,
                                     'default': '',
                                     'hidden': True
+                                }
+                            }
+                        }, 
+                        'perturbedmaximization_perturbation':  {
+                            'order': 23,
+                            'description': 'A single float representing the perturbation factor for the Perturbed Maximization Solver. The value should be between 0 and 1, increasing the value will trade assignment quality for randomization.',
+                            'value': {
+                                'param': {
+                                    'type': 'float',
+                                    'range': [0, 1],
+                                    'optional': True,
+                                    'deletable': True,
+                                    'default': '1'
+                                }
+                            }
+                        }, 
+                        'perturbedmaximization_bad_match_thresholds':  {
+                            'order': 24,
+                            'description': 'A list of floats, representing the thresholds in affinity score for categorizing a paper-reviewer match, used by the Perturbed Maximization Solver.',
+                            'value': {
+                                'param': {
+                                    'type': 'float[]',
+                                    'optional': True,
+                                    'deletable': True,
+                                    'default': [0.1, 0.3, 0.5]
                                 }
                             }
                         }
