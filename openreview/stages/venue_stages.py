@@ -123,7 +123,7 @@ class SubmissionStage(object):
             return ['everyone']
 
         submission_readers=[conference.id]
-        is_accepted = decision and ((accept_options and decision in accept_options) or (not accept_options and 'Accept' in decision))
+        is_accepted = decision and openreview.tools.is_accept_decision(decision, accept_options)
 
         if self.Readers.EVERYONE_BUT_REJECTED in self.readers:
             hide = not decision or not is_accepted

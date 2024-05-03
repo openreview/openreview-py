@@ -447,7 +447,7 @@ def process(client, note, invitation):
             }
 
             for decision in decision_options:
-                if (accept_decision_options and decision in accept_decision_options) or (not accept_decision_options and 'Accept' in decision):
+                if openreview.tools.is_accept_decision(decision, accept_decision_options):
                     content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
                         'value-regex': '[\\S\\s]{1,10000}',
                         'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',

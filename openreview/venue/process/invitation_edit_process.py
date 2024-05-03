@@ -55,7 +55,7 @@ def process(client, invitation):
             source_submissions = client.get_all_notes(content={ 'venueid': venue_id }, sort='number:asc', details='directReplies')
             if not source_submissions and decision_name:
                 under_review_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='directReplies')
-                source_submissions = [s for s in under_review_submissions if len([r for r in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{decision_name}' in r['invitations'] and ((not accept_options and 'Accept' in r['content'][decision_field_name]['value']) or (accept_options and r['content'][decision_field_name]['value'] in accept_options))]) > 0]
+                source_submissions = [s for s in under_review_submissions if len([r for r in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{decision_name}' in r['invitations'] and openreview.tools.is_accept_decision(r['content'][decision_field_name]['value'], accept_options) ]) > 0]
             expire_existing_invitations()
         else:
             source_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='directReplies')

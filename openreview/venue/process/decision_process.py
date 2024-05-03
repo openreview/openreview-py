@@ -32,7 +32,7 @@ def process(client, edit, invitation):
 
     if (authors_accepted_id):
       accept_options = domain.get_content_value('accept_decision_options')
-      if (accept_options and decision.content['decision']['value'] in accept_options) or (not accept_options and 'Accept' in decision.content['decision']['value']):
+      if openreview.tools.is_accept_decision(decision.content['decision']['value'], accept_options):
         client.add_members_to_group(authors_accepted_id, paper_authors_id)
       else:
         client.remove_members_from_group(authors_accepted_id, paper_authors_id)

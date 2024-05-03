@@ -377,7 +377,7 @@ class Venue(object):
                     for reply in note.details['directReplies']:
                         if f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{self.decision_stage.name}' in reply['invitations']:
                             decision = reply['content']['decision']['value']
-                            if (self.decision_stage.accept_options and decision in self.decision_stage.accept_options) or (not self.decision_stage.accept_options and 'Accept' in decision):
+                            if openreview.tools.is_accept_decision(decision, self.decision_stage.accept_options):
                                 accepted_notes.append(note)
             return accepted_notes
         else:
@@ -719,7 +719,7 @@ Total Errors: {len(errors)}
             return reveal_all_authors or (reveal_authors_accepted and is_note_accepted)
 
         def decision_to_venueid(decision):
-            if (self.decision_stage.accept_options and decision in self.decision_stage.accept_options) or (not self.decision_stage.accept_options and 'Accept' in decision):
+            if openreview.tools.is_accept_decision(decision, self.decision_stage.accept_options):
                 return venue_id
             else:
                 return self.get_rejected_submission_venue_id()
@@ -734,7 +734,7 @@ Total Errors: {len(errors)}
                     if f'{self.venue_id}/{self.submission_stage.name}{submission.number}/-/{self.decision_stage.name}' in reply['invitations']:
                         decision_note = reply
                         break
-            note_accepted = decision_note and ((self.decision_stage.accept_options and decision_note['content']['decision']['value'] in self.decision_stage.accept_options) or (not self.decision_stage.accept_options and 'Accept' in decision_note['content']['decision']['value']))
+            note_accepted = decision_note and openreview.tools.is_accept_decision(decision_note['content']['decision']['value'], self.decision_stage.accept_options)
             submission_readers = self.submission_stage.get_readers(self, submission.number, decision_note['content']['decision']['value'] if decision_note else None, self.decision_stage.accept_options)
 
             venue = self.short_name
