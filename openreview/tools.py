@@ -37,7 +37,7 @@ def decision_to_venue(venue_id, decision_option, accept_options=None):
         if decision: 
             venue += ' ' + decision.strip()
     else:
-        venue = f'Submitted to {venue_id}'
+        venue = f'Submitted to {venue}'
     return venue
 
 def run_once(f):
