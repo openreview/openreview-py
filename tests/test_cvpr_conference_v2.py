@@ -495,44 +495,6 @@ class TestCVPRConference():
             writers=[]
         )
 
-        review_stage_note_3 = openreview.Note(
-            content={
-                'review_start_date': start_date.strftime('%Y/%m/%d'),
-                'review_deadline': due_date.strftime('%Y/%m/%d'),
-                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
-                'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
-                'release_reviews_to_reviewers': 'Review should not be revealed to any reviewer, except to the author of the review',
-                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received',
-                'remove_review_form_options': 'title',
-                'review_rating_field_name': 'soundness',
-                'additional_review_form_options': {
-                    "soundness": {
-                        "order": 2,
-                        "description": "Please assign the paper a numerical rating on the following scale to indicate the soundness of the technical claims, experimental and research methodology and on whether the central claims of the paper are adequately supported with evidence.",
-                        "value": {
-                            "param": {
-                                "type": "string",
-                                "enum": [
-                                    "4 excellentt",
-                                    "3 good",
-                                    "2 fair",
-                                    "1 poor"
-                                ],
-                                "input": "radio"
-                            }
-                        }
-                    },                    
-                },
-            },
-            forum=request_form.forum,
-            invitation=f'openreview.net/Support/-/Request{request_form.number}/Review_Stage',
-            readers=['thecvf.com/CVPR/2024/Conference/Program_Chairs', 'openreview.net/Support'],
-            replyto=request_form.forum,
-            referent=request_form.forum,
-            signatures=['~Program_CVPRChair1'],
-            writers=[]
-        )                
-
         pc_client.post_note(review_stage_note)
         time.sleep(2)
 
