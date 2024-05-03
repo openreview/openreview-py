@@ -235,39 +235,6 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=True)
         return invitation
-    
-    def set_edit_submission_expiration_invitation(self):
-
-        venue_id = self.venue_id
-        venue = self.venue
-        submission_stage = venue.submission_stage
-        submission_expiration_id = submission_stage.get_submission_id(venue) + '/Expiration'
-
-        invitation = Invitation(
-            id = submission_expiration_id,
-            invitees = [venue_id],
-            signatures = [venue_id],
-            readers = [venue_id],
-            writers = [venue_id],
-            edit = {
-                'signatures': [venue.get_program_chairs_id()],
-                'readers': [venue_id],
-                'writers': [venue_id],
-                'invitation': {
-                    'id': submission_stage.get_submission_id(venue),
-                    'signatures': [venue_id],
-                    'expdate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'deletable': True
-                        }
-                    }
-                }
-            }
-        )
-
-        self.save_invitation(invitation, replacement=True)
-        return invitation
 
     def set_edit_submission_content_invitation(self):
 

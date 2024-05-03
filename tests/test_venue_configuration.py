@@ -28,6 +28,10 @@ class TestVenueConfiguration():
         assert openreview_client.get_invitation('openreview.net/-/Comment')
         assert openreview_client.get_invitation('openreview.net/-/Deploy')
 
+        now = datetime.datetime.utcnow()
+        start_date = now + datetime.timedelta(minutes=30)
+        due_date = now + datetime.timedelta(days=1)
+
         # post a conference request form
         conference_request = openreview_client.post_note_edit(invitation='openreview.net/-/Conference_Venue_Request',
             signatures=['~Super_User1'],
@@ -36,14 +40,21 @@ class TestVenueConfiguration():
                     'official_venue_name': { 'value': 'The Thirteenth International Conference on Learning Representations' },
                     'abbreviated_venue_name': { 'value': 'ICLR 2025' },
                     'venue_website_url': { 'value': 'https://iclr.cc/Conferences/2025' },
+                    'location': { 'value': 'Vienna, Austria' },
+                    'venue_start_date': { 'value': now.strftime('%Y/%m/%d') },
                     'program_chair_emails': { 'value': ['sherry@iclr.cc'] },
                     'contact_email': { 'value': 'iclr2024.programchairs@gmail.com' },
-                    'location': { 'value': 'Vienna, Austria' },
                     'publication_chairs': { 'value': 'No, our venue does not have Publication Chairs' },
                     'area_chairs_and_senior_area_chairs': { 'value': 'Yes, our venue has Area Chairs and Senior Area Chairs' },
                     'ethics_chairs_and_reviewers': { 'value': 'No, our venue does not have Ethics Chairs and Reviewers' },
                     'secondary_area_chairs': { 'value': 'No, our venue does not have Secondary Area Chairs' },
-                    'author_and_reviewer_anonymity': { 'value': 'Double-blind' }
+                    'submission_start_date': { 'value': start_date.strftime('%Y/%m/%d %H:%M') },
+                    'submission_deadline': { 'value': due_date.strftime('%Y/%m/%d %H:%M') },
+                    'author_and_reviewer_anonymity': { 'value': 'Double-blind' },
+                    'force_profiles_only': { 'value': 'No, allow submissions with email addresses' },
+                    'submission_readers': { 'value': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)' },
+                    'submission_license': { 'value': ['CC BY-NC 4.0'] },
+                    'email_pcs_for_new_submissions': { 'value': 'No, do not email PCs.' }
                 }
             ))
         
@@ -68,17 +79,16 @@ class TestVenueConfiguration():
         assert openreview.tools.get_group(openreview_client, 'ICLR.cc/2025/Conference')
         assert openreview.tools.get_group(openreview_client, 'ICLR.cc/2025')
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission')
-        assert submission_inv and not submission_inv.duedate
-        assert not submission_inv.expdate
+        assert submission_inv and submission_inv.cdate == openreview.tools.datetime_millis(start_date.replace(second=0, microsecond=0))
+        assert submission_inv.duedate == openreview.tools.datetime_millis(due_date.replace(second=0, microsecond=0))
+        assert submission_inv.expdate == submission_inv.duedate + (30*60*1000)
         submission_deadline_inv =  openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission/Deadline')
         assert submission_deadline_inv and submission_inv.id in submission_deadline_inv.edit['invitation']['id']
-        submission_expiration_inv =  openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission/Expiration')
-        assert submission_expiration_inv and submission_inv.id in submission_expiration_inv.edit['invitation']['id']
 
         now = datetime.datetime.now()
-        duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=1))
+        duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
 
-        # edit Submission duedate with Submission/Deadline invitation
+        # extend Submission duedate with Submission/Deadline invitation
         pc_client_v2.post_invitation_edit(
             invitations=submission_deadline_inv.id,
             invitation=openreview.api.Invitation(
