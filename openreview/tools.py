@@ -32,14 +32,12 @@ def decision_to_venue(venue_id, decision_option, accept_options=None):
     """
     venue = venue_id
     decision = re.sub(r'[()\W]+', '', decision_option)
-    if 'Accept' in decision_option:
-        decision = decision.replace('Accept', '')
-        if decision:
+    if (not accept_options and 'Accept' in decision_option) or (accept_options and decision_option in accept_options):
+        decision = decision.replace('Accept', '') if 'Accept' in decision else decision
+        if decision: 
             venue += ' ' + decision.strip()
-    elif accept_options and decision_option in accept_options:
-        venue += ' ' + decision.strip()
     else:
-        venue = f'Submitted to {venue}'
+        venue = f'Submitted to {venue_id}'
     return venue
 
 def run_once(f):
