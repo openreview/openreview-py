@@ -1389,7 +1389,7 @@ class OpenReviewClient(object):
         return Tag.from_json(response.json())
     
     
-    def get_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None, with_count=False):
+    def get_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None, with_count=False, mintmdate=None):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
 
@@ -1419,6 +1419,8 @@ class OpenReviewClient(object):
             params['limit'] = limit
         if offset is not None:
             params['offset'] = offset
+        if mintmdate is not None:
+            params['mintmdate'] = mintmdate            
 
         response = self.session.get(self.tags_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -3106,10 +3108,11 @@ class Tag(object):
     :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
     :type nonreaders: list[str], optional
     """
-    def __init__(self, tag, invitation, signatures, readers=None, id=None, cdate=None, tcdate=None, ddate=None, forum=None, replyto=None, nonreaders=None):
+    def __init__(self, tag, invitation, signatures, readers=None, id=None, cdate=None, tcdate=None, tmdate=None, ddate=None, forum=None, replyto=None, nonreaders=None):
         self.id = id
         self.cdate = cdate
         self.tcdate = tcdate
+        self.tmdate = tmdate
         self.ddate = ddate
         self.tag = tag
         self.forum = forum
@@ -3176,6 +3179,7 @@ class Tag(object):
             id = t.get('id'),
             cdate = t.get('cdate'),
             tcdate = t.get('tcdate'),
+            tmdate = t.get('tmdate'),
             ddate = t.get('ddate'),
             tag = t.get('tag'),
             forum = t.get('forum'),

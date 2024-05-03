@@ -5468,12 +5468,12 @@ Best,
         assert len(openreview_client.get_messages(to='pc@icml.cc', subject='[ICML 2023] New messages in comittee members chat for submission 1: Paper title 1 Version 2')) == 1
 
         ## Add tag emoji
-        sac_client.post_tag(openreview.api.Tag(
+        tag = sac_client.post_tag(openreview.api.Tag(
             invitation='ICML.cc/2023/Conference/Submission1/-/Chat_Reaction',
             signatures=['ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs'],
-            tag='thumbs-up',
+            tag='😄',
             replyto=note_edit['note']['id']
         ))
 
-        tags = openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Submission1/-/Chat_Reaction')
+        tags = openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Submission1/-/Chat_Reaction', mintmdate=tag.tmdate)
         assert len(tags) == 1
