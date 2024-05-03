@@ -1721,7 +1721,7 @@ class InvitationBuilder(object):
                         'writers': [venue_id, '${2/signatures}'],
                         'tag': {
                             'param': {
-                                'enum': ['thumbs-up', 'thumbs-down']
+                                'enum': ['👍', '👎', '😄', '😂', '🔥']
                             }                                
                         }
                     }
