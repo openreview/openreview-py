@@ -84,24 +84,28 @@ class TestVenueConfiguration():
         assert submission_inv.expdate == submission_inv.duedate + (30*60*1000)
         submission_deadline_inv =  openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission/Deadline')
         assert submission_deadline_inv and submission_inv.id in submission_deadline_inv.edit['invitation']['id']
+        post_submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Post_Submission')
+        assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
 
         now = datetime.datetime.now()
-        duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
+        new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
 
         # extend Submission duedate with Submission/Deadline invitation
         pc_client_v2.post_invitation_edit(
             invitations=submission_deadline_inv.id,
             invitation=openreview.api.Invitation(
                 id=submission_inv.id,
-                duedate=duedate
+                duedate=new_duedate
             )
         )
         helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2025/Conference/-/Submission/Deadline')
 
         # assert submission deadline and expdate get updated
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission')
-        assert submission_inv and submission_inv.duedate == duedate
-        assert submission_inv.expdate == duedate + (30*60*1000)
+        assert submission_inv and submission_inv.duedate == new_duedate
+        assert submission_inv.expdate == new_duedate + (30*60*1000)
+        post_submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Post_Submission')
+        assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
 
         # # edit Submission content with Submission/Content invitation
         # pc_client_v2.post_invitation_edit(

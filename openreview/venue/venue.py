@@ -10,6 +10,7 @@ import openreview
 from openreview import tools
 from .invitation import InvitationBuilder
 from .group import GroupBuilder
+from .edit_invitation import EditInvitationBuilder
 from openreview.api import Group
 from openreview.api import Note
 from .recruitment import Recruitment
@@ -66,6 +67,7 @@ class Venue(object):
         self.invitation_builder = InvitationBuilder(self)
         self.group_builder = GroupBuilder(self)
         self.recruitment = Recruitment(self)
+        self.edit_invitation_builder = EditInvitationBuilder(self)
         self.reviewer_identity_readers = []
         self.area_chair_identity_readers = []
         self.senior_area_chair_identity_readers = []
@@ -488,7 +490,7 @@ class Venue(object):
             self.invitation_builder.set_submission_deletion_invitation(submission_revision_stage)
 
     def create_submission_edit_invitations(self):
-        self.invitation_builder.set_edit_submission_deadline_invitation()
+        self.edit_invitation_builder.set_edit_deadline_invitation(self.get_submission_id(), 'edit_submission_deadline_process.py')
         # self.invitation_builder.set_edit_submission_content_invitation()
 
     def create_post_submission_stage(self):
