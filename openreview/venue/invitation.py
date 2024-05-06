@@ -1591,7 +1591,9 @@ class InvitationBuilder(object):
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['decision_process_script']['value']
-    funcs = {}
+    funcs = {
+        'openreview': openreview
+    }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
 ''',

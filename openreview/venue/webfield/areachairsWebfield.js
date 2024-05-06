@@ -58,6 +58,8 @@ return {
     metaReviewRecommendationName: domain.content.meta_review_recommendation?.value || 'recommendation',
     shortPhrase: domain.content.subtitle?.value,
     enableQuerySearch: true,
-    emailReplyTo: domain.content.contact?.value
+    emailReplyTo: domain.content.contact?.value,
+    reviewerName: domain.content.reviewers_name?.value,
+    anonReviewerName: domain.content.reviewers_anon_name?.value
   }
 }
