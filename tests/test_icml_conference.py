@@ -5118,7 +5118,7 @@ Best,
         assert 'We are delighted to inform you that your submission has been accepted.' in messages[0]['content']['text']
 
         replies = pc_client.get_notes(forum=request_form.id, invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment', sort='tmdate:desc')
-        assert replies[0].content['title'] == 'Post Decision Stage Process Completed '
+        assert replies[0].content['title'] == 'Post Decision Stage Process Completed'
         assert replies[1].content['title'] == 'Decision Notification Status'
         assert 'Decision notifications have been sent to the authors. You can check the status of the emails by clicking on this link: https://openreview.net/messages?parentGroup=ICML.cc/2023/Conference/Authors' in replies[0].content['comment']
 
