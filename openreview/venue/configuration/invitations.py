@@ -395,7 +395,7 @@ class VenueConfiguration():
                     'signatures': [ support_group_id ],
                     'readers': ['everyone'],
                     'writers': [support_group_id],
-                    'invitees': [support_group_id],
+                    'invitees': ['everyone'],
                     'maxReplies': 1,
                     'edit': {
                         'signatures': { 
