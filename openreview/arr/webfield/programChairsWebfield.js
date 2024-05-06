@@ -1,8 +1,9 @@
 // Webfield component
+// loaded properly
 const automaticAssignment = domain.content.automatic_reviewer_assignment?.value
 const assignmentUrls = {}
 
-const manualReviewerAssignmentUrl = `/edges/browse?traverse=${domain.content.reviewers_assignment_id?.value}&edit=${domain.content.reviewers_assignment_id?.value};${domain.content.reviewers_custom_max_papers_id?.value},head:ignore&browse=${domain.content.reviewers_affinity_score_id?.value};${domain.content.reviewers_conflict_id?.value}&version=2`
+const manualReviewerAssignmentUrl = `/edges/browse?traverse=${domain.content.reviewers_assignment_id?.value}&edit=${domain.content.reviewers_assignment_id?.value};${domain.content.reviewers_custom_max_papers_id?.value},tail:ignore&browse=${domain.content.reviewers_affinity_score_id?.value};${domain.content.reviewers_conflict_id?.value}&version=2`
 assignmentUrls[domain.content.reviewers_name?.value] = {
   manualAssignmentUrl: manualReviewerAssignmentUrl,
   automaticAssignment: automaticAssignment
@@ -10,7 +11,7 @@ assignmentUrls[domain.content.reviewers_name?.value] = {
 
 const areaChairName = domain.content.area_chairs_name?.value
 if (areaChairName) {
-  const manualAreaChairAssignmentUrl = `/edges/browse?traverse=${domain.content.area_chairs_assignment_id?.value}&edit=${domain.content.area_chairs_assignment_id?.value};${domain.content.area_chairs_custom_max_papers_id?.value},head:ignore&browse=${domain.content.area_chairs_affinity_score_id?.value};${domain.content.area_chairs_conflict_id?.value}&version=2`
+  const manualAreaChairAssignmentUrl = `/edges/browse?traverse=${domain.content.area_chairs_assignment_id?.value}&edit=${domain.content.area_chairs_assignment_id?.value};${domain.content.area_chairs_custom_max_papers_id?.value},tail:ignore&browse=${domain.content.area_chairs_affinity_score_id?.value};${domain.content.area_chairs_conflict_id?.value}&version=2`
   assignmentUrls[areaChairName] = {
     manualAssignmentUrl: manualAreaChairAssignmentUrl,
     automaticAssignment: automaticAssignment
@@ -62,6 +63,23 @@ return {
     areaChairStatusExportColumns: null,
     requestFormId: domain.content.request_form_id?.value,
     assignmentUrls: assignmentUrls,
-    emailReplyTo: domain.content.contact?.value
+    emailReplyTo: domain.content.contact?.value,
+    submissionContentFields: [
+      {
+        field: 'flagged_for_desk_reject_verification',
+        responseInvitations: ['Desk_Reject_Verification'],
+        reasonInvitations: ['Official_Review', 'Meta_Review', 'Reviewer_Checklist', 'Action_Editor_Checklist'],
+        reasonFields: {
+            'appropriateness': ['No'],
+            'formatting': ['No'],
+            'length': ['No'],
+            'anonymity': ['No'],
+            'responsible_checklist': ['No'],
+            'limitations': ['No'],
+            'Knowledge_of_or_educated_guess_at_author_identity': ['Yes'],
+            'author_identity_guess': [5]
+        }
+      }
+    ]
   }
 }

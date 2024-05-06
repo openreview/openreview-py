@@ -117,15 +117,16 @@ class SubmissionStage(object):
         self.second_deadline_remove_fields = second_deadline_remove_fields
         self.commitments_venue = commitments_venue
 
-    def get_readers(self, conference, number, decision=None):
+    def get_readers(self, conference, number, decision=None, accept_options=None):
 
         if self.Readers.EVERYONE in self.readers:
             return ['everyone']
 
         submission_readers=[conference.id]
+        is_accepted = decision and openreview.tools.is_accept_decision(decision, accept_options)
 
         if self.Readers.EVERYONE_BUT_REJECTED in self.readers:
-            hide = not decision or 'Accept' not in decision
+            hide = not decision or not is_accepted
             if hide:
                 if conference.use_senior_area_chairs:
                     submission_readers.append(conference.get_senior_area_chairs_id(number=number))
@@ -161,7 +162,7 @@ class SubmissionStage(object):
             if conference.use_ethics_reviewers:
                 submission_readers.append(conference.get_ethics_reviewers_id(number=number))
 
-        if conference.use_publication_chairs and decision and 'Accept' in decision:
+        if conference.use_publication_chairs and decision and is_accepted:
             submission_readers.append(conference.get_publication_chairs_id())
 
         submission_readers.append(conference.get_authors_id(number=number))
@@ -1254,10 +1255,11 @@ class MetaReviewRevisionStage(object):
 
 class DecisionStage(object):
 
-    def __init__(self, options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False, additional_fields = {}, decisions_file=None):
+    def __init__(self, options = None, accept_options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False, additional_fields = {}, decisions_file=None):
         if not options:
             options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
         self.options = options
+        self.accept_options = accept_options
         self.start_date = start_date
         self.due_date = due_date
         self.name = 'Decision'
