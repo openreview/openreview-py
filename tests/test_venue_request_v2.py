@@ -342,6 +342,8 @@ class TestVenueRequest():
         )
         client.post_note(venue_revision_note)
 
+        helpers.await_queue()
+
         venue_revision_note.content['abstract_registration_deadline'] = (now - datetime.timedelta(days=1)).strftime('%Y/%m/%d %H:%M')
         venue_revision_note.content['Submission Deadline'] = (now - datetime.timedelta(days=1)).strftime('%Y/%m/%d %H:%M')
         venue_revision_note=client.post_note(venue_revision_note)
