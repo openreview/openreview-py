@@ -1526,8 +1526,50 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         comment_stage = self.venue.comment_stage
         chat_invitation = self.venue.get_invitation_id('Chat')
+        emoji_chat_invitation = self.venue.get_invitation_id('Chat_Reaction')                
         comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
         comment_expdate = tools.datetime_millis(comment_stage.end_date) if comment_stage.end_date else None
+
+        if not comment_stage.enable_chat:
+            invitation = tools.get_invitation(self.client, chat_invitation)
+            if invitation:
+                self.client.post_invitation_edit(
+                    invitations=self.venue.get_meta_invitation_id(),
+                    signatures = [venue_id],
+                    invitation = openreview.api.Invitation(
+                        id = chat_invitation,
+                        edit = {
+                            'invitation': {
+                                'expdate': tools.datetime_millis(datetime.datetime.utcnow())
+                            }
+                        }
+                    )
+                )
+
+                self.client.post_invitation_edit(
+                    invitations=self.venue.get_meta_invitation_id(),
+                    signatures = [venue_id],
+                    invitation = openreview.api.Invitation(
+                        id = self.venue.submission_stage.get_submission_id(self.venue),
+                        reply_forum_views = { 'delete': True }
+                    )
+                )
+
+                self.client.post_invitation_edit(
+                    invitations=self.venue.get_meta_invitation_id(),
+                    signatures = [venue_id],
+                    invitation = openreview.api.Invitation(
+                        id = emoji_chat_invitation,
+                        edit = {
+                            'invitation': {
+                                'expdate': tools.datetime_millis(datetime.datetime.utcnow())
+                            }
+                        }
+                    )
+                )
+
+
+            return
 
         invitation = Invitation(id=chat_invitation,
             invitees=[venue_id],
@@ -1564,7 +1606,7 @@ class InvitationBuilder(object):
                         }
                     }
                 },
-                'replacement': True,
+                'replacement': False,
                 'invitation': {
                     'id': self.venue.get_invitation_id('Chat', '${2/content/noteNumber/value}'),
                     'signatures': [ venue_id ],
@@ -1572,6 +1614,10 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'invitees': comment_stage.get_chat_invitees(self.venue, number='${3/content/noteNumber/value}'),
                     'cdate': comment_cdate,
+                    'dateprocesses':[{ 
+                        'dates': [],
+                        'script': self.get_process_content('process/chat_date_comment_process.py')              
+                    }],
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['chat_process_script']['value']
@@ -1663,8 +1709,6 @@ class InvitationBuilder(object):
                 ]
             )
         )
-
-        emoji_chat_invitation = self.venue.get_invitation_id('Chat_Reaction')
 
         invitation = Invitation(id=emoji_chat_invitation,
             invitees=[venue_id],

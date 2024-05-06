@@ -3656,8 +3656,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         chat_invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Chat')
         assert len(chat_invitations) == 100
 
-        Chat_Reaction_invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Chat_Reaction')
-        assert len(Chat_Reaction_invitations) == 100        
+        chat_reaction_invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Chat_Reaction')
+        assert len(chat_reaction_invitations) == 100        
         
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Comment')
         assert invitation
@@ -5325,6 +5325,9 @@ Best,
         anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLOne1')
         anon_group_id = anon_groups[0].id
 
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Chat')
+        assert invitation.date_processes[0].get('dates') == []
+
         note_edit = reviewer_client.post_note_edit(
             invitation='ICML.cc/2023/Conference/Submission1/-/Chat',
             signatures=[anon_group_id],
@@ -5337,6 +5340,10 @@ Best,
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=note_edit['id'])
+
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Chat')
+        assert invitation.date_processes[0].get('dates') is None
+        assert invitation.date_processes[0].get('cron') == '0 */4 * * *'        
 
         assert len(openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] New conversation in comittee members chat for submission 1: Paper title 1 Version 2')) == 0
         assert len(openreview_client.get_messages(to='reviewer2@icml.cc', subject='[ICML 2023] New conversation in comittee members chat for submission 1: Paper title 1 Version 2')) == 1
@@ -5477,3 +5484,43 @@ Best,
 
         tags = openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Submission1/-/Chat_Reaction', mintmdate=tag.tmdate - 5000)
         assert len(tags) == 1
+
+        ## Disable chat
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        # Post an official comment stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        end_date = now + datetime.timedelta(days=3)
+        comment_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'commentary_start_date': start_date.strftime('%Y/%m/%d'),
+                'commentary_end_date': end_date.strftime('%Y/%m/%d'),
+                'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
+                'additional_readers': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Assigned Submitted Reviewers'],
+                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue',
+                'enable_chat_between_committee_members': 'No, do not enable chat between committee members'
+            },
+            forum=request_form.forum,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment_Stage',
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Comment-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Chat-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Chat_Reaction-0-1', count=2)
+
+        chat_invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Chat')
+        assert len(chat_invitations) == 0
+
+        chat_reaction_invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Chat_Reaction')
+        assert len(chat_reaction_invitations) == 0     
+
+        submission_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Submission')
+        assert submission_invitation.reply_forum_views is None   

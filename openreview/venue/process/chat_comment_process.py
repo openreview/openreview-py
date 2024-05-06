@@ -9,6 +9,22 @@ def process(client, edit, invitation):
     submission = client.get_note(edit.note.forum)
     comment = client.get_note(edit.note.id)
 
+    invitation = client.get_invitation(invitation.id)
+    if invitation.date_processes[0].get('cron') is None:
+        ## Activate date process to run every 4 hours
+        print('update cron job tu run every 4 hours')
+        client.post_invitation_edit (
+            invitations=meta_invitation_id,
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=invitation.id,
+                date_processes = [{
+                    'cron': '0 */4 * * *',
+                    'script': invitation.date_processes[0].get('script')
+                }]
+            )
+        )      
+
     if comment.number == 1:
         print('Send initial comment email')
 
@@ -25,6 +41,8 @@ You can view the conversation here: https://openreview.net/forum?id={submission.
             ignoreRecipients = comment.signatures
         )
 
+        ## Update the last notified id
+        print('Set last notified id', comment.id)
         client.post_invitation_edit (
             invitations=meta_invitation_id,
             signatures=[venue_id],
@@ -36,20 +54,31 @@ You can view the conversation here: https://openreview.net/forum?id={submission.
             )
         )
 
-    else:
+        return
 
-        print('Send follow up comment email')
+    last_notified_id = invitation.content.get('last_notified_id', {}).get('value') if invitation.content else None
 
-        last_notified_id = invitation.content.get('last_notified_id', {}).get('value') if invitation.content else None
+    if not last_notified_id:
+        ## Update the last notified id
+        print('Set the last notified id, it was not set before', comment.id)
+        client.post_invitation_edit (
+            invitations=meta_invitation_id,
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=invitation.id,
+                content={
+                    'last_notified_id': { 'value': comment.id }
+                }
+            )
+        )
+        last_notified_id = comment.id               
 
-        last_notified_comment = client.get_note(last_notified_id) if last_notified_id else comment
+    print('Send follow up comment email')
+    last_notified_comment = client.get_note(last_notified_id)
+    new_comments = client.get_notes(invitation=invitation.id, forum=submission.id, mintcdate=last_notified_comment.tcdate, sort='tcdate:asc')
 
-        new_comments = client.get_notes(invitation=invitation.id, forum=submission.id, mintcdate=last_notified_comment.tcdate, sort='tcdate:asc')
-
-        print(f'New comments: {len(new_comments)}')
-        if len(new_comments) < 5:
-            return
-        
+    print(f'New comments: {len(new_comments)}')
+    if len(new_comments) >= 5:
         client.post_message(
             subject = f'[{short_name}] New messages in comittee members chat for submission {submission.number}: {submission.content["title"]["value"]}',
             recipients = comment.readers,
@@ -63,6 +92,7 @@ You can view the conversation here: https://openreview.net/forum?id={submission.
             ignoreRecipients = comment.signatures
         )
 
+        print('Update the last notified id', comment.id)
         client.post_invitation_edit (
             invitations=meta_invitation_id,
             signatures=[venue_id],
