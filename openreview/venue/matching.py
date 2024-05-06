@@ -202,7 +202,7 @@ class Matching(object):
 
             edge_weight = {
                 'param': {
-                    'enum': [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+                    'enum': list(range(0, 51))
                 }
             }
             edge_label = None
