@@ -98,8 +98,6 @@ def process(client, invitation):
     reassignment_status = defaultdict(list)
     only_resubmissions = []
 
-    print(f"records of resubmission: {','.join([s.id for s in resubmissions])}")
-
     # Fetch profiles and map names to profile IDs - account for change in preferred names
     reviewer_profiles = []
     all_profiles = []
@@ -202,8 +200,6 @@ def process(client, invitation):
         openreview.tools.post_bulk_edges(client=client, edges=cmp_to_post)
     
 
-    print('iterating through')
-    print(list(resubmissions))
     for submission in resubmissions:
         print(f"rewriting {submission.id}")
         # 1) Find all reassignments and reassignment requests -> 0 out or set to 3
