@@ -107,7 +107,7 @@ class EditInvitationBuilder(object):
                         'note': {
                             'content': {
                                 'param': {
-                                    'type': 'note-content-json'
+                                    'type': 'content'
                                 }
                             }
                         }
