@@ -97,24 +97,31 @@ class EditInvitationBuilder(object):
             readers = [venue_id],
             writers = [venue_id],
             edit = {
-                'signatures': [venue.get_program_chairs_id()],
+                'signatures': [venue_id],
                 'readers': [venue_id],
                 'writers': [venue_id],
+                'content' :{
+                    'note_content': {
+                        'value': {
+                            'param': {
+                                'type': 'content'
+                            }
+                        }
+                    }
+                },
                 'invitation': {
                     'id': invitation_id,
                     'signatures': [venue_id],
                     'edit': {
+                        'signatures': [venue.get_program_chairs_id()],
                         'note': {
-                            'content': {
-                                'param': {
-                                    'type': 'content'
-                                }
-                            }
+                            'content': '${4/content/note_content/value}',
+                            'signatures': ["${3/signatures}"]
                         }
                     }
                 }
             }  
         )
 
-        self.save_invitation(invitation, replacement=True)
+        self.save_invitation(invitation, replacement=False)
         return invitation

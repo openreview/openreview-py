@@ -107,41 +107,48 @@ class TestVenueConfiguration():
         post_submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Post_Submission')
         assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
 
-        # # edit Submission content with Submission/Content invitation
-        # pc_client_v2.post_invitation_edit(
-        #     invitations=submission_deadline_inv.id,
-        #     invitation=openreview.api.Invitation(
-        #         id=submission_inv.id,
-        #         edit={
-        #             'note': {
-        #                 'content': {
-        #                     'subject_area': {
-        #                         'order': 10,
-        #                         "description": "Select one subject area.",
-        #                         'value': {
-        #                             'param': {
-        #                                 'type': 'string',
-        #                                 'enum': [
-        #                                     "3D from multi-view and sensors",
-        #                                     "3D from single images",	
-        #                                     "Adversarial attack and defense",	
-        #                                     "Autonomous driving",
-        #                                     "Biometrics",	
-        #                                     "Computational imaging",	
-        #                                     "Computer vision for social good",	
-        #                                     "Computer vision theory",	
-        #                                     "Datasets and evaluation"
-        #                                 ],
-        #                                 "input": "select"
-        #                             }
-        #                         }
-        #                     }
-        #                 }
-        #             }
-        #         }
-        #     )
-        # )
-        # helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2025/Conference/-/Submission/Deadline')
+        content_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission/Content')
+        assert content_inv
+        assert 'subject_area' not in submission_inv.edit['note']['content']
+        assert 'keywords' in submission_inv.edit['note']['content']
 
-        # submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission')
-        # assert submission_inv and 'subject_area' in submission_inv.edit['note']['content']
+        ## edit Submission content with Submission/Content invitation
+        pc_client_v2.post_invitation_edit(
+            invitations=content_inv.id,
+            content = {
+                'note_content': {
+                    'value': {
+                        'subject_area': {
+                            'order': 10,
+                            "description": "Select one subject area.",
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        "3D from multi-view and sensors",
+                                        "3D from single images",
+                                        "Adversarial attack and defense",
+                                        "Autonomous driving",
+                                        "Biometrics",
+                                        "Computational imaging",
+                                        "Computer vision for social good",
+                                        "Computer vision theory",
+                                        "Datasets and evaluation"
+                                    ],
+                                    "input": "select"
+                                }
+                            }
+                        },
+                        'keywords': {
+                            'delete': True
+                        }
+                    }
+                }
+            }
+        )
+
+        submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission')
+        assert submission_inv and 'subject_area' in submission_inv.edit['note']['content']
+        assert 'keywords' not in submission_inv.edit['note']['content']
+        content_keys = submission_inv.edit['note']['content'].keys()
+        assert all(field in content_keys for field in ['title', 'authors', 'authorids', 'TLDR', 'abstract', 'pdf'])
