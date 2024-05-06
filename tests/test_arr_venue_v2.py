@@ -3694,7 +3694,7 @@ class TestARRVenueV2():
                     note=openreview.api.Note(
                         content = {
                             'emergency_reviewing_agreement': { 'value': 'Yes' },
-                            'emergency_load': { 'value': '2' },
+                            'emergency_load': { 'value': 2 },
                         }
                     )
                 )
@@ -3706,7 +3706,7 @@ class TestARRVenueV2():
                 note=openreview.api.Note(
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
-                        'emergency_load': { 'value': '2' },
+                        'emergency_load': { 'value': 2 },
                         'research_area': { 'value': 'Generation' }
                     }
                 )
@@ -3739,7 +3739,7 @@ class TestARRVenueV2():
                     id=user_note_edit['note']['id'],
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
-                        'emergency_load': { 'value': '4' },
+                        'emergency_load': { 'value': 4 },
                         'research_area': { 'value': 'Machine Translation' }
                     }
                 )
@@ -3774,7 +3774,7 @@ class TestARRVenueV2():
                     ddate=openreview.tools.datetime_millis(now),
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
-                        'emergency_load': { 'value': '4' },
+                        'emergency_load': { 'value': 4 },
                         'research_area': { 'value': 'Machine Translation' }
                     }
                 )
