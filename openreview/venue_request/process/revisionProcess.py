@@ -634,7 +634,7 @@ Best,
             content={
                 'title': f'{invitation_type.replace("_", " ")} Process Completed',
                 'comment': f'''
-The process for the {invitation_type.replace("_", " ")} process has been completed.
+The {invitation_type.replace("_", " ")} process has been completed.
 
 More details: https://api.openreview.net/references?id={note.id}'''
             }
