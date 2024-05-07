@@ -3,6 +3,11 @@ def process(client, note, invitation):
 
     forum_note = client.get_note(note.forum)
 
+    previous_references = client.get_references(referent=forum_note.id, invitation=note.invitation)
+    if len(previous_references) > 0:
+        if not client.get_process_logs(id=previous_references[0].id):
+            raise openreview.OpenReviewException('There is currently a stage process running, please wait until it finishes to try again.')
+
     if 'Yes' in note.content.get('make_reviews_public', ''):
         if 'Everyone (submissions are public)' not in forum_note.content.get('submission_readers', '') and 'Make accepted submissions public and hide rejected submissions' not in forum_note.content.get('submission_readers', ''):
             raise openreview.OpenReviewException('Reviews cannot be released to the public since all papers are private')
