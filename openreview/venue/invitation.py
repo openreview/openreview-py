@@ -88,6 +88,16 @@ class InvitationBuilder(object):
                 )
             )
 
+    def unexpire_invitation(self, invitation_id):
+        invitation = tools.get_invitation(self.client, id = invitation_id)
+
+        if invitation:
+            self.save_invitation(invitation=Invitation(id=invitation.id,
+                    expdate={ "delete": True },
+                    signatures=[self.venue_id]
+                )
+            )            
+
     def get_process_content(self, file_path):
         process = None
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
@@ -2458,7 +2468,8 @@ class InvitationBuilder(object):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['custom_stage_process_script']['value']
     funcs = {
-        'openreview': openreview
+        'openreview': openreview,
+        'datetime': datetime
     }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
