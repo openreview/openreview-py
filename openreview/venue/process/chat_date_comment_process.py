@@ -25,7 +25,7 @@ def process(client, invitation):
     
     client.post_message(
         invitation = meta_invitation_id,
-        subject = f'[{short_name}] New message{"s" if len(new_comments) > 1 else ""} in comittee members chat for submission {submission.number}: {submission.content["title"]["value"]}',
+        subject = f'[{short_name}] New message{"s" if len(new_comments) > 1 else ""} in committee members chat for submission {submission.number}: {submission.content["title"]["value"]}',
         recipients = new_comments[-1].readers,
         message = f'''Hi {{{{fullname}}}},
         
