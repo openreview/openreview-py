@@ -209,7 +209,6 @@ class InvitationBuilder(object):
         revision_stage = submission_revision_stage
         deletion_invitation_id = self.venue.get_invitation_id(invitation_name)
         deletion_cdate = tools.datetime_millis(revision_stage.start_date if revision_stage.start_date else datetime.datetime.utcnow())
-        deletion_duedate = tools.datetime_millis(revision_stage.due_date) if revision_stage.due_date else None
         deletion_expdate = tools.datetime_millis(revision_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if revision_stage.due_date else None
 
         invitation = Invitation(id=deletion_invitation_id,
@@ -296,9 +295,6 @@ class InvitationBuilder(object):
                 }
             }
         )
-
-        if deletion_duedate:
-            invitation.edit['invitation']['duedate'] = deletion_duedate
 
         if deletion_expdate:
             invitation.edit['invitation']['expdate'] = deletion_expdate
