@@ -7,6 +7,7 @@ from openreview import ProfileManagement
 import csv
 import os
 import random
+import time
 
 class TestCVPRConference():
 
@@ -471,9 +472,66 @@ class TestCVPRConference():
             writers=[]
         )
 
-        review_stage_note=pc_client.post_note(review_stage_note)
+        review_stage_note_2 = openreview.Note(
+            content={
+                'review_start_date': start_date.strftime('%Y/%m/%d'),
+                'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
+                'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Review should not be revealed to any reviewer, except to the author of the review',
+                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews',
+                'review_rating_field_name': 'rating',
+                'additional_review_form_options': {
+                    "summary": {
+                        "order": 1,
+                        "description": "Briefly summarize the paper and its contributions. This is not the place to critique the paper; the authors should generally agree with a well-written summary.",
+                        "value": {
+                            "param": {
+                                "maxLength": 200000,
+                                "type": "string",
+                                "input": "textarea",
+                                "markdown": True
+                            }
+                        }
+                    },
+                    "soundness": {
+                        "order": 2,
+                        "description": "Please assign the paper a numerical rating on the following scale to indicate the soundness of the technical claims, experimental and research methodology and on whether the central claims of the paper are adequately supported with evidence.",
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "4 excellent",
+                                    "3 good",
+                                    "2 fair",
+                                    "1 poor"
+                                ],
+                                "input": "radio"
+                            }
+                        }
+                    },
+                }
+            },
+            forum=request_form.forum,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Review_Stage',
+            readers=['thecvf.com/CVPR/2024/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_CVPRChair1'],
+            writers=[]
+        )
+
+        pc_client.post_note(review_stage_note)
+        time.sleep(2)
+
+        with pytest.raises(openreview.OpenReviewException, match=r'There is currently a stage process running, please wait until it finishes to try again.'):
+            pc_client.post_note(review_stage_note_2)
 
         helpers.await_queue()
+
+        comment_invitation = f'openreview.net/Support/-/Request{request_form.number}/Stage_Error_Status'
+        error_comments = client.get_notes(invitation=comment_invitation, sort='tmdate')
+        assert not error_comments or len(error_comments) == 0        
 
         assert len(openreview_client.get_invitations(invitation='thecvf.com/CVPR/2024/Conference/-/Official_Review')) == 49
 
