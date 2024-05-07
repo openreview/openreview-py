@@ -1,7 +1,7 @@
 def process(client, edit, invitation):
 
     paper_link = edit.note.content['paper_link']['value']
-    paper_forum = paper_link.split('=')[-1]
+    paper_forum = paper_link.split('?id=')[-1].split('&')[0]
 
     try:
         client_v1=openreview.Client(baseurl=openreview.tools.get_base_urls(client)[0], token=client.token)
