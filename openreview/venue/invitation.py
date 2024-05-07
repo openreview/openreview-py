@@ -88,6 +88,16 @@ class InvitationBuilder(object):
                 )
             )
 
+    def unexpire_invitation(self, invitation_id):
+        invitation = tools.get_invitation(self.client, id = invitation_id)
+
+        if invitation:
+            self.save_invitation(invitation=Invitation(id=invitation.id,
+                    expdate={ "delete": True },
+                    signatures=[self.venue_id]
+                )
+            )            
+
     def get_process_content(self, file_path):
         process = None
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
@@ -209,7 +219,6 @@ class InvitationBuilder(object):
         revision_stage = submission_revision_stage
         deletion_invitation_id = self.venue.get_invitation_id(invitation_name)
         deletion_cdate = tools.datetime_millis(revision_stage.start_date if revision_stage.start_date else datetime.datetime.utcnow())
-        deletion_duedate = tools.datetime_millis(revision_stage.due_date) if revision_stage.due_date else None
         deletion_expdate = tools.datetime_millis(revision_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if revision_stage.due_date else None
 
         invitation = Invitation(id=deletion_invitation_id,
@@ -296,9 +305,6 @@ class InvitationBuilder(object):
                 }
             }
         )
-
-        if deletion_duedate:
-            invitation.edit['invitation']['duedate'] = deletion_duedate
 
         if deletion_expdate:
             invitation.edit['invitation']['expdate'] = deletion_expdate
@@ -1581,7 +1587,9 @@ class InvitationBuilder(object):
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['decision_process_script']['value']
-    funcs = {}
+    funcs = {
+        'openreview': openreview
+    }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
 ''',
@@ -2456,7 +2464,8 @@ class InvitationBuilder(object):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['custom_stage_process_script']['value']
     funcs = {
-        'openreview': openreview
+        'openreview': openreview,
+        'datetime': datetime
     }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)

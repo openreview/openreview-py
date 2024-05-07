@@ -5117,10 +5117,10 @@ Best,
         assert 'andrew@amazon.com' in recipients
         assert 'We are delighted to inform you that your submission has been accepted.' in messages[0]['content']['text']
 
-        replies = pc_client.get_notes(forum=request_form.id, invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment')
-        assert len(replies) == 2
-        assert replies[0].content['title'] == 'Decision Notification Status'
-        assert 'Decision notifications have been sent to the authors. You can check the status of the emails by clicking on this link: https://openreview.net/messages?parentGroup=ICML.cc/2023/Conference/Authors' in replies[0].content['comment']
+        replies = pc_client.get_notes(forum=request_form.id, invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment', sort='tmdate:desc')
+        assert replies[0].content['title'] == 'Post Decision Stage Process Completed'
+        assert replies[1].content['title'] == 'Decision Notification Status'
+        assert 'Decision notifications have been sent to the authors. You can check the status of the emails by clicking on this link: https://openreview.net/messages?parentGroup=ICML.cc/2023/Conference/Authors' in replies[1].content['comment']
 
         for submission in accepted_submissions:
             assert submission.readers == ['everyone']
@@ -5301,7 +5301,7 @@ Best,
         assert len(messages) == 5
 
         replies = pc_client.get_notes(forum=request_form.id, invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment')
-        assert len(replies) == 2
+        assert len(replies) == 20
 
     def test_forum_chat(self, openreview_client, helpers):
 

@@ -432,6 +432,10 @@ def process(client, note, invitation):
             else:
                 decision_options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
 
+            accept_decision_options = forum_note.content.get('accept_decision_options')
+            if accept_decision_options:
+                accept_decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in accept_decision_options.split(',')]
+
             content['send_decision_notifications'] = {
                 'description': 'Would you like to notify the authors regarding the decision? If yes, please carefully review the template below for each decision option before you click submit to send out the emails. Note that you can only send email notifications from the OpenReview UI once. If you need to send additional emails, you can do so by using the python client.',
                 'value-radio': [
@@ -441,8 +445,9 @@ def process(client, note, invitation):
                 'required': True,
                 'default': 'No, I will send the emails to the authors'
             }
+
             for decision in decision_options:
-                if 'Accept' in decision:
+                if openreview.tools.is_accept_decision(decision, accept_decision_options):
                     content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
                         'value-regex': '[\\S\\s]{1,10000}',
                         'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
@@ -455,26 +460,13 @@ Best,
 {short_name} Program Chairs
 '''
                     }
-                elif 'Reject' in decision:
-                    content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
-                        'value-regex': '[\\S\\s]{1,10000}',
-                        'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
-                        'default': f'''Dear {{{{fullname}}}},
-                        
-Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted.
-You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
-
-Best,
-{short_name} Program Chairs
-'''
-                    }
                 else:
                     content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
                         'value-regex': '[\\S\\s]{1,10000}',
                         'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
                         'default': f'''Dear {{{{fullname}}}},
-
-Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}.
+                    
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted.
 You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,
@@ -632,6 +624,23 @@ Best,
         client.post_invitation(submission_revision_invitation)
 
         print('Conference: ', conference.get_id())
+        comment_note = openreview.Note(
+            invitation=SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Comment',
+            forum=forum_note.id,
+            replyto=forum_note.id,
+            readers=comment_readers,
+            writers=[SUPPORT_GROUP],
+            signatures=[SUPPORT_GROUP],
+            content={
+                'title': f'{invitation_type.replace("_", " ")} Process Completed',
+                'comment': f'''
+The {invitation_type.replace("_", " ")} process has been completed.
+
+More details: https://api.openreview.net/references?id={note.id}'''
+            }
+        )
+
+        client.post_note(comment_note)        
     except Exception as e:
         forum_note = client.get_note(note.forum)
 
