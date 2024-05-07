@@ -1918,9 +1918,8 @@ arr_reviewer_emergency_load_task = {
     "emergency_load": {
         "value": {
             "param": {
-                "regex": "[0-9]{0,3}",
                 "optional": True,
-                "type": "string"
+                "type": "integer"
             }
         },
         "description": "Enter your emergency reviewing load. This will be added to your originally submitted load.",
@@ -1964,9 +1963,8 @@ arr_ac_emergency_load_task = {
     "emergency_load": {
         "value": {
             "param": {
-                "regex": "[0-9]{0,3}",
                 "optional": True,
-                "type": "string"
+                "type": "integer"
             }
         },
         "description": "Enter your emergency reviewing load. This will be added to your originally submitted load.",

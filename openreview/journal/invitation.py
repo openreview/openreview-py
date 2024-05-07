@@ -571,7 +571,7 @@ If you have questions after reviewing the points below that are not answered on 
                                     'value': {
                                         'param': {
                                             'type': "string",
-                                            'enum': ['I understand that I am required to review submissions that are assigned, as long as they fill in my area of expertise and are within my annual quota'],
+                                            'enum': ['I understand that I am required to review submissions that are assigned, as long as they fall in my area of expertise and are within my annual quota'],
                                             'input': 'checkbox'
                                         }
                                     }
@@ -1115,7 +1115,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 },
                 'weight': {
                     'param': {
-                        'minimum': -1
+                        'minimum': -1,
+                        'default': 0
                     }
                 },
                 'label': {
@@ -1804,7 +1805,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 },
                 'weight': {
                     'param': {
-                        'minimum': -1
+                        'minimum': -1,
+                        'default': 0
                     }
                 },
                 'label': {
@@ -3635,7 +3637,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         edit_param = f'{self.journal.get_reviewer_assignment_id()};{self.journal.get_reviewer_invite_assignment_id()}'
         score_ids = [self.journal.get_reviewer_affinity_score_id(), self.journal.get_reviewer_conflict_id(), self.journal.get_reviewer_custom_max_papers_id() + ',head:ignore', self.journal.get_reviewer_pending_review_id() + ',head:ignore', self.journal.get_reviewer_availability_id() + ',head:ignore']
         browse_param = ';'.join(score_ids)
-        filter_param = f'{self.journal.get_reviewer_pending_review_id()} == 0 AND {self.journal.get_reviewer_availability_id()} == Available'
+        filter_param = f'{self.journal.get_reviewer_pending_review_id()} == 0 AND {self.journal.get_reviewer_availability_id()} == Available AND {self.journal.get_reviewer_conflict_id()} == 0'
         params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&filter={filter_param}&maxColumns=2&version=2&referrer=[Return Instructions](/invitation?id={invitation.id})'
         with open(os.path.join(os.path.dirname(__file__), 'webfield/assignReviewerWebfield.js')) as f:
             content = f.read()
@@ -6180,6 +6182,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                         'Deploying',
                                         'Deployed',
                                         'Deployment Error',
+                                        'Undeploying',
+                                        'Undeployment Error',                                        
                                         'Queued',
                                         'Cancelled'
                                     ],

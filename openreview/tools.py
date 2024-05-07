@@ -19,7 +19,7 @@ import urllib.parse as urlparse
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 
-def decision_to_venue(venue_id, decision_option):
+def decision_to_venue(venue_id, decision_option, accept_options=None):
     """
     Returns the venue for a submission based on its decision
 
@@ -27,16 +27,31 @@ def decision_to_venue(venue_id, decision_option):
     :type venue_id: string
     :param decision_option: paper decision (i.e., Accept, Reject)
     :type decision_option: string
+    :param accept_options: accept decisions (i.e., [ Accept (Best Paper), Invite to Archive ])
+    :type accept_options: list
     """
     venue = venue_id
-    if 'Accept' in decision_option:
-        decision = decision_option.replace('Accept', '')
+    if is_accept_decision(decision_option, accept_options):
+        decision = decision_option.replace('Accept', '') if 'Accept' in decision_option else decision_option
         decision = re.sub(r'[()\W]+', '', decision)
-        if decision:
+        if decision: 
             venue += ' ' + decision.strip()
     else:
         venue = f'Submitted to {venue}'
     return venue
+
+def is_accept_decision(decision, accept_options=None):
+    """
+    Checks if decision is an accept decision
+
+    :param decision: paper decision (i.e., Accept, Reject)
+    :type decision: string
+    :param accept_options: accept decisions (i.e., [ Accept (Best Paper), Invite to Archive ])
+    :type accept_options: list
+    """
+    if (accept_options and decision in accept_options) or (not accept_options and 'Accept' in decision):
+        return True
+    return False
 
 def run_once(f):
     """
