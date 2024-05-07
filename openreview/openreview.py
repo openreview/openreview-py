@@ -97,7 +97,7 @@ class Client(object):
 
         if self.token:
             self.headers['Authorization'] = 'Bearer ' + self.token
-            self.user = jwt.decode(self.token, "secret", algorithms=["HS256"], issuer="openreview", options={"verify_signature": False})
+            self.user = jwt.decode(self.token, options={"verify_signature": False})
             try:
                 self.profile = self.get_profile()
             except:
@@ -120,7 +120,7 @@ class Client(object):
         self.token = str(response['token'])
         self.profile = Profile( id = response['user']['profile']['id'] )
         self.headers['Authorization'] ='Bearer ' + self.token
-        self.user = jwt.decode(self.token, "secret", algorithms=["HS256"], issuer="openreview", options={"verify_signature": False})
+        self.user = jwt.decode(self.token, options={"verify_signature": False})
         return response
 
     def __handle_response(self,response):
