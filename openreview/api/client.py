@@ -1376,7 +1376,7 @@ class OpenReviewClient(object):
 
     def post_tag(self, tag):
         """
-        Posts the tag. If the tag is unsigned, signs it using the client's default signature.
+        Posts the tag.
 
         :param tag: Tag to be posted
         :type tag: Tag
