@@ -844,6 +844,12 @@ Total Errors: {len(errors)}
         assignment_invitation = self.client.get_invitation(self.get_assignment_id(match_group.id))
         conference_matching = matching.Matching(self, match_group, submission_content=assignment_invitation.edit.get('head', {}).get('param', {}).get('withContent'))
         return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment)
+    
+    def unset_assignments(self, assignment_title, committee_id):
+
+        match_group = self.client.get_group(committee_id)
+        conference_matching = matching.Matching(self, match_group)
+        return conference_matching.undeploy(assignment_title)    
 
     def setup_assignment_recruitment(self, committee_id, hash_seed, due_date, assignment_title=None, invitation_labels={}, email_template=None):
 

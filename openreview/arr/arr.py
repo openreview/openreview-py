@@ -353,6 +353,17 @@ class ARR(object):
                 )
             )
 
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/seniorAreaChairsWebfield.js')) as f:
+            content = f.read()
+            self.client.post_group_edit(
+                invitation=self.get_meta_invitation_id(),
+                signatures=[self.venue_id],
+                group=openreview.api.Group(
+                    id=self.get_senior_area_chairs_id(),
+                    web=content
+                )
+            )
+
         setup_arr_invitations(self.invitation_builder)
         return setup_value
 
