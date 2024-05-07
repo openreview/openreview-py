@@ -57,7 +57,7 @@ var reviewersUrl = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',tai
     REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' +
     REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
   '&maxColumns=2&version=2' +
-  '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available' +
+  '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available AND ' + REVIEWERS_CONFLICT_ID + ' == 0' +
   '&referrer=' + referrerUrl;
 
 
@@ -410,7 +410,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
             '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_INVITE_ASSIGNMENT_ID +
             '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
             '&maxColumns=2&version=2' +
-            '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available'
+            '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available AND ' + REVIEWERS_CONFLICT_ID + ' == 0'
           }
         ] : [],
         duedate: reviewInvitation && reviewInvitation.duedate || 0
@@ -544,7 +544,8 @@ var renderData = function(venueStatusData) {
                 id: row.submission.forum,
                 noteId: row.submission.forum,
                 invitationId: Webfield2.utils.getInvitationId(VENUE_ID, row.submission.number, REVIEW_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
-              })
+              }),
+              number: row.submission.number
             }
           });
         }
@@ -564,7 +565,8 @@ var renderData = function(venueStatusData) {
                 id: row.submission.forum,
                 noteId: row.submission.forum,
                 invitationId: Webfield2.utils.getInvitationId(VENUE_ID, row.submission.number, OFFICIAL_RECOMMENDATION_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
-              })
+              }),
+              number: row.submission.number
             }
           });
         }

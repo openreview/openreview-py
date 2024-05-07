@@ -8,6 +8,7 @@ def process(client, invitation):
     submission_name = domain.content['submission_name']['value']
     decision_name = domain.content.get('decision_name', {}).get('value')
     decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'Decision')
+    accept_options = domain.content.get('accept_decision_options', {}).get('value')
     review_name = domain.content.get('review_name', {}).get('value')
     meta_review_name = domain.content.get('meta_review_name', {}).get('value')
     ethics_chairs_id = domain.content.get('ethics_chairs_id', {}).get('value')
@@ -51,10 +52,10 @@ def process(client, invitation):
         print('reply_to', reply_to)
         print('source_submissions_query', source_submissions_query)
         if source == 'accepted_submissions':
-            source_submissions = client.get_all_notes(content={ 'venueid': venue_id }, sort='number:asc')
+            source_submissions = client.get_all_notes(content={ 'venueid': venue_id }, sort='number:asc', details='directReplies')
             if not source_submissions and decision_name:
                 under_review_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='directReplies')
-                source_submissions = [s for s in under_review_submissions if len([r for r in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{decision_name}' in r['invitations'] and 'Accept' in r['content'][decision_field_name]['value']]) > 0]
+                source_submissions = [s for s in under_review_submissions if len([r for r in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{decision_name}' in r['invitations'] and openreview.tools.is_accept_decision(r['content'][decision_field_name]['value'], accept_options) ]) > 0]
             expire_existing_invitations()
         else:
             source_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='directReplies')
@@ -72,11 +73,11 @@ def process(client, invitation):
                 source_submissions = [s for s in source_submissions if value in s.content.get(key, {}).get('value', '')]
 
         if reply_to == 'reviews':
-            children_notes = [openreview.api.Note.from_json(reply) for s in source_submissions for reply in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{review_name}' in reply['invitations']]
+            children_notes = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{review_name}' in reply['invitations']]
         elif reply_to == 'metareviews':
-            children_notes = [openreview.api.Note.from_json(reply) for s in source_submissions for reply in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{meta_review_name}' in reply['invitations']]
+            children_notes = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{meta_review_name}' in reply['invitations']]
         else:
-            children_notes = source_submissions
+            children_notes = [(note, note) for note in source_submissions]
 
         return children_notes
     
@@ -133,27 +134,20 @@ def process(client, invitation):
 
     def post_invitation(note):
 
+        note, forumNote = note
+
         content = {
-            'noteId': {
-                'value': note.id
-            },
-            'noteNumber': {
-                'value': note.number
-            }
+            'noteId': { 'value': forumNote.id },
+            'noteNumber': { 'value': forumNote.number }
         }
 
-        if 'replyto' in invitation.edit['content'] and 'replytoSignatures' in invitation.edit['content']:
-            paper_number = note.signatures[0].split(submission_name)[-1].split('/')[0]
-            content['noteId'] = { 'value': note.forum }
-            content['noteNumber'] = { 'value': int(paper_number) }
+        if 'replyto' in invitation.edit['content']:
             content['replyto'] = { 'value': note.id }
+
+        if 'replytoSignatures' in invitation.edit['content']:
             content['replytoSignatures'] = { 'value': note.signatures[0] }
 
-        if 'replyto' in invitation.edit['content'] and 'replyNumber' in invitation.edit['content']:
-            paper_number = note.invitations[0].split(submission_name)[-1].split('/')[0]
-            content['noteId'] = { 'value': note.forum }
-            content['noteNumber'] = { 'value': int(paper_number) }
-            content['replyto'] = { 'value': note.id }
+        if 'replyNumber' in invitation.edit['content']:
             content['replyNumber'] = { 'value': note.number }
 
         if 'noteReaders' in invitation.edit['content']:

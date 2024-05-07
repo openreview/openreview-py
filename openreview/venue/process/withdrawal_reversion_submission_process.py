@@ -9,7 +9,8 @@ def process(client, edit, invitation):
     withdraw_expiration_id = domain.content['withdraw_expiration_id']['value']
     withdraw_committee = domain.content['withdraw_committee']['value']
     submission_name = domain.content['submission_name']['value']
-    authors_name = domain.content['authors_name']['value'] 
+    authors_name = domain.content['authors_name']['value']
+    sender = domain.get_content_value('message_sender')
 
     now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
     submission = client.get_note(edit.note.forum)
@@ -48,7 +49,7 @@ def process(client, edit, invitation):
 For more information, click here https://openreview.net/forum?id={submission.id}
 '''
 
-    client.post_message(email_subject, final_committee, email_body, invitation=meta_invitation_id, signature=venue_id, replyTo=contact)
+    client.post_message(email_subject, final_committee, email_body, invitation=meta_invitation_id, signature=venue_id, replyTo=contact, sender=sender)
 
     print(f'Add {paper_group_id}/{authors_name} to {venue_id}/{authors_name}')
     client.add_members_to_group(f'{venue_id}/{authors_name}', f'{paper_group_id}/{authors_name}')

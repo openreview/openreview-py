@@ -17,8 +17,8 @@ import re
 import time
 import jwt
 import traceback
-from openreview import Profile
-from openreview import OpenReviewException
+from ..openreview import Profile
+from ..openreview import OpenReviewException
 from .. import tools
 
 class LogRetry(Retry):
@@ -63,6 +63,7 @@ class OpenReviewClient(object):
         self.groups_url = self.baseurl + '/groups'
         self.login_url = self.baseurl + '/login'
         self.register_url = self.baseurl + '/register'
+        self.alternate_confirm_url = self.baseurl + '/user/confirm'
         self.invitations_url = self.baseurl + '/invitations'
         self.mail_url = self.baseurl + '/mail'
         self.notes_url = self.baseurl + '/notes'
@@ -236,6 +237,22 @@ class OpenReviewClient(object):
 
         return json_response
 
+    def confirm_alternate_email(self, profile_id, alternate_email):
+        """
+        Confirms an alternate email address
+
+        :param profile_id: id of the profile
+        :type profile_id: str
+        :param alternate_email: email address to confirm
+        :type alternate_email: str
+
+        :return: Dictionary containing the profile information
+        :rtype: dict
+        """
+        response = self.session.post(self.alternate_confirm_url, json = { 'username': profile_id, 'alternate': alternate_email }, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+    
     def get_activatable(self, token = None):
         response = self.session.get(self.baseurl + '/activatable/' + token, params = {}, headers = self.headers)
         response = self.__handle_response(response)
@@ -1736,7 +1753,8 @@ class OpenReviewClient(object):
             json['ignoreGroups'] = ignoreRecipients
 
         if sender:
-            json['from'] = sender
+            json['fromName'] = sender.get('fromName')
+            json['fromEmail'] = sender.get('fromEmail')
 
         if replyTo:
             json['replyTo'] = replyTo

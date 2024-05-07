@@ -5,6 +5,7 @@ from openreview.api import Edge
 
 import random
 import time
+import datetime
 from tqdm import tqdm
 
 class Assignment(object):
@@ -286,5 +287,24 @@ class Assignment(object):
                         head = head,
                         tail = tail,
                         weight = 1
-                    ))                
+                    )) 
+
+    def unset_ae_assignments(self, assignment_title):
+        journal = self.journal
+
+        proposed_assignments =  { g['id']['head']: [v['tail'] for v in g['values']] for g in self.client.get_grouped_edges(invitation=journal.get_ae_assignment_id(proposed=True),
+            label=assignment_title, groupby='head', select='tail')}        
+        assignments =  { g['id']['head']: [openreview.api.Edge.from_json(v) for v in g['values']] for g in self.client.get_grouped_edges(invitation=journal.get_ae_assignment_id(),
+            groupby='head', select=None)}        
+        submission_by_id = { s.id: s for s in self.client.get_all_notes(invitation=journal.get_author_submission_id()) }
+
+        to_delete_assignments = []
+        now = tools.datetime_millis(datetime.datetime.utcnow())
+        for head, tails in tqdm(proposed_assignments.items()):
+            assignment_edges = assignments.get(head)
+            for edge in assignment_edges:
+                edge.ddate = now
+                to_delete_assignments.append(edge)
+
+        openreview.tools.concurrent_requests(self.client.post_edge, to_delete_assignments)                                   
 

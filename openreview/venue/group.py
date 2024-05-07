@@ -154,6 +154,7 @@ class GroupBuilder(object):
             'subtitle': { 'value': self.venue.short_name if self.venue.short_name else '' },
             'website': { 'value': self.venue.website if self.venue.website else '' },
             'contact': { 'value': self.venue.contact if self.venue.contact else '' },
+            'message_sender': { 'value': self.venue.get_message_sender() },
             'location': { 'value': self.venue.location if self.venue.location else '' },
             'instructions': { 'value': self.venue.instructions if self.venue.instructions else '' },
             'start_date': { 'value': self.venue.start_date if self.venue.start_date else '' },
@@ -236,6 +237,7 @@ class GroupBuilder(object):
             content['decision_name'] = { 'value': self.venue.decision_stage.name }
             content['decision_email_authors'] = { 'value': self.venue.decision_stage.email_authors }
             content['decision_field_name'] = { 'value': self.venue.decision_stage.decision_field_name }
+            content['accept_decision_options'] = { 'value': self.venue.decision_stage.accept_options }
 
         if self.venue.submission_revision_stage:
             content['submission_revision_accepted'] = { 'value': self.venue.submission_revision_stage.only_accepted }            

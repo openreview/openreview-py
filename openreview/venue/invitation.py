@@ -88,6 +88,16 @@ class InvitationBuilder(object):
                 )
             )
 
+    def unexpire_invitation(self, invitation_id):
+        invitation = tools.get_invitation(self.client, id = invitation_id)
+
+        if invitation:
+            self.save_invitation(invitation=Invitation(id=invitation.id,
+                    expdate={ "delete": True },
+                    signatures=[self.venue_id]
+                )
+            )            
+
     def get_process_content(self, file_path):
         process = None
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
@@ -1144,6 +1154,18 @@ class InvitationBuilder(object):
                     }
                 }
 
+            bid_score_spec = {
+                'weight': 1,
+                'default': 0,
+                'translate_map' : {
+                    'Very High': 1.0,
+                    'High': 0.5,
+                    'Neutral': 0.0,
+                    'Low': -0.5,
+                    'Very Low': -1.0
+                }
+            }
+
             bid_invitation_id = venue.get_invitation_id(bid_stage.name, prefix=match_group_id)
 
             template_name = 'profileBidWebfield.js' if match_group_id == venue.get_senior_area_chairs_id() and not venue.sac_paper_assignments else 'paperBidWebfield.js'
@@ -1163,7 +1185,8 @@ class InvitationBuilder(object):
                 minReplies = bid_stage.request_count,
                 web = webfield_content,
                 content = {
-                    'committee_name': { 'value': venue.get_committee_name(match_group_id) }
+                    'committee_name': { 'value': venue.get_committee_name(match_group_id) },
+                    'scores_spec': { 'value': bid_score_spec }
                 },
                 edge = {
                     'id': {
@@ -1212,6 +1235,37 @@ class InvitationBuilder(object):
             )
 
             bid_invitation = self.save_invitation(bid_invitation, replacement=True)
+
+            configuration_invitation = tools.get_invitation(self.client, f'{match_group_id}/-/Assignment_Configuration')
+            if configuration_invitation:
+                updated_config = False
+                scores_spec_param = configuration_invitation.edit['note']['content']['scores_specification']['value']['param']
+                if 'default' in scores_spec_param and bid_invitation.id not in scores_spec_param:
+                    scores_spec_param['default'][bid_invitation.id] = bid_score_spec
+                    updated_config = True
+                elif 'default' not in scores_spec_param:
+                    scores_spec_param['default'] = {
+                        bid_invitation.id: bid_score_spec
+                    }
+                    updated_config = True
+                if updated_config:
+                    self.client.post_invitation_edit(invitations=venue.get_meta_invitation_id(),
+                        signatures=[venue_id],
+                        invitation=openreview.api.Invitation(
+                            id=configuration_invitation.id,
+                            edit={
+                                'note': {
+                                    'content': {
+                                        'scores_specification': {
+                                            'value': {
+                                                'param': scores_spec_param
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        )
+                    )
 
     def set_official_comment_invitation(self):
         venue_id = self.venue_id
@@ -1537,7 +1591,9 @@ class InvitationBuilder(object):
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['decision_process_script']['value']
-    funcs = {}
+    funcs = {
+        'openreview': openreview
+    }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
 ''',
@@ -2412,7 +2468,8 @@ class InvitationBuilder(object):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['custom_stage_process_script']['value']
     funcs = {
-        'openreview': openreview
+        'openreview': openreview,
+        'datetime': datetime
     }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
@@ -3615,6 +3672,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         invitation_id = self.venue.get_invitation_id(f'{self.venue.submission_stage.name}_Message', prefix=self.venue.get_reviewers_id())
         cdate=tools.datetime_millis(self.venue.submission_stage.second_due_date_exp_date if self.venue.submission_stage.second_due_date_exp_date else self.venue.submission_stage.exp_date)
+        venue_sender = self.venue.get_message_sender()
 
         committee = [venue_id]
         committee_signatures = [venue_id, self.venue.get_program_chairs_id()]
@@ -3670,7 +3728,9 @@ class InvitationBuilder(object):
                         'groups': { 'param': { 'inGroup': self.venue.get_reviewers_id('${3/content/noteNumber/value}') } },
                         'parentGroup': { 'param': { 'const': self.venue.get_reviewers_id('${3/content/noteNumber/value}') } },
                         'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
-                        'signature': { 'param': { 'enum': committee_signatures } }
+                        'signature': { 'param': { 'enum': committee_signatures } },
+                        'fromName': venue_sender['fromName'],
+                        'fromEmail': venue_sender['fromEmail']
                     }
                 }
 
@@ -3692,7 +3752,9 @@ class InvitationBuilder(object):
                 'groups': { 'param': { 'inGroup': self.venue.get_reviewers_id() } },
                 'parentGroup': { 'param': { 'const': self.venue.get_reviewers_id() } },
                 'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
-                'signature': { 'param': { 'enum': [venue_id, self.venue.get_program_chairs_id()] } }
+                'signature': { 'param': { 'enum': [venue_id, self.venue.get_program_chairs_id()] } },
+                'fromName': venue_sender['fromName'],
+                'fromEmail': venue_sender['fromEmail']
             }
         )
 
@@ -3711,7 +3773,9 @@ class InvitationBuilder(object):
                     'groups': { 'param': { 'inGroup': self.venue.get_area_chairs_id() } },
                     'parentGroup': { 'param': { 'const': self.venue.get_area_chairs_id() } },
                     'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
-                    'signature': { 'param': { 'enum': [venue_id, self.venue.get_program_chairs_id(), '~.*'] } } 
+                    'signature': { 'param': { 'enum': [venue_id, self.venue.get_program_chairs_id(), '~.*'] } },
+                    'fromName': venue_sender['fromName'],
+                    'fromEmail': venue_sender['fromEmail']
                 }
             )
 
