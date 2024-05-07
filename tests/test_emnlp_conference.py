@@ -1,8 +1,11 @@
 import csv
 import os
+import pytest
 import random
 import openreview
 import datetime
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
 
 class TestEMNLPConference():
 
@@ -223,7 +226,7 @@ class TestEMNLPConference():
         assert 'values-dropdown' in post_submission_invitation.reply['content']['hide_fields']
         assert ['keywords', 'abstract', 'supplementary_materials', 'pdf', 'submission_type'] == post_submission_invitation.reply['content']['hide_fields']['values-dropdown']
 
-    def test_submit_papers(self, test_client, client, openreview_client, helpers):
+    def test_submit_papers(self, test_client, client, openreview_client, helpers, selenium, request_page):
 
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
@@ -347,7 +350,17 @@ class TestEMNLPConference():
 
         invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Deletion')
         assert len(invitations) == 5
-        assert invitations[0].duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))
+        assert not invitations[0].duedate
+
+        tasks_url = 'http://localhost:3030/group?id=EMNLP/2023/Conference/Authors#author-tasks'
+        request_page(selenium, tasks_url, test_client.token, wait_for_element='Submission1 Revision')
+
+        task_panel = selenium.find_element(By.LINK_TEXT, "Author Tasks")
+        task_panel.click()
+
+        assert selenium.find_element(By.LINK_TEXT, 'Submission1 Revision')
+        with pytest.raises(NoSuchElementException):
+            selenium.find_element(By.LINK_TEXT, 'Submission1 Deletion')
 
         submissions = openreview_client.get_notes(invitation='EMNLP/2023/Conference/-/Submission', sort='number:asc')
         assert submissions[4].readers == [
