@@ -5301,7 +5301,7 @@ Best,
         assert len(messages) == 5
 
         replies = pc_client.get_notes(forum=request_form.id, invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment')
-        assert len(replies) == 2
+        assert len(replies) == 20
 
     def test_forum_chat(self, openreview_client, helpers):
 
