@@ -80,7 +80,7 @@ You can view the conversation here: https://openreview.net/forum?id={submission.
     print(f'New comments: {len(new_comments)}')
     if len(new_comments) >= 5:
         client.post_message(
-            subject = f'[{short_name}] New messages in comittee members chat for submission {submission.number}: {submission.content["title"]["value"]}',
+            subject = f'[{short_name}] New messages in committee members chat for submission {submission.number}: {submission.content["title"]["value"]}',
             recipients = comment.readers,
             message = f'''Hi {{{{fullname}}}},
             
