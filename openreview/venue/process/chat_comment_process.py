@@ -29,7 +29,7 @@ def process(client, edit, invitation):
         print('Send initial comment email')
 
         client.post_message(
-            subject = f'[{short_name}] New conversation in comittee members chat for submission {submission.number}: {submission.content["title"]["value"]}',
+            subject = f'[{short_name}] New conversation in committee members chat for submission {submission.number}: {submission.content["title"]["value"]}',
             recipients = comment.readers,
             message = f'''Hi {{{{fullname}}}},
             
