@@ -7,7 +7,8 @@ def process(client, edit, invitation):
     submission = client.get_note(edit.note.id)
 
 
-    if submission.content['flagged_for_desk_reject_verification']['value']:
+    flagged = submission.content.get('flagged_for_desk_reject_verification', {}).get('value')
+    if flagged:
         # unexpire
         invitation_id=f'{venue_id}/{submission_name}{submission.number}/-/Desk_Reject_Verification'
         verification_invitation = openreview.tools.get_invitation(client, invitation_id)
@@ -24,7 +25,7 @@ def process(client, edit, invitation):
                     )
             )
         
-    elif not submission.content['flagged_for_desk_reject_verification']['value']:
+    else:
         print('Unflag paper #', submission.number)
 
         # expire
