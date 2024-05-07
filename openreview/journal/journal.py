@@ -397,6 +397,9 @@ class Journal(object):
     def set_assignments(self, assignment_title, committee_id=None, overwrite=True, enable_reviewer_reassignment=True):
         self.assignment.set_ae_assignments(assignment_title)
     
+    def unset_assignments(self, assignment_title, committee_id=None):
+        self.assignment.unset_ae_assignments(assignment_title)
+
     def get_action_editors(self):
         return self.client.get_group(self.get_action_editors_id()).members
 

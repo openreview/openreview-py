@@ -113,7 +113,7 @@ def process(client, edit, invitation):
         original_load = 0
     else:
         original_load = cmp_edges[0].weight
-    emergency_load = int(edit.note.content['emergency_load']['value'])
+    emergency_load = edit.note.content['emergency_load']['value']
 
     edge_invitation_ids = [
         f"{role}/-/Custom_Max_Papers",
