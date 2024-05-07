@@ -1788,6 +1788,10 @@ class TestARRVenueV2():
                     f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/-/Blind_Submission_License_Agreement'
                 ).duedate == None
 
+            # Add check for counters
+            assert submission.content['number_of_reviewer_checklists']['value'] == 0
+            assert submission.content['number_of_action_editor_checklists']['value'] == 0
+
     def test_post_submission(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
@@ -2902,10 +2906,13 @@ class TestARRVenueV2():
         edit, test_submission = post_checklist(user_client, checklist_inv, user)
         assert 'flagged_for_ethics_review' not in test_submission.content
         assert 'flagged_for_desk_reject_verification' not in test_submission.content
+        assert test_submission.content['number_of_reviewer_checklists']['value'] == 1
         _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=edit['note'])
+        assert test_submission.content['number_of_reviewer_checklists']['value'] == 0
 
         # Post checklist with no ethics flag and a violation field - check for DSV flag
         edit, test_submission = post_checklist(user_client, checklist_inv, user, tested_field=violation_fields[0])
+        assert test_submission.content['number_of_reviewer_checklists']['value'] == 1
         assert 'flagged_for_ethics_review' not in test_submission.content
         assert 'flagged_for_desk_reject_verification' in test_submission.content
         assert test_submission.content['flagged_for_desk_reject_verification']['value']
@@ -2965,10 +2972,13 @@ class TestARRVenueV2():
         edit, test_submission = post_checklist(user_client, checklist_inv, user)
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
+        assert test_submission.content['number_of_action_editor_checklists']['value'] == 1
         _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=edit['note'])
+        assert test_submission.content['number_of_action_editor_checklists']['value'] == 0
 
         # Post checklist with no ethics flag and a violation field - check for DSV flag
         edit, test_submission = post_checklist(user_client, checklist_inv, user, tested_field=violation_fields[2])
+        assert test_submission.content['number_of_action_editor_checklists']['value'] == 1
         assert test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate > now()
