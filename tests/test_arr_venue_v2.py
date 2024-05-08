@@ -64,6 +64,10 @@ class TestARRVenueV2():
                     {
                         'fullname': fullname,
                         'username': username,
+                        'preferred': False
+                    },
+                    {
+                        'fullname': 'Reviewer Alternate ARROne',
                         'preferred': True
                     }
                 ],
@@ -80,6 +84,11 @@ class TestARRVenueV2():
         }]
         rev_client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001')
         rev_client.activate_user('reviewer1@aclrollingreview.com', profile_content)
+
+        profile = rev_client.get_profile('~Reviewer_ARROne1')
+        assert profile.content['names'][0]['username'] == '~Reviewer_ARROne1'
+        assert profile.content['names'][1]['username'] == '~Reviewer_Alternate_ARROne1'
+
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
@@ -700,7 +709,7 @@ class TestARRVenueV2():
         sac_client = openreview.api.OpenReviewClient(username = 'sac1@aclrollingreview.com', password=helpers.strong_password)
         reviewer_client.post_note_edit(
             invitation=f'{venue.get_reviewers_id()}/-/{registration_name}',
-            signatures=['~Reviewer_ARROne1'],
+            signatures=['~Reviewer_Alternate_ARROne1'],
             note=openreview.api.Note(
                 content = {
                     'profile_confirmed': { 'value': 'Yes' },
@@ -762,7 +771,7 @@ class TestARRVenueV2():
         # Post past unavailability notes
         reviewer_client.post_note_edit( ## Reviewer should be available - next available date is now
             invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
-            signatures=['~Reviewer_ARROne1'],
+            signatures=['~Reviewer_Alternate_ARROne1'],
             note=openreview.api.Note(
                 content = {
                     'maximum_load_this_cycle': { 'value': '0' },
@@ -879,14 +888,14 @@ class TestARRVenueV2():
         user_client = openreview.api.OpenReviewClient(username='reviewer1@aclrollingreview.com', password=helpers.strong_password)
         archive_note = user_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
-            signatures=['~Reviewer_ARROne1'],
+            signatures=['~Reviewer_Alternate_ARROne1'],
             note = openreview.api.Note(
                 pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
                 content = {
                     'title': { 'value': 'Paper title 2' },
                     'abstract': { 'value': 'Paper abstract 2' },
                     'authors': { 'value': ['Reviewer ARR', 'Test2 Client'] },
-                    'authorids': { 'value': ['~Reviewer_ARROne1', 'test2@mail.com'] },
+                    'authorids': { 'value': ['~Reviewer_Alternate_ARROne1', 'test2@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
                 },
                 license = 'CC BY-SA 4.0'
@@ -1386,7 +1395,7 @@ class TestARRVenueV2():
 
         reviewer_note_edit = reviewer_client.post_note_edit(
                 invitation=f'{august_venue.get_reviewers_id()}/-/{max_load_name}',
-                signatures=['~Reviewer_ARROne1'],
+                signatures=['~Reviewer_Alternate_ARROne1'],
                 note=openreview.api.Note(
                     content = {
                         'maximum_load_this_cycle': { 'value': '4' },
@@ -1432,7 +1441,7 @@ class TestARRVenueV2():
         # Test editing
         reviewer_note_edit = reviewer_client.post_note_edit(
                 invitation=f'{august_venue.get_reviewers_id()}/-/{max_load_name}',
-                signatures=['~Reviewer_ARROne1'],
+                signatures=['~Reviewer_Alternate_ARROne1'],
                 note=openreview.api.Note(
                     id = reviewer_note_edit['note']['id'],
                     content = {
@@ -1481,7 +1490,7 @@ class TestARRVenueV2():
         # Test deleting
         reviewer_note_edit = reviewer_client.post_note_edit(
                 invitation=f'{august_venue.get_reviewers_id()}/-/{max_load_name}',
-                signatures=['~Reviewer_ARROne1'],
+                signatures=['~Reviewer_Alternate_ARROne1'],
                 note=openreview.api.Note(
                     id = reviewer_note_edit['note']['id'],
                     ddate = openreview.tools.datetime_millis(now),
@@ -1572,7 +1581,7 @@ class TestARRVenueV2():
         # Recognition tasks
         recognition_edit = reviewer_client.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Recognition_Request',
-            signatures=['~Reviewer_ARROne1'],
+            signatures=['~Reviewer_Alternate_ARROne1'],
             note=openreview.api.Note(
                 content = {
                     "request_a_letter_of_recognition":{
@@ -1601,7 +1610,7 @@ class TestARRVenueV2():
         # License task
         license_edit = reviewer_client.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/License_Agreement',
-            signatures=['~Reviewer_ARROne1'],
+            signatures=['~Reviewer_Alternate_ARROne1'],
             note=openreview.api.Note(
                 content = {
                     "attribution": { "value": "Yes, I wish to be attributed."},
@@ -3665,7 +3674,7 @@ class TestARRVenueV2():
 
         reviewer_note_edit = reviewer_client.post_note_edit( ## Reviewer 1 will have an original load
             invitation=f'{venue.get_reviewers_id()}/-/{invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME}',
-            signatures=['~Reviewer_ARROne1'],
+            signatures=['~Reviewer_Alternate_ARROne1'],
             note=openreview.api.Note(
                 content = {
                     'maximum_load_this_cycle': { 'value': '4' },
@@ -3683,7 +3692,7 @@ class TestARRVenueV2():
                 'role': venue.get_reviewers_id(),
                 'invitation_name': invitation_builder.EMERGENCY_REVIEWING_NAME,
                 'client': reviewer_client,
-                'user': '~Reviewer_ARROne1'
+                'user': '~Reviewer_Alternate_ARROne1'
             },
             {   
                 'role': venue.get_area_chairs_id(),
@@ -3743,7 +3752,7 @@ class TestARRVenueV2():
             assert all(len(edges[user]) == 1 for edges in [cmp_edges, reg_edges, emg_edges, area_edges])
             cmp_original, reg_original, emg_original = cmp_edges[user][0], reg_edges[user][0], emg_edges[user][0]
     
-            if 'Reviewer' in user:
+            if user == '~Reviewer_Alternate_ARROne1':
                 assert cmp_edges[user][0] == 6
             assert cmp_original == reg_original + emg_original
             assert area_edges[user][0] == 'Generation'
@@ -3774,7 +3783,7 @@ class TestARRVenueV2():
 
             assert all(user in edges for edges in [cmp_edges, reg_edges, emg_edges, area_edges])
             assert all(len(edges[user]) == 1 for edges in [cmp_edges, reg_edges, emg_edges, area_edges])
-            if 'Reviewer' in user:
+            if user == '~Reviewer_Alternate_ARROne1':
                 assert cmp_edges[user][0] == 10
             assert cmp_edges[user][0] != cmp_original
             assert reg_edges[user][0] != reg_original
@@ -3802,12 +3811,13 @@ class TestARRVenueV2():
             
             helpers.await_queue_edit(openreview_client, edit_id=user_note_edit['id'])
 
-            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Custom_Max_Papers", tail=user) == 1
+            tail = '~Reviewer_ARROne1' if user == '~Reviewer_Alternate_ARROne1' else '~AC_ARRTwo1'
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Custom_Max_Papers", tail=tail) == 1
             cmp_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Custom_Max_Papers", groupby='tail', select='weight')}
             assert cmp_edges[user][0] == reg_edges[user][0] ## New custom max papers should just be what was registered with
-            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Registered_Load", tail=user) == 0
-            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Emergency_Load", tail=user) == 0
-            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Emergency_Area", tail=user) == 0
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Registered_Load", tail=tail) == 0
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Emergency_Load", tail=tail) == 0
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Emergency_Area", tail=tail) == 0
 
             score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
             assert all(weight < 10 for weight in score_edges[user])
