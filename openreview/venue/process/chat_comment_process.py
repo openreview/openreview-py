@@ -5,6 +5,7 @@ def process(client, edit, invitation):
     short_name = domain.get_content_value('subtitle')
     contact = domain.get_content_value('contact')
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
+    sender = domain.get_content_value('message_sender')
 
     submission = client.get_note(edit.note.forum)
     comment = client.get_note(edit.note.id)
@@ -29,6 +30,7 @@ def process(client, edit, invitation):
         print('Send initial comment email')
 
         client.post_message(
+            invitation=meta_invitation_id,
             subject = f'[{short_name}] New conversation in committee members chat for submission {submission.number}: {submission.content["title"]["value"]}',
             recipients = comment.readers,
             message = f'''Hi {{{{fullname}}}},
@@ -38,7 +40,9 @@ A new conversation has been started in the {short_name} forum for submission {su
 You can view the conversation here: https://openreview.net/forum?id={submission.id}&noteId={comment.id}#committee-chat
 ''',
             replyTo = contact,
-            ignoreRecipients = comment.signatures
+            ignoreRecipients = comment.signatures,
+            signature=venue_id,
+            sender=sender            
         )
 
         ## Update the last notified id
@@ -80,6 +84,7 @@ You can view the conversation here: https://openreview.net/forum?id={submission.
     print(f'New comments: {len(new_comments)}')
     if len(new_comments) >= 5:
         client.post_message(
+            invitation=meta_invitation_id,
             subject = f'[{short_name}] New messages in committee members chat for submission {submission.number}: {submission.content["title"]["value"]}',
             recipients = comment.readers,
             message = f'''Hi {{{{fullname}}}},
@@ -89,7 +94,9 @@ New comments have been posted for the conversation in the {short_name} forum for
 You can view the conversation here: https://openreview.net/forum?id={submission.id}&noteId={new_comments[0].id}#committee-chat
 ''',
             replyTo = contact,
-            ignoreRecipients = comment.signatures
+            ignoreRecipients = comment.signatures,
+            signature=venue_id,
+            sender=sender            
         )
 
         print('Update the last notified id', comment.id)

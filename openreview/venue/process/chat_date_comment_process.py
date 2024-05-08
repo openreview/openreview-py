@@ -35,6 +35,7 @@ You can view the conversation here: https://openreview.net/forum?id={submission.
 ''',
         replyTo = contact,
         ignoreRecipients = new_comments[-1].signatures,
+        signature=venue_id,
         sender = sender
     )
 
