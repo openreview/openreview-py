@@ -3692,23 +3692,25 @@ class TestARRVenueV2():
                 'role': venue.get_reviewers_id(),
                 'invitation_name': invitation_builder.EMERGENCY_REVIEWING_NAME,
                 'client': reviewer_client,
-                'user': '~Reviewer_Alternate_ARROne1'
+                'user': '~Reviewer_ARROne1',
+                'signature': '~Reviewer_Alternate_ARROne1'
             },
             {   
                 'role': venue.get_area_chairs_id(),
                 'invitation_name': invitation_builder.EMERGENCY_METAREVIEWING_NAME,
                 'client': ac_client,
-                'user': '~AC_ARRTwo1'
+                'user': '~AC_ARRTwo1',
+                'signature': '~AC_ARRTwo1'
             }
         ]
         for case in test_cases:
-            role, inv_name, user_client, user = case['role'], case['invitation_name'], case['client'], case['user']
+            role, inv_name, user_client, user, signature = case['role'], case['invitation_name'], case['client'], case['user']
 
             # Test preprocess
             with pytest.raises(openreview.OpenReviewException, match=r'You have agreed to emergency reviewing, please enter the additional load that you want to be assigned.'):
                 user_note_edit = user_client.post_note_edit(
                     invitation=f'{role}/-/{inv_name}',
-                    signatures=[user],
+                    signatures=[signature],
                     note=openreview.api.Note(
                         content = {
                             'emergency_reviewing_agreement': { 'value': 'Yes' },
@@ -3719,7 +3721,7 @@ class TestARRVenueV2():
             with pytest.raises(openreview.OpenReviewException, match=r'You have agreed to emergency reviewing, please enter your closest relevant research area.'):
                 user_note_edit = user_client.post_note_edit(
                     invitation=f'{role}/-/{inv_name}',
-                    signatures=[user],
+                    signatures=[signature],
                     note=openreview.api.Note(
                         content = {
                             'emergency_reviewing_agreement': { 'value': 'Yes' },
@@ -3731,7 +3733,7 @@ class TestARRVenueV2():
             # Test valid note and check for edges
             user_note_edit = user_client.post_note_edit(
                 invitation=f'{role}/-/{inv_name}',
-                signatures=[user],
+                signatures=[signature],
                 note=openreview.api.Note(
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
@@ -3752,7 +3754,7 @@ class TestARRVenueV2():
             assert all(len(edges[user]) == 1 for edges in [cmp_edges, reg_edges, emg_edges, area_edges])
             cmp_original, reg_original, emg_original = cmp_edges[user][0], reg_edges[user][0], emg_edges[user][0]
     
-            if user == '~Reviewer_Alternate_ARROne1':
+            if 'Reviewer' in user:
                 assert cmp_edges[user][0] == 6
             assert cmp_original == reg_original + emg_original
             assert area_edges[user][0] == 'Generation'
@@ -3783,7 +3785,7 @@ class TestARRVenueV2():
 
             assert all(user in edges for edges in [cmp_edges, reg_edges, emg_edges, area_edges])
             assert all(len(edges[user]) == 1 for edges in [cmp_edges, reg_edges, emg_edges, area_edges])
-            if user == '~Reviewer_Alternate_ARROne1':
+            if 'Reviewer' in user:
                 assert cmp_edges[user][0] == 10
             assert cmp_edges[user][0] != cmp_original
             assert reg_edges[user][0] != reg_original
@@ -3811,13 +3813,12 @@ class TestARRVenueV2():
             
             helpers.await_queue_edit(openreview_client, edit_id=user_note_edit['id'])
 
-            tail = '~Reviewer_ARROne1' if user == '~Reviewer_Alternate_ARROne1' else '~AC_ARRTwo1'
-            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Custom_Max_Papers", tail=tail) == 1
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Custom_Max_Papers", tail=user) == 1
             cmp_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Custom_Max_Papers", groupby='tail', select='weight')}
             assert cmp_edges[user][0] == reg_edges[user][0] ## New custom max papers should just be what was registered with
-            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Registered_Load", tail=tail) == 0
-            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Emergency_Load", tail=tail) == 0
-            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Emergency_Area", tail=tail) == 0
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Registered_Load", tail=user) == 0
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Emergency_Load", tail=user) == 0
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Emergency_Area", tail=user) == 0
 
             score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
             assert all(weight < 10 for weight in score_edges[user])
