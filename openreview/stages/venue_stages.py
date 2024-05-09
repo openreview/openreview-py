@@ -117,15 +117,16 @@ class SubmissionStage(object):
         self.second_deadline_remove_fields = second_deadline_remove_fields
         self.commitments_venue = commitments_venue
 
-    def get_readers(self, conference, number, decision=None):
+    def get_readers(self, conference, number, decision=None, accept_options=None):
 
         if self.Readers.EVERYONE in self.readers:
             return ['everyone']
 
         submission_readers=[conference.id]
+        is_accepted = decision and openreview.tools.is_accept_decision(decision, accept_options)
 
         if self.Readers.EVERYONE_BUT_REJECTED in self.readers:
-            hide = not decision or 'Accept' not in decision
+            hide = not decision or not is_accepted
             if hide:
                 if conference.use_senior_area_chairs:
                     submission_readers.append(conference.get_senior_area_chairs_id(number=number))
@@ -161,7 +162,7 @@ class SubmissionStage(object):
             if conference.use_ethics_reviewers:
                 submission_readers.append(conference.get_ethics_reviewers_id(number=number))
 
-        if conference.use_publication_chairs and decision and 'Accept' in decision:
+        if conference.use_publication_chairs and decision and is_accepted:
             submission_readers.append(conference.get_publication_chairs_id())
 
         submission_readers.append(conference.get_authors_id(number=number))
@@ -959,7 +960,8 @@ class CommentStage(object):
         only_accepted=False,
         check_mandatory_readers=False,
         readers=[],
-        invitees=[]):
+        invitees=[],
+        enable_chat=False):
 
         self.official_comment_name = official_comment_name if official_comment_name else 'Official_Comment'
         self.public_name = 'Public_Comment'
@@ -973,6 +975,7 @@ class CommentStage(object):
         self.check_mandatory_readers=check_mandatory_readers
         self.readers = readers
         self.invitees = invitees
+        self.enable_chat = enable_chat
 
     def get_readers(self, conference, number, api_version='1'):
 
@@ -1070,6 +1073,59 @@ class CommentStage(object):
             invitees.append(conference.get_authors_id(number))
 
         return invitees
+
+    def get_chat_invitees(self, conference, number):
+        invitees = [conference.get_id(), conference.support_user]
+
+        if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.invitees:
+            invitees.append(conference.get_senior_area_chairs_id(number))
+
+        if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
+            invitees.append(conference.get_area_chairs_id(number))
+
+        if self.Readers.REVIEWERS_ASSIGNED in self.invitees:
+            invitees.append(conference.get_reviewers_id(number))
+
+        if self.Readers.REVIEWERS_SUBMITTED in self.invitees:
+            invitees.append(conference.get_reviewers_id(number) + '/Submitted')
+
+        return invitees
+    
+    def get_chat_signatures(self, conference, number):
+
+        committee = [conference.get_program_chairs_id()]
+
+        if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.invitees:
+            committee.append(conference.get_senior_area_chairs_id(number))
+
+        if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
+            committee.append(conference.get_anon_area_chair_id(number=number, anon_id='.*'))
+
+        if conference.use_secondary_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
+            committee.append(conference.get_anon_secondary_area_chair_id(number=number, anon_id='.*'))
+
+        if self.Readers.REVIEWERS_ASSIGNED in self.invitees or self.Readers.REVIEWERS_SUBMITTED in self.invitees:
+            committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
+
+        return committee    
+
+    def get_chat_readers(self, conference, number, api_version='1'):
+
+        readers = [conference.get_program_chairs_id()]
+
+        if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.readers:
+            readers.append(conference.get_senior_area_chairs_id(number))
+
+        if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.readers:
+            readers.append(conference.get_area_chairs_id(number))
+
+        if self.Readers.REVIEWERS_ASSIGNED in self.readers:
+            readers.append(conference.get_reviewers_id(number))
+
+        if self.Readers.REVIEWERS_SUBMITTED in self.readers:
+            readers.append(conference.get_reviewers_id(number) + '/Submitted')               
+
+        return readers
 
     def get_mandatory_readers(self, conference, number):
         readers = [conference.get_program_chairs_id()]
@@ -1199,10 +1255,11 @@ class MetaReviewRevisionStage(object):
 
 class DecisionStage(object):
 
-    def __init__(self, options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False, additional_fields = {}, decisions_file=None):
+    def __init__(self, options = None, accept_options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False, additional_fields = {}, decisions_file=None):
         if not options:
             options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
         self.options = options
+        self.accept_options = accept_options
         self.start_date = start_date
         self.due_date = due_date
         self.name = 'Decision'

@@ -490,6 +490,16 @@ class VenueStages():
                 'required': True,
                 'default': 'No, do not email PCs for each official comment made in the venue',
                 'order': 31
+            },
+            'enable_chat_between_committee_members': {
+                'description': 'An experimental feature that allows committee members to chat with each other. Only the selected participants that are members of the reviewing committee will be using this feature. Default is "Yes, enable chat between committee members". More information: https://docs.openreview.net/getting-started/live-chat-on-the-forum-page',
+                'value-radio': [
+                    'Yes, enable chat between committee members',
+                    'No, do not enable chat between committee members'
+                ],
+                'required': False,
+                'default': 'Yes, enable chat between committee members',
+                'order': 32
             }
         }
 
@@ -715,18 +725,25 @@ class VenueStages():
                 'required': True
             },
             'decision_options': {
-                'description': 'What are the decision options (provide comma separated values, e.g. Accept (Best Paper), Accept, Reject)? Leave empty for default options - "Accept (Oral)", "Accept (Poster)", "Reject"',
+                'description': 'List all decision options. Provide comma separated values, e.g. "Accept (Best Paper), Invite to Archive, Reject". Default options are: "Accept (Oral)", "Accept (Poster)", "Reject"',
                 'value-regex': '.*',
+                'default': 'Accept (Oral), Accept (Poster), Reject',
                 'order': 30
             },
-            'make_decisions_public': {'description': 'Should the decisions be made public immediately upon posting? Default is "No, decisions should NOT be revealed publicly when they are posted".',
+            'accept_decision_options': {
+                'description': 'What are the accept decision options? Please specify all decision options that signify acceptance to the venue. Any decision option not specified here will be treated as a rejection. If left empty, decisions containing "Accept" signify acceptance to the venue.',
+                'value-regex': '.*',
+                'order': 31,
+            },
+            'make_decisions_public': {
+                'description': 'Should the decisions be made public immediately upon posting? Default is "No, decisions should NOT be revealed publicly when they are posted".',
                 'value-radio': [
                     'Yes, decisions should be revealed publicly when they are posted',
                     'No, decisions should NOT be revealed publicly when they are posted'
                 ],
                 'required': True,
                 'default': 'No, decisions should NOT be revealed publicly when they are posted',
-                'order': 31
+                'order': 32
             },
             'release_decisions_to_authors': {
                 'description': 'Should the decisions be visible to paper\'s authors immediately upon posting? Default is "No, decisions should NOT be revealed when they are posted to the paper\'s authors".',
@@ -736,7 +753,7 @@ class VenueStages():
                 ],
                 'required': True,
                 'default': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
-                'order': 32
+                'order': 33
             },
             'release_decisions_to_reviewers': {
                 'description': 'Should the decisions be immediately revealed to paper\'s reviewers? Default is "No, decisions should not be immediately revealed to the paper\'s reviewers"',
@@ -746,7 +763,7 @@ class VenueStages():
                 ],
                 'required': True,
                 'default': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
-                'order': 33
+                'order': 34
             },
             'release_decisions_to_area_chairs': {
                 'description': 'Should the decisions be immediately revealed to paper\'s area chairs? Default is "No, decisions should not be immediately revealed to the paper\'s area chairs"',
@@ -756,7 +773,7 @@ class VenueStages():
                 ],
                 'required': True,
                 'default': 'No, decisions should not be immediately revealed to the paper\'s area chairs',
-                'order': 34
+                'order': 35
             },
             'notify_authors': {
                 'description': 'Should we notify the authors the decision has been posted?, this option is only available when the decision is released to the authors or public',
@@ -767,17 +784,17 @@ class VenueStages():
                 'required': False,
                 'hidden': True,
                 'default': 'No, I will send the emails to the authors',
-                'order': 35
+                'order': 36
             },
             'additional_decision_form_options': {
-                'order': 36,
+                'order': 37,
                 'value-dict': {},
                 'required': False,
                 'description': 'Configure additional options in the decision form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
             },
             'decisions_file': {
                 'description': 'Upload a CSV file containing decisions for papers (one decision per line in the format: paper_number, decision, comment). Please do not add the column names as the first row',
-                'order': 37,
+                'order': 38,
                 'value-file': {
                     'fileTypes': ['csv'],
                     'size': 50
@@ -841,6 +858,9 @@ class VenueStages():
                     }
                 ))
 
+        with open(self.venue_request.decision_stage_pre_process, 'r') as pre:
+            pre_process_file_content = pre.read()
+
         return self.venue_request.client.post_invitation(openreview.Invitation(
             id='{}/-/Decision_Stage'.format(self.venue_request.support_group.id),
             readers=['everyone'],
@@ -848,6 +868,7 @@ class VenueStages():
             signatures=[self.venue_request.super_user],
             invitees=['everyone'],
             multiReply=True,
+            preprocess=pre_process_file_content,
             process_string=self.file_content,
             reply={
                 'readers': {
@@ -1159,6 +1180,7 @@ class VenueRequest():
         self.matching_status_process = os.path.join(os.path.dirname(__file__), 'process/matching_status_process.py')
         self.recruitment_status_process = os.path.join(os.path.dirname(__file__), 'process/recruitment_status_process.py')
         self.decision_upload_status_process = os.path.join(os.path.dirname(__file__), 'process/decision_upload_status_process.py')
+        self.decision_stage_pre_process = os.path.join(os.path.dirname(__file__), 'process/decision_stage_pre_process.py')
         self.deploy_process = os.path.join(os.path.dirname(__file__), 'process/deployProcess.py')
         self.recruitment_process = os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py')
         self.remind_recruitment_process = os.path.join(os.path.dirname(__file__), 'process/remindRecruitmentProcess.py')

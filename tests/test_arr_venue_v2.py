@@ -1788,6 +1788,10 @@ class TestARRVenueV2():
                     f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/-/Blind_Submission_License_Agreement'
                 ).duedate == None
 
+            # Add check for counters
+            assert submission.content['number_of_reviewer_checklists']['value'] == 0
+            assert submission.content['number_of_action_editor_checklists']['value'] == 0
+
     def test_post_submission(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
@@ -2502,6 +2506,13 @@ class TestARRVenueV2():
             )
         )
 
+        # Zero out affinity score for reviewer
+        openreview_client.delete_edges(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Affinity_Score',
+            head=submissions[1].id,
+            tail='~Reviewer_ARROne1'
+        )
+
         # Call the stage
         pc_client.post_note(
             openreview.Note(
@@ -2678,6 +2689,19 @@ class TestARRVenueV2():
 
         sac3_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs')
         assert sac3_group.members == ['~SAC_ARRTwo1']
+
+        sac_client = openreview.api.OpenReviewClient(username='sac2@aclrollingreview.com', password=helpers.strong_password)
+        request_page(selenium, "http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs", sac_client.token, wait_for_element='header')
+        header_div = selenium.find_element(By.ID, 'header')
+        assert header_div
+        description = header_div.find_element(By.CLASS_NAME, 'description')
+        assert 'AE Assignment Browser:' in description.text
+        url = header_div.find_element(By.ID, 'edge_browser_url')
+        assert url
+
+        edge_browser_url = 'http://localhost:3030/edges/browse?start=aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Assignment,tail:~SAC_ARRTwo1&traverse=aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment&edit=aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Invite_Assignment&browse=aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Agreggate_Score;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Affinity_Score;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Research_Area;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Custom_Max_Papers,head:ignore;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Registered_Load,head:ignore;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Load,head:ignore;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency,head:ignore;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Area,head:ignore&hide=aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Conflict&maxColumns=2&version=2&referrer=[Senior%20Area%20Chair%20Console](/group?id=aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs)'
+
+        assert url.get_attribute('href') == edge_browser_url
 
         openreview_client.post_edge(openreview.api.Edge(
             invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Proposed_Assignment',
@@ -2889,10 +2913,13 @@ class TestARRVenueV2():
         edit, test_submission = post_checklist(user_client, checklist_inv, user)
         assert 'flagged_for_ethics_review' not in test_submission.content
         assert 'flagged_for_desk_reject_verification' not in test_submission.content
+        assert test_submission.content['number_of_reviewer_checklists']['value'] == 1
         _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=edit['note'])
+        assert test_submission.content['number_of_reviewer_checklists']['value'] == 0
 
         # Post checklist with no ethics flag and a violation field - check for DSV flag
         edit, test_submission = post_checklist(user_client, checklist_inv, user, tested_field=violation_fields[0])
+        assert test_submission.content['number_of_reviewer_checklists']['value'] == 1
         assert 'flagged_for_ethics_review' not in test_submission.content
         assert 'flagged_for_desk_reject_verification' in test_submission.content
         assert test_submission.content['flagged_for_desk_reject_verification']['value']
@@ -2952,10 +2979,13 @@ class TestARRVenueV2():
         edit, test_submission = post_checklist(user_client, checklist_inv, user)
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
+        assert test_submission.content['number_of_action_editor_checklists']['value'] == 1
         _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=edit['note'])
+        assert test_submission.content['number_of_action_editor_checklists']['value'] == 0
 
         # Post checklist with no ethics flag and a violation field - check for DSV flag
         edit, test_submission = post_checklist(user_client, checklist_inv, user, tested_field=violation_fields[2])
+        assert test_submission.content['number_of_action_editor_checklists']['value'] == 1
         assert test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate > now()
@@ -3684,7 +3714,7 @@ class TestARRVenueV2():
                     note=openreview.api.Note(
                         content = {
                             'emergency_reviewing_agreement': { 'value': 'Yes' },
-                            'emergency_load': { 'value': '2' },
+                            'emergency_load': { 'value': 2 },
                         }
                     )
                 )
@@ -3696,7 +3726,7 @@ class TestARRVenueV2():
                 note=openreview.api.Note(
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
-                        'emergency_load': { 'value': '2' },
+                        'emergency_load': { 'value': 2 },
                         'research_area': { 'value': 'Generation' }
                     }
                 )
@@ -3729,7 +3759,7 @@ class TestARRVenueV2():
                     id=user_note_edit['note']['id'],
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
-                        'emergency_load': { 'value': '4' },
+                        'emergency_load': { 'value': 4 },
                         'research_area': { 'value': 'Machine Translation' }
                     }
                 )
@@ -3764,7 +3794,7 @@ class TestARRVenueV2():
                     ddate=openreview.tools.datetime_millis(now),
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
-                        'emergency_load': { 'value': '4' },
+                        'emergency_load': { 'value': 4 },
                         'research_area': { 'value': 'Machine Translation' }
                     }
                 )

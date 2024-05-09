@@ -256,7 +256,47 @@ class TestJournalMatching():
         assignment = openreview_client.get_edges(invitation='CARP/Action_Editors/-/Assignment', head=submissions[2].id)[0]
         assert assignment.tail == '~Paul_McCartney1'
 
-        messages = openreview_client.get_messages(to = 'ana@prada.com', subject = '[CARP] Assignment to new CARP submission Paper title 1')
+        assert len(openreview_client.get_messages(to = 'ana@prada.com', subject = '[CARP] Assignment to new CARP submission 1: Paper title 1')) == 1
+
+        assert openreview_client.get_note(submissions[0].id).content['venueid']['value'] == 'CARP/Assigned_AE'
+        assert openreview_client.get_note(submissions[1].id).content['venueid']['value'] == 'CARP/Assigned_AE'
+        assert openreview_client.get_note(submissions[2].id).content['venueid']['value'] == 'CARP/Assigned_AE'
+
+        assigning_submissions = openreview_client.get_notes(content={ 'venueid': 'CARP/Assigning_AE' })
+        assert len(assigning_submissions) == 0
+
+        ## Undeploy assignments
+        journal.unset_assignments(assignment_title='matching-1234')
+
+        assert openreview_client.get_edges_count(invitation='CARP/Action_Editors/-/Assignment') == 0
+
+        helpers.await_queue_edit(openreview_client, edit_id=assignments[0]['values'][0]['id'], count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=assignments[1]['values'][0]['id'], count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=assignments[2]['values'][0]['id'], count=2)            
+
+        assert openreview_client.get_note(submissions[0].id).content['venueid']['value'] == 'CARP/Assigning_AE'
+        assert openreview_client.get_note(submissions[1].id).content['venueid']['value'] == 'CARP/Assigning_AE'
+        assert openreview_client.get_note(submissions[2].id).content['venueid']['value'] == 'CARP/Assigning_AE'
+
+        assert len(openreview_client.get_messages(to = 'ana@prada.com', subject = '[CARP] You have been unassigned from CARP submission 1: Paper title 1')) == 1
+
+        assigning_submissions = openreview_client.get_notes(content={ 'venueid': 'CARP/Assigning_AE' })
+        assert len(assigning_submissions) == 3
+
+        ## Deploy again
+        journal.set_assignments(assignment_title='matching-1234')
+
+        assignments = openreview_client.get_grouped_edges(invitation='CARP/Action_Editors/-/Assignment', groupby='head')
+        assert len(assignments) == 3
+
+        helpers.await_queue_edit(openreview_client, edit_id=assignments[0]['values'][0]['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=assignments[1]['values'][0]['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=assignments[2]['values'][0]['id'])
+
+        assignment = openreview_client.get_edges(invitation='CARP/Action_Editors/-/Assignment', head=submissions[2].id)[0]
+        assert assignment.tail == '~Paul_McCartney1'
+
+        assert len(openreview_client.get_messages(to = 'ana@prada.com', subject = '[CARP] Assignment to new CARP submission 1: Paper title 1')) == 2
 
         assert openreview_client.get_note(submissions[0].id).content['venueid']['value'] == 'CARP/Assigned_AE'
         assert openreview_client.get_note(submissions[1].id).content['venueid']['value'] == 'CARP/Assigned_AE'

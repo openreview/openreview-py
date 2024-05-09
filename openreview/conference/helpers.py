@@ -139,7 +139,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')
         venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
         venue.senior_area_chair_identity_readers = get_identity_readers(note, 'senior_area_chair_identity')
-        venue.decision_heading_map = get_decision_heading_map(venue.short_name, note)
+        venue.decision_heading_map = get_decision_heading_map(venue.short_name, note, venue_content.get('accept_decision_options', {}).get('value', []))
         venue.source_submissions_query_mapping = note.content.get('source_submissions_query_mapping', {})
         venue.sac_paper_assignments = note.content.get('senior_area_chairs_assignment', 'Area Chairs') == 'Submissions'
 
@@ -436,11 +436,11 @@ def get_identity_readers(request_forum, field_name):
 
     return [readers_map[r] for r in request_forum.content.get(field_name, [])]
 
-def get_decision_heading_map(short_name, request_forum):
+def get_decision_heading_map(short_name, request_forum, accept_options):
     map = request_forum.content.get('home_page_tab_names', {})
     decision_heading_map = {}
     for decision, tabName in map.items():
-        decision_heading_map[openreview.tools.decision_to_venue(short_name, decision)] = tabName
+        decision_heading_map[openreview.tools.decision_to_venue(short_name, decision, accept_options)] = tabName
 
     return decision_heading_map
 
@@ -885,15 +885,20 @@ def get_decision_stage(request_forum):
         decision_due_date = None
 
     decision_options = request_forum.content.get('decision_options', '').strip()
+    accept_decision_options = request_forum.content.get('accept_decision_options', '').strip()
     decision_form_additional_options = request_forum.content.get('additional_decision_form_options', {})
 
     if decision_options:
         decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
 
+    if accept_decision_options:
+        accept_decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in accept_decision_options.split(',')]
+
     decisions_file = request_forum.content.get('decisions_file')
 
     return openreview.stages.DecisionStage(
         options = decision_options,
+        accept_options = accept_decision_options,
         start_date = decision_start_date,
         due_date = decision_due_date,
         public = request_forum.content.get('make_decisions_public', '').startswith('Yes'),
@@ -1020,6 +1025,8 @@ def get_comment_stage(request_forum):
 
     email_pcs = request_forum.content.get('email_program_chairs_about_official_comments', '') == 'Yes, email PCs for each official comment made in the venue'
 
+    enable_chat = request_forum.content.get('enable_chat_between_committee_members', '') == 'Yes, enable chat between committee members'
+
     return openreview.stages.CommentStage(
         start_date=commentary_start_date,
         end_date=commentary_end_date,
@@ -1029,7 +1036,8 @@ def get_comment_stage(request_forum):
         email_pcs=email_pcs,
         check_mandatory_readers=True,
         readers=readers,
-        invitees=invitees
+        invitees=invitees,
+        enable_chat=enable_chat
     )
 
 def get_registration_stages(request_forum, venue):
