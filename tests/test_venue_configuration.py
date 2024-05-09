@@ -82,7 +82,7 @@ class TestVenueConfiguration():
         assert submission_inv and submission_inv.cdate == openreview.tools.datetime_millis(start_date.replace(second=0, microsecond=0))
         assert submission_inv.duedate == openreview.tools.datetime_millis(due_date.replace(second=0, microsecond=0))
         assert submission_inv.expdate == submission_inv.duedate + (30*60*1000)
-        submission_deadline_inv =  openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission/Deadline')
+        submission_deadline_inv =  openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission/Deadlines')
         assert submission_deadline_inv and submission_inv.id in submission_deadline_inv.edit['invitation']['id']
         post_submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Post_Submission')
         assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
@@ -98,7 +98,7 @@ class TestVenueConfiguration():
                 duedate=new_duedate
             )
         )
-        helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2025/Conference/-/Submission/Deadline')
+        helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2025/Conference/-/Submission/Deadlines')
 
         # assert submission deadline and expdate get updated
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission')
@@ -111,6 +111,7 @@ class TestVenueConfiguration():
         assert content_inv
         assert 'subject_area' not in submission_inv.edit['note']['content']
         assert 'keywords' in submission_inv.edit['note']['content']
+        assert submission_inv.edit['note']['license'] == 'CC BY 4.0'
 
         ## edit Submission content with Submission/Content invitation
         pc_client_v2.post_invitation_edit(
@@ -143,7 +144,8 @@ class TestVenueConfiguration():
                             'delete': True
                         }
                     }
-                }
+                },
+                'note_license': { 'value':  'CC BY-NC-ND 4.0' }
             }
         )
 
@@ -152,3 +154,4 @@ class TestVenueConfiguration():
         assert 'keywords' not in submission_inv.edit['note']['content']
         content_keys = submission_inv.edit['note']['content'].keys()
         assert all(field in content_keys for field in ['title', 'authors', 'authorids', 'TLDR', 'abstract', 'pdf'])
+        assert submission_inv.edit['note']['license'] == 'CC BY-NC-ND 4.0'

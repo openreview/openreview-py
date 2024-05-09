@@ -1,5 +1,7 @@
 import os
+import time
 import datetime
+from .. import tools
 from openreview.api import Invitation
 
 class EditInvitationBuilder(object):
@@ -51,11 +53,11 @@ class EditInvitationBuilder(object):
             process = f.read()
             return process
 
-    def set_edit_deadline_invitation(self, invitation_id, process_file):
+    def set_edit_deadlines_invitation(self, invitation_id, process_file):
 
         venue_id = self.venue_id
         venue = self.venue
-        deadline_invitation_id = invitation_id + '/Deadline'
+        deadline_invitation_id = invitation_id + '/Deadlines'
 
         invitation = Invitation(
             id = deadline_invitation_id,
@@ -64,15 +66,27 @@ class EditInvitationBuilder(object):
             readers = [venue_id],
             writers = [venue_id],
             edit = {
+                # 'content': {
+                #     'activation_date': { 'value': '?' },
+                #     'deadline': { 'value': '?' },
+                # },
                 'signatures': [venue.get_program_chairs_id()],
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'invitation': {
                     'id': invitation_id,
                     'signatures': [venue_id],
+                    'cdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
                     'duedate': {
                         'param': {
                             'range': [ 0, 9999999999999 ],
+                            'optional': True,
                             'deletable': True
                         }
                     }
@@ -107,6 +121,15 @@ class EditInvitationBuilder(object):
                                 'type': 'content'
                             }
                         }
+                    },
+                    'note_license': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum':  ['CC BY 4.0', 'CC BY-SA 4.0', 'CC BY-NC 4.0', 'CC BY-ND 4.0', 'CC BY-NC-SA 4.0', 'CC BY-NC-ND 4.0', 'CC0 1.0'],
+                                'input': 'checkbox'
+                            }
+                        }
                     }
                 },
                 'invitation': {
@@ -116,6 +139,7 @@ class EditInvitationBuilder(object):
                         'signatures': [venue.get_program_chairs_id()],
                         'note': {
                             'content': '${4/content/note_content/value}',
+                            'license': '${4/content/note_license/value}', # how to allow multiple licenses??
                             'signatures': ["${3/signatures}"]
                         }
                     }

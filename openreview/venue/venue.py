@@ -74,7 +74,7 @@ class Venue(object):
         self.automatic_reviewer_assignment = False
         self.decision_heading_map = {}
         self.allow_gurobi_solver = False
-        self.submission_license = None
+        self.submission_license = ['CC BY 4.0']
         self.use_publication_chairs = False
         self.source_submissions_query_mapping = {}
         self.sac_paper_assignments = False
@@ -491,7 +491,7 @@ class Venue(object):
             self.invitation_builder.set_submission_deletion_invitation(submission_revision_stage)
 
     def create_submission_edit_invitations(self):
-        self.edit_invitation_builder.set_edit_deadline_invitation(self.get_submission_id(), 'edit_submission_deadline_process.py')
+        self.edit_invitation_builder.set_edit_deadlines_invitation(self.get_submission_id(), 'edit_submission_deadline_process.py')
         self.edit_invitation_builder.set_edit_content_invitation(self.get_submission_id())
 
     def create_post_submission_stage(self):
