@@ -3704,7 +3704,7 @@ class TestARRVenueV2():
             }
         ]
         for case in test_cases:
-            role, inv_name, user_client, user, signature = case['role'], case['invitation_name'], case['client'], case['user']
+            role, inv_name, user_client, user, signature = case['role'], case['invitation_name'], case['client'], case['user'], case['signature']
 
             # Test preprocess
             with pytest.raises(openreview.OpenReviewException, match=r'You have agreed to emergency reviewing, please enter the additional load that you want to be assigned.'):
