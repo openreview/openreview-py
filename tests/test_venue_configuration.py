@@ -110,51 +110,51 @@ class TestVenueConfiguration():
         post_submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Post_Submission')
         assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
 
-        # content_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission/Submission_Form')
-        # assert content_inv
-        # assert 'subject_area' not in submission_inv.edit['note']['content']
-        # assert 'keywords' in submission_inv.edit['note']['content']
-        # assert submission_inv.edit['note']['license'] == 'CC BY 4.0'
+        content_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission/Submission_Form')
+        assert content_inv
+        assert 'subject_area' not in submission_inv.edit['note']['content']
+        assert 'keywords' in submission_inv.edit['note']['content']
+        assert submission_inv.edit['note']['license'] == 'CC BY 4.0'
 
-        # ## edit Submission content with Submission/Submission_Form invitation
-        # pc_client_v2.post_invitation_edit(
-        #     invitations=content_inv.id,
-        #     content = {
-        #         'note_content': {
-        #             'value': {
-        #                 'subject_area': {
-        #                     'order': 10,
-        #                     "description": "Select one subject area.",
-        #                     'value': {
-        #                         'param': {
-        #                             'type': 'string',
-        #                             'enum': [
-        #                                 "3D from multi-view and sensors",
-        #                                 "3D from single images",
-        #                                 "Adversarial attack and defense",
-        #                                 "Autonomous driving",
-        #                                 "Biometrics",
-        #                                 "Computational imaging",
-        #                                 "Computer vision for social good",
-        #                                 "Computer vision theory",
-        #                                 "Datasets and evaluation"
-        #                             ],
-        #                             "input": "select"
-        #                         }
-        #                     }
-        #                 },
-        #                 'keywords': {
-        #                     'delete': True
-        #                 }
-        #             }
-        #         },
-        #         'note_license': { 'value':  ['CC BY-NC-ND 4.0'] }
-        #     }
-        # )
+        ## edit Submission content with Submission/Submission_Form invitation
+        pc_client_v2.post_invitation_edit(
+            invitations=content_inv.id,
+            content = {
+                'note_content': {
+                    'value': {
+                        'subject_area': {
+                            'order': 10,
+                            "description": "Select one subject area.",
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        "3D from multi-view and sensors",
+                                        "3D from single images",
+                                        "Adversarial attack and defense",
+                                        "Autonomous driving",
+                                        "Biometrics",
+                                        "Computational imaging",
+                                        "Computer vision for social good",
+                                        "Computer vision theory",
+                                        "Datasets and evaluation"
+                                    ],
+                                    "input": "select"
+                                }
+                            }
+                        },
+                        'keywords': {
+                            'delete': True
+                        }
+                    }
+                },
+                'note_license': { 'value':  ['CC BY-NC-ND 4.0', 'CC BY-NC-SA 4.0'] }
+            }
+        )
 
-        # submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission')
-        # assert submission_inv and 'subject_area' in submission_inv.edit['note']['content']
-        # assert 'keywords' not in submission_inv.edit['note']['content']
-        # content_keys = submission_inv.edit['note']['content'].keys()
-        # assert all(field in content_keys for field in ['title', 'authors', 'authorids', 'TLDR', 'abstract', 'pdf'])
-        # assert submission_inv.edit['note']['license'] == 'CC BY-NC-ND 4.0'
+        submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission')
+        assert submission_inv and 'subject_area' in submission_inv.edit['note']['content']
+        assert 'keywords' not in submission_inv.edit['note']['content']
+        content_keys = submission_inv.edit['note']['content'].keys()
+        assert all(field in content_keys for field in ['title', 'authors', 'authorids', 'TLDR', 'abstract', 'pdf'])
+        assert submission_inv.edit['note']['license']['param']['enum'] == ['CC BY-NC-ND 4.0', 'CC BY-NC-SA 4.0']

@@ -492,7 +492,7 @@ class Venue(object):
 
     def create_submission_edit_invitations(self):
         self.edit_invitation_builder.set_edit_deadlines_invitation(self.get_submission_id(), 'edit_submission_deadline_process.py')
-        # self.edit_invitation_builder.set_edit_content_invitation(self.get_submission_id())
+        self.edit_invitation_builder.set_edit_content_invitation(self.get_submission_id())
 
     def create_post_submission_stage(self):
 

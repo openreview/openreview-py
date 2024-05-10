@@ -142,14 +142,15 @@ class EditInvitationBuilder(object):
                     'note_license': {
                         'value': {
                             'param': {
+                                'type': 'string[]',
                                 'items':  [
-                                    {'value': 'CC BY 4.0', 'optional': True},
-                                    {'value': 'CC BY-SA 4.0', 'optional': True},
-                                    {'value': 'CC BY-NC 4.0', 'optional': True},
-                                    {'value': 'CC BY-ND 4.0', 'optional': True},
-                                    {'value': 'CC BY-NC-SA 4.0', 'optional': True},
-                                    {'value': 'CC BY-NC-ND 4.0', 'optional': True},
-                                    {'value': 'CC0 1.0', 'optional': True}
+                                    {'value': 'CC BY 4.0', 'optional': True, 'description': 'A'},
+                                    {'value': 'CC BY-SA 4.0', 'optional': True, 'description': 'A'},
+                                    {'value': 'CC BY-NC 4.0', 'optional': True, 'description': 'A'},
+                                    {'value': 'CC BY-ND 4.0', 'optional': True, 'description': 'A'},
+                                    {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'A'},
+                                    {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'A'},
+                                    {'value': 'CC0 1.0', 'optional': True, 'description': 'A'}
                                 ]
                             }
                         }
@@ -165,7 +166,7 @@ class EditInvitationBuilder(object):
                             'content': '${4/content/note_content/value}',
                             'license': {
                                 'param': {
-                                    'enum': '${4/content/note_license/value}'
+                                    'enum': ['${7/content/note_license/value}']
                                 }
                             }
                         }
