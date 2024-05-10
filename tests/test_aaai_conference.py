@@ -268,4 +268,4 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         request_page(selenium, "http://localhost:3030/group?id=AAAI.org/2025/Conference/Program_Committee", reviewer_client.token, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
-        assert 'You have agreed to review up to 1 papers' in header.text
+        assert 'You have agreed to review up to 1 submission' in header.text
