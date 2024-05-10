@@ -578,7 +578,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2023/Conference/Reviewers", reviewer_client.token, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
-        assert 'You have agreed to review up to 1 papers' in header.text
+        assert 'You have agreed to review up to 1 submission' in header.text
 
     def test_registrations(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
