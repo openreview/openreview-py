@@ -66,30 +66,47 @@ class EditInvitationBuilder(object):
             readers = [venue_id],
             writers = [venue_id],
             edit = {
-                # 'content': {
-                #     'activation_date': { 'value': '?' },
-                #     'deadline': { 'value': '?' },
-                # },
+                'content': {
+                    'activation_date': { 
+                        'value': {
+                            'param': {
+                                'type': 'integer',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'deadline': { 
+                        'value': {
+                            'param': {
+                                'type': 'integer',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'expiration_date': { 
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    }
+                },
                 'signatures': [venue.get_program_chairs_id()],
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'invitation': {
                     'id': invitation_id,
                     'signatures': [venue_id],
-                    'cdate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True,
-                            'deletable': True
-                        }
-                    },
-                    'duedate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True,
-                            'deletable': True
-                        }
-                    }
+                    'cdate': '${2/content/activation_date/value}',
+                    'duedate': '${2/content/deadline/value}',
+                    'expdate': '${2/content/expiration_date/value}'
                 }
             },
             process=self.get_process_content(f'process/{process_file}')  
@@ -102,7 +119,7 @@ class EditInvitationBuilder(object):
 
         venue_id = self.venue_id
         venue = self.venue
-        content_invitation_id = invitation_id + '/Content'
+        content_invitation_id = invitation_id + '/Submission_Form'
 
         invitation = Invitation(
             id = content_invitation_id,
@@ -125,9 +142,15 @@ class EditInvitationBuilder(object):
                     'note_license': {
                         'value': {
                             'param': {
-                                'type': 'string',
-                                'enum':  ['CC BY 4.0', 'CC BY-SA 4.0', 'CC BY-NC 4.0', 'CC BY-ND 4.0', 'CC BY-NC-SA 4.0', 'CC BY-NC-ND 4.0', 'CC0 1.0'],
-                                'input': 'checkbox'
+                                'items':  [
+                                    {'value': 'CC BY 4.0', 'optional': True},
+                                    {'value': 'CC BY-SA 4.0', 'optional': True},
+                                    {'value': 'CC BY-NC 4.0', 'optional': True},
+                                    {'value': 'CC BY-ND 4.0', 'optional': True},
+                                    {'value': 'CC BY-NC-SA 4.0', 'optional': True},
+                                    {'value': 'CC BY-NC-ND 4.0', 'optional': True},
+                                    {'value': 'CC0 1.0', 'optional': True}
+                                ]
                             }
                         }
                     }
@@ -138,9 +161,13 @@ class EditInvitationBuilder(object):
                     'edit': {
                         'signatures': [venue.get_program_chairs_id()],
                         'note': {
+                            'signatures': ['${3/signatures}'],
                             'content': '${4/content/note_content/value}',
-                            'license': '${4/content/note_license/value}', # how to allow multiple licenses??
-                            'signatures': ["${3/signatures}"]
+                            'license': {
+                                'param': {
+                                    'enum': '${4/content/note_license/value}'
+                                }
+                            }
                         }
                     }
                 }
