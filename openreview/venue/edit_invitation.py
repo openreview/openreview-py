@@ -177,3 +177,57 @@ class EditInvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=False)
         return invitation
+
+    def set_edit_submission_notification_invitation(self):
+
+        venue_id = self.venue_id
+        venue = self.venue
+        notifications_invitation_id = venue.get_submission_id() + '/Notifications'
+
+        invitation = Invitation(
+            id = notifications_invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'email_authors': {
+                        'value': {
+                            'param': {
+                                'type': 'boolean',
+                                'enum': [True, False],
+                                'input': 'radio'
+                            }
+                        }
+                    },
+                    'email_pcs': {
+                        'value': {
+                            'param': {
+                                'type': 'boolean',
+                                'enum': [True, False],
+                                'input': 'radio'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': venue.get_submission_id(),
+                    'signatures': [venue_id],
+                    'content': {
+                        'email_authors': {
+                            'value': '${4/content/email_authors/value}'
+                        },
+                        'email_pcs': {
+                            'value': '${4/content/email_pcs/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation

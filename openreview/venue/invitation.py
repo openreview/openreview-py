@@ -152,6 +152,10 @@ class InvitationBuilder(object):
             cdate=submission_cdate,
             duedate=tools.datetime_millis(submission_stage.due_date) if submission_stage.due_date else None,
             expdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None,
+            content = {
+                'email_authors': { 'value': True },
+                'email_pcs': { 'value': self.venue.submission_stage.email_pcs }
+            },
             edit = {
                 'signatures': {
                     'param': {

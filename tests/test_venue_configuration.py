@@ -158,3 +158,21 @@ class TestVenueConfiguration():
         content_keys = submission_inv.edit['note']['content'].keys()
         assert all(field in content_keys for field in ['title', 'authors', 'authorids', 'TLDR', 'abstract', 'pdf'])
         assert submission_inv.edit['note']['license']['param']['enum'] == ['CC BY-NC-ND 4.0', 'CC BY-NC-SA 4.0']
+
+        notifications_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission/Notifications')
+        assert notifications_inv
+        assert 'email_authors' in submission_inv.content and submission_inv.content['email_authors']['value']
+        assert 'email_pcs' in submission_inv.content and not submission_inv.content['email_pcs']['value']
+
+        ## edit Submission invitation content with Submission/Notifications invitation
+        pc_client_v2.post_invitation_edit(
+            invitations=notifications_inv.id,
+            content = {
+                'email_authors': { 'value': False },
+                'email_pcs': { 'value': True }
+            }
+        )
+
+        submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission')
+        assert 'email_authors' in submission_inv.content and not submission_inv.content['email_authors']['value']
+        assert 'email_pcs' in submission_inv.content and submission_inv.content['email_pcs']['value']
