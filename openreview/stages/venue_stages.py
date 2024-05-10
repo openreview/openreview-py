@@ -302,7 +302,7 @@ class SubmissionStage(object):
                         'param': {
                             'type': 'string',
                             'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
-                            'mismatchError': 'must be a valid link to an OpenrReview submission: https://openreview.net/forum?id=...'
+                            'mismatchError': 'must be a valid link to an OpenReview submission: https://openreview.net/forum?id=...'
                         }
                     },
                     'description': 'Please provide the link to your ARR submission. The link should have the following format: https://openreview.net/forum?id=<PAPER_ID>" where <PAPER_ID> is the paper ID of your ARR submission.',
