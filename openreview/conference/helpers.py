@@ -930,6 +930,8 @@ def get_comment_stage(request_forum):
 
     email_pcs = request_forum.content.get('email_program_chairs_about_official_comments', '') == 'Yes, email PCs for each official comment made in the venue'
 
+    enable_chat = request_forum.content.get('enable_chat_between_committee_members', '') == 'Yes, enable chat between committee members'
+
     return openreview.stages.CommentStage(
         start_date=commentary_start_date,
         end_date=commentary_end_date,
@@ -939,7 +941,8 @@ def get_comment_stage(request_forum):
         email_pcs=email_pcs,
         check_mandatory_readers=True,
         readers=readers,
-        invitees=invitees
+        invitees=invitees,
+        enable_chat=enable_chat
     )
 
 def get_registration_stages(request_forum, venue):

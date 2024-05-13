@@ -615,7 +615,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         header = selenium.find_element(By.ID, 'header')
         strong_elements = header.find_elements(By.TAG_NAME, 'strong')
         assert len(strong_elements) == 1
-        assert strong_elements[0].text == '4 papers'
+        assert strong_elements[0].text == '4 submissions'
 
         ## Remind reviewers
         recruitment_note = pc_client.post_note(openreview.Note(

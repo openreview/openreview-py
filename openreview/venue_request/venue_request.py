@@ -497,6 +497,16 @@ class VenueStages():
                 'required': True,
                 'default': 'No, do not email PCs for each official comment made in the venue',
                 'order': 31
+            },
+            'enable_chat_between_committee_members': {
+                'description': 'An experimental feature that allows committee members to chat with each other. Only the selected participants that are members of the reviewing committee will be using this feature. Default is "Yes, enable chat between committee members". More information: https://docs.openreview.net/getting-started/live-chat-on-the-forum-page',
+                'value-radio': [
+                    'Yes, enable chat between committee members',
+                    'No, do not enable chat between committee members'
+                ],
+                'required': False,
+                'default': 'Yes, enable chat between committee members',
+                'order': 32
             }
         }
 

@@ -72,10 +72,10 @@ class InvitationBuilder(object):
 
             if len(process_logs) == 0:
                 raise openreview.OpenReviewException('Time out waiting for invitation to complete: ' + invitation.id)
-                
+
             if process_logs[0]['status'] == 'error':
                 raise openreview.OpenReviewException('Error saving invitation: ' + invitation.id)
-            
+
         return invitation
 
     def expire_invitation(self, invitation_id):
@@ -103,11 +103,11 @@ class InvitationBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
             process = f.read()
             return process
-        
+
     def set_meta_invitation(self):
         venue_id=self.venue_id
         meta_invitation = openreview.tools.get_invitation(self.client, self.venue.get_meta_invitation_id())
-        
+
         if meta_invitation is None or self._should_update_meta_invitation(meta_invitation):
             self.client.post_invitation_edit(invitations=None,
                 readers=[venue_id],
@@ -123,12 +123,12 @@ class InvitationBuilder(object):
                         },
                         'group_edit_script': {
                             'value': self.get_process_content('process/group_edit_process.py')
-                        }                        
+                        }
                     },
                     edit=True
                 )
             )
-       
+
     def set_submission_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
@@ -153,13 +153,13 @@ class InvitationBuilder(object):
             duedate=tools.datetime_millis(submission_stage.due_date) if submission_stage.due_date else None,
             expdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None,
             edit = {
-                'signatures': { 
-                    'param': { 
+                'signatures': {
+                    'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': self.venue.get_program_chairs_id(), 'optional': True } 
+                            { 'value': self.venue.get_program_chairs_id(), 'optional': True }
                         ]
-                    } 
+                    }
                 },
                 'readers': edit_readers,
                 'writers': [venue_id, '${2/note/content/authorids/value}'],
@@ -169,7 +169,7 @@ class InvitationBuilder(object):
                         'optional': True,
                         'deletable': True
                     }
-                },                
+                },
                 'note': {
                     'id': {
                         'param': {
@@ -227,9 +227,9 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=deletion_cdate,
-            date_processes=[{ 
+            date_processes=[{
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process              
+                'script': self.invitation_edit_process
             }],
             content={
                 'deletion_process_script': {
@@ -241,17 +241,17 @@ class InvitationBuilder(object):
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'content': {
-                    'noteNumber': { 
+                    'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer' 
+                                'regex': '.*', 'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string' 
+                                'regex': '.*', 'type': 'string'
                             }
                         }
                     }
@@ -278,15 +278,15 @@ class InvitationBuilder(object):
                         'ddate': {
                             'param': {
                                 'range': [ 0, 9999999999999 ],
-                                'optional': True                                   
+                                'optional': True
                             }
                         },
-                        'signatures': { 
-                            'param': { 
+                        'signatures': {
+                            'param': {
                                 'items': [
-                                    { 'value': self.venue.get_authors_id(number='${7/content/noteNumber/value}'), 'optional': True }, 
+                                    { 'value': self.venue.get_authors_id(number='${7/content/noteNumber/value}'), 'optional': True },
                                     { 'value': self.venue.get_program_chairs_id(), 'optional': True }
-                                ] 
+                                ]
                             }
                         },
                         'readers': [venue_id, self.venue.get_authors_id(number='${4/content/noteNumber/value}')],
@@ -324,7 +324,7 @@ class InvitationBuilder(object):
         hidden_field_names = submission_stage.get_hidden_field_names()
         note_content = { f: { 'readers': [venue_id, self.venue.get_authors_id('${{4/id}/number}')] } for f in hidden_field_names }
 
-        existing_invitation = openreview.tools.get_invitation(self.client, post_submission_id)        
+        existing_invitation = openreview.tools.get_invitation(self.client, post_submission_id)
         if existing_invitation and 'content' in existing_invitation.edit['note']:
             for field, value in existing_invitation.edit['note']['content'].items():
                 if field not in hidden_field_names and 'readers' in value:
@@ -339,10 +339,10 @@ class InvitationBuilder(object):
             readers = ['everyone'],
             writers = [venue_id],
             cdate=post_submission_cdate,
-            date_processes=[{ 
+            date_processes=[{
                 'dates': ["#{4/cdate}", self.update_date_string],
-                'script': self.get_process_content('process/post_submission_process.py')              
-            }],            
+                'script': self.get_process_content('process/post_submission_process.py')
+            }],
             edit = {
                 'signatures': [venue_id],
                 'readers': [venue_id, self.venue.get_authors_id('${{2/note/id}/number}')],
@@ -384,11 +384,11 @@ class InvitationBuilder(object):
             submission_invitation.edit['note']['content'] = note_content
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=False)
-        
+
     def set_pc_submission_revision_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
-        cdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None        
+        cdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None
 
         submission_id = submission_stage.get_submission_id(self.venue)
 
@@ -411,14 +411,14 @@ class InvitationBuilder(object):
                         'optional': True,
                         'deletable': True
                     }
-                },                
+                },
                 'note': {
                     'id': {
                         'param': {
                             'withInvitation': submission_id,
                             'optional': True
                         }
-                    },                   
+                    },
                     'content': content,
                     'signatures': [self.venue.get_authors_id('${2/number}')]
                 }
@@ -427,7 +427,7 @@ class InvitationBuilder(object):
         )
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=True)
-    
+
     def set_review_invitation(self):
 
         venue_id = self.venue_id
@@ -438,7 +438,7 @@ class InvitationBuilder(object):
         review_expdate = tools.datetime_millis(review_stage.exp_date) if review_stage.exp_date else None
         if not review_expdate:
             review_expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None
-        
+
         content = review_stage.get_content(api_version='2', conference=self.venue)
 
         previous_query = {}
@@ -454,9 +454,9 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=review_cdate,
-            date_processes=[{ 
+            date_processes=[{
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process              
+                'script': self.invitation_edit_process
             }],
             content={},
             edit={
@@ -464,17 +464,17 @@ class InvitationBuilder(object):
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'content': {
-                    'noteNumber': { 
+                    'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer' 
+                                'regex': '.*', 'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string' 
+                                'regex': '.*', 'type': 'string'
                             }
                         }
                     }
@@ -489,9 +489,9 @@ class InvitationBuilder(object):
                     'maxReplies': 1,
                     'cdate': review_cdate,
                     'edit': {
-                        'signatures': { 
-                            'param': { 
-                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in review_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')] 
+                        'signatures': {
+                            'param': {
+                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in review_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')]
                             }
                         },
                         'readers': ['${2/note/readers}'],
@@ -510,7 +510,7 @@ class InvitationBuilder(object):
                                 'param': {
                                     'range': [ 0, 9999999999999 ],
                                     'optional': True,
-                                    'deletable': True                                 
+                                    'deletable': True
                                 }
                             },
                             'signatures': ['${3/signatures}'],
@@ -538,7 +538,7 @@ class InvitationBuilder(object):
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
 '''
-        
+
         if review_stage.preprocess_path:
             invitation.content['review_preprocess_script'] = {
                 'value': self.get_process_content(review_stage.preprocess_path)
@@ -551,7 +551,7 @@ class InvitationBuilder(object):
     }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
-'''           
+'''
 
         if review_duedate:
             invitation.edit['invitation']['duedate'] = review_duedate
@@ -582,7 +582,7 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=False)
         return invitation
-    
+
     def update_review_invitations(self):
 
         source_submissions_query_mapping = self.venue.source_submissions_query_mapping
@@ -681,9 +681,9 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=review_rebuttal_cdate,
-            date_processes=[{ 
+            date_processes=[{
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process              
+                'script': self.invitation_edit_process
             }],
             content = {
                 'review_rebuttal_process_script': {
@@ -730,8 +730,8 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 ''',
                     'edit': {
-                        'signatures': { 
-                            'param': { 
+                        'signatures': {
+                            'param': {
                                 'items': [{ 'value': self.venue.get_authors_id(number='${7/content/noteNumber/value}') }]
                             }
                         },
@@ -819,9 +819,9 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=meta_review_cdate,
-            date_processes=[{ 
+            date_processes=[{
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process              
+                'script': self.invitation_edit_process
             }],
             content = {},
             edit={
@@ -829,17 +829,17 @@ class InvitationBuilder(object):
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'content': {
-                    'noteNumber': { 
+                    'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer' 
+                                'regex': '.*', 'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string' 
+                                'regex': '.*', 'type': 'string'
                             }
                         }
                     }
@@ -855,9 +855,9 @@ class InvitationBuilder(object):
                     'maxReplies': 1,
                     'cdate': meta_review_cdate,
                     'edit': {
-                        'signatures': { 
-                            'param': { 
-                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in meta_review_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')] 
+                        'signatures': {
+                            'param': {
+                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in meta_review_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')]
                             }
                         },
                         'readers': meta_review_stage.get_readers(self.venue, '${4/content/noteNumber/value}'),
@@ -876,7 +876,7 @@ class InvitationBuilder(object):
                                 'param': {
                                     'range': [ 0, 9999999999999 ],
                                     'optional': True,
-                                    'deletable': True                                   
+                                    'deletable': True
                                 }
                             },
                             'signatures': ['${3/signatures}'],
@@ -903,7 +903,7 @@ class InvitationBuilder(object):
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
 '''
-        
+
         if meta_review_stage.preprocess_path:
             invitation.content['metareview_preprocess_script'] = {
                 'value': self.get_process_content(meta_review_stage.preprocess_path)
@@ -916,7 +916,7 @@ class InvitationBuilder(object):
     }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
-'''           
+'''
 
         if meta_review_duedate:
             invitation.edit['invitation']['duedate'] = meta_review_duedate
@@ -940,9 +940,9 @@ class InvitationBuilder(object):
                 writers=[venue_id],
                 signatures=[venue_id],
                 cdate=meta_review_cdate,
-                date_processes=[{ 
+                date_processes=[{
                     'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                    'script': self.invitation_edit_process              
+                    'script': self.invitation_edit_process
                 }],
                 content = {
                 },
@@ -951,17 +951,17 @@ class InvitationBuilder(object):
                     'readers': [venue_id],
                     'writers': [venue_id],
                     'content': {
-                        'noteNumber': { 
+                        'noteNumber': {
                             'value': {
                                 'param': {
-                                    'regex': '.*', 'type': 'integer' 
+                                    'regex': '.*', 'type': 'integer'
                                 }
                             }
                         },
                         'noteId': {
                             'value': {
                                 'param': {
-                                    'regex': '.*', 'type': 'string' 
+                                    'regex': '.*', 'type': 'string'
                                 }
                             }
                         }
@@ -975,10 +975,10 @@ class InvitationBuilder(object):
                         'invitees': [venue_id, self.venue.get_senior_area_chairs_id(number='${3/content/noteNumber/value}')],
                         'cdate': meta_review_cdate,
                         'edit': {
-                            'signatures': { 
-                                'param': { 
+                            'signatures': {
+                                'param': {
                                     'items': [
-                                        { 'value': self.venue.get_senior_area_chairs_id(number='${7/content/noteNumber/value}') } 
+                                        { 'value': self.venue.get_senior_area_chairs_id(number='${7/content/noteNumber/value}') }
                                     ]
                                 }
                             },
@@ -1054,7 +1054,7 @@ class InvitationBuilder(object):
                 }
             }
             content['reduced_load'] = reduced_load_dict
-        
+
         process_content = self.get_process_content('process/recruitment_process.py')
         pre_process_content = self.get_process_content('process/recruitment_pre_process.js')
 
@@ -1209,7 +1209,7 @@ class InvitationBuilder(object):
                     'writers': [ venue_id, '${2/tail}' ],
                     'signatures': {
                         'param': {
-                            'regex': f'~.*|{venue_id}' 
+                            'regex': f'~.*|{venue_id}'
                         }
                     },
                     'head': head,
@@ -1287,9 +1287,9 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=comment_cdate,
-            date_processes=[{ 
+            date_processes=[{
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process              
+                'script': self.invitation_edit_process
             }],
             content={
                 'comment_preprocess_script': {
@@ -1345,9 +1345,9 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 ''',
                     'edit': {
-                        'signatures': { 
-                            'param': { 
-                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in comment_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')] 
+                        'signatures': {
+                            'param': {
+                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in comment_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')]
                             }
                         },
                         'readers': ['${2/note/readers}'],
@@ -1361,9 +1361,9 @@ class InvitationBuilder(object):
                                 }
                             },
                             'forum': '${4/content/noteId/value}',
-                            'replyto': { 
+                            'replyto': {
                                 'param': {
-                                    'withForum': '${6/content/noteId/value}', 
+                                    'withForum': '${6/content/noteId/value}',
                                 }
                             },
                             'ddate': {
@@ -1433,9 +1433,9 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=comment_cdate,
-            date_processes=[{ 
+            date_processes=[{
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process              
+                'script': self.invitation_edit_process
             }],
             content={
                 'comment_process_script': {
@@ -1484,9 +1484,9 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 ''',
                     'edit': {
-                        'signatures': { 
-                            'param': { 
-                                'items': [{ 'prefix': '~.*' }] 
+                        'signatures': {
+                            'param': {
+                                'items': [{ 'prefix': '~.*' }]
                             }
                         },
                         'readers': ['${2/note/readers}'],
@@ -1499,9 +1499,9 @@ class InvitationBuilder(object):
                                 }
                             },
                             'forum': '${4/content/noteId/value}',
-                            'replyto': { 
+                            'replyto': {
                                 'param': {
-                                    'withForum': '${6/content/noteId/value}', 
+                                    'withForum': '${6/content/noteId/value}',
                                 }
                             },
                             'ddate': {
@@ -1528,6 +1528,275 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
+    def set_chat_invitation(self):
+        venue_id = self.venue_id
+        comment_stage = self.venue.comment_stage
+        chat_invitation = self.venue.get_invitation_id('Chat')
+        emoji_chat_invitation = self.venue.get_invitation_id('Chat_Reaction')
+        comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
+        comment_expdate = tools.datetime_millis(comment_stage.end_date) if comment_stage.end_date else None
+
+        if not comment_stage.enable_chat:
+            invitation = tools.get_invitation(self.client, chat_invitation)
+            if invitation:
+                self.client.post_invitation_edit(
+                    invitations=self.venue.get_meta_invitation_id(),
+                    signatures = [venue_id],
+                    invitation = openreview.api.Invitation(
+                        id = chat_invitation,
+                        edit = {
+                            'invitation': {
+                                'expdate': tools.datetime_millis(datetime.datetime.utcnow())
+                            }
+                        }
+                    )
+                )
+
+                self.client.post_invitation_edit(
+                    invitations=self.venue.get_meta_invitation_id(),
+                    signatures = [venue_id],
+                    invitation = openreview.api.Invitation(
+                        id = self.venue.submission_stage.get_submission_id(self.venue),
+                        reply_forum_views = { 'delete': True }
+                    )
+                )
+
+                self.client.post_invitation_edit(
+                    invitations=self.venue.get_meta_invitation_id(),
+                    signatures = [venue_id],
+                    invitation = openreview.api.Invitation(
+                        id = emoji_chat_invitation,
+                        edit = {
+                            'invitation': {
+                                'expdate': tools.datetime_millis(datetime.datetime.utcnow())
+                            }
+                        }
+                    )
+                )
+
+
+            return
+
+        invitation = Invitation(id=chat_invitation,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            cdate=comment_cdate,
+            date_processes=[{
+                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                'script': self.invitation_edit_process
+            }],
+            content={
+                'chat_process_script': {
+                    'value': self.get_process_content('process/chat_comment_process.py')
+                }
+            },
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'replacement': False,
+                'invitation': {
+                    'id': self.venue.get_invitation_id('Chat', '${2/content/noteNumber/value}'),
+                    'signatures': [ venue_id ],
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'invitees': comment_stage.get_chat_invitees(self.venue, number='${3/content/noteNumber/value}'),
+                    'cdate': comment_cdate,
+                    'dateprocesses':[{
+                        'dates': [],
+                        'script': self.get_process_content('process/chat_date_comment_process.py')
+                    }],
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['chat_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
+                    'edit': {
+                        'signatures': {
+                            'param': {
+                                #'enum': comment_stage.get_chat_signatures(self.venue, '${6/content/noteNumber/value}')
+                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in comment_stage.get_chat_signatures(self.venue, '${7/content/noteNumber/value}')]
+                            }
+                        },
+                        'readers': ['${2/note/readers}'],
+                        'writers': [venue_id],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': self.venue.get_invitation_id('Chat', '${6/content/noteNumber/value}'),
+                                    'optional': True
+                                }
+                            },
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': {
+                                'param': {
+                                    'withForum': '${6/content/noteId/value}',
+                                }
+                            },
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            },
+                            'signatures': ['${3/signatures}'],
+                            'readers': comment_stage.get_chat_readers(self.venue, '${5/content/noteNumber/value}'),
+                            'writers': [venue_id, '${3/signatures}'],
+                            'content': {
+                                'message': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 1000,
+                                            'markdown': True
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        if comment_expdate:
+            invitation.edit['invitation']['expdate'] = comment_expdate
+
+        self.save_invitation(invitation, replacement=False)
+
+        self.client.post_invitation_edit(
+            invitations=self.venue.get_meta_invitation_id(),
+            signatures = [venue_id],
+            invitation = openreview.api.Invitation(
+                id = self.venue.submission_stage.get_submission_id(self.venue),
+                reply_forum_views = [
+                    {
+                        'id': 'discussion',
+                        'label': 'Discussion',
+                        'filter': f'-invitations:{venue_id}/{self.venue.submission_stage.name}${{note.number}}/-/Chat',
+                        'nesting': 3,
+                        'sort': 'date-desc',
+                        'layout': 'default',
+                        'live': True
+                    },
+                    {
+                        'id': 'committee-chat',
+                        'label': 'Committee Members Chat',
+                        'filter': f'invitations:{venue_id}/{self.venue.submission_stage.name}${{note.number}}/-/Chat,{venue_id}/{self.venue.submission_stage.name}${{note.number}}/-/{self.venue.review_stage.name}',
+                        'nesting': 1,
+                        'sort': 'date-asc',
+                        'layout': 'chat',
+                        'live': True,
+                        'expandedInvitations': [f'{venue_id}/{self.venue.submission_stage.name}${{note.number}}/-/Chat']
+                    }
+                ]
+            )
+        )
+
+        invitation = Invitation(id=emoji_chat_invitation,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            cdate=comment_cdate,
+            date_processes=[{
+                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                'script': self.invitation_edit_process
+            }],
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'replacement': True,
+                'invitation': {
+                    'id': self.venue.get_invitation_id('Chat_Reaction', '${2/content/noteNumber/value}'),
+                    'signatures': [ venue_id ],
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'invitees': comment_stage.get_chat_invitees(self.venue, number='${3/content/noteNumber/value}'),
+                    'cdate': comment_cdate,
+                    'tag': {
+                        'id': {
+                            'param': {
+                                'withInvitation': self.venue.get_invitation_id('Chat_Reaction', '${5/content/noteNumber/value}'),
+                                'optional': True
+                            }
+                        },
+                        'forum': '${3/content/noteId/value}',
+                        'replyto': {
+                            'param': {
+                                'withForum': '${5/content/noteId/value}',
+                            }
+                        },
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'signatures': {
+                            'param': {
+                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in comment_stage.get_chat_signatures(self.venue, '${7/content/noteNumber/value}')]
+                            }
+                        },
+                        'readers': comment_stage.get_chat_readers(self.venue, '${4/content/noteNumber/value}'),
+                        'writers': [venue_id, '${2/signatures}'],
+                        'tag': {
+                            'param': {
+                                'enum': ['👍', '👎', '👌', '👆', '😄', '😂', '🔥', '🚀', '✅']
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        if comment_expdate:
+            invitation.edit['invitation']['expdate'] = comment_expdate
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
+
     def set_decision_invitation(self):
 
         venue_id = self.venue_id
@@ -1545,9 +1814,9 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=decision_cdate,
-            date_processes=[{ 
+            date_processes=[{
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process              
+                'script': self.invitation_edit_process
             }],
             content={
                 'decision_process_script': {
@@ -1630,7 +1899,7 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['duedate'] = decision_due_date
 
         if decision_expdate:
-            invitation.edit['invitation']['expdate'] = decision_expdate        
+            invitation.edit['invitation']['expdate'] = decision_expdate
 
         self.save_invitation(invitation, replacement=True)
         return invitation
@@ -1651,31 +1920,31 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=cdate,
-            date_processes=[{ 
+            date_processes=[{
                 'dates': [self.update_date_string],
-                'script': self.invitation_edit_process              
-            }],            
+                'script': self.invitation_edit_process
+            }],
             content={
                 'process_script': {
                     'value': self.get_process_content('process/withdrawal_submission_process.py')
                 }
-            },            
+            },
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'content': {
-                    'noteNumber': { 
+                    'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer' 
+                                'regex': '.*', 'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string' 
+                                'regex': '.*', 'type': 'string'
                             }
                         }
                     }
@@ -1698,9 +1967,9 @@ class InvitationBuilder(object):
     exec(script, funcs)
     funcs['process'](client, edit, invitation)''',
                     'edit': {
-                        'signatures': { 
-                            'param': { 
-                                'items': [{ 'value': self.venue.get_authors_id(number='${7/content/noteNumber/value}') }] 
+                        'signatures': {
+                            'param': {
+                                'items': [{ 'value': self.venue.get_authors_id(number='${7/content/noteNumber/value}') }]
                             }
                         },
                         'readers': submission_stage.get_withdrawal_readers(self.venue, '${4/content/noteNumber/value}'),
@@ -1745,14 +2014,14 @@ class InvitationBuilder(object):
                 }
 
             }
-        )            
+        )
 
         if cdate:
             invitation.edit['invitation']['cdate'] = cdate
-            invitation.date_processes=[{ 
+            invitation.date_processes=[{
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process              
-            }]            
+                'script': self.invitation_edit_process
+            }]
 
         if exp_date:
             invitation.edit['invitation']['expdate'] = exp_date
@@ -1809,13 +2078,13 @@ class InvitationBuilder(object):
                         'optional': True,
                         'deletable': True
                     }
-                },                 
+                },
                 'note': {
                     'id': {
                         'param': {
                             'withInvitation': self.venue.submission_stage.get_submission_id(self.venue)
                         }
-                    },                    
+                    },
                     'content': content,
                     'readers' : submission_stage.get_withdrawal_readers(self.venue, '${{2/id}/number}')
                 }
@@ -1844,14 +2113,14 @@ class InvitationBuilder(object):
                         'optional': True,
                         'deletable': True
                     }
-                },                 
+                },
                 'invitation': {
                     'id': {
                         'param': {
                             'regex': self.venue.get_paper_group_prefix()
                         }
                     },
-                    'signatures': [venue_id],                  
+                    'signatures': [venue_id],
                     'expdate': {
                         'param': {
                             'range': [ 0, 9999999999999 ],
@@ -1873,7 +2142,7 @@ class InvitationBuilder(object):
                 'process_script': {
                     'value': self.get_process_content('process/withdrawal_reversion_submission_process.py')
                 }
-            },            
+            },
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -1882,14 +2151,14 @@ class InvitationBuilder(object):
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string' 
+                                'regex': '.*', 'type': 'string'
                             }
                         }
                     },
                     'withdrawalId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string' 
+                                'regex': '.*', 'type': 'string'
                             }
                         }
                     }
@@ -1955,7 +2224,7 @@ class InvitationBuilder(object):
                 }
 
             }
-        )            
+        )
 
 
         self.save_invitation(invitation, replacement=True)
@@ -1978,9 +2247,9 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=cdate,
-            date_processes=[{ 
+            date_processes=[{
                 'dates': [self.update_date_string],
-                'script': self.invitation_edit_process              
+                'script': self.invitation_edit_process
             }],
             content={
                 'process_script': {
@@ -2046,9 +2315,9 @@ class InvitationBuilder(object):
 
         if cdate:
             invitation.edit['invitation']['cdate'] = cdate
-            invitation.date_processes=[{ 
+            invitation.date_processes=[{
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process              
+                'script': self.invitation_edit_process
             }]
 
         self.save_invitation(invitation, replacement=False)
@@ -2254,9 +2523,9 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=revision_cdate,
-            date_processes=[{ 
+            date_processes=[{
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process              
+                'script': self.invitation_edit_process
             }],
             content={
                 'revision_process_script': {
@@ -2271,17 +2540,17 @@ class InvitationBuilder(object):
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'content': {
-                    'noteNumber': { 
+                    'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer' 
+                                'regex': '.*', 'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string' 
+                                'regex': '.*', 'type': 'string'
                             }
                         }
                     }
@@ -2307,15 +2576,15 @@ class InvitationBuilder(object):
                         'ddate': {
                             'param': {
                                 'range': [ 0, 9999999999999 ],
-                                'optional': True                                   
+                                'optional': True
                             }
                         },
-                        'signatures': { 
-                            'param': { 
+                        'signatures': {
+                            'param': {
                                 'items': [
-                                    { 'value': self.venue.get_authors_id(number='${7/content/noteNumber/value}'), 'optional': True }, 
+                                    { 'value': self.venue.get_authors_id(number='${7/content/noteNumber/value}'), 'optional': True },
                                     { 'value': self.venue.get_program_chairs_id(), 'optional': True }
-                                ] 
+                                ]
                             }
                         },
                         'readers': ['${{2/note/id}/readers}'],
@@ -2425,9 +2694,9 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=custom_stage_cdate,
-            date_processes=[{ 
+            date_processes=[{
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process              
+                'script': self.invitation_edit_process
             }],
             content = invitation_content,
             edit={
@@ -2471,9 +2740,9 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 ''',
                     'edit': {
-                        'signatures': { 
-                            'param': { 
-                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in custom_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')] 
+                        'signatures': {
+                            'param': {
+                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in custom_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')]
                             }
                         },
                         'readers': edit_readers,
@@ -2548,7 +2817,7 @@ class InvitationBuilder(object):
         return invitation
 
     def set_assignment_invitation(self, committee_id, submission_content=None):
-        
+
         venue = self.venue
         venue_id = venue.get_id()
         assignment_invitation_id = venue.get_assignment_id(committee_id, deployed=True)
@@ -2625,9 +2894,9 @@ class InvitationBuilder(object):
         }
         if submission_content:
             edge_head['param']['withContent'] = submission_content
-        
+
         if is_reviewer:
-            edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')] 
+            edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')]
             if venue.use_senior_area_chairs:
                 invitation_readers.append(senior_area_chairs_id)
                 edge_invitees.append(senior_area_chairs_id)
@@ -2651,7 +2920,7 @@ class InvitationBuilder(object):
 
         if is_area_chair:
             invitation_readers.append(area_chairs_id)
-            edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')] 
+            edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')]
             if venue.use_senior_area_chairs:
                 invitation_readers.append(senior_area_chairs_id)
                 edge_invitees.append(senior_area_chairs_id)
@@ -2720,7 +2989,7 @@ class InvitationBuilder(object):
                 'nonreaders': edge_nonreaders,
                 'writers': edge_writers,
                 'signatures': {
-                    'param': { 
+                    'param': {
                         'regex': '|'.join(edge_signatures),
                         'default': [venue.get_program_chairs_id()]
                     }
@@ -2732,17 +3001,17 @@ class InvitationBuilder(object):
                         'options': {
                             'group': committee_id
                         }
-                    }                
+                    }
                 },
                 'weight': {
                     'param': {
                         'minimum': -1
-                    }            
+                    }
                 }
             }
         )
 
-        self.save_invitation(invitation, replacement=True)            
+        self.save_invitation(invitation, replacement=True)
 
     def set_expertise_selection_invitations(self):
 
@@ -2792,7 +3061,7 @@ class InvitationBuilder(object):
                     'writers': [ venue_id, '${2/signatures}' ],
                     'signatures': {
                         'param': {
-                            'regex': '~.*' 
+                            'regex': '~.*'
                         }
                     },
                     'head': {
@@ -2860,7 +3129,7 @@ class InvitationBuilder(object):
                                 'optional': True,
                                 'deletable': True
                             }
-                        },                    
+                        },
                         'readers': readers,
                         'writers': [venue_id],
                         'signatures': [venue_id],
@@ -2881,11 +3150,11 @@ class InvitationBuilder(object):
                                         'type': 'string',
                                         'maxLength': 250000,
                                         'markdown': True,
-                                        'input': 'textarea'                                    
+                                        'input': 'textarea'
                                     }
                                 }
                             }
-                        }                    
+                        }
                     }
                 }
             )
@@ -2919,7 +3188,7 @@ class InvitationBuilder(object):
             due_date = registration_stage.due_date
             expdate = registration_stage.expdate if registration_stage.expdate else due_date
 
-            registration_content = registration_stage.get_content(api_version='2', conference=self.venue)        
+            registration_content = registration_stage.get_content(api_version='2', conference=self.venue)
 
             registration_invitation_id = venue.get_invitation_id(name=f'{registration_stage.name}', prefix=committee_id)
             invitation=Invitation(id=registration_invitation_id,
@@ -2931,7 +3200,7 @@ class InvitationBuilder(object):
                 duedate = tools.datetime_millis(due_date) if due_date else None,
                 expdate = tools.datetime_millis(expdate) if expdate else None,
                 maxReplies = 1,
-                minReplies = 1,       
+                minReplies = 1,
                 edit={
                     'signatures': { 'param': { 'items': [ { 'prefix': '~.*' } ] }},
                     'readers': [venue_id, '${2/signatures}'],
@@ -2948,7 +3217,7 @@ class InvitationBuilder(object):
                                 'optional': True,
                                 'deletable': True
                             }
-                        },                    
+                        },
                         'forum': forum_note_id,
                         'replyto': forum_note_id,
                         'signatures': ['${3/signatures}'],
@@ -2956,7 +3225,7 @@ class InvitationBuilder(object):
                         'writers': [venue_id, '${3/signatures}'],
                         'content': registration_content
                     }
-                }        
+                }
             )
             self.save_invitation(invitation, replacement=True)
 
@@ -3040,9 +3309,9 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=cdate,
-            date_processes=[{ 
+            date_processes=[{
                 'dates': ["#{4/cdate}", self.update_date_string],
-                'script': self.group_edit_process              
+                'script': self.group_edit_process
             }],
             edit={
                 'signatures': [venue_id],
@@ -3080,13 +3349,13 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=False)
         return invitation
-    
+
     def set_submission_area_chair_group_invitation(self):
 
         venue_id = self.venue_id
         invitation_id = self.venue.get_invitation_id(f'{self.venue.submission_stage.name}_Group', prefix=self.venue.get_area_chairs_id())
         cdate=tools.datetime_millis(self.venue.submission_stage.second_due_date_exp_date if self.venue.submission_stage.second_due_date_exp_date else self.venue.submission_stage.exp_date)
-            
+
 
         invitation = Invitation(id=invitation_id,
             invitees=[venue_id],
@@ -3094,9 +3363,9 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=cdate,
-            date_processes=[{ 
+            date_processes=[{
                 'dates': ["#{4/cdate}", self.update_date_string],
-                'script': self.group_edit_process              
+                'script': self.group_edit_process
             }],
             edit={
                 'signatures': [venue_id],
@@ -3140,7 +3409,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         invitation_id = self.venue.get_invitation_id(f'{self.venue.submission_stage.name}_Group', prefix=self.venue.get_senior_area_chairs_id())
         cdate=tools.datetime_millis(self.venue.submission_stage.second_due_date_exp_date if self.venue.submission_stage.second_due_date_exp_date else self.venue.submission_stage.exp_date)
-            
+
 
         invitation = Invitation(id=invitation_id,
             invitees=[venue_id],
@@ -3148,9 +3417,9 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=cdate,
-            date_processes=[{ 
+            date_processes=[{
                 'dates': ["#{4/cdate}", self.update_date_string],
-                'script': self.group_edit_process              
+                'script': self.group_edit_process
             }],
             edit={
                 'signatures': [venue_id],
@@ -3246,7 +3515,7 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=False)
         return invitation
-    
+
     def set_ethics_review_invitation(self):
 
         venue_id = self.venue_id
@@ -3257,7 +3526,7 @@ class InvitationBuilder(object):
         ethics_review_expdate = tools.datetime_millis(ethics_review_stage.exp_date) if ethics_review_stage.exp_date else None
         if not ethics_review_expdate:
             ethics_review_expdate = tools.datetime_millis(ethics_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if ethics_review_stage.due_date else None
-        
+
         content = ethics_review_stage.get_content(api_version='2', conference=self.venue)
 
         invitation = Invitation(id=ethics_review_invitation_id,
@@ -3266,9 +3535,9 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=ethics_review_cdate,
-            date_processes=[{ 
+            date_processes=[{
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process              
+                'script': self.invitation_edit_process
             }],
             content={
                 'source': {
@@ -3280,17 +3549,17 @@ class InvitationBuilder(object):
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'content': {
-                    'noteNumber': { 
+                    'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer' 
+                                'regex': '.*', 'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string' 
+                                'regex': '.*', 'type': 'string'
                             }
                         }
                     }
@@ -3305,9 +3574,9 @@ class InvitationBuilder(object):
                     'maxReplies': 1,
                     'cdate': ethics_review_cdate,
                     'edit': {
-                        'signatures': { 
-                            'param': { 
-                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in ethics_review_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')] 
+                        'signatures': {
+                            'param': {
+                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in ethics_review_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')]
                             }
                         },
                         'readers': ethics_review_stage.get_readers(self.venue, '${4/content/noteNumber/value}', '${2/signatures}'),
@@ -3326,7 +3595,7 @@ class InvitationBuilder(object):
                                 'param': {
                                     'range': [ 0, 9999999999999 ],
                                     'optional': True,
-                                    'deletable': True                                 
+                                    'deletable': True
                                 }
                             },
                             'signatures': ['${3/signatures}'],
@@ -3354,7 +3623,7 @@ class InvitationBuilder(object):
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
 '''
-        
+
         if ethics_review_stage.preprocess_path:
             invitation.content['ethics_review_preprocess_script'] = {
                 'value': self.get_process_content(ethics_review_stage.preprocess_path)
@@ -3367,7 +3636,7 @@ class InvitationBuilder(object):
     }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
-'''        
+'''
 
         if ethics_review_duedate:
             invitation.edit['invitation']['duedate'] = ethics_review_duedate
@@ -3520,14 +3789,14 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 ''',
                             'edit': {
-                                'signatures': { 
-                                    'param': { 
+                                'signatures': {
+                                    'param': {
                                         'items': [
-                                            { 'value': venue.get_senior_area_chairs_id(number='${7/content/noteNumber/value}'), 'optional': True }, 
+                                            { 'value': venue.get_senior_area_chairs_id(number='${7/content/noteNumber/value}'), 'optional': True },
                                             { 'value': venue.get_program_chairs_id(), 'optional': True }
-                                        ] 
+                                        ]
                                     }
-                                },                                
+                                },
                                 'readers': ['${2/note/readers}'],
                                 'nonreaders': ['${2/note/nonreaders}'],
                                 'writers': [venue_id],
@@ -3638,7 +3907,7 @@ class InvitationBuilder(object):
                 'writers': [ venue_id, '${2/signatures}' ],
                 'signatures': {
                     'param': {
-                        'regex': f'~.*|{venue_id}' 
+                        'regex': f'~.*|{venue_id}'
                     }
                 },
                 'head': {
@@ -3685,9 +3954,9 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=cdate,
-            date_processes=[{ 
+            date_processes=[{
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                'script': self.invitation_edit_process              
+                'script': self.invitation_edit_process
             }],
             edit={
                 'signatures': [venue_id],
@@ -3734,7 +4003,7 @@ class InvitationBuilder(object):
         )
 
         self.save_invitation(invitation, replacement=True)
-        
+
         ## invitation to message all reviewers
         invitation = Invitation(id=self.venue.get_message_id(committee_id=self.venue.get_reviewers_id()),
             readers=[venue_id],
@@ -3775,6 +4044,6 @@ class InvitationBuilder(object):
                 }
             )
 
-            self.save_invitation(invitation, replacement=True)                  
-        
+            self.save_invitation(invitation, replacement=True)
+
         return invitation

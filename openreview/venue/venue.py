@@ -527,6 +527,8 @@ class Venue(object):
         if self.comment_stage.allow_public_comments:
             self.invitation_builder.set_public_comment_invitation()
 
+        self.invitation_builder.set_chat_invitation()
+
     def create_decision_stage(self):
         invitation = self.invitation_builder.set_decision_invitation()
 
