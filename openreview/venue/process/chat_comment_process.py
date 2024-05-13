@@ -6,6 +6,8 @@ def process(client, edit, invitation):
     contact = domain.get_content_value('contact')
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
     sender = domain.get_content_value('message_sender')
+    comment_email_pcs = domain.get_content_value('comment_email_pcs')
+    program_chairs_id = domain.get_content_value('program_chairs_id')
 
     submission = client.get_note(edit.note.forum)
     comment = client.get_note(edit.note.id)
@@ -40,7 +42,7 @@ A new conversation has been started in the {short_name} forum for submission {su
 You can view the conversation here: https://openreview.net/forum?id={submission.id}&noteId={comment.id}#committee-chat
 ''',
             replyTo = contact,
-            ignoreRecipients = comment.signatures,
+            ignoreRecipients = comment.signatures + ([program_chairs_id] if not comment_email_pcs else []),
             signature=venue_id,
             sender=sender            
         )
@@ -94,7 +96,7 @@ New comments have been posted for the conversation in the {short_name} forum for
 You can view the conversation here: https://openreview.net/forum?id={submission.id}&noteId={new_comments[0].id}#committee-chat
 ''',
             replyTo = contact,
-            ignoreRecipients = comment.signatures,
+            ignoreRecipients = comment.signatures + ([program_chairs_id] if not comment_email_pcs else []),
             signature=venue_id,
             sender=sender            
         )
