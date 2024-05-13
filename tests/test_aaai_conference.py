@@ -612,3 +612,70 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         messages = openreview_client.get_messages(to='senior_program_committee1@aaai.org', subject='[AAAI 2025] First Round Review posted to your assigned Paper number: 1, Paper title: "Paper title 1"')
         assert messages and len(messages) == 1
+
+    def test_comments(self, client, openreview_client, helpers, request_page, selenium):
+        pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+
+        # Start comment stage
+        comment_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'commentary_start_date': start_date.strftime('%Y/%m/%d'),
+                'commentary_end_date': due_date.strftime('%Y/%m/%d'),
+                'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
+                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
+            },
+            forum=request_form.forum,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment_Stage',
+            readers=['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_AAAIChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
+
+        assert comment_stage_note
+
+        # Check signature gets added to readers of comment
+        rev_client_v2=openreview.api.OpenReviewClient(username='program_committee1@aaai.org', password=helpers.strong_password)
+        anon_groups = rev_client_v2.get_groups(prefix='AAAI.org/2025/Conference/Submission1/Program_Committee_', signatory='~Program_Committee_AAAIOne1')
+        anon_group_id = anon_groups[0].id
+        submissions = openreview_client.get_notes(invitation='AAAI.org/2025/Conference/-/Submission', sort='number:asc')
+
+        official_comment_note = rev_client_v2.post_note_edit(
+            invitation='AAAI.org/2025/Conference/Submission1/-/Official_Comment',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                replyto=submissions[0].id,
+                content={
+                    'title': {'value': 'Title'},
+                    'comment': {'value': 'Program Committee comment to Senior Program Committee'}
+                },
+                readers=[
+                    'AAAI.org/2025/Conference/Program_Chairs',
+                    'AAAI.org/2025/Conference/Submission1/Area_Chairs',
+                    'AAAI.org/2025/Conference/Submission1/Senior_Program_Committee'
+                ]
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=official_comment_note['id'])
+
+        official_comment_notes = openreview_client.get_notes(invitation='AAAI.org/2025/Conference/Submission1/-/Official_Comment')
+        assert len(official_comment_notes) == 1
+        assert anon_group_id in official_comment_notes[0].readers # Test fails
+
+        messages = openreview_client.get_messages(to='program_committee1@aaai.org', subject='[AAAI 2025] Your comment was received on Paper Number: 1, Paper Title: "Paper title 1"')
+        assert messages and len(messages) == 1
+
+        messages = openreview_client.get_messages(subject='[AAAI 2025] Program Committee.* commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title 1"')
+        assert messages and len(messages) == 3
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'pc@aaai.org' in recipients
+        assert 'ac1@aaai.org' in recipients
+        assert 'senior_program_committee1@aaai.org' in recipients
