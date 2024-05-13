@@ -11,7 +11,8 @@ if (decisionHeadingMap) {
     tabs.push({
       name:tabName,
       query: {
-        'content.venue': venue
+        'content.venue': venue,
+        'invitation': domain.content.submission_id?.value
       },
       options: {
         hideWhenEmpty: true

@@ -117,12 +117,16 @@ def process(client, invitation):
             updated_note = openreview.api.Note(
                 id = note.id
             )
+            final_invitation_writers = list(dict.fromkeys([note.signatures[0] if 'signatures' in r else r for r in paper_invitation.edit['note'].get('writers', [])]))
+            
             if final_invitation_readers and note.readers != final_invitation_readers:
                 updated_note.readers = final_invitation_readers
                 updated_note.nonreaders = paper_invitation.edit['note'].get('nonreaders')
+            if final_invitation_writers and note.writers != final_invitation_writers:
+                updated_note.writers = final_invitation_writers
             if updated_content:
                 updated_note.content = updated_content
-            if updated_note.content or updated_note.readers:
+            if updated_note.content or updated_note.readers or updated_note.writers:
                 client.post_note_edit(
                     invitation = meta_invitation_id,
                     readers = edit_readers,
