@@ -1773,7 +1773,7 @@ class InvitationBuilder(object):
                         },
                         'ddate': {
                             'param': {
-                                'range': [ 0, 999999999999 ],
+                                'range': [ 0, 9999999999999 ],
                                 'optional': True,
                                 'deletable': True
                             }
@@ -1787,7 +1787,7 @@ class InvitationBuilder(object):
                         'writers': [venue_id, '${2/signatures}'],
                         'tag': {
                             'param': {
-                                'enum': ['👍', '👎', '😄', '😂', '🔥']
+                                'enum': ['👍', '👎', '👌', '👆', '😄', '😂', '🔥', '🚀', '✅']
                             }
                         }
                     }
