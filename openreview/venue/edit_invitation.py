@@ -53,7 +53,7 @@ class EditInvitationBuilder(object):
             process = f.read()
             return process
 
-    def set_edit_deadlines_invitation(self, invitation_id, process_file):
+    def set_edit_deadlines_invitation(self, invitation_id, process_file=None):
 
         venue_id = self.venue_id
         venue = self.venue
@@ -108,18 +108,20 @@ class EditInvitationBuilder(object):
                     'duedate': '${2/content/deadline/value}',
                     'expdate': '${2/content/expiration_date/value}'
                 }
-            },
-            process=self.get_process_content(f'process/{process_file}')  
+            }
         )
+
+        if process_file:
+            invitation.process = self.get_process_content(f'process/{process_file}')  
 
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_edit_content_invitation(self, invitation_id):
+    def set_edit_content_invitation(self, invitation_id, include_license=False):
 
         venue_id = self.venue_id
         venue = self.venue
-        content_invitation_id = invitation_id + '/Submission_Form'
+        content_invitation_id = invitation_id + '/Form_Fields'
 
         invitation = Invitation(
             id = content_invitation_id,
@@ -138,22 +140,6 @@ class EditInvitationBuilder(object):
                                 'type': 'content'
                             }
                         }
-                    },
-                    'note_license': {
-                        'value': {
-                            'param': {
-                                'type': 'string[]',
-                                'items':  [
-                                    {'value': 'CC BY 4.0', 'optional': True, 'description': 'A'},
-                                    {'value': 'CC BY-SA 4.0', 'optional': True, 'description': 'A'},
-                                    {'value': 'CC BY-NC 4.0', 'optional': True, 'description': 'A'},
-                                    {'value': 'CC BY-ND 4.0', 'optional': True, 'description': 'A'},
-                                    {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'A'},
-                                    {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'A'},
-                                    {'value': 'CC0 1.0', 'optional': True, 'description': 'A'}
-                                ]
-                            }
-                        }
                     }
                 },
                 'invitation': {
@@ -161,17 +147,35 @@ class EditInvitationBuilder(object):
                     'signatures': [venue_id],
                     'edit': {
                         'note': {
-                            'content': '${4/content/note_content/value}',
-                            'license': {
-                                'param': {
-                                    'enum': ['${7/content/note_license/value}']
-                                }
-                            }
+                            'content': '${4/content/note_content/value}'
                         }
                     }
                 }
             }  
         )
+
+        if include_license:
+            invitation.edit['content']['note_license'] = {
+                'value': {
+                    'param': {
+                        'type': 'string[]',
+                        'items':  [
+                            {'value': 'CC BY 4.0', 'optional': True, 'description': 'A'},
+                            {'value': 'CC BY-SA 4.0', 'optional': True, 'description': 'A'},
+                            {'value': 'CC BY-NC 4.0', 'optional': True, 'description': 'A'},
+                            {'value': 'CC BY-ND 4.0', 'optional': True, 'description': 'A'},
+                            {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'A'},
+                            {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'A'},
+                            {'value': 'CC0 1.0', 'optional': True, 'description': 'A'}
+                        ]
+                    }
+                }
+            }
+            invitation.edit['invitation']['edit']['note']['license'] =  {
+                'param': {
+                    'enum': ['${7/content/note_license/value}']
+                }
+            }
 
         self.save_invitation(invitation, replacement=False)
         return invitation
@@ -360,4 +364,71 @@ class EditInvitationBuilder(object):
         )
 
         self.save_invitation(invitation, replacement=False)
-        return invitation        
+        return invitation
+
+    def set_edit_reply_readers_invitation(self, invitation_id):
+
+        venue_id = self.venue_id
+        venue = self.venue
+        reply_readers_invitation_id = invitation_id + '/Readers'
+
+        reply_readers = [
+            {'value': venue.get_program_chairs_id(), 'optional': False, 'description': 'Program Chairs.'}
+        ]
+        if venue.use_senior_area_chairs:
+            reply_readers.extend([
+                {'value': venue.get_senior_area_chairs_id(), 'optional': True, 'description': 'All Senior Area Chairs'}
+                # {'value': venue.get_senior_area_chairs_id('${5/content/noteNumber/value}'), 'optional': True, 'description': 'Assigned Senior Area Chairs'}
+            ])
+        if venue.use_area_chairs:
+            reply_readers.extend([
+                {'value': venue.get_area_chairs_id(), 'optional': True, 'description': 'All Area Chairs'}
+                # {'value': venue.get_area_chairs_id('${5/content/noteNumber/value}'), 'optional': True, 'description': 'Assigned Area Chairs'}
+            ])
+        reply_readers.extend([
+            {'value': venue.get_reviewers_id(), 'optional': True, 'description': 'All Reviewers'},
+            # {'value': venue.get_reviewers_id('${5/content/noteNumber/value}'), 'optional': True, 'description': 'Assigned Reviewers'},
+            # {'value': venue.get_reviewers_id('${5/content/noteNumber/value}', submitted=True), 'optional': True, 'description': 'Assigned Reviewers who already submitted their review'},
+            # {'value': '${3/signatures}', 'optional': True, 'description': 'Reviewer who submitted the review'},
+            {'value': venue.get_authors_id(), 'optional': True, 'description': 'Paper authors'}
+        ])
+
+        invitation = Invitation(
+            id = reply_readers_invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'reply_readers': {
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'items': reply_readers
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': invitation_id,
+                    'signatures': [venue_id],
+                    'edit': {
+                        'invitation': {
+                            'id': venue.get_invitation_id(venue.review_stage.child_invitations_name, '${2/content/noteNumber/value}'),
+                            'edit': {
+                                'note': {
+                                    'readers': ['${7/content/reply_readers/value}']
+                                }
+                            }
+                        }
+                    }
+                }
+            }  
+        )
+        
+        self.save_invitation(invitation, replacement=False)
+        return invitation

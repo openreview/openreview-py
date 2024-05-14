@@ -20,8 +20,9 @@ def get_venue(client, venue_note_id, support_user='OpenReview.net/Support'):
     venue.use_ethics_chairs = venue.use_ethics_reviewers = note.content.get('ethics_chairs_and_reviewers', {}).get('value', '') == 'Yes, our venue has Ethics Chairs and Reviewers'
     venue.use_publication_chairs = note.content.get('publication_chairs', {}).get('value', '') == 'Yes, our venue has Publication Chairs'
     
-    venue.submission_stage = get_submission_stage_v2(note, venue)
+    set_initial_stages_v2(note, venue)
     venue.setup(note.content.get('program_chair_emails',{}).get('value'))
+    venue.create_review_stage()
     return venue
 
 def set_start_date(request_forum, venue):
@@ -38,7 +39,7 @@ def set_start_date(request_forum, venue):
 
     venue.start_date = venue_start_date_str
 
-def get_submission_stage_v2(request_forum, venue):
+def set_initial_stages_v2(request_forum, venue):
 
     readers_map = {
         'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)': [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.REVIEWERS],
@@ -90,7 +91,7 @@ def get_submission_stage_v2(request_forum, venue):
     date += 'Submission Deadline: ' + submission_deadline_str
     venue.date = date
 
-    return openreview.stages.SubmissionStage(
+    venue.submission_stage =  openreview.stages.SubmissionStage(
         start_date=submission_start_date,
         due_date=submission_due_date,
         second_due_date=submission_second_due_date,
@@ -98,6 +99,11 @@ def get_submission_stage_v2(request_forum, venue):
         double_blind=request_forum.content.get('author_and_reviewer_anonymity', {}).get('value', '') == 'Double-blind',
         email_pcs='Yes' in request_forum.content.get('email_pcs_for_new_submissions', {}).get('value', ''),
         force_profiles='Yes' in request_forum.content.get('force_profiles_only', {}).get('value', '')
+    )
+
+    venue.review_stage = openreview.stages.ReviewStage(
+        start_date = (submission_second_due_date if submission_second_due_date else submission_due_date) + datetime.timedelta(weeks=1),
+        allow_de_anonymization = (request_forum.content.get('author_and_reviewer_anonymity', {}).get('value', 'No anonymity') == 'No anonymity'),
     )
 
 def get_conference(client, request_form_id, support_user='OpenReview.net/Support', setup=False):

@@ -6,6 +6,7 @@ def process(client, edit, invitation):
     venue = openreview.helpers.get_venue(client, note.id, support_user)
     venue.create_submission_stage()
     venue.create_submission_edit_invitations()
+    venue.create_review_edit_invitations()
 
     # remove PC access to editing the note
     client.post_note_edit(

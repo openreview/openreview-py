@@ -110,13 +110,13 @@ class TestVenueConfiguration():
         post_submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Post_Submission')
         assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
 
-        content_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission/Submission_Form')
+        content_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission/Form_Fields')
         assert content_inv
         assert 'subject_area' not in submission_inv.edit['note']['content']
         assert 'keywords' in submission_inv.edit['note']['content']
         assert submission_inv.edit['note']['license'] == 'CC BY 4.0'
 
-        ## edit Submission content with Submission/Submission_Form invitation
+        ## edit Submission content with Submission/Form_Fields invitation
         pc_client_v2.post_invitation_edit(
             invitations=content_inv.id,
             content = {
@@ -176,6 +176,35 @@ class TestVenueConfiguration():
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission')
         assert 'email_authors' in submission_inv.content and not submission_inv.content['email_authors']['value']
         assert 'email_pcs' in submission_inv.content and submission_inv.content['email_pcs']['value']
+
+        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Official_Review')
+        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Official_Review/Deadlines')
+        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Official_Review/Form_Fields')
+        review_readers_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Official_Review/Readers')
+        assert review_readers_inv
+
+        ## edit Official Review readers
+        pc_client_v2.post_invitation_edit(
+            invitations=review_readers_inv.id,
+            content = {
+                'reply_readers': { 
+                    'value':  [
+                        'ICLR.cc/2025/Conference/Program_Chairs', 
+                        'ICLR.cc/2025/Conference/Senior_Area_Chairs',
+                        'ICLR.cc/2025/Conference/Area_Chairs',
+                        'ICLR.cc/2025/Conference/Reviewers'
+                    ] 
+                }
+            }
+        )
+
+        review_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Official_Review')
+        assert review_inv.edit['invitation']['edit']['note']['readers'] == [
+            'ICLR.cc/2025/Conference/Program_Chairs', 
+            'ICLR.cc/2025/Conference/Senior_Area_Chairs',
+            'ICLR.cc/2025/Conference/Area_Chairs',
+            'ICLR.cc/2025/Conference/Reviewers'
+        ]
 
     def test_post_submissions(self, openreview_client, test_client, helpers):
 
