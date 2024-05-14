@@ -176,3 +176,65 @@ class TestVenueConfiguration():
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission')
         assert 'email_authors' in submission_inv.content and not submission_inv.content['email_authors']['value']
         assert 'email_pcs' in submission_inv.content and submission_inv.content['email_pcs']['value']
+
+    def test_post_submissions(self, openreview_client, test_client, helpers):
+
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+
+        domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu', 'deepmind.com', 'co.ux', 'apple.com', 'nvidia.com']
+        for i in range(1,11):
+            note = openreview.api.Note(
+                license = 'CC BY-NC-SA 4.0',
+                content = {
+                    'title': { 'value': 'Paper title ' + str(i) },
+                    'abstract': { 'value': 'This is an abstract ' + str(i) },
+                    'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i % 10]] },
+                    'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
+                    'subject_area': { 'value': '3D from multi-view and sensors' },
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                }
+            )
+
+            test_client.post_note_edit(invitation='ICLR.cc/2025/Conference/-/Submission',
+                signatures=['~SomeFirstName_User1'],
+                note=note)
+
+        helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2025/Conference/-/Submission', count=10)
+
+        submissions = openreview_client.get_notes(invitation='ICLR.cc/2025/Conference/-/Submission')
+        assert len(submissions) == 10
+        assert submissions[0].readers == ['ICLR.cc/2025/Conference', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@umass.edu']
+
+        ## Setup submissions readers after the deadline
+        pc_client = openreview.api.OpenReviewClient(username='sherry@iclr.cc', password=helpers.strong_password)
+
+        submission_readers_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Post_Submission/Submission_Readers')
+        assert submission_readers_inv
+
+        pc_client.post_invitation_edit(
+            invitations=submission_readers_inv.id,
+            content = {
+#                'readers': { 'value': ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Submission${{2/id}/number}/Authors'] },
+                'readers': { 'value': ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Authors'] },
+            }
+        )
+
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now - datetime.timedelta(days=1))
+        new_duedate = openreview.tools.datetime_millis(now - datetime.timedelta(minutes=28))
+
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2025/Conference/-/Submission/Deadlines',
+            content={
+                'activation_date': { 'value': new_cdate },
+                'deadline': { 'value': new_duedate },
+                'expiration_date': { 'value': new_duedate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2025/Conference/-/Submission/Deadlines')
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/Post_Submission-0-1', count=3)
+
+        submissions = openreview_client.get_notes(invitation='ICLR.cc/2025/Conference/-/Submission')
+        assert len(submissions) == 10
+        assert submissions[0].readers == ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Authors']                 
+        

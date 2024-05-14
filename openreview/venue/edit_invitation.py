@@ -160,9 +160,7 @@ class EditInvitationBuilder(object):
                     'id': invitation_id,
                     'signatures': [venue_id],
                     'edit': {
-                        'signatures': [venue.get_program_chairs_id()],
                         'note': {
-                            'signatures': ['${3/signatures}'],
                             'content': '${4/content/note_content/value}',
                             'license': {
                                 'param': {
@@ -231,3 +229,55 @@ class EditInvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=False)
         return invitation
+    
+    def set_edit_submission_readers_invitation(self):
+
+        venue_id = self.venue_id
+        venue = self.venue
+        post_submission_id = f'{venue_id}/-/Post_{venue.submission_stage.name}'        
+        content_invitation_id = post_submission_id + '/Submission_Readers'
+
+        invitation = Invitation(
+            id = content_invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'readers': {
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'items':  [
+                                    {'value': venue_id, 'optional': False, 'description': 'Program Chairs'},
+                                    {'value': venue.get_authors_id(), 'optional': True, 'description': 'All Authors'},
+                                    {'value': venue.get_reviewers_id(), 'optional': True, 'description': 'All Reviewers'},
+                                    {'value': venue.get_area_chairs_id(), 'optional': True, 'description': 'All Area Chairs'},
+                                    {'value': venue.get_senior_area_chairs_id(), 'optional': True, 'description': 'All Senior Area Chairs'},
+                                   # {'value': venue.get_authors_id('${{2/id}/number}'), 'optional': True, 'description': 'Submission Authors'},
+                                   # {'value': venue.get_reviewers_id('${{2/id}/number}'), 'optional': True, 'description': 'Assigned Reviewers'},
+                                   # {'value': venue.get_area_chairs_id('${{2/id}/number}'), 'optional': True, 'description': 'Assigned Area Chairs'},
+                                   # {'value': venue.get_senior_area_chairs_id('${{2/id}/number}'), 'optional': True, 'description': 'Assigned Senior Area Chairs'},
+                                ]
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': post_submission_id,
+                    'signatures': [venue_id],
+                    'edit': {
+                        'note': {
+                            'readers': ['${5/content/readers/value}']
+                        }
+                    }
+                }
+            }  
+        )
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation    
