@@ -6,7 +6,8 @@ def process(client, invitation):
     contact = domain.get_content_value('contact')
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
     sender = domain.get_content_value('message_sender')
-
+    comment_email_pcs = domain.get_content_value('comment_email_pcs')
+    program_chairs_id = domain.get_content_value('program_chairs_id')
 
     last_notified_id = invitation.content.get('last_notified_id', {}).get('value') if invitation.content else None
 
@@ -34,7 +35,7 @@ New comment{"s have" if len(new_comments) > 1 else " has"} been posted for the c
 You can view the conversation here: https://openreview.net/forum?id={submission.id}&noteId={new_comments[0].id}#committee-chat
 ''',
         replyTo = contact,
-        ignoreRecipients = new_comments[-1].signatures,
+        ignoreRecipients = new_comments[-1].signatures + ([program_chairs_id] if not comment_email_pcs else []),
         signature=venue_id,
         sender = sender
     )
