@@ -37,6 +37,7 @@ class TestAAAIConference():
         helpers.create_user('program_committee1@aaai.org', 'Program Committee', 'AAAIOne')
         helpers.create_user('program_committee2@aaai.org', 'Program Committee', 'AAAITwo')
         helpers.create_user('program_committee3@aaai.org', 'Program Committee', 'AAAIThree')
+        helpers.create_user('program_committee4@aaai.org', 'Program Committee', 'AAAIFour')
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
@@ -612,6 +613,105 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         messages = openreview_client.get_messages(to='senior_program_committee1@aaai.org', subject='[AAAI 2025] First Round Review posted to your assigned Paper number: 1, Paper title: "Paper title 1"')
         assert messages and len(messages) == 1
+
+        ## Close first review stage
+        now = datetime.datetime.utcnow()
+        due_date = now - datetime.timedelta(days=1)
+        review_stage_note=pc_client.post_note(openreview.Note(
+            content={
+                'review_name': 'First_Round_Review',
+                'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
+                'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Review should not be revealed to any reviewer, except to the author of the review',
+                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews',
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Review_Stage'.format(request_form.number),
+            readers=['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_AAAIChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
+
+        ## Desk reject papers, assign more reviewers to papers
+        desk_reject_note = openreview_client.post_note_edit(invitation='AAAI.org/2025/Conference/Submission10/-/Desk_Rejection',
+            signatures=['AAAI.org/2025/Conference/Program_Chairs'],
+            note=openreview.api.Note(
+                content={
+                    'desk_reject_comments': { 'value': 'No PDF' },
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
+
+        submissions = openreview_client.get_notes(content= { 'venueid': 'AAAI.org/2025/Conference/Submission'}, sort='number:asc')
+        for sub in submissions:
+            assignment_edge = openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'AAAI.org/2025/Conference/Program_Committee/-/Assignment',
+                head = sub.id,
+                tail = '~Program_Committee_AAAIFour1',
+                signatures = ['AAAI.org/2025/Conference/Program_Chairs'],
+                weight = 1
+            ))
+            helpers.await_queue_edit(openreview_client, edit_id=assignment_edge.id)
+
+        ## Open second review stage
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        review_stage_note=pc_client.post_note(openreview.Note(
+            content={
+                'review_name': 'Second_Round_Review',
+                'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
+                'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Review should not be revealed to any reviewer, except to the author of the review',
+                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews',
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Review_Stage'.format(request_form.number),
+            readers=['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_AAAIChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
+
+        assert len(openreview_client.get_invitations(invitation='AAAI.org/2025/Conference/-/Second_Round_Review')) == 9
+        assert openreview_client.get_invitation('AAAI.org/2025/Conference/Submission1/-/Second_Round_Review')
+
+        reviewer_client = openreview.api.OpenReviewClient(username='program_committee4@aaai.org', password=helpers.strong_password)
+        anon_groups = reviewer_client.get_groups(prefix='AAAI.org/2025/Conference/Submission1/Program_Committee_', signatory='~Program_Committee_AAAIFour1')
+        anon_group_id = anon_groups[0].id
+
+        review_edit = reviewer_client.post_note_edit(
+            invitation='AAAI.org/2025/Conference/Submission1/-/Second_Round_Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': 'Second Review for Paper 1' },
+                    'review': { 'value': 'Great paper' },
+                    'rating': { 'value': 10 },
+                    'confidence': { 'value': 5 }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
+
+        messages = openreview_client.get_messages(to='senior_program_committee1@aaai.org', subject='[AAAI 2025] Second Round Review posted to your assigned Paper number: 1, Paper title: "Paper title 1"')
+        assert messages and len(messages) == 1
+        messages = openreview_client.get_messages(to='program_committee4@aaai.org', subject='[AAAI 2025] Your second round review has been received on your assigned Paper number: 1, Paper title: "Paper title 1"')
+        assert messages and len(messages) == 1
+
+        review_note = openreview_client.get_notes(invitation='AAAI.org/2025/Conference/Submission1/-/Second_Round_Review', sort='number:asc')[0]
+        assert review_note
+        assert review_note.readers == [
+            'AAAI.org/2025/Conference/Program_Chairs', 
+            'AAAI.org/2025/Conference/Submission1/Area_Chairs', 
+            'AAAI.org/2025/Conference/Submission1/Senior_Program_Committee', 
+            anon_group_id ]
 
     def test_comments(self, client, openreview_client, helpers, request_page, selenium):
         pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
