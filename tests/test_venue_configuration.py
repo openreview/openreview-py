@@ -219,6 +219,18 @@ class TestVenueConfiguration():
             }
         )
 
+        submission_field_readers_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Post_Submission/Restrict_Field_Visibility')
+        assert submission_field_readers_inv
+
+        pc_client.post_invitation_edit(
+            invitations=submission_field_readers_inv.id,
+            content = {
+#                'readers': { 'value': ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Submission${{2/id}/number}/Authors'] },
+                'author_readers': { 'value': ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Authors'] },
+                'pdf_readers': { 'value': ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Authors', 'ICLR.cc/2025/Conference/Reviewers'] },
+            }
+        )        
+
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now - datetime.timedelta(days=1))
         new_duedate = openreview.tools.datetime_millis(now - datetime.timedelta(minutes=28))
@@ -237,4 +249,7 @@ class TestVenueConfiguration():
         submissions = openreview_client.get_notes(invitation='ICLR.cc/2025/Conference/-/Submission')
         assert len(submissions) == 10
         assert submissions[0].readers == ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Authors']                 
+        assert submissions[0].content['authors']['readers'] == ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Authors']                 
+        assert submissions[0].content['authorids']['readers'] == ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Authors']                 
+        assert submissions[0].content['pdf']['readers'] == ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Authors', 'ICLR.cc/2025/Conference/Reviewers']                 
         
