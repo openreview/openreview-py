@@ -308,7 +308,7 @@ class TestProfileManagement():
 
         profile = kate_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://kate.google.com'
         profile.content['names'].append({
             'first': 'Kathryn',
             'last': 'Ricci'
@@ -352,7 +352,7 @@ class TestProfileManagement():
 
         profile = john_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://john.google.com'
         profile.content['names'].append({
             'first': 'John',
             'middle': 'Alternate',
@@ -617,7 +617,7 @@ The OpenReview Team.
 
         profile = ana_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://ana.google.com'
         profile.content['names'].append({
             'first': 'Ana',
             'middle': 'Alternate',
@@ -774,7 +774,7 @@ The OpenReview Team.
 
         profile = peter_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://peter.google.com'
         profile.content['names'].append({
             'first': 'Peter',
             'middle': 'Alternate',
@@ -869,7 +869,7 @@ The OpenReview Team.
 
         profile = ella_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://ella.google.com'
         profile.content['names'].append({
             'first': 'Ella',
             'middle': 'Alternate',
@@ -1039,7 +1039,7 @@ The OpenReview Team.
 
         profile = javier_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://javier.google.com'
         profile.content['names'].append({
             'first': 'Javier',
             'middle': 'Alternate',
@@ -1194,7 +1194,7 @@ The OpenReview Team.
         paul_client = helpers.create_user('paul@profile.org', 'Paul', 'Last', alternates=[], institution='google.com')
         profile = paul_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://paul.google.com'
         profile.content['names'].append({
             'first': 'Paul',
             'middle': 'Alternate',
@@ -1514,7 +1514,7 @@ The OpenReview Team.
 
         profile = juan_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://juan.google.com'
         profile.content['names'].append({
             'first': 'Juan',
             'middle': 'Alternate',
@@ -1624,7 +1624,7 @@ The OpenReview Team.
 
         profile = nara_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://nara.google.com'
         profile.content['names'].append({
             'first': 'Nara',
             'middle': 'Alternate',
@@ -1662,7 +1662,7 @@ The OpenReview Team.
 
         profile = mara_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://mara.google.com'
         profile.content['names'].append({
             'first': 'Mara',
             'middle': 'Alternate',
@@ -1716,7 +1716,7 @@ The OpenReview Team.
         rachel_client = helpers.create_user('rachel@profile.org', 'Rachel', 'Last', alternates=[], institution='google.com')
         profile = rachel_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://rachel.google.com'
         profile.content['names'].append({
             'first': 'Rachel',
             'middle': 'Alternate',
@@ -1850,7 +1850,7 @@ The OpenReview Team.
         melisa_client = helpers.create_user('melisa@profile.org', 'Melisa', 'Last', alternates=[], institution='google.com')
         profile = melisa_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://melisa.google.com'
         profile.content['names'].append({
             'first': 'Melisa',
             'middle': 'Alternate',
@@ -1911,7 +1911,7 @@ The OpenReview Team.
         harold_client = helpers.create_user('harold@profile.org', 'Harold', 'Last', alternates=[], institution='google.com')
         profile = harold_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://harold.google.com'
         profile.content['emails'].append('alternate_harold@profile.org')
         harold_client.post_profile(profile)
         profile = harold_client.get_profile(email_or_id='~Harold_Last1')
@@ -2109,7 +2109,7 @@ The OpenReview Team.
 
         profile = carlos_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://carlos.google.com'
         profile.content['relations'].append({
             'relation': 'Advisor',
             'name': 'Zoey User',
@@ -2294,7 +2294,7 @@ The OpenReview Team.
         akshat_client_2 = helpers.create_user('akshat_2@profile.org', 'Akshat', 'Last', alternates=[], institution='google.com')
 
         profile = akshat_client_1.get_profile()
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://akshat.google.com'
         profile.content['emails'].append('akshat_2@profile.org')
         akshat_client_1.post_profile(profile)
     
