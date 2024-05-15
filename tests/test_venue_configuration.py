@@ -24,7 +24,7 @@ class TestVenueConfiguration():
         pc_client_v2=openreview.api.OpenReviewClient(username='sherry@iclr.cc', password=helpers.strong_password)
 
         assert openreview_client.get_invitation('openreview.net/-/Edit')
-        assert openreview_client.get_invitation('openreview.net/-/Conference_Venue_Request')
+        assert openreview_client.get_invitation('openreview.net/-/Venue_Configuration_Request')
         assert openreview_client.get_invitation('openreview.net/-/Comment')
         assert openreview_client.get_invitation('openreview.net/-/Deploy')
 
@@ -33,7 +33,7 @@ class TestVenueConfiguration():
         due_date = now + datetime.timedelta(days=1)
 
         # post a conference request form
-        conference_request = openreview_client.post_note_edit(invitation='openreview.net/-/Conference_Venue_Request',
+        conference_request = openreview_client.post_note_edit(invitation='openreview.net/-/Venue_Configuration_Request',
             signatures=['~Super_User1'],
             note=openreview.api.Note(
                 content={
@@ -59,13 +59,13 @@ class TestVenueConfiguration():
             ))
         
         assert conference_request
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/-/Conference_Venue_Request')
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/-/Venue_Configuration_Request')
 
         request = openreview_client.get_note(conference_request['note']['id'])
-        assert openreview_client.get_invitation(f'openreview.net/Conference_Venue_Request{request.number}/-/Comment')
-        assert openreview_client.get_invitation(f'openreview.net/Conference_Venue_Request{request.number}/-/Deploy')
+        assert openreview_client.get_invitation(f'openreview.net/Venue_Configuration_Request{request.number}/-/Comment')
+        assert openreview_client.get_invitation(f'openreview.net/Venue_Configuration_Request{request.number}/-/Deploy')
 
-        openreview_client.post_note_edit(invitation=f'openreview.net/Conference_Venue_Request{request.number}/-/Deploy',
+        openreview_client.post_note_edit(invitation=f'openreview.net/Venue_Configuration_Request{request.number}/-/Deploy',
             signatures=[support_group_id],
             note=openreview.api.Note(
                 id=request.id,
@@ -74,7 +74,7 @@ class TestVenueConfiguration():
                 }
             ))
         
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Conference_Venue_Request1/-/Deploy')
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Venue_Configuration_Request1/-/Deploy')
         
         assert openreview.tools.get_group(openreview_client, 'ICLR.cc/2025/Conference')
         assert openreview.tools.get_group(openreview_client, 'ICLR.cc/2025')

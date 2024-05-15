@@ -1,4 +1,5 @@
 
+import openreview.api
 from ... import openreview
 from openreview.api import Invitation
 import os
@@ -16,6 +17,7 @@ class VenueConfiguration():
         self.set_conference_venue_invitation()
         self.set_comment_invitation()
         self.set_deploy_invitation()
+        self.set_venues_homepage()
 
     def get_process_content(self, file_path):
         process = None
@@ -46,10 +48,23 @@ class VenueConfiguration():
             )
         )
 
+    def set_venues_homepage(self):
+
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/venuepageWebfield.js')) as f:
+            content = f.read()
+            self.client.post_group_edit(
+                invitation=self.meta_invitation_id,
+                signatures=['~Super_User1'],
+                group=openreview.api.Group(
+                    id='venues',
+                    web=content
+                )
+            )
+
     def set_conference_venue_invitation(self):
 
         super_user = self.super_user
-        conference_venue_invitation_id = f'{super_user}/-/Conference_Venue_Request'
+        conference_venue_invitation_id = f'{super_user}/-/Venue_Configuration_Request'
 
         invitation_content = {
             'title': {
@@ -391,7 +406,7 @@ class VenueConfiguration():
                 },
                 'replacement': True,
                 'invitation': {
-                    'id': f'{super_user}/Conference_Venue_Request' + '${2/content/noteNumber/value}' + '/-/Comment',
+                    'id': f'{super_user}/Venue_Configuration_Request' + '${2/content/noteNumber/value}' + '/-/Comment',
                     'signatures': [ support_group_id ],
                     'readers': ['everyone'],
                     'writers': [support_group_id],
@@ -408,7 +423,7 @@ class VenueConfiguration():
                         'readers': ['${2/note/readers}'],
                         'writers': [support_group_id],
                         'note': {
-                            'id': f'{super_user}/Conference_Venue_Request' + '${4/content/noteNumber/value}' + '/-/Comment',
+                            'id': f'{super_user}/Venue_Configuration_Request' + '${4/content/noteNumber/value}' + '/-/Comment',
                             'forum': '${4/content/noteId/value}',
                             'replyto': '${4/content/noteId/value}',
                             'ddate': {
@@ -493,7 +508,7 @@ class VenueConfiguration():
                 },
                 'replacement': True,
                 'invitation': {
-                    'id': f'{super_user}/Conference_Venue_Request' + '${2/content/noteNumber/value}' + '/-/Deploy',
+                    'id': f'{super_user}/Venue_Configuration_Request' + '${2/content/noteNumber/value}' + '/-/Deploy',
                     'signatures': [ '~Super_User1' ],
                     'readers': ['everyone'],
                     'writers': [support_group_id],
