@@ -51,10 +51,10 @@ class TestVenueConfiguration():
                     'submission_start_date': { 'value': start_date.strftime('%Y/%m/%d %H:%M') },
                     'submission_deadline': { 'value': due_date.strftime('%Y/%m/%d %H:%M') },
                     'author_and_reviewer_anonymity': { 'value': 'Double-blind' },
-                    'force_profiles_only': { 'value': 'No, allow submissions with email addresses' },
-                    'submission_readers': { 'value': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)' },
+                    #'force_profiles_only': { 'value': 'No, allow submissions with email addresses' },
+                    #'submission_readers': { 'value': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)' },
                     'submission_license': { 'value': ['CC BY-NC 4.0'] },
-                    'email_pcs_for_new_submissions': { 'value': 'No, do not email PCs.' }
+                    #'email_pcs_for_new_submissions': { 'value': 'No, do not email PCs.' }
                 }
             ))
         

@@ -254,37 +254,37 @@ class VenueConfiguration():
                     }
                 }
             },
-            'force_profiles_only': {
-                'order': 17,
-                'description': 'Submitting authors must have an OpenReview profile, however, should all co-authors be required to have profiles?',
-                'value': {
-                    'param': {
-                        'type': 'string',
-                        'enum': [
-                            'Yes, require all authors to have an OpenReview profile',
-                            'No, allow submissions with email addresses'
-                        ],
-                        'input': 'radio'
-                    }
-                }
-            },
-            'submission_readers': {
-                'order': 18,
-                'description': 'Please select who should have access to the submissions after the abstract deadline (if your venue has one) or the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
-                'value': {
-                    'param': {
-                        'type': 'string',
-                        'enum': [
-                            'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
-                            'All area chairs only',
-                            'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
-                            'Program chairs and paper authors only',
-                            'Everyone (submissions are public)'
-                        ],
-                        'input': 'radio'
-                    }
-                }
-            },
+            # 'force_profiles_only': {
+            #     'order': 17,
+            #     'description': 'Submitting authors must have an OpenReview profile, however, should all co-authors be required to have profiles?',
+            #     'value': {
+            #         'param': {
+            #             'type': 'string',
+            #             'enum': [
+            #                 'Yes, require all authors to have an OpenReview profile',
+            #                 'No, allow submissions with email addresses'
+            #             ],
+            #             'input': 'radio'
+            #         }
+            #     }
+            # },
+            # 'submission_readers': {
+            #     'order': 18,
+            #     'description': 'Please select who should have access to the submissions after the abstract deadline (if your venue has one) or the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
+            #     'value': {
+            #         'param': {
+            #             'type': 'string',
+            #             'enum': [
+            #                 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+            #                 'All area chairs only',
+            #                 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
+            #                 'Program chairs and paper authors only',
+            #                 'Everyone (submissions are public)'
+            #             ],
+            #             'input': 'radio'
+            #         }
+            #     }
+            # },
             'submission_license': {
                 'order': 19,
                 'description': 'Which license should be applied to each submission? We recommend "CC BY 4.0". If you select multiple licenses, you allow authors to choose their license upon submission. If your license is not listed, please contact us. Refer to https://openreview.net/legal/terms for more information.',
@@ -304,20 +304,20 @@ class VenueConfiguration():
                     }
                 }
             },
-            'email_pcs_for_new_submissions': {
-                'order': 20,
-                'description': 'Should PCs receive an email for every new submission?',
-                'value': {
-                    'param': {
-                        'type': 'string',
-                        'enum': [
-                            'Yes, email PCs for every new submission.',
-                            'No, do not email PCs.'
-                        ],
-                        'input': 'radio'
-                    }
-                }
-            },
+            # 'email_pcs_for_new_submissions': {
+            #     'order': 20,
+            #     'description': 'Should PCs receive an email for every new submission?',
+            #     'value': {
+            #         'param': {
+            #             'type': 'string',
+            #             'enum': [
+            #                 'Yes, email PCs for every new submission.',
+            #                 'No, do not email PCs.'
+            #             ],
+            #             'input': 'radio'
+            #         }
+            #     }
+            # },
             'other_important_information': {
                 'order': 21,
                 'description': 'Please provide any other important information about your venue that you would like to share with OpenReview. Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',

@@ -49,7 +49,7 @@ def set_initial_stages_v2(request_forum, venue):
         'Everyone (submissions are public)': [openreview.stages.SubmissionStage.Readers.EVERYONE],
         'Make accepted submissions public and hide rejected submissions': [openreview.stages.SubmissionStage.Readers.EVERYONE_BUT_REJECTED]
     }
-    readers = readers_map[request_forum.content.get('submission_readers', {}).get('value', [])]
+    #readers = readers_map[request_forum.content.get('submission_readers', {}).get('value', [])]
 
     submission_start_date = request_forum.content.get('submission_start_date', {}).get('value', '').strip()
 
@@ -95,10 +95,10 @@ def set_initial_stages_v2(request_forum, venue):
         start_date=submission_start_date,
         due_date=submission_due_date,
         second_due_date=submission_second_due_date,
-        readers=readers,
+        #readers=readers,
         double_blind=request_forum.content.get('author_and_reviewer_anonymity', {}).get('value', '') == 'Double-blind',
-        email_pcs='Yes' in request_forum.content.get('email_pcs_for_new_submissions', {}).get('value', ''),
-        force_profiles='Yes' in request_forum.content.get('force_profiles_only', {}).get('value', '')
+        #email_pcs='Yes' in request_forum.content.get('email_pcs_for_new_submissions', {}).get('value', ''),
+        #force_profiles='Yes' in request_forum.content.get('force_profiles_only', {}).get('value', '')
     )
 
     venue.review_stage = openreview.stages.ReviewStage(
