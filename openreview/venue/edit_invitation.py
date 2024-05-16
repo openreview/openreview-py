@@ -70,7 +70,7 @@ class EditInvitationBuilder(object):
                     'activation_date': { 
                         'value': {
                             'param': {
-                                'type': 'integer',
+                                'type': 'date',
                                 'range': [ 0, 9999999999999 ],
                                 'optional': True,
                                 'deletable': True
@@ -80,7 +80,7 @@ class EditInvitationBuilder(object):
                     'deadline': { 
                         'value': {
                             'param': {
-                                'type': 'integer',
+                                'type': 'date',
                                 'range': [ 0, 9999999999999 ],
                                 'optional': True,
                                 'deletable': True
@@ -159,14 +159,15 @@ class EditInvitationBuilder(object):
                 'value': {
                     'param': {
                         'type': 'string[]',
+                        'input': 'select',
                         'items':  [
-                            {'value': 'CC BY 4.0', 'optional': True, 'description': 'A'},
-                            {'value': 'CC BY-SA 4.0', 'optional': True, 'description': 'A'},
-                            {'value': 'CC BY-NC 4.0', 'optional': True, 'description': 'A'},
-                            {'value': 'CC BY-ND 4.0', 'optional': True, 'description': 'A'},
-                            {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'A'},
-                            {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'A'},
-                            {'value': 'CC0 1.0', 'optional': True, 'description': 'A'}
+                            {'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'},
+                            {'value': 'CC BY-SA 4.0', 'optional': True, 'description': 'CC BY-SA 4.0'},
+                            {'value': 'CC BY-NC 4.0', 'optional': True, 'description': 'CC BY-NC 4.0'},
+                            {'value': 'CC BY-ND 4.0', 'optional': True, 'description': 'CC BY-ND 4.0'},
+                            {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
+                            {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
+                            {'value': 'CC0 1.0', 'optional': True, 'description': 'CC0 1.0'}
                         ]
                     }
                 }
@@ -256,6 +257,7 @@ class EditInvitationBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'string[]',
+                                'input': 'select',
                                 'items':  [
                                     {'value': venue_id, 'optional': False, 'description': 'Program Chairs'},
                                     {'value': venue.get_authors_id(), 'optional': True, 'description': 'All Authors'},
@@ -308,6 +310,7 @@ class EditInvitationBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'string[]',
+                                'input': 'select',
                                 'items':  [
                                     {'value': venue_id, 'optional': False, 'description': 'Program Chairs'},
                                     {'value': venue.get_authors_id(), 'optional': True, 'description': 'All Authors'},
@@ -326,6 +329,7 @@ class EditInvitationBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'string[]',
+                                'input': 'select',
                                 'items':  [
                                     {'value': venue_id, 'optional': False, 'description': 'Program Chairs'},
                                     {'value': venue.get_authors_id(), 'optional': True, 'description': 'All Authors'},
@@ -408,6 +412,7 @@ class EditInvitationBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'string[]',
+                                'input': 'select',
                                 'items': reply_readers
                             }
                         }
