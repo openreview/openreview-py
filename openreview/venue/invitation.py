@@ -387,6 +387,7 @@ class InvitationBuilder(object):
 
     def set_pc_submission_revision_invitation(self):
         venue_id = self.venue_id
+        submission_license = self.venue.submission_license
         submission_stage = self.venue.submission_stage
         cdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None
 
@@ -425,6 +426,20 @@ class InvitationBuilder(object):
             },
             process=self.get_process_content('process/pc_submission_revision_process.py')
         )
+
+        # Allow PCs to revise license
+        if submission_license:
+            if isinstance(submission_license, str):
+                submission_invitation.edit['note']['license'] = submission_license
+            elif len(submission_license) == 1:
+                submission_invitation.edit['note']['license'] = submission_license[0]
+            else:
+                license_options = [ { "value": license, "description": license } for license in submission_license ]
+                submission_invitation.edit['note']['license'] = {
+                    "param": {
+                        "enum": license_options
+                    }
+                }
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=True)
 

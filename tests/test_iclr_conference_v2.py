@@ -287,8 +287,8 @@ class TestICLRConference():
                 content = {
                     'title': { 'value': submission.content['title']['value'] + ' license revision' },
                     'abstract': submission.content['abstract'],
-                    'authorids': submission.content['authorids'],
-                    'authors': submission.content['authors'],
+                    'authorids': { 'value': submission.content['authorids']['value'] },
+                    'authors': { 'value': submission.content['authors']['value'] },
                     'keywords': submission.content['keywords'],
                     'pdf': submission.content['pdf'],
                 }
@@ -339,6 +339,7 @@ class TestICLRConference():
         helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Withdrawal-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Desk_Rejection-0-1', count=2)
 
+        # Author can't revise license after paper deadline
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation ICLR.cc/2024/Conference/Submission1/-/Revision has expired'):
             revision_note = author_client.post_note_edit(
                 invitation = f'ICLR.cc/2024/Conference/Submission{submission.number}/-/Revision',
@@ -348,8 +349,8 @@ class TestICLRConference():
                     content = {
                         'title': submission.content['title'],
                         'abstract': submission.content['abstract'],
-                        'authorids': submission.content['authorids'],
-                        'authors': submission.content['authors'],
+                        'authorids': { 'value': submission.content['authorids']['value'] },
+                        'authors': { 'value': submission.content['authors']['value'] },
                         'keywords': submission.content['keywords'],
                         'pdf': submission.content['pdf'],
                     }
@@ -365,8 +366,8 @@ class TestICLRConference():
                 content = {
                     'title': submission.content['title'],
                     'abstract': submission.content['abstract'],
-                    'authorids': submission.content['authorids'],
-                    'authors': submission.content['authors'],
+                    'authorids': { 'value': submission.content['authorids']['value'] },
+                    'authors': { 'value': submission.content['authors']['value'] },
                     'keywords': submission.content['keywords'],
                     'pdf': submission.content['pdf'],
                 }
