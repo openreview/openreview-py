@@ -53,6 +53,60 @@ class EditInvitationBuilder(object):
             process = f.read()
             return process
 
+    def set_edit_submission_deadlines_invitation(self, invitation_id, process_file=None):
+
+        venue_id = self.venue_id
+        venue = self.venue
+        deadline_invitation_id = invitation_id + '/Deadlines'
+
+        invitation = Invitation(
+            id = deadline_invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'content': {
+                    'activation_date': { 
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'deadline': { 
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    }
+                },
+                'signatures': [venue.get_program_chairs_id()],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'invitation': {
+                    'id': invitation_id,
+                    'signatures': [venue_id],
+                    'cdate': '${2/content/activation_date/value}',
+                    'duedate': '${2/content/deadline/value}',
+                    'expdate': '${2/content/deadline/value}+1800000' ## 30 minutes buffer period
+                }
+            }
+        )
+
+        if process_file:
+            invitation.process = self.get_process_content(f'process/{process_file}')  
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation
+    
     def set_edit_deadlines_invitation(self, invitation_id, process_file=None):
 
         venue_id = self.venue_id
@@ -105,8 +159,13 @@ class EditInvitationBuilder(object):
                     'id': invitation_id,
                     'signatures': [venue_id],
                     'cdate': '${2/content/activation_date/value}',
-                    'duedate': '${2/content/deadline/value}',
-                    'expdate': '${2/content/expiration_date/value}'
+                    # 'edit': {
+                    #     'invitation': {
+                    #         'cdate': '${4/content/activation_date/value}',
+                    #         'duedate': '${4/content/deadline/value}',
+                    #         'expdate': '${4/content/expiration_date/value}'
+                    #     }
+                    # }
                 }
             }
         )
@@ -115,7 +174,7 @@ class EditInvitationBuilder(object):
             invitation.process = self.get_process_content(f'process/{process_file}')  
 
         self.save_invitation(invitation, replacement=True)
-        return invitation
+        return invitation    
 
     def set_edit_content_invitation(self, invitation_id, include_license=False):
 

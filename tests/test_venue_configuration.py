@@ -97,7 +97,7 @@ class TestVenueConfiguration():
             content={
                 'activation_date': { 'value': new_cdate },
                 'deadline': { 'value': new_duedate },
-                'expiration_date': { 'value': new_duedate }
+                #'expiration_date': { 'value': new_duedate }
             }
         )
         helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2025/Conference/-/Submission/Deadlines')
@@ -106,7 +106,7 @@ class TestVenueConfiguration():
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission')
         assert submission_inv and submission_inv.cdate == new_cdate
         assert submission_inv.duedate == new_duedate
-        assert submission_inv.expdate == new_duedate
+        assert submission_inv.expdate == new_duedate + 1800000
         post_submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Post_Submission')
         assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
 
@@ -269,7 +269,7 @@ class TestVenueConfiguration():
             content={
                 'activation_date': { 'value': new_cdate },
                 'deadline': { 'value': new_duedate },
-                'expiration_date': { 'value': new_duedate }
+                #'expiration_date': { 'value': new_duedate }
             }
         )
         helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2025/Conference/-/Submission/Deadlines')
