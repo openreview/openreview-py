@@ -2498,6 +2498,7 @@ class InvitationBuilder(object):
     def set_submission_revision_invitation(self, submission_revision_stage=None):
 
         venue_id = self.venue_id
+        submission_license = self.venue.submission_license
         revision_stage = submission_revision_stage if submission_revision_stage else self.venue.submission_revision_stage
         revision_invitation_id = self.venue.get_invitation_id(revision_stage.name)
         revision_cdate = tools.datetime_millis(revision_stage.start_date if revision_stage.start_date else datetime.datetime.utcnow())
@@ -2603,6 +2604,20 @@ class InvitationBuilder(object):
 
         if revision_expdate:
             invitation.edit['invitation']['expdate'] = revision_expdate
+
+        # Allow license edition until full paper deadline
+        if submission_license and revision_stage.allow_license_edition:
+            if isinstance(submission_license, str):
+                invitation.edit['invitation']['edit']['note']['license'] = submission_license
+            elif len(submission_license) == 1:
+                invitation.edit['invitation']['edit']['note']['license'] = submission_license[0]
+            else:
+                license_options = [ { "value": license, "description": license } for license in submission_license ]
+                invitation.edit['invitation']['edit']['note']['license'] = {
+                    "param": {
+                        "enum": license_options
+                    }
+                }
 
         self.save_invitation(invitation, replacement=False)
         return invitation
