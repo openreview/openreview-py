@@ -2306,6 +2306,7 @@ class Edit(object):
         readers = None,
         writers = None,
         signatures = None,
+        content = None,
         note = None,
         group = None,
         invitation = None,
@@ -2323,6 +2324,7 @@ class Edit(object):
         self.nonreaders = nonreaders
         self.writers = writers
         self.signatures = signatures
+        self.content = content
         self.note = note
         self.group = group
         self.invitation = invitation
@@ -2357,6 +2359,8 @@ class Edit(object):
             body['writers'] = self.writers
         if (self.signatures):
             body['signatures'] = self.signatures
+        if (self.content):
+            body['content'] = self.content
         if (self.note):
             body['note'] = self.note.to_json()
         if (self.group):
@@ -2390,6 +2394,7 @@ class Edit(object):
             nonreaders = e.get('nonreaders'),
             writers = e.get('writers'),
             signatures = e.get('signatures'),
+            content = e.get('content'),
             note = Note.from_json(e['note']) if 'note' in e else None,
             group = Group.from_json(e['group']) if 'group' in e else None,
             invitation = e.get('invitation'),

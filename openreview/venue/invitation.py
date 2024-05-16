@@ -1338,7 +1338,7 @@ class InvitationBuilder(object):
   const script = metaInvitation.content.comment_preprocess_script.value;
   eval(`var process = ${script}`);
   await process(client, edit, invitation);
-}''' if comment_stage.check_mandatory_readers and comment_stage.reader_selection else None,
+}''' if comment_stage.check_mandatory_readers and comment_stage.reader_selection else '',
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['comment_process_script']['value']

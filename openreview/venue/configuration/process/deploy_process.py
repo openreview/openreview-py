@@ -7,6 +7,7 @@ def process(client, edit, invitation):
     venue.create_submission_stage()
     venue.create_submission_edit_invitations()
     venue.create_review_edit_invitations()
+    venue.edit_invitation_builder.set_edit_stage_invitation()
 
     # remove PC access to editing the note
     client.post_note_edit(

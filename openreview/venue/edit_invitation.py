@@ -437,3 +437,76 @@ class EditInvitationBuilder(object):
         
         self.save_invitation(invitation, replacement=False)
         return invitation
+    
+    def set_edit_stage_invitation(self):
+
+        venue_id = self.venue_id
+        venue = self.venue
+
+        invitation = Invitation(
+            id = f'{venue_id}/-/Stage',
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            process = self.get_process_content('configuration/process/stage_process.py'),
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'stage_name': {
+                        'description': 'Stage Name, e.g. Official_Comment, Meta_Review, Decision, Rebuttal, Custom Stage',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                            }
+                        }
+                    },
+                    'stage_type': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'input': 'select',
+                                'enum':  [
+                                    {'value': 'Official_Comment', 'description': 'Official Comment'},
+                                    {'value': 'Meta_Review', 'description': 'Meta Review'},
+                                    {'value': 'Decision', 'description': 'Decision'},
+                                    {'value': 'Rebuttal', 'description': 'Rebuttal'},
+                                    {'value': 'Custom', 'description': 'Custom Stage'},
+                                ]
+                            }
+                        }
+                    },
+                    'activation_date': { 
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'expiration_date': { 
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    }                    
+                },
+                'invitation': {
+                    'id': f'{venue_id}/-/${{2/content/stage_name/value}}',
+                    'signatures': [venue_id],
+                }
+            }  
+        )
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation    

@@ -282,3 +282,40 @@ class TestVenueConfiguration():
         assert submissions[0].content['authorids']['readers'] == ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Authors']                 
         assert submissions[0].content['pdf']['readers'] == ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Authors', 'ICLR.cc/2025/Conference/Reviewers']                 
         
+    def test_comment_stage(self, openreview_client, test_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='sherry@iclr.cc', password=helpers.strong_password)
+
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Stage')
+
+        now = datetime.datetime.now()
+        cdate = openreview.tools.datetime_millis(now - datetime.timedelta(minutes=1))
+        expdate = openreview.tools.datetime_millis(now + datetime.timedelta(minutes=28))        
+
+        edit = pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2025/Conference/-/Stage',
+            content={
+                'stage_name': { 'value': 'Confidential_Comment' },
+                'stage_type': { 'value': 'Official_Comment' },
+                'activation_date': { 'value': cdate },
+                'expiration_date': { 'value': expdate }
+            }
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], count=1)
+
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Confidential_Comment')
+
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/Confidential_Comment-0-1', count=1)
+
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/Submission1/-/Confidential_Comment')
+
+        submissions = openreview_client.get_notes(invitation='ICLR.cc/2025/Conference/-/Submission', sort='number:asc')
+        pc_client.post_note_edit(invitation=f'ICLR.cc/2025/Conference/Submission1/-/Confidential_Comment',
+            signatures=['ICLR.cc/2025/Conference/Program_Chairs'],
+            note=openreview.api.Note(
+                replyto=submissions[0].id,
+                content={
+                    'comment': { 'value': 'this is a comment' }
+                }
+            ))               
