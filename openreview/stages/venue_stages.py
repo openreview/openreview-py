@@ -529,7 +529,7 @@ class SubmissionRevisionStage():
             invitation_id = conference.get_invitation_id(self.name)
             invitation = openreview.tools.get_invitation(conference.client, invitation_id)
             if invitation:
-                for field, value in invitation.edit['invitation']['edit']['note']['content'].items():
+                for field, value in invitation.edit.get('invitation', {}).get('edit', {}).get('note', {}).get('content', {}).items() if invitation.edit else {}:
                     if field not in content:
                         content[field] = { 'delete': True }
 
@@ -658,7 +658,7 @@ class ReviewStage(object):
             invitation_id = conference.get_invitation_id(self.name)
             invitation = openreview.tools.get_invitation(conference.client, invitation_id)
             if invitation:
-                for field, value in invitation.edit['invitation']['edit']['note']['content'].items():
+                for field, value in invitation.edit.get('invitation', {}).get('edit', {}).get('note', {}).get('content', {}).items() if invitation.edit else {}:
                     if field not in content:
                         content[field] = { 'delete': True }
 
@@ -797,7 +797,7 @@ class EthicsReviewStage(object):
             invitation_id = conference.get_invitation_id(self.name)
             invitation = openreview.tools.get_invitation(conference.client, invitation_id)
             if invitation:
-                for field, value in invitation.edit['invitation']['edit']['note']['content'].items():
+                for field, value in invitation.edit.get('invitation', {}).get('edit', {}).get('note', {}).get('content', {}).items() if invitation.edit else {}:
                     if field not in content:
                         content[field] = { 'delete': True }
 
@@ -880,7 +880,7 @@ class ReviewRebuttalStage(object):
             invitation_id = conference.get_invitation_id(self.name)
             invitation = openreview.tools.get_invitation(conference.client, invitation_id)
             if invitation:
-                for field, value in invitation.edit['invitation']['edit']['note']['content'].items():
+                for field, value in invitation.edit.get('invitation', {}).get('edit', {}).get('note', {}).get('content', {}).items() if invitation.edit else {}:
                     if field not in content:
                         content[field] = { 'delete': True }
 
@@ -1238,7 +1238,7 @@ class MetaReviewStage(object):
             invitation_id = conference.get_invitation_id(self.name)
             invitation = openreview.tools.get_invitation(conference.client, invitation_id)
             if invitation:
-                for field, value in invitation.edit['invitation']['edit']['note']['content'].items():
+                for field, value in invitation.edit.get('invitation', {}).get('edit', {}).get('note', {}).get('content', {}).items() if invitation.edit else {}:
                     if field not in content:
                         content[field] = { 'delete': True }
 
@@ -1255,14 +1255,14 @@ class MetaReviewRevisionStage(object):
 
 class DecisionStage(object):
 
-    def __init__(self, options = None, accept_options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False, additional_fields = {}, decisions_file=None):
+    def __init__(self, name = 'Decision', options = None, accept_options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False, additional_fields = {}, decisions_file=None):
         if not options:
             options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
         self.options = options
         self.accept_options = accept_options
         self.start_date = start_date
         self.due_date = due_date
-        self.name = 'Decision'
+        self.name = name
         self.public = public
         self.release_to_authors = release_to_authors
         self.release_to_reviewers = release_to_reviewers
@@ -1320,7 +1320,7 @@ class DecisionStage(object):
             invitation_id = conference.get_invitation_id(self.name)
             invitation = openreview.tools.get_invitation(conference.client, invitation_id)
             if invitation:
-                for field, value in invitation.edit['invitation']['edit']['note']['content'].items():
+                for field, value in invitation.edit.get('invitation', {}).get('edit', {}).get('note', {}).get('content', {}).items() if invitation.edit else {}:
                     if field not in content:
                         content[field] = { 'delete': True }
 
@@ -1382,7 +1382,7 @@ class RegistrationStage(object):
             invitation_id = conference.get_invitation_id(self.name)
             invitation = openreview.tools.get_invitation(conference.client, invitation_id)
             if invitation:
-                for field, value in invitation.edit['invitation']['edit']['note']['content'].items():
+                for field, value in invitation.edit.get('invitation', {}).get('edit', {}).get('note', {}).get('content', {}).items() if invitation.edit else {}:
                     if field not in content:
                         content[field] = { 'delete': True }
 
@@ -1590,7 +1590,7 @@ class CustomStage(object):
             invitation_id = conference.get_invitation_id(self.name)
             invitation = openreview.tools.get_invitation(conference.client, invitation_id)
             if invitation:
-                for field, value in invitation.edit['invitation']['edit']['note']['content'].items():
+                for field, value in invitation.edit.get('invitation', {}).get('edit', {}).get('note', {}).get('content', {}).items() if invitation.edit else {}:
                     if field not in content:
                         content[field] = { 'delete': True }
 
