@@ -448,7 +448,7 @@ class InvitationBuilder(object):
         previous_query = {}
         invitation = tools.get_invitation(self.client, review_invitation_id)
         if invitation:
-            previous_query = invitation.content.get('source_submissions_query', {}).get('value', {})
+            previous_query = invitation.content.get('source_submissions_query', {}).get('value', {}) if invitation.content else {}
 
         source_submissions_query = review_stage.source_submissions_query if review_stage.source_submissions_query else previous_query
 
@@ -813,7 +813,7 @@ class InvitationBuilder(object):
         previous_query = {}
         invitation = tools.get_invitation(self.client, meta_review_invitation_id)
         if invitation:
-            previous_query = invitation.content.get('source_submissions_query', {}).get('value', {})
+            previous_query = invitation.content.get('source_submissions_query', {}).get('value', {}) if invitation.content else {}
 
         source_submissions_query = meta_review_stage.source_submissions_query if meta_review_stage.source_submissions_query else previous_query
 
@@ -2513,7 +2513,7 @@ class InvitationBuilder(object):
 
         hidden_field_names = self.venue.submission_stage.get_hidden_field_names()
         existing_invitation = tools.get_invitation(self.client, revision_invitation_id)
-        invitation_content = existing_invitation.edit['invitation']['edit']['note']['content'] if existing_invitation else {}
+        invitation_content = existing_invitation.edit.get('invitation', {}).get('edit', {}).get('note', {}).get('content', {}) if existing_invitation and existing_invitation.edit else {}
 
         for field in content:
             if field in hidden_field_names:

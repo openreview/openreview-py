@@ -159,13 +159,13 @@ class EditInvitationBuilder(object):
                     'id': invitation_id,
                     'signatures': [venue_id],
                     'cdate': '${2/content/activation_date/value}',
-                    # 'edit': {
-                    #     'invitation': {
-                    #         'cdate': '${4/content/activation_date/value}',
-                    #         'duedate': '${4/content/deadline/value}',
-                    #         'expdate': '${4/content/expiration_date/value}'
-                    #     }
-                    # }
+                    'edit': {
+                        'invitation': {
+                            'cdate': '${4/content/activation_date/value}',
+                            'duedate': '${4/content/deadline/value}',
+                            'expdate': '${4/content/expiration_date/value}'
+                        }
+                    }
                 }
             }
         )
@@ -176,7 +176,7 @@ class EditInvitationBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation    
 
-    def set_edit_content_invitation(self, invitation_id, include_license=False):
+    def set_edit_submission_content_invitation(self, invitation_id, include_license=False):
 
         venue_id = self.venue_id
         venue = self.venue
@@ -232,6 +232,74 @@ class EditInvitationBuilder(object):
                 }
             }
             invitation.edit['invitation']['edit']['note']['license'] =  {
+                'param': {
+                    'enum': ['${7/content/note_license/value}']
+                }
+            }
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
+    
+    def set_edit_content_invitation(self, invitation_id, include_license=False):
+
+        venue_id = self.venue_id
+        venue = self.venue
+        content_invitation_id = invitation_id + '/Form_Fields'
+
+        invitation = Invitation(
+            id = content_invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'note_content': {
+                        'value': {
+                            'param': {
+                                'type': 'content'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': invitation_id,
+                    'signatures': [venue_id],
+                    'edit': {
+                        'invitation': {
+                            'edit': {
+                                'note': {
+                                    'content': '${6/content/note_content/value}'
+                                }
+                            }
+                        }
+                    }
+                }
+            }  
+        )
+
+        if include_license:
+            invitation.edit['content']['note_license'] = {
+                'value': {
+                    'param': {
+                        'type': 'string[]',
+                        'input': 'select',
+                        'items':  [
+                            {'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'},
+                            {'value': 'CC BY-SA 4.0', 'optional': True, 'description': 'CC BY-SA 4.0'},
+                            {'value': 'CC BY-NC 4.0', 'optional': True, 'description': 'CC BY-NC 4.0'},
+                            {'value': 'CC BY-ND 4.0', 'optional': True, 'description': 'CC BY-ND 4.0'},
+                            {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
+                            {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
+                            {'value': 'CC0 1.0', 'optional': True, 'description': 'CC0 1.0'}
+                        ]
+                    }
+                }
+            }
+            invitation.edit['invitation']['edit']['invitation']['edit']['note']['license'] =  {
                 'param': {
                     'enum': ['${7/content/note_license/value}']
                 }
@@ -482,7 +550,6 @@ class EditInvitationBuilder(object):
                     'signatures': [venue_id],
                     'edit': {
                         'invitation': {
-                            'id': venue.get_invitation_id(venue.review_stage.child_invitations_name, '${2/content/noteNumber/value}'),
                             'edit': {
                                 'note': {
                                     'readers': ['${7/content/reply_readers/value}']
@@ -514,17 +581,9 @@ class EditInvitationBuilder(object):
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'content' :{
-                    'stage_name': {
-                        'description': 'Stage Name, e.g. Official_Comment, Meta_Review, Decision, Rebuttal, Custom Stage',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'regex': '^[a-zA-Z0-9_]*$',
-                            }
-                        }
-                    },
                     'stage_type': {
+                        'order': 1,
+                        'description': 'Stage Type, e.g. Official_Comment, Meta_Review, Decision, Submission Revision, Custom Stage',
                         'value': {
                             'param': {
                                 'type': 'string',
@@ -533,13 +592,25 @@ class EditInvitationBuilder(object):
                                     {'value': 'Official_Comment', 'description': 'Official Comment'},
                                     {'value': 'Meta_Review', 'description': 'Meta Review'},
                                     {'value': 'Decision', 'description': 'Decision'},
-                                    {'value': 'Rebuttal', 'description': 'Rebuttal'},
+                                    {'value': 'Submission_Revision', 'description': 'Submission Revision'},
                                     {'value': 'Custom', 'description': 'Custom Stage'},
                                 ]
                             }
                         }
                     },
-                    'activation_date': { 
+                    'stage_name': {
+                        'order': 2,
+                        'description': 'Stage Name, use underscores to represent spaces',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                            }
+                        }
+                    },                    
+                    'activation_date': {
+                        'order': 3, 
                         'value': {
                             'param': {
                                 'type': 'date',
@@ -549,7 +620,8 @@ class EditInvitationBuilder(object):
                             }
                         }
                     },
-                    'expiration_date': { 
+                    'expiration_date': {
+                        'order': 4, 
                         'value': {
                             'param': {
                                 'type': 'date',
