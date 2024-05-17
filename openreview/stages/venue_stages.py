@@ -481,7 +481,7 @@ class ExpertiseSelectionStage(object):
 
 class SubmissionRevisionStage():
 
-    def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None, allow_author_reorder=False):
+    def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None, allow_author_reorder=False, allow_license_edition=False):
         self.name = name
         self.start_date = start_date
         self.due_date = due_date
@@ -490,6 +490,7 @@ class SubmissionRevisionStage():
         self.only_accepted = only_accepted
         self.multiReply=multiReply
         self.allow_author_reorder=allow_author_reorder
+        self.allow_license_edition=allow_license_edition
 
     def get_content(self, api_version='2', conference=None):
         
