@@ -572,7 +572,7 @@ class EditInvitationBuilder(object):
         invitation = Invitation(
             id = f'{venue_id}/-/Stage',
             invitees = [venue_id],
-            signatures = [venue_id],
+            signatures = ['~Super_User1'],
             readers = [venue_id],
             writers = [venue_id],
             process = self.get_process_content('configuration/process/stage_process.py'),

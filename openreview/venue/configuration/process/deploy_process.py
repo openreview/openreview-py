@@ -1,6 +1,7 @@
 def process(client, edit, invitation):
 
     support_user = 'openreview.net/Support'
+    domain = invitation.domain
 
     note = client.get_note(edit.note.id)
     venue = openreview.helpers.get_venue(client, note.id, support_user)
@@ -11,7 +12,7 @@ def process(client, edit, invitation):
 
     # remove PC access to editing the note
     client.post_note_edit(
-        invitation=venue.get_meta_invitation_id(),
+        invitation=f'{domain}/-/Edit',
         signatures=[venue.id],
         note = openreview.api.Note(
             id = note.id,
