@@ -411,7 +411,6 @@ class VenueConfiguration():
                     'readers': ['everyone'],
                     'writers': [support_group_id],
                     'invitees': ['everyone'],
-                    'maxReplies': 1,
                     'edit': {
                         'signatures': { 
                             'param': { 
@@ -423,9 +422,18 @@ class VenueConfiguration():
                         'readers': ['${2/note/readers}'],
                         'writers': [support_group_id],
                         'note': {
-                            'id': f'{super_user}/Venue_Configuration_Request' + '${4/content/noteNumber/value}' + '/-/Comment',
+                            'id': {
+                                'param': {
+                                    'withInvitation': f'{super_user}/Venue_Configuration_Request' + '${6/content/noteNumber/value}' + '/-/Comment',
+                                    'optional': True
+                                }
+                            },
                             'forum': '${4/content/noteId/value}',
-                            'replyto': '${4/content/noteId/value}',
+                            'replyto': {
+                                'param': {
+                                    'withForum': '${6/content/noteId/value}',
+                                }
+                            },
                             'ddate': {
                                 'param': {
                                     'range': [ 0, 9999999999999 ],
@@ -433,7 +441,7 @@ class VenueConfiguration():
                                     'deletable': True
                                 }
                             },
-                            'readers': [support_group_id, '{{2/note/id}/content/program_chair_emails/value}'],
+                            'readers': [support_group_id, '${{3/note/forum}/content/program_chair_emails/value}'],
                             'writers': [support_group_id, '${3/signatures}'],
                             'signatures': ['${3/signatures}'],
                             'content': {
