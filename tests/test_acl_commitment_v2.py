@@ -172,7 +172,7 @@ class TestACLCommitment():
 
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
-        with pytest.raises(openreview.OpenReviewException, match=r'paper_link value must be a valid link to an OpenReview submission: https://openreview.net/forum?id=...'):
+        with pytest.raises(openreview.OpenReviewException, match=r'paper_link value must be a valid link to an OpenReview submission'):
             test_client.post_note_edit(invitation='aclweb.org/ACL/2024/Conference/-/Submission',
                     signatures=['~SomeFirstName_User1'],
                     note=openreview.api.Note(
