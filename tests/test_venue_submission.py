@@ -109,7 +109,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
     def test_setup(self, venue, openreview_client, helpers):
 
-        venue.setup(program_chair_ids=['venue_pc@mail.com'])
+        venue.setup(program_chair_ids=['venue_pc@mail.com', 'venue_pc2@mail.com'])
         venue.create_submission_stage()
         venue.create_review_stage()
         venue.create_review_rebuttal_stage()
@@ -240,6 +240,20 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
                     }
                 ))
             
+        with pytest.raises(openreview.OpenReviewException, match=r'Profile Not Found: ~Melisa_BokEleven1'):
+            submission_note_2 = author_client.post_note_edit(
+                invitation='TestVenue.cc/-/Submission',
+                signatures= ['~Celeste_MartinezEleven1'],
+                note=Note(
+                    content={
+                        'title': { 'value': 'Paper 2 Title' },
+                        'authors': { 'value': ['Celeste MartinezEleven', 'Melisa BokEleven']},
+                        'authorids': { 'value': ['~Celeste_MartinezEleven1', '~Melisa_BokEleven1']},
+                        'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                        'keywords': {'value': ['aa'] }
+                    }
+                ))            
+            
         helpers.create_user('melisa@maileleven.com', 'Melisa', 'BokEleven')
 
         submission_note_2 = author_client.post_note_edit(
@@ -266,10 +280,12 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Post_Submission-0-0')
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/Reviewers/-/Submission_Group-0-0')
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/Area_Chairs/-/Submission_Group-0-0')
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/Reviewers/-/Submission_Message-0-0')
 
         assert openreview_client.get_group('TestVenue.cc/Submission1/Authors')
         assert openreview_client.get_group('TestVenue.cc/Submission1/Reviewers')
         assert openreview_client.get_group('TestVenue.cc/Submission1/Area_Chairs')
+        assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Message')
 
         submissions = venue.get_submissions(sort='number:asc')
         assert len(submissions) == 2
@@ -611,7 +627,8 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 withdrawn by paper authors')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been withdrawn by the paper authors.\n\nFor more information, click here https://openreview.net/forum?id={note.id}&noteId={withdraw_note["note"]["id"]}\n'
+        assert messages[0]['content']['replyTo'] == 'testvenue@contact.com'
+        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been withdrawn by the paper authors.\n\nFor more information, click here https://openreview.net/forum?id={note.id}&noteId={withdraw_note["note"]["id"]}\n\n\nPlease note that responding to this email will direct your reply to testvenue@contact.com.\n'
 
         assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Withdrawal_Reversion')
 
@@ -649,7 +666,8 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 restored by venue organizers')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
+        assert messages[0]['content']['replyTo'] == 'testvenue@contact.com'
+        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n\n\nPlease note that responding to this email will direct your reply to testvenue@contact.com.\n'
 
         authors_group = openreview_client.get_group('TestVenue.cc/Authors')
         assert 'TestVenue.cc/Submission2/Authors' in authors_group.members
@@ -694,11 +712,12 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 desk-rejected by Program Chairs')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been desk-rejected by Program Chairs.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
+        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been desk-rejected by Program Chairs.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n\n\nPlease note that responding to this email will direct your reply to testvenue@contact.com.\n'
+        assert messages[0]['content']['replyTo'] == 'testvenue@contact.com'
 
         messages = openreview_client.get_messages(to='venue_pc@mail.com', subject='[TV 22]: Paper #2 desk-rejected by Program Chairs')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been desk-rejected by Program Chairs.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
+        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been desk-rejected by Program Chairs.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n\n\nPlease note that responding to this email will direct your reply to testvenue@contact.com.\n'
 
         assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Desk_Rejection_Reversion')
 
@@ -735,11 +754,12 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 restored by venue organizers')
         assert len(messages) == 2
-        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
+        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n\n\nPlease note that responding to this email will direct your reply to testvenue@contact.com.\n'
+        assert messages[0]['content']['replyTo'] == 'testvenue@contact.com'
 
         messages = openreview_client.get_messages(to='venue_pc@mail.com', subject='[TV 22]: Paper #2 restored by venue organizers')
         assert len(messages) == 2
-        assert messages[1]['content']['text'] == f'The desk-rejected TV 22 paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n'
+        assert messages[1]['content']['text'] == f'The desk-rejected TV 22 paper \"Paper 2 Title\" has been restored by the venue organizers.\n\nFor more information, click here https://openreview.net/forum?id={note.id}\n\n\nPlease note that responding to this email will direct your reply to testvenue@contact.com.\n'
 
         authors_group = openreview_client.get_group('TestVenue.cc/Authors')
         assert 'TestVenue.cc/Submission2/Authors' in authors_group.members
@@ -815,8 +835,9 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         updated_note = author_client.get_note(id=submissions[0].forum)
 
-        messages = client.get_messages(to = 'celeste@maileleven.com', subject='TV 22 has received a new revision of your submission titled Paper 1 Title REVISED AGAIN')
+        messages = openreview_client.get_messages(to = 'celeste@maileleven.com', subject='TV 22 has received a new revision of your submission titled Paper 1 Title REVISED AGAIN')
         assert messages and len(messages) == 1
+        assert messages[0]['content']['replyTo'] == 'testvenue@contact.com'
 
         message_text = f'''Your new revision of the submission to TV 22 has been posted.
 
@@ -881,7 +902,17 @@ To view your submission, click here: https://openreview.net/forum?id={updated_no
 
         messages = openreview_client.get_messages(subject='[TV 22] A camera ready verification has been received on your Paper Number: 1, Paper Title: "Paper 1 Title REVISED AGAIN"')
         assert len(messages) == 1
+        assert messages[0]['content']['replyTo'] == 'testvenue@contact.com'
         assert 'celeste@maileleven.com' in messages[0]['content']['to']
+        assert messages[0]['content']['text'] == f'''The camera ready verification for submission number {str(submissions[0].number)} has been posted.
+Please follow this link: https://openreview.net/forum?id={submissions[0].id}&noteId={verification_note.id}
+
+Please note that responding to this email will direct your reply to testvenue@contact.com.
+'''
+        
+        messages = openreview_client.get_messages(subject='[TV 22] A camera ready verification has been received on Paper Number: 1, Paper Title: "Paper 1 Title REVISED AGAIN"')
+        assert len(messages) == 1
+        assert 'venue_pc2@mail.com' in messages[0]['content']['to']
         assert messages[0]['content']['text'] == f'''The camera ready verification for submission number {str(submissions[0].number)} has been posted.
 Please follow this link: https://openreview.net/forum?id={submissions[0].id}&noteId={verification_note.id}'''
 
@@ -889,4 +920,7 @@ Please follow this link: https://openreview.net/forum?id={submissions[0].id}&not
         assert len(messages) == 1
         assert 'venue_pc@mail.com' in messages[0]['content']['to']
         assert messages[0]['content']['text'] == f'''The camera ready verification for submission number {str(submissions[0].number)} has been posted.
-Please follow this link: https://openreview.net/forum?id={submissions[0].id}&noteId={verification_note.id}'''
+Please follow this link: https://openreview.net/forum?id={submissions[0].id}&noteId={verification_note.id}
+
+Please note that responding to this email will direct your reply to testvenue@contact.com.
+'''

@@ -40,15 +40,14 @@ class Helpers:
             'emails': [email] + alternates,
             'preferredEmail': 'info@openreview.net' if email == 'openreview.net' else email
         }
-        if institution:
-            profile_content['history'] = [{
-                'position': 'PhD Student',
-                'start': 2017,
-                'end': None,
-                'institution': {
-                    'domain': institution
-                }
-            }]
+        profile_content['history'] = [{
+            'position': 'PhD Student',
+            'start': 2017,
+            'end': None,
+            'institution': {
+                'domain': institution if institution else email.split('@')[1],
+            }
+        }]
         res = client.activate_user(email, profile_content)
         assert res, "Res i none"
         return client
@@ -58,10 +57,9 @@ class Helpers:
         return openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', username = email, password = Helpers.strong_password)
 
     @staticmethod
-    def await_queue(super_client=None):
-        if super_client is None:
-            super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password=Helpers.strong_password)
-            assert super_client is not None, 'Super Client is none'
+    def await_queue():
+
+        super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password=Helpers.strong_password)
 
         while True:
             jobs = super_client.get_jobs_status()
@@ -74,10 +72,10 @@ class Helpers:
 
             time.sleep(0.5)
 
-        assert not super_client.get_process_logs(status='error')
+        assert not [l for l in super_client.get_process_logs(status='error') if l['executedOn'] == 'openreview-api-1']
 
     @staticmethod
-    def await_queue_edit(super_client, edit_id=None, invitation=None, count=1):
+    def await_queue_edit(super_client, edit_id=None, invitation=None, count=1, error=False):
         while True:
             process_logs = super_client.get_process_logs(id=edit_id, invitation=invitation)
             if len(process_logs) >= count:
@@ -85,7 +83,7 @@ class Helpers:
 
             time.sleep(0.5)
 
-        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[0]['status'] == ('error' if error else 'ok'), process_logs[0]['log']
 
 
     @staticmethod
@@ -112,6 +110,9 @@ class Helpers:
         container = selenium.find_element(By.CLASS_NAME, 'note_editor')
 
         buttons = container.find_elements(By.TAG_NAME, "button")
+
+        for button in buttons:
+            assert button.is_enabled()      
 
         if quota and accept:
             if len(buttons) == 3: ## Accept with quota

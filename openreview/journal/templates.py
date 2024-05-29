@@ -50,7 +50,6 @@ Visit the following link to perform this task: {invitation_url}
 If any correction is needed, you may contact the authors directly by email or through OpenReview.
 
 The {short_name} Editors-in-Chief
-
 '''
 
 ae_official_recommendation_starts_email_template = '''Hi {{{{fullname}}}},
@@ -132,7 +131,7 @@ author_ae_recommendation_email_template = '''Hi {{{{fullname}}}},
 
 Thank you for submitting your work titled "{submission_title}" to {short_name}.
 
-Before the review process starts, you need to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
+Before the review process starts, you need to submit three or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
 
 To do so, please follow this link: {invitation_url} or check your tasks in the Author Console: https://openreview.net/group?id={venue_id}/Authors
 
@@ -283,4 +282,23 @@ eic_new_submission_template = '''Hi {{{{fullname}}}},
 A new submission has been received for {short_name}.
 
 To view the submission, click here: https://openreview.net/forum?id={submission_id}
+'''
+
+author_new_submission_email_template = '''Hi {{{{fullname}}}},
+
+Your submission to {short_name} has been received.
+
+Submission Number: {submission_number}
+
+Title: {submission_title}
+
+To view the submission, click here: https://openreview.net/forum?id={submission_id}
+'''
+
+author_official_recommendation_starts_email_template = '''Hi {{{{fullname}}}},
+
+The discussion period has ended and the reviewers will submit their recommendations, after which the AE will enter their final recommendation.
+
+The {short_name} Editors-in-Chief
+note: replies to this email will go to the AE, {assigned_action_editor}.
 '''

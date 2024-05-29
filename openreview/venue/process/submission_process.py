@@ -7,9 +7,11 @@ def process(client, edit, invitation):
     authors_name = domain.content['authors_name']['value']
     submission_name = domain.content['submission_name']['value']
     short_phrase = domain.content['subtitle']['value']
+    contact = domain.content['contact']['value']
     submission_email = domain.content['submission_email_template']['value']
     email_pcs = domain.content['submission_email_pcs']['value']
     program_chairs_id = domain.content['program_chairs_id']['value']
+    sender = domain.get_content_value('message_sender')
 
     note = client.get_note(edit.note.id)
 
@@ -78,9 +80,9 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
 
     for venue_invitation in invitation_invitations:
         print('processing invitation: ', venue_invitation.id)
-        accepted_only = ('accepted_submissions' == venue_invitation.content.get('source', {}).get('value', False)) if venue_invitation.content else False
+        all_submissions = ('all_submissions' == venue_invitation.content.get('source', {}).get('value', 'all_submissions')) if venue_invitation.content else False
         content_keys = venue_invitation.edit.get('content', {}).keys()
-        if not accepted_only and 'noteId' in content_keys and 'noteNumber' in content_keys and len(content_keys) == 2:
+        if all_submissions and 'noteId' in content_keys and 'noteNumber' in content_keys and len(content_keys) == 2:
             print('create invitation: ', venue_invitation.id)
             client.post_invitation_edit(invitations=venue_invitation.id,
                 content={
@@ -120,23 +122,32 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
     #send tauthor email
     if edit.tauthor.lower() != 'openreview.net':
         client.post_message(
+            invitation=meta_invitation_id,
             subject=author_subject,
             message=author_message,
-            recipients=[edit.tauthor]
+            recipients=[edit.tauthor],
+            replyTo=contact,
+            signature=venue_id,
+            sender=sender
         )
 
     # send co-author emails
     if ('authorids' in note.content and len(note.content['authorids']['value'])):
         author_message += f'''\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at {edit.tauthor}'''
         client.post_message(
+            invitation=meta_invitation_id,
             subject=author_subject,
             message=author_message,
             recipients=note.content['authorids']['value'],
-            ignoreRecipients=[edit.tauthor]
+            ignoreRecipients=[edit.tauthor],
+            replyTo=contact,
+            signature=venue_id,
+            sender=sender
         )
 
     if email_pcs:
         client.post_message(
+            invitation=meta_invitation_id,
             subject=f'''{short_phrase} has received a new submission titled {note.content['title']['value']}''',
             message=f'''A submission to {short_phrase} has been {action}.
 
@@ -144,5 +155,7 @@ Submission Number: {note.number}
 Title: {note.content['title']['value']} {note_abstract}
 
 To view the submission, click here: https://openreview.net/forum?id={note.forum}''',
-            recipients=[program_chairs_id]
+            recipients=[program_chairs_id],
+            signature=venue_id,
+            sender=sender
         )

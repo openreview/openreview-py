@@ -238,7 +238,7 @@ class TestTools():
         assert len(notes) == 1333
 
     def test_get_all_refs(self, client):
-        refs_iterator = openreview.tools.iterget_references(client)
+        refs_iterator = openreview.tools.iterget_references(client, invitation='GetAllNotes/-/Submission')
         assert refs_iterator
 
     def test_get_all_tags(self, client):
@@ -480,7 +480,7 @@ class TestTools():
 
         test_profile = openreview.tools.get_profiles(client, ['test@mail.com'], with_relations=True)[0]
         user_profiles = openreview.tools.get_profiles(client, ['user2@qq.com'], with_relations=True)
-        conflicts = openreview.tools.get_conflicts(user_profiles, test_profile, policy='NeurIPS')
+        conflicts = openreview.tools.get_conflicts(user_profiles, test_profile, policy='NeurIPS', n_years=5)
 
         assert len(conflicts) == 1
         assert conflicts[0] == '~SomeFirstName_User1'

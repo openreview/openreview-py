@@ -15,6 +15,7 @@ var DECISION_NAME = 'Decision';
 var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
 var JOURNAL_REQUEST_ID = '';
 var REVIEWER_REPORT_ID = '';
+var NUMBER_OF_REVIEWERS = 3;
 
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var REVIEWERS_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Assignment';
@@ -56,7 +57,7 @@ var reviewersUrl = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',tai
     REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' +
     REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
   '&maxColumns=2&version=2' +
-  '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available' +
+  '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available AND ' + REVIEWERS_CONFLICT_ID + ' == 0' +
   '&referrer=' + referrerUrl;
 
 
@@ -265,7 +266,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         id: reviewerAssignmentInvitation.id,
         cdate: reviewerAssignmentInvitation.cdate,
         duedate: reviewerAssignmentInvitation.duedate,
-        complete: reviewers.length >= 3,
+        complete: reviewers.length >= NUMBER_OF_REVIEWERS,
         replies: reviewers
       });
     }
@@ -275,7 +276,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         id: reviewInvitation.id,
         cdate: reviewInvitation.cdate,
         duedate: reviewInvitation.duedate,
-        complete: reviewNotes.length >= 3,
+        complete: reviewNotes.length >= NUMBER_OF_REVIEWERS,
         replies: reviewNotes
       });
     }
@@ -285,7 +286,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         id: officialRecommendationInvitation.id,
         cdate: officialRecommendationInvitation.cdate,
         duedate: officialRecommendationInvitation.duedate,
-        complete: officialRecommendationNotes.length >= 3,
+        complete: officialRecommendationNotes.length >= NUMBER_OF_REVIEWERS,
         replies: officialRecommendationNotes
       });
     }
@@ -383,7 +384,8 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
           id: submission.id,
           noteId: submission.id,
           invitationId: Webfield2.utils.getInvitationId(VENUE_ID, submission.number, REVIEW_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
-        })
+        }),
+        anonymousGroupId: reviewer.anonymousGroupId
       };
     });
 
@@ -408,7 +410,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
             '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_INVITE_ASSIGNMENT_ID +
             '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
             '&maxColumns=2&version=2' +
-            '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available'
+            '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available AND ' + REVIEWERS_CONFLICT_ID + ' == 0'
           }
         ] : [],
         duedate: reviewInvitation && reviewInvitation.duedate || 0
@@ -507,6 +509,8 @@ var renderData = function(venueStatusData) {
         'Click on the link below to go to the review page:\n\n{{forumUrl}}' +
         '\n\nThank you,\n' + SHORT_PHRASE + ' Action Editor',
       replyTo: user && user.id,
+      messageInvitationId: VENUE_ID + '/Paper{number}/-/Message',
+      messageSignature: user && user.profile.id,
       menu: [{
         id: 'all-reviewers',
         name: 'All reviewers of selected papers',
@@ -519,7 +523,8 @@ var renderData = function(venueStatusData) {
                 : [],
               forumUrl: 'https://openreview.net/forum?' + $.param({
                 id: row.submission.forum
-              })
+              }),
+              number: row.submission.number
             }
           });
         }
@@ -539,7 +544,8 @@ var renderData = function(venueStatusData) {
                 id: row.submission.forum,
                 noteId: row.submission.forum,
                 invitationId: Webfield2.utils.getInvitationId(VENUE_ID, row.submission.number, REVIEW_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
-              })
+              }),
+              number: row.submission.number
             }
           });
         }
@@ -559,7 +565,8 @@ var renderData = function(venueStatusData) {
                 id: row.submission.forum,
                 noteId: row.submission.forum,
                 invitationId: Webfield2.utils.getInvitationId(VENUE_ID, row.submission.number, OFFICIAL_RECOMMENDATION_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
-              })
+              }),
+              number: row.submission.number
             }
           });
         }

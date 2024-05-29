@@ -69,6 +69,12 @@ class Journal(object):
         if number:
             return f'{group_id}/{self.submission_group_name}{number}/-/{name}'
         return f'{group_id}/-/{name}'
+    
+    def get_message_sender(self):
+        return {
+            'fromName': self.short_name,
+            'fromEmail': f'{self.short_name.replace(" ", "").lower()}-notifications@openreview.net'
+        }    
 
     def get_editors_in_chief_id(self):
         return f'{self.venue_id}/{self.editors_in_chief_name}'
@@ -90,6 +96,9 @@ class Journal(object):
     
     def get_reviewers_reported_id(self):
         return self.get_reviewers_id() + '/Reported'
+    
+    def get_reviewers_volunteers_id(self):
+        return f'{self.get_reviewers_id()}/Volunteers'     
     
     def get_expert_reviewers_id(self):
         return self.__get_group_id('Expert_Reviewers')
@@ -276,6 +285,9 @@ class Journal(object):
     
     def get_reviewer_expertise_selection_id(self):
         return self.__get_invitation_id(name='Expertise_Selection', prefix=self.get_reviewers_id())
+    
+    def get_reviewers_message_id(self, number=None):
+        return self.__get_invitation_id(name='Message', number=number)
 
     def get_expertise_selection_id(self, committee_id):
         return self.__get_invitation_id(name='Expertise_Selection', prefix=committee_id)
@@ -326,6 +338,9 @@ class Journal(object):
             forum_note = self.client.get_note(self.request_form_id)
             return forum_note.invitations[0].split('/-/')[0]
 
+    def get_expertise_model(self):
+        return self.settings.get('expertise_model', 'specter+mfr')
+    
     def get_ae_recommendation_period_length(self):
         return self.settings.get('ae_recommendation_period', 1)
     
@@ -382,6 +397,9 @@ class Journal(object):
     def set_assignments(self, assignment_title, committee_id=None, overwrite=True, enable_reviewer_reassignment=True):
         self.assignment.set_ae_assignments(assignment_title)
     
+    def unset_assignments(self, assignment_title, committee_id=None):
+        self.assignment.unset_ae_assignments(assignment_title)
+
     def get_action_editors(self):
         return self.client.get_group(self.get_action_editors_id()).members
 
@@ -410,6 +428,7 @@ class Journal(object):
         self.invitation_builder.set_note_withdrawal_invitation(note)
         self.invitation_builder.set_note_desk_rejection_invitation(note)
         self.invitation_builder.set_note_comment_invitation(note, public=False)
+        self.invitation_builder.set_note_reviewer_message_invitation(note)
         self.assignment.request_expertise(note, self.get_action_editors_id())
         self.assignment.request_expertise(note, self.get_reviewers_id())
         print('Finished setup author submission data.')
@@ -427,9 +446,18 @@ class Journal(object):
 
     def get_issn(self):
         return self.settings.get('issn', None)
+    
+    def get_submission_license(self):
+        return self.settings.get('submission_license', 'CC BY-SA 4.0')
+    
+    def get_expertise_model(self):
+        return self.settings.get('expertise_model', 'specter+mfr')
 
     def are_authors_anonymous(self):
         return self.settings.get('author_anonymity', True)
+    
+    def release_submission_after_acceptance(self):
+        return self.settings.get('release_submission_after_acceptance', True)
     
     def should_eic_submission_notification(self):
         return self.settings.get('eic_submission_notification', False)
@@ -438,7 +466,13 @@ class Journal(object):
         return self.settings.get('skip_ac_recommendation', False)
     
     def should_skip_reviewer_responsibility_acknowledgement(self):
-        return self.settings.get('skip_reviewer_responsibility_acknowledgement', False)    
+        return self.settings.get('skip_reviewer_responsibility_acknowledgement', False) 
+
+    def should_skip_reviewer_assignment_acknowledgement(self):
+        return self.settings.get('skip_reviewer_assignment_acknowledgement', False)        
+
+    def should_skip_camera_ready_revision(self):
+        return self.settings.get('skip_camera_ready_revision', False)
 
     def get_certifications(self):
         return self.settings.get('certifications', []) 
@@ -453,7 +487,7 @@ class Journal(object):
         return self.settings.get('submission_length', [])
     
     def get_website_url(self, key):
-        return self.settings.get('website_urls', {}).get(key, 'url not available')
+        return self.settings.get('website_urls', {}).get(key)
     
     def get_editors_in_chief_email(self):
         return self.settings.get('editors_email', self.contact_info)
@@ -520,19 +554,21 @@ class Journal(object):
         return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]        
 
     def get_release_authors_readers(self, number):
-        if self.is_submission_public():
+        if self.is_submission_public() or self.release_submission_after_acceptance():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_authors_id(number)]        
+        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_authors_id(number)]          
 
     def get_official_comment_readers(self, number):
         readers = []
         if self.is_submission_public():
             readers.append('everyone')
 
-        return readers + [
-            self.get_editors_in_chief_id(), 
-            self.get_action_editors_id(), 
-            self.get_action_editors_id(number), 
+        readers.append(self.get_editors_in_chief_id())
+
+        if not self.is_submission_public():
+            readers.append(self.get_action_editors_id())
+            
+        return readers + [self.get_action_editors_id(number), 
             self.get_reviewers_id(number), 
             self.get_reviewers_id(number, anon=True) + '.*', 
             self.get_authors_id(number)
@@ -743,8 +779,7 @@ Submission: {forum.content['title']['value']}
             formatted_content = formatted_content + f'{formatted_field}: {note.content.get(field, {}).get("value", "")}' + '\n'
 
         content = f'''{formatted_content}
-To view the {lower_formatted_invitation}, click here: https://openreview.net/forum?id={note.forum}&noteId={note.id}
-'''
+To view the {lower_formatted_invitation}, click here: https://openreview.net/forum?id={note.forum}&noteId={note.id}'''
 
         ## Notify author of the note
         if action == 'posted' and self.get_editors_in_chief_id() not in note.signatures:
@@ -753,7 +788,7 @@ To view the {lower_formatted_invitation}, click here: https://openreview.net/for
 Your {lower_formatted_invitation} on a submission has been {action}
 {content}
 '''
-            self.client.post_message(recipients=[edit.tauthor], subject=subject, message=message, replyTo=self.contact_info)
+            self.client.post_message(invitation=self.get_meta_invitation_id(), recipients=[edit.tauthor], subject=subject, message=message, replyTo=self.contact_info, signature=self.venue_id, sender=self.get_message_sender())
 
         ## Notify authors
         if is_public or self.get_authors_id(number=forum.number) in readers:
@@ -762,7 +797,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 {before_invitation} {lower_formatted_invitation} has been {action} on your submission.
 {content}
 '''
-            self.client.post_message(recipients=[self.get_authors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
+            self.client.post_message(invitation=self.get_meta_invitation_id(), recipients=[self.get_authors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info, signature=self.venue_id, sender=self.get_message_sender())
 
         ## Notify reviewers
         reviewer_recipients = []
@@ -779,17 +814,17 @@ Your {lower_formatted_invitation} on a submission has been {action}
 {before_invitation} {lower_formatted_invitation} has been {action} on a submission for which you are a reviewer.
 {content}
 '''
-            self.client.post_message(recipients=reviewer_recipients, subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
+            self.client.post_message(invitation=self.get_meta_invitation_id(), recipients=reviewer_recipients, subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info, signature=self.venue_id, sender=self.get_message_sender())
 
 
         ## Notify action editors
-        if is_public or self.get_action_editors_id(number=forum.number) in readers:
+        if is_public or self.get_action_editors_id(number=forum.number) in readers or self.get_action_editors_id() in readers:
             message = f'''Hi {{{{fullname}}}},
 
 {before_invitation} {lower_formatted_invitation} has been {action} on a submission for which you are an Action Editor.
 {content}
 '''
-            self.client.post_message(recipients=[self.get_action_editors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
+            self.client.post_message(invitation=self.get_meta_invitation_id(), recipients=[self.get_action_editors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info, signature=self.venue_id, sender=self.get_message_sender())
 
 
         if self.get_editors_in_chief_id() in readers and len(readers) == 2 and 'comment' in lower_formatted_invitation:
@@ -798,7 +833,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 {before_invitation} {lower_formatted_invitation} has been {action} on a submission for which you are serving as Editor-In-Chief.
 {content}
 '''
-            self.client.post_message(recipients=[self.get_editors_in_chief_id()], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
+            self.client.post_message(invitation=self.get_meta_invitation_id(), recipients=[self.get_editors_in_chief_id()], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info, signature=self.venue_id, sender=self.get_message_sender())
 
     def setup_note_invitations(self):
 
@@ -1083,10 +1118,11 @@ Your {lower_formatted_invitation} on a submission has been {action}
             author_group = client.get_group(journal.get_authors_id())
 
             ## Get all the submissions that don't have a decision affinity scores
-            submissions = journal.client.get_all_notes(invitation=journal.get_author_submission_id(), content = { 'venueid': journal.submitted_venue_id})
+            submissions = journal.client.get_all_notes(invitation=journal.get_author_submission_id())
+            active_submissions = [s for s in submissions if s.content['venueid']['value'] in [journal.submitted_venue_id, journal.assigning_AE_venue_id, journal.assigned_AE_venue_id]]
 
             ## For each submission check the status of the expertise task
-            for submission in tqdm(submissions):
+            for submission in tqdm(active_submissions):
                 ae_score_count = journal.client.get_edges_count(invitation=journal.get_ae_affinity_score_id(), head=submission.id)
                 if ae_score_count == 0:
                     print('Submission with no AE scores', submission.id, submission.number)
@@ -1113,10 +1149,13 @@ Your {lower_formatted_invitation} on a submission has been {action}
                                     invitation_url=f'https://openreview.net/invitation?id={journal.get_ae_recommendation_id(number=submission.number)}'
                                 )                                
                                 journal.client.post_message(
+                                    invitation=journal.get_meta_invitation_id(),
                                     recipients=submission.signatures,
                                     subject=f'[{journal.short_name}] Suggest candidate Action Editor for your new {journal.short_name} submission',
                                     message=message,
-                                    replyTo=journal.contact_info
+                                    replyTo=journal.contact_info,
+                                    signature=journal.venue_id,
+                                    sender=journal.get_message_sender()
                                 )
 
 
@@ -1628,7 +1667,7 @@ A conflict was detected between you and the submission authors and the assignmen
 If you have any questions, please contact us as info@openreview.net.
 
 OpenReview Team'''
-            response = client.post_message(subject, [edge.tail], message)
+            response = client.post_message(subject, [edge.tail], message, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())
 
             ## Send email to inviter
             subject=f"[{journal.short_name}] Conflict detected between reviewer {user_profile.get_preferred_name(pretty=True)} and paper {submission.number}: {submission.content['title']['value']}"
@@ -1640,7 +1679,7 @@ If you have any questions, please contact us as info@openreview.net.
 OpenReview Team'''
 
             ## - Send email
-            response = client.post_message(subject, edge.signatures, message)            
+            response = client.post_message(subject, edge.signatures, message, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())            
         
         def mark_as_accepted(journal, edge, submission, user_profile):
 
@@ -1681,7 +1720,7 @@ If you would like to change your decision, please click the Decline link in the 
 OpenReview Team'''
 
                 ## - Send email
-                response = client.post_message(subject, [edge.tail], message)
+                response = client.post_message(subject, [edge.tail], message, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())
 
                 ## Send email to inviter
                 subject=f'[{short_phrase}] {reviewer_name} {user_profile.get_preferred_name(pretty=True)} signed up and is assigned to paper {submission.number}: {submission.content["title"]["value"]}'
@@ -1691,7 +1730,7 @@ The {reviewer_name} {user_profile.get_preferred_name(pretty=True)}({user_profile
 OpenReview Team'''
 
                 ## - Send email
-                response = client.post_message(subject, edge.signatures, message)            
+                response = client.post_message(subject, edge.signatures, message, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())            
         
         journal_requests = client.get_all_notes(invitation=f'{support_group_id}/-/Journal_Request')
 

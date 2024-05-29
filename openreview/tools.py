@@ -19,7 +19,7 @@ import urllib.parse as urlparse
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 
-def decision_to_venue(venue_id, decision_option):
+def decision_to_venue(venue_id, decision_option, accept_options=None):
     """
     Returns the venue for a submission based on its decision
 
@@ -27,16 +27,31 @@ def decision_to_venue(venue_id, decision_option):
     :type venue_id: string
     :param decision_option: paper decision (i.e., Accept, Reject)
     :type decision_option: string
+    :param accept_options: accept decisions (i.e., [ Accept (Best Paper), Invite to Archive ])
+    :type accept_options: list
     """
     venue = venue_id
-    if 'Accept' in decision_option:
-        decision = decision_option.replace('Accept', '')
+    if is_accept_decision(decision_option, accept_options):
+        decision = decision_option.replace('Accept', '') if 'Accept' in decision_option else decision_option
         decision = re.sub(r'[()\W]+', '', decision)
-        if decision:
+        if decision: 
             venue += ' ' + decision.strip()
     else:
         venue = f'Submitted to {venue}'
     return venue
+
+def is_accept_decision(decision, accept_options=None):
+    """
+    Checks if decision is an accept decision
+
+    :param decision: paper decision (i.e., Accept, Reject)
+    :type decision: string
+    :param accept_options: accept decisions (i.e., [ Accept (Best Paper), Invite to Archive ])
+    :type accept_options: list
+    """
+    if (accept_options and decision in accept_options) or (not accept_options and 'Accept' in decision):
+        return True
+    return False
 
 def run_once(f):
     """
@@ -1212,7 +1227,9 @@ def recruit_reviewer(client, user, first,
     reviewers_invited_id,
     contact_info='info@openreview.net',
     verbose=True,
-    replyTo=None):
+    replyTo=None,
+    invitation=None,
+    signature=None):
     """
     Recruit a reviewer. Sends an email to the reviewer with a link to accept or
     reject the recruitment invitation.
@@ -1269,7 +1286,10 @@ def recruit_reviewer(client, user, first,
         raise e
 
     # send the email through openreview
-    response = client.post_message(recruit_message_subj, [user], personalized_message, parentGroup=reviewers_invited_id, replyTo=replyTo)
+    if invitation is not None:
+        response = client.post_message(recruit_message_subj, [user], personalized_message, parentGroup=reviewers_invited_id, replyTo=replyTo, invitation=invitation, signature=signature)
+    else:
+        response = client.post_message(recruit_message_subj, [user], personalized_message, parentGroup=reviewers_invited_id, replyTo=replyTo)
 
     if verbose:
         print("Sent to the following: ", response)
@@ -1382,7 +1402,7 @@ def get_profile_info(profile, n_years=None):
 
     if n_years:
         cut_off_date = datetime.datetime.now()
-        cut_off_date = cut_off_date.replace(year=cut_off_date.year - n_years)
+        cut_off_date = cut_off_date - datetime.timedelta(days=365 * n_years)
         cut_off_year = cut_off_date.year
     else:
         cut_off_year = -1
@@ -1442,7 +1462,7 @@ def get_neurips_profile_info(profile, n_years=None):
 
     if n_years:
         cut_off_date = datetime.datetime.now()
-        cut_off_date = cut_off_date.replace(year=cut_off_date.year - n_years)
+        cut_off_date = cut_off_date - datetime.timedelta(days=365 * n_years)
         cut_off_year = cut_off_date.year
     else:
         cut_off_year = -1
@@ -1509,7 +1529,7 @@ def get_current_submissions_profile_info(profile, n_years=None, submission_venue
 
     if n_years is not None:
         cut_off_date = datetime.datetime.now()
-        cut_off_date = cut_off_date.replace(year=cut_off_date.year - n_years)
+        cut_off_date = cut_off_date - datetime.timedelta(days=365 * n_years)
         cut_off_year = cut_off_date.year
     else:
         cut_off_year = -1

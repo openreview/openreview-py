@@ -10,6 +10,10 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         urls = openreview.tools.get_base_urls(client)
         openreview_client = openreview.api.OpenReviewClient(baseurl = urls[1], token=client.token)
         venue = openreview.venue.Venue(openreview_client, note.content['venue_id'], support_user)
+
+        if note.content['venue_id'].startswith('aclweb.org/ACL/ARR'):
+            venue = openreview.arr.ARR(openreview_client, note.content['venue_id'], support_user, venue=venue)
+
         venue_group = openreview.tools.get_group(openreview_client, note.content['venue_id'])
         venue_content = venue_group.content if venue_group else {}
         
@@ -21,20 +25,26 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.request_form_id = request_form_id
         venue.use_area_chairs = note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs'
         venue.use_senior_area_chairs = note.content.get('senior_area_chairs') == 'Yes, our venue has Senior Area Chairs'
+        venue.use_secondary_area_chairs = note.content.get('secondary_area_chairs') == 'Yes, our venue has Secondary Area Chairs'
         venue.use_ethics_chairs = note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers'
         venue.use_ethics_reviewers = note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers'
         venue.use_publication_chairs = note.content.get('publication_chairs', 'No, our venue does not have Publication Chairs') == 'Yes, our venue has Publication Chairs'
         venue.automatic_reviewer_assignment = note.content.get('submission_reviewer_assignment', '') == 'Automatic'
         venue.senior_area_chair_roles = note.content.get('senior_area_chair_roles', ['Senior_Area_Chairs'])
+        venue.senior_area_chairs_name = venue.senior_area_chair_roles[0]
         venue.area_chair_roles = note.content.get('area_chair_roles', ['Area_Chairs'])
+        venue.area_chairs_name = venue.area_chair_roles[0]
         venue.reviewer_roles = note.content.get('reviewer_roles', ['Reviewers'])
+        venue.reviewers_name = venue.reviewer_roles[0]
         venue.allow_gurobi_solver = venue_content.get('allow_gurobi_solver', {}).get('value', False)
         venue.submission_license = note.content.get('submission_license', ['CC BY 4.0'])
         set_homepage_options(note, venue)
         venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')
         venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
         venue.senior_area_chair_identity_readers = get_identity_readers(note, 'senior_area_chair_identity')
-        venue.decision_heading_map = get_decision_heading_map(venue.short_name, note)
+        venue.decision_heading_map = get_decision_heading_map(venue.short_name, note, venue_content.get('accept_decision_options', {}).get('value', []))
+        venue.source_submissions_query_mapping = note.content.get('source_submissions_query_mapping', {})
+        venue.sac_paper_assignments = note.content.get('senior_area_chairs_assignment', 'Area Chairs') == 'Submissions'
 
         venue.submission_stage = get_submission_stage(note, venue)
         venue.review_stage = get_review_stage(note)
@@ -48,9 +58,13 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.registration_stages = get_registration_stages(note, venue)
         if 'ethics_review_deadline' in note.content:
             venue.ethics_review_stage = get_ethics_review_stage(note)
+        venue.custom_stage = get_review_rating_stage(note)
 
         include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
         venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date, include_option=include_expertise_selection)
+
+        if isinstance(venue, openreview.arr.ARR):
+            venue.copy_to_venue()
 
         if setup:
             venue.setup(note.content.get('program_chair_emails'), note.content.get('publication_chairs_emails'))
@@ -325,11 +339,11 @@ def get_identity_readers(request_forum, field_name):
 
     return [readers_map[r] for r in request_forum.content.get(field_name, [])]
 
-def get_decision_heading_map(short_name, request_forum):
+def get_decision_heading_map(short_name, request_forum, accept_options):
     map = request_forum.content.get('home_page_tab_names', {})
     decision_heading_map = {}
     for decision, tabName in map.items():
-        decision_heading_map[openreview.tools.decision_to_venue(short_name, decision)] = tabName
+        decision_heading_map[openreview.tools.decision_to_venue(short_name, decision, accept_options)] = tabName
 
     return decision_heading_map
 
@@ -434,6 +448,12 @@ def get_submission_stage(request_forum, venue):
     else:
         withdraw_submission_exp_date = None
 
+    withdrawn_submission_public = 'Yes' in request_forum.content.get('withdrawn_submissions_visibility', '')
+    desk_rejected_submission_public = 'Yes' in request_forum.content.get('desk_rejected_submissions_visibility', '')
+    withdrawn_submission_reveal_authors = 'Yes' in request_forum.content.get('withdrawn_submissions_author_anonymity', '')
+    desk_rejected_submission_reveal_authors = 'Yes' in request_forum.content.get('desk_rejected_submissions_author_anonymity', '')
+    commitments_venue = request_forum.content.get('commitments_venue', 'No') == 'Yes'
+
     return openreview.stages.SubmissionStage(name = name,
         double_blind=double_blind,
         start_date=submission_start_date,
@@ -445,6 +465,10 @@ def get_submission_stage(request_forum, venue):
         subject_areas=subject_areas,
         create_groups=create_groups,
         withdraw_submission_exp_date=withdraw_submission_exp_date,
+        withdrawn_submission_public=withdrawn_submission_public,
+        withdrawn_submission_reveal_authors=withdrawn_submission_reveal_authors,
+        desk_rejected_submission_public=desk_rejected_submission_public,
+        desk_rejected_submission_reveal_authors=desk_rejected_submission_reveal_authors,
         author_names_revealed=author_names_revealed,
         papers_released=papers_released,
         readers=readers,
@@ -455,7 +479,8 @@ def get_submission_stage(request_forum, venue):
         submission_email=submission_email,
         force_profiles=force_profiles,
         second_deadline_additional_fields=second_deadline_additional_fields,
-        second_deadline_remove_fields=second_deadline_remove_fields)
+        second_deadline_remove_fields=second_deadline_remove_fields,
+        commitments_venue=commitments_venue)
 
 def get_bid_stages(request_forum):
     bid_start_date = request_forum.content.get('bid_start_date', '').strip()
@@ -482,6 +507,10 @@ def get_bid_stages(request_forum):
     if 'Yes, our venue has Area Chairs' in request_forum.content.get('Area Chairs (Metareviewers)', ''):
         ac_bid_stage = openreview.stages.BidStage(request_forum.content['venue_id'] + '/Area_Chairs', start_date = bid_start_date, due_date = bid_due_date, request_count = int(request_forum.content.get('bid_count', 50)))
         bid_stages.append(ac_bid_stage)
+
+    if 'Yes, our venue has Senior Area Chairs' in request_forum.content.get('senior_area_chairs', '') and 'Yes' in request_forum.content.get('sac_bidding', ''):
+        sac_bid_stage = openreview.stages.BidStage(request_forum.content['venue_id'] + '/Senior_Area_Chairs', start_date = bid_start_date, due_date = bid_due_date, request_count = int(request_forum.content.get('bid_count', 50)))
+        bid_stages.append(sac_bid_stage)
 
     return bid_stages
 
@@ -734,6 +763,7 @@ def get_meta_review_stage(request_forum):
         public = request_forum.content.get('make_meta_reviews_public', '').startswith('Yes'),
         release_to_authors = (request_forum.content.get('release_meta_reviews_to_authors', '').startswith('Yes')),
         release_to_reviewers = release_to_reviewers,
+        recommendation_field_name=request_forum.content.get('recommendation_field_name', 'recommendation'),
         additional_fields = meta_review_form_additional_options,
         remove_fields = meta_review_form_remove_options
     )
@@ -758,15 +788,20 @@ def get_decision_stage(request_forum):
         decision_due_date = None
 
     decision_options = request_forum.content.get('decision_options', '').strip()
+    accept_decision_options = request_forum.content.get('accept_decision_options', '').strip()
     decision_form_additional_options = request_forum.content.get('additional_decision_form_options', {})
 
     if decision_options:
         decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
 
+    if accept_decision_options:
+        accept_decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in accept_decision_options.split(',')]
+
     decisions_file = request_forum.content.get('decisions_file')
 
     return openreview.stages.DecisionStage(
         options = decision_options,
+        accept_options = accept_decision_options,
         start_date = decision_start_date,
         due_date = decision_due_date,
         public = request_forum.content.get('make_decisions_public', '').startswith('Yes'),
@@ -893,6 +928,8 @@ def get_comment_stage(request_forum):
 
     email_pcs = request_forum.content.get('email_program_chairs_about_official_comments', '') == 'Yes, email PCs for each official comment made in the venue'
 
+    enable_chat = request_forum.content.get('enable_chat_between_committee_members', '') == 'Yes, enable chat between committee members'
+
     return openreview.stages.CommentStage(
         start_date=commentary_start_date,
         end_date=commentary_end_date,
@@ -902,7 +939,8 @@ def get_comment_stage(request_forum):
         email_pcs=email_pcs,
         check_mandatory_readers=True,
         readers=readers,
-        invitees=invitees
+        invitees=invitees,
+        enable_chat=enable_chat
     )
 
 def get_registration_stages(request_forum, venue):
@@ -1005,3 +1043,64 @@ def get_registration_stages(request_forum, venue):
     if 'Yes' in request_forum.content.get('Area Chairs (Metareviewers)') and 'AC_form_title' in request_forum.content:
         stages.append(get_ac_registration_stage(request_forum, venue))
     return stages
+
+def get_review_rating_stage(request_forum):
+
+    review_rating_start_date = request_forum.content.get('review_ratingstart_date', '').strip()
+    if review_rating_start_date:
+        try:
+            review_rating_start_date = datetime.datetime.strptime(review_rating_start_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            review_rating_start_date = datetime.datetime.strptime(review_rating_start_date, '%Y/%m/%d')
+    else:
+        review_rating_start_date = None
+
+    review_rating_due_date = request_forum.content.get('review_rating_deadline', '').strip()
+    if review_rating_due_date:
+        try:
+            review_rating_due_date = datetime.datetime.strptime(review_rating_due_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            review_rating_due_date = datetime.datetime.strptime(review_rating_due_date, '%Y/%m/%d')
+    else:
+        review_rating_due_date = None
+
+    review_rating_exp_date = request_forum.content.get('review_rating_expiration_date', '').strip()
+    if review_rating_exp_date:
+        try:
+            review_rating_exp_date = datetime.datetime.strptime(review_rating_exp_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            review_rating_exp_date = datetime.datetime.strptime(review_rating_exp_date, '%Y/%m/%d')
+    else:
+        review_rating_exp_date = None
+
+    readers = [openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED] if 'Yes' in request_forum.content.get('release_to_senior_area_chairs', 'No') else [openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED]
+
+    default_content = {
+        'review_quality': {
+            'order': 1,
+            'description': 'How helpful is this review?',
+            'value': {
+                'param': {
+                    'type': 'integer',
+                    'input': 'radio',
+                    'enum': [
+                        {'value': 0, 'description': '0: below expectations'},
+                        {'value': 1, 'description': '1: meets expectations'},
+                        {'value': 2, 'description': '2: exceeds expectations'}
+                    ]
+                }
+            }
+        }
+    }
+    content = request_forum.content.get('review_rating_form_options', default_content)
+
+    return openreview.stages.CustomStage(name='Rating',
+        reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
+        source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+        reply_type=openreview.stages.CustomStage.ReplyType.REPLY,
+        start_date=review_rating_start_date,
+        due_date=review_rating_due_date,
+        exp_date=review_rating_exp_date,
+        invitees=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
+        readers=readers,
+        content=content)

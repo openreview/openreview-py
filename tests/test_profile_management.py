@@ -3,6 +3,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import openreview
 import datetime
 import time
+import re
+from selenium.webdriver.common.by import By
 from openreview import ProfileManagement
 from openreview.api import OpenReviewClient
 from openreview.api import Note
@@ -14,51 +16,334 @@ class TestProfileManagement():
 
     
     @pytest.fixture(scope="class")
-    def profile_management(self, client, openreview_client):
-        profile_management = ProfileManagement(client, 'openreview.net')
+    def profile_management(self, openreview_client):
+        profile_management = ProfileManagement(openreview_client, 'openreview.net')
         profile_management.setup()
         return profile_management
     
-    def test_import_dblp_notes(self, client, profile_management, test_client, helpers):
+    def test_import_dblp_notes(self, client, openreview_client, profile_management, test_client, helpers):
 
-        note = test_client.post_note(
-            openreview.Note(
-                invitation='dblp.org/-/record',
-                readers=['everyone'],
-                writers=['dblp.org'],
-                signatures=['~SomeFirstName_User1'],
+        test_client_v2 = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+
+        edit = test_client_v2.post_note_edit(
+            invitation = 'DBLP.org/-/Record',
+            signatures = ['~SomeFirstName_User1'],
+            content = {
+                'xml': {
+                    'value': '<article key=\"journals/iotj/WangJWSGZ23\" mdate=\"2023-04-16\">\n<author orcid=\"0000-0003-4015-0348\" pid=\"188/7759-93\">Chao Wang 0093</author>\n              <author orcid=\"0000-0002-3703-121X\" pid=\"00/8334\">Chunxiao Jiang</author>\n<author orcid=\"0000-0003-3170-8952\" pid=\"62/2631-1\">Jingjing Wang 0001</author>\n<author orcid=\"0000-0002-7558-5379\" pid=\"66/800\">Shigen Shen</author>\n<author orcid=\"0000-0001-9831-2202\" pid=\"01/267-1\">Song Guo 0001</author>\n<author orcid=\"0000-0002-0990-5581\" pid=\"24/9047\">Peiying Zhang</author>\n<title>Blockchain-Aided Network Resource Orchestration in Intelligent Internet of Things.</title>\n<pages>6151-6163</pages>\n<year>2023</year>\n<month>April 1</month>\n<volume>10</volume>\n<journal>IEEE Internet Things J.</journal>\n<number>7</number>\n<ee>https://doi.org/10.1109/JIOT.2022.3222911</ee>\n<url>db/journals/iotj/iotj10.html#WangJWSGZ23</url>\n</article>'
+
+                }
+            },
+            note = openreview.api.Note(
                 content={
-                    'dblp': '<article key=\"journals/iotj/WangJWSGZ23\" mdate=\"2023-04-16\">\n<author orcid=\"0000-0003-4015-0348\" pid=\"188/7759-93\">Chao Wang 0093</author>\n<author orcid=\"0000-0002-3703-121X\" pid=\"00/8334\">Chunxiao Jiang</author>\n<author orcid=\"0000-0003-3170-8952\" pid=\"62/2631-1\">Jingjing Wang 0001</author>\n<author orcid=\"0000-0002-7558-5379\" pid=\"66/800\">Shigen Shen</author>\n<author orcid=\"0000-0001-9831-2202\" pid=\"01/267-1\">Song Guo 0001</author>\n<author orcid=\"0000-0002-0990-5581\" pid=\"24/9047\">Peiying Zhang</author>\n<title>Blockchain-Aided Network Resource Orchestration in Intelligent Internet of Things.</title>\n<pages>6151-6163</pages>\n<year>2023</year>\n<month>April 1</month>\n<volume>10</volume>\n<journal>IEEE Internet Things J.</journal>\n<number>7</number>\n<ee>https://doi.org/10.1109/JIOT.2022.3222911</ee>\n<url>db/journals/iotj/iotj10.html#WangJWSGZ23</url>\n</article>'
+                    'title': {
+                        'value': 'Blockchain-Aided Network Resource Orchestration in Intelligent Internet of Things',
+                    },
+                    'authors': {
+                        'value': ['Chao Wang 0093', 'Chunxiao Jiang', 'Jingjing Wang 0001', 'Shigen Shen', 'Song Guo 0001', 'Peiying Zhang'],
+                    },
+                    'venue': {
+                        'value': 'WangJWSGZ23',
+                    }
                 }
             )
         )
 
-        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], error=True)
 
-        note = test_client.get_note(note.id)
-        assert note.content['title'] == 'Blockchain-Aided Network Resource Orchestration in Intelligent Internet of Things'
-        assert datetime.datetime.fromtimestamp(note.cdate/1000).year == 2023
-        assert datetime.datetime.fromtimestamp(note.cdate/1000).month == 4
+        note = test_client_v2.get_note(edit['note']['id'])
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit']
+        assert note.cdate
+        assert note.pdate
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
 
-        note = test_client.post_note(
-            openreview.Note(
-                invitation='dblp.org/-/record',
-                readers=['everyone'],
-                writers=['dblp.org'],
-                signatures=['~SomeFirstName_User1'],
+        andrew_client = helpers.create_user('mccallum@profile.org', 'Andrew', 'McCallum', alternates=[], institution='google.com')
+
+        xml = '''<inproceedings key="conf/acl/ChangSRM23" mdate="2023-08-10">
+<author pid="130/1022">Haw-Shiuan Chang</author>
+<author pid="301/6251">Ruei-Yao Sun</author>
+<author pid="331/1034">Kathryn Ricci</author>
+<author pid="m/AndrewMcCallum">Andrew McCallum</author>
+<title>Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling.</title>
+<pages>821-854</pages>
+<year>2023</year>
+<booktitle>ACL (1)</booktitle>
+<ee type="oa">https://doi.org/10.18653/v1/2023.acl-long.48</ee>
+<ee type="oa">https://aclanthology.org/2023.acl-long.48</ee>
+<crossref>conf/acl/2023-1</crossref>
+<url>db/conf/acl/acl2023-1.html#ChangSRM23</url>
+</inproceedings>
+'''
+
+        edit = andrew_client.post_note_edit(
+            invitation = 'DBLP.org/-/Record',
+            signatures = ['~Andrew_McCallum1'],
+            content = {
+                'xml': {
+                    'value': xml
+                }
+            },
+            note = openreview.api.Note(
                 content={
-                    'dblp': '<article key=\"journals/iotj/WittHTSL23\" mdate=\"2023-02-25\">\n<author orcid=\"0000-0002-9984-3213\" pid=\"295/9513\">Leon Witt</author>\n<author pid=\"320/8197\">Mathis Heyer</author>\n<author orcid=\"0000-0002-6233-3121\" pid=\"45/10835\">Kentaroh Toyoda</author>\n<author orcid=\"0000-0002-6283-3265\" pid=\"79/9736\">Wojciech Samek</author>\n<author orcid=\"0000-0002-7581-8865\" pid=\"48/4185-1\">Dan Li 0001</author>\n<title>Decentral and Incentivized Federated Learning Frameworks: A Systematic Literature Review.</title>\n<pages>3642-3663</pages>\n<year>2023</year>\n<month>February 15</month>\n<volume>10</volume>\n<journal>IEEE Internet Things J.</journal>\n<number>4</number>\n<ee>https://doi.org/10.1109/JIOT.2022.3231363</ee>\n<url>db/journals/iotj/iotj10.html#WittHTSL23</url>\n</article>'
+                    'title': {
+                        'value': 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling.',
+                    },
+                    'authors': {
+                        'value': ['Haw-Shiuan Chang', 'Ruei-Yao Sun', 'Kathryn Ricci', 'Andrew McCallum'],
+                    },
+                    'authorids': {
+                        'value': ['', '', '', '~Andrew_McCallum1'],
+                    },
+                    'venue': {
+                        'value': 'ACL (1)',
+                    }
                 }
             )
         )
 
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], error=True)
 
-        helpers.await_queue()
+        note = andrew_client.get_note(edit['note']['id'])
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit']
+        assert note.cdate
+        assert note.pdate
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
+        assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+        assert note.content['authors']['value'] == [
+            "Haw-Shiuan Chang",
+            "Ruei-Yao Sun",
+            "Kathryn Ricci",
+            "Andrew McCallum"
+        ]
+        assert note.content['authorids']['value'] == [
+            "https://dblp.org/search/pid/api?q=author:Haw-Shiuan_Chang:",
+            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
+            "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
+            "~Andrew_McCallum1"
+        ]
 
-        note = test_client.get_note(note.id)
-        assert note.content['title'] == 'Decentral and Incentivized Federated Learning Frameworks: A Systematic Literature Review'
-        assert datetime.datetime.fromtimestamp(note.cdate/1000).year == 2023
-        assert datetime.datetime.fromtimestamp(note.cdate/1000).month == 2                
+        haw_shiuan_client = helpers.create_user('haw@profile.org', 'Haw-Shiuan', 'Chang', alternates=[], institution='umass.edu')
+
+        edit = haw_shiuan_client.post_note_edit(
+            invitation = 'DBLP.org/-/Author_Coreference',
+            signatures = ['~Haw-Shiuan_Chang1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '~Haw-Shiuan_Chang1' },
+            },
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        note = haw_shiuan_client.get_note(edit['note']['id'])
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference']
+        assert note.cdate
+        assert note.mdate
+        assert note.pdate
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
+        assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+        assert note.content['authorids']['value'] == [
+            "~Haw-Shiuan_Chang1",
+            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
+            "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
+            "~Andrew_McCallum1"
+        ]
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The author id ~Andrew_McCallum1 doesn\'t match with the names listed in your profile'):
+            edit = haw_shiuan_client.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~Haw-Shiuan_Chang1'],
+                content = {
+                    'author_index': { 'value': 3 },
+                    'author_id': { 'value': '~Andrew_McCallum1' },
+                },                
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The author name Andrew McCallum from index 3 doesn\'t match with the names listed in your profile'):
+            edit = haw_shiuan_client.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~Haw-Shiuan_Chang1'],
+                content = {
+                    'author_index': { 'value': 3 },
+                    'author_id': { 'value': '~Haw-Shiuan_Chang1' },
+                },                  
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )            
+
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The author name Ruei-Yao Sun from index 1 doesn\'t match with the names listed in your profile'):
+            edit = test_client_v2.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~SomeFirstName_User1'],
+                content = {
+                    'author_index': { 'value': 1 },
+                    'author_id': { 'value': '~SomeFirstName_User1' },
+                },                 
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid author index'):
+            edit = haw_shiuan_client.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~Haw-Shiuan_Chang1'],
+                content = {
+                    'author_index': { 'value': 13 },
+                    'author_id': { 'value': '~Haw-Shiuan_Chang1' },
+                },                
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )             
+
+        edit = haw_shiuan_client.post_note_edit(
+            invitation = 'DBLP.org/-/Author_Coreference',
+            signatures = ['~Haw-Shiuan_Chang1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '' },
+            },             
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The author name  from index 0 doesn\'t match with the names listed in your profile'):
+            edit = andrew_client.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~Andrew_McCallum1'],
+                content = {
+                    'author_index': { 'value': 0 },
+                    'author_id': { 'value': '' },
+                },                
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid author index'):
+            edit = andrew_client.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~Andrew_McCallum1'],
+                content = {
+                    'author_index': { 'value': 11 },
+                    'author_id': { 'value': '' },
+                },                 
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )                        
+
+        note = haw_shiuan_client.get_note(edit['note']['id'])
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference']
+        assert note.cdate
+        assert note.mdate
+        assert note.pdate
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
+        assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+        assert note.content['authorids']['value'] == [
+            '',
+            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
+            "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
+            "~Andrew_McCallum1"
+        ]                    
+
+        edit = openreview_client.post_note_edit(
+            invitation = 'DBLP.org/-/Abstract',
+            signatures = ['DBLP.org/Uploader'],
+            note = openreview.api.Note(
+                id = note.id,
+                content={
+                    'abstract': {
+                        'value': 'this is an abstract'
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], error=True)
+        
+        note = haw_shiuan_client.get_note(edit['note']['id'])
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference', 'DBLP.org/-/Abstract']
+        assert note.content['abstract']['value'] == 'this is an abstract'
+
+        ## claim dblp paper using another tilde id
+        kate_client = helpers.create_user('kate@profile.org', 'Kate', 'Ricci', alternates=[], institution='umass.edu')
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The author name Kathryn Ricci from index 2 doesn\'t match with the names listed in your profile'):
+            edit = kate_client.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~Kate_Ricci1'],
+                content = {
+                    'author_index': { 'value': 2 },
+                    'author_id': { 'value': '~Kate_Ricci1' },
+                },                 
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            ) 
+
+        profile = kate_client.get_profile()
+
+        profile.content['homepage'] = 'https://kate.google.com'
+        profile.content['names'].append({
+            'first': 'Kathryn',
+            'last': 'Ricci'
+            })
+        kate_client.post_profile(profile)
+
+        edit = kate_client.post_note_edit(
+            invitation = 'DBLP.org/-/Author_Coreference',
+            signatures = ['~Kate_Ricci1'],
+            content = {
+                'author_index': { 'value': 2 },
+                'author_id': { 'value': '~Kate_Ricci1' },
+            },                 
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        note = haw_shiuan_client.get_note(edit['note']['id'])
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference', 'DBLP.org/-/Abstract']
+        assert note.cdate
+        assert note.mdate
+        assert note.pdate
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
+        assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+        assert note.content['authorids']['value'] == [
+            '',
+            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
+            "~Kate_Ricci1",
+            "~Andrew_McCallum1"
+        ]                                  
 
    
     def test_remove_alternate_name(self, openreview_client, profile_management, test_client, helpers):
@@ -67,7 +352,7 @@ class TestProfileManagement():
 
         profile = john_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://john.google.com'
         profile.content['names'].append({
             'first': 'John',
             'middle': 'Alternate',
@@ -134,7 +419,7 @@ class TestProfileManagement():
             )
                     
         ## Add publications
-        john_client.post_note_edit(
+        edit = john_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~John_Alternate_Last1'],
             note = openreview.api.Note(
@@ -144,9 +429,43 @@ class TestProfileManagement():
                     'abstract': { 'value': 'Paper abstract 1' },
                     'authors': { 'value': ['John Alternate Last', 'Test Client'] },
                     'authorids': { 'value': ['~John_Alternate_Last1', 'test@mail.com'] },
-                    'venue': { 'value': 'Arxiv' }
-                }
-        ))            
+                    'venue': { 'value': 'Arxiv' },
+                    'html': { 'value': 'https://arxiv.org/abs/test' }
+                },
+                license = 'CC BY-SA 4.0'
+        ))
+        note_number = edit['note']['number']
+
+        ## Enable comment invitation
+        openreview_client.post_invitation_edit(
+            invitations='openreview.net/Archive/-/Comment',
+            signatures=['openreview.net/Archive'],
+            content={
+                'noteNumber': { 'value': 1 },
+                'noteId': { 'value': edit['note']['id'] }
+            }
+        )
+
+        assert openreview_client.get_invitation('openreview.net/Archive/Submission1/-/Comment')
+
+
+        edit = john_client.post_note_edit(
+            invitation='openreview.net/Archive/Submission1/-/Comment',
+            signatures=['~John_Alternate_Last1'],
+            note = openreview.api.Note(
+                replyto = edit['note']['id'],
+                content = {
+                    'comment': { 'value': 'more details about our submission' },
+                }   
+            )                         
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview Archive] John Alternate Last commented on your submission. Paper Title: "Paper title 1"')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''John Alternate Last commented on your submission.\n    \nPaper number: {note_number}\n\nPaper title: Paper title 1\n\nComment: more details about our submission\n\nTo view the comment, click here: https://openreview.net/forum?id={edit['note']['forum']}&noteId={edit['note']['id']}'''        
+
 
         john_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
@@ -159,7 +478,8 @@ class TestProfileManagement():
                     'authors': { 'value': ['John Alternate Last', 'Test Client'] },
                     'authorids': { 'value': ['~John_Alternate_Last1', 'test@mail.com', 'another@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         )) 
 
         ## Create committee groups
@@ -297,7 +617,7 @@ The OpenReview Team.
 
         profile = ana_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://ana.google.com'
         profile.content['names'].append({
             'first': 'Ana',
             'middle': 'Alternate',
@@ -343,7 +663,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Ana Last', 'Test Client'] },
                     'authorids': { 'value': ['~Ana_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))        
 
         ana_client.post_note_edit(
@@ -357,7 +678,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Ana Last', 'Test Client'] },
                     'authorids': { 'value': ['~Ana_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))        
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Ana_Alternate_Last1'})
@@ -452,7 +774,7 @@ The OpenReview Team.
 
         profile = peter_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://peter.google.com'
         profile.content['names'].append({
             'first': 'Peter',
             'middle': 'Alternate',
@@ -477,7 +799,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Peter Alternate Last', 'Test Client'] },
                     'authorids': { 'value': ['~Peter_Alternate_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))                      
 
         request_note = peter_client.post_note_edit(
@@ -546,7 +869,7 @@ The OpenReview Team.
 
         profile = ella_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://ella.google.com'
         profile.content['names'].append({
             'first': 'Ella',
             'middle': 'Alternate',
@@ -574,7 +897,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Ella Last', 'Test Client'] },
                     'authorids': { 'value': ['~Ella_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))         
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Ella_Last1'})
@@ -600,7 +924,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Ella Last', 'Test Client'] },
                     'authorids': { 'value': ['~Ella_Last2', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Ella_Last2'})
@@ -714,7 +1039,7 @@ The OpenReview Team.
 
         profile = javier_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://javier.google.com'
         profile.content['names'].append({
             'first': 'Javier',
             'middle': 'Alternate',
@@ -740,7 +1065,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Javier Last', 'Test Client'] },
                     'authorids': { 'value': ['~Javier_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))      
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Javier_Last1'})
@@ -761,7 +1087,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Javier Last', 'Test Client'] },
                     'authorids': { 'value': ['~Javier_Last2', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))        
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Javier_Last2'})
@@ -867,7 +1194,7 @@ The OpenReview Team.
         paul_client = helpers.create_user('paul@profile.org', 'Paul', 'Last', alternates=[], institution='google.com')
         profile = paul_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://paul.google.com'
         profile.content['names'].append({
             'first': 'Paul',
             'middle': 'Alternate',
@@ -895,7 +1222,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Paul Alternate Last', 'Test Client'] },
                     'authorids': { 'value': ['~Paul_Alternate_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))         
         
 
@@ -910,7 +1238,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Paul Alternate Last', 'Test Client'] },
                     'authorids': { 'value': ['~Paul_Alternate_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))         
 
         submission_note_1 = paul_client.post_note_edit(invitation='CABJ/-/Submission',
@@ -1185,7 +1514,7 @@ The OpenReview Team.
 
         profile = juan_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://juan.google.com'
         profile.content['names'].append({
             'first': 'Juan',
             'middle': 'Alternate',
@@ -1210,7 +1539,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Juan Last', 'Test Client'] },
                     'authorids': { 'value': ['~Juan_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))                      
 
         john_client = openreview.api.OpenReviewClient(username='john@profile.org', password=helpers.strong_password)
@@ -1294,7 +1624,7 @@ The OpenReview Team.
 
         profile = nara_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://nara.google.com'
         profile.content['names'].append({
             'first': 'Nara',
             'middle': 'Alternate',
@@ -1332,7 +1662,7 @@ The OpenReview Team.
 
         profile = mara_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://mara.google.com'
         profile.content['names'].append({
             'first': 'Mara',
             'middle': 'Alternate',
@@ -1386,7 +1716,7 @@ The OpenReview Team.
         rachel_client = helpers.create_user('rachel@profile.org', 'Rachel', 'Last', alternates=[], institution='google.com')
         profile = rachel_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://rachel.google.com'
         profile.content['names'].append({
             'first': 'Rachel',
             'middle': 'Alternate',
@@ -1520,7 +1850,7 @@ The OpenReview Team.
         melisa_client = helpers.create_user('melisa@profile.org', 'Melisa', 'Last', alternates=[], institution='google.com')
         profile = melisa_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://melisa.google.com'
         profile.content['names'].append({
             'first': 'Melisa',
             'middle': 'Alternate',
@@ -1581,7 +1911,7 @@ The OpenReview Team.
         harold_client = helpers.create_user('harold@profile.org', 'Harold', 'Last', alternates=[], institution='google.com')
         profile = harold_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://harold.google.com'
         profile.content['emails'].append('alternate_harold@profile.org')
         harold_client.post_profile(profile)
         profile = harold_client.get_profile(email_or_id='~Harold_Last1')
@@ -1651,7 +1981,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Harold Last', 'Test Client'] },
                     'authorids': { 'value': ['alternate_harold@profile.org', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))        
 
         openreview_client.post_note_edit(
@@ -1665,7 +1996,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Harold Last', 'Test Client'] },
                     'authorids': { 'value': ['alternate_harold@profile.org', 'test@mail.com', 'another@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         )) 
 
         ## Add v2 submission
@@ -1777,7 +2109,7 @@ The OpenReview Team.
 
         profile = carlos_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://carlos.google.com'
         profile.content['relations'].append({
             'relation': 'Advisor',
             'name': 'Zoey User',
@@ -1839,7 +2171,8 @@ The OpenReview Team.
                     'TLDR': { 'value': 'TL;DR'},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'abstract': { 'value': 'Paper abstract' },
-                }   
+                },
+                license = 'CC BY-SA 4.0'   
             )                         
         )
 
@@ -1901,3 +2234,119 @@ The OpenReview Team.
 
         messages = openreview_client.get_messages(subject='[Anonymous Preprint Server] Carlos Last commented on your submission. Paper Title: "Paper title 1"')
         assert len(messages) == 2
+
+
+    def test_confirm_alternate_email(self, profile_management, openreview_client, helpers, request_page, selenium):
+
+        xukun_client = helpers.create_user('xukun@profile.org', 'Xukun', 'First', alternates=[], institution='google.com')
+
+        profile = xukun_client.get_profile()
+        profile.content['homepage'] = 'https://xukun.com'
+        profile.content['emails'].append('xukun@gmail.com')
+        xukun_client.post_profile(profile)
+
+        response = xukun_client.confirm_alternate_email('~Xukun_First1', 'xukun@gmail.com')
+
+        ## As guest user
+        request_page(selenium, 'http://localhost:3030/confirm?token=xukun@gmail.com', None, by=By.CLASS_NAME, wait_for_element='important_message')
+
+        message = selenium.find_element(By.CLASS_NAME, 'important_message')
+        assert 'Please login to access /confirm?token=xukun@gmail.com' == message.text
+
+        profile = xukun_client.get_profile()
+        assert profile.content['emailsConfirmed'] == ['xukun@profile.org']
+
+        ## As super user
+        request_page(selenium, 'http://localhost:3030/confirm?token=xukun@gmail.com', openreview_client.token, wait_for_element='header')
+
+        message = selenium.find_element(By.TAG_NAME, 'header')
+        assert 'Error 403' == message.text              
+    
+        ## As owner of the profile
+        request_page(selenium, 'http://localhost:3030/confirm?token=xukun@gmail.com', xukun_client.token, by=By.CLASS_NAME, wait_for_element='main')
+
+        content = selenium.find_element(By.ID, 'content')
+        assert 'Click Confirm Email button below to confirm adding xukun@gmail.com' in content.text
+
+        content.find_element(By.TAG_NAME, 'button').click()
+
+        time.sleep(2)
+
+        message = selenium.find_element(By.CLASS_NAME, 'important_message')
+        assert 'Thank you for confirming your email xukun@gmail.com' == message.text        
+        
+        profile = xukun_client.get_profile()
+        assert profile.content['emailsConfirmed'] == ['xukun@profile.org', 'xukun@gmail.com']
+
+        ## create a group and try to confirm
+        openreview_client.add_members_to_group('ICMLR.cc/Reviewers', 'xukun@yahoo.com')
+
+        response = xukun_client.confirm_alternate_email('~Xukun_First1', 'xukun@yahoo.com')
+
+        request_page(selenium, 'http://localhost:3030/confirm?token=xukun@yahoo.com', xukun_client.token, by=By.CLASS_NAME, wait_for_element='main')
+
+        content = selenium.find_element(By.ID, 'content')
+        assert 'Click Confirm Email button below to confirm adding xukun@yahoo.com' in content.text        
+    
+    def test_merge_profiles_automatically(self, profile_management, openreview_client, helpers, request_page, selenium):
+
+        akshat_client_1 = helpers.create_user('akshat_1@profile.org', 'Akshat', 'First', alternates=[], institution='google.com')
+        akshat_client_2 = helpers.create_user('akshat_2@profile.org', 'Akshat', 'Last', alternates=[], institution='google.com')
+
+        profile = akshat_client_1.get_profile()
+        profile.content['homepage'] = 'https://akshat.google.com'
+        profile.content['emails'].append('akshat_2@profile.org')
+        akshat_client_1.post_profile(profile)
+    
+        akshat_client_1.post_profile(profile)
+        
+        response = akshat_client_1.confirm_alternate_email('~Akshat_First1', 'akshat_2@profile.org')
+
+        messages = openreview_client.get_messages(subject='OpenReview Account Linking - Duplicate Profile Found', to='akshat_2@profile.org')
+        assert len(messages) == 1
+
+        ## As guest user
+        request_page(selenium, 'http://localhost:3030/profile/merge?token=akshat_2@profile.org', None, by=By.CLASS_NAME, wait_for_element='important_message')
+
+        message = selenium.find_element(By.CLASS_NAME, 'important_message')
+        assert 'Please login to access /profile/merge?token=akshat_2@profile.org' == message.text  
+
+        ## As super user
+        request_page(selenium, 'http://localhost:3030/profile/merge?token=akshat_2@profile.org', openreview_client.token, wait_for_element='header')
+
+        message = selenium.find_element(By.TAG_NAME, 'header')
+        assert 'Error 403' == message.text                
+
+        ## As the other user
+        request_page(selenium, 'http://localhost:3030/profile/merge?token=akshat_2@profile.org', akshat_client_2.token, wait_for_element='header')
+
+        message = selenium.find_element(By.TAG_NAME, 'header')
+        assert 'Error 403' == message.text   
+
+        ## As the owner of the profile
+        request_page(selenium, 'http://localhost:3030/profile/merge?token=akshat_2@profile.org', akshat_client_1.token, wait_for_element='main')
+
+        content = selenium.find_element(By.ID, 'content')
+        assert 'Click the confirm button below to merge ~Akshat_Last1<akshat_2@profile.org> into your user profile.' in content.text
+
+        content.find_element(By.TAG_NAME, 'button').click()
+
+        time.sleep(2)
+
+        message = selenium.find_element(By.CLASS_NAME, 'important_message')
+        assert 'Thank you for confirming the profile merge.' == message.text        
+        
+        profile = akshat_client_1.get_profile()
+        assert profile.content['emailsConfirmed'] == ['akshat_1@profile.org', 'akshat_2@profile.org']
+        assert len(profile.content['names']) == 2
+        assert profile.content['names'][0]['username'] == '~Akshat_First1'
+        assert profile.content['names'][1]['username'] == '~Akshat_Last1'
+
+        ## As the owner of the profile again
+        request_page(selenium, 'http://localhost:3030/profile/merge?token=akshat_2@profile.org', akshat_client_1.token, wait_for_element='main')
+
+        content = selenium.find_element(By.ID, 'content')
+        assert 'Activation token is not valid' in content.text
+
+        
+

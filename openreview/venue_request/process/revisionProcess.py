@@ -27,7 +27,7 @@ def process(client, note, invitation):
                     submission_deadline = datetime.datetime.strptime(submission_deadline, '%Y/%m/%d')
                 matching_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Paper_Matching_Setup')
                 if matching_invitation:
-                    matching_invitation.cdate = openreview.tools.datetime_millis(submission_deadline)
+                    matching_invitation.cdate = openreview.tools.datetime_millis(conference.submission_stage.due_date)
                     client.post_invitation(matching_invitation)
                 revision_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Revision'))
                 if revision_invitation and conference.submission_stage.second_due_date and not forum_note.content.get('submission_revision_deadline'):
@@ -214,6 +214,12 @@ def process(client, note, invitation):
                 #update post submission hide_fields
                 submission_content = conference.submission_stage.get_content(api_version='2', conference=conference)
                 hide_fields = [key for key in submission_content.keys() if key not in ['title', 'authors', 'authorids', 'venue', 'venueid'] and 'delete' not in submission_content[key]]
+                second_deadline_fields = forum_note.content.get('second_deadline_additional_options', {})
+                if second_deadline_fields:
+                    fields = list(second_deadline_fields.keys())
+                    for field in fields:
+                        if field not in hide_fields and 'delete' not in second_deadline_fields[field]:
+                            hide_fields.append(field)
                 content = {
                     'submission_readers': {
                         'description': 'Please select who should have access to the submissions after the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
@@ -266,7 +272,7 @@ def process(client, note, invitation):
             if forum_note.content.get('api_version') == '2':
 
                 review_due_date = forum_note.content.get('review_deadline').strip()
-                cdate = datetime.datetime.utcnow()
+                cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
                 if review_due_date:
                     try:
                         review_due_date = datetime.datetime.strptime(review_due_date, '%Y/%m/%d %H:%M')
@@ -286,6 +292,79 @@ def process(client, note, invitation):
                             'description': 'The users who will be allowed to read the above content.',
                             'values' : [conference.get_program_chairs_id(), SUPPORT_GROUP]
                         }
+                    },
+                    signatures = ['~Super_User1']
+                ))
+
+                review_rating_stage_content = {
+                    'review_rating_start_date': {
+                        'description': 'When does the review rating stage begin? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                        'order': 1
+                    },
+                    'review_rating_deadline': {
+                        'description': 'When does the review rating stage end? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                        'required': True,
+                        'order': 2
+                    },
+                    'review_rating_expiration_date': {
+                        'description': 'After this date, no more review ratings can be submitted. This is the hard deadline users will not be able to see. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59). Default is 30 minutes after the review rating deadline.',
+                        'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                        'required': False,
+                        'order': 3
+                    },
+                    'release_to_senior_area_chairs': {
+                        'description': 'Should the review ratings be visible to paper\'s senior area chairs immediately upon posting?',
+                        'value-radio': [
+                            'Yes, review ratings should be revealed when they are posted to the paper\'s senior area chairs',
+                            'No, review ratings should NOT be revealed when they are posted to the paper\'s senior area chairs'
+                        ],
+                        'required': True,
+                        'default': 'No, review ratings should NOT be revealed when they are posted to the paper\'s senior area chairs',
+                        'order': 4
+                    },
+                    'review_rating_form_options': {
+                        'order': 5,
+                        'value-dict': {},
+                        'required': True,
+                        'description': 'Configure the fields in the review rating form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.',
+                        'default': {
+                            'review_quality': {
+                                'order': 1,
+                                'description': 'How helpful is this review?',
+                                'value': {
+                                    'param': {
+                                        'type': 'integer',
+                                        'input': 'radio',
+                                        'enum': [
+                                            {'value': 0, 'description': '0: below expectations'},
+                                            {'value': 1, 'description': '1: meets expectations'},
+                                            {'value': 2, 'description': '2: exceeds expectations'}
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if 'No' in forum_note.content.get('senior_area_chairs', 'No'):
+                    del review_rating_stage_content['release_to_senior_area_chairs']
+
+                client.post_invitation(openreview.Invitation(
+                    id = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Review_Rating_Stage',
+                    super = SUPPORT_GROUP + '/-/Review_Rating_Stage',
+                    invitees = [conference.get_program_chairs_id(), SUPPORT_GROUP],
+                    cdate = cdate,
+                    reply = {
+                        'forum': forum_note.id,
+                        'referent': forum_note.id,
+                        'readers' : {
+                            'description': 'The users who will be allowed to read the above content.',
+                            'values' : [conference.get_program_chairs_id(), SUPPORT_GROUP]
+                        },
+                        'content': review_rating_stage_content
                     },
                     signatures = ['~Super_User1']
                 ))
@@ -353,6 +432,10 @@ def process(client, note, invitation):
             else:
                 decision_options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
 
+            accept_decision_options = forum_note.content.get('accept_decision_options')
+            if accept_decision_options:
+                accept_decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in accept_decision_options.split(',')]
+
             content['send_decision_notifications'] = {
                 'description': 'Would you like to notify the authors regarding the decision? If yes, please carefully review the template below for each decision option before you click submit to send out the emails. Note that you can only send email notifications from the OpenReview UI once. If you need to send additional emails, you can do so by using the python client.',
                 'value-radio': [
@@ -362,8 +445,9 @@ def process(client, note, invitation):
                 'required': True,
                 'default': 'No, I will send the emails to the authors'
             }
+
             for decision in decision_options:
-                if 'Accept' in decision:
+                if openreview.tools.is_accept_decision(decision, accept_decision_options):
                     content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
                         'value-regex': '[\\S\\s]{1,10000}',
                         'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
@@ -376,26 +460,13 @@ Best,
 {short_name} Program Chairs
 '''
                     }
-                elif 'Reject' in decision:
-                    content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
-                        'value-regex': '[\\S\\s]{1,10000}',
-                        'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
-                        'default': f'''Dear {{{{fullname}}}},
-                        
-Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted.
-You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
-
-Best,
-{short_name} Program Chairs
-'''
-                    }
                 else:
                     content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
                         'value-regex': '[\\S\\s]{1,10000}',
                         'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
                         'default': f'''Dear {{{{fullname}}}},
-
-Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}.
+                    
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted.
 You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,
@@ -514,6 +585,37 @@ Best,
                         )
                         client.post_note(comment_note)
 
+            # update Submission_Revision_stage invitation
+            if forum_note.content.get('reveal_authors') == 'Reveal author identities of only accepted submissions to the public':
+                revision_stage_inv = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Submission_Revision_Stage')
+                if revision_stage_inv:
+                    content = revision_stage_inv.reply['content']
+                    content['accepted_submissions_only'] = {
+                        'description': 'At this point, revisions can only be enabled for accepted submissions. If you would like to enable revisions for rejected submissions as well, please contact us at info@openreview.net.',
+                        'value-radio': [
+                            'Enable revision for accepted submissions only',
+                        ],
+                        'default': 'Enable revision for accepted submissions only',
+                        'required': True,
+                        'order': 4
+                    }
+                    client.post_invitation(openreview.Invitation(
+                        id = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Submission_Revision_Stage',
+                        super = SUPPORT_GROUP + '/-/Submission_Revision_Stage',
+                        invitees = [conference.get_program_chairs_id(), SUPPORT_GROUP],
+                        reply = {
+                            'forum': forum_note.id,
+                            'referent': forum_note.id,
+                            'readers' : revision_stage_inv.reply['readers'],
+                            'content': content
+                        },
+                        signatures = ['~Super_User1']
+                    ))
+
+        elif invitation_type == 'Review_Rating_Stage':
+
+            conference.create_custom_stage()
+
         submission_content = conference.submission_stage.get_content(forum_note.content.get('api_version', '1'))
         submission_revision_invitation = client.get_invitation(SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Submission_Revision_Stage')
 
@@ -522,6 +624,23 @@ Best,
         client.post_invitation(submission_revision_invitation)
 
         print('Conference: ', conference.get_id())
+        comment_note = openreview.Note(
+            invitation=SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Comment',
+            forum=forum_note.id,
+            replyto=forum_note.id,
+            readers=comment_readers,
+            writers=[SUPPORT_GROUP],
+            signatures=[SUPPORT_GROUP],
+            content={
+                'title': f'{invitation_type.replace("_", " ")} Process Completed',
+                'comment': f'''
+The {invitation_type.replace("_", " ")} process has been completed.
+
+More details: https://api.openreview.net/references?id={note.id}'''
+            }
+        )
+
+        client.post_note(comment_note)        
     except Exception as e:
         forum_note = client.get_note(note.forum)
 

@@ -8,7 +8,8 @@ else:
 
 from . import tools
 import requests
-from requests.adapters import HTTPAdapter, Retry
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 import pprint
 import os
 import re
@@ -19,6 +20,17 @@ import traceback
 class OpenReviewException(Exception):
     pass
 
+class LogRetry(Retry):
+     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)   
+
+    def increment(self, method=None, url=None, response=None, error=None, _pool=None, _stacktrace=None):
+        # Log retry information before calling the parent class method
+        print(f"Retrying request: {method} {url}, response: {response}, error: {error}")
+
+        # Call the parent class method to perform the actual retry increment
+        return super().increment(method=method, url=url, response=response, error=error, _pool=_pool, _stacktrace=_stacktrace)
 class Client(object):
     """
     :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
@@ -77,14 +89,15 @@ class Client(object):
             'Accept': 'application/json',
         }
 
+        retry_strategy = LogRetry(total=3, backoff_factor=0.1, status_forcelist=[ 500, 502, 503, 504 ], respect_retry_after_header=False)
         self.session = requests.Session()
-        retries = Retry(total=16, backoff_factor=0.2, status_forcelist=[500, 502, 503, 504])
-        self.session.mount('https://', HTTPAdapter(max_retries=retries))
-        self.session.mount('http://', HTTPAdapter(max_retries=retries))
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session.mount('https://', adapter)
+        self.session.mount('http://', adapter)
 
         if self.token:
             self.headers['Authorization'] = 'Bearer ' + self.token
-            self.user = jwt.decode(self.token, "secret", algorithms=["HS256"], issuer="openreview", options={"verify_signature": False})
+            self.user = jwt.decode(self.token, options={"verify_signature": False})
             try:
                 self.profile = self.get_profile()
             except:
@@ -107,7 +120,7 @@ class Client(object):
         self.token = str(response['token'])
         self.profile = Profile( id = response['user']['profile']['id'] )
         self.headers['Authorization'] ='Bearer ' + self.token
-        self.user = jwt.decode(self.token, "secret", algorithms=["HS256"], issuer="openreview", options={"verify_signature": False})
+        self.user = jwt.decode(self.token, options={"verify_signature": False})
         return response
 
     def __handle_response(self,response):
@@ -2771,7 +2784,7 @@ class Profile(object):
     :param tauthor: True author
     :type tauthor: str, optional
     """
-    def __init__(self, id=None, active=None, password=None, number=None, tcdate=None, tmdate=None, referent=None, packaging=None, invitation=None, readers=None, nonreaders=None, signatures=None, writers=None, content=None, metaContent=None, tauthor=None):
+    def __init__(self, id=None, active=None, password=None, number=None, tcdate=None, tmdate=None, referent=None, packaging=None, invitation=None, readers=None, nonreaders=None, signatures=None, writers=None, content=None, metaContent=None, tauthor=None, state=None):
         self.id = id
         self.number = number
         self.tcdate = tcdate
@@ -2789,6 +2802,8 @@ class Profile(object):
         self.password = password
         if tauthor:
             self.tauthor = tauthor
+        if state:
+            self.state = state
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -2886,7 +2901,8 @@ class Profile(object):
         writers=n.get('writers'),
         content=n.get('content'),
         metaContent=n.get('metaContent'),
-        tauthor=n.get('tauthor')
+        tauthor=n.get('tauthor'),
+        state=n.get('state')
         )
         return profile
 

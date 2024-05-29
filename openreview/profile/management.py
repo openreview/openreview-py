@@ -6,15 +6,7 @@ class ProfileManagement():
 
     def __init__(self, client, super_user):
 
-        baseurl_v2 = 'http://localhost:3001'
-
-        if 'https://devapi' in client.baseurl:
-            baseurl_v2 = 'https://devapi2.openreview.net'
-        if 'https://api' in client.baseurl:
-            baseurl_v2 = 'https://api2.openreview.net'
-
         self.client = client
-        self.client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)        
         self.super_user = super_user
         self.support_group_id = f'{self.super_user}/Support'
         self.author_rename_invitation_id = f'{self.support_group_id}/-/Author_Rename'
@@ -30,75 +22,261 @@ class ProfileManagement():
 
     def set_dblp_invitations(self):
 
-        dblp_group = openreview.tools.get_group(self.client, 'dblp.org')
+        dblp_group_id = 'DBLP.org'
+        dblp_uploader_group_id = f'{dblp_group_id}/Uploader'
+
+        dblp_group = openreview.tools.get_group(self.client, dblp_group_id)
         if dblp_group is None:
-            self.client.post_group(
-                openreview.Group(
-                    id = 'dblp.org',
+            self.client.post_group_edit(
+                invitation = f'{self.super_user}/-/Edit',
+                signatures = [self.super_user],
+                group = openreview.api.Group(
+                    id = dblp_group_id,
                     readers = ['everyone'],
-                    writers = ['dblp.org'],
+                    writers = [dblp_group_id],
                     nonreaders = [],
                     signatures = ['~Super_User1'],
-                    signatories = ['dblp.org'],
+                    signatories = [dblp_group_id],
                     members = []
                 )
             )
 
-        content = {
-            "dblp": {
-                "value-regex": "(.*\\n)+.*"
-            }
-        }
+        meta_invitation_id = f'{dblp_group_id}/-/Edit'
+        self.client.post_invitation_edit(
+            invitations = None,
+            signatures = [self.super_user],
+            invitation = openreview.api.Invitation(
+                id=meta_invitation_id,
+                invitees=[dblp_uploader_group_id],
+                readers=[dblp_group_id, dblp_uploader_group_id],
+                signatures=[dblp_group_id],                
+                edit=True
+            )
+        )
 
-        self.client.post_invitation(openreview.Invitation(
-            id='dblp.org/-/record',
-            readers=['everyone'],
-            writers=['dblp.org'],
-            signatures=['dblp.org'],
-            invitees=['~'],
-            transform=os.path.join(os.path.dirname(__file__), 'process/dblp_transform.js'),
-            reply={
-                'readers': {
-                    'values': ['everyone']
-                },
-                'writers': {
-                    'values':['dblp.org'],
-                },
-                'signatures': {
-                    'values-regex': "dblp.org|~.*"
-                },
-                'content': content
-            }
-        ))
+        dblp_uploader_group = openreview.tools.get_group(self.client, dblp_uploader_group_id)
+        if dblp_uploader_group is None:
+            self.client.post_group_edit(
+                invitation = meta_invitation_id,
+                signatures = [dblp_group_id],
+                group = openreview.api.Group(
+                    id = dblp_uploader_group_id,
+                    readers = [dblp_uploader_group_id],
+                    writers = [dblp_group_id],
+                    nonreaders = [],
+                    signatures = [dblp_group_id],
+                    signatories = [dblp_group_id],
+                    members = []
+                )
+            )
 
-        self.client.post_invitation(openreview.Invitation(
-            id='dblp.org/-/author_coreference',
-            readers=['everyone'],
-            writers=['dblp.org'],
-            signatures=['dblp.org'],
-            invitees=['~'],
-            reply={
-                'referentInvitation': 'dblp.org/-/record',
-                'readers': {
-                    'values': ['everyone']
-                },
-                'writers': {
-                    'values':[],
-                },
-                'signatures': {
-                    'values-regex': "dblp.org|~.*"
-                },
-                "content": {
-                    "authorids": {
-                        "values-regex": ".*"
+        record_invitation_id = f'{dblp_group_id}/-/Record'
+        with open(os.path.join(os.path.dirname(__file__), 'process/dblp_record_process.js'), 'r') as f:
+            file_content = f.read()
+
+        self.client.post_invitation_edit(
+            invitations = meta_invitation_id,
+            signatures = [dblp_group_id],
+            invitation = openreview.api.Invitation(
+                id=record_invitation_id,
+                readers=['everyone'],
+                writers=[dblp_group_id],
+                signatures=[dblp_group_id],
+                invitees=['~'],
+                process=file_content,
+                maxReplies=1000,
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True },
+                                { 'value': dblp_uploader_group_id, 'optional': True } 
+                            ]
+                        } 
                     },
-                    "authors": {
-                        "values-regex": ".*",
-                        "required": False
-                    }
+                    'writers':  [dblp_uploader_group_id],
+                    'content': {
+                        'xml': {
+                            'value': {
+                                'param': {
+                                    'type': 'string'
+                                }
+                            }
+                        }
+                    },
+                    'note': {
+                        'signatures': [ '${3/signatures}' ],
+                        'readers': ['everyone'],
+                        'writers': [ '~'],
+                        'license': 'CC BY-SA 4.0',
+                        'content': {
+                            'title': {
+                                'order': 1,
+                                'description': 'Title of paper.',
+                                'value': { 
+                                    'param': { 
+                                        'type': 'string',
+                                        'regex': '^.{1,250}$'
+                                    }
+                                }
+                            },
+                            'authors': {
+                                'order': 2,
+                                'value': {
+                                    'param': {
+                                        'type': 'string[]',
+                                        'regex': '[^;,\\n]+(,[^,\\n]+)*'
+                                    }
+                                }
+                            },
+                            'authorids': {
+                                'order': 2,
+                                'value': {
+                                    'param': {
+                                        'type': 'string[]',
+                                        'optional': True
+                                    }
+                                }
+                            },                        
+                            'venue': {
+                                'order': 3,
+                                'description': 'Enter the venue where the paper was published.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            },
+                            'venueid': {
+                                'order': 4,
+                                'value': {
+                                    'param': {
+                                        'type': "string",
+                                        'const': dblp_group_id,
+                                    }
+                                }
+                            }
+                        }
+                    }                                        
                 }
-            }
-        ))                           
+            )
+        )
+
+        author_coreference_invitation_id = f'{dblp_group_id}/-/Author_Coreference'
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/dblp_author_coreference_pre_process.js'), 'r') as f:
+            file_content = f.read()
+
+        self.client.post_invitation_edit(
+            invitations = meta_invitation_id,
+            signatures = [dblp_group_id],
+            invitation = openreview.api.Invitation(
+                id=author_coreference_invitation_id,
+                readers=['everyone'],
+                writers=[dblp_group_id],
+                signatures=[dblp_group_id],
+                invitees=['~'],
+                preprocess=file_content,
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True },
+                                { 'value': dblp_uploader_group_id, 'optional': True } 
+                            ]
+                        } 
+                    },
+                    'writers':  [dblp_group_id],
+                    'content': {
+                        'author_index': {
+                            'order': 1,
+                            'description': 'Enter the 0 based index of the author in the author list. The author name listed in that position must match with one of your names in your profile.',
+                            'value': {
+                                'param': {
+                                    'type': 'integer'
+                                }
+                            }
+                        },
+                        'author_id' : {
+                            'order': 2,
+                            'description': 'Enter the author id that matches with the author name in the author list.',
+                            'value': {
+                                'param': {
+                                    'type': 'string'
+                                }
+                            }
+                        },
+                    },
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': record_invitation_id
+                            }
+                        },
+                        'content': {
+                            'authorids': {
+                                'order': 2,
+                                'value': {
+                                    'param': {
+                                        'const': {
+                                            'replace': {
+                                                'index': '${6/content/author_index/value}',
+                                                'value': '${6/content/author_id/value}'
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }                                        
+                }
+            )
+        )
+
+        abstract_invitation_id = f'{dblp_group_id}/-/Abstract'
+        
+        with open(os.path.join(os.path.dirname(__file__), 'process/dblp_abstract_process.js'), 'r') as f:
+            file_content = f.read()
+
+        self.client.post_invitation_edit(
+            invitations = meta_invitation_id,
+            signatures = [dblp_group_id],
+            invitation = openreview.api.Invitation(
+                id=abstract_invitation_id,
+                readers=['everyone'],
+                writers=[dblp_group_id],
+                signatures=[dblp_group_id],
+                invitees=[dblp_uploader_group_id],
+                process=file_content,
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': [dblp_uploader_group_id],
+                    'writers':  [dblp_group_id, dblp_uploader_group_id],
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': record_invitation_id
+                            }
+                        },
+                        'content': {
+                            'abstract': {
+                                'order': 1,
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            }
+                        }
+                    }                                        
+                }
+            )
+        )                                          
+
 
     def set_remove_name_invitations(self):
 
@@ -148,7 +326,7 @@ class ProfileManagement():
                 
             with open(os.path.join(os.path.dirname(__file__), 'process/request_remove_name_pre_process.py'), 'r') as pre:
                 pre_file_content = pre.read()
-                self.client_v2.post_invitation_edit(
+                self.client.post_invitation_edit(
                     invitations=f'{self.super_user}/-/Edit',
                     signatures=[self.super_user],
                     invitation=openreview.api.Invitation(                    
@@ -215,7 +393,7 @@ class ProfileManagement():
             with open(os.path.join(os.path.dirname(__file__), 'process/request_remove_name_decision_pre_process.py'), 'r') as pre:
                 pre_file_content = pre.read()
 
-        self.client_v2.post_invitation_edit(
+        self.client.post_invitation_edit(
             invitations=f'{self.super_user}/-/Edit',
             signatures=[self.super_user],
             invitation=openreview.api.Invitation(
@@ -242,7 +420,9 @@ class ProfileManagement():
             )
         )
 
-        self.client.post_invitation(openreview.Invitation(
+        baseurl_v1, baseurl_v2 = openreview.tools.get_base_urls(self.client)
+        client_v1 = openreview.Client(baseurl=baseurl_v1, token=self.client.token)        
+        client_v1.post_invitation(openreview.Invitation(
             id=self.author_rename_invitation_id,
             readers=[self.support_group_id],
             writers=[self.support_group_id],
@@ -313,7 +493,7 @@ class ProfileManagement():
             file_content = file_content.replace("AUTHOR_RENAME_INVITATION_ID = ''", "AUTHOR_RENAME_INVITATION_ID = '" + self.author_rename_invitation_id + "'")
             with open(os.path.join(os.path.dirname(__file__), 'process/request_remove_email_pre_process.py'), 'r') as pre:
                 pre_file_content = pre.read()
-                self.client_v2.post_invitation_edit(
+                self.client.post_invitation_edit(
                     invitations=f'{self.super_user}/-/Edit',
                     signatures=[self.super_user],
                     invitation=openreview.api.Invitation(
@@ -340,31 +520,45 @@ class ProfileManagement():
 
     def set_archive_invitations(self):
 
+        archive_group_id = f'{self.super_user}/Archive'
+
+        self.client.post_invitation_edit(invitations=None,
+            readers=[archive_group_id],
+            writers=[archive_group_id],
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(id=f'{archive_group_id}/-/Edit',
+                invitees=[archive_group_id],
+                readers=[archive_group_id],
+                signatures=['~Super_User1'],
+                edit=True
+            )
+        )        
+
         archive_group = openreview.api.Group(
-            id = f'{self.super_user}/Archive',
+            id = archive_group_id,
             readers = ['everyone'],
-            writers = [self.support_group_id],
+            writers = [archive_group_id],
             signatures = [self.super_user],
-            signatories = []
+            signatories = [archive_group_id]
         )
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/archiveWebfield.js'), 'r') as f:
             file_content = f.read()
             archive_group.web = file_content
 
-            self.client_v2.post_group_edit(
-                invitation = f'{self.super_user}/-/Edit',
-                signatures = [self.super_user],
+            self.client.post_group_edit(
+                invitation = f'{archive_group_id}/-/Edit',
+                signatures = ['~Super_User1'],
                 group = archive_group)
 
-        self.client_v2.post_invitation_edit(
-            invitations = f'{self.super_user}/-/Edit',
-            signatures = [self.super_user],
+        self.client.post_invitation_edit(
+            invitations = f'{archive_group_id}/-/Edit',
+            signatures = [archive_group_id],
             invitation = openreview.api.Invitation(
                 id=f'{archive_group.id}/-/Direct_Upload',
                 readers=['~'],
                 writers=[self.support_group_id],
-                signatures=[self.super_user],
+                signatures=[archive_group_id],
                 invitees=['~'],
                 edit={
                     'readers': ['everyone'],
@@ -406,7 +600,19 @@ class ProfileManagement():
                         'signatures': [ '${3/signatures}' ],
                         'readers': ['everyone'],
                         'writers': [ '${2/content/authorids/value}'],
-                        'license': 'CC BY-SA 4.0',
+                        'license': {
+                            'param': {
+                                'enum': [ 
+                                    { 'value': 'CC BY 4.0', 'description': 'CC BY 4.0' },
+                                    { 'value': 'CC BY-SA 4.0', 'description': 'CC BY-SA 4.0' },
+                                    { 'value': 'CC BY-NC 4.0', 'description': 'CC BY-NC 4.0' },
+                                    { 'value': 'CC BY-ND 4.0', 'description': 'CC BY-ND 4.0' },
+                                    { 'value': 'CC BY-NC-SA 4.0', 'description': 'CC BY-NC-SA 4.0' },
+                                    { 'value': 'CC BY-NC-ND 4.0', 'description': 'CC BY-NC-ND 4.0' },
+                                    { 'value': 'CC0 1.0', 'description': 'CC0 1.0' } 
+                                ]
+                            }
+                        },
                         'content': {
                             'title': {
                                 'order': 1,
@@ -433,7 +639,7 @@ class ProfileManagement():
                                 'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
                                 'value': {
                                     'param': {
-                                        'type': 'group[]',
+                                        'type': 'profile[]',
                                         'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
                                         'mismatchError': 'must be a valid email or profile ID'
                                     }
@@ -469,7 +675,7 @@ class ProfileManagement():
                                 'value': {
                                     'param': {
                                         'type': 'string',
-                                        'regex': '"(http|https):\\/\\/.+"',
+                                        'regex': '(http|https):\/\/.+',
                                         'optional': True
                                     }
                                 }
@@ -499,12 +705,106 @@ class ProfileManagement():
             )
         )
 
+        with open(os.path.join(os.path.dirname(__file__), 'process/archive_comment_process.py'), 'r') as f:
+            process_content = f.read()
+
+        self.client.post_invitation_edit(
+            invitations = f'{archive_group.id}/-/Edit',
+            signatures = [archive_group.id],
+            invitation = openreview.api.Invitation(id=f'{archive_group.id}/-/Comment',
+                invitees=[archive_group.id],
+                readers=[archive_group.id],
+                writers=[archive_group.id],
+                signatures=[archive_group.id],
+                content={
+                    'comment_process_script': {
+                        'value': process_content
+                    }
+                },
+                edit={
+                    'signatures': [archive_group.id],
+                    'readers': [archive_group.id],
+                    'writers': [archive_group.id],
+                    'content': {
+                        'noteNumber': {
+                            'value': {
+                                'param': {
+                                    'regex': '.*', 'type': 'integer'
+                                }
+                            }
+                        },
+                        'noteId': {
+                            'value': {
+                                'param': {
+                                    'regex': '.*', 'type': 'string'
+                                }
+                            }
+                        }
+                    },
+                    'replacement': True,
+                    'invitation': {
+                        'id': f'{archive_group.id}/Submission${{2/content/noteNumber/value}}/-/Comment',
+                        'signatures': [ archive_group.id ],
+                        'readers': ['everyone'],
+                        'writers': [archive_group.id],
+                        'invitees': ['everyone'],
+                        'process': '''def process(client, edit, invitation):
+        meta_invitation = client.get_invitation(invitation.invitations[0])
+        script = meta_invitation.content['comment_process_script']['value']
+        funcs = {
+            'openreview': openreview
+        }
+        exec(script, funcs)
+        funcs['process'](client, edit, invitation)
+    ''',
+                        'edit': {
+                            'signatures': { 
+                                'param': { 
+                                    'items': [
+                                        { 'prefix': '~.*' }
+                                    ] 
+                                }
+                            },
+                            'readers': ['${2/note/readers}'],
+                            'writers': [archive_group.id],
+                            'note': {
+                                'id': {
+                                    'param': {
+                                        'withInvitation': f'{archive_group.id}/Submission${{6/content/noteNumber/value}}/-/Comment',
+                                        'optional': True
+                                    }
+                                },
+                                'forum': '${4/content/noteId/value}',
+                                'replyto': { 
+                                    'param': {
+                                        'withForum': '${6/content/noteId/value}', 
+                                    }
+                                },
+                                'ddate': {
+                                    'param': {
+                                        'range': [ 0, 9999999999999 ],
+                                        'optional': True,
+                                        'deletable': True
+                                    }
+                                },
+                                'signatures': ['${3/signatures}'],
+                                'readers': ['everyone'],
+                                'writers': [archive_group.id, '${3/signatures}'],
+                                'content': default_content.comment_v2.copy()
+                            }
+                        }
+                    }
+
+                }
+            )
+        )        
+
     def set_anonymous_preprint_invitations(self):
 
         anonymous_group_id = f'{self.super_user}/Anonymous_Preprint'
         author_anonymous_group_id = f'{anonymous_group_id}/Submission${{2/note/number}}/Authors'
 
-        self.client_v2.post_invitation_edit(invitations=None,
+        self.client.post_invitation_edit(invitations=None,
             readers=[anonymous_group_id],
             writers=[anonymous_group_id],
             signatures=['~Super_User1'],
@@ -528,7 +828,7 @@ class ProfileManagement():
             file_content = f.read()
             anonymous_group.web = file_content
 
-            self.client_v2.post_group_edit(
+            self.client.post_group_edit(
                 invitation = f'{anonymous_group_id}/-/Edit',
                 signatures = ['~Super_User1'],
                 group = anonymous_group)
@@ -536,7 +836,7 @@ class ProfileManagement():
         with open(os.path.join(os.path.dirname(__file__), 'process/anonymous_preprint_submission_process.py'), 'r') as f:
             process_content = f.read()
 
-        self.client_v2.post_invitation_edit(
+        self.client.post_invitation_edit(
             invitations = f'{anonymous_group_id}/-/Edit',
             signatures = [anonymous_group_id],
             invitation = openreview.api.Invitation(
@@ -581,7 +881,19 @@ class ProfileManagement():
                         'signatures': [ f'{anonymous_group_id}/Submission${{2/number}}/Authors' ],
                         'readers': ['everyone'],
                         'writers': [ anonymous_group_id, f'{anonymous_group_id}/Submission${{2/number}}/Authors'],
-                        'license': 'CC BY-SA 4.0',
+                        'license': {
+                            'param': {
+                                'enum': [ 
+                                    { 'value': 'CC BY 4.0', 'description': 'CC BY 4.0' },
+                                    { 'value': 'CC BY-SA 4.0', 'description': 'CC BY-SA 4.0' },
+                                    { 'value': 'CC BY-NC 4.0', 'description': 'CC BY-NC 4.0' },
+                                    { 'value': 'CC BY-ND 4.0', 'description': 'CC BY-ND 4.0' },
+                                    { 'value': 'CC BY-NC-SA 4.0', 'description': 'CC BY-NC-SA 4.0' },
+                                    { 'value': 'CC BY-NC-ND 4.0', 'description': 'CC BY-NC-ND 4.0' },
+                                    { 'value': 'CC0 1.0', 'description': 'CC0 1.0' } 
+                                ]
+                            }
+                        },
                         'content': {
                             'title': {
                                 'order': 1,
@@ -609,7 +921,7 @@ class ProfileManagement():
                                 'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
                                 'value': {
                                     'param': {
-                                        'type': 'group[]',
+                                        'type': 'profile[]',
                                         'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
                                         'mismatchError': 'must be a valid email or profile ID'
                                     }
@@ -692,7 +1004,7 @@ class ProfileManagement():
         with open(os.path.join(os.path.dirname(__file__), 'process/anonymous_preprint_comment_process.py'), 'r') as f:
             process_content = f.read()
 
-        self.client_v2.post_invitation_edit(
+        self.client.post_invitation_edit(
             invitations = f'{anonymous_group_id}/-/Edit',
             signatures = [anonymous_group_id],
             invitation = openreview.api.Invitation(id=f'{anonymous_group_id}/-/Comment',
@@ -841,14 +1153,14 @@ class ProfileManagement():
 
         with open(os.path.join(os.path.dirname(__file__), 'process/request_merge_profiles_process.py'), 'r') as f:
             file_content = f.read()
-            self.client_v2.post_invitation_edit(
+            self.client.post_invitation_edit(
                 invitations = f'{self.super_user}/-/Edit',
                 signatures = [self.super_user],
                 invitation = openreview.api.Invitation(
                     id=f'{self.support_group_id}/-/Profile_Merge',
                     readers=['everyone'],
                     writers=[self.support_group_id],
-                    signatures=[self.support_group_id],
+                    signatures=[self.super_user],
                     invitees=['~', '(guest)'],
                     process=file_content,
                     edit={
@@ -904,7 +1216,7 @@ class ProfileManagement():
             file_content = f.read()
             file_content = file_content.replace("SUPPORT_USER_ID = ''", "SUPPORT_USER_ID = '" + self.support_group_id + "'")
             file_content = file_content.replace("AUTHOR_RENAME_INVITATION_ID = ''", "AUTHOR_RENAME_INVITATION_ID = '" + self.author_rename_invitation_id + "'")
-            self.client_v2.post_invitation_edit(
+            self.client.post_invitation_edit(
                 invitations = f'{self.super_user}/-/Edit',
                 signatures = [self.super_user],
                 invitation = openreview.api.Invitation(

@@ -4,6 +4,7 @@ def process(client, edit, invitation):
     venue_id = domain.id
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     short_name = domain.get_content_value('subtitle')
+    contact = domain.get_content_value('contact')
     authors_name = domain.get_content_value('authors_name')
     submission_name = domain.get_content_value('submission_name')
     reviewers_name = domain.get_content_value('reviewers_name')
@@ -11,6 +12,7 @@ def process(client, edit, invitation):
     senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
     reviewers_submitted_name = domain.get_content_value('reviewers_submitted_name')
     review_name = domain.get_content_value('review_name')
+    sender = domain.get_content_value('message_sender')
 
     submission = client.get_note(edit.note.forum)
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
@@ -58,6 +60,9 @@ def process(client, edit, invitation):
 
     if domain.get_content_value('review_email_pcs'):
         client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
+            sender=sender,
             recipients=[domain.get_content_value('program_chairs_id')],
             ignoreRecipients=ignore_groups,
             subject=f'''[{short_name}] A {review_name} has been received on Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
@@ -68,7 +73,11 @@ def process(client, edit, invitation):
         )
 
     client.post_message(
+        invitation=meta_invitation_id,
+        signature=venue_id,
+        sender=sender,
         recipients=review.signatures,
+        replyTo=contact,
         subject=f'''[{short_name}] Your {review_name} has been received on your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
         message=f''''We have received a review on a submission to {short_name}.
 
@@ -81,8 +90,12 @@ Paper title: {submission.content['title']['value']}
 
     if area_chairs_name and ('everyone' in review.readers or paper_area_chairs_id in review.readers):
         client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
+            sender=sender,
             recipients=[paper_area_chairs_id],
             ignoreRecipients=ignore_groups,
+            replyTo=contact,
             subject=f'''[{short_name}] {capital_review_name} posted to your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
             message=f''''A submission to {short_name}, for which you are an official area chair, has received a review.
 
@@ -97,8 +110,12 @@ Paper title: {submission.content['title']['value']}
     create_group(paper_reviewers_submitted_id, [review.signatures[0]])
     if 'everyone' in review.readers or paper_reviewers_id in review.readers:
         client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
+            sender=sender,
             recipients=[paper_reviewers_id],
             ignoreRecipients=ignore_groups,
+            replyTo=contact,
             subject=f'''[{short_name}] {capital_review_name} posted to your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
             message=f''''A submission to {short_name}, for which you are a reviewer, has received a review.
 
@@ -111,8 +128,12 @@ Paper title: {submission.content['title']['value']}
         )
     elif paper_reviewers_submitted_id in review.readers:
         client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
+            sender=sender,
             recipients=[paper_reviewers_submitted_id],
             ignoreRecipients=ignore_groups,
+            replyTo=contact,
             subject=f'''[{short_name}] {capital_review_name} posted to your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
             message=f''''A submission to {short_name}, for which you are a reviewer, has received a review.
 
@@ -127,8 +148,12 @@ Paper title: {submission.content['title']['value']}
     paper_authors_id = f'{paper_group_id}/{authors_name}'
     if 'everyone' in  review.readers or paper_authors_id in review.readers:
         client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
+            sender=sender,
             recipients=[paper_authors_id],
             ignoreRecipients=ignore_groups,
+            replyTo=contact,
             subject=f'''[{short_name}] {capital_review_name} posted to your submission - Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
             message=f''''Your submission to {short_name} has received a review.
 
@@ -144,14 +169,18 @@ Paper title: {submission.content['title']['value']}
         print('processing invitation: ', invitation.id)
         review_reply = invitation.content.get('reply_to', {}).get('value', False) if invitation.content else False
         content_keys = invitation.edit.get('content', {}).keys()
-        if 'reviews' == review_reply and 'replytoSignatures' in content_keys and 'replyto' in content_keys and len(content_keys) == 4:
+        if 'reviews' == review_reply and 'replyto' in content_keys and len(content_keys) >= 4:
             print('create invitation: ', invitation.id)
+            content  = {
+                'noteId': { 'value': review.forum },
+                'noteNumber': { 'value': submission.number },
+                'replyto': { 'value': review.id }
+            }
+            if 'replytoSignatures' in content_keys:
+                content['replytoSignatures'] = { 'value': review.signatures[0] }
+            if 'replyNumber' in content_keys:
+                content['replyNumber'] = { 'value': review.number }
             client.post_invitation_edit(invitations=invitation.id,
-                content={
-                    'noteId': { 'value': review.forum },
-                    'noteNumber': { 'value': submission.number },
-                    'replytoSignatures': { 'value': review.signatures[0] },
-                    'replyto': { 'value': review.id }
-                },
+                content=content,
                 invitation=openreview.api.Invitation()
             )

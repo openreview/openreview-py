@@ -19,5 +19,5 @@ Assignment acknowledgement: {edit.note.content['assignment_acknowledgement']['va
 To view the acknowledgement, click here: https://openreview.net/forum?id={submission.id}&noteId={edit.note.id}
 '''
 
-    client.post_message(subject, recipients, message, ignoreRecipients=ignoreRecipients, replyTo=journal.contact_info)
+    client.post_message(subject, recipients, message, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, ignoreRecipients=ignoreRecipients, replyTo=journal.contact_info, sender=journal.get_message_sender())
 

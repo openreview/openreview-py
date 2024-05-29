@@ -71,6 +71,7 @@ class GroupBuilder(object):
             'subtitle': { 'value': self.journal.short_name },
             'website': { 'value': self.journal.website },
             'contact': { 'value': self.journal.contact_info },
+            'message_sender': { 'value': self.journal.get_message_sender() },
             'submission_id': { 'value': self.journal.get_author_submission_id() },
             'under_review_venue_id': { 'value': self.journal.under_review_venue_id },
             'decision_pending_venue_id': { 'value': self.journal.decision_pending_venue_id },
@@ -80,7 +81,7 @@ class GroupBuilder(object):
             content['certifications'] = { 'value': self.journal.get_certifications() }
         if self.journal.get_eic_certifications():
             content['eic_certifications'] = { 'value': self.journal.get_eic_certifications() }
-        if self.journal.get_expert_reviewer_certification():
+        if self.journal.has_expert_reviewers():
             content['expert_reviewer_certification'] = { 'value': self.journal.get_expert_reviewer_certification() }
         if self.journal.get_event_certifications():
             content['event_certifications'] = { 'value': self.journal.get_event_certifications() }
@@ -122,6 +123,7 @@ class GroupBuilder(object):
             content = content.replace("var EDITORS_IN_CHIEF_EMAIL = '';", "var EDITORS_IN_CHIEF_EMAIL = '" + self.journal.get_editors_in_chief_email() + "';")
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + self.journal.reviewers_name + "';")
             content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + self.journal.action_editors_name + "';")
+            content = content.replace("var NUMBER_OF_REVIEWERS = 3;", "var NUMBER_OF_REVIEWERS = " + str(self.journal.get_number_of_reviewers()) + ";")
             if self.journal.request_form_id:
                 content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + self.journal.request_form_id + "';")
             if reviewer_report_form:
@@ -172,11 +174,11 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             publication_chairs_id = self.journal.get_publication_chairs_id()
             publication_chairs_group = openreview.tools.get_group(self.client, publication_chairs_id)
             if not publication_chairs_group:
-                action_editor_group=self.post_group(Group(id=publication_chairs_id,
+                publication_chairs_group=self.post_group(Group(id=publication_chairs_id,
                                 readers=['everyone'],
                                 writers=[venue_id],
                                 signatures=[venue_id],
-                                signatories=[venue_id],
+                                signatories=[venue_id, publication_chairs_id],
                                 members=[]))
 
         ## action editors group
@@ -209,6 +211,7 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + self.journal.action_editors_name + "';")
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + self.journal.reviewers_name + "';")
             content = content.replace("var SUBMISSION_GROUP_NAME = '';", "var SUBMISSION_GROUP_NAME = '" + self.journal.submission_group_name + "';")
+            content = content.replace("var NUMBER_OF_REVIEWERS = 3;", "var NUMBER_OF_REVIEWERS = " + str(self.journal.get_number_of_reviewers()) + ";")
             if self.journal.request_form_id:
                 content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + self.journal.request_form_id + "';")
             if reviewer_report_form:
@@ -272,6 +275,7 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + self.journal.action_editors_name + "';")
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + self.journal.reviewers_name + "';")
             content = content.replace("var SUBMISSION_GROUP_NAME = '';", "var SUBMISSION_GROUP_NAME = '" + self.journal.submission_group_name + "';")
+            content = content.replace("var NUMBER_OF_REVIEWERS = 3;", "var NUMBER_OF_REVIEWERS = " + str(self.journal.get_number_of_reviewers()) + ";")
             if reviewer_report_form:
                 content = content.replace("var REVIEWER_REPORT_ID = '';", "var REVIEWER_REPORT_ID = '" + reviewer_report_form + "';")
 
@@ -362,6 +366,17 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
                             signatories=[],
                             members=[]))
             
+        ## reviewers volunteers group
+        reviewers_volunteers_id = self.journal.get_reviewers_volunteers_id()
+        reviewers_volunteers_group = openreview.tools.get_group(self.client, reviewers_volunteers_id)
+        if not reviewers_volunteers_group:
+            self.post_group(Group(id=reviewers_volunteers_id,
+                            readers=[venue_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[],
+                            members=[]))            
+            
         ## expert reviewer group
         if self.journal.has_expert_reviewers():
             expert_reviewers_id = self.journal.get_expert_reviewers_id()
@@ -382,8 +397,10 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
         authors_group = openreview.tools.get_group(self.client, authors_id)
         if not authors_group:
             content = {}
+            content['new_submission_email_template_script'] = { 'value': author_new_submission_email_template }
             content['ae_recommendation_email_template_script'] = { 'value': author_ae_recommendation_email_template }
-            content['discussion_starts_email_template_script'] = { 'value': author_discussion_starts_email_template }            
+            content['discussion_starts_email_template_script'] = { 'value': author_discussion_starts_email_template }
+            content['official_recommendation_starts_email_template_script'] = { 'value': author_official_recommendation_starts_email_template }          
             content['decision_accept_as_is_email_template_script'] = { 'value': author_decision_accept_as_is_email_template }
             content['decision_accept_revision_email_template_script'] = { 'value': author_decision_accept_revision_email_template }
             content['decision_reject_email_template_script'] = { 'value': author_decision_reject_email_template }
@@ -437,7 +454,7 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
                 nonreaders=[authors_group_id],
                 writers=[venue_id],
                 signatures=[venue_id],
-                signatories=[venue_id, action_editors_group_id],
+                signatories=[venue_id],
                 members=[],
                 anonids=True
             ))
@@ -479,6 +496,6 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
 
     def set_impersonators(self, impersonators):
         return self.post_group(openreview.api.Group(
-            id = self.venue_id,
+            id = self.journal.venue_id,
             impersonators = impersonators
         ))

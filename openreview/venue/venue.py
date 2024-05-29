@@ -32,12 +32,13 @@ class Venue(object):
         self.date = 'TBD'
         self.id = venue_id # get compatibility with conference
         self.program_chairs_name = 'Program_Chairs'
-        self.reviewers_name = 'Reviewers'
         self.reviewer_roles = ['Reviewers']
+        self.reviewers_name = self.reviewer_roles[0]
         self.area_chair_roles = ['Area_Chairs']
+        self.area_chairs_name = self.area_chair_roles[0]
         self.senior_area_chair_roles = ['Senior_Area_Chairs']        
-        self.area_chairs_name = 'Area_Chairs'
-        self.senior_area_chairs_name = 'Senior_Area_Chairs'
+        self.senior_area_chairs_name = self.senior_area_chair_roles[0]
+        self.secondary_area_chairs_name = 'Secondary_Area_Chairs'
         self.ethics_chairs_name = 'Ethics_Chairs'
         self.ethics_reviewers_name = 'Ethics_Reviewers'
         self.authors_name = 'Authors'
@@ -73,12 +74,20 @@ class Venue(object):
         self.allow_gurobi_solver = False
         self.submission_license = None
         self.use_publication_chairs = False
+        self.source_submissions_query_mapping = {}
+        self.sac_paper_assignments = False
 
     def get_id(self):
         return self.venue_id
 
     def get_short_name(self):
         return self.short_name
+    
+    def get_message_sender(self):
+        return {
+            'fromName': self.short_name,
+            'fromEmail': f'{self.short_name.replace(" ", "").lower()}-notifications@openreview.net'
+        }
     
     def get_edges_archive_date(self):
         archive_date = datetime.datetime.utcnow()
@@ -160,8 +169,14 @@ class Venue(object):
     def get_custom_max_papers_id(self, committee_id):
         return self.get_invitation_id('Custom_Max_Papers', prefix=committee_id)
     
+    def get_custom_user_demands_id(self, committee_id):
+        return self.get_invitation_id('Custom_User_Demands', prefix=committee_id)    
+    
     def get_constraint_label_id(self, committee_id):
         return self.get_invitation_id('Constraint_Label', prefix=committee_id)
+
+    def get_message_id(self, committee_id=None, number=None):
+        return self.get_invitation_id('Message', prefix=committee_id, number=number)
 
     def get_recommendation_id(self, committee_id=None):
         if not committee_id:
@@ -229,8 +244,7 @@ class Venue(object):
 
     def get_reviewers_name(self, pretty=True):
         if pretty:
-            name=self.reviewers_name.replace('_', ' ')
-            return name[:-1] if name.endswith('s') else name
+            return self.get_committee_name(self.reviewers_name, pretty)
         return self.reviewers_name
     
     def get_anon_committee_name(self, name):
@@ -242,8 +256,7 @@ class Venue(object):
 
     def get_ethics_reviewers_name(self, pretty=True):
         if pretty:
-            name=self.ethics_reviewers_name.replace('_', ' ')
-            return name[:-1] if name.endswith('s') else name
+            return self.get_committee_name(self.ethics_reviewers_name, pretty)
         return self.ethics_reviewers_name
 
     def anon_ethics_reviewers_name(self, pretty=True):
@@ -251,8 +264,7 @@ class Venue(object):
 
     def get_area_chairs_name(self, pretty=True):
         if pretty:
-            name=self.area_chairs_name.replace('_', ' ')
-            return name[:-1] if name.endswith('s') else name
+            return self.get_committee_name(self.area_chairs_name, pretty)
         return self.area_chairs_name
 
     def get_anon_area_chairs_name(self, pretty=True):
@@ -277,10 +289,17 @@ class Venue(object):
     def get_area_chairs_id(self, number = None, anon=False):
         ac_name = self.get_anon_area_chairs_name()
         return self.get_committee_id(f'{ac_name}.*' if anon else self.area_chairs_name, number)
+    
+    def get_secondary_area_chairs_id(self, number = None, anon=False):
+        ac_name = self.get_anon_committee_name(self.secondary_area_chairs_name)
+        return self.get_committee_id(f'{ac_name}.*' if anon else self.secondary_area_chairs_name, number)    
 
     ## Compatibility with Conference, refactor conference references to use get_area_chairs_id
     def get_anon_area_chair_id(self, number, anon_id):
         return self.get_area_chairs_id(number, True)
+
+    def get_anon_secondary_area_chair_id(self, number, anon_id):
+        return self.get_secondary_area_chairs_id(number, True)
 
     def get_senior_area_chairs_id(self, number = None):
         return self.get_committee_id(self.senior_area_chairs_name, number)
@@ -360,7 +379,8 @@ class Venue(object):
                 for note in notes:
                     for reply in note.details['directReplies']:
                         if f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{self.decision_stage.name}' in reply['invitations']:
-                            if 'Accept' in reply['content']['decision']['value']:
+                            decision = reply['content']['decision']['value']
+                            if openreview.tools.is_accept_decision(decision, self.decision_stage.accept_options):
                                 accepted_notes.append(note)
             return accepted_notes
         else:
@@ -449,6 +469,7 @@ class Venue(object):
         self.invitation_builder.set_post_submission_invitation()
         self.invitation_builder.set_pc_submission_revision_invitation()
         self.invitation_builder.set_submission_reviewer_group_invitation()
+        self.invitation_builder.set_submission_message_invitation()
         if self.use_area_chairs:
             self.invitation_builder.set_submission_area_chair_group_invitation()
         if self.use_senior_area_chairs:
@@ -465,15 +486,16 @@ class Venue(object):
                 remove_fields=stage.second_deadline_remove_fields if stage.second_deadline_remove_fields else stage.remove_fields,
                 only_accepted=False,
                 multiReply=True,
-                allow_author_reorder=stage.author_reorder_after_first_deadline
-            
+                allow_author_reorder=stage.author_reorder_after_first_deadline,
+                allow_license_edition=True
             )
-            self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)                        
+            self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)
+            self.invitation_builder.set_submission_deletion_invitation(submission_revision_stage)
 
     def create_post_submission_stage(self):
 
         self.invitation_builder.set_post_submission_invitation()
-    
+
     def create_submission_revision_stage(self):
         return self.invitation_builder.set_submission_revision_invitation()
 
@@ -509,6 +531,8 @@ class Venue(object):
         if self.comment_stage.allow_public_comments:
             self.invitation_builder.set_public_comment_invitation()
 
+        self.invitation_builder.set_chat_invitation()
+
     def create_decision_stage(self):
         invitation = self.invitation_builder.set_decision_invitation()
 
@@ -538,7 +562,7 @@ class Venue(object):
 
         flag_invitation = self.invitation_builder.set_ethics_stage_invitation()
         self.invitation_builder.set_ethics_paper_groups_invitation()
-        self.invitation_builder.set_review_invitation()
+        self.invitation_builder.update_review_invitations()
         self.invitation_builder.set_ethics_review_invitation()
         if self.ethics_review_stage.enable_comments:
             self.invitation_builder.set_official_comment_invitation()
@@ -701,7 +725,7 @@ Total Errors: {len(errors)}
             return reveal_all_authors or (reveal_authors_accepted and is_note_accepted)
 
         def decision_to_venueid(decision):
-            if 'Accept' in decision:
+            if openreview.tools.is_accept_decision(decision, self.decision_stage.accept_options):
                 return venue_id
             else:
                 return self.get_rejected_submission_venue_id()
@@ -716,12 +740,12 @@ Total Errors: {len(errors)}
                     if f'{self.venue_id}/{self.submission_stage.name}{submission.number}/-/{self.decision_stage.name}' in reply['invitations']:
                         decision_note = reply
                         break
-            note_accepted = decision_note and 'Accept' in decision_note['content']['decision']['value']
-            submission_readers = self.submission_stage.get_readers(self, submission.number, decision_note['content']['decision']['value'] if decision_note else None)
+            note_accepted = decision_note and openreview.tools.is_accept_decision(decision_note['content']['decision']['value'], self.decision_stage.accept_options)
+            submission_readers = self.submission_stage.get_readers(self, submission.number, decision_note['content']['decision']['value'] if decision_note else None, self.decision_stage.accept_options)
 
             venue = self.short_name
             decision_option = decision_note['content']['decision']['value'] if decision_note else ''
-            venue = tools.decision_to_venue(venue, decision_option)
+            venue = tools.decision_to_venue(venue, decision_option, self.decision_stage.accept_options)
             venueid = decision_to_venueid(decision_option)
 
             content = {
@@ -798,14 +822,21 @@ Total Errors: {len(errors)}
                 message = messages[decision_note['content']['decision']['value']]
                 final_message = message.replace("{{submission_title}}", note.content['title']['value'])
                 final_message = final_message.replace("{{forum_url}}", f'https://openreview.net/forum?id={note.id}')
-                self.client.post_message(subject, recipients=[self.get_authors_id(note.number)], message=final_message, parentGroup=self.get_authors_id())
+                self.client.post_message(subject, 
+                                         recipients=[self.get_authors_id(note.number)], 
+                                         message=final_message, 
+                                         parentGroup=self.get_authors_id(), 
+                                         replyTo=self.contact, 
+                                         invitation=self.get_meta_invitation_id(), 
+                                         signature=self.venue_id,
+                                         sender=self.get_message_sender())
 
         tools.concurrent_requests(send_notification, paper_notes)
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None, submission_track=None):
         if committee_id is None:
             committee_id=self.get_reviewers_id()
-        if self.use_senior_area_chairs and committee_id == self.get_senior_area_chairs_id() and not alternate_matching_group:
+        if self.use_senior_area_chairs and committee_id == self.get_senior_area_chairs_id() and not alternate_matching_group and not self.sac_paper_assignments:
             alternate_matching_group = self.get_area_chairs_id()
         venue_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group, { 'track': submission_track } if submission_track else None)
 
@@ -817,6 +848,12 @@ Total Errors: {len(errors)}
         assignment_invitation = self.client.get_invitation(self.get_assignment_id(match_group.id))
         conference_matching = matching.Matching(self, match_group, submission_content=assignment_invitation.edit.get('head', {}).get('param', {}).get('withContent'))
         return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment)
+    
+    def unset_assignments(self, assignment_title, committee_id):
+
+        match_group = self.client.get_group(committee_id)
+        conference_matching = matching.Matching(self, match_group)
+        return conference_matching.undeploy(assignment_title)    
 
     def setup_assignment_recruitment(self, committee_id, hash_seed, due_date, assignment_title=None, invitation_labels={}, email_template=None):
 
@@ -977,7 +1014,7 @@ A conflict was detected between you and the submission authors and the assignmen
 If you have any questions, please contact us as info@openreview.net.
 
 OpenReview Team'''
-            response = client.post_message(subject, [edge.tail], message)
+            response = client.post_message(subject, [edge.tail], message, invitation=venue_group.content['meta_invitation_id']['value'], signature=venue_group.id, replyTo=venue_group.content['contact']['value'], sender=venue_group.content['message_sender']['value'])
 
             ## Send email to inviter
             subject=f"[{venue_group.content['subtitle']['value']}] Conflict detected between reviewer {user_profile.get_preferred_name(pretty=True)} and paper {submission.number}"
@@ -989,7 +1026,7 @@ If you have any questions, please contact us as info@openreview.net.
 OpenReview Team'''
 
             ## - Send email
-            response = client.post_message(subject, edge.signatures, message)            
+            response = client.post_message(subject, edge.signatures, message, invitation=venue_group.content['meta_invitation_id']['value'], signature=venue_group.id, replyTo=venue_group.content['contact']['value'], sender=venue_group.content['message_sender']['value'])            
         
         def mark_as_accepted(venue_group, edge, submission, user_profile, invite_assignment_invitation):
 
@@ -1045,7 +1082,7 @@ If you would like to change your decision, please click the Decline link in the 
 OpenReview Team'''
 
                 ## - Send email
-                response = client.post_message(subject, [edge.tail], message)
+                response = client.post_message(subject, [edge.tail], message, invitation=venue_group.content['meta_invitation_id']['value'], signature=venue_group.id, replyTo=venue_group.content['contact']['value'], sender=venue_group.content['message_sender']['value'])
 
                 ## Send email to inviter
                 subject=f'[{short_phrase}] {reviewer_name} {user_profile.get_preferred_name(pretty=True)} signed up and is assigned to paper {submission.number}'
@@ -1055,7 +1092,7 @@ The {reviewer_name} {user_profile.get_preferred_name(pretty=True)}({user_profile
 OpenReview Team'''
 
                 ## - Send email
-                response = client.post_message(subject, edge.signatures, message)            
+                response = client.post_message(subject, edge.signatures, message, invitation=venue_group.content['meta_invitation_id']['value'], signature=venue_group.id, replyTo=venue_group.content['contact']['value'], sender=venue_group.content['message_sender']['value'])            
         
         active_venues = client.get_group('active_venues').members
 

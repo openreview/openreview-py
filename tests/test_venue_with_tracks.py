@@ -14,8 +14,8 @@ class TestVenueWithTracks():
 
 
     @pytest.fixture(scope="class")
-    def profile_management(self, client):
-        profile_management = ProfileManagement(client, 'openreview.net')
+    def profile_management(self, openreview_client):
+        profile_management = ProfileManagement(openreview_client, 'openreview.net')
         profile_management.setup()
         return profile_management
 
@@ -987,12 +987,12 @@ reviewer{reviewer_counter + 1}@{'gmail' if reviewer_counter == 21 else 'webconf'
 
         assert openreview_client.get_groups('ACM.org/TheWebConf/2024/Conference/Emergency_COI_Reviewers/Invited', member='celeste@acm.org')
 
-        messages = client.get_messages(to='celeste@acm.org', subject='[TheWebConf24] Invitation to review paper titled "Paper title 1"')
+        messages = openreview_client.get_messages(to='celeste@acm.org', subject='[TheWebConf24] Invitation to review paper titled "Paper title 1"')
         assert messages and len(messages) == 1
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, invitation='ACM.org/TheWebConf/2024/Conference/COI_Reviewers/-/Assignment_Recruitment')
 
         ## External reviewer is set pending profile creation
         invite_edges=pc_client_v2.get_edges(invitation='ACM.org/TheWebConf/2024/Conference/COI_Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='celeste@acm.org')
@@ -1011,7 +1011,7 @@ reviewer{reviewer_counter + 1}@{'gmail' if reviewer_counter == 21 else 'webconf'
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Accepted'
 
-        messages = client.get_messages(to='celeste@acm.org', subject='[TheWebConf24] Reviewer Assignment confirmed for paper 1')
+        messages = openreview_client.get_messages(to='celeste@acm.org', subject='[TheWebConf24] Reviewer Assignment confirmed for paper 1')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Celeste ACM,
 Thank you for accepting the invitation to review the paper number: 1, title: Paper title 1.
@@ -1020,4 +1020,7 @@ Please go to the TheWebConf24 Reviewers Console and check your pending tasks: ht
 
 If you would like to change your decision, please click the Decline link in the previous invitation email.
 
-OpenReview Team'''
+OpenReview Team
+
+Please note that responding to this email will direct your reply to pc@webconf.org.
+'''

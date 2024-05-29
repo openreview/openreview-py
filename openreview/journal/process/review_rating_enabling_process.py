@@ -22,10 +22,13 @@ def process(client, edit, invitation):
         contact_info=journal.contact_info
     )     
     client.post_message(
+        invitation=journal.get_meta_invitation_id(),
         recipients=[journal.get_action_editors_id(number=submission.number)],
         subject=f'''[{journal.short_name}] Evaluate reviewers and submit decision for {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
         message=message,
-        replyTo=journal.contact_info
+        replyTo=journal.contact_info,
+        signature=journal.venue_id,
+        sender=journal.get_message_sender()
     )
 
     journal.invitation_builder.expire_invitation(journal.get_review_rating_enabling_id(submission.number))    

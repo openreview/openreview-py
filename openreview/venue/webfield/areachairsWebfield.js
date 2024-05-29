@@ -46,8 +46,10 @@ return {
       edgeBrowserDeployedUrl: `/edges/browse?start=${startParam}&traverse=${traverseParam}&edit=${replaceReviewerName(domain.content.reviewers_invite_assignment_id?.value)}&browse=${browseInvitations.join(';')}${otherParams}`,
     },
     submissionInvitationId: domain.content.submission_id?.value,
+    messageSubmissionReviewersInvitationId: domain.content.reviewers_message_submission_id?.value,
     seniorAreaChairsId: domain.content.senior_area_chairs_id?.value,
     areaChairName: domain.content.area_chairs_name?.value,
+    secondaryAreaChairName: domain.content.secondary_area_chairs_name?.value,
     submissionName: domain.content.submission_name?.value,
     officialReviewName: domain.content.review_name?.value,
     reviewRatingName: domain.content.review_rating?.value,
@@ -56,6 +58,8 @@ return {
     metaReviewRecommendationName: domain.content.meta_review_recommendation?.value || 'recommendation',
     shortPhrase: domain.content.subtitle?.value,
     enableQuerySearch: true,
-    emailReplyTo: domain.content.contact?.value
+    emailReplyTo: domain.content.contact?.value,
+    reviewerName: domain.content.reviewers_name?.value,
+    anonReviewerName: domain.content.reviewers_anon_name?.value
   }
 }

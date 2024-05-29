@@ -310,6 +310,34 @@ class TestSingleBlindVenueV2():
             ))
         helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
 
+        ## Try to add the ACs as writers of the decision notes
+        openreview_client.post_invitation_edit(
+            invitations='V2.cc/2050/Conference_Single_Blind/-/Edit',
+            signatures=['V2.cc/2050/Conference_Single_Blind'],
+            invitation=openreview.api.Invitation(
+                id='V2.cc/2050/Conference_Single_Blind/-/Decision',
+                edit = {
+                    'invitation': {
+                        'edit': {
+                            'writers': ['V2.cc/2050/Conference_Single_Blind', 'V2.cc/2050/Conference_Single_Blind/Submission${4/content/noteNumber/value}/Area_Chairs'],
+                            'note': {
+                                'writers': ['V2.cc/2050/Conference_Single_Blind', 'V2.cc/2050/Conference_Single_Blind/Submission${5/content/noteNumber/value}/Area_Chairs', '${3/signatures}']
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='V2.cc/2050/Conference_Single_Blind/-/Decision-0-1', count=2)
+
+        invitation = openreview_client.get_invitation('V2.cc/2050/Conference_Single_Blind/Submission1/-/Decision')
+        assert 'V2.cc/2050/Conference_Single_Blind/Submission1/Area_Chairs' in invitation.edit['writers']
+        assert 'V2.cc/2050/Conference_Single_Blind/Submission1/Area_Chairs' in invitation.edit['note']['writers']
+
+        decision_note = openreview_client.get_notes(invitation='V2.cc/2050/Conference_Single_Blind/Submission1/-/Decision')[0]
+        assert decision_note.writers == ['V2.cc/2050/Conference_Single_Blind', 'V2.cc/2050/Conference_Single_Blind/Submission1/Area_Chairs', 'V2.cc/2050/Conference_Single_Blind/Program_Chairs'] 
+
         invitation = client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
         invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
         client.post_invitation(invitation)

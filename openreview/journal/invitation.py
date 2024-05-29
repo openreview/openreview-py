@@ -24,7 +24,7 @@ class InvitationBuilder(object):
 
         self.author_edge_reminder_process = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week)],
-            'script': self.get_process_content('process/author_edge_reminder_process.py')
+            'script': self.get_super_dateprocess_content('author_edge_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'one week' })
         }
 
         self.author_reminder_process = {
@@ -54,8 +54,13 @@ class InvitationBuilder(object):
 
         self.ae_edge_reminder_process = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week), "#{4/duedate} + " + str(one_month)],
-            'script': self.get_process_content('process/action_editor_edge_reminder_process.py')
+            'script': self.get_super_dateprocess_content('ae_edge_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'one week', 2: 'one month' })
         }
+
+        self.eic_reminder_process = {
+            'dates': ["#{4/duedate} + " + str(week), "#{4/duedate} + " + str(one_month)],
+            'script': self.get_super_dateprocess_content('eic_reminder_script', self.journal.get_meta_invitation_id(), { 0: 'one week', 1: 'one month' })
+        }        
 
     def set_invitations(self, assignment_delay):
         self.set_ae_recruitment_invitation()
@@ -98,6 +103,7 @@ class InvitationBuilder(object):
         self.set_expertise_selection_invitations()
         self.set_review_rating_enabling_invitation()
         self.set_expertise_reviewer_invitation()
+        self.set_reviewer_message_invitation()
 
     
     def get_super_process_content(self, field_name):
@@ -244,6 +250,15 @@ class InvitationBuilder(object):
                     },
                     'author_reminder_script': {
                         'value': self.get_process_content('process/author_reminder_process.py')
+                    },
+                    'ae_edge_reminder_script': {
+                        'value': self.get_process_content('process/action_editor_edge_reminder_process.py')
+                    },
+                    'author_edge_reminder_script': {
+                        'value': self.get_process_content('process/author_edge_reminder_process.py')
+                    },
+                    'eic_reminder_script': {
+                        'value': self.get_process_content('process/eic_reminder_process.py')
                     }
                 },
                 edit=True
@@ -556,7 +571,7 @@ If you have questions after reviewing the points below that are not answered on 
                                     'value': {
                                         'param': {
                                             'type': "string",
-                                            'enum': ['I understand that I am required to review submissions that are assigned, as long as they fill in my area of expertise and are within my annual quota'],
+                                            'enum': ['I understand that I am required to review submissions that are assigned, as long as they fall in my area of expertise and are within my annual quota'],
                                             'input': 'checkbox'
                                         }
                                     }
@@ -624,6 +639,9 @@ If you have questions after reviewing the points below that are not answered on 
         )        
     
     def set_reviewer_assignment_acknowledgement_invitation(self):
+
+        if self.journal.should_skip_reviewer_assignment_acknowledgement():
+            return         
 
         venue_id=self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
@@ -896,7 +914,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'authorids': {
                             'value': {
                                 'param': {
-                                    'type': "group[]",
+                                    'type': "profile[]",
                                     'regex': r'~.*'
                                 }
                             },
@@ -1024,9 +1042,22 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.get_submission_additional_fields():
             for key, value in self.journal.get_submission_additional_fields().items():
-                invitation.edit['note']['content'][key] = value if value else { "delete": True }             
+                invitation.edit['note']['content'][key] = value if value else { "delete": True }
 
-        print(invitation.edit['note']['content'])
+        submission_license = self.journal.get_submission_license()
+        if isinstance(submission_license, str):
+            invitation.edit['note']['license'] = submission_license
+        
+        if isinstance(submission_license, list):
+            if len(submission_license) == 1:
+                invitation.edit['note']['license'] = submission_license[0]
+            else:
+                invitation.edit['note']['license'] = {
+                    "param": {
+                        "enum": [ { "value": license, "description": license } for license in submission_license ]
+                    }
+                }             
+
         self.save_invitation(invitation)
 
     def set_ae_assignment(self, assignment_delay):
@@ -1084,7 +1115,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 },
                 'weight': {
                     'param': {
-                        'minimum': -1
+                        'minimum': -1,
+                        'default': 0
                     }
                 },
                 'label': {
@@ -1290,7 +1322,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             invitees=[venue_id, editor_in_chief_id],
             readers=[venue_id, action_editors_id, authors_id],
             writers=[venue_id],
-            signatures=[editor_in_chief_id], ## EIC have permission to check conflicts
+            signatures=[venue_id], ## EIC have permission to check conflicts
             minReplies=1,
             maxReplies=1,
             type='Edge',
@@ -1709,7 +1741,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             },
             date_processes=[
                 {
-                    'cron': '* 0 * * *',
+                    'cron': '0 0 * * *',
                     'script': self.get_process_content('process/remind_ae_unavailable_process.py')
                 }
             ]
@@ -1730,7 +1762,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             invitees=[venue_id],
             readers=[venue_id, action_editors_id] + additional_committee,
             writers=[venue_id],
-            signatures=[editor_in_chief_id], ## to compute conflicts
+            signatures=[venue_id], ## to compute conflicts
             minReplies=1,
             maxReplies=1,            
             type='Edge',
@@ -1773,7 +1805,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 },
                 'weight': {
                     'param': {
-                        'minimum': -1
+                        'minimum': -1,
+                        'default': 0
                     }
                 },
                 'label': {
@@ -1855,7 +1888,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             invitees=[venue_id, action_editors_id] + additional_committee,
             readers=[venue_id, action_editors_id] + additional_committee,
             writers=[venue_id],
-            signatures=[self.journal.get_editors_in_chief_id()],
+            signatures=[venue_id],
             minReplies=1,
             maxReplies=1,
             type='Edge',
@@ -1928,7 +1961,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             invitees=[venue_id],
             readers=[venue_id, action_editors_id] + additional_committee,
             writers=[venue_id],
-            signatures=[self.journal.get_editors_in_chief_id()],
+            signatures=[venue_id],
             minReplies=1,
             maxReplies=1,
             type='Edge',
@@ -2165,7 +2198,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             },
             date_processes=[
                 {
-                    'cron': '* 0 * * *',
+                    'cron': '0 0 * * *',
                     'script': self.get_process_content('process/remind_reviewer_unavailable_process.py')
                 }
             ]
@@ -2181,7 +2214,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             invitees=[venue_id, action_editors_id] + additional_committee,
             readers=[venue_id, action_editors_id] + additional_committee,
             writers=[venue_id],
-            signatures=[self.journal.get_editors_in_chief_id()],
+            signatures=[venue_id],
             minReplies=1,
             maxReplies=1,
             type='Edge',
@@ -2524,6 +2557,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'maxReplies': 1,
             'process': self.process_script,
             'duedate': '${2/content/duedate/value}',
+            'dateprocesses': [self.eic_reminder_process],
             'edit': {
                 'signatures': [editors_in_chief_id],
                 'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
@@ -3334,10 +3368,6 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'venueid': {
                             'value': self.journal.accepted_venue_id,
                             'order': 2
-                        },
-                        'license': {
-                            'value': 'Creative Commons Attribution 4.0 International (CC BY 4.0)',
-                            'order': 4
                         }
                     }
                 }
@@ -3345,16 +3375,22 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             process=self.get_process_content('process/accepted_submission_process.py')
         )
 
-        if self.journal.should_release_authors():
-            invitation.edit['note']['content']['authors'] = {
-                'readers': { 'param': { 'const': { 'delete': True } } }
-            }
-            invitation.edit['note']['content']['authorids'] = {
-                'readers': { 'param': { 'const': { 'delete': True } } }
-            }
-            invitation.edit['note']['content']['supplementary_material'] = {
-                'readers': { 'param': { 'const': { 'delete': True } } }
-            }            
+        if self.journal.release_submission_after_acceptance():
+            
+            if self.journal.are_authors_anonymous():
+                invitation.edit['note']['content']['authors'] = {
+                    'readers': { 'param': { 'const': { 'delete': True } } }
+                }
+                invitation.edit['note']['content']['authorids'] = {
+                    'readers': { 'param': { 'const': { 'delete': True } } }
+                }
+                invitation.edit['note']['content']['supplementary_material'] = {
+                    'readers': { 'param': { 'const': { 'delete': True } } }
+                }
+
+            if not self.journal.is_submission_public():
+                invitation.edit['note']['readers'] = ['everyone']
+                invitation.edit['note']['nonreaders'] = []     
 
         if self.journal.get_certifications():
             invitation.edit['note']['content']['certifications'] = {
@@ -3601,7 +3637,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         edit_param = f'{self.journal.get_reviewer_assignment_id()};{self.journal.get_reviewer_invite_assignment_id()}'
         score_ids = [self.journal.get_reviewer_affinity_score_id(), self.journal.get_reviewer_conflict_id(), self.journal.get_reviewer_custom_max_papers_id() + ',head:ignore', self.journal.get_reviewer_pending_review_id() + ',head:ignore', self.journal.get_reviewer_availability_id() + ',head:ignore']
         browse_param = ';'.join(score_ids)
-        filter_param = f'{self.journal.get_reviewer_pending_review_id()} == 0 AND {self.journal.get_reviewer_availability_id()} == Available'
+        filter_param = f'{self.journal.get_reviewer_pending_review_id()} == 0 AND {self.journal.get_reviewer_availability_id()} == Available AND {self.journal.get_reviewer_conflict_id()} == 0'
         params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&filter={filter_param}&maxColumns=2&version=2&referrer=[Return Instructions](/invitation?id={invitation.id})'
         with open(os.path.join(os.path.dirname(__file__), 'webfield/assignReviewerWebfield.js')) as f:
             content = f.read()
@@ -5222,7 +5258,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'forum': '${4/content/noteId/value}',
                         'replyto': '${4/content/replytoId/value}',
                         'signatures': ['${3/signatures}'],
-                        'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') ],
+                        'readers': [ editors_in_chief_id, self.journal.get_action_editors_id() if self.journal.get_action_editors_id() in self.journal.get_release_review_readers('${5/content/noteNumber/value}') else self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') ],
                         'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                         'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
                         'content': {
@@ -5347,6 +5383,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         )
     
     def set_camera_ready_revision_invitation(self):
+
+        if self.journal.should_skip_camera_ready_revision():
+            return
+
         venue_id = self.journal.venue_id
         short_name = self.journal.short_name
 
@@ -5726,7 +5766,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'authorids': {
                             'value': {
                                 'param': {
-                                    'type': "group[]",
+                                    'type': "profile[]",
                                     'regex': r'~.*'
                                 }
                             },
@@ -5963,6 +6003,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
+            content = {
+                'multiple_deployments': { 'value': True }
+            },
             edit = {
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -6120,7 +6163,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'enum': ['MinMax', 'FairFlow', 'Randomized', 'FairSequence'],
+                                    'enum': ['MinMax', 'FairFlow', 'Randomized', 'FairSequence', 'PerturbedMaximization'],
                                     'input': 'radio'
                                 }
                             }
@@ -6139,6 +6182,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                         'Deploying',
                                         'Deployed',
                                         'Deployment Error',
+                                        'Undeploying',
+                                        'Undeployment Error',                                        
                                         'Queued',
                                         'Cancelled'
                                     ],
@@ -6197,6 +6242,31 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'deletable': True,
                                     'default': '',
                                     'hidden': True
+                                }
+                            }
+                        }, 
+                        'perturbedmaximization_perturbation':  {
+                            'order': 23,
+                            'description': 'A single float representing the perturbation factor for the Perturbed Maximization Solver. The value should be between 0 and 1, increasing the value will trade assignment quality for randomization.',
+                            'value': {
+                                'param': {
+                                    'type': 'float',
+                                    'range': [0, 1],
+                                    'optional': True,
+                                    'deletable': True,
+                                    'default': '1'
+                                }
+                            }
+                        }, 
+                        'perturbedmaximization_bad_match_thresholds':  {
+                            'order': 24,
+                            'description': 'A list of floats, representing the thresholds in affinity score for categorizing a paper-reviewer match, used by the Perturbed Maximization Solver.',
+                            'value': {
+                                'param': {
+                                    'type': 'float[]',
+                                    'optional': True,
+                                    'deletable': True,
+                                    'default': [0.1, 0.3, 0.5]
                                 }
                             }
                         }
@@ -6301,3 +6371,64 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         )
 
         self.save_invitation(invitation)
+
+    def set_reviewer_message_invitation(self):
+
+        venue_id = self.journal.venue_id
+
+        invitation = Invitation(id=f'{self.journal.get_reviewers_id()}/-/Reviewer_Message',
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'replacement': True,
+                'invitation': {
+                    'id': self.journal.get_reviewers_message_id(number='${2/content/noteNumber/value}'),
+                    'signatures': [ venue_id ],
+                    'readers': [ venue_id, self.journal.get_action_editors_id('${3/content/noteNumber/value}')],
+                    'writers': [venue_id],
+                    'invitees': [ venue_id, self.journal.get_action_editors_id('${3/content/noteNumber/value}')],
+                    'message': {
+                        'replyTo': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
+                        'subject': { 'param': { 'minLength': 1 } },
+                        'message': { 'param': { 'minLength': 1 } },
+                        'groups': { 'param': { 'inGroup': self.journal.get_reviewers_id('${3/content/noteNumber/value}') } },
+                        'parentGroup': { 'param': { 'const': self.journal.get_reviewers_id('${3/content/noteNumber/value}') } },
+                        'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
+                        'signature': { 'param': { 'enum': [ venue_id, '~.*']} }
+                    }
+                }
+
+            }
+        )
+
+        self.save_invitation(invitation)
+
+    def set_note_reviewer_message_invitation(self, note):
+        return self.client.post_invitation_edit(invitations=f'{self.journal.get_reviewers_id()}/-/Reviewer_Message',
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }
+            },
+            signatures=[self.journal.venue_id]
+        )        

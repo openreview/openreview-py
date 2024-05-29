@@ -16,6 +16,7 @@ var REVIEWERS_NAME = '';
 var ACTION_EDITOR_NAME = '';
 var JOURNAL_REQUEST_ID = '';
 var REVIEWER_REPORT_ID = '';
+var NUMBER_OF_REVIEWERS = 3;
 var REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID = '';
 var ACTION_EDITOR_ID = VENUE_ID + '/' + ACTION_EDITOR_NAME;
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
@@ -82,7 +83,7 @@ var reviewers_url = '/edges/browse?traverse=' + REVIEWERS_ASSIGNMENT_ID +
   '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_INVITE_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
   '&browse=' + REVIEWERS_ARCHIVED_ASSIGNMENT_ID + ';' + REVIEWERS_AFFINITY_SCORE_ID+ ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + 
   '&version=2' +
-  '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available' +
+  '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available AND ' + REVIEWERS_CONFLICT_ID + ' == 0' +
   '&referrer=' + referrerUrl;  
 HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Assignments Browser:</strong></li>' +
   '<li><a href="' + ae_url + '">Modify Action Editor Assignments</a></li>' +
@@ -105,7 +106,7 @@ var getReplies = function(submission, name, prefix) {
 var getRatingInvitations = function(invitationsById, number) {
   var invitations = [];
   Object.keys(invitationsById).forEach(function(invitationId) {
-    if (invitationId.match(VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '.*/-/Rating')) {
+    if (invitationId.match(VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/Reviewer_.*/-/Rating')) {
       invitations.push(invitationsById[invitationId]);
     }
   })
@@ -190,6 +191,7 @@ var loadData = function() {
     Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME + '/Archived', { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Archived', { withProfiles: true}),
+    Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Volunteers', { withProfiles: true}),
     Webfield2.api.getAll('/invitations', {
       prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
       type: 'all',
@@ -231,6 +233,7 @@ var formatData = function(
   archivedActionEditors,
   reviewers,
   archivedReviewers,
+  volunteerReviewers,
   invitationsById,
   superInvitationIds,
   reviewerInvitationIds,
@@ -240,7 +243,7 @@ var formatData = function(
   var referrerUrl = encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#paper-status)');
 
   var reviewerStatusById = {};
-  var getReviewerStatus = function(reviewer, index, isArchived) {
+  var getReviewerStatus = function(reviewer, index, isOfficial, isArchived, isVolunteer) {
     var responsibility = responsibilityNotes.find(function(reply) {
       return reply.invitations[0] === REVIEWERS_ID + '/-/' + reviewer.id + '/' + RESPONSIBILITY_ACK_NAME;
     });
@@ -257,7 +260,9 @@ var formatData = function(
           Publications: '-',
           'Responsibility Acknowledgement': responsibility ? 'Yes' : 'No',
           'Reviewer Report': reviewerReports.length,
-          Archived: isArchived ? 'Yes' : 'No'
+          Official: isOfficial ? 'Yes' : 'No',
+          Archived: isArchived ? 'Yes' : 'No',
+          Volunteer: isVolunteer ? 'Yes' : 'No'
         }
       },
       reviewerProgressData: {
@@ -276,16 +281,25 @@ var formatData = function(
         numPapers: 0,
         papers: [],
         referrer: referrerUrl
-      }
+      },
+      note: {id: reviewer.id}
     };
   }
+  var officialReviewerIds = new Set();
+  var archivedReviewerIds = new Set();
   reviewers.members.forEach(function(reviewer, index) {
-    reviewerStatusById[reviewer.id] = getReviewerStatus(reviewer, index, false);
+    reviewerStatusById[reviewer.id] = getReviewerStatus(reviewer, index, true, false, false);
+    officialReviewerIds.add(reviewer.id);
   });
 
   (archivedReviewers?.members || []).forEach(function(reviewer, index) {
-    reviewerStatusById[reviewer.id] = getReviewerStatus(reviewer, index, true);
+    reviewerStatusById[reviewer.id] = getReviewerStatus(reviewer, index, false, true, false);
+    archivedReviewerIds.add(reviewer.id);
   });
+
+  (volunteerReviewers?.members || []).forEach(function(reviewer, index) {
+    reviewerStatusById[reviewer.id] = getReviewerStatus(reviewer, index, officialReviewerIds.has(reviewer.id), archivedReviewerIds.has(reviewer.id), true);
+  });  
 
   var actionEditorStatusById = {};
   actionEditors.members.forEach(function(actionEditor, index) {
@@ -431,7 +445,7 @@ var formatData = function(
         id: aeRecommendationInvitation.id,
         cdate: aeRecommendationInvitation.cdate,
         duedate: aeRecommendationInvitation.duedate,
-        complete: recommendationCount >= 3,
+        complete: recommendationCount >= NUMBER_OF_REVIEWERS,
         replies: Array(recommendationCount).fill(1)
       };
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
@@ -477,7 +491,7 @@ var formatData = function(
         id: reviewerAssignmentInvitation.id,
         cdate: reviewerAssignmentInvitation.cdate,
         duedate: reviewerAssignmentInvitation.duedate,
-        complete: reviewers.length >= 3,
+        complete: reviewers.length >= NUMBER_OF_REVIEWERS,
         replies: reviewers
       };
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
@@ -489,7 +503,7 @@ var formatData = function(
         id: reviewInvitation.id,
         cdate: reviewInvitation.cdate,
         duedate: reviewInvitation.duedate,
-        complete: reviewNotes.length >= 3,
+        complete: reviewNotes.length >= NUMBER_OF_REVIEWERS,
         replies: reviewNotes
       };
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
@@ -501,7 +515,7 @@ var formatData = function(
         id: officialRecommendationInvitation.id,
         cdate: officialRecommendationInvitation.cdate,
         duedate: officialRecommendationInvitation.duedate,
-        complete: officialRecommendationNotes.length >= 3,
+        complete: officialRecommendationNotes.length >= NUMBER_OF_REVIEWERS,
         replies: officialRecommendationNotes
       };
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
@@ -664,7 +678,8 @@ var formatData = function(
           id: submission.id,
           noteId: submission.id,
           invitationId: getInvitationId(submission.number, REVIEW_NAME)
-        })
+        }),
+        anonymousGroupId: reviewer.anonymousGroupId
       }
 
       if (reviewerStatus) {
@@ -686,7 +701,7 @@ var formatData = function(
     });
 
     paperActionEditors.forEach(function(actionEditor) {
-      var completedDecision = decisions.find(function(decision) { return decision.signatures[0] == VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/Action_Editors'; });
+      var completedDecision = decisions.find(function(decision) { return decision.signatures[0].startsWith(VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/Action_Editor'); });
       var actionEditorStatus = actionEditorStatusById[actionEditor.id];
       if (actionEditorStatus) {
         actionEditorStatus.reviewProgressData.numPapers += 1;
@@ -763,7 +778,7 @@ var formatData = function(
             '&edit='+ REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_INVITE_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
             '&browse=' + REVIEWERS_ARCHIVED_ASSIGNMENT_ID + ';' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + 
             '&version=2' +
-            '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available'
+            '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available AND ' + REVIEWERS_CONFLICT_ID + ' == 0'
           }
         ] : [],
         duedate: reviewInvitation && reviewInvitation.duedate || 0
@@ -778,8 +793,8 @@ var formatData = function(
         actionEditor: actionEditor,
         metaReview: metaReview,
         referrer: referrerUrl,
-        reviewPending: reviewInvitation && reviewNotes.length < 3,
-        recommendationPending: officialRecommendationInvitation && officialRecommendationNotes.length < 3 && decisionNotes.length == 0,
+        reviewPending: reviewInvitation && reviewNotes.length < NUMBER_OF_REVIEWERS,
+        recommendationPending: officialRecommendationInvitation && officialRecommendationNotes.length < NUMBER_OF_REVIEWERS && decisionNotes.length == 0,
         ratingPending: reviewerRatingInvitations.length && reviewerRatingReplies.length < reviewNotes.length,
         decisionPending: decisionInvitation && decisionNotes.length == 0,
         decisionApprovalPending: metaReview && decisionApprovalNotes.length == 0,
@@ -968,6 +983,8 @@ var renderTable = function(container, rows) {
         'Click on the link below to go to the submission page:\n\n{{forumUrl}}\n\n' +
         'Thank you,\n' + SHORT_PHRASE + ' Editor-in-Chief',
       replyTo: EDITORS_IN_CHIEF_EMAIL,
+      messageInvitationId: VENUE_ID + '/-/Edit',
+      messageSignature: VENUE_ID,
       menu: [{
         id: 'all-reviewers',
         name: 'All reviewers of selected papers',
@@ -1285,7 +1302,8 @@ var renderData = function(venueStatusData) {
             "</tbody></table>"
           );
       },
-      Handlebars.templates.notesReviewerStatus
+      Handlebars.templates.notesReviewerStatus,
+      function (_) { return null}
     ],
     sortOptions: {
       Reviewer_Name: function(row) { return row.summary.name.toLowerCase(); },
@@ -1301,6 +1319,9 @@ var renderData = function(venueStatusData) {
       papersAssigned: ['reviewerProgressData.numPapers'],
       averageRating:['ratingData.averageRating'],
       default: ['summary.name'],
+      official: ['summary.status.Official'],
+      archived: ['summary.status.Archived'],
+      volunteer: ['summary.status.Volunteer']
     },
     extraClasses: 'console-table',
     pageSize: 10,
