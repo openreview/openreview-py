@@ -51,6 +51,8 @@ class TestGroupRecruitment():
         venue.setup(program_chair_ids=['pc_venue23@mail.com'])
         venue.create_submission_stage()
         venue.group_builder.create_recruitment_committee_groups('Reviewers')
+        venue.invitation_builder.set_group_recruitment_invitations('Reviewers')
+
 
         assert openreview_client.get_group('Venue.cc')
         assert openreview_client.get_group('Venue.cc/Authors')
