@@ -9,5 +9,5 @@ def process(client, edit, invitation):
     except openreview.OpenReviewException as e:
         raise openreview.OpenReviewException('Provided paper link does not correspond to a submission in OpenReview')
 
-    if 'aclweb.org/ACL/ARR' not in arr_submission.invitation:
+    if 'aclweb.org/ACL/ARR' not in arr_submission.invitation or arr_submission.id != arr_submission.forum:
         raise openreview.OpenReviewException('Provided paper link does not correspond to an ARR submission')
