@@ -481,7 +481,7 @@ class ExpertiseSelectionStage(object):
 
 class SubmissionRevisionStage():
 
-    def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None, allow_author_reorder=False):
+    def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None, allow_author_reorder=False, allow_license_edition=False):
         self.name = name
         self.start_date = start_date
         self.due_date = due_date
@@ -490,6 +490,7 @@ class SubmissionRevisionStage():
         self.only_accepted = only_accepted
         self.multiReply=multiReply
         self.allow_author_reorder=allow_author_reorder
+        self.allow_license_edition=allow_license_edition
 
     def get_content(self, api_version='2', conference=None):
         
@@ -960,7 +961,8 @@ class CommentStage(object):
         only_accepted=False,
         check_mandatory_readers=False,
         readers=[],
-        invitees=[]):
+        invitees=[],
+        enable_chat=False):
 
         self.official_comment_name = official_comment_name if official_comment_name else 'Official_Comment'
         self.public_name = 'Public_Comment'
@@ -974,6 +976,7 @@ class CommentStage(object):
         self.check_mandatory_readers=check_mandatory_readers
         self.readers = readers
         self.invitees = invitees
+        self.enable_chat = enable_chat
 
     def get_readers(self, conference, number, api_version='1'):
 
@@ -1071,6 +1074,59 @@ class CommentStage(object):
             invitees.append(conference.get_authors_id(number))
 
         return invitees
+
+    def get_chat_invitees(self, conference, number):
+        invitees = [conference.get_id(), conference.support_user]
+
+        if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.invitees:
+            invitees.append(conference.get_senior_area_chairs_id(number))
+
+        if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
+            invitees.append(conference.get_area_chairs_id(number))
+
+        if self.Readers.REVIEWERS_ASSIGNED in self.invitees:
+            invitees.append(conference.get_reviewers_id(number))
+
+        if self.Readers.REVIEWERS_SUBMITTED in self.invitees:
+            invitees.append(conference.get_reviewers_id(number) + '/Submitted')
+
+        return invitees
+    
+    def get_chat_signatures(self, conference, number):
+
+        committee = [conference.get_program_chairs_id()]
+
+        if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.invitees:
+            committee.append(conference.get_senior_area_chairs_id(number))
+
+        if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
+            committee.append(conference.get_anon_area_chair_id(number=number, anon_id='.*'))
+
+        if conference.use_secondary_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
+            committee.append(conference.get_anon_secondary_area_chair_id(number=number, anon_id='.*'))
+
+        if self.Readers.REVIEWERS_ASSIGNED in self.invitees or self.Readers.REVIEWERS_SUBMITTED in self.invitees:
+            committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
+
+        return committee    
+
+    def get_chat_readers(self, conference, number, api_version='1'):
+
+        readers = [conference.get_program_chairs_id()]
+
+        if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.readers:
+            readers.append(conference.get_senior_area_chairs_id(number))
+
+        if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.readers:
+            readers.append(conference.get_area_chairs_id(number))
+
+        if self.Readers.REVIEWERS_ASSIGNED in self.readers:
+            readers.append(conference.get_reviewers_id(number))
+
+        if self.Readers.REVIEWERS_SUBMITTED in self.readers:
+            readers.append(conference.get_reviewers_id(number) + '/Submitted')               
+
+        return readers
 
     def get_mandatory_readers(self, conference, number):
         readers = [conference.get_program_chairs_id()]

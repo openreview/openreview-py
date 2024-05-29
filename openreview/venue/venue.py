@@ -483,7 +483,8 @@ class Venue(object):
                 remove_fields=stage.second_deadline_remove_fields if stage.second_deadline_remove_fields else stage.remove_fields,
                 only_accepted=False,
                 multiReply=True,
-                allow_author_reorder=stage.author_reorder_after_first_deadline
+                allow_author_reorder=stage.author_reorder_after_first_deadline,
+                allow_license_edition=True
             )
             self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)
             self.invitation_builder.set_submission_deletion_invitation(submission_revision_stage)
@@ -526,6 +527,8 @@ class Venue(object):
         self.invitation_builder.set_official_comment_invitation()
         if self.comment_stage.allow_public_comments:
             self.invitation_builder.set_public_comment_invitation()
+
+        self.invitation_builder.set_chat_invitation()
 
     def create_decision_stage(self):
         invitation = self.invitation_builder.set_decision_invitation()

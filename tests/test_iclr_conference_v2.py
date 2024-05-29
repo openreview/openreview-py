@@ -42,6 +42,7 @@ class TestICLRConference():
         helpers.create_user('reviewer5@gmail.com', 'Reviewer', 'ICLRFive')
         helpers.create_user('reviewer6@gmail.com', 'Reviewer', 'ICLRSix')
         helpers.create_user('reviewerethics@gmail.com', 'Reviewer', 'ICLRSeven')
+        helpers.create_user('peter@mail.com', 'Peter', 'SomeLastName') # Author
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
@@ -179,7 +180,7 @@ class TestICLRConference():
 
         request_page(selenium, "http://localhost:3030/group?id=ICLR.cc/2024/Conference/Reviewers", reviewer_client.token, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
-        assert 'You have agreed to review up to 1 papers' in header.text
+        assert 'You have agreed to review up to 1 submission' in header.text
 
     def test_submissions(self, client, openreview_client, helpers, test_client):
 
@@ -269,11 +270,33 @@ class TestICLRConference():
         assert submission_invitation.expdate < openreview.tools.datetime_millis(now)
 
         submissions = pc_client_v2.get_notes(invitation='ICLR.cc/2024/Conference/-/Submission', sort='number:asc')
+        submission = submissions[0]
         assert len(submissions) == 11
-        assert submissions[0].license == 'CC BY-SA 4.0'
-        assert submissions[0].readers == ['everyone']
-        assert '_bibtex' in submissions[0].content
-        assert 'author={Anonymous}' in submissions[0].content['_bibtex']['value']
+        assert submission.license == 'CC BY-SA 4.0'
+        assert submission.readers == ['everyone']
+        assert '_bibtex' in submission.content
+        assert 'author={Anonymous}' in submission.content['_bibtex']['value']
+
+        # Author revises submission license
+        author_client = openreview.api.OpenReviewClient(username='peter@mail.com', password=helpers.strong_password)
+        revision_note = author_client.post_note_edit(
+            invitation = f'ICLR.cc/2024/Conference/Submission{submission.number}/-/Revision',
+            signatures = [f'ICLR.cc/2024/Conference/Submission{submission.number}/Authors'],
+            note = openreview.api.Note(
+                license = 'CC0 1.0',
+                content = {
+                    'title': { 'value': submission.content['title']['value'] + ' license revision' },
+                    'abstract': submission.content['abstract'],
+                    'authorids': { 'value': submission.content['authorids']['value'] },
+                    'authors': { 'value': submission.content['authors']['value'] },
+                    'keywords': submission.content['keywords'],
+                    'pdf': submission.content['pdf'],
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
+
+        submission = pc_client_v2.get_notes(invitation='ICLR.cc/2024/Conference/-/Submission', sort='number:asc')[0]
+        assert submission.license == 'CC0 1.0'
         
         # Assert that activation date of matching invitation == abstract deadline
         matching_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup')
@@ -316,7 +339,44 @@ class TestICLRConference():
         helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Withdrawal-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Desk_Rejection-0-1', count=2)
 
-        client.get_group('ICLR.cc/2024/Conference/Submission1/Reviewers')    
+        # Author can't revise license after paper deadline
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation ICLR.cc/2024/Conference/Submission1/-/Revision has expired'):
+            revision_note = author_client.post_note_edit(
+                invitation = f'ICLR.cc/2024/Conference/Submission{submission.number}/-/Revision',
+                signatures = [f'ICLR.cc/2024/Conference/Submission{submission.number}/Authors'],
+                note = openreview.api.Note(
+                    license = 'CC BY 4.0',
+                    content = {
+                        'title': submission.content['title'],
+                        'abstract': submission.content['abstract'],
+                        'authorids': { 'value': submission.content['authorids']['value'] },
+                        'authors': { 'value': submission.content['authors']['value'] },
+                        'keywords': submission.content['keywords'],
+                        'pdf': submission.content['pdf'],
+                    }
+                ))
+
+        # PC revises submission license
+        pc_revision = pc_client_v2.post_note_edit(
+            invitation='ICLR.cc/2024/Conference/-/PC_Revision',
+            signatures=['ICLR.cc/2024/Conference/Program_Chairs'],
+            note=openreview.api.Note(
+                id = submission.id,
+                license = 'CC BY 4.0',
+                content = {
+                    'title': submission.content['title'],
+                    'abstract': submission.content['abstract'],
+                    'authorids': { 'value': submission.content['authorids']['value'] },
+                    'authors': { 'value': submission.content['authors']['value'] },
+                    'keywords': submission.content['keywords'],
+                    'pdf': submission.content['pdf'],
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=pc_revision['id'])
+
+        submission = pc_client_v2.get_notes(invitation='ICLR.cc/2024/Conference/-/Submission', sort='number:asc')[0]
+        assert submission.license == 'CC BY 4.0'
 
     def test_review_stage(self, client, openreview_client, helpers, test_client):
 

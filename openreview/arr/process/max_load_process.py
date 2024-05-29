@@ -11,7 +11,7 @@ def process(client, edit, invitation):
     SAC_ID = domain.content['senior_area_chairs_id']['value']
     AC_ID = domain.content['area_chairs_id']['value']
     REV_ID = domain.content['reviewers_id']['value']
-    user = edit.signatures[0]
+    user = client.get_profile(edit.signatures[0]).id
 
     edge_readers = [CONFERENCE_ID]
     inv_role = invitation.id.split('/')[-3]
