@@ -3972,7 +3972,6 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-
             process=self.get_process_content('process/group_recruitment_process.py'),
             content={
                 'committee_name': { 'value': committee_name },
