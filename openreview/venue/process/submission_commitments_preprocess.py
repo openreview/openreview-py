@@ -1,7 +1,7 @@
 def process(client, edit, invitation):
 
     paper_link = edit.note.content['paper_link']['value']
-    paper_forum = paper_link.split('?id=')[-1].split('&')[0]
+    paper_forum = paper_link.split('?id=')[-1]
 
     try:
         client_v1=openreview.Client(baseurl=openreview.tools.get_base_urls(client)[0], token=client.token)
@@ -9,5 +9,8 @@ def process(client, edit, invitation):
     except openreview.OpenReviewException as e:
         raise openreview.OpenReviewException('Provided paper link does not correspond to a submission in OpenReview')
 
-    if 'aclweb.org/ACL/ARR' not in arr_submission.invitation or arr_submission.id != arr_submission.forum:
+    if 'aclweb.org/ACL/ARR' not in arr_submission.invitation:
         raise openreview.OpenReviewException('Provided paper link does not correspond to an ARR submission')
+
+    if arr_submission.id != arr_submission.forum:
+        raise openreview.OpenReviewException('Provided paper link does not correspond to an ARR submission. Make sure the link points to a submission and not to a reply.')
