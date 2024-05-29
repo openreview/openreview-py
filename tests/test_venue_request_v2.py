@@ -446,51 +446,33 @@ class TestVenueRequest():
     def test_venue_recruitment_email_error(self, client, test_client, selenium, request_page, openreview_client,  venue, helpers):
 
         reviewer_details = '''reviewer_candidate1_v2@mail.com, Reviewer One\nreviewer_candidate2_v2@mail.com, Reviewer Two'''
-        recruitment_note = test_client.post_note(openreview.Note(
-            content={
-                'title': 'Recruitment',
-                'invitee_role': 'Reviewers',
-                'invitee_details': reviewer_details,
-                'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
-                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the {program} chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
-            },
-            forum=venue['request_form_note'].forum,
-            replyto=venue['request_form_note'].forum,
-            invitation='{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number),
-            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-            signatures=['~SomeFirstName_User1'],
-            writers=[]
-        ))
-        assert recruitment_note
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid token: program in invitation_email_content is not supported. Please use the following tokens in this field: fullname,invitee_role,invitation_url,contact_info.'):
+            recruitment_note = test_client.post_note(openreview.Note(
+                content={
+                    'title': 'Recruitment',
+                    'invitee_role': 'Reviewers',
+                    'invitee_details': reviewer_details,
+                    'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
+                    'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the {program} chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
+                },
+                forum=venue['request_form_note'].forum,
+                replyto=venue['request_form_note'].forum,
+                invitation='{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number),
+                readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+                signatures=['~SomeFirstName_User1'],
+                writers=[]
+            ))
 
         invite = client.get_invitation('{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number))
 
         assert invite.reply['content']['invitee_details']['description'] == 'Enter a list of invitees with one per line. Either tilde IDs (∼Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee". Do not use parentheses in your list of invitees.'
-
-        helpers.await_queue()
-        process_logs = client.get_process_logs(id=recruitment_note.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
-        assert process_logs[0]['invitation'] == '{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
 
         messages = openreview_client.get_messages(to='reviewer_candidate1_v2@mail.com')
         assert not messages
         messages = openreview_client.get_messages(to='reviewer_candidate2_v2@mail.com')
         assert not messages
 
-        recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
-                                                             venue['request_form_note'].number)
-        last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
-        error_string = '{\n ' \
-                       ' "KeyError(\'program\')": [\n' \
-                       '    "reviewer_candidate1_v2@mail.com",\n' \
-                       '    "reviewer_candidate2_v2@mail.com"\n' \
-                       '  ]\n' \
-                       '}'
-        assert error_string in last_comment.content['error']
-        assert '0 users' in last_comment.content['invited']
-
-        # make sure we catch both KeyError and Group Not Found error
+        # make sure we catch Invalid Group error
         reviewer_details = '''celeste@uni-a,de, Celeste'''
         recruitment_note = test_client.post_note(openreview.Note(
             content={
@@ -498,7 +480,7 @@ class TestVenueRequest():
                 'invitee_role': 'Reviewers',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
-                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear name,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
@@ -514,10 +496,10 @@ class TestVenueRequest():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
+        recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
 
-        assert '"OpenReviewException({\'name\': \'NotFoundError\', \'message\': \'Group Not Found: celeste@uni-a\'' in last_comment.content['error']
-        assert '"KeyError(\'name\')"' in last_comment.content['error']
+        assert '"InvalidGroup": [\n    "celeste@uni-a"\n  ]' in last_comment.content['error']
         assert '0 users' in last_comment.content['invited']
 
     def test_venue_recruitment(self, client, test_client, selenium, request_page, venue, helpers, openreview_client):
@@ -540,11 +522,15 @@ class TestVenueRequest():
             writers=[]
         )
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Invalid token: {{contact_info}} in invitation_email_subject is not supported.'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid token: contact_info in invitation_email_subject is not supported. Please use the following tokens in this field: invitee_role.'):
            recruitment_note=test_client.post_note(recruitment_note)
 
         recruitment_note.content['invitation_email_subject'] = '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {invitee_role'
         with pytest.raises(openreview.OpenReviewException, match=r'Invalid token: {invitee_role in invitation_email_subject. Tokens must be wrapped in double curly braces.'):
+           recruitment_note=test_client.post_note(recruitment_note)
+
+        recruitment_note.content['invitation_email_subject'] = '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {}'
+        with pytest.raises(openreview.OpenReviewException, match=r'Tokens must not be empty. Please use the following tokens in invitation_email_subject: invitee_role.'):
            recruitment_note=test_client.post_note(recruitment_note)
 
         recruitment_note.content['invitation_email_subject'] = '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}'
