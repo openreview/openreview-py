@@ -2,6 +2,9 @@ def process(client, edit, invitation):
 
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
+    venue_id = domain.id
+    meta_invitation_id = domain.content['meta_invitation_id']['value']
+    contact = domain.content['contact']['value']    
     invited_group = client.get_group(invitation.edit['group']['id'])
     recruitment_subject = invited_group.content['recruitment_subject']['value']
     recruitment_template = invited_group.content['recruitment_template']['value']
@@ -98,17 +101,20 @@ def process(client, edit, invitation):
             valid_invitees.append((email, name))
 
     for email, name in valid_invitees:
-        try:
-            openreview.tools.recruit_reviewer(client, email, name,
-                hash_seed,
-                f'{venue_id}/{committee_name}/-/Recruitment',
-                recruitment_template,
-                recruitment_subject,
-                invited_group.id,
-                contact_email,
-                verbose=False)
-            recruitment_status['invited'].append(email)
-        except Exception as e:
-            error_string = repr(e)
+        
+        openreview.tools.recruit_reviewer(client, email, name,
+            hash_seed,
+            f'{venue_id}/{committee_name}/-/Recruitment',
+            recruitment_template,
+            recruitment_subject,
+            invited_group.id,
+            contact_email,
+            verbose=False,
+            replyTo=contact,
+            invitation=meta_invitation_id,
+            signature=venue_id)
+        
+        recruitment_status['invited'].append(email)
 
-    print("Invited users:", len(recruitment_status['invited']))
+
+    print("Recruitment status:", recruitment_status)
