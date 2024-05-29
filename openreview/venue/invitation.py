@@ -4077,6 +4077,10 @@ class InvitationBuilder(object):
             committee_signatures.append(self.venue.get_area_chairs_id('${4/content/noteNumber/value}', anon=True))
 
         invitation = Invitation(id=invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],                                
             cdate=cdate,
             date_processes=[{
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
@@ -4086,7 +4090,7 @@ class InvitationBuilder(object):
                 'signatures': [venue_id],
                 'readers': [venue_id],
                 'writers': [venue_id],
-                'content': {            
+                'content': {    
                     'noteNumber': {
                         'value': {
                             'param': {
@@ -4101,7 +4105,7 @@ class InvitationBuilder(object):
                             }
                         }
                     }
-                },                                                                            
+                },                                                    
                 'replacement': True,
                 'invitation': {
                     'id': self.venue.get_message_id(number='${2/content/noteNumber/value}'),
