@@ -25,23 +25,26 @@ def process(client, note, invitation):
 
     for (const [field, tokens] of Object.entries(fieldTokens)) {
         if (field in note.content) {
-            // Find all words wrapped in double curly braces. If it's not a token, raise an error.
-            let regex = /{{([^{}]+)}}/g;
-            let parenthesizedToken = '';
-            let match;
-            while ((match = regex.exec(note.content[field])) !== null) {
-                parenthesizedToken = match[1];
-                if (!tokens.includes(parenthesizedToken)) {
-                    done(`Invalid token: {{${parenthesizedToken}}} in ${field} is not supported. Please use the following tokens in this field: ${tokens.toString()}.`);
+            // Check for valid tokens in curly braces
+            let regex = /{([^{}]*)}/g;
+            let parsedToken = '';
+            let matches;
+            while ((matches = regex.exec(note.content[field])) !== null) {
+                parsedToken = matches[1];
+                if (!parsedToken) {
+                    done(`Tokens must not be empty. Please use the following tokens in ${field}: ${tokens.toString()}.`);
+                }
+                if (!tokens.includes(parsedToken)) {
+                    done(`Invalid token: ${parsedToken} in ${field} is not supported. Please use the following tokens in this field: ${tokens.toString()}.`);
                 }
             }
 
             // Check for tokens that don't have double curly braces, raise an error.
             for (const token of tokens) {
                 regex = new RegExp(`(?<!{)[{]?${token}[}]+|[{]+${token}[}]?(?!})`, 'g');
-                while ((match = regex.exec(note.content[field])) !== null) {
-                    parenthesizedToken = match[0];
-                    done(`Invalid token: ${parenthesizedToken} in ${field}. Tokens must be wrapped in double curly braces.`);
+                while ((matches = regex.exec(note.content[field])) !== null) {
+                    parsedToken = matches[0];
+                    done(`Invalid token: ${parsedToken} in ${field}. Tokens must be wrapped in double curly braces.`);
                 }
             }
         }

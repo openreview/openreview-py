@@ -2313,7 +2313,8 @@ class Edit(object):
         nonreaders = None,
         cdate = None,
         ddate = None,
-        tauthor = None):
+        tauthor = None,
+        content = None):
 
         self.id = id
         self.domain = domain
@@ -2329,6 +2330,7 @@ class Edit(object):
         self.group = group
         self.invitation = invitation
         self.tauthor = tauthor
+        self.content = content
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -2371,6 +2373,8 @@ class Edit(object):
             body['invitation'] = self.invitation
         if (self.ddate):
             body['ddate'] = self.ddate
+        if (self.content):
+            body['content'] = self.content
 
         return body
 
@@ -2398,7 +2402,8 @@ class Edit(object):
             note = Note.from_json(e['note']) if 'note' in e else None,
             group = Group.from_json(e['group']) if 'group' in e else None,
             invitation = e.get('invitation'),
-            tauthor = e.get('tauthor')
+            tauthor = e.get('tauthor'),
+            content = e.get('content')
             )
 
         if isinstance(edit.invitation, dict):
