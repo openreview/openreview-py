@@ -3961,6 +3961,104 @@ class InvitationBuilder(object):
         )
 
         recommendation_invitation = self.save_invitation(recommendation_invitation, replacement=True)
+        
+    def set_group_recruitment_invitations(self, committee_name):
+        
+        venue_id = self.venue_id
+        venue = self.venue
+        
+        invitation = Invitation(id=venue.get_committee_id_invited(committee_name)+'/-/Members',
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            process=self.get_process_content('process/group_recruitment_process.py'),
+            content={
+                'committee_name': { 'value': committee_name },
+                'official_committee_roles': { 'value': venue.get_committee_names()},
+                'hash_seed': { 'value': '1234', 'readers': [ venue_id ]},
+            },
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {            
+                    'inviteeDetails': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 200000,
+                                'input': 'textarea',
+                                'optional': True,
+                                'markdown': True
+                            }
+                        }
+                    }
+                },
+                'group': {
+                    'id': venue.get_committee_id_invited(committee_name)
+                }
+            })
+        
+        self.save_invitation(invitation, replacement=False)
+
+        pretty_role = committee_name.replace('_', ' ')
+        pretty_role = pretty_role[:-1] if pretty_role.endswith('s') else pretty_role
+
+        invitation = Invitation(id=venue.get_committee_id_invited(committee_name)+'/-/Recruitment_Settings',
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'group': {
+                    'id': venue.get_committee_id_invited(committee_name),
+                    'content': {
+                        'reduced_load': {
+                            'value': {
+                                'param': {
+                                    'type': 'integer[]',
+                                    'optional': True
+                                }
+                            }
+                        },
+                        'recruitment_subject': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '.+',
+                                    'optional': True,
+                                    'default': f'[{venue.short_name}] Invitation to serve as {pretty_role}'
+                                }
+                            }
+                        },
+                        'recruitment_template': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                    'optional': True
+                                }
+                            }
+                        },
+                        'allow_overlap': {
+                            'value': {
+                                'param': {
+                                    'type': 'boolean',
+                                    'enum': [True, False]
+                                }
+                            }
+                        }
+                    }
+                }
+            })
+        
+        self.save_invitation(invitation, replacement=False)
+
 
     def set_submission_message_invitation(self):
 
@@ -3982,7 +4080,7 @@ class InvitationBuilder(object):
             invitees=[venue_id],
             readers=[venue_id],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=[venue_id],                                
             cdate=cdate,
             date_processes=[{
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
@@ -3992,7 +4090,7 @@ class InvitationBuilder(object):
                 'signatures': [venue_id],
                 'readers': [venue_id],
                 'writers': [venue_id],
-                'content': {
+                'content': {    
                     'noteNumber': {
                         'value': {
                             'param': {
@@ -4007,7 +4105,7 @@ class InvitationBuilder(object):
                             }
                         }
                     }
-                },
+                },                                                    
                 'replacement': True,
                 'invitation': {
                     'id': self.venue.get_message_id(number='${2/content/noteNumber/value}'),
@@ -4077,3 +4175,4 @@ class InvitationBuilder(object):
             self.save_invitation(invitation, replacement=True)
 
         return invitation
+
