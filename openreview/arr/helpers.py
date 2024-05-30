@@ -788,6 +788,7 @@ class ARRWorkflow(object):
                 },
                 due_date=self.configuration_note.content.get('reviewer_checklist_due_date'),
                 exp_date=self.configuration_note.content.get('reviewer_checklist_exp_date'),
+                #start_date=self.venue.submission_stage.exp_date.strftime('%Y/%m/%d %H:%M'), Discuss with Harold
                 process='process/checklist_process.py',
                 preprocess='process/checklist_preprocess.py',
                 extend=ARRWorkflow._extend_reviewer_checklist
@@ -811,6 +812,7 @@ class ARRWorkflow(object):
                 },
                 due_date=self.configuration_note.content.get('ae_checklist_due_date'),
                 exp_date=self.configuration_note.content.get('ae_checklist_exp_date'),
+                #start_date=self.venue.submission_stage.exp_date.strftime('%Y/%m/%d %H:%M'), Discuss with Harold
                 process='process/checklist_process.py',
                 preprocess='process/checklist_preprocess.py',
                 extend=ARRWorkflow._extend_ae_checklist
@@ -830,6 +832,7 @@ class ARRWorkflow(object):
                     'email_sacs': False
                 },
                 exp_date=self.configuration_note.content.get('form_expiration_date'),
+                #start_date=self.venue.submission_stage.exp_date.strftime('%Y/%m/%d %H:%M'), Discuss with Harold
                 process='process/verification_process.py',
                 extend=ARRWorkflow._extend_desk_reject_verification
             ),
@@ -1431,6 +1434,8 @@ def flag_submission(
     domain = client.get_group(edit.domain)
     venue_id = domain.id
     meta_invitation_id = domain.content['meta_invitation_id']['value']
+    contact = domain.content['contact']['value']
+    sender = domain.get_content_value('message_sender')
     short_name = domain.get_content_value('subtitle')
     forum = client.get_note(id=edit.note.forum, details='replies')
 
@@ -1535,6 +1540,10 @@ def flag_submission(
 
         To view the submission, click here: https://openreview.net/forum?id={}'''.format(forum.number, forum.id)
         client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
+            replyTo=contact,
+            sender=sender,
             recipients=[domain.content['ethics_chairs_id']['value']],
             ignoreRecipients=[edit.tauthor],
             subject=subject,
