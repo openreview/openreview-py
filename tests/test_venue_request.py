@@ -782,30 +782,31 @@ class TestVenueRequest():
         assert recruitment_invitation.reply['content']['invitation_email_subject']['default'] == "[TestVenue@OR'2030 Modified] Invitation to serve as {{invitee_role}}"
         assert recruitment_invitation.reply['content']['invitation_email_content']['default'] == '''Dear {{fullname}},
 
-        You have been nominated by the program chair committee of TestVenue@OR'2030 Modified to serve as {{invitee_role}}. As a respected researcher in the area, we hope you will accept and help us make TestVenue@OR'2030 Modified a success.
+You have been nominated by the program chair committee of TestVenue@OR'2030 Modified to serve as {{invitee_role}}. As a respected researcher in the area, we hope you will accept and help us make TestVenue@OR'2030 Modified a success.
 
-        You are also welcome to submit papers, so please also consider submitting to TestVenue@OR'2030 Modified.
+You are also welcome to submit papers, so please also consider submitting to TestVenue@OR'2030 Modified.
 
-        We will be using OpenReview.net and a reviewing process that we hope will be engaging and inclusive of the whole community.
+We will be using OpenReview.net and a reviewing process that we hope will be engaging and inclusive of the whole community.
 
-        To ACCEPT the invitation, please click on the following link:
+To ACCEPT the invitation, please click on the following link:
 
-        {{accept_url}}
+{{accept_url}}
 
-        To DECLINE the invitation, please click on the following link:
+To DECLINE the invitation, please click on the following link:
 
-        {{decline_url}}
+{{decline_url}}
 
-        Please answer within 10 days.
+Please answer within 10 days.
 
-        If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using. Visit http://openreview.net/profile after logging in.
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using. Visit http://openreview.net/profile after logging in.
 
-        If you have any questions, please contact us at info@openreview.net.
+If you have any questions, please contact {{contact_info}}.
 
-        Cheers!
+Cheers!
 
-        Program Chairs
-        '''
+Program Chairs
+'''
+
         recruitment_note = test_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
