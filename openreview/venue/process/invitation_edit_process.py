@@ -164,6 +164,7 @@ def process(client, invitation):
             if note.content.get('flagged_for_ethics_review', {}).get('value', False):
                 if 'everyone' not in final_readers or invitation.content.get('reader_selection',{}).get('value'):
                     final_readers.append(f'{venue_id}/{submission_name}{note.number}/{ethics_reviewers_name}')
+                    final_readers.append(ethics_chairs_id)
             content['noteReaders'] = { 'value': final_readers }
 
         paper_invitation_edit = client.post_invitation_edit(invitations=invitation.id,

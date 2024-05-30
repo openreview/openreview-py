@@ -573,7 +573,9 @@ class TestARRVenueV2():
                         }
                     }
                 },
-                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
+                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers',
+                'release_submissions_to_ethics_chairs': 'Yes, release flagged submissions to the ethics chairs.',
+                'compute_affinity_scores': 'No'
             },
             forum=request_form_note.forum,
             referent=request_form_note.forum,
@@ -2955,6 +2957,8 @@ class TestARRVenueV2():
         assert 'flagged_for_desk_reject_verification' in test_submission.content
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
 
         # Edit with ethics flag and no violation field - check DSV flag is false and ethics flag exists and is True
         _, test_submission = post_checklist(user_client, checklist_inv, user, tested_field='need_ethics_review', existing_note=violation_edit['note'])
@@ -2963,6 +2967,8 @@ class TestARRVenueV2():
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in test_submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' in test_submission.readers
 
         # Delete checklist - check both flags False
         _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=violation_edit['note'])
@@ -2970,6 +2976,8 @@ class TestARRVenueV2():
         assert 'flagged_for_desk_reject_verification' in test_submission.content
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
 
         # Re-post with no flag - check both flags false
         reviewer_edit, test_submission = post_checklist(user_client, checklist_inv, user)
@@ -2978,7 +2986,8 @@ class TestARRVenueV2():
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
-
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
 
         # Test checklists for AEs
         checklist_inv = test_data_templates[venue.get_area_chairs_id()]['checklist_invitation']

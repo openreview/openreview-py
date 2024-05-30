@@ -10,6 +10,7 @@ def process(client, edit, invitation):
     source_submissions_query_mapping = domain.content.get('source_submissions_query_mapping', {}).get('value')
     ae_checklist_name = invitation.get_content_value('ae_checklist_name')
     reviewer_checklist_name = invitation.get_content_value('reviewer_checklist_name')
+    ethics_chairs_id = domain.get_content_value('ethics_chairs_id')
 
     submission = client.get_note(edit.note.id)
 
@@ -46,6 +47,7 @@ def process(client, edit, invitation):
                         final_readers.remove('{signatures}')
                     if 'everyone' not in final_readers:
                         final_readers.append(f'{venue_id}/{submission_name}{submission.number}/{ethics_reviewers_name}')
+                        final_readers.append(ethics_chairs_id)
 
                     print('review_name:', review_name)
                     paper_invitation_edit = client.post_invitation_edit(
@@ -116,6 +118,7 @@ def process(client, edit, invitation):
             final_readers = [reader.replace('{number}', str(submission.number)) for reader in final_readers]
             if 'everyone' not in final_readers or comment_invitation.content.get('reader_selection',{}).get('value'):
                 final_readers.append(f'{venue_id}/{submission_name}{submission.number}/{ethics_reviewers_name}')
+                final_readers.append(ethics_chairs_id)
 
             paper_invitation_edit = client.post_invitation_edit(
                     invitations=comment_invitation.id,
@@ -137,6 +140,20 @@ def process(client, edit, invitation):
                 )
     elif not submission.content['flagged_for_ethics_review']['value']:
         print('Unflag paper #', submission.number)
+
+        # remove ethics reviewers and chair as readers of submission
+        client.post_note_edit(invitation=meta_invitation_id,
+                signatures=[venue_id],
+                note=openreview.api.Note(
+                    id=submission.id,
+                    readers={
+                        'remove': [
+                            f'{venue_id}/{submission_name}{submission.number}/{ethics_reviewers_name}',
+                            ethics_chairs_id
+                        ]
+                    }
+                )
+            )
 
         # expire ethics review invitation
         invitation_id=f'{venue_id}/{submission_name}{submission.number}/-/{ethics_review_name}'
@@ -162,16 +179,18 @@ def process(client, edit, invitation):
             group_id=f'{venue_id}/{submission_name}{submission.number}/{ethics_reviewers_name}'
             if group_id in invitees:
                 invitees.remove(group_id)
-                print('invitees:', invitees)
-                print('group_id:', group_id)
-                client.post_invitation_edit(invitations=meta_invitation_id,
-                readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                replacement=False,
-                invitation=openreview.api.Invitation(
-                        id=invitation.id,
-                        invitees=invitees,
-                        signatures=[venue_id]
-                    )
+            if ethics_chairs_id in invitees:
+                invitees.remove(ethics_chairs_id)
+            print('invitees:', invitees)
+            print('group_id:', group_id)
+            client.post_invitation_edit(invitations=meta_invitation_id,
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            replacement=False,
+            invitation=openreview.api.Invitation(
+                    id=invitation.id,
+                    invitees=invitees,
+                    signatures=[venue_id]
+                )
             )
