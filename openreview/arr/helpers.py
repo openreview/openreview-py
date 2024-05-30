@@ -1536,7 +1536,7 @@ def flag_submission(
         subject = f'[{short_name}] A submission has been flagged for ethics reviewing'
         message = '''Paper {} has been flagged for ethics review.
 
-        To view the submission, click here: https://openreview.net/forum?id={}'''.format(forum.number, forum.id)
+To view the submission, click here: https://openreview.net/forum?id={}'''.format(forum.number, forum.id)
         client.post_message(
             recipients=[domain.content['ethics_chairs_id']['value']],
             ignoreRecipients=[edit.tauthor],
