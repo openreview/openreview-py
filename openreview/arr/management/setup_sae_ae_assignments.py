@@ -26,7 +26,7 @@ def process(client, invitation):
     support_group = request_form.invitation.split('/-/')[0]
     venue = openreview.helpers.get_conference(client_v1, request_form_id, support_group)
 
-    conference_matching = matching.Matching(venue, client.get_group(venue.get_senior_area_chairs_id()), None)
+    conference_matching = matching.Matching(venue, client.get_group(venue.get_area_chairs_id()), None)
 
     # Enable outside reviewers
     hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
