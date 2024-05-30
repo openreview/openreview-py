@@ -3275,8 +3275,8 @@ class TestARRVenueV2():
         review = openreview_client.get_note(reviewer_edit['note']['id'])
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Authors' in review.readers
 
-        # Edit with ethics flag and no violation field - check DSV flag is false and ethics flag exists and is True
-        _, test_submission = post_official_review(user_client, review_inv, user, tested_field='needs_ethics_review', existing_note=violation_edit['note'])
+        # Edit with ethics flag to double check that authors are present
+        _, test_submission = post_official_review(user_client, review_inv, user, tested_field='needs_ethics_review', existing_note=reviewer_edit['note'])
         assert 'flagged_for_ethics_review' in test_submission.content
 
     def test_author_response(self, client, openreview_client, helpers, test_client, request_page, selenium):
