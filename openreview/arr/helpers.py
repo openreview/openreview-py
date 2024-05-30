@@ -560,6 +560,7 @@ class ARRWorkflow(object):
                     'title': venue.get_reviewers_name() + ' ' + arr_registration_task_forum['title'],
                     'additional_fields': arr_registration_task
                 },
+                due_date=self.configuration_note.content.get('registration_due_date'),
                 exp_date=self.configuration_note.content.get('form_expiration_date')
             ),
             ARRStage(
@@ -604,6 +605,7 @@ class ARRWorkflow(object):
                     'title': venue.get_area_chairs_name() + ' ' + arr_registration_task_forum['title'],
                     'additional_fields': arr_registration_task
                 },
+                due_date=self.configuration_note.content.get('registration_due_date'),
                 exp_date=self.configuration_note.content.get('form_expiration_date')
             ),
             ARRStage(
@@ -648,6 +650,7 @@ class ARRWorkflow(object):
                     'title': venue.senior_area_chairs_name.replace('_', ' ') + ' ' + arr_registration_task_forum['title'],
                     'additional_fields': arr_registration_task
                 },
+                due_date=self.configuration_note.content.get('registration_due_date'),
                 exp_date=self.configuration_note.content.get('form_expiration_date')
             ),
             ARRStage(

@@ -310,6 +310,11 @@ class TestARRVenueV2():
 
         helpers.await_queue()
 
+        # Check duedates for registration stages
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Registration').duedate > 0
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Registration').duedate > 0
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Registration').duedate > 0
+
         # Pin 2023 and 2024 into next available year
         task_array = [
             arr_reviewer_max_load_task,
@@ -2771,6 +2776,7 @@ class TestARRVenueV2():
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Enable_SAE_AE_Assignments-0-1', count=1)
 
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Emergency_Area_Chairs')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Invite_Assignment')
         assignment_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment')
         assert 'sync_sac_id' not in assignment_invitation.content
 
