@@ -678,7 +678,7 @@ def get_ethics_review_stage(request_forum):
     if request_forum.content.get('ethics_review_submissions'):
         flagged_submissions = [int(number) for number in request_forum.content['ethics_review_submissions'].split(',')]
 
-    compute_affinity_scores = None if request_forum.content.get('compute_affinity_scores') == 'No' else request_forum.content.get('compute_affinity_scores')
+    compute_affinity_scores = False if request_forum.content.get('compute_affinity_scores', 'No') == 'No' else request_forum.content.get('compute_affinity_scores')
 
     return openreview.stages.EthicsReviewStage(
         start_date = review_start_date,
