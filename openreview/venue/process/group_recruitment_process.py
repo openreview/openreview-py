@@ -4,12 +4,11 @@ def process(client, edit, invitation):
     venue_id = domain.id
     venue_id = domain.id
     meta_invitation_id = domain.content['meta_invitation_id']['value']
-    contact = domain.content['contact']['value']    
+    contact_email = domain.content['contact']['value']    
     invited_group = client.get_group(invitation.edit['group']['id'])
     recruitment_subject = invited_group.content['recruitment_subject']['value']
     recruitment_template = invited_group.content['recruitment_template']['value']
     allow_overlap = invited_group.content.get('allow_overlap', {}).get('value')
-    contact_email = domain.content['contact']['value']
     hash_seed = invitation.content['hash_seed']['value']
 
     committee_name = invitation.content['committee_name']['value']
@@ -100,21 +99,34 @@ def process(client, edit, invitation):
                 name = 'invitee'
             valid_invitees.append((email, name))
 
-    for email, name in valid_invitees:
-        
-        openreview.tools.recruit_reviewer(client, email, name,
-            hash_seed,
-            f'{venue_id}/{committee_name}/-/Recruitment',
-            recruitment_template,
-            recruitment_subject,
-            invited_group.id,
-            contact_email,
-            verbose=False,
-            replyTo=contact,
-            invitation=meta_invitation_id,
-            signature=venue_id)
-        
-        recruitment_status['invited'].append(email)
 
+    client.post_group_edit(
+        invitation=meta_invitation_id,
+        signatures=[venue_id],
+        group=openreview.api.Group(
+            id=invited_group.id,
+            members={
+                'append': list(set([i[0] for i in valid_invitees]))
+            }
+        )
+    )
+
+    def recruit_user(invitee):
+        email, name = invitee
+        openreview.tools.recruit_user(client, email,
+            hash_seed,
+            recruitment_message_subject=recruitment_subject,
+            recruitment_message_content=recruitment_template,
+            recruitment_invitation_id=f'{venue_id}/{committee_name}/-/Recruitment',
+            comittee_invited_id=invited_group.id,
+            contact_email=contact_email,
+            message_invitation=meta_invitation_id,
+            message_signature=venue_id,
+            name=name
+        )
+        return email
+        
+    invited_emails = openreview.tools.concurrent_requests(recruit_user, valid_invitees, desc='send_recruitment_invitations')
+    recruitment_status['invited'] = invited_emails
 
     print("Recruitment status:", recruitment_status)

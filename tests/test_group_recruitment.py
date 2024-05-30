@@ -86,7 +86,7 @@ Please answer within 10 days.
 
 If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using. Visit http://openreview.net/profile after logging in.
 
-If you have any questions, please contact us at info@openreview.net.
+If you have any questions, please contact us at {{contact_info}}.
 
 Cheers!
 
