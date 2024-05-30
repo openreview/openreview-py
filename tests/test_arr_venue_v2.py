@@ -310,6 +310,11 @@ class TestARRVenueV2():
 
         helpers.await_queue()
 
+        # Check duedates for registration stages
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Registration').duedate > 0
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Registration').duedate > 0
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Registration').duedate > 0
+
         # Pin 2023 and 2024 into next available year
         task_array = [
             arr_reviewer_max_load_task,
