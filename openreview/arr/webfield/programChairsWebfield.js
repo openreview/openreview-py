@@ -80,6 +80,24 @@ return {
             'author_identity_guess': [5]
         }
       }
-    ]
+    ],
+    propertiesAllowed: {
+      reviewerChecklistCount: `
+      const invitationToCheck="Reviewer_Checklist"; 
+      const checklistReplies = row.note?.details?.replies.filter(reply => {
+        const hasReply = reply.invitations.some(invitation => invitation.includes(invitationToCheck)); 
+        return hasReply;
+      })
+      return checklistReplies?.length??0;
+      `,
+      actionEditorChecklistCount: `
+      const invitationToCheck="Action_Editor_Checklist"; 
+      const checklistReplies = row.note?.details?.replies.filter(reply => {
+        const hasReply = reply.invitations.some(invitation => invitation.includes(invitationToCheck)); 
+        return hasReply;
+      })
+      return checklistReplies?.length??0;
+      `
+    }    
   }
 }
