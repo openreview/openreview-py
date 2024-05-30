@@ -391,10 +391,10 @@ class EditInvitationBuilder(object):
                                     {'value': venue.get_reviewers_id(), 'optional': True, 'description': 'All Reviewers'},
                                     {'value': venue.get_area_chairs_id(), 'optional': True, 'description': 'All Area Chairs'},
                                     {'value': venue.get_senior_area_chairs_id(), 'optional': True, 'description': 'All Senior Area Chairs'},
-                                   # {'value': venue.get_authors_id('${{2/id}/number}'), 'optional': True, 'description': 'Submission Authors'},
-                                   # {'value': venue.get_reviewers_id('${{2/id}/number}'), 'optional': True, 'description': 'Assigned Reviewers'},
-                                   # {'value': venue.get_area_chairs_id('${{2/id}/number}'), 'optional': True, 'description': 'Assigned Area Chairs'},
-                                   # {'value': venue.get_senior_area_chairs_id('${{2/id}/number}'), 'optional': True, 'description': 'Assigned Senior Area Chairs'},
+                                    {'value': venue.get_authors_id('${{2/id}/number}'), 'optional': True, 'description': 'Submission Authors'},
+                                    {'value': venue.get_reviewers_id('${{2/id}/number}'), 'optional': True, 'description': 'Assigned Reviewers'},
+                                    {'value': venue.get_area_chairs_id('${{2/id}/number}'), 'optional': True, 'description': 'Assigned Area Chairs'},
+                                    {'value': venue.get_senior_area_chairs_id('${{2/id}/number}'), 'optional': True, 'description': 'Assigned Senior Area Chairs'}
                                 ]
                             }
                         }
@@ -444,10 +444,10 @@ class EditInvitationBuilder(object):
                                     {'value': venue.get_reviewers_id(), 'optional': True, 'description': 'All Reviewers'},
                                     {'value': venue.get_area_chairs_id(), 'optional': True, 'description': 'All Area Chairs'},
                                     {'value': venue.get_senior_area_chairs_id(), 'optional': True, 'description': 'All Senior Area Chairs'},
-                                   # {'value': venue.get_authors_id('${{4/id}/number}'), 'optional': True, 'description': 'Submission Authors'},
-                                   # {'value': venue.get_reviewers_id('${{4/id}/number}'), 'optional': True, 'description': 'Assigned Reviewers'},
-                                   # {'value': venue.get_area_chairs_id('${{4/id}/number}'), 'optional': True, 'description': 'Assigned Area Chairs'},
-                                   # {'value': venue.get_senior_area_chairs_id('${{4/id}/number}'), 'optional': True, 'description': 'Assigned Senior Area Chairs'},
+                                    {'value': venue.get_authors_id('${{4/id}/number}'), 'optional': True, 'description': 'Submission Authors'},
+                                    {'value': venue.get_reviewers_id('${{4/id}/number}'), 'optional': True, 'description': 'Assigned Reviewers'},
+                                    {'value': venue.get_area_chairs_id('${{4/id}/number}'), 'optional': True, 'description': 'Assigned Area Chairs'},
+                                    {'value': venue.get_senior_area_chairs_id('${{4/id}/number}'), 'optional': True, 'description': 'Assigned Senior Area Chairs'},
                                 ]
                             }
                         }
@@ -463,10 +463,10 @@ class EditInvitationBuilder(object):
                                     {'value': venue.get_reviewers_id(), 'optional': True, 'description': 'All Reviewers'},
                                     {'value': venue.get_area_chairs_id(), 'optional': True, 'description': 'All Area Chairs'},
                                     {'value': venue.get_senior_area_chairs_id(), 'optional': True, 'description': 'All Senior Area Chairs'},
-                                   # {'value': venue.get_authors_id('${{4/id}/number}'), 'optional': True, 'description': 'Submission Authors'},
-                                   # {'value': venue.get_reviewers_id('${{4/id}/number}'), 'optional': True, 'description': 'Assigned Reviewers'},
-                                   # {'value': venue.get_area_chairs_id('${{4/id}/number}'), 'optional': True, 'description': 'Assigned Area Chairs'},
-                                   # {'value': venue.get_senior_area_chairs_id('${{4/id}/number}'), 'optional': True, 'description': 'Assigned Senior Area Chairs'},
+                                    {'value': venue.get_authors_id('${{4/id}/number}'), 'optional': True, 'description': 'Submission Authors'},
+                                    {'value': venue.get_reviewers_id('${{4/id}/number}'), 'optional': True, 'description': 'Assigned Reviewers'},
+                                    {'value': venue.get_area_chairs_id('${{4/id}/number}'), 'optional': True, 'description': 'Assigned Area Chairs'},
+                                    {'value': venue.get_senior_area_chairs_id('${{4/id}/number}'), 'optional': True, 'description': 'Assigned Senior Area Chairs'},
                                 ]
                             }
                         }

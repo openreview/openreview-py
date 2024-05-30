@@ -243,8 +243,7 @@ class TestVenueConfiguration():
         pc_client.post_invitation_edit(
             invitations=submission_readers_inv.id,
             content = {
-#                'readers': { 'value': ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Submission${{2/id}/number}/Authors'] },
-                'readers': { 'value': ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Authors'] },
+               'readers': { 'value': ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Submission${{2/id}/number}/Authors'] }
             }
         )
 
@@ -254,9 +253,8 @@ class TestVenueConfiguration():
         pc_client.post_invitation_edit(
             invitations=submission_field_readers_inv.id,
             content = {
-#                'readers': { 'value': ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Submission${{2/id}/number}/Authors'] },
-                'author_readers': { 'value': ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Authors'] },
-                'pdf_readers': { 'value': ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Authors', 'ICLR.cc/2025/Conference/Reviewers'] },
+                'author_readers': { 'value': ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Submission${{4/id}/number}/Authors'] },
+                'pdf_readers': { 'value': ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Submission${{4/id}/number}/Authors', 'ICLR.cc/2025/Conference/Submission${{4/id}/number}/Reviewers'] },
             }
         )        
 
@@ -275,12 +273,12 @@ class TestVenueConfiguration():
         helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2025/Conference/-/Submission/Deadlines')
         helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/Post_Submission-0-1', count=3)
 
-        submissions = openreview_client.get_notes(invitation='ICLR.cc/2025/Conference/-/Submission')
+        submissions = openreview_client.get_notes(invitation='ICLR.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
-        assert submissions[0].readers == ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Authors']                 
-        assert submissions[0].content['authors']['readers'] == ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Authors']                 
-        assert submissions[0].content['authorids']['readers'] == ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Authors']                 
-        assert submissions[0].content['pdf']['readers'] == ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Authors', 'ICLR.cc/2025/Conference/Reviewers']                 
+        assert submissions[0].readers == ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Submission1/Authors']
+        assert submissions[0].content['authors']['readers'] == ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Submission1/Authors']
+        assert submissions[0].content['authorids']['readers'] == ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Submission1/Authors']
+        assert submissions[0].content['pdf']['readers'] == ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Submission1/Authors', 'ICLR.cc/2025/Conference/Submission1/Reviewers']
         
     def test_comment_stage(self, openreview_client, test_client, helpers):
 
