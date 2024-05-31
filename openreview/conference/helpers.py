@@ -3,7 +3,7 @@ import openreview
 import datetime
 import json
 
-def get_venue(client, venue_note_id, support_user='OpenReview.net/Support'):
+def get_venue(client, venue_note_id, support_user='OpenReview.net/Support', setup=False):
     
     note = client.get_note(venue_note_id)
     venue = openreview.venue.Venue(client, note.content['venue_id']['value'], support_user)
@@ -21,8 +21,8 @@ def get_venue(client, venue_note_id, support_user='OpenReview.net/Support'):
     venue.use_publication_chairs = note.content.get('publication_chairs', {}).get('value', '') == 'Yes, our venue has Publication Chairs'
     
     set_initial_stages_v2(note, venue)
-    venue.setup(note.content.get('program_chair_emails',{}).get('value'))
-    venue.create_review_stage()
+    if setup:
+        venue.setup(note.content.get('program_chair_emails',{}).get('value'))
     return venue
 
 def set_start_date(request_forum, venue):
