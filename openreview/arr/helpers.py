@@ -1011,20 +1011,6 @@ class ARRWorkflow(object):
             m = matching.Matching(venue, self.client_v2.get_group(role), None, None)
             if not openreview.tools.get_invitation(self.client_v2, venue.get_custom_max_papers_id(role)):
                 m._create_edge_invitation(venue.get_custom_max_papers_id(m.match_group.id))
-                cmp_inv = self.client_v2.get_invitation(venue.get_custom_max_papers_id(m.match_group.id))
-                cmp_inv.edit['weight']['param']['optional'] = True
-                if 'enum' in cmp_inv.edit['weight']['param']:
-                    del cmp_inv.edit['weight']['param']['enum']
-                    cmp_inv.edit['weight']['param']['minimum'] = 0
-                    cmp_inv.edit['weight']['param']['default'] = 0
-
-                self.client_v2.post_invitation_edit(
-                    invitations=venue.get_meta_invitation_id(),
-                    readers=[venue.id],
-                    writers=[venue.id],
-                    signatures=[venue.id],
-                    invitation=cmp_inv
-                )
             
             if not openreview.tools.get_invitation(self.client_v2, f"{role}/-/Status"): # Hold "Requested" or "Reassigned", head=submission ID
                 m._create_edge_invitation(f"{role}/-/Status")
