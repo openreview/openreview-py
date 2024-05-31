@@ -2413,7 +2413,7 @@ class TestARRVenueV2():
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "A Name"}
+                    "reviewer_certification": {"value": ["I certify that the review I've entered accurately reflects my assessment of the work"]}
                 }
             )
         )
@@ -2439,7 +2439,7 @@ class TestARRVenueV2():
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "A Name"}
+                    "reviewer_certification": {"value": ["I certify that the review I've entered accurately reflects my assessment of the work"]}
                 }
             )
         )
@@ -2465,7 +2465,7 @@ class TestARRVenueV2():
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "A Name"}
+                    "reviewer_certification": {"value": ["I certify that the review I've entered accurately reflects my assessment of the work"]}
                 }
             )
         )
@@ -3139,7 +3139,7 @@ class TestARRVenueV2():
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "A Name"}
+                    "reviewer_certification": {"value": ["I certify that the review I've entered accurately reflects my assessment of the work"]}
                 }
                 ret_content['ethical_concerns'] = {'value': 'There are no concerns with this submission'}
 
