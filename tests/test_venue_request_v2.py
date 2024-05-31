@@ -809,6 +809,63 @@ class TestVenueRequest():
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Remind Recruitment Status' not in last_message['content']['text']
 
+    def test_change_short_name(self, client, test_client, selenium, request_page, venue, helpers, openreview_client):
+
+        venue_revision_note = test_client.post_note(openreview.Note(
+            content={
+                'title': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Official Venue Name': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Abbreviated Venue Name': venue['request_form_note'].content['Abbreviated Venue Name'] + ' Modified',
+                'Official Website URL': venue['request_form_note'].content['Official Website URL'],
+                'program_chair_emails': venue['request_form_note'].content['program_chair_emails'],
+                'Expected Submissions': '100',
+                'How did you hear about us?': 'ML conferences',
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
+                'Submission Deadline':  venue['request_form_note'].content['Submission Deadline'],
+                'Venue Start Date':  venue['request_form_note'].content['Venue Start Date'],
+                'contact_email': venue['request_form_note'].content['contact_email'],
+                'publication_chairs':'No, our venue does not have Publication Chairs'
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+        updated_request_form_note = client.get_note(venue['request_form_note'].id)
+        assert updated_request_form_note.content['Abbreviated Venue Name'].endswith('Modified')
+
+        recruitment_invitation = client.get_invitation('{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number))
+
+        assert recruitment_invitation.reply['content']['invitation_email_subject']['default'] == "[TestVenue@OR'2030V2 Modified] Invitation to serve as {{invitee_role}}"
+        assert recruitment_invitation.reply['content']['invitation_email_content']['default'] == '''Dear {{fullname}},
+
+You have been nominated by the program chair committee of TestVenue@OR'2030V2 Modified to serve as {{invitee_role}}. As a respected researcher in the area, we hope you will accept and help us make TestVenue@OR'2030V2 Modified a success.
+
+You are also welcome to submit papers, so please also consider submitting to TestVenue@OR'2030V2 Modified.
+
+We will be using OpenReview.net and a reviewing process that we hope will be engaging and inclusive of the whole community.
+
+To respond the invitation, please click on the following link:
+
+{{invitation_url}}
+
+Please answer within 10 days.
+
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using. Visit http://openreview.net/profile after logging in.
+
+If you have any questions, please contact {{contact_info}}.
+
+Cheers!
+
+Program Chairs
+'''
+
     def test_reviewer_registration_stage(self, client, test_client, selenium, request_page, venue, helpers, openreview_client):
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=2)
@@ -1059,12 +1116,12 @@ class TestVenueRequest():
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
 
-        messages = openreview_client.get_messages(subject="TestVenue@OR'2030V2 has received your submission titled test submission")
+        messages = openreview_client.get_messages(subject="TestVenue@OR'2030V2 Modified has received your submission titled test submission")
         assert messages and len(messages) == 1
         assert 'venue_author_v2@mail.com' in messages[0]['content']['to']
         assert 'If you have any questions, please contact the PCs at test@mail.com' in messages[0]['content']['text']
 
-        messages = openreview_client.get_messages(subject="TestVenue@OR'2030V2 has received a new submission titled test submission")
+        messages = openreview_client.get_messages(subject="TestVenue@OR'2030V2 Modified has received a new submission titled test submission")
         assert messages and len(messages) == 2
         recipients = [msg['content']['to'] for msg in messages]
         assert 'test@mail.com' in recipients
@@ -1090,14 +1147,14 @@ class TestVenueRequest():
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id'])
 
         #check co-author email
-        messages = openreview_client.get_messages(to='venue_author_v2@mail.com', subject="TestVenue@OR'2030V2 has received your submission titled test submission 2")
+        messages = openreview_client.get_messages(to='venue_author_v2@mail.com', subject="TestVenue@OR'2030V2 Modified has received your submission titled test submission 2")
         assert messages and len(messages) == 1
         assert messages[0]['content']['replyTo'] == 'test@mail.com'
         assert 'If you have any questions, please contact the PCs at test@mail.com' in messages[0]['content']['text']
         assert 'If you are not an author of this submission and would like to be removed, please contact the author who added you at venue_author_v2_2@mail.com' in messages[0]['content']['text']
 
         #check tauthor email
-        messages = openreview_client.get_messages(to='venue_author_v2_2@mail.com', subject="TestVenue@OR'2030V2 has received your submission titled test submission 2")
+        messages = openreview_client.get_messages(to='venue_author_v2_2@mail.com', subject="TestVenue@OR'2030V2 Modified has received your submission titled test submission 2")
         assert messages and len(messages) == 1
         assert 'If you have any questions, please contact the PCs at test@mail.com' in messages[0]['content']['text']
         assert 'If you are not an author of this submission and would like to be removed, please contact the author who added you at venue_author_v2_2@mail.com' not in messages[0]['content']['text']
@@ -1358,7 +1415,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             content={
                 'title': '{} Updated'.format(venue['request_form_note'].content['title']),
                 'Official Venue Name': '{} Updated'.format(venue['request_form_note'].content['title']),
-                'Abbreviated Venue Name': venue['request_form_note'].content['Abbreviated Venue Name'],
+                'Abbreviated Venue Name': venue['request_form_note'].content['Abbreviated Venue Name'] + ' Modified',
                 'Official Website URL': venue['request_form_note'].content['Official Website URL'],
                 'program_chair_emails': venue['request_form_note'].content['program_chair_emails'],
                 'Expected Submissions': '100',
@@ -1732,10 +1789,10 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Rebuttal-0-1')
         helpers.await_queue_edit(openreview_client, rebuttal_edit['id'])
 
-        messages = openreview_client.get_messages(subject = '[TestVenue@OR\'2030V2] Your author rebuttal was posted on Submission Number: 1, Submission Title: "test submission"')
+        messages = openreview_client.get_messages(subject = '[TestVenue@OR\'2030V2 Modified] Your author rebuttal was posted on Submission Number: 1, Submission Title: "test submission"')
         assert len(messages) == 1
         assert 'venue_author_v2@mail.com' in messages[0]['content']['to']
-        messages = openreview_client.get_messages(subject = '[TestVenue@OR\'2030V2] An author rebuttal was posted on Submission Number: 1, Submission Title: "test submission"')
+        messages = openreview_client.get_messages(subject = '[TestVenue@OR\'2030V2 Modified] An author rebuttal was posted on Submission Number: 1, Submission Title: "test submission"')
         assert len(messages) == 2
         assert 'venue_reviewer_v2_@mail.com' in messages[0]['content']['to']
         assert 'venue_reviewer_v2@mail.com' in messages[1]['content']['to']
@@ -2193,7 +2250,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             content={
                 'title': '{} Updated'.format(venue['request_form_note'].content['title']),
                 'Official Venue Name': '{} Updated'.format(venue['request_form_note'].content['title']),
-                'Abbreviated Venue Name': venue['request_form_note'].content['Abbreviated Venue Name'],
+                'Abbreviated Venue Name': venue['request_form_note'].content['Abbreviated Venue Name'] + ' Modified',
                 'Official Website URL': venue['request_form_note'].content['Official Website URL'],
                 'program_chair_emails': venue['request_form_note'].content['program_chair_emails'],
                 'Expected Submissions': '100',
@@ -2243,7 +2300,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             content={
                 'title': '{} Updated'.format(venue['request_form_note'].content['title']),
                 'Official Venue Name': '{} Updated'.format(venue['request_form_note'].content['title']),
-                'Abbreviated Venue Name': venue['request_form_note'].content['Abbreviated Venue Name'],
+                'Abbreviated Venue Name': venue['request_form_note'].content['Abbreviated Venue Name'] + ' Modified',
                 'Official Website URL': venue['request_form_note'].content['Official Website URL'],
                 'program_chair_emails': venue['request_form_note'].content['program_chair_emails'],
                 'Expected Submissions': '100',
@@ -2594,7 +2651,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         messages = openreview_client.get_messages(
             to='venue_author_v2@mail.com',
-            subject="[TestVenue@OR'2030V2] Decision posted to your submission - Paper Number: 1, Paper Title: \"test submission\"")
+            subject="[TestVenue@OR'2030V2 Modified] Decision posted to your submission - Paper Number: 1, Paper Title: \"test submission\"")
         assert messages and len(messages) == 1
         assert messages[0]['content']['replyTo'] == 'test@mail.com'
         assert messages[0]['content']['text'] == f'''To view the decision, click here: https://openreview.net/forum?id={submission.id}&noteId={decision_note['note']['id']}\n\nPlease note that responding to this email will direct your reply to test@mail.com.\n'''
@@ -3040,12 +3097,12 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert updated_note.content['authors']['value'] == ['VenueFour Author', 'VenueThree Author']
         assert updated_note.content['authorids']['value'] == ['~VenueFour_Author1', '~VenueThree_Author1']
 
-        messages = openreview_client.get_messages(to = 'venue_author3_v2@mail.com', subject='TestVenue@OR\'2030V2 has received a new revision of your submission titled revised test submission 3')
+        messages = openreview_client.get_messages(to = 'venue_author3_v2@mail.com', subject='TestVenue@OR\'2030V2 Modified has received a new revision of your submission titled revised test submission 3')
         assert messages and len(messages) == 1
-        messages = openreview_client.get_messages(to = 'venue_author_v2_2@mail.com', subject='TestVenue@OR\'2030V2 has received a new revision of your submission titled revised test submission 3')
+        messages = openreview_client.get_messages(to = 'venue_author_v2_2@mail.com', subject='TestVenue@OR\'2030V2 Modified has received a new revision of your submission titled revised test submission 3')
         assert messages and len(messages) == 1
 
-        message_text = f'''Your new revision of the submission to TestVenue@OR'2030V2 has been posted.
+        message_text = f'''Your new revision of the submission to TestVenue@OR'2030V2 Modified has been posted.
 
 Title: revised test submission 3
 
@@ -3135,7 +3192,7 @@ Please note that responding to this email will direct your reply to test@mail.co
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
-        short_name = 'TestVenue@OR\'2030V2'
+        short_name = 'TestVenue@OR\'2030V2 Modified'
         post_decision_stage_note = test_client.post_note(openreview.Note(
             content={
                 'reveal_authors': 'Reveal author identities of only accepted submissions to the public',
@@ -3209,25 +3266,25 @@ Best,
         assert not submissions[2].odate
 
         # assert authors of accepted paper were released
-        assert submissions[0].content['venue']['value'] == 'TestVenue@OR\'2030V2'
+        assert submissions[0].content['venue']['value'] == 'TestVenue@OR\'2030V2 Modified'
         assert submissions[0].content['venueid']['value'] == 'V2.cc/2030/Conference'
         assert 'readers' not in submissions[0].content['authors']
         assert 'readers' not in submissions[0].content['authorids']
 
         # assert author identities of rejected paper are still hidden
-        assert submissions[1].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
+        assert submissions[1].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2 Modified'
         assert submissions[1].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected_Submission'
         assert submissions[1].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
         assert submissions[1].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
 
         # assert author identities of paper with no decision are still hidden
-        assert submissions[2].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
+        assert submissions[2].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2 Modified'
         assert submissions[2].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected_Submission'
         assert submissions[2].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
         assert submissions[2].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
 
-        last_message = openreview_client.get_messages(to='venue_author_v2@mail.com', subject='[TestVenue@OR\'2030V2] Decision notification for your submission 1: test submission')[0]
-        assert "Dear VenueTwo Author,\n\nThank you for submitting your paper, test submission, to TestVenue@OR'2030V2." in last_message['content']['text']
+        last_message = openreview_client.get_messages(to='venue_author_v2@mail.com', subject='[TestVenue@OR\'2030V2 Modified] Decision notification for your submission 1: test submission')[0]
+        assert "Dear VenueTwo Author,\n\nThank you for submitting your paper, test submission, to TestVenue@OR'2030V2 Modified." in last_message['content']['text']
         assert f"https://openreview.net/forum?id={submissions[0].id}" in last_message['content']['text']
 
         request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token, by=By.CLASS_NAME, wait_for_element='tabs-container')
@@ -3312,19 +3369,19 @@ Best,
             'V2.cc/2030/Conference/Submission3/Authors']
 
         # assert authors of accepted paper were released
-        assert submissions[0].content['venue']['value'] == 'TestVenue@OR\'2030V2'
+        assert submissions[0].content['venue']['value'] == 'TestVenue@OR\'2030V2 Modified'
         assert submissions[0].content['venueid']['value'] == 'V2.cc/2030/Conference'
         assert 'readers' not in submissions[0].content['authors']
         assert 'readers' not in submissions[0].content['authorids']
 
         # assert author identities of rejected paper are still hidden
-        assert submissions[1].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
+        assert submissions[1].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2 Modified'
         assert submissions[1].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected_Submission'
         assert submissions[1].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
         assert submissions[1].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
 
         # assert author identities of paper with no decision are still hidden
-        assert submissions[2].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
+        assert submissions[2].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2 Modified'
         assert submissions[2].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected_Submission'
         assert submissions[2].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
         assert submissions[2].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
