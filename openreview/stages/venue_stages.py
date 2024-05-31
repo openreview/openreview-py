@@ -387,6 +387,17 @@ class BidStage(object):
         self.score_ids=score_ids
         self.instructions=instructions
         self.allow_conflicts_bids=allow_conflicts_bids
+        self.default_scores_spec={
+            'weight': 1,
+            'default': 0,
+            'translate_map' : {
+                'Very High': 1.0,
+                'High': 0.5,
+                'Neutral': 0.0,
+                'Low': -0.5,
+                'Very Low': -1.0
+            }
+        }
 
     def get_invitation_readers(self, conference):
         readers = [conference.get_id()]

@@ -1165,17 +1165,7 @@ class InvitationBuilder(object):
                     }
                 }
 
-            bid_score_spec = {
-                'weight': 1,
-                'default': 0,
-                'translate_map' : {
-                    'Very High': 1.0,
-                    'High': 0.5,
-                    'Neutral': 0.0,
-                    'Low': -0.5,
-                    'Very Low': -1.0
-                }
-            }
+            bid_score_spec = bid_stage.default_scores_spec
 
             bid_invitation_id = venue.get_invitation_id(bid_stage.name, prefix=match_group_id)
 

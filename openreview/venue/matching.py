@@ -1090,7 +1090,7 @@ class Matching(object):
 
             invitation = openreview.tools.get_invitation(self.client, venue.get_bid_id(self.match_group.id))
             if invitation:
-                score_spec[invitation.id] = invitation.content['scores_spec']['value']
+                score_spec[invitation.id] = venue.bid_stage.default_scores_spec
 
             invitation = openreview.tools.get_invitation(self.client, venue.get_recommendation_id(self.match_group.id))
             if invitation:
