@@ -6,11 +6,18 @@ def process(client, edit, invitation):
     contact = domain.get_content_value('contact')
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
     sender = domain.get_content_value('message_sender')
+    submission_name = domain.get_content_value('submission_name')
     comment_email_pcs = domain.get_content_value('comment_email_pcs')
+    comment_email_sacs = domain.get_content_value('comment_email_sacs')
     program_chairs_id = domain.get_content_value('program_chairs_id')
+    senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
 
     submission = client.get_note(edit.note.forum)
     comment = client.get_note(edit.note.id)
+
+    ignore_recipients = comment.signatures + ([program_chairs_id] if not comment_email_pcs else [])
+    if not comment_email_sacs and senior_area_chairs_name:
+        ignore_recipients.append(f'{venue_id}/{submission_name}{submission.number}/{senior_area_chairs_name}')
 
     invitation = client.get_invitation(invitation.id)
     if invitation.date_processes[0].get('cron') is None:
@@ -42,7 +49,7 @@ A new conversation has been started in the {short_name} forum for submission {su
 You can view the conversation here: https://openreview.net/forum?id={submission.id}&noteId={comment.id}#committee-chat
 ''',
             replyTo = contact,
-            ignoreRecipients = comment.signatures + ([program_chairs_id] if not comment_email_pcs else []),
+            ignoreRecipients = ignore_recipients,
             signature=venue_id,
             sender=sender            
         )
@@ -96,7 +103,7 @@ New comments have been posted for the conversation in the {short_name} forum for
 You can view the conversation here: https://openreview.net/forum?id={submission.id}&noteId={new_comments[0].id}#committee-chat
 ''',
             replyTo = contact,
-            ignoreRecipients = comment.signatures + ([program_chairs_id] if not comment_email_pcs else []),
+            ignoreRecipients = ignore_recipients,
             signature=venue_id,
             sender=sender            
         )

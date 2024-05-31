@@ -762,8 +762,8 @@ class ARRWorkflow(object):
                     ],
                     'content': comment_v2,
                     'multi_reply': True,
-                    'notify_readers': False,
-                    'email_sacs': False
+                    'notify_readers': True,
+                    'email_sacs': True
                 },
                 start_date=self.configuration_note.content.get('commentary_start_date'),
                 exp_date=self.configuration_note.content.get('commentary_end_date')   
@@ -870,7 +870,9 @@ class ARRWorkflow(object):
                             'Assigned Submitted Reviewers'
                         ],
                         'additional_readers':['Program Chairs'],
-                        'email_program_chairs_about_official_comments': 'No, do not email PCs for each official comment made in the venue'
+                        'email_program_chairs_about_official_comments': 'No, do not email PCs for each official comment made in the venue',
+                        'email_senior_area_chairs_about_official_comments': 'Yes, email SACs for each official comment made in the venue'
+
                     },
                     'forum': request_form_id,
                     'invitation': '{}/-/Request{}/Comment_Stage'.format(support_user, request_form.number),
