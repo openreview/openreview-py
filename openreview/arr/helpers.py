@@ -560,6 +560,7 @@ class ARRWorkflow(object):
                     'title': venue.get_reviewers_name() + ' ' + arr_registration_task_forum['title'],
                     'additional_fields': arr_registration_task
                 },
+                due_date=self.configuration_note.content.get('registration_due_date'),
                 exp_date=self.configuration_note.content.get('form_expiration_date')
             ),
             ARRStage(
@@ -604,6 +605,7 @@ class ARRWorkflow(object):
                     'title': venue.get_area_chairs_name() + ' ' + arr_registration_task_forum['title'],
                     'additional_fields': arr_registration_task
                 },
+                due_date=self.configuration_note.content.get('registration_due_date'),
                 exp_date=self.configuration_note.content.get('form_expiration_date')
             ),
             ARRStage(
@@ -648,6 +650,7 @@ class ARRWorkflow(object):
                     'title': venue.senior_area_chairs_name.replace('_', ' ') + ' ' + arr_registration_task_forum['title'],
                     'additional_fields': arr_registration_task
                 },
+                due_date=self.configuration_note.content.get('registration_due_date'),
                 exp_date=self.configuration_note.content.get('form_expiration_date')
             ),
             ARRStage(
@@ -1209,28 +1212,28 @@ class ARRStage(object):
                     field_readers = [venue.get_program_chairs_id()]
 
                     if ARRStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED in readers:
-                        field_readers.append(venue.get_senior_area_chairs_id('${{4/forum}/number}'))
+                        field_readers.append(venue.get_senior_area_chairs_id('${7/content/noteNumber/value}'))
 
                     if ARRStage.Participants.AREA_CHAIRS_ASSIGNED in readers:
-                        field_readers.append(venue.get_area_chairs_id('${{4/forum}/number}'))
+                        field_readers.append(venue.get_area_chairs_id('${7/content/noteNumber/value}'))
 
                     if ARRStage.Participants.SECONDARY_AREA_CHAIRS in readers:
-                        field_readers.append(venue.get_secondary_area_chairs_id('${{4/forum}/number}'))
+                        field_readers.append(venue.get_secondary_area_chairs_id('${7/content/noteNumber/value}'))
 
                     if ARRStage.Participants.REVIEWERS_ASSIGNED in readers:
-                        field_readers.append(venue.get_reviewers_id('${{4/forum}/number}'))
+                        field_readers.append(venue.get_reviewers_id('${7/content/noteNumber/value}'))
 
                     if ARRStage.Participants.REVIEWERS_SUBMITTED in readers:
-                        field_readers.append(venue.get_reviewers_id('${{4/forum}/number}') + '/Submitted')
+                        field_readers.append(venue.get_reviewers_id('${7/content/noteNumber/value}') + '/Submitted')
 
                     if ARRStage.Participants.AUTHORS in readers:
-                        field_readers.append(venue.get_authors_id('${{4/forum}/number}'))
+                        field_readers.append(venue.get_authors_id('${7/content/noteNumber/value}'))
 
                     if ARRStage.Participants.ETHICS_CHAIRS in readers:
                         field_readers.append(venue.get_ethics_chairs_id())
 
                     if ARRStage.Participants.ETHICS_REVIEWERS_ASSIGNED in readers:
-                        field_readers.append(venue.get_ethics_reviewers_id('${{4/forum}/number}'))
+                        field_readers.append(venue.get_ethics_reviewers_id('${7/content/noteNumber/value}'))
 
                     print(f"setting readers for {content_name}/{field_name} in {self.super_invitation_id}")
                     if self.type == ARRStage.Type.STAGE_NOTE:
