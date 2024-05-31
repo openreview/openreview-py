@@ -497,7 +497,7 @@ class VenueStages():
                     'Yes, email SACs for each official comment made in the venue',
                     'No, do not email SACs for each official comment made in the venue'
                 ],
-                'required': True,
+                'required': False,
                 'default': 'No, do not email SACs for each official comment made in the venue',
                 'order': 32
             },            
