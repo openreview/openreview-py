@@ -2981,8 +2981,9 @@ class TestARRVenueV2():
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
-        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in test_submission.readers
-        assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' in test_submission.readers
+        assert test_submission.readers == ['everyone']
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
 
         # Delete checklist - check both flags False
         _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=violation_edit['note'])
@@ -3602,7 +3603,7 @@ class TestARRVenueV2():
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Desk_Reject_Verification').expdate < now()
         comment_inv = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Official_Comment')
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in comment_inv.invitees
-        assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Ethics_Reviewers' in comment_inv.readers
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Ethics_Reviewers' in comment_inv.invitees
 
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Ethics_Review_Flag', count=9)
 

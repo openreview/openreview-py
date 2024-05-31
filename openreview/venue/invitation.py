@@ -3743,18 +3743,6 @@ class InvitationBuilder(object):
         if ethics_review_stage.flag_process_path:
             ethics_stage_invitation.process = self.get_process_content(ethics_review_stage.flag_process_path)
 
-        if 'everyone' not in self.venue.submission_stage.get_readers(self.venue, '${{2/id}/number}'):
-            readers_to_append = [self.venue.get_ethics_reviewers_id('${{3/id}/number}')]
-            if ethics_review_stage.release_to_chairs:
-                readers_to_append.append(self.venue.get_ethics_chairs_id())
-            ethics_stage_invitation.edit['note']['readers'] = {
-                'param': {
-                    'const': {
-                        'append': readers_to_append
-                    }
-                }
-            }
-
         self.save_invitation(ethics_stage_invitation, replacement=False)
         return ethics_stage_invitation
 

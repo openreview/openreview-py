@@ -3373,6 +3373,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
                 'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
                 'ICML.cc/2023/Conference/Submission1/Area_Chairs',
                 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers',
+                'ICML.cc/2023/Conference/Ethics_Chairs',
                 review.signatures[0]
             ]
 
@@ -3484,6 +3485,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
                 'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
                 'ICML.cc/2023/Conference/Submission1/Area_Chairs',
                 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers',
+                'ICML.cc/2023/Conference/Ethics_Chairs',
                 review.signatures[0]
             ]
 

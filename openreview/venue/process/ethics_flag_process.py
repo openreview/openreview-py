@@ -11,6 +11,7 @@ def process(client, edit, invitation):
     ae_checklist_name = invitation.get_content_value('ae_checklist_name')
     reviewer_checklist_name = invitation.get_content_value('reviewer_checklist_name')
     ethics_chairs_id = domain.get_content_value('ethics_chairs_id')
+    release_to_ethics_chairs = domain.get_content_value('release_to_chairs')
 
     submission = client.get_note(edit.note.id)
 
@@ -23,6 +24,21 @@ def process(client, edit, invitation):
                 review_name = invitation_name 
 
     if submission.content['flagged_for_ethics_review']['value']:
+
+        # add ethics reviewers and chair as readers of submission if submission is not public
+        if 'everyone' not in submission.readers:
+            readers = [f'{venue_id}/{submission_name}{submission.number}/{ethics_reviewers_name}']
+            if release_to_ethics_chairs:
+                readers.append(ethics_chairs_id)
+            client.post_note_edit(invitation=meta_invitation_id,
+                    signatures=[venue_id],
+                    note=openreview.api.Note(
+                        id=submission.id,
+                        readers={
+                            'append': readers
+                        }
+                    )
+                )
 
         # create ethics reviewers group
         client.post_group_edit(
