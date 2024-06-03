@@ -93,11 +93,11 @@ class Venue(object):
     
     def get_edges_archive_date(self):
         archive_date = datetime.datetime.utcnow()
-        if self.date:
+        if self.start_date:
             try:
-                archive_date = datetime.datetime.strptime(self.date, '%Y/%m/%d')
+                archive_date = datetime.datetime.strptime(self.start_date, '%Y/%m/%d')
             except ValueError:
-                print(f'Error parsing venue date {self.date}')
+                print(f'Error parsing venue date {self.start_date}')
 
         return openreview.tools.datetime_millis(archive_date + datetime.timedelta(weeks=52)) ## archive edges after 1 year
         

@@ -170,35 +170,6 @@ class TestVenueConfiguration():
         assert 'email_authors' in submission_inv.content and not submission_inv.content['email_authors']['value']
         assert 'email_pcs' in submission_inv.content and submission_inv.content['email_pcs']['value']
 
-        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Official_Review')
-        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Official_Review/Deadlines')
-        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Official_Review/Form_Fields')
-        review_readers_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Official_Review/Readers')
-        assert review_readers_inv
-
-        ## edit Official Review readers
-        pc_client_v2.post_invitation_edit(
-            invitations=review_readers_inv.id,
-            content = {
-                'reply_readers': { 
-                    'value':  [
-                        'ICLR.cc/2025/Conference/Program_Chairs', 
-                        'ICLR.cc/2025/Conference/Senior_Area_Chairs',
-                        'ICLR.cc/2025/Conference/Area_Chairs',
-                        'ICLR.cc/2025/Conference/Reviewers'
-                    ] 
-                }
-            }
-        )
-
-        review_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Official_Review')
-        assert review_inv.edit['invitation']['edit']['note']['readers'] == [
-            'ICLR.cc/2025/Conference/Program_Chairs', 
-            'ICLR.cc/2025/Conference/Senior_Area_Chairs',
-            'ICLR.cc/2025/Conference/Area_Chairs',
-            'ICLR.cc/2025/Conference/Reviewers'
-        ]
-
     def test_post_submissions(self, openreview_client, test_client, helpers):
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
@@ -273,6 +244,112 @@ class TestVenueConfiguration():
         assert submissions[0].content['authorids']['readers'] == ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Submission1/Authors']
         assert submissions[0].content['pdf']['readers'] == ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Submission1/Authors', 'ICLR.cc/2025/Conference/Submission1/Reviewers']
         
+    def test_review_stage(self, openreview_client, test_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='sherry@iclr.cc', password=helpers.strong_password)
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Official_Review')
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Official_Review/Deadlines')
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Official_Review/Form_Fields')
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Official_Review/Readers')
+
+        # edit review stage fields
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2025/Conference/-/Official_Review/Form_Fields',
+            content = {
+                'note_content': {
+                    'value': {
+                        "summary": {
+                            "order": 1,
+                            "description": "Briefly summarize the paper and its contributions. This is not the place to critique the paper; the authors should generally agree with a well-written summary.",
+                            "value": {
+                            "param": {
+                                "maxLength": 200000,
+                                "type": "string",
+                                "input": "textarea",
+                                "markdown": True
+                            }
+                            }
+                        },
+                        "rating": {
+                            "order": 10,
+                            "value": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                "1: strong reject",
+                                "3: reject, not good enough",
+                                "5: marginally below the acceptance threshold",
+                                "6: marginally above the acceptance threshold",
+                                "8: accept, good paper",
+                                "10: strong accept, should be highlighted at the conference"
+                                ],
+                                "input": "radio"
+                            }
+                            },
+                            "description": "Please provide an \"overall score\" for this submission."
+                        },
+                        'title': {
+                            'delete': True
+                        }
+                    }
+                }
+            }
+        )
+
+        review_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Official_Review')
+        assert 'title' not in review_inv.edit['invitation']['edit']['note']['content']
+        assert 'summary' in review_inv.edit['invitation']['edit']['note']['content']
+        assert 'rating' in review_inv.edit['invitation']['edit']['note']['content'] and review_inv.edit['invitation']['edit']['note']['content']['rating']['value']['param']['enum'][0] == "1: strong reject"
+
+        ## edit Official Review readers
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2025/Conference/-/Official_Review/Readers',
+            content = {
+                'reply_readers': {
+                    'value':  [
+                        'ICLR.cc/2025/Conference/Program_Chairs',
+                        'ICLR.cc/2025/Conference/Submission${5/content/noteNumber/value}/Senior_Area_Chairs',
+                        'ICLR.cc/2025/Conference/Submission${5/content/noteNumber/value}/Area_Chairs',
+                        'ICLR.cc/2025/Conference/Submission${5/content/noteNumber/value}/Reviewers'
+                    ]
+                }
+            }
+        )
+
+        review_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Official_Review')
+        assert review_inv.edit['invitation']['edit']['note']['readers'] == [
+            'ICLR.cc/2025/Conference/Program_Chairs',
+            'ICLR.cc/2025/Conference/Submission${5/content/noteNumber/value}/Senior_Area_Chairs',
+            'ICLR.cc/2025/Conference/Submission${5/content/noteNumber/value}/Area_Chairs',
+            'ICLR.cc/2025/Conference/Submission${5/content/noteNumber/value}/Reviewers'
+        ]
+
+        # create child invitations
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30))
+        new_duedate = openreview.tools.datetime_millis(now - datetime.timedelta(days=3))
+
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2025/Conference/-/Official_Review/Deadlines',
+            content={
+                'activation_date': { 'value': new_cdate },
+                'deadline': { 'value': new_duedate },
+                'expiration_date': { 'value': new_duedate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/Official_Review-0-1', count=2)
+
+        # invitations = openreview_client.get_invitations(invitation='ICLR.cc/2025/Conference/-/Official_Review')
+        # assert len(invitations) == 10
+
+        invitation  = openreview_client.get_invitation('ICLR.cc/2025/Conference/Submission1/-/Official_Review')
+        assert invitation and invitation.edit['readers'] == [
+            'ICLR.cc/2025/Conference/Program_Chairs',
+            'ICLR.cc/2025/Conference/Submission1/Senior_Area_Chairs',
+            'ICLR.cc/2025/Conference/Submission1/Area_Chairs',
+            'ICLR.cc/2025/Conference/Submission1/Reviewers'
+        ]
+
     def test_comment_stage(self, openreview_client, test_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='sherry@iclr.cc', password=helpers.strong_password)

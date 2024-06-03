@@ -240,7 +240,7 @@ class EditInvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
     
-    def set_edit_content_invitation(self, invitation_id, include_license=False):
+    def set_edit_content_invitation(self, invitation_id):
 
         venue_id = self.venue_id
         venue = self.venue
@@ -280,30 +280,6 @@ class EditInvitationBuilder(object):
                 }
             }  
         )
-
-        if include_license:
-            invitation.edit['content']['note_license'] = {
-                'value': {
-                    'param': {
-                        'type': 'string[]',
-                        'input': 'select',
-                        'items':  [
-                            {'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'},
-                            {'value': 'CC BY-SA 4.0', 'optional': True, 'description': 'CC BY-SA 4.0'},
-                            {'value': 'CC BY-NC 4.0', 'optional': True, 'description': 'CC BY-NC 4.0'},
-                            {'value': 'CC BY-ND 4.0', 'optional': True, 'description': 'CC BY-ND 4.0'},
-                            {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
-                            {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
-                            {'value': 'CC0 1.0', 'optional': True, 'description': 'CC0 1.0'}
-                        ]
-                    }
-                }
-            }
-            invitation.edit['invitation']['edit']['invitation']['edit']['note']['license'] =  {
-                'param': {
-                    'enum': ['${7/content/note_license/value}']
-                }
-            }
 
         self.save_invitation(invitation, replacement=False)
         return invitation
@@ -508,19 +484,19 @@ class EditInvitationBuilder(object):
         ]
         if venue.use_senior_area_chairs:
             reply_readers.extend([
-                {'value': venue.get_senior_area_chairs_id(), 'optional': True, 'description': 'All Senior Area Chairs'}
-                # {'value': venue.get_senior_area_chairs_id('${5/content/noteNumber/value}'), 'optional': True, 'description': 'Assigned Senior Area Chairs'}
+                {'value': venue.get_senior_area_chairs_id(), 'optional': True, 'description': 'All Senior Area Chairs'},
+                {'value': venue.get_senior_area_chairs_id('${5/content/noteNumber/value}'), 'optional': True, 'description': 'Assigned Senior Area Chairs'}
             ])
         if venue.use_area_chairs:
             reply_readers.extend([
-                {'value': venue.get_area_chairs_id(), 'optional': True, 'description': 'All Area Chairs'}
-                # {'value': venue.get_area_chairs_id('${5/content/noteNumber/value}'), 'optional': True, 'description': 'Assigned Area Chairs'}
+                {'value': venue.get_area_chairs_id(), 'optional': True, 'description': 'All Area Chairs'},
+                {'value': venue.get_area_chairs_id('${5/content/noteNumber/value}'), 'optional': True, 'description': 'Assigned Area Chairs'}
             ])
         reply_readers.extend([
             {'value': venue.get_reviewers_id(), 'optional': True, 'description': 'All Reviewers'},
-            # {'value': venue.get_reviewers_id('${5/content/noteNumber/value}'), 'optional': True, 'description': 'Assigned Reviewers'},
-            # {'value': venue.get_reviewers_id('${5/content/noteNumber/value}', submitted=True), 'optional': True, 'description': 'Assigned Reviewers who already submitted their review'},
-            # {'value': '${3/signatures}', 'optional': True, 'description': 'Reviewer who submitted the review'},
+            {'value': venue.get_reviewers_id('${5/content/noteNumber/value}'), 'optional': True, 'description': 'Assigned Reviewers'},
+            {'value': venue.get_reviewers_id('${5/content/noteNumber/value}', submitted=True), 'optional': True, 'description': 'Assigned Reviewers who already submitted their review'},
+            {'value': '${3/signatures}', 'optional': True, 'description': 'Reviewer who submitted the review'},
             {'value': venue.get_authors_id(), 'optional': True, 'description': 'Paper authors'}
         ])
 
