@@ -5,7 +5,6 @@ import datetime
 import time
 import re
 from selenium.webdriver.common.by import By
-from openreview import ProfileManagement
 from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.journal import Journal
@@ -14,14 +13,7 @@ import pytest
 
 class TestProfileManagement():
 
-    
-    @pytest.fixture(scope="class")
-    def profile_management(self, openreview_client):
-        profile_management = ProfileManagement(openreview_client, 'openreview.net')
-        profile_management.setup()
-        return profile_management
-    
-    def test_import_dblp_notes(self, client, openreview_client, profile_management, test_client, helpers):
+    def test_import_dblp_notes(self, client, openreview_client, test_client, helpers):
 
         test_client_v2 = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 

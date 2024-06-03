@@ -10,7 +10,6 @@ import sys
 from copy import deepcopy
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
-from openreview import ProfileManagement
 from openreview.venue import matching
 from openreview.stages.arr_content import (
     arr_submission_content,
@@ -27,12 +26,8 @@ from openreview.stages.arr_content import (
 )
 # API2 template from ICML
 class TestARRVenueV2():
-    @pytest.fixture(scope="class")
-    def profile_management(self, openreview_client):
-        profile_management = ProfileManagement(openreview_client, 'openreview.net')
-        profile_management.setup()
-        return profile_management
-    def test_august_cycle(self, client, openreview_client, helpers, test_client, profile_management, request_page, selenium):
+
+    def test_august_cycle(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)

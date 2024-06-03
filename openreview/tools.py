@@ -1213,11 +1213,12 @@ def datetime_millis(dt):
     :return: The time from Jan 1, 1970 to the passed date in milliseconds
     :rtype: int
     """
-    if isinstance(dt, datetime.datetime):
-        epoch = datetime.datetime.utcfromtimestamp(0)
-        return int((dt - epoch).total_seconds() * 1000)
+    # if isinstance(dt, datetime.datetime):
+    #     epoch = datetime.datetime.utcfromtimestamp(0)
+    #     return int((dt - epoch).total_seconds() * 1000)
 
-    return dt
+    # return dt
+    return int(dt.timestamp() * 1000)
 
 def recruit_reviewer(client, user, first,
     hash_seed,

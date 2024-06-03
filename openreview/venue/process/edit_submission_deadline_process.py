@@ -5,6 +5,8 @@ def process(client, edit, invitation):
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
     submission_name = domain.get_content_value('submission_name')
     expdate = edit.invitation.expdate
+    print('Submission deadline: ', edit.invitation.duedate)    
+    print('Setting post submission cdate to: ', expdate)    
 
     # update post submission cdate
     client.post_invitation_edit(

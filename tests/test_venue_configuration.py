@@ -10,8 +10,6 @@ class TestVenueConfiguration():
     def test_venue_configuration_setup(self, openreview_client, helpers):
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
-        venue_configuration = VenueConfiguration(openreview_client, support_group_id, super_id)
-        venue_configuration.setup()        
 
         helpers.create_user('sherry@iclr.cc', 'ProgramChair', 'ICLR')
         pc_client_v2=openreview.api.OpenReviewClient(username='sherry@iclr.cc', password=helpers.strong_password)
@@ -222,7 +220,7 @@ class TestVenueConfiguration():
             }
         )        
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.timezone.utc)
         new_cdate = openreview.tools.datetime_millis(now - datetime.timedelta(days=1))
         new_duedate = openreview.tools.datetime_millis(now - datetime.timedelta(minutes=28))
 
