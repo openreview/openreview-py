@@ -220,7 +220,7 @@ class TestVenueConfiguration():
             }
         )        
 
-        now = datetime.datetime.now(datetime.timezone.utc)
+        now = datetime.datetime.utcnow()
         new_cdate = openreview.tools.datetime_millis(now - datetime.timedelta(days=1))
         new_duedate = openreview.tools.datetime_millis(now - datetime.timedelta(minutes=28))
 
