@@ -1218,7 +1218,7 @@ def datetime_millis(dt):
     #     return int((dt - epoch).total_seconds() * 1000)
 
     # return dt
-    return int(dt.timestamp() * 1000)
+    return int(dt.timestamp() * 1000) if dt else None
 
 def recruit_reviewer(client, user, first,
     hash_seed,
