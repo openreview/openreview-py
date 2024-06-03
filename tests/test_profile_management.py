@@ -338,7 +338,7 @@ class TestProfileManagement():
         ]                                  
 
    
-    def test_remove_alternate_name(self, openreview_client, profile_management, test_client, helpers):
+    def test_remove_alternate_name(self, openreview_client, test_client, helpers):
 
         john_client = helpers.create_user('john@profile.org', 'John', 'Last', alternates=[], institution='google.com')
 
@@ -855,7 +855,7 @@ Regards,
 The OpenReview Team.
 '''
 
-    def test_remove_name_from_merged_profile(self, openreview_client, profile_management, helpers):
+    def test_remove_name_from_merged_profile(self, openreview_client, helpers):
 
         ella_client = helpers.create_user('ella@profile.org', 'Ella', 'Last', alternates=[], institution='google.com')
 
@@ -1025,7 +1025,7 @@ Thanks,
 The OpenReview Team.
 '''
 
-    def test_remove_duplicated_name(self, openreview_client, profile_management, helpers):
+    def test_remove_duplicated_name(self, openreview_client, helpers):
 
         javier_client = helpers.create_user('javier@profile.org', 'Javier', 'Last', alternates=[], institution='google.com')
 
@@ -1173,7 +1173,7 @@ Thanks,
 The OpenReview Team.
 '''
 
-    def test_rename_publications_from_api2(self, profile_management, test_client, helpers, openreview_client):
+    def test_rename_publications_from_api2(self, test_client, helpers, openreview_client):
 
         journal=Journal(openreview_client, 'CABJ', '1234', contact_info='cabj@mail.org', full_name='Transactions on Machine Learning Research', short_name='CABJ', submission_name='Submission')
         journal.setup(support_role='test@mail.com', editors=[])
@@ -1500,7 +1500,7 @@ The OpenReview Team.
 
         assert openreview_client.get_edges(invitation='CABJ/Reviewers/-/Assignment_Availability', tail='~Paul_Last1')[0].label == 'Unavailable'
 
-    def test_remove_name_and_update_relations(self, openreview_client, profile_management, helpers):
+    def test_remove_name_and_update_relations(self, openreview_client, helpers):
 
         juan_client = helpers.create_user('juan@profile.org', 'Juan', 'Last', alternates=[], institution='google.com')
 
@@ -1610,7 +1610,7 @@ The OpenReview Team.
         assert profile.content['relations'][1]['name'] == 'Juan Alternate Last'
 
 
-    def test_remove_name_and_accept_automatically(self, openreview_client, profile_management, helpers):
+    def test_remove_name_and_accept_automatically(self, openreview_client, helpers):
 
         nara_client = helpers.create_user('nara@profile.org', 'Nara', 'Last', alternates=[], institution='google.com')
 
@@ -1648,7 +1648,7 @@ The OpenReview Team.
         note = nara_client.get_note(request_note['note']['id'])
         assert note.content['status']['value'] == 'Accepted'
 
-    def test_remove_name_and_do_not_accept_automatically(self, openreview_client, profile_management, helpers):
+    def test_remove_name_and_do_not_accept_automatically(self, openreview_client, helpers):
 
         mara_client = helpers.create_user('mara@profile.org', 'Mara', 'Last', alternates=[], institution='google.com')
 
@@ -1703,7 +1703,7 @@ The OpenReview Team.
         assert note.content['status']['value'] == 'Pending'        
 
 
-    def test_merge_profiles(self, openreview_client, profile_management, helpers):
+    def test_merge_profiles(self, openreview_client, helpers):
 
         rachel_client = helpers.create_user('rachel@profile.org', 'Rachel', 'Last', alternates=[], institution='google.com')
         profile = rachel_client.get_profile()
@@ -1774,7 +1774,7 @@ Thanks,
 The OpenReview Team.
 '''
 
-    def test_merge_profiles_as_guest(self, openreview_client, profile_management, helpers):
+    def test_merge_profiles_as_guest(self, openreview_client, helpers):
 
         helpers.create_user('marina@profile.org', 'Marina', 'Last', alternates=[], institution='google.com')
         helpers.create_user('marina@gmail.com', 'Marina', 'Last', alternates=[], institution='google.com')
@@ -1837,7 +1837,7 @@ The OpenReview Team.
 '''
 
 
-    def test_merge_profiles_ignore_request(self, openreview_client, profile_management, helpers):
+    def test_merge_profiles_ignore_request(self, openreview_client, helpers):
 
         melisa_client = helpers.create_user('melisa@profile.org', 'Melisa', 'Last', alternates=[], institution='google.com')
         profile = melisa_client.get_profile()
@@ -1898,7 +1898,7 @@ The OpenReview Team.
         messages = openreview_client.get_messages(to='melisa@profile.org', subject='Profile merge request has been accepted')
         assert len(messages) == 0
 
-    def test_remove_email_address(self, profile_management, openreview_client, helpers):
+    def test_remove_email_address(self, openreview_client, helpers):
 
         harold_client = helpers.create_user('harold@profile.org', 'Harold', 'Last', alternates=[], institution='google.com')
         profile = harold_client.get_profile()
@@ -2095,7 +2095,7 @@ The OpenReview Team.
         assert openreview_client.get_group('harold@profile.org').members == ['~Harold_Last1']
 
 
-    def test_update_relation_after_signup(self, openreview_client, profile_management, helpers):
+    def test_update_relation_after_signup(self, helpers):
 
         carlos_client = helpers.create_user('carlos@profile.org', 'Carlos', 'Last', alternates=[], institution='google.com')
 
@@ -2147,7 +2147,7 @@ The OpenReview Team.
         assert profile.content['relations'][0]['username'] == '~Zoey_User1'
         assert 'email' not in profile.content['relations'][0]
 
-    def test_anonymous_preprint_server(self, profile_management, openreview_client, helpers):
+    def test_anonymous_preprint_server(self, openreview_client, helpers):
 
         clara_client = helpers.create_user('clara@profile.org', 'Clara', 'Last', alternates=[], institution='google.com')
 
@@ -2228,7 +2228,7 @@ The OpenReview Team.
         assert len(messages) == 2
 
 
-    def test_confirm_alternate_email(self, profile_management, openreview_client, helpers, request_page, selenium):
+    def test_confirm_alternate_email(self, openreview_client, helpers, request_page, selenium):
 
         xukun_client = helpers.create_user('xukun@profile.org', 'Xukun', 'First', alternates=[], institution='google.com')
 
@@ -2280,7 +2280,7 @@ The OpenReview Team.
         content = selenium.find_element(By.ID, 'content')
         assert 'Click Confirm Email button below to confirm adding xukun@yahoo.com' in content.text        
     
-    def test_merge_profiles_automatically(self, profile_management, openreview_client, helpers, request_page, selenium):
+    def test_merge_profiles_automatically(self, openreview_client, helpers, request_page, selenium):
 
         akshat_client_1 = helpers.create_user('akshat_1@profile.org', 'Akshat', 'First', alternates=[], institution='google.com')
         akshat_client_2 = helpers.create_user('akshat_2@profile.org', 'Akshat', 'Last', alternates=[], institution='google.com')

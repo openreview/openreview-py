@@ -351,7 +351,7 @@ class TestARRVenueV2():
                 )
             )
 
-    def test_june_cycle(self, client, openreview_client, helpers, test_client, profile_management):
+    def test_june_cycle(self, client, openreview_client, helpers, test_client):
         # Build the previous cycle
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2 = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
