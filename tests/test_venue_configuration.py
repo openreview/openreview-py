@@ -2,23 +2,16 @@ import pytest
 import datetime
 import openreview
 from openreview.api import Note
-from openreview import ProfileManagement
 from openreview.api import OpenReviewClient
 from openreview.venue.configuration import VenueConfiguration
 
 class TestVenueConfiguration():
 
-    @pytest.fixture(scope="class")
-    def profile_management(self, openreview_client):
-        profile_management = ProfileManagement(openreview_client, 'openreview.net')
-        profile_management.setup()
-        return profile_management
-
     def test_venue_configuration_setup(self, openreview_client, helpers):
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
         venue_configuration = VenueConfiguration(openreview_client, support_group_id, super_id)
-        venue_configuration.setup()
+        venue_configuration.setup()        
 
         helpers.create_user('sherry@iclr.cc', 'ProgramChair', 'ICLR')
         pc_client_v2=openreview.api.OpenReviewClient(username='sherry@iclr.cc', password=helpers.strong_password)
@@ -258,7 +251,7 @@ class TestVenueConfiguration():
             }
         )        
 
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow()
         new_cdate = openreview.tools.datetime_millis(now - datetime.timedelta(days=1))
         new_duedate = openreview.tools.datetime_millis(now - datetime.timedelta(minutes=28))
 
@@ -271,7 +264,7 @@ class TestVenueConfiguration():
             }
         )
         helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2025/Conference/-/Submission/Deadlines')
-        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/Post_Submission-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/Post_Submission-0-0', count=1)
 
         submissions = openreview_client.get_notes(invitation='ICLR.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
