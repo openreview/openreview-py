@@ -384,4 +384,37 @@ class TestVenueConfiguration():
                 content={
                     'comment': { 'value': 'this is a comment' }
                 }
-            ))               
+            ))
+
+    def test_metareview_stage(self, openreview_client, test_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='sherry@iclr.cc', password=helpers.strong_password)
+
+        now = datetime.datetime.now()
+        cdate = openreview.tools.datetime_millis(now - datetime.timedelta(minutes=1))
+        duedate = openreview.tools.datetime_millis(now + datetime.timedelta(minutes=30))
+        expdate = openreview.tools.datetime_millis(now + datetime.timedelta(hours=1))
+
+        edit = pc_client.post_invitation_edit(
+            invitations='openreview.net/Support/-/Meta_Review_Template',
+            signatures=['~ProgramChair_ICLR1'],
+            content={
+                'venue_id': { 'value': 'ICLR.cc/2025/Conference' },
+                'stage_name': { 'value': 'Meta_Review' },
+                'activation_date': { 'value': cdate },
+                'due_date': { 'value': duedate },
+                'expiration_date': { 'value': expdate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], count=1)
+
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Meta_Review')
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Meta_Review/Deadlines')
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Meta_Review/Form_Fields')
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Meta_Review/Readers')
+
+        invitations = pc_client.get_invitations(invitation='ICLR.cc/2025/Conference/-/Meta_Review')
+        assert len(invitations) == 10
+
+        # invitations = pc_client.get_invitations(invitation='ICLR.cc/2025/Conference/-/Official_Review')
+        # assert len(invitations) == 10

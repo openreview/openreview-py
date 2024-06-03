@@ -19,6 +19,10 @@ class VenueConfiguration():
         self.set_deploy_invitation()
         self.set_venues_homepage()
 
+        #setup stage templates
+        workflow_invitations = WorkflowInvitations(self.client, self.support_group_id, self.super_user)
+        workflow_invitations.setup_metareview_template_invitation()
+
     def get_process_content(self, file_path):
         process = None
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
@@ -570,26 +574,110 @@ class VenueConfiguration():
 
 class WorkflowInvitations():
 
-    def __init__(self, client, support_group_id, super_user, venue_id):
+    def __init__(self, client, support_group_id, super_user):
         self.support_group_id = support_group_id
         self.client = client
         self.super_user = super_user
-        self.venue_id = venue_id
+        self.meta_invitation_id = f'{super_user}/-/Edit'
 
-    def setup_submission_config_invitation(self):
-
-        venue_id = self.venue_id
-        config_invitation_id = f'{venue_id}/-/Config/Submission'
-
-        invitation = Invitation(id=config_invitation_id,
-            invitees=[venue_id],
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            
-
+    def post_invitation_edit(self, invitation):
+        return self.client.post_invitation_edit(invitations=self.meta_invitation_id,
+            readers=['~Super_User1'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            invitation=invitation,
+            replacement=True
         )
 
-        
+    def get_process_content(self, file_path):
+        process = None
+        with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
+            process = f.read()
+            return process
 
-        
+    def setup_metareview_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/-/Meta_Review_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=[support_group_id],
+            signatures=[self.super_user],
+            process = self.get_process_content('process/templates_process.py'),
+            edit = {
+                'signatures': {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content' :{
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                            }
+                        }
+                    },
+                    'stage_name': {
+                        'order': 2,
+                        'description': 'Stage Name, use underscores to represent spaces',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'due_date': {
+                        'order': 4,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'expiration_date': {
+                        'order': 5,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': '${{2/content/venue_id/value}}/-/${{2/content/stage_name/value}}',
+                    'signatures': ['${{2/content/venue_id/value}}'],
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
