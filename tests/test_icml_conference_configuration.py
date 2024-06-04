@@ -21,7 +21,7 @@ class TestICMLConference():
 
         # Post the request form note
         helpers.create_user('pc@icml.cc', 'Program', 'ICMLChair')
-        pc_client = openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
+        pc_client = openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
 
 
         sac_client = helpers.create_user('sac1@gmail.com', 'SAC', 'ICMLOne')
@@ -44,8 +44,8 @@ class TestICMLConference():
         due_date = now + datetime.timedelta(days=1)
 
         # post a conference request form
-        conference_request_edit = openreview_client.post_note_edit(invitation='openreview.net/-/Venue_Configuration_Request',
-            signatures=['~Super_User1'],
+        conference_request_edit = pc_client.post_note_edit(invitation='openreview.net/-/Venue_Configuration_Request',
+            signatures=['~Program_ICMLChair1'],
             note=openreview.api.Note(
                 content={
                     'official_venue_name': { 'value': 'Thirty-ninth International Conference on Machine Learning' },
@@ -405,29 +405,67 @@ class TestICMLConference():
 #         pc_group = pc_client.get_group('ICML.cc/2024/Conference/Program_Chairs')
 #         assert ['pc@icml.cc', 'pc3@icml.cc'] == pc_group.members
 
-#     def test_sac_recruitment(self, client, openreview_client, helpers, request_page, selenium):
+    def test_sac_recruitment(self, client, openreview_client, helpers, request_page, selenium):
 
-#         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
-#         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        pc_client = openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/-/Venue_Configuration_Request')[0]
 
-#         reviewer_details = '''sac1@gmail.com, SAC ICMLOne\nsac2@icml.cc, SAC ICMLTwo'''
-#         pc_client.post_note(openreview.Note(
-#             content={
-#                 'title': 'Recruitment',
-#                 'invitee_role': 'Senior_Area_Chairs',
-#                 'invitee_details': reviewer_details,
-#                 'invitation_email_subject': '[ICML 2023] Invitation to serve as {{invitee_role}}',
-#                 'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
-#             },
-#             forum=request_form.forum,
-#             replyto=request_form.forum,
-#             invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
-#             readers=['ICML.cc/2024/Conference/Program_Chairs', 'openreview.net/Support'],
-#             signatures=['~Program_ICMLChair1'],
-#             writers=[]
-#         ))
+        venue = openreview.helpers.get_venue(pc_client, request_form.id, 'openreview.net/Support')
+        venue.group_builder.create_recruitment_committee_groups('Senior_Area_Chairs')
+        venue.invitation_builder.set_group_recruitment_invitations('Senior_Area_Chairs')        
 
-#         helpers.await_queue()
+        invitee_details = '''sac1@gmail.com, SAC ICMLOne\nsac2@icml.cc, SAC ICMLTwoo'''
+
+        # use invitation to recruit reviewers
+        pc_client.post_group_edit(
+                invitation='ICML.cc/2024/Conference/Senior_Area_Chairs/Invited/-/Recruitment_Settings',
+                group=openreview.api.Group(
+                    content = {
+                        'reduced_load': { 'value': [1,2,3] },
+                        'recruitment_template': { 'value': '''Dear {{fullname}},
+
+You have been nominated by the program chair committee of V 24 to serve as Reviewer. As a respected researcher in the area, we hope you will accept and help us make V 24 a success.
+
+You are also welcome to submit papers, so please also consider submitting to V 24.
+
+We will be using OpenReview.net and a reviewing process that we hope will be engaging and inclusive of the whole community.
+
+To respond the invitation, please click on the following link:
+
+{{invitation_url}}
+
+Please answer within 10 days.
+
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using. Visit http://openreview.net/profile after logging in.
+
+If you have any questions, please contact us at {{contact_info}}.
+
+Cheers!
+
+Program Chairs
+''' },
+                        'recruitment_subject': { 'value': '[ICML 2024] Invitation to serve as Senior Area Chair' },
+                        'allow_overlap': { 'value': False }
+                    }
+                )
+            )
+
+        edit = pc_client.post_group_edit(
+                invitation='ICML.cc/2024/Conference/Senior_Area_Chairs/Invited/-/Members',
+                content={
+                    'inviteeDetails': { 'value':  invitee_details }
+                },
+                group=openreview.api.Group()
+            )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        invited_group = openreview_client.get_group('ICML.cc/2024/Conference/Senior_Area_Chairs/Invited')
+        assert len(invited_group.members) == 2
+        assert 'sac1@gmail.com' in invited_group.members
+        assert 'sac2@icml.cc' in invited_group.members
+
+        messages = openreview_client.get_messages(subject = '[ICML 2024] Invitation to serve as Senior Area Chair')
+        assert len(messages) == 2
 
 #         assert len(openreview_client.get_group('ICML.cc/2024/Conference/Senior_Area_Chairs').members) == 0
 #         group = openreview_client.get_group('ICML.cc/2024/Conference/Senior_Area_Chairs/Invited')
