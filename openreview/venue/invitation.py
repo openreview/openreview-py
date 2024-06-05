@@ -3266,26 +3266,8 @@ class InvitationBuilder(object):
         process_content = self.get_process_content(process_file)
         preprocess_content = self.get_process_content('process/paper_recruitment_pre_process.js')
 
-        edge_readers = []
-        edge_writers = []
-        if committee_id.endswith(venue.area_chairs_name):
-            if venue.use_senior_area_chairs:
-                edge_readers.append(venue.get_senior_area_chairs_id(number='{number}'))
-                edge_writers.append(venue.get_senior_area_chairs_id(number='{number}'))
-
-        if committee_id.endswith(venue.reviewers_name):
-            if venue.use_senior_area_chairs:
-                edge_readers.append(venue.get_senior_area_chairs_id(number='{number}'))
-                edge_writers.append(venue.get_senior_area_chairs_id(number='{number}'))
-
-            if venue.use_area_chairs:
-                edge_readers.append(venue.get_area_chairs_id(number='{number}'))
-                edge_writers.append(venue.get_area_chairs_id(number='{number}'))
-
         invitation_content = {
             'committee_name': { 'value':  venue.get_committee_name(committee_id, pretty=True) },
-            'edge_readers': { 'value': edge_readers },
-            'edge_writers': { 'value': edge_writers },
             'hash_seed': { 'value': hash_seed, 'readers': [ venue.venue_id ]},
             'committee_id': { 'value': committee_id },
             'committee_invited_id': { 'value': venue.get_committee_id(name=invited_committee_name + '/Invited') if invited_committee_name else ''},
