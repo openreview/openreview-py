@@ -9,7 +9,7 @@ def process(client, edit, invitation):
     authorids = edit.note.content.get('authorids').get('value')
 
     if paper_link:
-        paper_forum = paper_link.split('=')[-1]
+        paper_forum = paper_link.split('?id=')[-1]
         client_v1=openreview.Client(baseurl=openreview.tools.get_base_urls(client)[0], token=client.token)
 
         try:
@@ -28,6 +28,9 @@ def process(client, edit, invitation):
 
         if (arr_submission_v1 and 'aclweb.org/ACL/ARR' not in arr_submission_v1.invitation) or (arr_submission_v2 and not any('aclweb.org/ACL/ARR' in inv for inv in arr_submission_v2.invitations)):
             raise openreview.OpenReviewException('Provided paper link does not correspond to an ARR submission')
+
+        if (arr_submission_v1 and arr_submission_v1.id != arr_submission_v1.forum) or (arr_submission_v2 and arr_submission_v2.id != arr_submission_v2.forum):
+            raise openreview.OpenReviewException('Provided paper link does not correspond to an ARR submission. Make sure the link points to a submission and not to a reply.')
 
     # If provided previous URL but left a reassignment request blank
     if paper_link and (not editor_reassignment_request or not reviewer_reassignment_request):

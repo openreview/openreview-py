@@ -1069,7 +1069,7 @@ class TestARRVenueV2():
         note = openreview.api.Note(
             content = {
                     **generic_note_content,
-                    'previous_URL': { 'value': f"http://localhost:3030/forum?id={allowed_note['note']['id']}" },
+                    'previous_URL': { 'value': f"https://openreview.net/forum?id={allowed_note['note']['id']}" },
                     'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
                     'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' }
@@ -1082,8 +1082,47 @@ class TestARRVenueV2():
         
         helpers.await_queue_edit(openreview_client, edit_id=allowed_note_second['id'])
 
-        # Not allowed: submission with invalid previous URL
+        with pytest.raises(openreview.OpenReviewException, match=r'previous_URL value must be a valid link to an OpenReview submission'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+                    signatures=['~SomeFirstName_User1'],
+                    note=openreview.api.Note(
+                    content = {
+                        **generic_note_content,
+                        'previous_URL': { 'value': 'https://openreview.net/pdf?id=1234' },
+                        'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                        'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                        'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' }
+                    }
+                ))
+        
         with pytest.raises(openreview.OpenReviewException, match=r'Provided paper link does not correspond to a submission in OpenReview'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+                    signatures=['~SomeFirstName_User1'],
+                    note=openreview.api.Note(
+                    content = {
+                        **generic_note_content,
+                        'previous_URL': { 'value': 'https://openreview.net/forum?id=1234&replyto=4567' },
+                        'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                        'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                        'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' }
+                    }
+                ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Provided paper link does not correspond to a submission in OpenReview'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+                    signatures=['~SomeFirstName_User1'],
+                    note=openreview.api.Note(
+                    content = {
+                        **generic_note_content,
+                        'previous_URL': { 'value': 'https://openreview.net/forum?id=1234&referrer=[Author%20Console](/group?id=aclweb.org/ACL/ARR/2023/June)' },
+                        'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                        'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                        'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' }
+                    }
+                ))
+
+        # Not allowed: submission with invalid previous URL
+        with pytest.raises(openreview.OpenReviewException, match=r'previous_URL value must be a valid link to an OpenReview submission'):
             test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=openreview.api.Note(
@@ -1144,7 +1183,7 @@ class TestARRVenueV2():
                 note=openreview.api.Note(
                 content = {
                     **generic_note_content,
-                    'previous_URL': { 'value': f"http://localhost:3030/forum?id={allowed_note['note']['id']}" },
+                    'previous_URL': { 'value': f"https://openreview.net/forum?id={allowed_note['note']['id']}" },
                     'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
                 }
             )
@@ -1157,7 +1196,7 @@ class TestARRVenueV2():
                 note=openreview.api.Note(
                 content = {
                     **generic_note_content,
-                    'previous_URL': { 'value': f"http://localhost:3030/forum?id={allowed_note['note']['id']}" },
+                    'previous_URL': { 'value': f"https://openreview.net/forum?id={allowed_note['note']['id']}" },
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
                     'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
                 }
@@ -1171,7 +1210,7 @@ class TestARRVenueV2():
                 note=openreview.api.Note(
                 content = {
                     **generic_note_content,
-                    'previous_URL': { 'value': f"http://localhost:3030/forum?id={allowed_note['note']['id']}" },
+                    'previous_URL': { 'value': f"https://openreview.net/forum?id={allowed_note['note']['id']}" },
                     'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
                     'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
                 }
@@ -1188,7 +1227,7 @@ class TestARRVenueV2():
                 note=openreview.api.Note(
                 content = {
                     **case_content,
-                    'previous_URL': { 'value': f"http://localhost:3030/forum?id={allowed_note['note']['id']}" },
+                    'previous_URL': { 'value': f"https://openreview.net/forum?id={allowed_note['note']['id']}" },
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
                     'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
                     'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
@@ -1714,7 +1753,7 @@ class TestARRVenueV2():
                     'languages_studied': { 'value': 'A language' },
                     'reassignment_request_action_editor': { 'value': 'This is not a resubmission' },
                     'reassignment_request_reviewers': { 'value': 'This is not a resubmission' },
-                    'previous_URL': { 'value': f'http://localhost:3030/forum?id={june_submission.id}' },
+                    'previous_URL': { 'value': f'https://openreview.net/forum?id={june_submission.id}' },
                     'response_PDF': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
@@ -2518,7 +2557,7 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 id=submissions[1].id,
                 content={
-                    'previous_URL': {'value': f'http://localhost:3030/forum?id={june_submissions[1].id}'},
+                    'previous_URL': {'value': f'https://openreview.net/forum?id={june_submissions[1].id}'},
                     'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
                     'reassignment_request_reviewers': { 'value': 'No, I want the same set of reviewers from our previous submission and understand that new reviewers may be assigned if any of the previous ones are unavailable' },
                 }
@@ -2532,7 +2571,7 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 id=submissions[2].id,
                 content={
-                    'previous_URL': {'value': f'http://localhost:3030/forum?id={june_submissions[2].id}'},
+                    'previous_URL': {'value': f'https://openreview.net/forum?id={june_submissions[2].id}'},
                     'reassignment_request_action_editor': {'value': 'Yes, I want a different action editor for our submission' },
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
                 }
