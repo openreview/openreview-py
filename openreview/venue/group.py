@@ -447,7 +447,7 @@ class GroupBuilder(object):
                             readers=[venue_id, ethics_chairs_id],
                             writers=[venue_id],
                             signatures=[venue_id],
-                            signatories=[venue_id],
+                            signatories=[venue_id, ethics_chairs_id],
                             members=[]
                         )
 
