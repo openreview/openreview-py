@@ -248,6 +248,7 @@ class GroupBuilder(object):
         if self.venue.comment_stage:
             content['comment_mandatory_readers'] = { 'value': self.venue.comment_stage.get_mandatory_readers(self.venue, '{number}') }
             content['comment_email_pcs'] = { 'value': self.venue.comment_stage.email_pcs }
+            content['comment_email_sacs'] = { 'value': self.venue.comment_stage.email_sacs }
 
         if self.venue.review_rebuttal_stage:
             content['rebuttal_email_pcs'] = { 'value': self.venue.review_rebuttal_stage.email_pcs}
@@ -528,6 +529,7 @@ class GroupBuilder(object):
                             signatories=[venue_id, committee_invited_id],
                             members=[]
                             ))
+           
 
     def set_external_reviewer_recruitment_groups(self, name='External_Reviewers', create_paper_groups=False):
 

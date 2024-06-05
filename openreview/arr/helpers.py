@@ -560,6 +560,7 @@ class ARRWorkflow(object):
                     'title': venue.get_reviewers_name() + ' ' + arr_registration_task_forum['title'],
                     'additional_fields': arr_registration_task
                 },
+                due_date=self.configuration_note.content.get('registration_due_date'),
                 exp_date=self.configuration_note.content.get('form_expiration_date')
             ),
             ARRStage(
@@ -604,6 +605,7 @@ class ARRWorkflow(object):
                     'title': venue.get_area_chairs_name() + ' ' + arr_registration_task_forum['title'],
                     'additional_fields': arr_registration_task
                 },
+                due_date=self.configuration_note.content.get('registration_due_date'),
                 exp_date=self.configuration_note.content.get('form_expiration_date')
             ),
             ARRStage(
@@ -648,6 +650,7 @@ class ARRWorkflow(object):
                     'title': venue.senior_area_chairs_name.replace('_', ' ') + ' ' + arr_registration_task_forum['title'],
                     'additional_fields': arr_registration_task
                 },
+                due_date=self.configuration_note.content.get('registration_due_date'),
                 exp_date=self.configuration_note.content.get('form_expiration_date')
             ),
             ARRStage(
@@ -762,8 +765,8 @@ class ARRWorkflow(object):
                     ],
                     'content': comment_v2,
                     'multi_reply': True,
-                    'notify_readers': False,
-                    'email_sacs': False
+                    'notify_readers': True,
+                    'email_sacs': True
                 },
                 start_date=self.configuration_note.content.get('commentary_start_date'),
                 exp_date=self.configuration_note.content.get('commentary_end_date')   
@@ -788,6 +791,7 @@ class ARRWorkflow(object):
                 },
                 due_date=self.configuration_note.content.get('reviewer_checklist_due_date'),
                 exp_date=self.configuration_note.content.get('reviewer_checklist_exp_date'),
+                #start_date=self.venue.submission_stage.exp_date.strftime('%Y/%m/%d %H:%M'), Discuss with Harold
                 process='process/checklist_process.py',
                 preprocess='process/checklist_preprocess.py',
                 extend=ARRWorkflow._extend_reviewer_checklist
@@ -811,6 +815,7 @@ class ARRWorkflow(object):
                 },
                 due_date=self.configuration_note.content.get('ae_checklist_due_date'),
                 exp_date=self.configuration_note.content.get('ae_checklist_exp_date'),
+                #start_date=self.venue.submission_stage.exp_date.strftime('%Y/%m/%d %H:%M'), Discuss with Harold
                 process='process/checklist_process.py',
                 preprocess='process/checklist_preprocess.py',
                 extend=ARRWorkflow._extend_ae_checklist
@@ -830,6 +835,7 @@ class ARRWorkflow(object):
                     'email_sacs': False
                 },
                 exp_date=self.configuration_note.content.get('form_expiration_date'),
+                #start_date=self.venue.submission_stage.exp_date.strftime('%Y/%m/%d %H:%M'), Discuss with Harold
                 process='process/verification_process.py',
                 extend=ARRWorkflow._extend_desk_reject_verification
             ),
@@ -867,7 +873,9 @@ class ARRWorkflow(object):
                             'Assigned Submitted Reviewers'
                         ],
                         'additional_readers':['Program Chairs'],
-                        'email_program_chairs_about_official_comments': 'No, do not email PCs for each official comment made in the venue'
+                        'email_program_chairs_about_official_comments': 'No, do not email PCs for each official comment made in the venue',
+                        'email_senior_area_chairs_about_official_comments': 'Yes, email SACs for each official comment made in the venue'
+
                     },
                     'forum': request_form_id,
                     'invitation': '{}/-/Request{}/Comment_Stage'.format(support_user, request_form.number),
@@ -1003,20 +1011,6 @@ class ARRWorkflow(object):
             m = matching.Matching(venue, self.client_v2.get_group(role), None, None)
             if not openreview.tools.get_invitation(self.client_v2, venue.get_custom_max_papers_id(role)):
                 m._create_edge_invitation(venue.get_custom_max_papers_id(m.match_group.id))
-                cmp_inv = self.client_v2.get_invitation(venue.get_custom_max_papers_id(m.match_group.id))
-                cmp_inv.edit['weight']['param']['optional'] = True
-                if 'enum' in cmp_inv.edit['weight']['param']:
-                    del cmp_inv.edit['weight']['param']['enum']
-                    cmp_inv.edit['weight']['param']['minimum'] = 0
-                    cmp_inv.edit['weight']['param']['default'] = 0
-
-                self.client_v2.post_invitation_edit(
-                    invitations=venue.get_meta_invitation_id(),
-                    readers=[venue.id],
-                    writers=[venue.id],
-                    signatures=[venue.id],
-                    invitation=cmp_inv
-                )
             
             if not openreview.tools.get_invitation(self.client_v2, f"{role}/-/Status"): # Hold "Requested" or "Reassigned", head=submission ID
                 m._create_edge_invitation(f"{role}/-/Status")
@@ -1209,28 +1203,28 @@ class ARRStage(object):
                     field_readers = [venue.get_program_chairs_id()]
 
                     if ARRStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED in readers:
-                        field_readers.append(venue.get_senior_area_chairs_id('${{4/forum}/number}'))
+                        field_readers.append(venue.get_senior_area_chairs_id('${7/content/noteNumber/value}'))
 
                     if ARRStage.Participants.AREA_CHAIRS_ASSIGNED in readers:
-                        field_readers.append(venue.get_area_chairs_id('${{4/forum}/number}'))
+                        field_readers.append(venue.get_area_chairs_id('${7/content/noteNumber/value}'))
 
                     if ARRStage.Participants.SECONDARY_AREA_CHAIRS in readers:
-                        field_readers.append(venue.get_secondary_area_chairs_id('${{4/forum}/number}'))
+                        field_readers.append(venue.get_secondary_area_chairs_id('${7/content/noteNumber/value}'))
 
                     if ARRStage.Participants.REVIEWERS_ASSIGNED in readers:
-                        field_readers.append(venue.get_reviewers_id('${{4/forum}/number}'))
+                        field_readers.append(venue.get_reviewers_id('${7/content/noteNumber/value}'))
 
                     if ARRStage.Participants.REVIEWERS_SUBMITTED in readers:
-                        field_readers.append(venue.get_reviewers_id('${{4/forum}/number}') + '/Submitted')
+                        field_readers.append(venue.get_reviewers_id('${7/content/noteNumber/value}') + '/Submitted')
 
                     if ARRStage.Participants.AUTHORS in readers:
-                        field_readers.append(venue.get_authors_id('${{4/forum}/number}'))
+                        field_readers.append(venue.get_authors_id('${7/content/noteNumber/value}'))
 
                     if ARRStage.Participants.ETHICS_CHAIRS in readers:
                         field_readers.append(venue.get_ethics_chairs_id())
 
                     if ARRStage.Participants.ETHICS_REVIEWERS_ASSIGNED in readers:
-                        field_readers.append(venue.get_ethics_reviewers_id('${{4/forum}/number}'))
+                        field_readers.append(venue.get_ethics_reviewers_id('${7/content/noteNumber/value}'))
 
                     print(f"setting readers for {content_name}/{field_name} in {self.super_invitation_id}")
                     if self.type == ARRStage.Type.STAGE_NOTE:
@@ -1431,6 +1425,8 @@ def flag_submission(
     domain = client.get_group(edit.domain)
     venue_id = domain.id
     meta_invitation_id = domain.content['meta_invitation_id']['value']
+    contact = domain.content['contact']['value']
+    sender = domain.get_content_value('message_sender')
     short_name = domain.get_content_value('subtitle')
     forum = client.get_note(id=edit.note.forum, details='replies')
 
@@ -1535,6 +1531,10 @@ def flag_submission(
 
         To view the submission, click here: https://openreview.net/forum?id={}'''.format(forum.number, forum.id)
         client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
+            replyTo=contact,
+            sender=sender,
             recipients=[domain.content['ethics_chairs_id']['value']],
             ignoreRecipients=[edit.tauthor],
             subject=subject,

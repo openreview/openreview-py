@@ -2,8 +2,31 @@
 // loaded properly
 const automaticAssignment = domain.content.automatic_reviewer_assignment?.value
 const assignmentUrls = {}
+const areaChairsId = domain.content.area_chairs_id?.value
+const reviewersId = domain.content.reviewers_id?.value
 
-const manualReviewerAssignmentUrl = `/edges/browse?traverse=${domain.content.reviewers_assignment_id?.value}&edit=${domain.content.reviewers_assignment_id?.value};${domain.content.reviewers_custom_max_papers_id?.value},tail:ignore&browse=${domain.content.reviewers_affinity_score_id?.value};${domain.content.reviewers_conflict_id?.value}&version=2`
+const browseInvitations = [
+  domain.content.reviewers_affinity_score_id?.value,
+  domain.content.reviewers_conflict_id?.value,
+  `${reviewersId}/-/Research_Area`,
+  `${reviewersId}/-/Status`,
+].join(';')
+
+const headBrowseInvitations = [
+  `${reviewersId}/-/Registered_Load`,
+  `${reviewersId}/-/Emergency_Load`,
+  `${reviewersId}/-/Emergency_Area`,
+  `${reviewersId}/-/Reviewing_Resubmissions`,
+  `${reviewersId}/-/Author_In_Current_Cycle`,
+  `${reviewersId}/-/Seniority`,
+].map(invitationId => `${invitationId},head:ignore`).join(';')
+
+const allBrowseInvitations = [
+  browseInvitations,
+  headBrowseInvitations,
+].join(';')
+
+const manualReviewerAssignmentUrl = `/edges/browse?traverse=${domain.content.reviewers_assignment_id?.value}&edit=${domain.content.reviewers_assignment_id?.value};${domain.content.reviewers_custom_max_papers_id?.value},head:ignore&browse=${allBrowseInvitations}&version=2`
 assignmentUrls[domain.content.reviewers_name?.value] = {
   manualAssignmentUrl: manualReviewerAssignmentUrl,
   automaticAssignment: automaticAssignment
@@ -11,7 +34,29 @@ assignmentUrls[domain.content.reviewers_name?.value] = {
 
 const areaChairName = domain.content.area_chairs_name?.value
 if (areaChairName) {
-  const manualAreaChairAssignmentUrl = `/edges/browse?traverse=${domain.content.area_chairs_assignment_id?.value}&edit=${domain.content.area_chairs_assignment_id?.value};${domain.content.area_chairs_custom_max_papers_id?.value},tail:ignore&browse=${domain.content.area_chairs_affinity_score_id?.value};${domain.content.area_chairs_conflict_id?.value}&version=2`
+
+  const browseInvitations = [
+    domain.content.area_chairs_affinity_score_id?.value,
+    domain.content.area_chairs_conflict_id?.value,
+    `${areaChairsId}/-/Research_Area`,
+    `${areaChairsId}/-/Status`,
+  ].join(';')
+  
+  const headBrowseInvitations = [
+    `${areaChairsId}/-/Registered_Load`,
+    `${areaChairsId}/-/Emergency_Load`,
+    `${areaChairsId}/-/Emergency_Area`,
+    `${areaChairsId}/-/Reviewing_Resubmissions`,
+    `${areaChairsId}/-/Author_In_Current_Cycle`,
+    `${areaChairsId}/-/Seniority`,
+  ].map(invitationId => `${invitationId},head:ignore`).join(';')
+  
+  const allBrowseInvitations = [
+    browseInvitations,
+    headBrowseInvitations,
+  ].join(';')
+
+  const manualAreaChairAssignmentUrl = `/edges/browse?traverse=${domain.content.area_chairs_assignment_id?.value}&edit=${domain.content.area_chairs_assignment_id?.value};${domain.content.area_chairs_custom_max_papers_id?.value},head:ignore&browse=${allBrowseInvitations}&version=2`
   assignmentUrls[areaChairName] = {
     manualAssignmentUrl: manualAreaChairAssignmentUrl,
     automaticAssignment: automaticAssignment
@@ -27,9 +72,9 @@ return {
       instructions: `This page provides information and status updates for the ${domain.content.subtitle?.value}. It will be regularly updated as the conference progresses, so please check back frequently.`
     },
     venueId: domain.id,
-    areaChairsId: domain.content.area_chairs_id?.value,
+    areaChairsId: areaChairsId,
     seniorAreaChairsId: domain.content.senior_area_chairs_id?.value,
-    reviewersId: domain.content.reviewers_id?.value,
+    reviewersId: reviewersId,
     programChairsId: domain.content.program_chairs_id?.value,
     authorsId: domain.content.authors_id?.value,
     paperReviewsCompleteThreshold: 3,
@@ -81,6 +126,24 @@ return {
             'author_identity_guess': [5]
         }
       }
-    ]
+    ],
+    propertiesAllowed: {
+      reviewerChecklistCount: `
+      const invitationToCheck="Reviewer_Checklist"; 
+      const checklistReplies = row.note?.details?.replies.filter(reply => {
+        const hasReply = reply.invitations.some(invitation => invitation.includes(invitationToCheck)); 
+        return hasReply;
+      })
+      return checklistReplies?.length??0;
+      `,
+      actionEditorChecklistCount: `
+      const invitationToCheck="Action_Editor_Checklist"; 
+      const checklistReplies = row.note?.details?.replies.filter(reply => {
+        const hasReply = reply.invitations.some(invitation => invitation.includes(invitationToCheck)); 
+        return hasReply;
+      })
+      return checklistReplies?.length??0;
+      `
+    }    
   }
 }

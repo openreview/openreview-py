@@ -310,6 +310,11 @@ class TestARRVenueV2():
 
         helpers.await_queue()
 
+        # Check duedates for registration stages
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Registration').duedate > 0
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Registration').duedate > 0
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Registration').duedate > 0
+
         # Pin 2023 and 2024 into next available year
         task_array = [
             arr_reviewer_max_load_task,
@@ -1842,6 +1847,15 @@ class TestARRVenueV2():
         ))
 
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Post_Submission-0-1', count=3)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
+
+        assert len(pc_client_v2.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Withdrawal')) == 101
+        assert len(pc_client_v2.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Desk_Rejection')) == 101
+        # Discuss with Harold
+        #assert len(pc_client_v2.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Reviewer_Checklist')) == 101
+        #assert len(pc_client_v2.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Action_Editor_Checklist')) == 101        
+        #assert len(pc_client_v2.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Desk_Reject_Verification')) == 101        
 
         # Open comments
         now = datetime.datetime.utcnow()
@@ -1865,12 +1879,13 @@ class TestARRVenueV2():
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Official_Comment-0-1', count=1)
 
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
         submission_invitation = pc_client_v2.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Submission')
         assert submission_invitation.expdate < openreview.tools.datetime_millis(now)
 
         assert len(pc_client_v2.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Withdrawal')) == 101
         assert len(pc_client_v2.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Desk_Rejection')) == 101
+        #assert len(pc_client_v2.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Reviewer_Checklist')) == 101
+        #assert len(pc_client_v2.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Action_Editor_Checklist')) == 101
         assert pc_client_v2.get_invitation('aclweb.org/ACL/ARR/2023/August/-/PC_Revision')
 
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
@@ -2021,7 +2036,7 @@ class TestARRVenueV2():
 
         # Post comment as PCs to all submissions
         for submission in submissions:
-            pc_client_v2.post_note_edit(
+            comment_edit = pc_client_v2.post_note_edit(
                 invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/-/Official_Comment",
                 writers=['aclweb.org/ACL/ARR/2023/August'],
                 signatures=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
@@ -2038,10 +2053,12 @@ class TestARRVenueV2():
                 )
             )
 
+            helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
         # Post comment as authors to chairs
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
         for submission in submissions:
-            pc_client_v2.post_note_edit(
+            comment_edit = pc_client_v2.post_note_edit(
                 invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/-/Author-Editor_Confidential_Comment",
                 writers=['aclweb.org/ACL/ARR/2023/August', f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Authors'],
                 signatures=[f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Authors'],
@@ -2058,6 +2075,10 @@ class TestARRVenueV2():
                     }
                 )
             )
+
+            helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+            assert openreview_client.get_messages(subject=f'[ARR - August 2023] An author-editor confidential comment has been received on your Paper Number: {submission.number}, Paper Title: "Paper title {submission.number}"')
 
 
     def test_setup_matching(self, client, openreview_client, helpers, test_client, request_page, selenium):
@@ -2387,7 +2408,7 @@ class TestARRVenueV2():
         anon_groups = ac_client_3.get_groups(prefix='aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chair_', signatory='~AC_ARRThree1')
         anon_group_id_ac = anon_groups[0].id
 
-        reviewer_client_1.post_note_edit(
+        review_edit = reviewer_client_1.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/June/Submission2/-/Official_Review',
             signatures=[anon_group_id_1],
             note=openreview.api.Note(
@@ -2412,8 +2433,9 @@ class TestARRVenueV2():
                 }
             )
         )
+        helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
 
-        reviewer_client_2.post_note_edit(
+        review_edit = reviewer_client_2.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/June/Submission3/-/Official_Review',
             signatures=[anon_group_id_2],
             note=openreview.api.Note(
@@ -2438,8 +2460,9 @@ class TestARRVenueV2():
                 }
             )
         )
+        helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
 
-        reviewer_client_5.post_note_edit(
+        review_edit = reviewer_client_5.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/June/Submission2/-/Official_Review',
             signatures=[anon_group_id_5],
             note=openreview.api.Note(
@@ -2464,6 +2487,7 @@ class TestARRVenueV2():
                 }
             )
         )
+        helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
 
         ac_edit = ac_client_3.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/June/Submission2/-/Meta_Review',
@@ -2769,6 +2793,7 @@ class TestARRVenueV2():
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Enable_SAE_AE_Assignments-0-1', count=1)
 
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Emergency_Area_Chairs')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Invite_Assignment')
         assignment_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment')
         assert 'sync_sac_id' not in assignment_invitation.content
 
@@ -3274,6 +3299,11 @@ class TestARRVenueV2():
 
         review = openreview_client.get_note(reviewer_edit['note']['id'])
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Authors' in review.readers
+        assert set(review.content['reviewer_certification']['readers']) == {
+            'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+            f"aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Senior_Area_Chairs",
+            f"aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Area_Chairs",
+        } 
 
     def test_author_response(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
@@ -3309,6 +3339,27 @@ class TestARRVenueV2():
 
             assert f"aclweb.org/ACL/ARR/2023/August/Submission{s.number}/Authors" in comment_invitees
             assert f"aclweb.org/ACL/ARR/2023/August/Submission{s.number}/Authors" in comment_readers
+
+        comment_edit = pc_client_v2.post_note_edit(
+            invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/-/Official_Comment",
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            note=openreview.api.Note(
+                replyto=submissions[0].id,
+                readers=[
+                    'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Senior_Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Area_Chairs'
+                ],
+                content={
+                    "comment": { "value": "This is a comment"}
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+        assert openreview_client.get_messages(to='sac2@aclrollingreview.com', subject='[ARR - August 2023] Program Chairs commented on a paper in your area. Paper Number: 3, Paper Title: "Paper title 3"')   
 
         # Close author response
         pc_client.post_note(

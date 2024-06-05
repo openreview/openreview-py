@@ -1295,6 +1295,30 @@ def recruit_reviewer(client, user, first,
         print("Sent to the following: ", response)
         print(personalized_message)
 
+def recruit_user(client, user,
+    hash_seed,
+    recruitment_message_subject,
+    recruitment_message_content,
+    recruitment_invitation_id,
+    comittee_invited_id,
+    contact_email,
+    message_invitation,
+    message_signature,
+    name=None):
+
+    hashkey = HMAC.new(hash_seed.encode('utf-8'), msg=user.encode('utf-8'), digestmod=SHA256).hexdigest()
+
+    url = f'https://openreview.net/invitation?id={recruitment_invitation_id}&user={urlparse.quote(user)}&key={hashkey}'
+
+    personalized_message = recruitment_message_content.replace("{{fullname}}", name) if name else recruitment_message_content
+    personalized_message = personalized_message.replace("{{invitation_url}}", url)
+    personalized_message = personalized_message.replace("{{contact_info}}", contact_email)
+
+    personalized_message.format()
+
+    client.post_message(recruitment_message_subject, [user], personalized_message, parentGroup=comittee_invited_id, replyTo=contact_email, invitation=message_invitation, signature=message_signature)
+
+
 def get_all_venues(client):
     """
     Returns a list of all the venues

@@ -498,6 +498,16 @@ class VenueStages():
                 'default': 'No, do not email PCs for each official comment made in the venue',
                 'order': 31
             },
+            'email_senior_area_chairs_about_official_comments': {
+                'description': 'Should the SACs(if applicable) receive an email for each official comment made in the venue? Default is "No, do not email SACs for each official comment in the venue"',
+                'value-radio': [
+                    'Yes, email SACs for each official comment made in the venue',
+                    'No, do not email SACs for each official comment made in the venue'
+                ],
+                'required': False,
+                'default': 'No, do not email SACs for each official comment made in the venue',
+                'order': 32
+            },            
             'enable_chat_between_committee_members': {
                 'description': 'An experimental feature that allows committee members to chat with each other. Only the selected participants that are members of the reviewing committee will be using this feature. Default is "Yes, enable chat between committee members". More information: https://docs.openreview.net/getting-started/live-chat-on-the-forum-page',
                 'value-radio': [
@@ -506,7 +516,7 @@ class VenueStages():
                 ],
                 'required': False,
                 'default': 'Yes, enable chat between committee members',
-                'order': 32
+                'order': 33
             }
         }
 
