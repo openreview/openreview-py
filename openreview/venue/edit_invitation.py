@@ -540,6 +540,76 @@ class EditInvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
     
+    def set_edit_reply_readers_selection_invitation(self, invitation_id):
+
+        venue_id = self.venue_id
+        venue = self.venue
+        reply_readers_invitation_id = invitation_id + '/Readers'
+
+        reply_readers = [
+            {'value': {'value': venue.get_program_chairs_id(), 'optional': False, 'description': 'Program Chairs.'}, 'optional': False, 'description': 'Program Chairs.'}
+        ]
+        if venue.use_senior_area_chairs:
+            reply_readers.extend([
+                {'value': {'value': venue.get_senior_area_chairs_id(), 'optional': False, 'description': 'All Senior Area Chairs'}, 'optional': True, 'description': 'All Senior Area Chairs'},
+                {'value': {'value': venue.get_senior_area_chairs_id('${8/content/noteNumber/value}'), 'optional': False, 'description': 'Assigned Senior Area Chairs'}, 'optional': True, 'description': 'Assigned Senior Area Chairs'}
+            ])
+        if venue.use_area_chairs:
+            reply_readers.extend([
+                {'value': {'value': venue.get_area_chairs_id(), 'optional': True, 'description': 'All Area Chairs'}, 'optional': True, 'description': 'All Area Chairs'},
+                {'value': {'value': venue.get_area_chairs_id('${8/content/noteNumber/value}'), 'optional': True, 'description': 'Assigned Area Chairs'}, 'optional': True, 'description': 'Assigned Area Chairs'}
+            ])
+        reply_readers.extend([
+            {'value': {'value': venue.get_reviewers_id(), 'optional': True, 'description': 'All Reviewers'}, 'optional': True, 'description': 'All Reviewers'},
+            {'value': {'value': venue.get_reviewers_id('${8/content/noteNumber/value}'), 'optional': True, 'description': 'Assigned Reviewers'}, 'optional': True, 'description': 'Assigned Reviewers'},
+            {'value': {'value': venue.get_reviewers_id('${8/content/noteNumber/value}', submitted=True), 'optional': True, 'description': 'Assigned Reviewers who already submitted their review'}, 'optional': True, 'description': 'Assigned Reviewers who already submitted their review'},
+            {'value': {'value': venue.get_authors_id(), 'optional': True, 'description': 'Paper authors'}, 'optional': True, 'description': 'Paper authors'}
+        ])
+
+        invitation = Invitation(
+            id = reply_readers_invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'reply_readers': {
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'input': 'select',
+                                'items': reply_readers
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': invitation_id,
+                    'signatures': [venue_id],
+                    'edit': {
+                        'invitation': {
+                            'edit': {
+                                'note': {
+                                    'readers': {
+                                        'param': {
+                                            'items': ['${7/content/reply_readers/value}']
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
+
     def set_edit_stage_invitation(self):
 
         venue_id = self.venue_id

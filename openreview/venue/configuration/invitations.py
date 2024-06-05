@@ -3,6 +3,7 @@ import openreview.api
 from ... import openreview
 from openreview.api import Invitation
 import os
+from ...stages import default_content
 
 class VenueConfiguration():
 
@@ -22,6 +23,7 @@ class VenueConfiguration():
         #setup stage templates
         workflow_invitations = WorkflowInvitations(self.client, self.support_group_id, self.super_user)
         workflow_invitations.setup_metareview_template_invitation()
+        workflow_invitations.setup_comment_template_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -636,6 +638,7 @@ class WorkflowInvitations():
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Meta_Review'
                             }
                         }
                     },
@@ -671,11 +674,118 @@ class WorkflowInvitations():
                                 'deletable': True
                             }
                         }
+                    },
+                    'readers': {
+                        'order': 6,
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'input': 'select',
+                                'items': [
+                                    {'value': 'Program Chairs', 'optional': False, 'description': 'Program Chairs'},
+                                    {'value': 'Assigned Senior Area Chairs', 'optional': False, 'description': 'Assigned Senior Area Chairs'},
+                                    {'value': 'Assigned Area Chairs', 'optional': False, 'description': 'Assigned Area Chairs'},
+                                    {'value': 'Assigned Reviewers', 'optional': True, 'description': 'Assigned Reviewers'},
+                                    {'value': 'Assigned Reviewers Submitted', 'optional': True, 'description': 'Assigned reviewers who have submitted a review'},
+                                    {'value': 'Paper Authors', 'optional': True, 'description': 'Paper Authors'},
+                                    {'value': 'Everyone', 'optional': True, 'description': 'Public'},
+                                ]
+                            }
+                        }
+                    },
+                    'content': {
+                        'order': 7,
+                        'value': {
+                            'param': {
+                                'type': 'json',
+                                'default': default_content.meta_review_v2,
+                                'optional': True
+                            }
+                        }
                     }
                 },
                 'invitation': {
-                    'id': '${{2/content/venue_id/value}}/-/${{2/content/stage_name/value}}',
-                    'signatures': ['${{2/content/venue_id/value}}'],
+                    # 'id': '${2/content/venue_id/value}/-/${2/content/stage_name/value}',
+                    'id': 'openreview.net/-/${2/content/stage_name/value}',
+                    'signatures': ['${{/content/venue_id/value}'],
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_comment_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/-/Official_Comment_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=[support_group_id],
+            signatures=[self.super_user],
+            process = self.get_process_content('process/templates_process.py'),
+            edit = {
+                'signatures': {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content' :{
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                            }
+                        }
+                    },
+                    'stage_name': {
+                        'order': 2,
+                        'description': 'Stage Name, use underscores to represent spaces',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Official_Comment'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'expiration_date': {
+                        'order': 5,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    # 'id': '${2/content/venue_id/value}/-/${2/content/stage_name/value}',
+                    'id': 'openreview.net/-/${2/content/stage_name/value}',
+                    'signatures': ['${2/content/venue_id/value}'],
                 }
             }
         )

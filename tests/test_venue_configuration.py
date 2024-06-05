@@ -352,22 +352,20 @@ class TestVenueConfiguration():
 
         pc_client = openreview.api.OpenReviewClient(username='sherry@iclr.cc', password=helpers.strong_password)
 
-        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Stage')
-
         now = datetime.datetime.now()
         cdate = openreview.tools.datetime_millis(now - datetime.timedelta(minutes=1))
         expdate = openreview.tools.datetime_millis(now + datetime.timedelta(minutes=28))        
 
         edit = pc_client.post_invitation_edit(
-            invitations='ICLR.cc/2025/Conference/-/Stage',
+            invitations='openreview.net/Support/-/Official_Comment_Template',
+            signatures=['~ProgramChair_ICLR1'],
             content={
+                'venue_id': { 'value': 'ICLR.cc/2025/Conference' },
                 'stage_name': { 'value': 'Confidential_Comment' },
-                'stage_type': { 'value': 'Official_Comment' },
                 'activation_date': { 'value': cdate },
                 'expiration_date': { 'value': expdate }
             }
         )
-
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], count=1)
 
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Confidential_Comment')
@@ -381,6 +379,7 @@ class TestVenueConfiguration():
             signatures=['ICLR.cc/2025/Conference/Program_Chairs'],
             note=openreview.api.Note(
                 replyto=submissions[0].id,
+                readers=['ICLR.cc/2025/Conference/Program_Chairs'],
                 content={
                     'comment': { 'value': 'this is a comment' }
                 }
@@ -403,7 +402,8 @@ class TestVenueConfiguration():
                 'stage_name': { 'value': 'Meta_Review' },
                 'activation_date': { 'value': cdate },
                 'due_date': { 'value': duedate },
-                'expiration_date': { 'value': expdate }
+                'expiration_date': { 'value': expdate },
+                'readers': { 'value': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers Submitted']}
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], count=1)
@@ -415,6 +415,14 @@ class TestVenueConfiguration():
 
         invitations = pc_client.get_invitations(invitation='ICLR.cc/2025/Conference/-/Meta_Review')
         assert len(invitations) == 10
+
+        invitation  = openreview_client.get_invitation('ICLR.cc/2025/Conference/Submission1/-/Meta_Review')
+        assert invitation.edit['readers'] == [
+            "ICLR.cc/2025/Conference/Submission1/Senior_Area_Chairs",
+            "ICLR.cc/2025/Conference/Submission1/Area_Chairs",
+            "ICLR.cc/2025/Conference/Submission1/Reviewers/Submitted",
+            "ICLR.cc/2025/Conference/Program_Chairs"
+        ]
 
         # invitations = pc_client.get_invitations(invitation='ICLR.cc/2025/Conference/-/Official_Review')
         # assert len(invitations) == 10
