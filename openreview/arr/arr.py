@@ -476,22 +476,7 @@ class ARR(object):
         return self.venue.send_decision_notifications(decision_options,  messages)
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None, submission_track=None):
-        matching_value = self.venue.setup_committee_matching(committee_id, compute_affinity_scores, compute_conflicts, compute_conflicts_n_years, alternate_matching_group, submission_track)
-        cmp_inv = self.client.get_invitation(self.get_custom_max_papers_id(committee_id))
-        cmp_inv.edit['weight']['param']['optional'] = True
-        if 'enum' in cmp_inv.edit['weight']['param']:
-            del cmp_inv.edit['weight']['param']['enum']
-            cmp_inv.edit['weight']['param']['minimum'] = 0
-            cmp_inv.edit['weight']['param']['default'] = 0
-
-        self.client.post_invitation_edit(
-            invitations=self.get_meta_invitation_id(),
-            readers=[self.venue_id],
-            writers=[self.venue_id],
-            signatures=[self.venue_id],
-            invitation=cmp_inv
-        )
-        return matching_value
+        return self.venue.setup_committee_matching(committee_id, compute_affinity_scores, compute_conflicts, compute_conflicts_n_years, alternate_matching_group, submission_track)
 
     def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
         return self.venue.set_assignments(assignment_title,  committee_id, enable_reviewer_reassignment, overwrite)
