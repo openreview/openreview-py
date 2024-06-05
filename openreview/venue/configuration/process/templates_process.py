@@ -48,5 +48,4 @@ def process(client, edit, invitation):
         venue.create_comment_stage()
         venue.edit_invitation_builder.set_edit_deadlines_invitation(invitation_id)
         venue.edit_invitation_builder.set_edit_content_invitation(invitation_id)
-        venue.edit_invitation_builder.set_edit_reply_readers_invitation(invitation_id)
-        # venue.edit_invitation_builder.set_edit_reply_readers_selection_invitation(invitation_id)
+        venue.edit_invitation_builder.set_edit_reply_readers_selection_invitation(invitation_id)

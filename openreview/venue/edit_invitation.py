@@ -580,7 +580,7 @@ class EditInvitationBuilder(object):
                     'reply_readers': {
                         'value': {
                             'param': {
-                                'type': 'string[]',
+                                'type': 'object[]',
                                 'input': 'select',
                                 'items': reply_readers
                             }
@@ -596,7 +596,7 @@ class EditInvitationBuilder(object):
                                 'note': {
                                     'readers': {
                                         'param': {
-                                            'items': ['${7/content/reply_readers/value}']
+                                            'items': '${8/content/reply_readers/value}'
                                         }
                                     }
                                 }
