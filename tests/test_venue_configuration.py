@@ -78,7 +78,7 @@ class TestVenueConfiguration():
         post_submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Post_Submission')
         assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
 
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow()
         new_cdate = openreview.tools.datetime_millis(now - datetime.timedelta(days=3))
         new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
 
@@ -323,9 +323,9 @@ class TestVenueConfiguration():
         ]
 
         # create child invitations
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow()
         new_cdate = openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30))
-        new_duedate = openreview.tools.datetime_millis(now - datetime.timedelta(days=3))
+        new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
 
         pc_client.post_invitation_edit(
             invitations='ICLR.cc/2025/Conference/-/Official_Review/Deadlines',
@@ -337,8 +337,8 @@ class TestVenueConfiguration():
         )
         helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/Official_Review-0-1', count=2)
 
-        # invitations = openreview_client.get_invitations(invitation='ICLR.cc/2025/Conference/-/Official_Review')
-        # assert len(invitations) == 10
+        invitations = openreview_client.get_invitations(invitation='ICLR.cc/2025/Conference/-/Official_Review')
+        assert len(invitations) == 10
 
         invitation  = openreview_client.get_invitation('ICLR.cc/2025/Conference/Submission1/-/Official_Review')
         assert invitation and invitation.edit['readers'] == [
@@ -389,10 +389,10 @@ class TestVenueConfiguration():
 
         pc_client = openreview.api.OpenReviewClient(username='sherry@iclr.cc', password=helpers.strong_password)
 
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow()
         cdate = openreview.tools.datetime_millis(now - datetime.timedelta(minutes=1))
-        duedate = openreview.tools.datetime_millis(now + datetime.timedelta(minutes=30))
-        expdate = openreview.tools.datetime_millis(now + datetime.timedelta(hours=1))
+        duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=10))
+        expdate = openreview.tools.datetime_millis(now + datetime.timedelta(days=10))
 
         edit = pc_client.post_invitation_edit(
             invitations='openreview.net/Support/-/Meta_Review_Template',
@@ -413,6 +413,9 @@ class TestVenueConfiguration():
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Meta_Review/Form_Fields')
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Meta_Review/Readers')
 
+        
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/Meta_Review-0-1', count=1)
+        
         invitations = pc_client.get_invitations(invitation='ICLR.cc/2025/Conference/-/Meta_Review')
         assert len(invitations) == 10
 
@@ -424,5 +427,5 @@ class TestVenueConfiguration():
             "ICLR.cc/2025/Conference/Program_Chairs"
         ]
 
-        # invitations = pc_client.get_invitations(invitation='ICLR.cc/2025/Conference/-/Official_Review')
-        # assert len(invitations) == 10
+        invitations = pc_client.get_invitations(invitation='ICLR.cc/2025/Conference/-/Official_Review')
+        assert len(invitations) == 10
