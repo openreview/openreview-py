@@ -3675,6 +3675,37 @@ class TestARRVenueV2():
         assert len(review.readers) - len(reviewer_edit['note']['readers']) == 1
         assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Authors' in review.readers
 
+        # allow ethics chairs to invite ethics reviewers
+        conference_matching = matching.Matching(venue, openreview_client.get_group(venue.get_ethics_reviewers_id()), None)
+        conference_matching.setup_invite_assignment(hash_seed='1234', invited_committee_name=f'Emergency_{venue.get_ethics_reviewers_name(pretty=False)}')
+        venue.group_builder.set_external_reviewer_recruitment_groups(name=f'Emergency_{venue.get_ethics_reviewers_name(pretty=False)}')
+
+        invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Ethics_Reviewers/-/Invite_Assignment')
+        assert invitation
+        assert 'is_ethics_reviewer' in invitation.content and invitation.content['is_ethics_reviewer']['value'] == True
+
+        ethics_chair_client = openreview.api.OpenReviewClient(username='ec1@aclrollingreview.com', password=helpers.strong_password)
+        edge = ethics_chair_client.post_edge(
+            openreview.api.Edge(invitation=invitation.id,
+                signatures=['aclweb.org/ACL/ARR/2023/August/Ethics_Chairs'],
+                head=test_submission.id,
+                tail='celeste@arrethics.cc',
+                label='Invitation Sent',
+                weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edge.id)
+
+        messages = openreview_client.get_messages(to='celeste@arrethics.cc', subject=f'''[ARR - August 2023] Invitation to serve as ethics reviewer for paper titled "{test_submission.content['title']['value']}"''')
+        assert messages and len(messages) == 1
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Ethics_Reviewers/-/Assignment_Recruitment', count=1)
+
+        messages = openreview_client.get_messages(to='celeste@arrethics.cc', subject='[ARR - August 2023] Ethics Reviewer Invitation accepted for paper 4, assignment pending')
+        assert len(messages) == 1
+
     def test_emergency_reviewing_forms(self, client, openreview_client, helpers):
         # Update the process functions for each of the unavailability forms, set up the custom max papers
         # invitations and test that each note posts an edge
