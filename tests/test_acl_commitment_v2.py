@@ -184,4 +184,32 @@ class TestACLCommitment():
                         'keywords': { 'value': ['machine learning'] },
                         'paper_link': { 'value': 'https://openreview.net/pdf?id=1234' }
                     }
-                ))                    
+                ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Provided paper link does not correspond to a submission in OpenReview'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/2024/Conference/-/Submission',
+                    signatures=['~SomeFirstName_User1'],
+                    note=openreview.api.Note(
+                    content = {
+                        'title': { 'value': 'Commitment Paper' },
+                        'abstract': { 'value': 'This is a test abstract' },
+                        'authorids': { 'value': ['test@mail.com'] },
+                        'authors': { 'value': ['SomeFirstName User'] },
+                        'keywords': { 'value': ['machine learning'] },
+                        'paper_link': { 'value': 'https://openreview.net/forum?id=1234&replyto=4567' }
+                    }
+                ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Provided paper link does not correspond to a submission in OpenReview'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/2024/Conference/-/Submission',
+                    signatures=['~SomeFirstName_User1'],
+                    note=openreview.api.Note(
+                    content = {
+                        'title': { 'value': 'Commitment Paper' },
+                        'abstract': { 'value': 'This is a test abstract' },
+                        'authorids': { 'value': ['test@mail.com'] },
+                        'authors': { 'value': ['SomeFirstName User'] },
+                        'keywords': { 'value': ['machine learning'] },
+                        'paper_link': { 'value': 'https://openreview.net/forum?id=1234&referrer=[Author%20Console](/group?id=aclweb.org/ACL/2024/Conference/Authors)' }
+                    }
+                ))
