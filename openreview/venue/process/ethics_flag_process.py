@@ -63,7 +63,8 @@ def process(client, edit, invitation):
                         final_readers.remove('{signatures}')
                     if 'everyone' not in final_readers:
                         final_readers.append(f'{venue_id}/{submission_name}{submission.number}/{ethics_reviewers_name}')
-                        final_readers.append(ethics_chairs_id)
+                        if release_to_ethics_chairs:
+                            final_readers.append(ethics_chairs_id)
 
                     print('review_name:', review_name)
                     paper_invitation_edit = client.post_invitation_edit(
