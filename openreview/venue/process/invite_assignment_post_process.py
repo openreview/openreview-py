@@ -13,7 +13,10 @@ def process_update(client, edge, invitation, existing_edge):
     paper_reviewer_invited_id = invitation.content['paper_reviewer_invited_id']['value']
     email_template = invitation.content['email_template']['value']
     is_reviewer = invitation.content['is_reviewer']['value']
+    is_ethics_reviewer = invitation.content.get('is_ethics_reviewer',{}).get('value', False)
     action_string = 'to review' if is_reviewer else 'to serve as area chair for'
+    if is_ethics_reviewer:
+        action_string = 'to serve as ethics reviewer for'
     print(edge.id)
 
     if edge.ddate is None and edge.label == invite_label and not existing_edge:
