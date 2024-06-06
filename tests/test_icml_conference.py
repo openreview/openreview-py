@@ -578,7 +578,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2023/Conference/Reviewers", reviewer_client.token, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
-        assert 'You have agreed to review up to 1 papers' in header.text
+        assert 'You have agreed to review up to 1 submission' in header.text
 
     def test_registrations(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
@@ -3636,7 +3636,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
                 'commentary_end_date': end_date.strftime('%Y/%m/%d'),
                 'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
                 'additional_readers': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Assigned Submitted Reviewers'],
-                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue',
+                'email_program_chairs_about_official_comments': 'No, do not email PCs for each official comment made in the venue',
                 'enable_chat_between_committee_members': 'Yes, enable chat between committee members'
             },
             forum=request_form.forum,
@@ -4272,7 +4272,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
                 'commentary_end_date': end_date.strftime('%Y/%m/%d'),
                 'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Authors'],
                 'additional_readers': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Assigned Submitted Reviewers', 'Authors'],
-                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
+                'email_program_chairs_about_official_comments': 'No, do not email PCs for each official comment made in the venue'
 
             },
             forum=request_form.forum,
@@ -5352,8 +5352,8 @@ Best,
         assert len(openreview_client.get_messages(to='reviewer4@yahoo.com', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 1
         assert len(openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 1
         assert len(openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 1
-        assert len(openreview_client.get_messages(to='sac2@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 1
-        assert len(openreview_client.get_messages(to='pc@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 1
+        assert len(openreview_client.get_messages(to='sac2@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 0
+        assert len(openreview_client.get_messages(to='pc@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 0
 
         pc_client=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
 
@@ -5472,7 +5472,7 @@ Best,
         assert len(openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 1
         assert len(openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 1
         assert len(openreview_client.get_messages(to='sac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='pc@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 1
+        assert len(openreview_client.get_messages(to='pc@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
 
         ## Add tag emoji
         tag = sac_client.post_tag(openreview.api.Tag(
@@ -5499,7 +5499,7 @@ Best,
                 'commentary_end_date': end_date.strftime('%Y/%m/%d'),
                 'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
                 'additional_readers': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Assigned Submitted Reviewers'],
-                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue',
+                'email_program_chairs_about_official_comments': 'No, do not email PCs for each official comment made in the venue',
                 'enable_chat_between_committee_members': 'No, do not enable chat between committee members'
             },
             forum=request_form.forum,

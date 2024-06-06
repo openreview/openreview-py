@@ -481,7 +481,7 @@ class ExpertiseSelectionStage(object):
 
 class SubmissionRevisionStage():
 
-    def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None, allow_author_reorder=False):
+    def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None, allow_author_reorder=False, allow_license_edition=False):
         self.name = name
         self.start_date = start_date
         self.due_date = due_date
@@ -490,6 +490,7 @@ class SubmissionRevisionStage():
         self.only_accepted = only_accepted
         self.multiReply=multiReply
         self.allow_author_reorder=allow_author_reorder
+        self.allow_license_edition=allow_license_edition
 
     def get_content(self, api_version='2', conference=None):
         
@@ -957,6 +958,7 @@ class CommentStage(object):
         anonymous=False,
         reader_selection=False,
         email_pcs=False,
+        email_sacs = False,
         only_accepted=False,
         check_mandatory_readers=False,
         readers=[],
@@ -971,6 +973,7 @@ class CommentStage(object):
         self.anonymous = anonymous
         self.reader_selection = reader_selection
         self.email_pcs = email_pcs
+        self.email_sacs = email_sacs
         self.only_accepted=only_accepted
         self.check_mandatory_readers=check_mandatory_readers
         self.readers = readers

@@ -6,7 +6,11 @@ def process(client, invitation):
     contact = domain.get_content_value('contact')
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
     sender = domain.get_content_value('message_sender')
-
+    submission_name = domain.get_content_value('submission_name')
+    comment_email_pcs = domain.get_content_value('comment_email_pcs')
+    comment_email_sacs = domain.get_content_value('comment_email_sacs')
+    program_chairs_id = domain.get_content_value('program_chairs_id')
+    senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
 
     last_notified_id = invitation.content.get('last_notified_id', {}).get('value') if invitation.content else None
 
@@ -23,6 +27,10 @@ def process(client, invitation):
     if len(new_comments) == 0:
         return
     
+    ignore_recipients = new_comments[-1].signatures + ([program_chairs_id] if not comment_email_pcs else [])
+    if not comment_email_sacs and senior_area_chairs_name:
+        ignore_recipients.append(f'{venue_id}/{submission_name}{submission.number}/{senior_area_chairs_name}')    
+    
     client.post_message(
         invitation = meta_invitation_id,
         subject = f'[{short_name}] New message{"s" if len(new_comments) > 1 else ""} in committee members chat for submission {submission.number}: {submission.content["title"]["value"]}',
@@ -34,7 +42,7 @@ New comment{"s have" if len(new_comments) > 1 else " has"} been posted for the c
 You can view the conversation here: https://openreview.net/forum?id={submission.id}&noteId={new_comments[0].id}#committee-chat
 ''',
         replyTo = contact,
-        ignoreRecipients = new_comments[-1].signatures,
+        ignoreRecipients = ignore_recipients,
         signature=venue_id,
         sender = sender
     )

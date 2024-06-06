@@ -49,32 +49,38 @@ def process(client, note, invitation):
             recruitment_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Recruitment')
             remind_recruitment_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Remind_Recruitment')
             subject = f'[{short_name}] Invitation to serve as {{{{invitee_role}}}}'
+            recruitment_links = f'''To ACCEPT the invitation, please click on the following link:
+
+{{{{accept_url}}}}
+
+To DECLINE the invitation, please click on the following link:
+
+{{{{decline_url}}}}'''
+
+            if conference.use_recruitment_template or forum_note.content.get('api_version') == '2':
+                recruitment_links = f'''To respond the invitation, please click on the following link:
+
+{{{{invitation_url}}}}'''
             content = f'''Dear {{{{fullname}}}},
 
-        You have been nominated by the program chair committee of {short_name} to serve as {{{{invitee_role}}}}. As a respected researcher in the area, we hope you will accept and help us make {short_name} a success.
+You have been nominated by the program chair committee of {short_name} to serve as {{{{invitee_role}}}}. As a respected researcher in the area, we hope you will accept and help us make {short_name} a success.
 
-        You are also welcome to submit papers, so please also consider submitting to {short_name}.
+You are also welcome to submit papers, so please also consider submitting to {short_name}.
 
-        We will be using OpenReview.net and a reviewing process that we hope will be engaging and inclusive of the whole community.
+We will be using OpenReview.net and a reviewing process that we hope will be engaging and inclusive of the whole community.
 
-        To ACCEPT the invitation, please click on the following link:
+{recruitment_links}
 
-        {{{{accept_url}}}}
+Please answer within 10 days.
 
-        To DECLINE the invitation, please click on the following link:
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using. Visit http://openreview.net/profile after logging in.
 
-        {{{{decline_url}}}}
+If you have any questions, please contact {{{{contact_info}}}}.
 
-        Please answer within 10 days.
+Cheers!
 
-        If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using. Visit http://openreview.net/profile after logging in.
-
-        If you have any questions, please contact us at info@openreview.net.
-
-        Cheers!
-
-        Program Chairs
-        '''
+Program Chairs
+'''
             if f'[{short_name}]' not in recruitment_invitation.reply['content']['invitation_email_subject']['default']:
                 recruitment_invitation.reply['content']['invitation_email_subject'] = {
                 'value-regex': '.*',
