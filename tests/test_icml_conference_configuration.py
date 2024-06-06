@@ -419,10 +419,9 @@ class TestICMLConference():
         # use invitation to recruit reviewers
         pc_client.post_group_edit(
                 invitation='ICML.cc/2024/Conference/Senior_Area_Chairs/Invited/-/Recruitment_Settings',
-                group=openreview.api.Group(
-                    content = {
-                        'reduced_load': { 'value': [1,2,3] },
-                        'recruitment_template': { 'value': '''Dear {{fullname}},
+                content = {
+                    'reduced_load': { 'value': [1,2,3] },
+                    'recruitment_template': { 'value': '''Dear {{fullname}},
 
 You have been nominated by the program chair committee of V 24 to serve as Reviewer. As a respected researcher in the area, we hope you will accept and help us make V 24 a success.
 
@@ -444,10 +443,9 @@ Cheers!
 
 Program Chairs
 ''' },
-                        'recruitment_subject': { 'value': '[ICML 2024] Invitation to serve as Senior Area Chair' },
-                        'allow_overlap': { 'value': False }
-                    }
-                )
+                    'recruitment_subject': { 'value': '[ICML 2024] Invitation to serve as Senior Area Chair' },
+                    'allow_overlap': { 'value': False }
+                }
             )
 
         edit = pc_client.post_group_edit(
