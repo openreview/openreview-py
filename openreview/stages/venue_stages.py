@@ -684,7 +684,9 @@ class EthicsReviewStage(object):
         additional_fields = {},
         remove_fields = [],
         submission_numbers = [],
-        enable_comments = False
+        enable_comments = False,
+        release_to_chairs = False,
+        compute_affinity_scores = None
     ):
 
         self.start_date = start_date
@@ -700,7 +702,9 @@ class EthicsReviewStage(object):
         self.enable_comments = enable_comments
         self.process_path = 'process/ethics_review_process.py'
         self.flag_process_path = 'process/ethics_flag_process.py'
-        self.preprocess_path = None        
+        self.preprocess_path = None
+        self.release_to_chairs = release_to_chairs
+        self.compute_affinity_scores = compute_affinity_scores     
 
     def get_readers(self, conference, number, ethics_review_signature=None):
 
