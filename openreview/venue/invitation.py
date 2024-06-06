@@ -1416,7 +1416,7 @@ class InvitationBuilder(object):
                 }
             invitation.edit['invitation']['edit']['note']['readers'] = comment_readers
 
-            invitation.edit['invitation']['invitees'].append(self.venue.get_ethics_reviewers_id('${3/content/noteNumber/value}'))
+            invitation.edit['invitation']['invitees'].extend([self.venue.get_ethics_reviewers_id('${3/content/noteNumber/value}'), self.venue.get_ethics_chairs_id()])
             invitation.edit['invitation']['edit']['signatures']['param']['items'].append({ 'prefix': self.venue.get_ethics_reviewers_id('${7/content/noteNumber/value}', anon=True), 'optional': True })
             invitation.edit['invitation']['edit']['signatures']['param']['items'].append({ 'value': self.venue.get_ethics_chairs_id(), 'optional': True })
 
@@ -3732,15 +3732,6 @@ class InvitationBuilder(object):
 
         if ethics_review_stage.flag_process_path:
             ethics_stage_invitation.process = self.get_process_content(ethics_review_stage.flag_process_path)
-
-        if 'everyone' not in self.venue.submission_stage.get_readers(self.venue, '${{2/id}/number}'):
-            ethics_stage_invitation.edit['note']['readers'] = {
-                'param': {
-                    'const': {
-                        'append': [self.venue.get_ethics_reviewers_id('${{3/id}/number}')]
-                    }
-                }
-            }
 
         self.save_invitation(ethics_stage_invitation, replacement=False)
         return ethics_stage_invitation

@@ -394,21 +394,36 @@ class VenueStages():
                 'required': False,
                 'description': 'Comma separated list of fields (recommendation, ethics_review) that you want removed from the review form.'
             },
+            "release_submissions_to_ethics_chairs": {
+                "description": "Do you want to release flagged submissions to the ethics chairs? All flagged submissions will be released to ethics chairs, despite any conflicts between ethics chairs and flagged submissions.",
+                "order": 9,
+                'value-radio': [
+                    'Yes, release flagged submissions to the ethics chairs.',
+                    'No, do not release flagged submissions to the ethics chairs.'
+                ],
+                "default": "No, do not release flagged submissions to the ethics chairs"
+            },
             "release_submissions_to_ethics_reviewers": {
                 "description": "Confirm that you want to release the submissions to the ethics reviewers if they are no currently released.",
-                "order": 9,
+                "order": 10,
                 "value-checkbox": "We confirm we want to release the submissions and reviews to the ethics reviewers",
                 "required": True
             },
+            "compute_affinity_scores": {
+                "order": 11,
+                'description': 'Please select whether you would like affinity scores for ethics reviewers to be computed and uploaded automatically. Select the model you want to use to compute the affinity scores or "No" if you don\'t want to compute affinity scores. The model "specter2+scincl" has the best performance, refer to our expertise repository for more information on the models: https://github.com/openreview/openreview-expertise.',
+                'value-radio': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl','No'],
+                "default": "No"
+            },
             'enable_comments_for_ethics_reviewers': {
-                'description': 'Should ethics reviewers be able to post comments? Note you can control the comment stage deadline as well who else can post comments by using the Comment Stage button.',
+                'description': 'Should ethics reviewers be able to post comments? Note you can control the comment stage deadline as well who else can post comments by using the Comment Stage button. Enabling comments for ethics reviewers will also enable them for ethics chairs.',
                 'value-radio': [
                     'Yes, enable commenting for ethics reviewers.',
                     'No, do not enable commenting for ethics reviewers.'
                 ],
                 'required': False,
                 'default': 'No, do not enable commenting for ethics reviewers.',
-                'order': 10
+                'order': 12
             }
         }
 
@@ -491,6 +506,16 @@ class VenueStages():
                 'default': 'No, do not email PCs for each official comment made in the venue',
                 'order': 31
             },
+            'email_senior_area_chairs_about_official_comments': {
+                'description': 'Should the SACs(if applicable) receive an email for each official comment made in the venue? Default is "No, do not email SACs for each official comment in the venue"',
+                'value-radio': [
+                    'Yes, email SACs for each official comment made in the venue',
+                    'No, do not email SACs for each official comment made in the venue'
+                ],
+                'required': False,
+                'default': 'No, do not email SACs for each official comment made in the venue',
+                'order': 32
+            },            
             'enable_chat_between_committee_members': {
                 'description': 'An experimental feature that allows committee members to chat with each other. Only the selected participants that are members of the reviewing committee will be using this feature. Default is "Yes, enable chat between committee members". More information: https://docs.openreview.net/getting-started/live-chat-on-the-forum-page',
                 'value-radio': [
@@ -499,7 +524,7 @@ class VenueStages():
                 ],
                 'required': False,
                 'default': 'Yes, enable chat between committee members',
-                'order': 32
+                'order': 33
             }
         }
 

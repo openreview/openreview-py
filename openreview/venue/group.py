@@ -248,6 +248,7 @@ class GroupBuilder(object):
         if self.venue.comment_stage:
             content['comment_mandatory_readers'] = { 'value': self.venue.comment_stage.get_mandatory_readers(self.venue, '{number}') }
             content['comment_email_pcs'] = { 'value': self.venue.comment_stage.email_pcs }
+            content['comment_email_sacs'] = { 'value': self.venue.comment_stage.email_sacs }
 
         if self.venue.review_rebuttal_stage:
             content['rebuttal_email_pcs'] = { 'value': self.venue.review_rebuttal_stage.email_pcs}
@@ -257,7 +258,8 @@ class GroupBuilder(object):
             content['ethics_chairs_name'] = { 'value': self.venue.ethics_chairs_name }
             content['ethics_reviewers_name'] = { 'value': self.venue.ethics_reviewers_name }
             content['ethics_review_name'] = { 'value': self.venue.ethics_review_stage.name }
-            content['anon_ethics_reviewer_name'] = { 'value': self.venue.anon_ethics_reviewers_name()}
+            content['anon_ethics_reviewer_name'] = { 'value': self.venue.anon_ethics_reviewers_name() }
+            content['release_to_chairs'] = { 'value': self.venue.ethics_review_stage.release_to_chairs }
 
         if venue_group.content.get('enable_reviewers_reassignment'):
             content['enable_reviewers_reassignment'] = venue_group.content.get('enable_reviewers_reassignment')

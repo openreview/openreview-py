@@ -3524,7 +3524,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         invitations = openreview_client.get_all_invitations(invitation='ICML.cc/2023/Conference/-/Official_Comment')
         assert len(invitations) == 100
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Comment')
-        assert invitation.invitees == ['ICML.cc/2023/Conference', 'openreview.net/Support', 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers']
+        assert invitation.invitees == ['ICML.cc/2023/Conference', 'openreview.net/Support', 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers', 'ICML.cc/2023/Conference/Ethics_Chairs']
 
         # post ethics review
         openreview_client.add_members_to_group('ICML.cc/2023/Conference/Submission5/Ethics_Reviewers', '~Reviewer_ICMLOne1')
@@ -5352,7 +5352,7 @@ Best,
         assert len(openreview_client.get_messages(to='reviewer4@yahoo.com', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 1
         assert len(openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 1
         assert len(openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 1
-        assert len(openreview_client.get_messages(to='sac2@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 1
+        assert len(openreview_client.get_messages(to='sac2@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 0
         assert len(openreview_client.get_messages(to='pc@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 0
 
         pc_client=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)

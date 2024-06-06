@@ -13,6 +13,7 @@ def process(client, invitation):
     meta_review_name = domain.content.get('meta_review_name', {}).get('value')
     ethics_chairs_id = domain.content.get('ethics_chairs_id', {}).get('value')
     ethics_reviewers_name = domain.content.get('ethics_reviewers_name', {}).get('value')
+    release_to_ethics_chairs = domain.get_content_value('release_to_chairs')
 
     now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
     cdate = invitation.edit['invitation']['cdate'] if 'cdate' in invitation.edit['invitation'] else invitation.cdate
@@ -164,6 +165,8 @@ def process(client, invitation):
             if note.content.get('flagged_for_ethics_review', {}).get('value', False):
                 if 'everyone' not in final_readers or invitation.content.get('reader_selection',{}).get('value'):
                     final_readers.append(f'{venue_id}/{submission_name}{note.number}/{ethics_reviewers_name}')
+                    if release_to_ethics_chairs:
+                        final_readers.append(ethics_chairs_id)
             content['noteReaders'] = { 'value': final_readers }
 
         paper_invitation_edit = client.post_invitation_edit(invitations=invitation.id,
