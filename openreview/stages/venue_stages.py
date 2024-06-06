@@ -301,11 +301,11 @@ class SubmissionStage(object):
                     'value': {
                         'param': {
                             'type': 'string',
-                            'regex': '(http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)',
-                            'mismatchError': 'must be a valid link to an OpenrReview submission: https://openreview.net/forum?id=...'
+                            'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                            'mismatchError': 'must be a valid link to an OpenReview submission: https://openreview.net/forum?id=...'
                         }
                     },
-                    'description': 'Please provide the link to your ARR submission. The link should have the following format: https://openreview.net/forum?id=<PAPER_ID>" where <PAPER_ID> is the paper ID of your ARR submission.',
+                    'description': 'Please provide the link to your ARR submission. The link should have the following format: https://openreview.net/forum?id=<PAPER_ID> where <PAPER_ID> is the paper ID of your ARR submission. Make sure to only add the paper id and not other parameters after &.',
                     'order': 8
                 }
 
