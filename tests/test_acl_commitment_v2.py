@@ -186,7 +186,7 @@ class TestACLCommitment():
                     }
                 ))
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Provided paper link does not correspond to a submission in OpenReview'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid paper link. Please make sure not to provide anything after the character "&" in the paper link.'):
             test_client.post_note_edit(invitation='aclweb.org/ACL/2024/Conference/-/Submission',
                     signatures=['~SomeFirstName_User1'],
                     note=openreview.api.Note(
@@ -200,7 +200,7 @@ class TestACLCommitment():
                     }
                 ))
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Provided paper link does not correspond to a submission in OpenReview'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid paper link. Please make sure not to provide anything after the character "&" in the paper link.'):
             test_client.post_note_edit(invitation='aclweb.org/ACL/2024/Conference/-/Submission',
                     signatures=['~SomeFirstName_User1'],
                     note=openreview.api.Note(

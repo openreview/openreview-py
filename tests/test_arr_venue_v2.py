@@ -1095,7 +1095,7 @@ class TestARRVenueV2():
                     }
                 ))
         
-        with pytest.raises(openreview.OpenReviewException, match=r'Provided paper link does not correspond to a submission in OpenReview'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid paper link. Please make sure not to provide anything after the character "&" in the paper link.'):
             test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
                     signatures=['~SomeFirstName_User1'],
                     note=openreview.api.Note(
@@ -1108,13 +1108,13 @@ class TestARRVenueV2():
                     }
                 ))
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Provided paper link does not correspond to a submission in OpenReview'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid paper link. Please make sure not to provide anything after the character "&" in the paper link.'):
             test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
                     signatures=['~SomeFirstName_User1'],
                     note=openreview.api.Note(
                     content = {
                         **generic_note_content,
-                        'previous_URL': { 'value': 'https://openreview.net/forum?id=1234&referrer=[Author%20Console](/group?id=aclweb.org/ACL/ARR/2023/June)' },
+                        'previous_URL': { 'value': f'https://openreview.net/forum?id=1234&referrer=[Author%20Console](/group?id=aclweb.org/ACL/ARR/2023/June)' },
                         'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
                         'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
                         'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' }

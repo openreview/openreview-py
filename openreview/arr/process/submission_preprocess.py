@@ -9,6 +9,10 @@ def process(client, edit, invitation):
     authorids = edit.note.content.get('authorids').get('value')
 
     if paper_link:
+
+        if '&' in paper_link:
+            raise openreview.OpenReviewException('Invalid paper link. Please make sure not to provide anything after the character "&" in the paper link.')
+
         paper_forum = paper_link.split('?id=')[-1]
         client_v1=openreview.Client(baseurl=openreview.tools.get_base_urls(client)[0], token=client.token)
 
@@ -31,6 +35,9 @@ def process(client, edit, invitation):
 
         if (arr_submission_v1 and arr_submission_v1.id != arr_submission_v1.forum) or (arr_submission_v2 and arr_submission_v2.id != arr_submission_v2.forum):
             raise openreview.OpenReviewException('Provided paper link does not correspond to an ARR submission. Make sure the link points to a submission and not to a reply.')
+
+        if arr_submission_v1 and 'aclweb.org/ACL/ARR' in arr_submission_v1.invitation and not arr_submission_v1.invitation.endswith('Blind_Submission'):
+            raise openreview.OpenReviewException('Provided paper link does not point to a blind submission')
 
     # If provided previous URL but left a reassignment request blank
     if paper_link and (not editor_reassignment_request or not reviewer_reassignment_request):
