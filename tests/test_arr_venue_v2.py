@@ -3810,8 +3810,10 @@ class TestARRVenueV2():
             assert cmp_original == reg_original + emg_original
             assert area_edges[user][0] == 'Generation'
 
-            score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
+            aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
+            score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
             assert all(weight >= 10 for weight in score_edges[user])
+            assert all(weight < 10 for weight in aggregate_score_edges[user])
 
             # Test editing note
             user_note_edit = user_client.post_note_edit(
@@ -3844,8 +3846,10 @@ class TestARRVenueV2():
             assert cmp_edges[user][0] == reg_edges[user][0] + emg_edges[user][0]
             assert area_edges[user][0] == 'Machine Translation'
 
-            score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
+            aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
+            score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
             assert all(weight >= 10 for weight in score_edges[user])
+            assert all(weight < 10 for weight in aggregate_score_edges[user])
 
             # Test deleting note
             user_note_edit = user_client.post_note_edit(
@@ -3871,8 +3875,10 @@ class TestARRVenueV2():
             assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Emergency_Load", tail=user) == 0
             assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Emergency_Area", tail=user) == 0
 
-            score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
-            assert all(weight < 10 for weight in score_edges[user])
+            aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
+            score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
+            assert user not in score_edges
+            assert all(weight < 10 for weight in aggregate_score_edges[user])
 
     def test_review_rating_forms(self, client, openreview_client, helpers, test_client):
         now = datetime.datetime.utcnow()
