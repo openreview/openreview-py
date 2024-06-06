@@ -446,7 +446,62 @@ class TestVenueConfiguration():
                 'activation_date': { 'value': cdate },
                 'due_date': { 'value': duedate },
                 'expiration_date': { 'value': expdate },
-                'readers': { 'value': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers Submitted']}
+                'readers': { 'value': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers Submitted']},
+                'content': {
+                    'value': {
+                        'title': {
+                            'order': 1,
+                            'description': 'Title',
+                            'value': { 
+                                'param': { 
+                                    'type': 'string',
+                                    'const': 'Meta Review'
+                                }
+                            }
+                        },
+                        'metareview': {
+                            'order': 2,
+                            'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons. Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'markdown': True,
+                                    'input': 'textarea'
+                                }
+                            }
+                        },
+                        'recommendation': {
+                            'order': 3,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'Accept',
+                                        'Reject'
+                                    ],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'confidence': {
+                            'order': 4,
+                            'value': {
+                                'param': {
+                                    'type': 'float',
+                                    'enum': [
+                                        { 'value': 3, 'description': '3: The area chair is absolutely certain' },
+                                        { 'value': 2.5, 'description': '2.5: The area chair is confident but not absolutely certain' },
+                                        { 'value': 2, 'description': '2: The area chair is somewhat confident' },
+                                        { 'value': 1.5, 'description': '1.5: The area chair is not sure' },
+                                        { 'value': 1.0, 'description': '1.0: The area chair\'s evaluation is an educated guess' }
+                                    ],
+                                    'input': 'radio'                
+                                }
+                            }
+                        }
+                    }
+                }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], count=1)
@@ -456,7 +511,6 @@ class TestVenueConfiguration():
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Meta_Review/Form_Fields')
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Meta_Review/Readers')
 
-        
         helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/Meta_Review-0-1', count=1)
         
         invitations = pc_client.get_invitations(invitation='ICLR.cc/2025/Conference/-/Meta_Review')
@@ -469,6 +523,5 @@ class TestVenueConfiguration():
             "ICLR.cc/2025/Conference/Submission1/Reviewers/Submitted",
             "ICLR.cc/2025/Conference/Program_Chairs"
         ]
-
-        invitations = pc_client.get_invitations(invitation='ICLR.cc/2025/Conference/-/Official_Review')
-        assert len(invitations) == 10
+        assert 'title' in invitation.edit['note']['content']
+        assert invitation.edit['note']['content']['confidence']['value']['param']['type'] == 'float'
