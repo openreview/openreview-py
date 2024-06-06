@@ -8,7 +8,7 @@ parameters:
     default: "master"
   openreview-api-v2-branch:
     type: string
-    default: "fix/setup-venue-configuration"
+    default: "feature/allow-select-objects"
 
 jobs:
   build:
