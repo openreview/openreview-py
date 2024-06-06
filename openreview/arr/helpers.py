@@ -949,8 +949,11 @@ class ARRWorkflow(object):
                         'release_ethics_reviews_to_reviewers': 'Ethics reviews should be immediately revealed to the paper\'s reviewers and ethics reviewers',
                         'additional_ethics_review_form_options': arr_ethics_review_content,
                         'remove_ethics_review_form_options': 'ethics_review',
+                        'release_submissions_to_ethics_chairs': 'Yes, release flagged submissions to the ethics chairs.',
                         "release_submissions_to_ethics_reviewers": "We confirm we want to release the submissions and reviews to the ethics reviewers",
                         'enable_comments_for_ethics_reviewers': 'Yes, enable commenting for ethics reviewers.',
+                        'compute_affinity_scores': 'No'
+
                     },
                     'forum': request_form_id,
                     'invitation': '{}/-/Request{}/Ethics_Review_Stage'.format(support_user, request_form.number),
@@ -1529,7 +1532,7 @@ def flag_submission(
         subject = f'[{short_name}] A submission has been flagged for ethics reviewing'
         message = '''Paper {} has been flagged for ethics review.
 
-        To view the submission, click here: https://openreview.net/forum?id={}'''.format(forum.number, forum.id)
+To view the submission, click here: https://openreview.net/forum?id={}'''.format(forum.number, forum.id)
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,

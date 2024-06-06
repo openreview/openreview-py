@@ -27,7 +27,8 @@ def process(client, edit, invitation):
             due_date = due_date,
             exp_date = expiration_date,
             release_to_authors = 'Paper Authors' in edit.content['readers']['value'],
-            release_to_reviewers = release_to_reviewers
+            release_to_reviewers = release_to_reviewers,
+            content = edit.content['content']['value'],
         )
         venue.create_meta_review_stage()
         venue.edit_invitation_builder.set_edit_deadlines_invitation(venue.get_invitation_id(stage_name))
