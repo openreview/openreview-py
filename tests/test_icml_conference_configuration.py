@@ -467,6 +467,25 @@ Program Chairs
         messages = openreview_client.get_messages(subject = '[ICML 2024] Invitation to serve as Senior Area Chair')
         assert len(messages) == 2
 
+        invitee_details = '''sac3@gmail.com'''
+        edit = pc_client.post_group_edit(
+                invitation='ICML.cc/2024/Conference/Senior_Area_Chairs/Invited/-/Members',
+                content={
+                    'inviteeDetails': { 'value':  invitee_details }
+                },
+                group=openreview.api.Group()
+            )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        invited_group = openreview_client.get_group('ICML.cc/2024/Conference/Senior_Area_Chairs/Invited')
+        assert len(invited_group.members) == 3
+        assert 'sac1@gmail.com' in invited_group.members
+        assert 'sac2@icml.cc' in invited_group.members
+        assert 'sac3@gmail.com' in invited_group.members
+
+        messages = openreview_client.get_messages(subject = '[ICML 2024] Invitation to serve as Senior Area Chair')
+        assert len(messages) == 3
+
 #         assert len(openreview_client.get_group('ICML.cc/2024/Conference/Senior_Area_Chairs').members) == 0
 #         group = openreview_client.get_group('ICML.cc/2024/Conference/Senior_Area_Chairs/Invited')
 #         assert len(group.members) == 2

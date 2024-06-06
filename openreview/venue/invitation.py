@@ -4000,7 +4000,12 @@ class InvitationBuilder(object):
                     }
                 },
                 'group': {
-                    'id': venue.get_committee_id_invited(committee_name)
+                    'id': venue.get_committee_id_invited(committee_name),
+                    'content': {
+                        'last_recruitment': {
+                            'value': '${4/tmdate}'
+                        }
+                    }
                 }
             })
         
