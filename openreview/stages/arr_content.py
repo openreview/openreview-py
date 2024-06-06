@@ -1512,11 +1512,13 @@ arr_official_review_content = {
 
 
 arr_metareview_content = {
-    "metareview": {
+    "metareview" : {
         "value": {
             "param": {
                 "minLength": 1,
                 "optional": False,
+                "input": "textarea",
+                "markdown": True,
                 "type": "string"
             }
         },
@@ -1528,6 +1530,8 @@ arr_metareview_content = {
             "param": {
                 "minLength": 1,
                 "optional": False,
+                "input": "textarea",
+                "markdown": True,
                 "type": "string"
             }
         },
@@ -1539,6 +1543,8 @@ arr_metareview_content = {
             "param": {
                 "minLength": 1,
                 "optional": False,
+                "input": "textarea",
+                "markdown": True,
                 "type": "string"
             }
         },
@@ -1609,6 +1615,8 @@ arr_metareview_content = {
             "param": {
                 "minLength": 1,
                 "optional": True,
+                "input": "textarea",
+                "markdown": True,
                 "type": "string"
             }
         },
@@ -1620,6 +1628,8 @@ arr_metareview_content = {
             "param": {
                 "minLength": 1,
                 "optional": False,
+                "input": "textarea",
+                "markdown": True,
                 "type": "string",
                 "default": "There are no concerns with this submission"
             }
