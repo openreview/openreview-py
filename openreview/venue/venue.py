@@ -1,5 +1,6 @@
 import csv
 import json
+import re
 from json import tool
 import datetime
 from io import StringIO
@@ -84,9 +85,18 @@ class Venue(object):
         return self.short_name
     
     def get_message_sender(self):
+
+        fromEmail = self.short_name.replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()
+        fromEmail = f'{fromEmail}-notifications@openreview.net'
+        
+        email_regex = re.compile("^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")        
+
+        if not email_regex.match(fromEmail):
+            raise openreview.OpenReviewException(f'Invalid email address: {fromEmail}')
+        
         return {
             'fromName': self.short_name,
-            'fromEmail': f'{self.short_name.replace(" ", "").lower()}-notifications@openreview.net'
+            'fromEmail': fromEmail
         }
     
     def get_edges_archive_date(self):
@@ -572,7 +582,7 @@ class Venue(object):
         tools.replace_members_with_ids(self.client, ethics_chairs_group)
         group = tools.get_group(self.client, id=self.get_ethics_reviewers_id())
         if group and len(group.members) > 0:
-            self.setup_committee_matching(group.id, compute_affinity_scores=False, compute_conflicts=True)
+            self.setup_committee_matching(group.id, compute_affinity_scores=self.ethics_review_stage.compute_affinity_scores, compute_conflicts=True)
             self.invitation_builder.set_assignment_invitation(group.id)
 
         flagged_submission_numbers = self.ethics_review_stage.submission_numbers
