@@ -1,5 +1,6 @@
 import csv
 import json
+import re
 from json import tool
 import datetime
 from io import StringIO
@@ -84,9 +85,18 @@ class Venue(object):
         return self.short_name
     
     def get_message_sender(self):
+
+        fromEmail = self.short_name.replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()
+        fromEmail = f'{fromEmail}-notifications@openreview.net'
+        
+        email_regex = re.compile("^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")        
+
+        if not email_regex.match(fromEmail):
+            raise openreview.OpenReviewException(f'Invalid email address: {fromEmail}')
+        
         return {
             'fromName': self.short_name,
-            'fromEmail': f'{self.short_name.replace(" ", "").lower()}-notifications@openreview.net'
+            'fromEmail': fromEmail
         }
     
     def get_edges_archive_date(self):
