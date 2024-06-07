@@ -1138,6 +1138,7 @@ class Matching(object):
             'hash_seed': { 'value': hash_seed, 'readers': [ venue.venue_id ]},
             'email_template': { 'value': email_template if email_template else ''},
             'is_reviewer': { 'value': True if (self.match_group.id.split('/')[-1] in venue.reviewer_roles) else False },
+            'is_ethics_reviewer': { 'value': True if self.match_group.id == venue.get_ethics_reviewers_id() else False }
         }
 
         # set invite assignment invitation
