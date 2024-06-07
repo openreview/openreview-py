@@ -163,7 +163,7 @@ def process(client, edit, invitation):
             signatures=edge.signatures,
             head=edge.head,
             tail=edge.tail,
-            weight=edge.weight + 10
+            weight=edge.weight
         ))
     
     client.delete_edges(
