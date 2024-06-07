@@ -400,10 +400,10 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         edges=sac_client.get_edges_count(invitation='NeurIPS.cc/2023/Conference/Senior_Area_Chairs/-/Affinity_Score', tail='~SeniorArea_GoogleChair1')
         assert edges == 3
 
-        tasks_url = 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference/Senior_Area_Chairs#seniorareachair-tasks'
+        tasks_url = 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference/Senior_Area_Chairs#Senior_Area_Chairs-tasks'
         request_page(selenium, tasks_url, sac_client.token, by=By.LINK_TEXT, wait_for_element='Senior Area Chair Bid')
 
-        task_panel = selenium.find_element(By.LINK_TEXT, "Senior Area Chair Tasks")
+        task_panel = selenium.find_element(By.LINK_TEXT, "Senior Area Chairs Tasks")
         task_panel.click()
 
         assert selenium.find_element(By.LINK_TEXT, "Senior Area Chair Bid")
