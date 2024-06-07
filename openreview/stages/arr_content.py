@@ -1889,7 +1889,10 @@ arr_sac_max_load_task = deepcopy(arr_max_load_task)
 del arr_sac_max_load_task["maximum_load_this_cycle_for_resubmissions"]
 arr_sac_max_load_task["maximum_load_this_cycle"] = {
     "value": {
-        "param": {"regex": "[0-9]{0,3}", "optional": False, "type": "string"}
+        "param": {
+            "optional": False,
+            "type": "integer"
+        }
     },
     "description": "Enter your maximum reviewing load for papers in this cycle. This refers only to the specific role mentioned at the top of this page. A load of '0' indicates you are unable to review new submissions.",
     "order": 1,
