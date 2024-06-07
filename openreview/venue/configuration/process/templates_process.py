@@ -28,7 +28,7 @@ def process(client, edit, invitation):
             exp_date = expiration_date,
             release_to_authors = 'Paper Authors' in edit.content['readers']['value'],
             release_to_reviewers = release_to_reviewers,
-            content = edit.content['content']['value'],
+            content = edit.content['content']['value']
         )
         venue.create_meta_review_stage()
         venue.edit_invitation_builder.set_edit_deadlines_invitation(venue.get_invitation_id(stage_name))
@@ -37,12 +37,58 @@ def process(client, edit, invitation):
 
     elif invitation.id.endswith('Official_Comment_Template'):
 
+        participants = edit.content['participants']['value']
+        additional_readers = edit.content.get('additional_readers', [])
+        anonymous = 'Everyone (anonymously)' in participants
+        allow_public_comments = anonymous or 'Everyone (non-anonymously)' in participants
+
+        invitees = []
+        readers = []
+        if 'Assigned Reviewers' in participants:
+            invitees.append(openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED)
+            readers.append(openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED)
+        elif 'Assigned Reviewers' in additional_readers:
+            readers.append(openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED)
+
+        if 'Assigned Submitted Reviewers' in participants:
+            invitees.append(openreview.stages.CommentStage.Readers.REVIEWERS_SUBMITTED)
+            readers.append(openreview.stages.CommentStage.Readers.REVIEWERS_SUBMITTED)
+        elif 'Assigned Submitted Reviewers' in additional_readers:
+            readers.append(openreview.stages.CommentStage.Readers.REVIEWERS_SUBMITTED)
+
+        if 'Assigned Area Chairs' in participants:
+            invitees.append(openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED)
+            readers.append(openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED)
+        elif 'Assigned Area Chairs' in additional_readers:
+            readers.append(openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED)
+
+        if 'Assigned Senior Area Chairs' in participants:
+            invitees.append(openreview.stages.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED)
+            readers.append(openreview.stages.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED)
+        elif 'Assigned Senior Area Chairs' in additional_readers:
+            readers.append(openreview.stages.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED)
+
+        if 'Paper Authors' in participants:
+            invitees.append(openreview.stages.CommentStage.Readers.AUTHORS)
+            readers.append(openreview.stages.CommentStage.Readers.AUTHORS)
+        elif 'Paper Authors' in additional_readers:
+            readers.append(openreview.stages.CommentStage.Readers.AUTHORS)
+
+        if 'Everyone' in additional_readers:
+            readers.append(openreview.stages.CommentStage.Readers.EVERYONE)
+
         print('Create Official Comment Stage')
         venue.comment_stage = openreview.stages.CommentStage(
             official_comment_name=stage_name,
             start_date=activation_date,
             end_date=expiration_date,
-            reader_selection=True
+            allow_public_comments=allow_public_comments,
+            reader_selection=True,
+            email_pcs=True if 'Yes' in edit.content['email_program_chairs_about_official_comments']['value'] else False,
+            email_sacs=True if 'Yes' in edit.content['email_senior_area_chairs_about_official_comments']['value'] else False,
+            check_mandatory_readers=True,
+            readers=readers,
+            invitees=invitees
         )
 
         invitation_id = venue.get_invitation_id(stage_name)
@@ -50,3 +96,7 @@ def process(client, edit, invitation):
         venue.edit_invitation_builder.set_edit_deadlines_invitation(invitation_id)
         venue.edit_invitation_builder.set_edit_content_invitation(invitation_id)
         venue.edit_invitation_builder.set_edit_reply_readers_selection_invitation(invitation_id)
+        if allow_public_comments:
+            invitation_id = venue.get_invitation_id(venue.comment_stage.public_name)
+            venue.edit_invitation_builder.set_edit_deadlines_invitation(invitation_id)
+            venue.edit_invitation_builder.set_edit_content_invitation(invitation_id)

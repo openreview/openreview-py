@@ -363,21 +363,44 @@ class TestVenueConfiguration():
                 'venue_id': { 'value': 'ICLR.cc/2025/Conference' },
                 'stage_name': { 'value': 'Confidential_Comment' },
                 'activation_date': { 'value': cdate },
-                'expiration_date': { 'value': expdate }
+                'expiration_date': { 'value': expdate },
+                'participants': { 'value': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs'] },
+                'email_program_chairs_about_official_comments': { 'value': 'No, do not email PCs.' },
+                'email_senior_area_chairs_about_official_comments' : { 'value': 'Yes, email SACs for every new comment.' },
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], count=1)
         helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/Confidential_Comment-0-1', count=1)
 
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Confidential_Comment')
-        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Confidential_Comment')
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Confidential_Comment/Deadlines')
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Confidential_Comment/Form_Fields')
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Confidential_Comment/Readers')
 
-        assert pc_client.get_invitation('ICLR.cc/2025/Conference/Submission1/-/Confidential_Comment')
+        invitation = pc_client.get_invitation('ICLR.cc/2025/Conference/Submission1/-/Confidential_Comment')
+        assert invitation
 
-        ## edit Confidential_Comment readers
+        assert invitation.invitees == ['ICLR.cc/2025/Conference', 'openreview.net/Support', 'ICLR.cc/2025/Conference/Submission1/Senior_Area_Chairs', 'ICLR.cc/2025/Conference/Submission1/Area_Chairs']
+
+        assert invitation.edit['note']['readers']['param']['items'] == [
+          {
+            "value": "ICLR.cc/2025/Conference/Program_Chairs",
+            "optional": False
+            # "description": "Program Chairs."
+          },
+          {
+            "value": "ICLR.cc/2025/Conference/Submission1/Senior_Area_Chairs",
+            "optional": False
+            # "description": "Assigned Senior Area Chairs"
+          },
+          {
+            "value": "ICLR.cc/2025/Conference/Submission1/Area_Chairs",
+            "optional": True
+            # "description": "Assigned Area Chairs"
+          }
+        ]
+
+        ## edit Confidential_Comment readers and add reviewers submitted, should not change invitees
         pc_client.post_invitation_edit(
             invitations='ICLR.cc/2025/Conference/-/Confidential_Comment/Readers',
             content = {
@@ -394,6 +417,8 @@ class TestVenueConfiguration():
         helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/Confidential_Comment-0-1', count=2)
 
         invitation = openreview_client.get_invitation('ICLR.cc/2025/Conference/Submission1/-/Confidential_Comment')
+
+        assert invitation.invitees == ['ICLR.cc/2025/Conference', 'openreview.net/Support', 'ICLR.cc/2025/Conference/Submission1/Senior_Area_Chairs', 'ICLR.cc/2025/Conference/Submission1/Area_Chairs']
         assert invitation.edit['note']['readers']['param']['items'] == [
           {
             "value": "ICLR.cc/2025/Conference/Program_Chairs",
@@ -424,7 +449,7 @@ class TestVenueConfiguration():
                 replyto=submissions[0].id,
                 readers=['ICLR.cc/2025/Conference/Program_Chairs', 'ICLR.cc/2025/Conference/Submission1/Senior_Area_Chairs'],
                 content={
-                    'comment': { 'value': 'this is a comment' }
+                    'comment': { 'value': 'this is a comment between PCs and SACs' }
                 }
             ))
 

@@ -688,7 +688,7 @@ class WorkflowInvitations():
                                     {'value': 'Assigned Reviewers', 'optional': True, 'description': 'Assigned Reviewers'},
                                     {'value': 'Assigned Reviewers Submitted', 'optional': True, 'description': 'Assigned reviewers who have submitted a review'},
                                     {'value': 'Paper Authors', 'optional': True, 'description': 'Paper Authors'},
-                                    {'value': 'Everyone', 'optional': True, 'description': 'Public'},
+                                    {'value': 'Everyone', 'optional': True, 'description': 'Public'}
                                 ]
                             }
                         }
@@ -761,6 +761,7 @@ class WorkflowInvitations():
                     },
                     'activation_date': {
                         'order': 3,
+                        'description': 'When should the comment stage start?',
                         'value': {
                             'param': {
                                 'type': 'date',
@@ -771,13 +772,85 @@ class WorkflowInvitations():
                         }
                     },
                     'expiration_date': {
-                        'order': 5,
+                        'order': 4,
+                        'description': 'When should the comment stage end?',
                         'value': {
                             'param': {
                                 'type': 'date',
                                 'range': [ 0, 9999999999999 ],
                                 'optional': True,
                                 'deletable': True
+                            }
+                        }
+                    },
+                    'participants': {
+                        'order': 5,
+                        'description': 'Who should be able to participate in the discussion?',
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'input': 'select',
+                                'items': [
+                                    {'value': 'Program Chairs', 'optional': False, 'description': 'Program Chairs'},
+                                    {'value': 'Assigned Senior Area Chairs', 'optional': False, 'description': 'Assigned Senior Area Chairs'},
+                                    {'value': 'Assigned Area Chairs', 'optional': False, 'description': 'Assigned Area Chairs'},
+                                    {'value': 'Assigned Reviewers', 'optional': True, 'description': 'Assigned Reviewers'},
+                                    {'value': 'Assigned Reviewers Submitted', 'optional': True, 'description': 'Assigned reviewers who have submitted a review'},
+                                    {'value': 'Paper Authors', 'optional': True, 'description': 'Paper Authors'},
+                                    {'value': 'Everyone (anonymously)', 'optional': True, 'description': 'Public (anonymously)'},
+                                    {'value': 'Everyone (non-anonymously)', 'optional': True, 'description': 'Public (non-anonymously)'}
+                                ],
+                                'default': ['Program Chairs']
+                            }
+                        }
+                    },
+                    'additional_readers': {
+                        'order': 6,
+                        'description': 'Who should be allowed to view comments (but not actively post comments)?',
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'input': 'select',
+                                'items': [
+                                    {'value': 'Program Chairs', 'optional': False, 'description': 'Program Chairs'},
+                                    {'value': 'Assigned Senior Area Chairs', 'optional': False, 'description': 'Assigned Senior Area Chairs'},
+                                    {'value': 'Assigned Area Chairs', 'optional': False, 'description': 'Assigned Area Chairs'},
+                                    {'value': 'Assigned Reviewers', 'optional': True, 'description': 'Assigned Reviewers'},
+                                    {'value': 'Assigned Reviewers Submitted', 'optional': True, 'description': 'Assigned reviewers who have submitted a review'},
+                                    {'value': 'Paper Authors', 'optional': True, 'description': 'Paper Authors'},
+                                    {'value': 'Everyone', 'optional': True, 'description': 'Public'}
+                                ],
+                                'optional': True
+                            }
+                        }
+                    },
+                    'email_program_chairs_about_official_comments': {
+                        'order': 7,
+                        'description': 'Should the PCs receive an email for every new comment?',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': [
+                                    'Yes, email PCs for every new comment.',
+                                    'No, do not email PCs.'
+                                ],
+                                'input': 'radio',
+                                'default': 'No, do not email PCs.'
+                            }
+                        }
+                    },
+                    'email_senior_area_chairs_about_official_comments': {
+                        'order': 8,
+                        'description': 'Should the SACs (if applicable) receive an email for every new comment?',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': [
+                                    'Yes, email SACs for every new comment.',
+                                    'No, do not email SACs.'
+                                ],
+                                'input': 'radio',
+                                'default': 'No, do not email SACs.'
                             }
                         }
                     }
