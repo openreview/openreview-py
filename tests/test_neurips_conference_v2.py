@@ -401,12 +401,12 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert edges == 3
 
         tasks_url = 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference/Senior_Area_Chairs#seniorareachair-tasks'
-        request_page(selenium, tasks_url, sac_client.token, by=By.LINK_TEXT, wait_for_element='Senior Area Chair Bid')
+        request_page(selenium, tasks_url, sac_client.token, by=By.LINK_TEXT, wait_for_element='Senior Area Chairs Bid')
 
-        task_panel = selenium.find_element(By.LINK_TEXT, "Senior Area Chair Tasks")
+        task_panel = selenium.find_element(By.LINK_TEXT, "Senior Area Chairs Tasks")
         task_panel.click()
 
-        assert selenium.find_element(By.LINK_TEXT, "Senior Area Chair Bid")
+        assert selenium.find_element(By.LINK_TEXT, "Senior Area Chairs Bid")
 
         bid_url = 'http://localhost:3030/invitation?id=NeurIPS.cc/2023/Conference/Senior_Area_Chairs/-/Bid'
         request_page(selenium, bid_url, sac_client.token, wait_for_element='notes')
