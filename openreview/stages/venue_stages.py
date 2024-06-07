@@ -301,11 +301,11 @@ class SubmissionStage(object):
                     'value': {
                         'param': {
                             'type': 'string',
-                            'regex': '(http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)',
-                            'mismatchError': 'must be a valid link to an OpenrReview submission: https://openreview.net/forum?id=...'
+                            'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                            'mismatchError': 'must be a valid link to an OpenReview submission: https://openreview.net/forum?id=...'
                         }
                     },
-                    'description': 'Please provide the link to your ARR submission. The link should have the following format: https://openreview.net/forum?id=<PAPER_ID>" where <PAPER_ID> is the paper ID of your ARR submission.',
+                    'description': 'Please provide the link to your ARR submission. The link should have the following format: https://openreview.net/forum?id=<PAPER_ID> where <PAPER_ID> is the paper ID of your ARR submission. Make sure to only add the paper id and not other parameters after &.',
                     'order': 8
                 }
 
@@ -684,7 +684,9 @@ class EthicsReviewStage(object):
         additional_fields = {},
         remove_fields = [],
         submission_numbers = [],
-        enable_comments = False
+        enable_comments = False,
+        release_to_chairs = False,
+        compute_affinity_scores = None
     ):
 
         self.start_date = start_date
@@ -700,7 +702,9 @@ class EthicsReviewStage(object):
         self.enable_comments = enable_comments
         self.process_path = 'process/ethics_review_process.py'
         self.flag_process_path = 'process/ethics_flag_process.py'
-        self.preprocess_path = None        
+        self.preprocess_path = None
+        self.release_to_chairs = release_to_chairs
+        self.compute_affinity_scores = compute_affinity_scores     
 
     def get_readers(self, conference, number, ethics_review_signature=None):
 

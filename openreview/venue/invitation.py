@@ -1426,7 +1426,7 @@ class InvitationBuilder(object):
                 }
             invitation.edit['invitation']['edit']['note']['readers'] = comment_readers
 
-            invitation.edit['invitation']['invitees'].append(self.venue.get_ethics_reviewers_id('${3/content/noteNumber/value}'))
+            invitation.edit['invitation']['invitees'].extend([self.venue.get_ethics_reviewers_id('${3/content/noteNumber/value}'), self.venue.get_ethics_chairs_id()])
             invitation.edit['invitation']['edit']['signatures']['param']['items'].append({ 'prefix': self.venue.get_ethics_reviewers_id('${7/content/noteNumber/value}', anon=True), 'optional': True })
             invitation.edit['invitation']['edit']['signatures']['param']['items'].append({ 'value': self.venue.get_ethics_chairs_id(), 'optional': True })
 
@@ -3266,26 +3266,8 @@ class InvitationBuilder(object):
         process_content = self.get_process_content(process_file)
         preprocess_content = self.get_process_content('process/paper_recruitment_pre_process.js')
 
-        edge_readers = []
-        edge_writers = []
-        if committee_id.endswith(venue.area_chairs_name):
-            if venue.use_senior_area_chairs:
-                edge_readers.append(venue.get_senior_area_chairs_id(number='{number}'))
-                edge_writers.append(venue.get_senior_area_chairs_id(number='{number}'))
-
-        if committee_id.endswith(venue.reviewers_name):
-            if venue.use_senior_area_chairs:
-                edge_readers.append(venue.get_senior_area_chairs_id(number='{number}'))
-                edge_writers.append(venue.get_senior_area_chairs_id(number='{number}'))
-
-            if venue.use_area_chairs:
-                edge_readers.append(venue.get_area_chairs_id(number='{number}'))
-                edge_writers.append(venue.get_area_chairs_id(number='{number}'))
-
         invitation_content = {
             'committee_name': { 'value':  venue.get_committee_name(committee_id, pretty=True) },
-            'edge_readers': { 'value': edge_readers },
-            'edge_writers': { 'value': edge_writers },
             'hash_seed': { 'value': hash_seed, 'readers': [ venue.venue_id ]},
             'committee_id': { 'value': committee_id },
             'committee_invited_id': { 'value': venue.get_committee_id(name=invited_committee_name + '/Invited') if invited_committee_name else ''},
@@ -3742,15 +3724,6 @@ class InvitationBuilder(object):
 
         if ethics_review_stage.flag_process_path:
             ethics_stage_invitation.process = self.get_process_content(ethics_review_stage.flag_process_path)
-
-        if 'everyone' not in self.venue.submission_stage.get_readers(self.venue, '${{2/id}/number}'):
-            ethics_stage_invitation.edit['note']['readers'] = {
-                'param': {
-                    'const': {
-                        'append': [self.venue.get_ethics_reviewers_id('${{3/id}/number}')]
-                    }
-                }
-            }
 
         self.save_invitation(ethics_stage_invitation, replacement=False)
         return ethics_stage_invitation

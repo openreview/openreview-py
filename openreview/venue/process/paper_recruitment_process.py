@@ -8,8 +8,6 @@ def process(client, edit, invitation):
     short_phrase = domain.content['subtitle']['value']
     submission_name = domain.content['submission_name']['value']
     committee_name = invitation.content['committee_name']['value']
-    edge_readers = invitation.content['edge_readers']['value']
-    edge_writers = invitation.content['edge_writers']['value']
     hash_seed = invitation.content['hash_seed']['value']
     committee_id = invitation.content['committee_id']['value']
     invite_assignment_invitation_id = invitation.content['invite_assignment_invitation_id']['value']
@@ -150,19 +148,17 @@ OpenReview Team'''
 
         if not assignment_edges:
             print('post assignment edge')
-            readers=[r.replace('{number}', str(submission.number)) for r in edge_readers]
-            writers=[r.replace('{number}', str(submission.number)) for r in edge_writers]
-            client.post_edge(openreview.Edge(
+            client.post_edge(openreview.api.Edge(
                 invitation=assignment_invitation_id,
                 head=edge.head,
                 tail=edge.tail,
                 label=assignment_title,
                 weight = 1,
-                readers=[venue_id] + readers + [edge.tail],
+                readers=None,
                 nonreaders=[
                     f'{venue_id}/{submission_name}{submission.number}/Authors'
                 ],
-                writers=[venue_id] + writers,
+                writers=None,
                 signatures=[venue_id]
             ))
 
