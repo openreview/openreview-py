@@ -497,7 +497,7 @@ class EditInvitationBuilder(object):
             {'value': venue.get_reviewers_id('${5/content/noteNumber/value}'), 'optional': True, 'description': 'Assigned Reviewers'},
             {'value': venue.get_reviewers_id('${5/content/noteNumber/value}', submitted=True), 'optional': True, 'description': 'Assigned Reviewers who already submitted their review'},
             {'value': '${3/signatures}', 'optional': True, 'description': 'Reviewer who submitted the review'},
-            {'value': venue.get_authors_id(), 'optional': True, 'description': 'Paper authors'}
+            {'value': venue.get_authors_id('${5/content/noteNumber/value}'), 'optional': True, 'description': 'Paper authors'}
         ])
 
         invitation = Invitation(
@@ -601,6 +601,67 @@ class EditInvitationBuilder(object):
                                     }
                                 }
                             }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
+
+    def set_edit_invitees_invitation(self, invitation_id):
+
+        venue_id = self.venue_id
+        venue = self.venue
+        participants_invitation_id = invitation_id + '/Participants'
+
+        participants = [
+            {'value': venue.get_program_chairs_id(), 'optional': False, 'description': 'Program Chairs.'}
+        ]
+        if venue.use_senior_area_chairs:
+            participants.append(
+                {'value': venue.get_senior_area_chairs_id('${3/content/noteNumber/value}'), 'optional': True, 'description': 'Assigned Senior Area Chairs'}
+            )
+        if venue.use_area_chairs:
+            participants.append(
+                {'value': venue.get_area_chairs_id('${3/content/noteNumber/value}'), 'optional': True, 'description': 'Assigned Area Chairs'}
+            )
+        participants.extend([
+            {'value': venue.get_reviewers_id('${3/content/noteNumber/value}'), 'optional': True, 'description': 'Assigned Reviewers'},
+            {'value': venue.get_reviewers_id('${3/content/noteNumber/value}', submitted=True), 'optional': True, 'description': 'Assigned Reviewers who already submitted their review'},
+            {'value': venue.get_authors_id('${3/content/noteNumber/value}'), 'optional': True, 'description': 'Paper authors'}
+        ])
+
+        invitation = Invitation(
+            id = participants_invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'participants': {
+                        'order': 1,
+                        'description': 'Who should be able to participate in this stage?',
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'input': 'select',
+                                'items':  participants
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': invitation_id,
+                    'signatures': [venue_id],
+                    'edit': {
+                        'invitation': {
+                            'invitees': ['${5/content/participants/value}']
                         }
                     }
                 }

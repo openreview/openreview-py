@@ -96,6 +96,7 @@ def process(client, edit, invitation):
         venue.edit_invitation_builder.set_edit_deadlines_invitation(invitation_id)
         venue.edit_invitation_builder.set_edit_content_invitation(invitation_id)
         venue.edit_invitation_builder.set_edit_reply_readers_selection_invitation(invitation_id)
+        venue.edit_invitation_builder.set_edit_invitees_invitation(invitation_id)
         if allow_public_comments:
             invitation_id = venue.get_invitation_id(venue.comment_stage.public_name)
             venue.edit_invitation_builder.set_edit_deadlines_invitation(invitation_id)

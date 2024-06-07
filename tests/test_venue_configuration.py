@@ -376,6 +376,7 @@ class TestVenueConfiguration():
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Confidential_Comment/Deadlines')
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Confidential_Comment/Form_Fields')
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Confidential_Comment/Readers')
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Confidential_Comment/Participants')
 
         invitation = pc_client.get_invitation('ICLR.cc/2025/Conference/Submission1/-/Confidential_Comment')
         assert invitation
@@ -452,6 +453,27 @@ class TestVenueConfiguration():
                     'comment': { 'value': 'this is a comment between PCs and SACs' }
                 }
             ))
+
+        ## edit Confidential_Comment invitees and add authors
+        ## TO DO: when adding a participant, also add them to readers??
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2025/Conference/-/Confidential_Comment/Participants',
+            content = {
+                'participants': {
+                    'value':  [
+                        'ICLR.cc/2025/Conference/Program_Chairs',
+                        'ICLR.cc/2025/Conference/Submission${3/content/noteNumber/value}/Senior_Area_Chairs',
+                        'ICLR.cc/2025/Conference/Submission${3/content/noteNumber/value}/Area_Chairs',
+                        'ICLR.cc/2025/Conference/Submission${3/content/noteNumber/value}/Authors'
+                    ]
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/Confidential_Comment-0-1', count=3)
+
+        invitation = openreview_client.get_invitation('ICLR.cc/2025/Conference/Submission1/-/Confidential_Comment')
+
+        assert invitation.invitees == ['ICLR.cc/2025/Conference/Program_Chairs', 'ICLR.cc/2025/Conference/Submission1/Senior_Area_Chairs', 'ICLR.cc/2025/Conference/Submission1/Area_Chairs', 'ICLR.cc/2025/Conference/Submission1/Authors']
 
     def test_metareview_stage(self, openreview_client, test_client, helpers):
 
