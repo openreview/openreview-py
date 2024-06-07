@@ -23,8 +23,10 @@ def process(client, edit, invitation):
 
     review = client.get_note(edit.note.id)
 
-    ### TODO: Fix this, we should notify the use when the review is updated
-    if review.tcdate != review.tmdate:
+    ## run process function for the first edit only
+    review_edits = client.get_note_edits(note_id=review.id, invitation=invitation.id, sort='tcdate:asc')
+    if edit.id != review_edits[0].id:
+        print('not first edit, exiting...')
         return
     
     def create_group(group_id, members=[]):
@@ -49,6 +51,8 @@ def process(client, edit, invitation):
                 }
             )
         )
+
+    create_group(paper_reviewers_submitted_id, [review.signatures[0]])
 
     capital_review_name = review_name.replace('_', ' ')
     review_name = capital_review_name.lower()
@@ -107,7 +111,6 @@ Paper title: {submission.content['title']['value']}
 '''
         )
 
-    create_group(paper_reviewers_submitted_id, [review.signatures[0]])
     if 'everyone' in review.readers or paper_reviewers_id in review.readers:
         client.post_message(
             invitation=meta_invitation_id,
