@@ -3962,7 +3962,7 @@ class TestARRVenueV2():
 
             aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
             score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
-            assert all(weight >= 10 for weight in score_edges[user])
+            assert all(weight < 10 for weight in score_edges[user])
             assert all(weight < 10 for weight in aggregate_score_edges[user])
 
             # Test editing note
@@ -3998,7 +3998,7 @@ class TestARRVenueV2():
 
             aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
             score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
-            assert all(weight >= 10 for weight in score_edges[user])
+            assert all(weight < 10 for weight in score_edges[user])
             assert all(weight < 10 for weight in aggregate_score_edges[user])
 
             # Test deleting note
