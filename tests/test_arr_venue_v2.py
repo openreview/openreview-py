@@ -2474,7 +2474,39 @@ class TestARRVenueV2():
                 }
             )
         )
-        helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
+        reviewer_client_1.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/June/Submission2/-/Official_Review',
+            signatures=[anon_group_id_1],
+            note=openreview.api.Note(
+                id = review_edit['note']['id'],
+                content={
+                    "confidence": { "value": 5 },
+                    "paper_summary": { "value": 'some summaryyyyyyyyy version 2' },
+                    "summary_of_strengths": { "value": 'some strengths' },
+                    "summary_of_weaknesses": { "value": 'some weaknesses' },
+                    "comments_suggestions_and_typos": { "value": 'some comments' },
+                    "soundness": { "value": 1 },
+                    "overall_assessment": { "value": 1 },
+                    "best_paper": { "value": "No" },
+                    "ethical_concerns": { "value": "N/A" },
+                    "reproducibility": { "value": 1 },
+                    "datasets": { "value": 1 },
+                    "software": { "value": 1 },
+                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
+                    "Knowledge_of_paper": {"value": "After the review process started"},
+                    "Knowledge_of_paper_source": {"value": ["A research talk"]},
+                    "impact_of_knowledge_of_paper": {"value": "A lot"},
+                    "reviewer_certification": {"value": "A Name"}
+                }
+            )
+        )        
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/June/Submission2/-/Official_Review', count=2)
+
+        assert anon_group_id_1 in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers/Submitted').members
+
+        messages = openreview_client.get_messages(to='reviewer1@aclrollingreview.com', subject='[ARR - June 2023] Your official review has been received on your assigned Paper number: 2, Paper title: "Paper title "')
+        assert len(messages) == 1
+        
 
         review_edit = reviewer_client_2.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/June/Submission3/-/Official_Review',
@@ -2502,6 +2534,8 @@ class TestARRVenueV2():
             )
         )
         helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
+
+        assert anon_group_id_2 in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Reviewers/Submitted').members
 
         review_edit = reviewer_client_5.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/June/Submission2/-/Official_Review',
