@@ -2357,7 +2357,7 @@ The OpenReview Team.
 
         guest.confirm_alternate_email(profile_id='~Lionel_Messi1', alternate_email='messi@mail.com', activation_token='confirm_alternate@mail.com')
 
-        messages = openreview_client.get_messages(subject='OpenReview Account Linking', to='messi@mail.com')
+        messages = openreview_client.get_messages(subject='OpenReview Email Confirmation', to='messi@mail.com')
         assert len(messages) == 1
         print(messages[0])
 
