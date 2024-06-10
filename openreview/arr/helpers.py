@@ -1054,6 +1054,25 @@ class ARRWorkflow(object):
                     invitation=stat_inv
                 )
 
+            if not openreview.tools.get_invitation(self.client_v2, f"{role}/-/Emergency_Score"): # Hold "Requested" or "Reassigned", head=submission ID
+                m._create_edge_invitation(f"{role}/-/Emergency_Score")
+                emg_score_inv = self.client_v2.get_invitation(f"{role}/-/Emergency_Score")
+                emg_score_inv.edit['weight']['param']['optional'] = True
+                emg_score_inv.edit['label'] = {
+                    "param": {
+                        "regex": ".*",
+                        "optional": True,
+                        "deletable": True
+                    }
+                }
+                self.client_v2.post_invitation_edit(
+                    invitations=venue.get_meta_invitation_id(),
+                    readers=[venue.id],
+                    writers=[venue.id],
+                    signatures=[venue.id],
+                    invitation=emg_score_inv
+                )
+
             for name in edge_invitation_names:
                 if not openreview.tools.get_invitation(self.client_v2, f"{role}/-/{name}"):
                     cmp_inv = self.client_v2.get_invitation(venue.get_custom_max_papers_id(m.match_group.id))
