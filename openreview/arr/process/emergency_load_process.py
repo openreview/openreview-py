@@ -113,7 +113,7 @@ def process(client, edit, invitation):
         original_load = 0
     else:
         original_load = cmp_edges[0].weight
-    emergency_load = edit.note.content['emergency_load']['value']
+    emergency_load = edit.note.content.get('emergency_load', {}).get('value', 0)
 
     edge_invitation_ids = [
         f"{role}/-/Custom_Max_Papers",
@@ -144,7 +144,7 @@ def process(client, edit, invitation):
         area_value = {
             'head': role,
             'tail': user,
-            'label': edit.note.content['research_area']['value']
+            'label': edit.note.content.get('research_area', {}).get('value', 'N/A')
         }
     edge_values.append(area_value)
 

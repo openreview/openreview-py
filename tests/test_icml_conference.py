@@ -643,9 +643,9 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         request_page(selenium, 'http://localhost:3030/group?id=ICML.cc/2023/Conference/Senior_Area_Chairs', sac_client.token, by=By.CLASS_NAME, wait_for_element='tabs-container')
         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
-        assert tabs.find_element(By.LINK_TEXT, "Paper Status")
-        assert tabs.find_element(By.LINK_TEXT, "Area Chair Status")
-        assert tabs.find_element(By.LINK_TEXT, "Senior Area Chair Tasks")
+        assert tabs.find_element(By.LINK_TEXT, "Submission Status")
+        assert tabs.find_element(By.LINK_TEXT, "Area Chairs Status")
+        assert tabs.find_element(By.LINK_TEXT, "Senior Area Chairs Tasks")
 
         registration_forum = sac_client.get_notes(invitation='ICML.cc/2023/Conference/Senior_Area_Chairs/-/Registration_Form')
         assert len(registration_forum) == 1
@@ -3524,7 +3524,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         invitations = openreview_client.get_all_invitations(invitation='ICML.cc/2023/Conference/-/Official_Comment')
         assert len(invitations) == 100
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Comment')
-        assert invitation.invitees == ['ICML.cc/2023/Conference', 'openreview.net/Support', 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers']
+        assert invitation.invitees == ['ICML.cc/2023/Conference', 'openreview.net/Support', 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers', 'ICML.cc/2023/Conference/Ethics_Chairs']
 
         # post ethics review
         openreview_client.add_members_to_group('ICML.cc/2023/Conference/Submission5/Ethics_Reviewers', '~Reviewer_ICMLOne1')

@@ -119,8 +119,8 @@ class TestACLCommitment():
                         'value': {
                         'param': {
                             'type': 'string',
-                            'regex': '(http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)',
-                            'mismatchError': 'must be a valid link to an OpenrReview submission: https://openreview.net/forum?id=...'
+                            'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                            'mismatchError': 'must be a valid link to an OpenReview submission: https://openreview.net/forum?id=...'
                         }
                     },
                         'description': 'This is a different description.',
@@ -145,7 +145,7 @@ class TestACLCommitment():
                         "order": 8
                     }
                 },
-                'remove_submission_options': ['TL;DR']
+                'remove_submission_options': ['TL;DR', 'pdf']
             }
         ))
         helpers.await_queue()
@@ -166,4 +166,50 @@ class TestACLCommitment():
         venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Conference/Reviewers/-/Submission_Group')        
         venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Conference/-/Post_Submission')
         venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Conference/-/Desk_Rejection')                
-        venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Conference/-/Withdrawal')                            
+        venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Conference/-/Withdrawal')     
+
+    def test_submit_papers(self, test_client, client, openreview_client, helpers):
+
+        test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+
+        with pytest.raises(openreview.OpenReviewException, match=r'paper_link value must be a valid link to an OpenReview submission'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/2024/Conference/-/Submission',
+                    signatures=['~SomeFirstName_User1'],
+                    note=openreview.api.Note(
+                    content = {
+                        'title': { 'value': 'Commitment Paper' },
+                        'abstract': { 'value': 'This is a test abstract' },
+                        'authorids': { 'value': ['test@mail.com'] },
+                        'authors': { 'value': ['SomeFirstName User'] },
+                        'keywords': { 'value': ['machine learning'] },
+                        'paper_link': { 'value': 'https://openreview.net/pdf?id=1234' }
+                    }
+                ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid paper link. Please make sure not to provide anything after the character "&" in the paper link.'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/2024/Conference/-/Submission',
+                    signatures=['~SomeFirstName_User1'],
+                    note=openreview.api.Note(
+                    content = {
+                        'title': { 'value': 'Commitment Paper' },
+                        'abstract': { 'value': 'This is a test abstract' },
+                        'authorids': { 'value': ['test@mail.com'] },
+                        'authors': { 'value': ['SomeFirstName User'] },
+                        'keywords': { 'value': ['machine learning'] },
+                        'paper_link': { 'value': 'https://openreview.net/forum?id=1234&replyto=4567' }
+                    }
+                ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid paper link. Please make sure not to provide anything after the character "&" in the paper link.'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/2024/Conference/-/Submission',
+                    signatures=['~SomeFirstName_User1'],
+                    note=openreview.api.Note(
+                    content = {
+                        'title': { 'value': 'Commitment Paper' },
+                        'abstract': { 'value': 'This is a test abstract' },
+                        'authorids': { 'value': ['test@mail.com'] },
+                        'authors': { 'value': ['SomeFirstName User'] },
+                        'keywords': { 'value': ['machine learning'] },
+                        'paper_link': { 'value': 'https://openreview.net/forum?id=1234&referrer=[Author%20Console](/group?id=aclweb.org/ACL/2024/Conference/Authors)' }
+                    }
+                ))

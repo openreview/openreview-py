@@ -201,12 +201,13 @@ arr_submission_content = {
     "previous_URL": {
         "value": {
             "param": {
-                "regex": ".{1,500}",
+                "regex": 'https:\/\/openreview\.net\/forum\?id=.*',
                 "optional": True,
-                "type": "string"
+                "type": "string",
+                'mismatchError': 'must be a valid link to an OpenReview submission: https://openreview.net/forum?id=...'
             }
         },
-        "description": "If this is a resubmission, provide the URL of your previous submission to ACL Rolling Review (this URL will look like https://openreview.net/forum?id=<some string>).",
+        "description": "If this is a resubmission, provide the URL of your previous submission to ACL Rolling Review (this URL will look like https://openreview.net/forum?id=<some string>). Make sure to only add the paper id and not other parameters after &.",
         "order": 14
     },
     "response_PDF": {
@@ -1512,11 +1513,13 @@ arr_official_review_content = {
 
 
 arr_metareview_content = {
-    "metareview": {
+    "metareview" : {
         "value": {
             "param": {
                 "minLength": 1,
                 "optional": False,
+                "input": "textarea",
+                "markdown": True,
                 "type": "string"
             }
         },
@@ -1528,6 +1531,8 @@ arr_metareview_content = {
             "param": {
                 "minLength": 1,
                 "optional": False,
+                "input": "textarea",
+                "markdown": True,
                 "type": "string"
             }
         },
@@ -1539,6 +1544,8 @@ arr_metareview_content = {
             "param": {
                 "minLength": 1,
                 "optional": False,
+                "input": "textarea",
+                "markdown": True,
                 "type": "string"
             }
         },
@@ -1609,6 +1616,8 @@ arr_metareview_content = {
             "param": {
                 "minLength": 1,
                 "optional": True,
+                "input": "textarea",
+                "markdown": True,
                 "type": "string"
             }
         },
@@ -1620,6 +1629,8 @@ arr_metareview_content = {
             "param": {
                 "minLength": 1,
                 "optional": False,
+                "input": "textarea",
+                "markdown": True,
                 "type": "string",
                 "default": "There are no concerns with this submission"
             }
