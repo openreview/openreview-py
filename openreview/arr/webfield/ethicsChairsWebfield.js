@@ -9,6 +9,7 @@ const edit = [
 ]
 const browse = [
   `${ethicsReviewersId}/-/Affinity_Score`,
+  `${ethicsReviewersId}/-/Custom_Max_Papers,head:ignore`,
   `${ethicsReviewersId}/-/Conflict`,
 ]
 const other = `version=2&referrer=[Ethics Chairs Console](/group?id=${entity.id})`
