@@ -578,7 +578,9 @@ class TestARRVenueV2():
                         }
                     }
                 },
-                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
+                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers',
+                'release_submissions_to_ethics_chairs': 'Yes, release flagged submissions to the ethics chairs.',
+                'compute_affinity_scores': 'No'
             },
             forum=request_form_note.forum,
             referent=request_form_note.forum,
@@ -779,7 +781,7 @@ class TestARRVenueV2():
             signatures=['~Reviewer_Alternate_ARROne1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load_this_cycle': { 'value': '0' },
+                    'maximum_load_this_cycle': { 'value': 0 },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     'next_available_month': { 'value': 'August'},
@@ -793,7 +795,7 @@ class TestARRVenueV2():
                 signatures=['~Reviewer_ARRTwo1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load_this_cycle': { 'value': '0' },
+                        'maximum_load_this_cycle': { 'value': 0 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'August'}
@@ -806,7 +808,7 @@ class TestARRVenueV2():
                 signatures=['~Reviewer_ARRTwo1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load_this_cycle': { 'value': '0' },
+                        'maximum_load_this_cycle': { 'value': 0 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_year': { 'value': 2024}
@@ -818,7 +820,7 @@ class TestARRVenueV2():
                 signatures=['~Reviewer_ARRTwo1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load_this_cycle': { 'value': '0' },
+                        'maximum_load_this_cycle': { 'value': 0 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'September'},
@@ -831,7 +833,7 @@ class TestARRVenueV2():
                 signatures=['~Reviewer_ARRThree1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load_this_cycle': { 'value': '0' },
+                        'maximum_load_this_cycle': { 'value': 0 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'No, I do not consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'July'},
@@ -844,7 +846,7 @@ class TestARRVenueV2():
                 signatures=['~Reviewer_ARRFour1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load_this_cycle': { 'value': '0' },
+                        'maximum_load_this_cycle': { 'value': 0 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'August'},
@@ -857,7 +859,7 @@ class TestARRVenueV2():
                 signatures=['~Reviewer_ARRFive1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load_this_cycle': { 'value': '0' },
+                        'maximum_load_this_cycle': { 'value': 0 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'July'},
@@ -870,7 +872,7 @@ class TestARRVenueV2():
             signatures=['~AC_ARROne1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load_this_cycle': { 'value': '0' },
+                    'maximum_load_this_cycle': { 'value': 0 },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     'next_available_month': { 'value': 'August'},
                     'next_available_year': { 'value':  2024}
@@ -882,7 +884,7 @@ class TestARRVenueV2():
             signatures=['~SAC_ARROne1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load_this_cycle': { 'value': '0' },
+                    'maximum_load_this_cycle': { 'value': 0 },
                     'next_available_month': { 'value': 'September'},
                     'next_available_year': { 'value':  2024}
                 }
@@ -1069,7 +1071,7 @@ class TestARRVenueV2():
         note = openreview.api.Note(
             content = {
                     **generic_note_content,
-                    'previous_URL': { 'value': f"http://localhost:3030/forum?id={allowed_note['note']['id']}" },
+                    'previous_URL': { 'value': f"https://openreview.net/forum?id={allowed_note['note']['id']}" },
                     'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
                     'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' }
@@ -1082,8 +1084,47 @@ class TestARRVenueV2():
         
         helpers.await_queue_edit(openreview_client, edit_id=allowed_note_second['id'])
 
+        with pytest.raises(openreview.OpenReviewException, match=r'previous_URL value must be a valid link to an OpenReview submission'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+                    signatures=['~SomeFirstName_User1'],
+                    note=openreview.api.Note(
+                    content = {
+                        **generic_note_content,
+                        'previous_URL': { 'value': 'https://openreview.net/pdf?id=1234' },
+                        'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                        'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                        'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' }
+                    }
+                ))
+        
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid paper link. Please make sure not to provide anything after the character "&" in the paper link.'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+                    signatures=['~SomeFirstName_User1'],
+                    note=openreview.api.Note(
+                    content = {
+                        **generic_note_content,
+                        'previous_URL': { 'value': 'https://openreview.net/forum?id=1234&replyto=4567' },
+                        'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                        'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                        'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' }
+                    }
+                ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid paper link. Please make sure not to provide anything after the character "&" in the paper link.'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+                    signatures=['~SomeFirstName_User1'],
+                    note=openreview.api.Note(
+                    content = {
+                        **generic_note_content,
+                        'previous_URL': { 'value': f'https://openreview.net/forum?id=1234&referrer=[Author%20Console](/group?id=aclweb.org/ACL/ARR/2023/June)' },
+                        'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                        'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                        'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' }
+                    }
+                ))
+
         # Not allowed: submission with invalid previous URL
-        with pytest.raises(openreview.OpenReviewException, match=r'Provided paper link does not correspond to a submission in OpenReview'):
+        with pytest.raises(openreview.OpenReviewException, match=r'previous_URL value must be a valid link to an OpenReview submission'):
             test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=openreview.api.Note(
@@ -1144,7 +1185,7 @@ class TestARRVenueV2():
                 note=openreview.api.Note(
                 content = {
                     **generic_note_content,
-                    'previous_URL': { 'value': f"http://localhost:3030/forum?id={allowed_note['note']['id']}" },
+                    'previous_URL': { 'value': f"https://openreview.net/forum?id={allowed_note['note']['id']}" },
                     'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
                 }
             )
@@ -1157,7 +1198,7 @@ class TestARRVenueV2():
                 note=openreview.api.Note(
                 content = {
                     **generic_note_content,
-                    'previous_URL': { 'value': f"http://localhost:3030/forum?id={allowed_note['note']['id']}" },
+                    'previous_URL': { 'value': f"https://openreview.net/forum?id={allowed_note['note']['id']}" },
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
                     'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
                 }
@@ -1171,7 +1212,7 @@ class TestARRVenueV2():
                 note=openreview.api.Note(
                 content = {
                     **generic_note_content,
-                    'previous_URL': { 'value': f"http://localhost:3030/forum?id={allowed_note['note']['id']}" },
+                    'previous_URL': { 'value': f"https://openreview.net/forum?id={allowed_note['note']['id']}" },
                     'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
                     'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
                 }
@@ -1188,7 +1229,7 @@ class TestARRVenueV2():
                 note=openreview.api.Note(
                 content = {
                     **case_content,
-                    'previous_URL': { 'value': f"http://localhost:3030/forum?id={allowed_note['note']['id']}" },
+                    'previous_URL': { 'value': f"https://openreview.net/forum?id={allowed_note['note']['id']}" },
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
                     'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
                     'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
@@ -1356,19 +1397,19 @@ class TestARRVenueV2():
         august_reviewer_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_reviewers_id()}/-/{max_load_name}")
         assert len(august_reviewer_notes) == len(migrated_reviewers)
         assert set([note.signatures[0] for note in august_reviewer_notes]) == migrated_reviewers
-        assert all(note.content['maximum_load_this_cycle']['value'] == '0' for note in august_reviewer_notes)
+        assert all(note.content['maximum_load_this_cycle']['value'] == 0 for note in august_reviewer_notes)
 
         migrated_acs = {'~AC_ARROne1'}
         august_ac_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_area_chairs_id()}/-/{max_load_name}")
         assert len(august_ac_notes) == len(migrated_acs)
         assert set([note.signatures[0] for note in august_ac_notes]) == migrated_acs
-        assert all(note.content['maximum_load_this_cycle']['value'] == '0' for note in august_ac_notes)
+        assert all(note.content['maximum_load_this_cycle']['value'] == 0 for note in august_ac_notes)
 
         migrated_sacs = {'~SAC_ARROne1'}
         august_sacs_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_senior_area_chairs_id()}/-/{max_load_name}")
         assert len(august_sacs_notes) == len(migrated_sacs)
         assert set([note.signatures[0] for note in august_sacs_notes]) == migrated_sacs
-        assert all(note.content['maximum_load_this_cycle']['value'] == '0' for note in august_sacs_notes)
+        assert all(note.content['maximum_load_this_cycle']['value'] == 0 for note in august_sacs_notes)
 
         august_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         august_ac_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_area_chairs_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
@@ -1394,16 +1435,27 @@ class TestARRVenueV2():
         )
 
         # Test posting new notes and finding the edges
+        ethics_reviewer_client = openreview.api.OpenReviewClient(username = 'reviewerethics@aclrollingreview.com', password=helpers.strong_password)
         reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@aclrollingreview.com', password=helpers.strong_password)
         ac_client = openreview.api.OpenReviewClient(username = 'ac2@aclrollingreview.com', password=helpers.strong_password)
         sac_client = openreview.api.OpenReviewClient(username = 'sac2@aclrollingreview.com', password=helpers.strong_password)
 
+        ethics_reviewer_note_edit = ethics_reviewer_client.post_note_edit(
+                invitation=f'{august_venue.get_ethics_reviewers_id()}/-/{max_load_name}',
+                signatures=['~EthicsReviewer_ARROne1'],
+                note=openreview.api.Note(
+                    content = {
+                        'maximum_load_this_cycle': { 'value': 4 },
+                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
+                    }
+                )
+            ) 
         reviewer_note_edit = reviewer_client.post_note_edit(
                 invitation=f'{august_venue.get_reviewers_id()}/-/{max_load_name}',
                 signatures=['~Reviewer_Alternate_ARROne1'],
                 note=openreview.api.Note(
                     content = {
-                        'maximum_load_this_cycle': { 'value': '4' },
+                        'maximum_load_this_cycle': { 'value': 4 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     }
@@ -1414,7 +1466,7 @@ class TestARRVenueV2():
             signatures=['~AC_ARRTwo1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load_this_cycle': { 'value': '6' },
+                    'maximum_load_this_cycle': { 'value': 6 },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' },
                 }
             )
@@ -1424,18 +1476,22 @@ class TestARRVenueV2():
             signatures=['~SAC_ARRTwo1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load_this_cycle': { 'value': '10' },
+                    'maximum_load_this_cycle': { 'value': 10 },
                 }
             )
         )
 
+        helpers.await_queue_edit(openreview_client, edit_id=ethics_reviewer_note_edit['id'])
         helpers.await_queue_edit(openreview_client, edit_id=reviewer_note_edit['id'])
         helpers.await_queue_edit(openreview_client, edit_id=ac_note_edit['id'])
         helpers.await_queue_edit(openreview_client, edit_id=sac_note_edit['id'])
 
+        august_ethics_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_ethics_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         august_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         august_ac_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_area_chairs_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         august_sac_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_senior_area_chairs_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
+        assert '~EthicsReviewer_ARROne1' in august_ethics_reviewer_edges
+        assert len(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == 1 and set(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == {4}
         assert '~Reviewer_ARROne1' in august_reviewer_edges
         assert len(august_reviewer_edges['~Reviewer_ARROne1']) == 1 and set(august_reviewer_edges['~Reviewer_ARROne1']) == {4}
         assert '~AC_ARRTwo1' in august_ac_edges
@@ -1444,13 +1500,24 @@ class TestARRVenueV2():
         assert len(august_sac_edges['~SAC_ARRTwo1']) == 1 and set(august_sac_edges['~SAC_ARRTwo1']) == {10}
 
         # Test editing
+        ethics_reviewer_note_edit = ethics_reviewer_client.post_note_edit(
+                invitation=f'{august_venue.get_ethics_reviewers_id()}/-/{max_load_name}',
+                signatures=['~EthicsReviewer_ARROne1'],
+                note=openreview.api.Note(
+                    id = ethics_reviewer_note_edit['note']['id'],
+                    content = {
+                        'maximum_load_this_cycle': { 'value': 5 },
+                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
+                    }
+                )
+            )
         reviewer_note_edit = reviewer_client.post_note_edit(
                 invitation=f'{august_venue.get_reviewers_id()}/-/{max_load_name}',
                 signatures=['~Reviewer_Alternate_ARROne1'],
                 note=openreview.api.Note(
                     id = reviewer_note_edit['note']['id'],
                     content = {
-                        'maximum_load_this_cycle': { 'value': '5' },
+                        'maximum_load_this_cycle': { 'value': 5 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     }
@@ -1462,7 +1529,7 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 id = ac_note_edit['note']['id'],
                 content = {
-                    'maximum_load_this_cycle': { 'value': '7' },
+                    'maximum_load_this_cycle': { 'value': 7 },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
                 }
             )
@@ -1473,18 +1540,22 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 id = sac_note_edit['note']['id'],
                 content = {
-                    'maximum_load_this_cycle': { 'value': '11' }
+                    'maximum_load_this_cycle': { 'value': 11 }
                 }
             )
         )
 
+        helpers.await_queue_edit(openreview_client, edit_id=ethics_reviewer_note_edit['id'])
         helpers.await_queue_edit(openreview_client, edit_id=reviewer_note_edit['id'])
         helpers.await_queue_edit(openreview_client, edit_id=ac_note_edit['id'])
         helpers.await_queue_edit(openreview_client, edit_id=sac_note_edit['id'])
 
+        august_ethics_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_ethics_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         august_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         august_ac_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_area_chairs_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         august_sac_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_senior_area_chairs_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
+        assert '~EthicsReviewer_ARROne1' in august_ethics_reviewer_edges
+        assert len(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == 1 and set(august_ethics_reviewer_edges['~EthicsReviewer_ARROne1']) == {5}
         assert '~Reviewer_ARROne1' in august_reviewer_edges
         assert len(august_reviewer_edges['~Reviewer_ARROne1']) == 1 and set(august_reviewer_edges['~Reviewer_ARROne1']) == {5}
         assert '~AC_ARRTwo1' in august_ac_edges
@@ -1493,6 +1564,18 @@ class TestARRVenueV2():
         assert len(august_sac_edges['~SAC_ARRTwo1']) == 1 and set(august_sac_edges['~SAC_ARRTwo1']) == {11}
 
         # Test deleting
+        ethics_reviewer_note_edit = ethics_reviewer_client.post_note_edit(
+                invitation=f'{august_venue.get_ethics_reviewers_id()}/-/{max_load_name}',
+                signatures=['~EthicsReviewer_ARROne1'],
+                note=openreview.api.Note(
+                    id = ethics_reviewer_note_edit['note']['id'],
+                    ddate = openreview.tools.datetime_millis(now),
+                    content = {
+                        'maximum_load_this_cycle': { 'value': 5 },
+                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
+                    }
+                )
+            )
         reviewer_note_edit = reviewer_client.post_note_edit(
                 invitation=f'{august_venue.get_reviewers_id()}/-/{max_load_name}',
                 signatures=['~Reviewer_Alternate_ARROne1'],
@@ -1500,7 +1583,7 @@ class TestARRVenueV2():
                     id = reviewer_note_edit['note']['id'],
                     ddate = openreview.tools.datetime_millis(now),
                     content = {
-                        'maximum_load_this_cycle': { 'value': '5' },
+                        'maximum_load_this_cycle': { 'value': 5 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     }
@@ -1513,7 +1596,7 @@ class TestARRVenueV2():
                 id = ac_note_edit['note']['id'],
                 ddate = openreview.tools.datetime_millis(now),
                 content = {
-                    'maximum_load_this_cycle': { 'value': '7' },
+                    'maximum_load_this_cycle': { 'value': 7 },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
                 }
             )
@@ -1525,18 +1608,21 @@ class TestARRVenueV2():
                 id = sac_note_edit['note']['id'],
                 ddate = openreview.tools.datetime_millis(now),
                 content = {
-                    'maximum_load_this_cycle': { 'value': '11' }
+                    'maximum_load_this_cycle': { 'value': 11 }
                 }
             )
         )
 
+        helpers.await_queue_edit(openreview_client, edit_id=ethics_reviewer_note_edit['id'])
         helpers.await_queue_edit(openreview_client, edit_id=reviewer_note_edit['id'])
         helpers.await_queue_edit(openreview_client, edit_id=ac_note_edit['id'])
         helpers.await_queue_edit(openreview_client, edit_id=sac_note_edit['id'])
 
+        august_ethics_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_ethics_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         august_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         august_ac_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_area_chairs_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         august_sac_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_senior_area_chairs_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
+        assert '~EthicsReviewer_ARROne1' not in august_ethics_reviewer_edges
         assert '~Reviewer_ARROne1' not in august_reviewer_edges
         assert '~AC_ARRTwo1' not in august_ac_edges
         assert '~SAC_ARRTwo1' not in august_sac_edges
@@ -1550,7 +1636,7 @@ class TestARRVenueV2():
             signatures=['~Reviewer_ARRFive1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load_this_cycle': { 'value': '0' },
+                    'maximum_load_this_cycle': { 'value': 0 },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' },
                     'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                 }
@@ -1561,7 +1647,7 @@ class TestARRVenueV2():
             signatures=['~AC_ARRThree1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load_this_cycle': { 'value': '0' },
+                    'maximum_load_this_cycle': { 'value': 0 },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
                 }
             )
@@ -1573,7 +1659,7 @@ class TestARRVenueV2():
             signatures=['~AC_ARRTwo1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load_this_cycle': { 'value': '6' },
+                    'maximum_load_this_cycle': { 'value': 6 },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
                 }
             )
@@ -1714,7 +1800,7 @@ class TestARRVenueV2():
                     'languages_studied': { 'value': 'A language' },
                     'reassignment_request_action_editor': { 'value': 'This is not a resubmission' },
                     'reassignment_request_reviewers': { 'value': 'This is not a resubmission' },
-                    'previous_URL': { 'value': f'http://localhost:3030/forum?id={june_submission.id}' },
+                    'previous_URL': { 'value': f'https://openreview.net/forum?id={june_submission.id}' },
                     'response_PDF': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
@@ -2433,7 +2519,39 @@ class TestARRVenueV2():
                 }
             )
         )
-        helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
+        reviewer_client_1.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/June/Submission2/-/Official_Review',
+            signatures=[anon_group_id_1],
+            note=openreview.api.Note(
+                id = review_edit['note']['id'],
+                content={
+                    "confidence": { "value": 5 },
+                    "paper_summary": { "value": 'some summaryyyyyyyyy version 2' },
+                    "summary_of_strengths": { "value": 'some strengths' },
+                    "summary_of_weaknesses": { "value": 'some weaknesses' },
+                    "comments_suggestions_and_typos": { "value": 'some comments' },
+                    "soundness": { "value": 1 },
+                    "overall_assessment": { "value": 1 },
+                    "best_paper": { "value": "No" },
+                    "ethical_concerns": { "value": "N/A" },
+                    "reproducibility": { "value": 1 },
+                    "datasets": { "value": 1 },
+                    "software": { "value": 1 },
+                    "Knowledge_of_or_educated_guess_at_author_identity": {"value": "No"},
+                    "Knowledge_of_paper": {"value": "After the review process started"},
+                    "Knowledge_of_paper_source": {"value": ["A research talk"]},
+                    "impact_of_knowledge_of_paper": {"value": "A lot"},
+                    "reviewer_certification": {"value": "A Name"}
+                }
+            )
+        )        
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/June/Submission2/-/Official_Review', count=2)
+
+        assert anon_group_id_1 in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers/Submitted').members
+
+        messages = openreview_client.get_messages(to='reviewer1@aclrollingreview.com', subject='[ARR - June 2023] Your official review has been received on your assigned Paper number: 2, Paper title: "Paper title "')
+        assert len(messages) == 1
+        
 
         review_edit = reviewer_client_2.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/June/Submission3/-/Official_Review',
@@ -2461,6 +2579,8 @@ class TestARRVenueV2():
             )
         )
         helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
+
+        assert anon_group_id_2 in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Reviewers/Submitted').members
 
         review_edit = reviewer_client_5.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/June/Submission2/-/Official_Review',
@@ -2518,7 +2638,7 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 id=submissions[1].id,
                 content={
-                    'previous_URL': {'value': f'http://localhost:3030/forum?id={june_submissions[1].id}'},
+                    'previous_URL': {'value': f'https://openreview.net/forum?id={june_submissions[1].id}'},
                     'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
                     'reassignment_request_reviewers': { 'value': 'No, I want the same set of reviewers from our previous submission and understand that new reviewers may be assigned if any of the previous ones are unavailable' },
                 }
@@ -2532,7 +2652,7 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 id=submissions[2].id,
                 content={
-                    'previous_URL': {'value': f'http://localhost:3030/forum?id={june_submissions[2].id}'},
+                    'previous_URL': {'value': f'https://openreview.net/forum?id={june_submissions[2].id}'},
                     'reassignment_request_action_editor': {'value': 'Yes, I want a different action editor for our submission' },
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
                 }
@@ -2662,9 +2782,9 @@ class TestARRVenueV2():
         load_notes = pc_client_v2.get_all_notes(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request')
         for note in load_notes:
             if note.signatures[0] == '~Reviewer_ARRFive1':
-                assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load_this_cycle']['value']) + 1
+                assert cmp_edges[note.signatures[0]]['weight'] == note.content['maximum_load_this_cycle']['value'] + 1
                 continue
-            assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load_this_cycle']['value'])
+            assert cmp_edges[note.signatures[0]]['weight'] == note.content['maximum_load_this_cycle']['value']
 
         cmp_edges = {
             g['id']['tail'] : g['values'][0]
@@ -2673,9 +2793,9 @@ class TestARRVenueV2():
         load_notes = pc_client_v2.get_all_notes(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Max_Load_And_Unavailability_Request')
         for note in load_notes:
             if note.signatures[0] == '~AC_ARRThree1':
-                assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load_this_cycle']['value']) + 1
+                assert cmp_edges[note.signatures[0]]['weight'] == note.content['maximum_load_this_cycle']['value'] + 1
                 continue
-            assert cmp_edges[note.signatures[0]]['weight'] == int(note.content['maximum_load_this_cycle']['value'])
+            assert cmp_edges[note.signatures[0]]['weight'] == note.content['maximum_load_this_cycle']['value']
 
         # Check for seniority edges
         seniority_edges = {
@@ -2732,8 +2852,7 @@ class TestARRVenueV2():
         url = header_div.find_element(By.ID, 'edge_browser_url')
         assert url
 
-        edge_browser_url = 'http://localhost:3030/edges/browse?start=aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Assignment,tail:~SAC_ARRTwo1&traverse=aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment&edit=aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Invite_Assignment&browse=aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Agreggate_Score;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Affinity_Score;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Research_Area;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Custom_Max_Papers,head:ignore;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Registered_Load,head:ignore;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Load,head:ignore;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency,head:ignore;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Area,head:ignore&hide=aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Conflict&maxColumns=2&version=2&referrer=[Senior%20Area%20Chair%20Console](/group?id=aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs)'
-
+        edge_browser_url = 'http://localhost:3030/edges/browse?start=aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Assignment,tail:~SAC_ARRTwo1&traverse=aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment&edit=aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Invite_Assignment&browse=aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Agreggate_Score;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Affinity_Score;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Score;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Research_Area;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Custom_Max_Papers,head:ignore;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Registered_Load,head:ignore;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Load,head:ignore;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency,head:ignore;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Area,head:ignore&hide=aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Conflict&maxColumns=2&version=2&referrer=[Senior%20Area%20Chair%20Console](/group?id=aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs)'
         assert url.get_attribute('href') == edge_browser_url
 
         openreview_client.post_edge(openreview.api.Edge(
@@ -2950,6 +3069,8 @@ class TestARRVenueV2():
         assert test_submission.content['number_of_reviewer_checklists']['value'] == 1
         _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=edit['note'])
         assert test_submission.content['number_of_reviewer_checklists']['value'] == 0
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
 
         # Post checklist with no ethics flag and a violation field - check for DSV flag
         edit, test_submission = post_checklist(user_client, checklist_inv, user, tested_field=violation_fields[0])
@@ -2958,6 +3079,8 @@ class TestARRVenueV2():
         assert 'flagged_for_desk_reject_verification' in test_submission.content
         assert test_submission.content['flagged_for_desk_reject_verification']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate > now()
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
 
         # Delete checklist - check DSV flag is False, invitation is expired
         _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=edit['note'])
@@ -2965,6 +3088,8 @@ class TestARRVenueV2():
         assert 'flagged_for_desk_reject_verification' in test_submission.content
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
 
         # Re-post with no ethics flag and a violation field - check DSV flag is True
         violation_edit, test_submission = post_checklist(user_client, checklist_inv, user, tested_field=violation_fields[1])
@@ -2972,6 +3097,8 @@ class TestARRVenueV2():
         assert 'flagged_for_desk_reject_verification' in test_submission.content
         assert test_submission.content['flagged_for_desk_reject_verification']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate > now()
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
 
         # Edit with no ethics flag and no violation field - check DSV flag is False
         violation_edit['note']['content'][violation_fields[1]]['value'] = 'Yes'
@@ -2980,6 +3107,8 @@ class TestARRVenueV2():
         assert 'flagged_for_desk_reject_verification' in test_submission.content
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
 
         # Edit with ethics flag and no violation field - check DSV flag is false and ethics flag exists and is True
         _, test_submission = post_checklist(user_client, checklist_inv, user, tested_field='need_ethics_review', existing_note=violation_edit['note'])
@@ -2988,6 +3117,9 @@ class TestARRVenueV2():
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
+        assert test_submission.readers == ['everyone']
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
 
         # Delete checklist - check both flags False
         _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=violation_edit['note'])
@@ -2995,6 +3127,8 @@ class TestARRVenueV2():
         assert 'flagged_for_desk_reject_verification' in test_submission.content
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
 
         # Re-post with no flag - check both flags false
         reviewer_edit, test_submission = post_checklist(user_client, checklist_inv, user)
@@ -3003,7 +3137,8 @@ class TestARRVenueV2():
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
-
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
 
         # Test checklists for AEs
         checklist_inv = test_data_templates[venue.get_area_chairs_id()]['checklist_invitation']
@@ -3223,13 +3358,14 @@ class TestARRVenueV2():
         assert 'flagged_for_desk_reject_verification' not in test_submission.content
         _, test_submission = post_official_review(user_client, review_inv, user, ddate=now(), existing_note=edit['note'])
 
-
         # Post checklist with no ethics flag and a violation field - check for DSV flag
         edit, test_submission = post_official_review(user_client, review_inv, user, tested_field=violation_fields[0])
         assert 'flagged_for_ethics_review' not in test_submission.content
         assert 'flagged_for_desk_reject_verification' in test_submission.content
         assert test_submission.content['flagged_for_desk_reject_verification']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Reject_Verification').expdate > now()
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
 
         # Delete checklist - check DSV flag is False, invitation is expired
         _, test_submission = post_official_review(user_client, review_inv, user, ddate=now(), existing_note=edit['note'])
@@ -3237,6 +3373,8 @@ class TestARRVenueV2():
         assert 'flagged_for_desk_reject_verification' in test_submission.content
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Reject_Verification').expdate < now()
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
 
         # Re-post with no ethics flag and a violation field - check DSV flag is True
         violation_edit, test_submission = post_official_review(user_client, review_inv, user, tested_field=violation_fields[0])
@@ -3244,6 +3382,8 @@ class TestARRVenueV2():
         assert 'flagged_for_desk_reject_verification' in test_submission.content
         assert test_submission.content['flagged_for_desk_reject_verification']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Reject_Verification').expdate > now()
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
 
         # Edit with no ethics flag and no violation field - check DSV flag is False
         violation_edit['note']['content'][violation_fields[0]]['value'] = 'No'
@@ -3252,6 +3392,8 @@ class TestARRVenueV2():
         assert 'flagged_for_desk_reject_verification' in test_submission.content
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Reject_Verification').expdate < now()
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
 
         # Edit with ethics flag and no violation field - check DSV flag is false and ethics flag exists and is True
         _, test_submission = post_official_review(user_client, review_inv, user, tested_field='needs_ethics_review', existing_note=violation_edit['note'])
@@ -3260,6 +3402,8 @@ class TestARRVenueV2():
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Reject_Verification').expdate < now()
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in test_submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' in test_submission.readers
 
         # Delete checklist - check both flags False
         _, test_submission = post_official_review(user_client, review_inv, user, ddate=now(), existing_note=violation_edit['note'])
@@ -3267,6 +3411,8 @@ class TestARRVenueV2():
         assert 'flagged_for_desk_reject_verification' in test_submission.content
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
 
         # Re-post with no flag - check both flags false
         reviewer_edit, test_submission = post_official_review(user_client, review_inv, user)
@@ -3275,6 +3421,8 @@ class TestARRVenueV2():
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Reject_Verification').expdate < now()
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
 
         # Make reviews public
         pc_client.post_note(
@@ -3621,13 +3769,16 @@ class TestARRVenueV2():
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Desk_Reject_Verification').expdate < now()
+        comment_inv = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Official_Comment')
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in comment_inv.invitees
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Ethics_Reviewers' in comment_inv.invitees
 
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Ethics_Review_Flag', count=9)
 
         # Post an ethics review
         ethics_anon_id = ethics_client.get_groups(prefix='aclweb.org/ACL/ARR/2023/August/Submission4/Ethics_Reviewer_', signatory='~EthicsReviewer_ARROne1')[0].id
         assert ethics_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Ethics_Review')
-        ethics_client.post_note_edit(
+        ethics_review_edit = ethics_client.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/August/Submission4/-/Ethics_Review',
             signatures=[ethics_anon_id],
             note=openreview.api.Note(
@@ -3638,6 +3789,12 @@ class TestARRVenueV2():
                 }
             )
         )
+        helpers.await_queue_edit(openreview_client, edit_id=ethics_review_edit['id'])
+        messages = openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] Ethics Review posted to your assigned Paper number: 4, Paper title: "Paper title 4"')
+        assert messages and len(messages) == 1
+
+        messages = openreview_client.get_messages(to='reviewerethics@aclrollingreview.com', subject='[ARR - August 2023] Your ethics review has been received on your assigned Paper number: 4, Paper title: "Paper title 4"')
+        assert messages and len(messages) == 1
 
         # Delete checklist - check both flags False
         _, test_submission = post_meta_review(user_client, review_inv, user, ddate=now(), existing_note=violation_edit['note'])
@@ -3680,6 +3837,37 @@ class TestARRVenueV2():
         review = openreview_client.get_note(reviewer_edit['note']['id'])
         assert len(review.readers) - len(reviewer_edit['note']['readers']) == 1
         assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Authors' in review.readers
+
+        # allow ethics chairs to invite ethics reviewers
+        conference_matching = matching.Matching(venue, openreview_client.get_group(venue.get_ethics_reviewers_id()), None)
+        conference_matching.setup_invite_assignment(hash_seed='1234', invited_committee_name=f'Emergency_{venue.get_ethics_reviewers_name(pretty=False)}')
+        venue.group_builder.set_external_reviewer_recruitment_groups(name=f'Emergency_{venue.get_ethics_reviewers_name(pretty=False)}')
+
+        invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Ethics_Reviewers/-/Invite_Assignment')
+        assert invitation
+        assert 'is_ethics_reviewer' in invitation.content and invitation.content['is_ethics_reviewer']['value'] == True
+
+        ethics_chair_client = openreview.api.OpenReviewClient(username='ec1@aclrollingreview.com', password=helpers.strong_password)
+        edge = ethics_chair_client.post_edge(
+            openreview.api.Edge(invitation=invitation.id,
+                signatures=['aclweb.org/ACL/ARR/2023/August/Ethics_Chairs'],
+                head=test_submission.id,
+                tail='celeste@arrethics.cc',
+                label='Invitation Sent',
+                weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edge.id)
+
+        messages = openreview_client.get_messages(to='celeste@arrethics.cc', subject=f'''[ARR - August 2023] Invitation to serve as ethics reviewer for paper titled "{test_submission.content['title']['value']}"''')
+        assert messages and len(messages) == 1
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Ethics_Reviewers/-/Assignment_Recruitment', count=1)
+
+        messages = openreview_client.get_messages(to='celeste@arrethics.cc', subject='[ARR - August 2023] Ethics Reviewer Invitation accepted for paper 4, assignment pending')
+        assert len(messages) == 1
 
     def test_emergency_reviewing_forms(self, client, openreview_client, helpers):
         # Update the process functions for each of the unavailability forms, set up the custom max papers
@@ -3734,7 +3922,7 @@ class TestARRVenueV2():
             signatures=['~Reviewer_Alternate_ARROne1'],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load_this_cycle': { 'value': '4' },
+                    'maximum_load_this_cycle': { 'value': 4 },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                 }
@@ -3816,8 +4004,10 @@ class TestARRVenueV2():
             assert cmp_original == reg_original + emg_original
             assert area_edges[user][0] == 'Generation'
 
-            score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
-            assert all(weight >= 10 for weight in score_edges[user])
+            aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
+            score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
+            assert all(weight < 10 for weight in score_edges[user])
+            assert all(weight < 10 for weight in aggregate_score_edges[user])
 
             # Test editing note
             user_note_edit = user_client.post_note_edit(
@@ -3850,8 +4040,10 @@ class TestARRVenueV2():
             assert cmp_edges[user][0] == reg_edges[user][0] + emg_edges[user][0]
             assert area_edges[user][0] == 'Machine Translation'
 
-            score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
-            assert all(weight >= 10 for weight in score_edges[user])
+            aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
+            score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
+            assert all(weight < 10 for weight in score_edges[user])
+            assert all(weight < 10 for weight in aggregate_score_edges[user])
 
             # Test deleting note
             user_note_edit = user_client.post_note_edit(
@@ -3877,8 +4069,10 @@ class TestARRVenueV2():
             assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Emergency_Load", tail=user) == 0
             assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Emergency_Area", tail=user) == 0
 
-            score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
-            assert all(weight < 10 for weight in score_edges[user])
+            aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
+            score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
+            assert user not in score_edges
+            assert all(weight < 10 for weight in aggregate_score_edges[user])
 
     def test_review_rating_forms(self, client, openreview_client, helpers, test_client):
         now = datetime.datetime.utcnow()

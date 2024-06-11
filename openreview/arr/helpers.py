@@ -28,6 +28,7 @@ from openreview.stages.arr_content import (
     arr_ethics_review_content,
     arr_review_rating_content,
     arr_author_consent_content,
+    arr_max_load_task,
     arr_metareview_license_task,
     arr_metareview_license_task_forum,
     hide_fields_from_public
@@ -657,6 +658,24 @@ class ARRWorkflow(object):
                 type=ARRStage.Type.REGISTRATION_STAGE,
                 group_id=venue.get_reviewers_id(),
                 required_fields=['maximum_load_due_date', 'maximum_load_exp_date'],
+                super_invitation_id=f"{venue.get_ethics_reviewers_id()}/-/{self.invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME}",
+                stage_arguments={
+                    'committee_id': venue.get_ethics_reviewers_id(),
+                    'name': self.invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME,
+                    'instructions': arr_max_load_task_forum['instructions'],
+                    'title': venue.get_ethics_reviewers_name() + ' ' + arr_max_load_task_forum['title'],
+                    'additional_fields': arr_max_load_task,
+                    'remove_fields': ['profile_confirmed', 'expertise_confirmed']
+                },
+                due_date=self.configuration_note.content.get('maximum_load_due_date'),
+                exp_date=self.configuration_note.content.get('maximum_load_exp_date'),
+                process='process/max_load_process.py',
+                preprocess='process/max_load_preprocess.py'
+            ),
+            ARRStage(
+                type=ARRStage.Type.REGISTRATION_STAGE,
+                group_id=venue.get_reviewers_id(),
+                required_fields=['maximum_load_due_date', 'maximum_load_exp_date'],
                 super_invitation_id=f"{venue.get_reviewers_id()}/-/{self.invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME}",
                 stage_arguments={
                     'committee_id': venue.get_reviewers_id(),
@@ -949,8 +968,11 @@ class ARRWorkflow(object):
                         'release_ethics_reviews_to_reviewers': 'Ethics reviews should be immediately revealed to the paper\'s reviewers and ethics reviewers',
                         'additional_ethics_review_form_options': arr_ethics_review_content,
                         'remove_ethics_review_form_options': 'ethics_review',
+                        'release_submissions_to_ethics_chairs': 'Yes, release flagged submissions to the ethics chairs.',
                         "release_submissions_to_ethics_reviewers": "We confirm we want to release the submissions and reviews to the ethics reviewers",
                         'enable_comments_for_ethics_reviewers': 'Yes, enable commenting for ethics reviewers.',
+                        'compute_affinity_scores': 'No'
+
                     },
                     'forum': request_form_id,
                     'invitation': '{}/-/Request{}/Ethics_Review_Stage'.format(support_user, request_form.number),
@@ -996,7 +1018,8 @@ class ARRWorkflow(object):
         venue_roles = [
             venue.get_reviewers_id(),
             venue.get_area_chairs_id(),
-            venue.get_senior_area_chairs_id()
+            venue.get_senior_area_chairs_id(),
+            venue.get_ethics_reviewers_id(),
         ]
         edge_invitation_names = [
             'Custom_Max_Papers',
@@ -1029,6 +1052,25 @@ class ARRWorkflow(object):
                     writers=[venue.id],
                     signatures=[venue.id],
                     invitation=stat_inv
+                )
+
+            if not openreview.tools.get_invitation(self.client_v2, f"{role}/-/Emergency_Score"): # Hold "Requested" or "Reassigned", head=submission ID
+                m._create_edge_invitation(f"{role}/-/Emergency_Score")
+                emg_score_inv = self.client_v2.get_invitation(f"{role}/-/Emergency_Score")
+                emg_score_inv.edit['weight']['param']['optional'] = True
+                emg_score_inv.edit['label'] = {
+                    "param": {
+                        "regex": ".*",
+                        "optional": True,
+                        "deletable": True
+                    }
+                }
+                self.client_v2.post_invitation_edit(
+                    invitations=venue.get_meta_invitation_id(),
+                    readers=[venue.id],
+                    writers=[venue.id],
+                    signatures=[venue.id],
+                    invitation=emg_score_inv
                 )
 
             for name in edge_invitation_names:
@@ -1529,7 +1571,7 @@ def flag_submission(
         subject = f'[{short_name}] A submission has been flagged for ethics reviewing'
         message = '''Paper {} has been flagged for ethics review.
 
-        To view the submission, click here: https://openreview.net/forum?id={}'''.format(forum.number, forum.id)
+To view the submission, click here: https://openreview.net/forum?id={}'''.format(forum.number, forum.id)
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,

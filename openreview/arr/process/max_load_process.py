@@ -11,12 +11,16 @@ def process(client, edit, invitation):
     SAC_ID = domain.content['senior_area_chairs_id']['value']
     AC_ID = domain.content['area_chairs_id']['value']
     REV_ID = domain.content['reviewers_id']['value']
+    ETHICS_REV_ID = domain.content['ethics_chairs_id']['value'].replace(
+      domain.content['ethics_chairs_name']['value'],
+      domain.content['ethics_reviewers_name']['value']
+    )
     user = client.get_profile(edit.signatures[0]).id
 
     edge_readers = [CONFERENCE_ID]
     inv_role = invitation.id.split('/')[-3]
     role = None
-    for venue_role in [SAC_ID, AC_ID, REV_ID]:
+    for venue_role in [SAC_ID, AC_ID, REV_ID, ETHICS_REV_ID]:
       if f"/{inv_role}" in venue_role:
         role = venue_role
         if venue_role == AC_ID:
@@ -57,7 +61,6 @@ def process(client, edit, invitation):
     client.post_edge(
       openreview.api.Edge(
         invitation=CUSTOM_MAX_PAPERS_ID,
-        readers=edge_readers,
         writers=[CONFERENCE_ID],
         signatures=[CONFERENCE_ID],
         head=role,
@@ -66,7 +69,7 @@ def process(client, edit, invitation):
       )
     )
 
-    if role == SAC_ID:
+    if role == SAC_ID or role == ETHICS_REV_ID:
       return
 
     client.delete_edges(
@@ -88,7 +91,6 @@ def process(client, edit, invitation):
     client.post_edge(
       openreview.api.Edge(
         invitation=AVAILABILITY_ID,
-        readers=edge_readers,
         writers=[CONFERENCE_ID],
         signatures=[CONFERENCE_ID],
         head=role,

@@ -1090,7 +1090,7 @@ class Matching(object):
 
             invitation = openreview.tools.get_invitation(self.client, venue.get_bid_id(self.match_group.id))
             if invitation:
-                score_spec[invitation.id] = invitation.content['scores_spec']['value']
+                score_spec[invitation.id] = venue.bid_stages[0].default_scores_spec
 
             invitation = openreview.tools.get_invitation(self.client, venue.get_recommendation_id(self.match_group.id))
             if invitation:
@@ -1138,6 +1138,7 @@ class Matching(object):
             'hash_seed': { 'value': hash_seed, 'readers': [ venue.venue_id ]},
             'email_template': { 'value': email_template if email_template else ''},
             'is_reviewer': { 'value': True if (self.match_group.id.split('/')[-1] in venue.reviewer_roles) else False },
+            'is_ethics_reviewer': { 'value': True if self.match_group.id == venue.get_ethics_reviewers_id() else False }
         }
 
         # set invite assignment invitation

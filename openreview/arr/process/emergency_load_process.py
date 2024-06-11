@@ -35,6 +35,7 @@ def process(client, edit, invitation):
         note for note in client.get_all_notes(invitation=f"{role}/-/Assignment_Configuration") if 'Deploy' in note.content['status']['value']
     ][0].content['title']['value']
     aggregate_score_edges = client.get_all_edges(invitation=f"{role}/-/Aggregate_Score", label=deployed_label, tail=user)
+    emergency_score_edges = client.get_all_edges(invitation=f"{role}/-/Emergency_Score", label=deployed_label, tail=user)
 
     if edit.note.ddate:
         reg_edges = client.get_all_edges(invitation=f"{role}/-/Registered_Load", tail=user)
@@ -70,6 +71,12 @@ def process(client, edit, invitation):
             wait_to_finish=True,
             soft_delete=True
         )
+        client.delete_edges(
+            invitation=f"{role}/-/Emergency_Score",
+            tail=user,
+            wait_to_finish=True,
+            soft_delete=True
+        )
 
         client.post_edge(
             openreview.api.Edge(
@@ -82,30 +89,6 @@ def process(client, edit, invitation):
                 weight=repost_load
             )
         )
-
-        if any(edge.weight >= 10 for edge in aggregate_score_edges): ## If scores were previous updated
-            edges_to_post = []
-            for edge in aggregate_score_edges:
-                edges_to_post.append(openreview.api.Edge(
-                    invitation=edge.invitation,
-                    readers=edge.readers,
-                    writers=edge.writers,
-                    nonreaders=edge.nonreaders,
-                    signatures=edge.signatures,
-                    head=edge.head,
-                    tail=edge.tail,
-                    weight=edge.weight - 10,
-                    label=edge.label
-                ))
-            
-            client.delete_edges(
-                invitation=f"{role}/-/Aggregate_Score",
-                label=deployed_label,
-                tail=user,
-                wait_to_finish=True,
-                soft_delete=True
-            )
-            openreview.tools.post_bulk_edges(client, edges_to_post)
         return
 
     cmp_edges = client.get_all_edges(invitation=f"{role}/-/Custom_Max_Papers", tail=user)
@@ -113,7 +96,7 @@ def process(client, edit, invitation):
         original_load = 0
     else:
         original_load = cmp_edges[0].weight
-    emergency_load = edit.note.content['emergency_load']['value']
+    emergency_load = edit.note.content.get('emergency_load', {}).get('value', 0)
 
     edge_invitation_ids = [
         f"{role}/-/Custom_Max_Papers",
@@ -144,7 +127,7 @@ def process(client, edit, invitation):
         area_value = {
             'head': role,
             'tail': user,
-            'label': edit.note.content['research_area']['value']
+            'label': edit.note.content.get('research_area', {}).get('value', 'N/A')
         }
     edge_values.append(area_value)
 
@@ -170,29 +153,27 @@ def process(client, edit, invitation):
             )
         )
 
-    if any(edge.weight < 10 for edge in aggregate_score_edges): ## If scores were previous updated
-        edges_to_post = []
-        for edge in aggregate_score_edges:
-            edges_to_post.append(openreview.api.Edge(
-                invitation=edge.invitation,
-                readers=edge.readers,
-                writers=edge.writers,
-                nonreaders=edge.nonreaders,
-                signatures=edge.signatures,
-                head=edge.head,
-                tail=edge.tail,
-                weight=edge.weight + 10,
-                label=edge.label
-            ))
-        
-        client.delete_edges(
-            invitation=f"{role}/-/Aggregate_Score",
-            label=deployed_label,
-            tail=user,
-            wait_to_finish=True,
-            soft_delete=True
-        )
-        openreview.tools.post_bulk_edges(client, edges_to_post)
+    edges_to_post = []
+    for edge in aggregate_score_edges:
+        edges_to_post.append(openreview.api.Edge(
+            invitation=f"{role}/-/Emergency_Score",
+            readers=edge.readers,
+            writers=edge.writers,
+            nonreaders=edge.nonreaders,
+            signatures=edge.signatures,
+            head=edge.head,
+            tail=edge.tail,
+            weight=edge.weight
+        ))
+    
+    client.delete_edges(
+        invitation=f"{role}/-/Emergency_Score",
+        label=deployed_label,
+        tail=user,
+        wait_to_finish=True,
+        soft_delete=True
+    )
+    openreview.tools.post_bulk_edges(client, edges_to_post)
 
     ## Delete availability, assume they can review more than resubmissions
     client.delete_edges(
