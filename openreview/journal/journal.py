@@ -322,6 +322,9 @@ class Journal(object):
 
     def get_moderation_id(self, number=None):
         return self.__get_invitation_id(name='Moderation', number=number)
+    
+    def get_preferred_email_invitation_id(self):
+        return self.__get_invitation_id(name='Preferred_Emails')
 
     def get_reviewer_report_form(self):
         forum_note = self.client.get_notes(invitation=self.get_form_id(), content={ 'title': 'Reviewer Report'})

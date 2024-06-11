@@ -489,9 +489,7 @@ class TestTools():
         user_profile = guest_client.get_profile(email_or_id='user@qq.com')
         user2_profile = guest_client.get_profile(email_or_id='user2@qq.com')
 
-        with pytest.raises(OpenReviewException) as error:
-            openreview.tools.get_conflicts([user2_profile], user_profile)
-        assert "You do not have the required permissions as some emails are obfuscated" in error.value.args[0]
+        openreview.tools.get_conflicts([user2_profile], user_profile)
 
         profile1 = openreview.Profile(
             id = '~Test_Conflict1',

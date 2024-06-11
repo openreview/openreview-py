@@ -52,7 +52,6 @@ def process(client, edit, invitation):
         raise openreview.OpenReviewException(f'user {user} can not reply to this invitation, invalid status {edge.label}')
 
     preferred_name=user_profile.get_preferred_name(pretty=True) if user_profile else edge.tail
-    preferred_email=user_profile.get_preferred_email() if user_profile else edge.tail
 
     assignment_edges = client.get_edges(invitation=assignment_invitation_id, head=submission.id, tail=edge.tail)
 
@@ -106,7 +105,7 @@ OpenReview Team'''
             if is_reviewer:
                 subject=f'[{short_phrase}] {committee_name} {preferred_name} accepted {action_string} paper {submission.number}'
                 message =f'''Hi {{{{fullname}}}},
-The {committee_name} {preferred_name}({preferred_email}) that was invited {action_string} paper {submission.number} has accepted the invitation and is now assigned to the paper {submission.number}.
+The {committee_name} {preferred_name} that was invited {action_string} paper {submission.number} has accepted the invitation and is now assigned to the paper {submission.number}.
 
 OpenReview Team'''
 

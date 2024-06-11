@@ -1433,13 +1433,10 @@ def get_profile_info(profile, n_years=None):
 
     ## Emails section
     for email in profile.content['emails']:
-        if email.startswith("****@"):
-            raise openreview.OpenReviewException("You do not have the required permissions as some emails are obfuscated. Please login with the correct account or contact support.")
         # split email
         if '@' in email:
             domain = email.split('@')[1]
             domains.add(domain)
-            emails.add(email)
         else:
             print('Profile with invalid email:', profile.id, email)
 
@@ -1505,15 +1502,6 @@ def get_neurips_profile_info(profile, n_years=None):
 
     ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
     relations = filter_relations_by_year(profile.content.get('relations', []), cut_off_year, ['Coauthor','Coworker'])
-
-    ## Emails section
-    for email in profile.content['emails']:
-        if email.startswith("****@"):
-            raise openreview.OpenReviewException("You do not have the required permissions as some emails are obfuscated. Please login with the correct account or contact support.")
-        if '@' in email:
-            emails.add(email)
-        else:
-            print('Profile with invalid email:', profile.id, email)
 
     ## if institution section is empty, add email domains
     if not domains:
