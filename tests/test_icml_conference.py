@@ -5429,6 +5429,28 @@ Best,
         replies = pc_client.get_notes(forum=request_form.id, invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment')
         assert len(replies) == 22
 
+        # submit another camera-ready revision after authors have been released
+        author_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        revision_edit = author_client.post_note_edit(invitation='ICML.cc/2023/Conference/Submission1/-/Camera_Ready_Revision',
+            signatures=['ICML.cc/2023/Conference/Submission1/Authors'],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': accepted_submissions[0].content['title']['value']},
+                    'abstract': { 'value': accepted_submissions[0].content['abstract']['value'] + ' UPDATED'},
+                    'authors': {'value': accepted_submissions[0].content['authors']['value']},
+                    'authorids': {'value': accepted_submissions[0].content['authorids']['value']},
+                    'pdf': { 'value': '/pdf/' + 'p' * 40 +'.pdf' }
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=revision_edit['id'])
+
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+        accepted_submissions = venue.get_submissions(accepted=True, sort='number:asc')
+
+        assert accepted_submissions[0].readers == ['everyone']
+        assert 'readers' not in accepted_submissions[0].content['authors']
+        assert 'readers' not in accepted_submissions[0].content['authorids']
+
     def test_forum_chat(self, openreview_client, helpers):
 
         submission_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Submission')
