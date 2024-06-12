@@ -153,7 +153,7 @@ def get_profile(client, value, with_publications=False):
     return profile
 
 
-def get_profiles(client, ids_or_emails, with_publications=False, with_relations=False, as_dict=False):
+def get_profiles(client, ids_or_emails, with_publications=False, with_relations=False, with_preferred_emails=False, as_dict=False):
     '''
     Helper function that repeatedly queries for profiles, given IDs and emails.
     Useful for getting more Profiles than the server will return by default (1000)
@@ -169,13 +169,13 @@ def get_profiles(client, ids_or_emails, with_publications=False, with_relations=
     profile_by_id = {}
     profile_by_id_or_email = {}
 
-    def process_profile(profile):
+    def process_profile(profile, email=None):
         profile_by_id[profile.id] = profile
         for name in profile.content.get("names", []):
             if name.get("username"):
                 profile_by_id_or_email[name.get("username")] = profile
-        for confirmed_email in profile.content.get('emailsConfirmed', []):
-            profile_by_id_or_email[confirmed_email] = profile        
+        if email:
+            profile_by_id_or_email[email] = profile        
 
     batch_size = 1000
     ## Get profiles by id and add them to the profiles list
@@ -190,7 +190,7 @@ def get_profiles(client, ids_or_emails, with_publications=False, with_relations=
         batch_emails = emails[j:j+batch_size]
         batch_profile_by_email = client.search_profiles(confirmedEmails=batch_emails)
         for email, profile in batch_profile_by_email.items():
-            process_profile(profile)            
+            process_profile(profile, email)            
 
     for email in emails:
         if email not in profile_by_id_or_email:
@@ -249,6 +249,15 @@ def get_profiles(client, ids_or_emails, with_publications=False, with_relations=
                 relation_profile = relation_profiles_by_id.get(relation.get('username')) or relation_profiles_by_id.get(relation.get('email'))
                 if relation_profile:
                     relation['profile_id'] = relation_profile.id
+
+    if with_preferred_emails:
+
+        preferred_email_by_id = { g['id']['head']: g['values'][0]['tail'] for g in client.get_grouped_edges(invitation=with_preferred_emails, groupby='head', select='tail')}
+
+        for profile in profiles:
+            preferred_email = preferred_email_by_id.get(profile.id)
+            if preferred_email:
+                profile.content['preferredEmail'] = preferred_email
     
     if as_dict:
         profiles_as_dict = {}

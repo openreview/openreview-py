@@ -6438,19 +6438,22 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         venue_id = self.journal.venue_id
 
+        if openreview.tools.get_invitation(self.client, self.journal.get_preferred_emails_invitation_id()):
+            return
+
         invitation = Invitation(
-            id=self.journal.get_preferred_email_invitation_id(),
+            id=self.journal.get_preferred_emails_invitation_id(),
             invitees=[venue_id],
             readers=[venue_id],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=['~Super_User1'], ## it should be the super user to get full email addresses
             minReplies=1,
             maxReplies=1,
             type='Edge',
             edit={
                 'id': {
                     'param': {
-                        'withInvitation': self.journal.get_preferred_email_invitation_id(),
+                        'withInvitation': self.journal.get_preferred_emails_invitation_id(),
                         'optional': True
                     }
                 },                

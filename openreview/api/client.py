@@ -503,15 +503,13 @@ class OpenReviewClient(object):
         if confirmedEmails:
             full_response = []
             for email_batch in batches(confirmedEmails):
-                response = self.session.post(self.profiles_search_url, json = {'emails': email_batch}, headers = self.headers)
+                response = self.session.post(self.profiles_search_url, json = {'confirmedEmails': email_batch}, headers = self.headers)
                 response = self.__handle_response(response)
                 full_response.extend(response.json()['profiles'])
 
             profiles_by_email = {}
             for p in full_response:
-                profile = Profile.from_json(p)
-                if p['email'] in profile.content['emailsConfirmed']:
-                    profiles_by_email[p['email']] = profile
+                profiles_by_email[p['email']] = Profile.from_json(p)
             return profiles_by_email
 
         if ids:
