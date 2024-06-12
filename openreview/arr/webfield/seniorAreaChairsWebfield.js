@@ -27,6 +27,7 @@ const traverse = `${domain.content.area_chairs_assignment_id?.value}`
 const edit = `${domain.content.area_chairs_assignment_id?.value};${domain.content.area_chairs_assignment_id?.value.replace('Assignment', 'Invite_Assignment')}`
 const browse = [
     `${domain.content.area_chairs_id?.value}/-/Agreggate_Score`,
+    `${domain.content.area_chairs_id?.value}/-/Emergency_Score`,
     domain.content.area_chairs_affinity_score_id?.value, 
     `${domain.content.area_chairs_id?.value}/-/Emergency_Score`,
     `${domain.content.area_chairs_id?.value}/-/Research_Area`,
@@ -51,6 +52,7 @@ const browseReviewerInvitations = [
   domain.content.reviewers_conflict_id?.value,
   `${reviewersId}/-/Research_Area`,
   `${reviewersId}/-/Status`,
+  `${reviewersId}/-/Emergency_Score`,
 ].join(';')
 
 const headBrowseInvitations = [
@@ -113,7 +115,6 @@ return {
     filterFunction: entity.content?.track?.value && `return note.content?.track?.value==="${entity.content?.track?.value}"`,
     propertiesAllowed: {
       reviewerChecklistCount: `
-      console.log(row);
       const invitationToCheck="Reviewer_Checklist"; 
       const checklistReplies = row.note?.details?.replies.filter(reply => {
         const hasReply = reply.invitations.some(invitation => invitation.includes(invitationToCheck)); 
