@@ -159,10 +159,12 @@ return {
           const anonId = obj?.officialReview?.anonymousId ?? ''
           const replies = obj?.note?.details?.replies ?? []
           const authorReplies = replies.filter(reply => 
-            reply.replyTo === reviewId && reply.signatures.some(sig => sig.includes('Authors'))
+            reply.replyto === reviewId && reply.signatures.some(sig => sig.includes('Authors'))
           )
+          console.log(replies)
+          console.log(authorReplies)
           const revRepliesToAuthorReplies = authorReplies.map(authorReply => 
-            replies.filter(reply => reply.replyTo === authorReply.id && reply.signatures.some(sig => sig.includes(anonId)))
+            replies.filter(reply => reply.replyto === authorReply.id && reply.signatures.some(sig => sig.includes(anonId)))
           ).flat()
 
           if (reviewId.length <= 0) {
@@ -177,22 +179,6 @@ return {
         `
       },
       {
-        label: 'Reviewers with Unsubmitted Checklists', filterFunc: `
-        console.log(row);
-        if (row.notesInfo.length <= 0){
-          return false;
-        }
-        
-        return !row.notesInfo.some(obj => {
-          return (obj?.notesInfo?.note?.details?.replies ?? []).some(reply => {
-            return (reply?.invitations ?? []).some(inv => {
-              return inv.includes('Action_Editor_Checklist')
-            })
-          })
-        })
-        `
-      },
-      {
         label: 'Registered Reviewers with Unsubmitted Load', filterFunc: `
         const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
         if (registrationNotes.length <= 0) {
@@ -201,14 +187,14 @@ return {
 
         const registrationForm = registrationNotes.filter(note => {
           const invitations = note?.invitations ?? []
-          return invitation.some(inv => inv.includes('Reviewers/-/Registration'))
+          return invitations.some(inv => inv.includes('Reviewers/-/Registration'))
         })
         const maxLoadForm = registrationNotes.filter(note => {
           const invitations = note?.invitations ?? []
-          return invitation.some(inv => inv.includes('Reviewers/-/Max_Load_And_Unavailability_Request'))
+          return invitations.some(inv => inv.includes('Reviewers/-/Max_Load_And_Unavailability_Request'))
         })
 
-        if (registrationForm.length >= 1 and maxLoadForm <= 0) {
+        if (registrationForm.length >= 1 && maxLoadForm.length <= 0) {
           return true
         }
         return false
@@ -223,18 +209,18 @@ return {
 
         const registrationForm = registrationNotes.filter(note => {
           const invitations = note?.invitations ?? []
-          return invitation.some(inv => inv.includes('Reviewers/-/Registration'))
+          return invitations.some(inv => inv.includes('Reviewers/-/Registration'))
         })
         const maxLoadForm = registrationNotes.filter(note => {
           const invitations = note?.invitations ?? []
-          return invitation.some(inv => inv.includes('Reviewers/-/Max_Load_And_Unavailability_Request'))
+          return invitations.some(inv => inv.includes('Reviewers/-/Max_Load_And_Unavailability_Request'))
         })
-
-        if (registrationForm.length >= 1 and maxLoadForm <= 0) {
+        
+        if (registrationForm.length <= 0 || maxLoadForm.length <= 0) {
           return false
         }
 
-        const load = typeof maxLoadForm.content.maximum_load_this_cycle.value === 'number' ? maxLoadForm.content.maximum_load_this_cycle.value : parseInt(maxLoadForm.content.maximum_load_this_cycle.value, 10)
+        const load = typeof maxLoadForm[0].content.maximum_load_this_cycle.value === 'number' ? maxLoadForm[0].content.maximum_load_this_cycle.value : parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
 
         if (load === 0){
           return true
@@ -287,14 +273,14 @@ return {
 
         const registrationForm = registrationNotes.filter(note => {
           const invitations = note?.invitations ?? []
-          return invitation.some(inv => inv.includes('Area_Chairs/-/Registration'))
+          return invitations.some(inv => inv.includes('Area_Chairs/-/Registration'))
         })
         const maxLoadForm = registrationNotes.filter(note => {
           const invitations = note?.invitations ?? []
-          return invitation.some(inv => inv.includes('Area_Chairs/-/Max_Load_And_Unavailability_Request'))
+          return invitations.some(inv => inv.includes('Area_Chairs/-/Max_Load_And_Unavailability_Request'))
         })
 
-        if (registrationForm.length >= 1 and maxLoadForm <= 0) {
+        if (registrationForm.length >= 1 && maxLoadForm.length <= 0) {
           return true
         }
         return false
@@ -309,18 +295,18 @@ return {
 
         const registrationForm = registrationNotes.filter(note => {
           const invitations = note?.invitations ?? []
-          return invitation.some(inv => inv.includes('Area_Chairs/-/Registration'))
+          return invitations.some(inv => inv.includes('Area_Chairs/-/Registration'))
         })
         const maxLoadForm = registrationNotes.filter(note => {
           const invitations = note?.invitations ?? []
-          return invitation.some(inv => inv.includes('Area_Chairs/-/Max_Load_And_Unavailability_Request'))
+          return invitations.some(inv => inv.includes('Area_Chairs/-/Max_Load_And_Unavailability_Request'))
         })
-
-        if (registrationForm.length >= 1 and maxLoadForm <= 0) {
+        
+        if (registrationForm.length <= 0 || maxLoadForm.length <= 0) {
           return false
         }
 
-        const load = typeof maxLoadForm.content.maximum_load_this_cycle.value === 'number' ? maxLoadForm.content.maximum_load_this_cycle.value : parseInt(maxLoadForm.content.maximum_load_this_cycle.value, 10)
+        const load = typeof maxLoadForm[0].content.maximum_load_this_cycle.value === 'number' ? maxLoadForm[0].content.maximum_load_this_cycle.value : parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
 
         if (load === 0){
           return true
@@ -346,6 +332,6 @@ return {
         return false
         `
       }
-    ] 
+    ]
   }
 }
