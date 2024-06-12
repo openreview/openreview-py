@@ -5046,6 +5046,188 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assert 'Reject' in invitation.reply['content']['home_page_tab_names']['default']
         assert invitation.reply['content']['home_page_tab_names']['default']['Reject'] == 'Reject'
 
+        #make sure all decision process functions have finished
+        for number in range(1, 101):
+            helpers.await_queue_edit(openreview_client, invitation=f'ICML.cc/2023/Conference/Submission{number}/-/Decision')
+
+        authors_accepted_group = openreview_client.get_group('ICML.cc/2023/Conference/Authors/Accepted')
+        num_accepted_papers = len(authors_accepted_group.members)
+
+        # add publication chair
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Thirty-ninth International Conference on Machine Learning',
+                'Official Venue Name': 'Thirty-ninth International Conference on Machine Learning',
+                'Abbreviated Venue Name': 'ICML 2023',
+                'Official Website URL': 'https://icml.cc',
+                'program_chair_emails': ['pc@icml.cc', 'pc3@icml.cc'],
+                'contact_email': 'pc@icml.cc',
+                'publication_chairs': 'Yes, our venue has Publication Chairs',
+                'publication_chairs_emails': ['publicationchair@icml.com'],
+                'Venue Start Date': '2023/07/01',
+                'Submission Deadline': request_form.content['Submission Deadline'],
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'Additional Submission Options': request_form.content['Additional Submission Options'],
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        pub_chair_group = openreview_client.get_group('ICML.cc/2023/Conference/Publication_Chairs')
+        assert pub_chair_group and 'publicationchair@icml.com' in pub_chair_group.members
+
+        # check members have not changed
+        authors_accepted_group = openreview_client.get_group('ICML.cc/2023/Conference/Authors/Accepted')
+        assert len(authors_accepted_group.members) == num_accepted_papers
+
+        #run post submission, give publication chairs access to accepted papers
+        now = datetime.datetime.utcnow()
+        short_name = 'ICML 2023'
+        post_decision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'reveal_authors': 'No, I don\'t want to reveal any author identities.',
+                'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
+                'hide_fields': ['supplementary_material', 'pdf'],
+                'home_page_tab_names': {
+                    'Accept': 'Accept',
+                    'Revision Needed': 'Revision Needed',
+                    'Reject': 'Submitted'
+                },
+                'send_decision_notifications': 'No, I will send the emails to the authors',
+                'accept_email_content': f'''Dear {{{{fullname}}}},
+
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+
+Best,
+{short_name} Program Chairs
+''',
+                'reject_email_content': f'''Dear {{{{fullname}}}},
+
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted.
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+
+Best,
+{short_name} Program Chairs
+''',
+                'revision_needed_email_content': f'''Dear {{{{fullname}}}},
+
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}.
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+
+Best,
+{short_name} Program Chairs
+'''
+            },
+            forum=request_form.forum,
+            invitation=invitation.id,
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+        assert post_decision_stage_note
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id = post_decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        submissions = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
+        submission = submissions[0]
+
+        # assert PCs can't use Submission invitation after post decision is run
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), pc_client_v2.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+        note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
+        assert note_div
+        button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
+        assert button_row
+        buttons = button_row.find_elements(By.CLASS_NAME, 'btn-xs')
+        assert buttons[0].text == 'Edit  '
+        buttons[0].click()
+        time.sleep(0.5)
+        dropdown = button_row.find_element(By.CLASS_NAME, 'dropdown-menu')
+        dropdown_values = dropdown.find_elements(By.TAG_NAME, "a")
+        values = [value.text for value in dropdown_values]
+        assert ['Post Submission', 'PC Revision', 'Ethics Review Flag'] == values
+
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+        accepted_submissions = venue.get_submissions(accepted=True, sort='number:asc')
+        rejected_submissions = venue.get_submissions(venueid='ICML.cc/2023/Conference/Rejected_Submission', sort='number:asc')
+
+        assert 'ICML.cc/2023/Conference/Publication_Chairs' in accepted_submissions[0].readers
+        assert 'ICML.cc/2023/Conference/Publication_Chairs' in accepted_submissions[0].content['authors']['readers']
+        assert 'ICML.cc/2023/Conference/Publication_Chairs' in accepted_submissions[0].content['authorids']['readers']
+        assert 'ICML.cc/2023/Conference/Publication_Chairs' not in rejected_submissions[0].readers
+        assert 'ICML.cc/2023/Conference/Publication_Chairs' not in rejected_submissions[0].content['authors']['readers']
+        assert 'ICML.cc/2023/Conference/Publication_Chairs' not in rejected_submissions[0].content['authorids']['readers']
+
+        # enable camera-ready revisions
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        revision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'submission_revision_name': 'Camera Ready Revision',
+                'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
+                'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
+                'accepted_submissions_only': 'Enable revision for accepted submissions only',
+                'submission_author_edition': 'Allow reorder of existing authors only',
+                'submission_revision_remove_options': ['keywords', 'financial_aid', 'subject_areas', 'position_paper_track']
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Submission_Revision_Stage'.format(request_form.number),
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support', 'ICML.cc/2023/Conference/Publication_Chairs'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+        assert revision_stage_note
+
+        helpers.await_queue()
+
+        # submit camera-ready revision
+        author_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        revision_edit = author_client.post_note_edit(invitation='ICML.cc/2023/Conference/Submission1/-/Camera_Ready_Revision',
+            signatures=['ICML.cc/2023/Conference/Submission1/Authors'],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': accepted_submissions[0].content['title']['value'] + ' UPDATED' },
+                    'abstract': accepted_submissions[0].content['abstract'],
+                    'authors': {'value': accepted_submissions[0].content['authors']['value']},
+                    'authorids': {'value': accepted_submissions[0].content['authorids']['value']},
+                    'pdf': { 'value': '/pdf/' + 'p' * 40 +'.pdf' }
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=revision_edit['id'])
+
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+        accepted_submissions = venue.get_submissions(accepted=True, sort='number:asc')
+        rejected_submissions = venue.get_submissions(venueid='ICML.cc/2023/Conference/Rejected_Submission', sort='number:asc')
+
+        assert 'ICML.cc/2023/Conference/Publication_Chairs' in accepted_submissions[0].readers
+        assert 'ICML.cc/2023/Conference/Publication_Chairs' in accepted_submissions[0].content['authors']['readers']
+        assert 'ICML.cc/2023/Conference/Publication_Chairs' in accepted_submissions[0].content['authorids']['readers']
+        assert 'ICML.cc/2023/Conference/Publication_Chairs' not in rejected_submissions[0].readers
+        assert 'ICML.cc/2023/Conference/Publication_Chairs' not in rejected_submissions[0].content['authors']['readers']
+        assert 'ICML.cc/2023/Conference/Publication_Chairs' not in rejected_submissions[0].content['authorids']['readers']
+
         #Post a post decision note, unhide financial_aid and hide pdf
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
@@ -5107,7 +5289,7 @@ Best,
         rejected_submissions = venue.get_submissions(venueid='ICML.cc/2023/Conference/Rejected_Submission', sort='number:asc')
         assert (len(accepted_submissions)+len(rejected_submissions)) == 100
 
-        messages = openreview_client.get_messages(subject='[ICML 2023] Decision notification for your submission 1: Paper title 1 Version 2')
+        messages = openreview_client.get_messages(subject='[ICML 2023] Decision notification for your submission 1: Paper title 1 Version 2 UPDATED')
         assert len(messages) == 5
         assert messages[0]['content']['replyTo'] == 'pc@icml.cc'
         recipients = [msg['content']['to'] for msg in messages]
@@ -5137,7 +5319,7 @@ Best,
         year = datetime.datetime.now().year
         valid_bibtex = '''@inproceedings{
 user'''+str(year)+'''paper,
-title={Paper title 1 Version 2},
+title={Paper title 1 Version 2 {UPDATED}},
 author={SomeFirstName User and Peter SomeLastName and Andrew Mc and SAC ICMLOne and Melisa ICML},
 booktitle={Thirty-ninth International Conference on Machine Learning},
 year={'''+str(year)+'''},
@@ -5176,72 +5358,6 @@ url={https://openreview.net/forum?id='''
 }'''
 
         assert '_bibtex' in rejected_submissions[0].content and rejected_submissions[0].content['_bibtex']['value'] == valid_bibtex
-
-        #make sure all decision process functions have finished
-        for number in range(1, 101):
-            helpers.await_queue_edit(openreview_client, invitation=f'ICML.cc/2023/Conference/Submission{number}/-/Decision')
-
-        authors_accepted_group = openreview_client.get_group('ICML.cc/2023/Conference/Authors/Accepted')
-        num_accepted_papers = len(authors_accepted_group.members)
-
-        # add publication chair
-        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
-
-        pc_client.post_note(openreview.Note(
-            content={
-                'title': 'Thirty-ninth International Conference on Machine Learning',
-                'Official Venue Name': 'Thirty-ninth International Conference on Machine Learning',
-                'Abbreviated Venue Name': 'ICML 2023',
-                'Official Website URL': 'https://icml.cc',
-                'program_chair_emails': ['pc@icml.cc', 'pc3@icml.cc'],
-                'contact_email': 'pc@icml.cc',
-                'publication_chairs': 'Yes, our venue has Publication Chairs',
-                'publication_chairs_emails': ['publicationchair@icml.com'],
-                'Venue Start Date': '2023/07/01',
-                'Submission Deadline': request_form.content['Submission Deadline'],
-                'Location': 'Virtual',
-                'submission_reviewer_assignment': 'Automatic',
-                'How did you hear about us?': 'ML conferences',
-                'Expected Submissions': '100',
-                'Additional Submission Options': request_form.content['Additional Submission Options'],
-            },
-            forum=request_form.forum,
-            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
-            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
-            referent=request_form.forum,
-            replyto=request_form.forum,
-            signatures=['~Program_ICMLChair1'],
-            writers=[]
-        ))
-
-        helpers.await_queue()
-
-        pub_chair_group = openreview_client.get_group('ICML.cc/2023/Conference/Publication_Chairs')
-        assert pub_chair_group and 'publicationchair@icml.com' in pub_chair_group.members
-
-        # check members have not changed
-        authors_accepted_group = openreview_client.get_group('ICML.cc/2023/Conference/Authors/Accepted')
-        assert len(authors_accepted_group.members) == num_accepted_papers
-
-        submissions = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
-        submission = submissions[0]
-
-        # assert PCs can't use Submission invitation after post decision is run
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), pc_client_v2.token, by=By.CLASS_NAME, wait_for_element='forum-note')
-        note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
-        assert note_div
-        button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
-        assert button_row
-        buttons = button_row.find_elements(By.CLASS_NAME, 'btn-xs')
-        assert buttons[0].text == 'Edit  '
-        buttons[0].click()
-        time.sleep(0.5)
-        dropdown = button_row.find_element(By.CLASS_NAME, 'dropdown-menu')
-        dropdown_values = dropdown.find_elements(By.TAG_NAME, "a")
-        values = [value.text for value in dropdown_values]
-        assert ['Post Submission', 'PC Revision', 'Ethics Review Flag'] == values
 
         #Post another post decision note
         now = datetime.datetime.utcnow()
@@ -5298,11 +5414,33 @@ Best,
         assert process_logs[0]['status'] == 'ok'
 
         # check emails were not resent and decision emails status comment was not re-posted
-        messages = openreview_client.get_messages(subject='[ICML 2023] Decision notification for your submission 1: Paper title 1 Version 2')
+        messages = openreview_client.get_messages(subject='[ICML 2023] Decision notification for your submission 1: Paper title 1 Version 2 UPDATED')
         assert len(messages) == 5
 
         replies = pc_client.get_notes(forum=request_form.id, invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment')
-        assert len(replies) == 20
+        assert len(replies) == 22
+
+        # submit another camera-ready revision after authors have been released
+        author_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        revision_edit = author_client.post_note_edit(invitation='ICML.cc/2023/Conference/Submission1/-/Camera_Ready_Revision',
+            signatures=['ICML.cc/2023/Conference/Submission1/Authors'],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': accepted_submissions[0].content['title']['value']},
+                    'abstract': { 'value': accepted_submissions[0].content['abstract']['value'] + ' UPDATED'},
+                    'authors': {'value': accepted_submissions[0].content['authors']['value']},
+                    'authorids': {'value': accepted_submissions[0].content['authorids']['value']},
+                    'pdf': { 'value': '/pdf/' + 'p' * 40 +'.pdf' }
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=revision_edit['id'])
+
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+        accepted_submissions = venue.get_submissions(accepted=True, sort='number:asc')
+
+        assert accepted_submissions[0].readers == ['everyone']
+        assert 'readers' not in accepted_submissions[0].content['authors']
+        assert 'readers' not in accepted_submissions[0].content['authorids']
 
     def test_forum_chat(self, openreview_client, helpers):
 
@@ -5336,15 +5474,15 @@ Best,
         assert invitation.date_processes[0].get('dates') is None
         assert invitation.date_processes[0].get('cron') == '0 */4 * * *'        
 
-        assert len(openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='reviewer2@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 1
-        assert len(openreview_client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 1
-        assert len(openreview_client.get_messages(to='reviewer3@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 1
-        assert len(openreview_client.get_messages(to='reviewer4@yahoo.com', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 1
-        assert len(openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 1
-        assert len(openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 1
-        assert len(openreview_client.get_messages(to='sac2@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='pc@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2')) == 0
+        assert len(openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='reviewer2@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 1
+        assert len(openreview_client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 1
+        assert len(openreview_client.get_messages(to='reviewer3@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 1
+        assert len(openreview_client.get_messages(to='reviewer4@yahoo.com', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 1
+        assert len(openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 1
+        assert len(openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 1
+        assert len(openreview_client.get_messages(to='sac2@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='pc@icml.cc', subject='[ICML 2023] New conversation in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
 
         pc_client=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
 
@@ -5361,15 +5499,15 @@ Best,
 
         helpers.await_queue_edit(openreview_client, edit_id=note_edit['id'])
 
-        assert len(openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='reviewer2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='reviewer3@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='reviewer4@yahoo.com', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='sac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='pc@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
+        assert len(openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='reviewer2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='reviewer3@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='reviewer4@yahoo.com', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='sac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='pc@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
 
         sac_client=openreview.api.OpenReviewClient(username='sac2@icml.cc', password=helpers.strong_password)
 
@@ -5386,15 +5524,15 @@ Best,
 
         helpers.await_queue_edit(openreview_client, edit_id=note_edit['id'])
 
-        assert len(openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='reviewer2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='reviewer3@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='reviewer4@yahoo.com', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='sac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='pc@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
+        assert len(openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='reviewer2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='reviewer3@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='reviewer4@yahoo.com', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='sac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='pc@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
 
         note_edit = sac_client.post_note_edit(
             invitation='ICML.cc/2023/Conference/Submission1/-/Chat',
@@ -5409,15 +5547,15 @@ Best,
 
         helpers.await_queue_edit(openreview_client, edit_id=note_edit['id'])
 
-        assert len(openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='reviewer2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='reviewer3@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='reviewer4@yahoo.com', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='sac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='pc@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
+        assert len(openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='reviewer2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='reviewer3@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='reviewer4@yahoo.com', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='sac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='pc@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
 
         note_edit = sac_client.post_note_edit(
             invitation='ICML.cc/2023/Conference/Submission1/-/Chat',
@@ -5432,15 +5570,15 @@ Best,
 
         helpers.await_queue_edit(openreview_client, edit_id=note_edit['id'])
 
-        assert len(openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='reviewer2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='reviewer3@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='reviewer4@yahoo.com', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='sac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='pc@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
+        assert len(openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='reviewer2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='reviewer3@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='reviewer4@yahoo.com', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='sac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='pc@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
 
         note_edit = sac_client.post_note_edit(
             invitation='ICML.cc/2023/Conference/Submission1/-/Chat',
@@ -5455,15 +5593,15 @@ Best,
 
         helpers.await_queue_edit(openreview_client, edit_id=note_edit['id'])
 
-        assert len(openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 1
-        assert len(openreview_client.get_messages(to='reviewer2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 1
-        assert len(openreview_client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 1
-        assert len(openreview_client.get_messages(to='reviewer3@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 1
-        assert len(openreview_client.get_messages(to='reviewer4@yahoo.com', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 1
-        assert len(openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 1
-        assert len(openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 1
-        assert len(openreview_client.get_messages(to='sac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
-        assert len(openreview_client.get_messages(to='pc@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2')) == 0
+        assert len(openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 1
+        assert len(openreview_client.get_messages(to='reviewer2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 1
+        assert len(openreview_client.get_messages(to='melisa@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 1
+        assert len(openreview_client.get_messages(to='reviewer3@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 1
+        assert len(openreview_client.get_messages(to='reviewer4@yahoo.com', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 1
+        assert len(openreview_client.get_messages(to='rachel_bis@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 1
+        assert len(openreview_client.get_messages(to='ac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 1
+        assert len(openreview_client.get_messages(to='sac2@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
+        assert len(openreview_client.get_messages(to='pc@icml.cc', subject='[ICML 2023] New messages in committee members chat for submission 1: Paper title 1 Version 2 UPDATED')) == 0
 
         ## Add tag emoji
         tag = sac_client.post_tag(openreview.api.Tag(

@@ -1169,17 +1169,7 @@ class InvitationBuilder(object):
                     }
                 }
 
-            bid_score_spec = {
-                'weight': 1,
-                'default': 0,
-                'translate_map' : {
-                    'Very High': 1.0,
-                    'High': 0.5,
-                    'Neutral': 0.0,
-                    'Low': -0.5,
-                    'Very Low': -1.0
-                }
-            }
+            bid_score_spec = bid_stage.default_scores_spec
 
             bid_invitation_id = venue.get_invitation_id(bid_stage.name, prefix=match_group_id)
 
@@ -2534,6 +2524,8 @@ class InvitationBuilder(object):
         for field in content:
             if field in hidden_field_names:
                 content[field]['readers'] = [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
+                if field in ['authors', 'authorids'] and only_accepted and self.venue.use_publication_chairs:
+                    content[field]['readers'].append(self.venue.get_publication_chairs_id())
             if field not in hidden_field_names and invitation_content.get(field, {}).get('readers', []):
                 content[field]['readers'] = { 'delete': True }
 

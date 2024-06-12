@@ -1513,11 +1513,13 @@ arr_official_review_content = {
 
 
 arr_metareview_content = {
-    "metareview": {
+    "metareview" : {
         "value": {
             "param": {
                 "minLength": 1,
                 "optional": False,
+                "input": "textarea",
+                "markdown": True,
                 "type": "string"
             }
         },
@@ -1529,6 +1531,8 @@ arr_metareview_content = {
             "param": {
                 "minLength": 1,
                 "optional": False,
+                "input": "textarea",
+                "markdown": True,
                 "type": "string"
             }
         },
@@ -1540,6 +1544,8 @@ arr_metareview_content = {
             "param": {
                 "minLength": 1,
                 "optional": False,
+                "input": "textarea",
+                "markdown": True,
                 "type": "string"
             }
         },
@@ -1610,6 +1616,8 @@ arr_metareview_content = {
             "param": {
                 "minLength": 1,
                 "optional": True,
+                "input": "textarea",
+                "markdown": True,
                 "type": "string"
             }
         },
@@ -1621,6 +1629,8 @@ arr_metareview_content = {
             "param": {
                 "minLength": 1,
                 "optional": False,
+                "input": "textarea",
+                "markdown": True,
                 "type": "string",
                 "default": "There are no concerns with this submission"
             }
@@ -1796,9 +1806,9 @@ arr_max_load_task = {
         "value": {
             "param": {
                 "input": "radio",
-                "enum": ["0", "4", "5", "6", "7", "8"],
+                "enum": [0, 4, 5, 6, 7, 8],
                 "optional": False,
-                "type": "string",
+                "type": "integer",
             }
         },
         "description": "Enter your maximum reviewing load for papers in this cycle. This refers only to the specific role mentioned at the top of this page. A load of '0' indicates you are unable to review new submissions.",
@@ -1877,9 +1887,9 @@ arr_ac_max_load_task["maximum_load_this_cycle"] = {
         "value": {
             "param": {
                 "input": "radio",
-                "enum": ["0", "6", "7", "8", "9", "10", "11", "12"],
+                "enum": [0, 6, 7, 8, 9, 10, 11, 12],
                 "optional": False,
-                "type": "string",
+                "type": "integer",
             }
         },
         "description": "Enter your maximum reviewing load for papers in this cycle. This refers only to the specific role mentioned at the top of this page. A load of '0' indicates you are unable to review new submissions.",
@@ -1889,7 +1899,10 @@ arr_sac_max_load_task = deepcopy(arr_max_load_task)
 del arr_sac_max_load_task["maximum_load_this_cycle_for_resubmissions"]
 arr_sac_max_load_task["maximum_load_this_cycle"] = {
     "value": {
-        "param": {"regex": "[0-9]{0,3}", "optional": False, "type": "string"}
+        "param": {
+            "optional": False,
+            "type": "integer"
+        }
     },
     "description": "Enter your maximum reviewing load for papers in this cycle. This refers only to the specific role mentioned at the top of this page. A load of '0' indicates you are unable to review new submissions.",
     "order": 1,
