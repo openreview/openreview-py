@@ -91,6 +91,7 @@ class OpenReviewClient(object):
         self.note_edits_url = self.baseurl + '/notes/edits'
         self.invitation_edits_url = self.baseurl + '/invitations/edits'
         self.group_edits_url = self.baseurl + '/groups/edits'
+        self.activatelink_url = self.baseurl + '/activatelink'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
         self.limit = 1000
@@ -237,7 +238,7 @@ class OpenReviewClient(object):
 
         return json_response
 
-    def confirm_alternate_email(self, profile_id, alternate_email):
+    def confirm_alternate_email(self, profile_id, alternate_email, activation_token=None):
         """
         Confirms an alternate email address
 
@@ -249,9 +250,25 @@ class OpenReviewClient(object):
         :return: Dictionary containing the profile information
         :rtype: dict
         """
-        response = self.session.post(self.alternate_confirm_url, json = { 'username': profile_id, 'alternate': alternate_email }, headers = self.headers)
+        response = self.session.post(self.alternate_confirm_url + (f'/{activation_token}' if activation_token else ''), json = { 'username': profile_id, 'alternate': alternate_email }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
+    
+    def activate_email_with_token(self, email, token, activation_token=None):
+        """
+        Activates an email address
+
+        :param email: email address to activate
+        :type email: str
+        :param token: token to activate the email
+        :type token: str
+
+        :return: Dictionary containing the profile information
+        :rtype: dict
+        """
+        response = self.session.put(self.activatelink_url + (f'/{activation_token}' if activation_token else ''), json = { 'email': email, 'token': token }, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()    
     
     def get_activatable(self, token = None):
         response = self.session.get(self.baseurl + '/activatable/' + token, params = {}, headers = self.headers)

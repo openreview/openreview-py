@@ -2348,5 +2348,48 @@ The OpenReview Team.
         content = selenium.find_element(By.ID, 'content')
         assert 'Activation token is not valid' in content.text
 
+    def test_confirm_email_for_inactive_profile(self, profile_management, openreview_client, helpers, request_page, selenium):
         
+        guest = openreview.api.OpenReviewClient()
+        res = guest.register_user(email = 'confirm_alternate@mail.com', fullname= 'Lionel Messi', password = helpers.strong_password)
+
+        guest.confirm_alternate_email(profile_id='~Lionel_Messi1', alternate_email='messi@mail.com', activation_token='confirm_alternate@mail.com')
+
+        messages = openreview_client.get_messages(subject='OpenReview Email Confirmation', to='messi@mail.com')
+        assert len(messages) == 1
+
+        guest.activate_email_with_token(email='messi@mail.com', token='000000', activation_token='confirm_alternate@mail.com')
+
+        profile = openreview_client.get_profile(email_or_id='~Lionel_Messi1')
+        assert len(profile.content['emails']) == 2
+        assert len(profile.content['emailsConfirmed']) == 2
+
+        profile_content={
+            'names': [
+                    {
+                        'fullname': 'Lionel Messi',
+                        'username': '~Lionel_Messi1',
+                        'preferred': True
+                    }
+                ],
+            'emails': ['confirm_alternate@mail.com', 'messi@mail.com'],
+            'preferredEmail': 'messi@mail.com'
+        }
+        profile_content['history'] = [{
+            'position': 'PhD Student',
+            'start': 2017,
+            'end': None,
+            'institution': {
+                'domain': 'google.com',
+            }
+        }]
+        res = guest.activate_user('confirm_alternate@mail.com', profile_content)
+
+        profile = openreview_client.get_profile(email_or_id='~Lionel_Messi1')
+        assert len(profile.content['emails']) == 2
+        assert len(profile.content['emailsConfirmed']) == 2
+        assert profile.state == 'Active Automatic'        
+
+
+
 
