@@ -176,10 +176,9 @@ class EditInvitationBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation    
 
-    def set_edit_submission_content_invitation(self, invitation_id, include_license=False):
+    def set_edit_submission_content_invitation(self, invitation_id):
 
         venue_id = self.venue_id
-        venue = self.venue
         content_invitation_id = invitation_id + '/Form_Fields'
 
         invitation = Invitation(
@@ -199,6 +198,23 @@ class EditInvitationBuilder(object):
                                 'type': 'content'
                             }
                         }
+                    },
+                    'note_license': {
+                        'value': {
+                            'param': {
+                                'type': 'object[]',
+                                'input': 'select',
+                                'items':  [
+                                    {'value': {'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'}, 'optional': True, 'description': 'CC BY 4.0'},
+                                    {'value': {'value': 'CC BY-SA 4.0', 'optional': True, 'description': 'CC BY-SA 4.0'}, 'optional': True, 'description': 'CC BY-SA 4.0'},
+                                    {'value': {'value': 'CC BY-NC 4.0', 'optional': True, 'description': 'CC BY-NC 4.0'}, 'optional': True, 'description': 'CC BY-NC 4.0'},
+                                    {'value': {'value': 'CC BY-ND 4.0', 'optional': True, 'description': 'CC BY-ND 4.0'}, 'optional': True, 'description': 'CC BY-ND 4.0'},
+                                    {'value': {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'}, 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
+                                    {'value': {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'}, 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
+                                    {'value': {'value': 'CC0 1.0', 'optional': True, 'description': 'CC0 1.0'}, 'optional': True, 'description': 'CC0 1.0'}
+                                ]
+                            }
+                        }
                     }
                 },
                 'invitation': {
@@ -206,36 +222,17 @@ class EditInvitationBuilder(object):
                     'signatures': [venue_id],
                     'edit': {
                         'note': {
-                            'content': '${4/content/note_content/value}'
+                            'content': '${4/content/note_content/value}',
+                            'license': {
+                                'param': {
+                                    'enum': ['${7/content/note_license/value}']
+                                }
+                            }
                         }
                     }
                 }
             }  
         )
-
-        if include_license:
-            invitation.edit['content']['note_license'] = {
-                'value': {
-                    'param': {
-                        'type': 'string[]',
-                        'input': 'select',
-                        'items':  [
-                            {'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'},
-                            {'value': 'CC BY-SA 4.0', 'optional': True, 'description': 'CC BY-SA 4.0'},
-                            {'value': 'CC BY-NC 4.0', 'optional': True, 'description': 'CC BY-NC 4.0'},
-                            {'value': 'CC BY-ND 4.0', 'optional': True, 'description': 'CC BY-ND 4.0'},
-                            {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
-                            {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
-                            {'value': 'CC0 1.0', 'optional': True, 'description': 'CC0 1.0'}
-                        ]
-                    }
-                }
-            }
-            invitation.edit['invitation']['edit']['note']['license'] =  {
-                'param': {
-                    'enum': ['${7/content/note_license/value}']
-                }
-            }
 
         self.save_invitation(invitation, replacement=False)
         return invitation

@@ -139,7 +139,12 @@ class TestVenueConfiguration():
                         }
                     }
                 },
-                'note_license': { 'value':  ['CC BY-NC-ND 4.0', 'CC BY-NC-SA 4.0'] }
+                'note_license': {
+                    'value':  [
+                        {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
+                        {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'}
+                    ]
+                }
             }
         )
 
@@ -148,7 +153,18 @@ class TestVenueConfiguration():
         assert 'keywords' not in submission_inv.edit['note']['content']
         content_keys = submission_inv.edit['note']['content'].keys()
         assert all(field in content_keys for field in ['title', 'authors', 'authorids', 'TLDR', 'abstract', 'pdf'])
-        assert submission_inv.edit['note']['license']['param']['enum'] == ['CC BY-NC-ND 4.0', 'CC BY-NC-SA 4.0']
+        assert submission_inv.edit['note']['license']['param']['enum'] == [
+            {
+            "value": "CC BY-NC-ND 4.0",
+            "optional": True,
+            "description": "CC BY-NC-ND 4.0"
+          },
+          {
+            "value": "CC BY-NC-SA 4.0",
+            "optional": True,
+            "description": "CC BY-NC-SA 4.0"
+          }
+        ]
 
         notifications_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission/Notifications')
         assert notifications_inv
