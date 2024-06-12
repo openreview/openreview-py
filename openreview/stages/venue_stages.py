@@ -1278,7 +1278,7 @@ class MetaReviewRevisionStage(object):
 
 class DecisionStage(object):
 
-    def __init__(self, name = 'Decision', options = None, accept_options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False, additional_fields = {}, decisions_file=None):
+    def __init__(self, name = 'Decision', options = None, accept_options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False, additional_fields = {}, decisions_file=None, content=None):
         if not options:
             options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
         self.options = options
@@ -1295,6 +1295,7 @@ class DecisionStage(object):
         self.decisions_file = decisions_file
         self.decision_field_name = 'decision'
         self.remove_fields = []
+        self.content = content
 
     def get_readers(self, conference, number):
 
@@ -1327,6 +1328,11 @@ class DecisionStage(object):
         return [conference.get_authors_id(number = number)]
     
     def get_content(self, api_version='2', conference=None):
+
+        if self.content:
+            if 'decision' in self.content:
+                self.content['decision']['value']['param']['enum'] = self.options
+            return self.content
         
         content = default_content.decision_v2.copy()
 

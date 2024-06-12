@@ -24,6 +24,7 @@ class VenueConfiguration():
         workflow_invitations = WorkflowInvitations(self.client, self.support_group_id, self.super_user)
         workflow_invitations.setup_metareview_template_invitation()
         workflow_invitations.setup_comment_template_invitation()
+        workflow_invitations.setup_decision_template_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -707,7 +708,7 @@ class WorkflowInvitations():
                 'invitation': {
                     # 'id': '${2/content/venue_id/value}/-/${2/content/stage_name/value}',
                     'id': 'openreview.net/-/${2/content/stage_name/value}',
-                    'signatures': ['${{/content/venue_id/value}'],
+                    'signatures': ['${2/content/venue_id/value}'],
                 }
             }
         )
@@ -851,6 +852,145 @@ class WorkflowInvitations():
                                 ],
                                 'input': 'radio',
                                 'default': 'No, do not email SACs.'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    # 'id': '${2/content/venue_id/value}/-/${2/content/stage_name/value}',
+                    'id': 'openreview.net/-/${2/content/stage_name/value}',
+                    'signatures': ['${2/content/venue_id/value}'],
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_decision_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/-/Decision_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=[support_group_id],
+            signatures=[self.super_user],
+            process = self.get_process_content('process/templates_process.py'),
+            edit = {
+                'signatures': {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content' :{
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                            }
+                        }
+                    },
+                    'stage_name': {
+                        'order': 2,
+                        'description': 'Stage Name, use underscores to represent spaces',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Decision'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'due_date': {
+                        'order': 4,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'decision_options': {
+                        'order': 5,
+                        'description': 'List all decision options. For example: Accept, Reject, Invite to Workshop. Default options are: Accept (Oral), Accept (Poster), Reject',
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'regex': '.+',
+                                'default': ['Accept (Oral), Accept (Poster), Reject']
+                            }
+                        }
+                    },
+                    'accept_decision_options': {
+                        'order': 6,
+                        'description': 'Which decision options are considered as an acceptance? If left empty, only decisions containing the word "Accept" will signify acceptance to the venue.',
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'regex': '.*',
+                                'optional': True
+                            }
+                        }
+                    },
+                    'readers': {
+                        'order': 7,
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'input': 'select',
+                                'items': [
+                                    {'value': 'Program Chairs', 'optional': False, 'description': 'Program Chairs'},
+                                    {'value': 'Assigned Senior Area Chairs', 'optional': False, 'description': 'Assigned Senior Area Chairs'},
+                                    {'value': 'Assigned Area Chairs', 'optional': False, 'description': 'Assigned Area Chairs'},
+                                    {'value': 'Assigned Reviewers', 'optional': True, 'description': 'Assigned Reviewers'},
+                                    {'value': 'Paper Authors', 'optional': True, 'description': 'Paper Authors'},
+                                    {'value': 'Everyone', 'optional': True, 'description': 'Public'}
+                                ]
+                            }
+                        }
+                    },
+                    'content': {
+                        'order': 8,
+                        'value': {
+                            'param': {
+                                'type': 'json',
+                                'default': default_content.decision_v2,
+                                'optional': True
+                            }
+                        }
+                    },
+                    'decisions_file': {
+                        'order': 9,
+                        'description': 'Upload a CSV file with decisions. The CSV file should have no header row and one decision per line in the following format: paper_number, decision, comment. The comment is optional.',
+                        'value': {
+                            'param': {
+                                'type': 'file',
+                                'maxSize': 50,
+                                'extensions': ['csv'],
+                                'optional': True
                             }
                         }
                     }

@@ -588,3 +588,82 @@ class TestVenueConfiguration():
         ]
         assert 'title' in invitation.edit['note']['content']
         assert invitation.edit['note']['content']['confidence']['value']['param']['type'] == 'float'
+
+    def test_decision_stage(self, openreview_client, test_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='sherry@iclr.cc', password=helpers.strong_password)
+
+        now = datetime.datetime.utcnow()
+        cdate = openreview.tools.datetime_millis(now - datetime.timedelta(minutes=1))
+        duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=5))
+
+        edit = pc_client.post_invitation_edit(
+            invitations='openreview.net/Support/-/Decision_Template',
+            signatures=['~ProgramChair_ICLR1'],
+            content={
+                'venue_id': { 'value': 'ICLR.cc/2025/Conference' },
+                'stage_name': { 'value': 'Final_Decision' },
+                'activation_date': { 'value': cdate },
+                'due_date': { 'value': duedate },
+                'decision_options': { 'value': ['Accept', 'Revision Needed', 'Reject'] },
+                'accept_decision_options': { 'value': ['Accept'] },
+                'readers': { 'value': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Paper Authors']},
+                'content': {
+                    'value': {
+                        'title': {
+                            'order': 1,
+                            'value': 'Paper Decision'
+                        },
+                        'decision': {
+                            'order': 2,
+                            'description': 'Decision',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'Accept (Oral)',
+                                        'Accept (Poster)',
+                                        'Reject'
+                                    ],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'comment': {
+                            'order': 3,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'markdown': True,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], count=1)
+
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Final_Decision')
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Final_Decision/Deadlines')
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Final_Decision/Form_Fields')
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Final_Decision/Readers')
+
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/Final_Decision-0-1', count=1)
+
+        invitations = pc_client.get_invitations(invitation='ICLR.cc/2025/Conference/-/Final_Decision')
+        assert len(invitations) == 10
+
+        invitation  = openreview_client.get_invitation('ICLR.cc/2025/Conference/Submission1/-/Final_Decision')
+        assert invitation.edit['readers'] == [
+            "ICLR.cc/2025/Conference/Program_Chairs",
+            "ICLR.cc/2025/Conference/Submission1/Senior_Area_Chairs",
+            "ICLR.cc/2025/Conference/Submission1/Area_Chairs",
+            "ICLR.cc/2025/Conference/Submission1/Reviewers",
+            "ICLR.cc/2025/Conference/Submission1/Authors"
+        ]
+        assert 'decision' in invitation.edit['note']['content']
+        assert invitation.edit['note']['content']['decision']['value']['param']['enum'] == ['Accept', 'Revision Needed', 'Reject']

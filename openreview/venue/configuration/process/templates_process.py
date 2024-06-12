@@ -8,7 +8,7 @@ def process(client, edit, invitation):
     stage_name = edit.content['stage_name']['value']
     activation_date = datetime.datetime.fromtimestamp(edit.content['activation_date']['value']/1000)
     due_date = datetime.datetime.fromtimestamp(edit.content['due_date']['value']/1000) if 'due_date' in edit.content else None
-    expiration_date = datetime.datetime.fromtimestamp(edit.content['expiration_date']['value']/1000)
+    expiration_date = datetime.datetime.fromtimestamp(edit.content['expiration_date']['value']/1000) if 'expiration_date' in edit.content else None
 
 
     if invitation.id.endswith('Meta_Review_Template'):
@@ -101,3 +101,25 @@ def process(client, edit, invitation):
             invitation_id = venue.get_invitation_id(venue.comment_stage.public_name)
             venue.edit_invitation_builder.set_edit_deadlines_invitation(invitation_id)
             venue.edit_invitation_builder.set_edit_content_invitation(invitation_id)
+
+    elif invitation.id.endswith('Decision_Template'):
+
+        venue.decision_stage = openreview.stages.DecisionStage(
+            options = edit.content['decision_options']['value'],
+            accept_options = edit.content['accept_decision_options']['value'],
+            start_date = activation_date,
+            due_date = due_date,
+            name = stage_name,
+            public = 'Everyone' in edit.content['readers']['value'],
+            release_to_authors = 'Paper Authors' in edit.content['readers']['value'],
+            release_to_reviewers = 'Assigned Reviewers' in edit.content['readers']['value'],
+            release_to_area_chairs = 'Assigned Area Chairs' in edit.content['readers']['value'],
+            decisions_file=edit.content.get('decision_file', None),
+            content = edit.content['content']['value']
+        )
+
+        invitation_id = venue.get_invitation_id(stage_name)
+        venue.create_decision_stage()
+        venue.edit_invitation_builder.set_edit_deadlines_invitation(invitation_id)
+        venue.edit_invitation_builder.set_edit_content_invitation(invitation_id)
+        venue.edit_invitation_builder.set_edit_reply_readers_invitation(invitation_id)
