@@ -27,8 +27,8 @@ const traverse = `${domain.content.area_chairs_assignment_id?.value}`
 const edit = `${domain.content.area_chairs_assignment_id?.value};${domain.content.area_chairs_assignment_id?.value.replace('Assignment', 'Invite_Assignment')}`
 const browse = [
     `${domain.content.area_chairs_id?.value}/-/Agreggate_Score`,
+    domain.content.area_chairs_affinity_score_id?.value, 
     `${domain.content.area_chairs_id?.value}/-/Emergency_Score`,
-    domain.content.area_chairs_affinity_score_id?.value,
     `${domain.content.area_chairs_id?.value}/-/Research_Area`,
     `${domain.content.area_chairs_custom_max_papers_id?.value},head:ignore`,
     `${domain.content.area_chairs_id?.value}/-/Registered_Load,head:ignore`,
