@@ -2353,13 +2353,10 @@ The OpenReview Team.
         guest = openreview.api.OpenReviewClient()
         res = guest.register_user(email = 'confirm_alternate@mail.com', fullname= 'Lionel Messi', password = helpers.strong_password)
 
-        print(res)
-
         guest.confirm_alternate_email(profile_id='~Lionel_Messi1', alternate_email='messi@mail.com', activation_token='confirm_alternate@mail.com')
 
         messages = openreview_client.get_messages(subject='OpenReview Email Confirmation', to='messi@mail.com')
         assert len(messages) == 1
-        print(messages[0])
 
         guest.activate_email_with_token(email='messi@mail.com', token='000000', activation_token='confirm_alternate@mail.com')
 
