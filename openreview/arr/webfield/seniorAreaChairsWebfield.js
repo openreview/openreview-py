@@ -28,6 +28,7 @@ const edit = `${domain.content.area_chairs_assignment_id?.value};${domain.conten
 const browse = [
     `${domain.content.area_chairs_id?.value}/-/Agreggate_Score`,
     domain.content.area_chairs_affinity_score_id?.value, 
+    `${domain.content.area_chairs_id?.value}/-/Emergency_Score`,
     `${domain.content.area_chairs_id?.value}/-/Research_Area`,
     `${domain.content.area_chairs_custom_max_papers_id?.value},head:ignore`,
     `${domain.content.area_chairs_id?.value}/-/Registered_Load,head:ignore`,
@@ -39,6 +40,39 @@ const browse = [
 const other = `hide=${domain.content.area_chairs_conflict_id?.value}&maxColumns=2&version=2&referrer=[Senior Area Chair Console](/group?id=${entity.id})`
 
 const edgeBrowserLink = `/edges/browse?start=${start}&traverse=${traverse}&edit=${edit}&browse=${browse.join(';')}&${other}`
+
+const assignmentUrls = {}
+const reviewersId = domain.content.reviewers_id?.value
+const areaChairsId = domain.content.area_chairs_id?.value
+const automaticAssignment = domain.content.automatic_reviewer_assignment?.value
+
+const browseReviewerInvitations = [
+  domain.content.reviewers_affinity_score_id?.value,
+  domain.content.reviewers_conflict_id?.value,
+  `${reviewersId}/-/Research_Area`,
+  `${reviewersId}/-/Status`,
+  `${reviewersId}/-/Emergency_Score`,
+].join(';')
+
+const headBrowseInvitations = [
+  `${reviewersId}/-/Registered_Load`,
+  `${reviewersId}/-/Emergency_Load`,
+  `${reviewersId}/-/Emergency_Area`,
+  `${reviewersId}/-/Reviewing_Resubmissions`,
+  `${reviewersId}/-/Author_In_Current_Cycle`,
+  `${reviewersId}/-/Seniority`,
+].map(invitationId => `${invitationId},head:ignore`).join(';')
+
+const allBrowseInvitations = [
+  browseReviewerInvitations,
+  headBrowseInvitations,
+].join(';')
+
+const manualReviewerAssignmentUrl = `/edges/browse?traverse=${domain.content.reviewers_assignment_id?.value}&edit=${domain.content.reviewers_assignment_id?.value};${domain.content.reviewers_invite_assignment_id?.value}&browse=${allBrowseInvitations}&version=2`
+assignmentUrls[domain.content.reviewers_name?.value] = {
+  manualAssignmentUrl: manualReviewerAssignmentUrl,
+  automaticAssignment: automaticAssignment
+}
 
 return {
   component: 'SeniorAreaChairConsole',
@@ -58,8 +92,11 @@ return {
     deskRejectedVenueId: domain.content.desk_rejected_venue_id?.value,
     submissionName: domain.content.submission_name?.value,
     reviewerName: domain.content.reviewers_name?.value,
+    assignmentUrls: assignmentUrls,
+    reviewersId: reviewersId,
     anonReviewerName: domain.content.reviewers_anon_name?.value,
     areaChairName: domain.content.area_chairs_name?.value,
+    areaChairsId: areaChairsId,
     anonAreaChairName: domain.content.area_chairs_anon_name?.value,
     secondaryAreaChairName: domain.content.secondary_area_chairs_name?.value,
     secondaryAnonAreaChairName: domain.content.secondary_area_chairs_anon_name?.value, 
@@ -74,6 +111,24 @@ return {
     enableQuerySearch: true,
     emailReplyTo: domain.content.contact?.value,
     edgeBrowserDeployedUrl: `/edges/browse?start=${startParam}&traverse=${traverseParam}&edit=${editParam}&browse=${browseInvitations.join(';')}${otherParams}`,
-    filterFunction: entity.content?.track?.value && `return note.content?.track?.value==="${entity.content?.track?.value}"`
+    filterFunction: entity.content?.track?.value && `return note.content?.track?.value==="${entity.content?.track?.value}"`,
+    propertiesAllowed: {
+      reviewerChecklistCount: `
+      const invitationToCheck="Reviewer_Checklist"; 
+      const checklistReplies = row.note?.details?.replies.filter(reply => {
+        const hasReply = reply.invitations.some(invitation => invitation.includes(invitationToCheck)); 
+        return hasReply;
+      })
+      return checklistReplies?.length??0;
+      `,
+      actionEditorChecklistCount: `
+      const invitationToCheck="Action_Editor_Checklist"; 
+      const checklistReplies = row.note?.details?.replies.filter(reply => {
+        const hasReply = reply.invitations.some(invitation => invitation.includes(invitationToCheck)); 
+        return hasReply;
+      })
+      return checklistReplies?.length??0;
+      `
+    }
   }
 }

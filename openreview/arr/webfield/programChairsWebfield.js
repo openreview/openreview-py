@@ -8,6 +8,7 @@ const reviewersId = domain.content.reviewers_id?.value
 const browseInvitations = [
   domain.content.reviewers_affinity_score_id?.value,
   domain.content.reviewers_conflict_id?.value,
+  `${reviewersId}/-/Emergency_Score`,
   `${reviewersId}/-/Research_Area`,
   `${reviewersId}/-/Status`,
 ].join(';')
@@ -38,6 +39,7 @@ if (areaChairName) {
   const browseInvitations = [
     domain.content.area_chairs_affinity_score_id?.value,
     domain.content.area_chairs_conflict_id?.value,
+    `${areaChairsId}/-/Emergency_Score`,
     `${areaChairsId}/-/Research_Area`,
     `${areaChairsId}/-/Status`,
   ].join(';')
