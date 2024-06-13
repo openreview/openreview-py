@@ -141,7 +141,7 @@ OpenReview Team'''
         if is_reviewer:
             subject=f'[{short_phrase}] {committee_name} {preferred_name} declined {action_string} paper {submission.number}'
             message =f'''Hi {{{{fullname}}}},
-The {committee_name} {preferred_name}({preferred_email}) that was invited {action_string} paper {submission.number} has declined the invitation.
+The {committee_name} {preferred_name} that was invited {action_string} paper {submission.number} has declined the invitation.
 
 Please go to the Area Chair console: https://openreview.net/group?id={venue_id}/Area_Chairs to invite another reviewer.
 

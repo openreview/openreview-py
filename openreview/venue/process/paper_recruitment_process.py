@@ -191,7 +191,7 @@ OpenReview Team'''
             ## Send email to inviter
             subject=f'[{short_phrase}] {committee_name} {preferred_name} accepted to review paper {submission.number}'
             message =f'''Hi {{{{fullname}}}},
-The {committee_name} {preferred_name}({preferred_email}) that you invited to review paper {submission.number} has accepted the invitation and is now assigned to the paper {submission.number}.
+The {committee_name} {preferred_name} that you invited to review paper {submission.number} has accepted the invitation and is now assigned to the paper {submission.number}.
 
 OpenReview Team'''
 
@@ -238,7 +238,7 @@ OpenReview Team'''
         ## Send email to inviter
         subject=f'[{short_phrase}] {committee_name} {preferred_name} declined to review paper {submission.number}'
         message =f'''Hi {{{{fullname}}}},
-The {committee_name} {preferred_name}({preferred_email}) that you invited to review paper {submission.number} has declined the invitation.
+The {committee_name} {preferred_name} that you invited to review paper {submission.number} has declined the invitation.
 
 To read their response, please click here: https://openreview.net/forum?id={note.id}
 
