@@ -591,6 +591,9 @@ Best,
                         )
                         client.post_note(comment_note)
 
+            if forum_note.content.get('accepted_submissions_only', '') == 'Enable revision for accepted submissions only':
+                conference.create_submission_revision_stage()
+
             # update Submission_Revision_stage invitation
             if forum_note.content.get('reveal_authors') == 'Reveal author identities of only accepted submissions to the public':
                 revision_stage_inv = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Submission_Revision_Stage')
