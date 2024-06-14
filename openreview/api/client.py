@@ -2019,7 +2019,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def post_invitation_edit(self, invitations, readers=None, writers=None, signatures=None, invitation=None, content=None, replacement=None):
+    def post_invitation_edit(self, invitations, readers=None, writers=None, signatures=None, invitation=None, content=None, replacement=None, domain=None):
         """
         """
         edit_json = {}
@@ -2044,6 +2044,9 @@ class OpenReviewClient(object):
 
         if invitation is not None:
             edit_json['invitation'] = invitation.to_json()
+
+        if domain is not None:
+            edit_json['domain'] = domain
 
         response = self.session.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)

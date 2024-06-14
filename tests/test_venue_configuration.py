@@ -375,6 +375,7 @@ class TestVenueConfiguration():
         edit = pc_client.post_invitation_edit(
             invitations='openreview.net/Support/-/Official_Comment_Template',
             signatures=['~ProgramChair_ICLR1'],
+            domain='ICLR.cc/2025/Conference',
             content={
                 'venue_id': { 'value': 'ICLR.cc/2025/Conference' },
                 'stage_name': { 'value': 'Confidential_Comment' },
@@ -503,6 +504,7 @@ class TestVenueConfiguration():
         edit = pc_client.post_invitation_edit(
             invitations='openreview.net/Support/-/Meta_Review_Template',
             signatures=['~ProgramChair_ICLR1'],
+            domain='ICLR.cc/2025/Conference',
             content={
                 'venue_id': { 'value': 'ICLR.cc/2025/Conference' },
                 'stage_name': { 'value': 'Meta_Review' },
@@ -600,6 +602,7 @@ class TestVenueConfiguration():
         edit = pc_client.post_invitation_edit(
             invitations='openreview.net/Support/-/Decision_Template',
             signatures=['~ProgramChair_ICLR1'],
+            domain='ICLR.cc/2025/Conference',
             content={
                 'venue_id': { 'value': 'ICLR.cc/2025/Conference' },
                 'stage_name': { 'value': 'Final_Decision' },

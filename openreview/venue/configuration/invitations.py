@@ -705,10 +705,10 @@ class WorkflowInvitations():
                         }
                     }
                 },
+                'domain': { 'param': { 'regex': '.*' } },
                 'invitation': {
-                    # 'id': '${2/content/venue_id/value}/-/${2/content/stage_name/value}',
-                    'id': 'openreview.net/-/${2/content/stage_name/value}',
-                    'signatures': ['${2/content/venue_id/value}'],
+                    'id': '${2/content/venue_id/value}/-/${2/content/stage_name/value}',
+                    'signatures': ['${3/content/venue_id/value}'],
                 }
             }
         )
@@ -856,10 +856,10 @@ class WorkflowInvitations():
                         }
                     }
                 },
+                'domain': { 'param': { 'regex': '.*' } },
                 'invitation': {
-                    # 'id': '${2/content/venue_id/value}/-/${2/content/stage_name/value}',
-                    'id': 'openreview.net/-/${2/content/stage_name/value}',
-                    'signatures': ['${2/content/venue_id/value}'],
+                    'id': '${2/content/venue_id/value}/-/${2/content/stage_name/value}',
+                    'signatures': ['${3/content/venue_id/value}'],
                 }
             }
         )
@@ -995,10 +995,10 @@ class WorkflowInvitations():
                         }
                     }
                 },
+                'domain': { 'param': { 'regex': '.*' } },
                 'invitation': {
-                    # 'id': '${2/content/venue_id/value}/-/${2/content/stage_name/value}',
-                    'id': 'openreview.net/-/${2/content/stage_name/value}',
-                    'signatures': ['${2/content/venue_id/value}'],
+                    'id': '${2/content/venue_id/value}/-/${2/content/stage_name/value}',
+                    'signatures': ['${3/content/venue_id/value}'],
                 }
             }
         )
