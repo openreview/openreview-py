@@ -2340,7 +2340,7 @@ The OpenReview Team.
         content = selenium.find_element(By.ID, 'content')
         assert 'Activation token is not valid' in content.text
 
-    def test_confirm_email_for_inactive_profile(self, profile_management, openreview_client, helpers, request_page, selenium):
+    def test_confirm_email_for_inactive_profile(self, openreview_client, helpers, request_page, selenium):
         
         guest = openreview.api.OpenReviewClient()
         res = guest.register_user(email = 'confirm_alternate@mail.com', fullname= 'Lionel Messi', password = helpers.strong_password)
