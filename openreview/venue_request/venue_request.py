@@ -129,7 +129,7 @@ class VenueStages():
 
         review_stage_content = {
             'review_name': {
-                'description': 'What should be the name of the official review button? Use underscores to represent spaces. Default name: Official Review',
+                'description': 'What should be the name of the official review button? Use underscores to represent spaces. Default name: Official_Review',
                 'value-regex': '^[a-zA-Z_]+$',
                 'order': 1,
                 'default':'Official_Review',
