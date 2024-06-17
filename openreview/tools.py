@@ -1406,11 +1406,10 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=None)
     user_info = info_function(user_profile, n_years)
 
     conflicts = set()
+    conflicts.update(author_ids.intersection(set([user_info['id']])))
     conflicts.update(author_domains.intersection(user_info['domains']))
-    conflicts.update(author_relations.intersection(user_info['emails'])) ## keep this one until all relations have a profile
     conflicts.update(author_relations.intersection([user_info['id']]))
     conflicts.update(author_ids.intersection(user_info['relations']))
-    conflicts.update(author_emails.intersection(user_info['relations'])) ## keep this one until all relations have a profile
     conflicts.update(author_emails.intersection(user_info['emails']))
     conflicts.update(author_publications.intersection(user_info['publications']))
 
