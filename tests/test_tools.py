@@ -384,7 +384,7 @@ class TestTools():
         )
 
         info = openreview.tools.get_profile_info(profile1)
-        assert info['emails'] == set(['user@cmu.edu'])
+        assert info['emails'] == set()
         assert info['domains'] == set(['cmu.edu', '126.com'])
         assert info['id'] == '~Test_Conflict1'
         assert info['relations'] == set([])
@@ -414,7 +414,7 @@ class TestTools():
         )
 
         info = openreview.tools.get_profile_info(profile1)
-        assert info['emails'] == set(['user@cmu.edu'])
+        assert info['emails'] == set()
         assert info['domains'] == set(['cmu.edu', '126.com'])
         assert info['id'] == '~Test_Conflict1'
         assert info['relations'] == set([])
@@ -428,14 +428,14 @@ class TestTools():
 
         conflicts = openreview.tools.get_conflicts([user_profile], user_profile)
         assert conflicts
-        assert conflicts[0] == 'user@gmail.com'
+        assert conflicts[0] == '~First_Last1'
 
         helpers.create_user('user@qq.com', 'First', 'Last')
         user_profile = client.get_profile(email_or_id='user@qq.com')
 
         conflicts = openreview.tools.get_conflicts([user_profile], user_profile)
         assert conflicts
-        assert conflicts[0] == 'user@qq.com'
+        assert conflicts[0] == '~First_Last2'
 
         helpers.create_user('user2@qq.com', 'First', 'Last')
         user2_profile = client.get_profile(email_or_id='user2@qq.com')
@@ -648,11 +648,11 @@ class TestTools():
             openreview.tools.get_group(guest_client, '~Super_User1')
         assert openReviewError.value.args[0].get('name') == 'ForbiddenError'
 
-    def test_get_profiles_as_dict(self, client, test_client):
-        client.add_members_to_group(client.get_group('~SomeFirstName_User1'), 'alternate@mail.com')
-        client.add_members_to_group(client.get_group('alternate@mail.com'), '~SomeFirstName_User1')
+    def test_get_profiles_as_dict(self, openreview_client, test_client):
+        openreview_client.add_members_to_group(openreview_client.get_group('~SomeFirstName_User1'), 'alternate@mail.com')
+        openreview_client.add_members_to_group(openreview_client.get_group('alternate@mail.com'), '~SomeFirstName_User1')
         profiles = openreview.tools.get_profiles(
-            client, ids_or_emails=['~SomeFirstName_User1', '~Another_Name1', 'user@gmail.com', 'test_user@mail.com', 'test@mail.com', 'alternate@mail.com', '~Test_Name1'], as_dict=True
+            openreview_client, ids_or_emails=['~SomeFirstName_User1', '~Another_Name1', 'user@gmail.com', 'test_user@mail.com', 'test@mail.com', 'alternate@mail.com', '~Test_Name1'], as_dict=True
         )
 
         assert isinstance(profiles, dict)

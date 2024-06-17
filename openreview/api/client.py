@@ -509,7 +509,9 @@ class OpenReviewClient(object):
 
             profiles_by_email = {}
             for p in full_response:
-                profiles_by_email[p['email']] = Profile.from_json(p)
+                profile_confirmed_emails = p.get('confirmedEmails', [])
+                for email in profile_confirmed_emails:
+                    profiles_by_email[email] = Profile.from_json(p)
             return profiles_by_email
 
         if ids:

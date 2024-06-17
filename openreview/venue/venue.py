@@ -921,6 +921,7 @@ Total Errors: {len(errors)}
             authorids = submission.content['authorids']['value']
 
             # Extract domains from each authorprofile
+            author_ids = set()
             author_domains = set()
             author_emails = set()
             author_relations = set()
@@ -928,6 +929,7 @@ Total Errors: {len(errors)}
             for authorid in authorids:
                 if author_profile_by_id.get(authorid):
                     author_info = info_function(author_profile_by_id[authorid], conflict_n_years)
+                    author_ids.add(author_info['id'])
                     author_domains.update(author_info['domains'])
                     author_emails.update(author_info['emails'])
                     author_relations.update(author_info['relations'])
@@ -940,10 +942,10 @@ Total Errors: {len(errors)}
                 for sac in sacs:
                     sac_info = info_function(sac_profile_by_id.get(sac), conflict_n_years)
                     conflicts = set()
+                    conflicts.update(author_ids.intersection(set([sac_info['id']])))
                     conflicts.update(author_domains.intersection(sac_info['domains']))
-                    conflicts.update(author_relations.intersection(sac_info['emails']))
-                    conflicts.update(author_emails.intersection(sac_info['relations']))
-                    conflicts.update(author_emails.intersection(sac_info['emails']))
+                    conflicts.update(author_relations.intersection([sac_info['id']]))
+                    conflicts.update(author_ids.intersection(sac_info['relations']))
                     conflicts.update(author_publications.intersection(sac_info['publications']))
 
                     if not conflict_policy or not conflicts:                
