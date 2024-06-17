@@ -5375,6 +5375,21 @@ note={Expert Certification}
         assert len(assignment_edges) == 1
 
         helpers.await_queue_edit(openreview_client, edit_id=assignment_edges[0].id)
+
+        ## compute preferred emails
+        openreview_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id='TMLR/-/Preferred_Emails',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='TMLR/-/Preferred_Emails-0-0', count=3)
+
+        ## Check preferred emails
+        assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 17        
         
         note = openreview_client.get_note(note_id_14)
         journal.invitation_builder.expire_paper_invitations(note)

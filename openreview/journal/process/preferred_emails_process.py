@@ -21,20 +21,29 @@ def process(client, invitation):
 
     print('Create preferred email edges for all the profiles')
 
-    edges = []
+    existing_edges = { g['id']['head']: openreview.api.Edge.from_json(g['values'][0]) for g in client.get_grouped_edges(invitation=invitation.id, groupby='head') }
+    
+    new_edges = []
     for profile in all_profiles:
         if '~' in profile.id:
-            edges.append(openreview.api.Edge(
-                invitation=invitation.id,
-                head=profile.id,
-                tail=profile.get_preferred_email(),
-                signatures=[journal.venue_id],
-                readers=[journal.venue_id, profile.id],
-                writers=[journal.venue_id, profile.id]
-            ))
+            existing_edge = existing_edges.get(profile.id)
+            if existing_edge:
+                if existing_edge.tail != profile.get_preferred_email():
+                    print('Updating preferred email for: ', profile.id, ' from: ', existing_edge.tail, ' to: ', profile.get_preferred_email())
+                    existing_edge.tail = profile.get_preferred_email()
+                    client.post_edge(existing_edge)
+            else:
+                new_edges.append(openreview.api.Edge(
+                    invitation=invitation.id,
+                    head=profile.id,
+                    tail=profile.get_preferred_email(),
+                    signatures=[journal.venue_id],
+                    readers=[journal.venue_id, profile.id],
+                    writers=[journal.venue_id, profile.id]
+                ))
 
-    print('Posting all edges: ', len(edges))
-    openreview.tools.post_bulk_edges(client, edges)
+    print('Posting all new edges: ', len(new_edges))
+    openreview.tools.post_bulk_edges(client, new_edges)
 
 
 
