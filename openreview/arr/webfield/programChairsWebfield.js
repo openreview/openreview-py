@@ -66,7 +66,7 @@ if (areaChairName) {
 }
 
 return {
-  component: 'ProgramChairConsole',
+  component: 'ARRProgramChairConsole',
   version: 1,
   properties: {
     header: {
@@ -112,6 +112,13 @@ return {
     requestFormId: domain.content.request_form_id?.value,
     assignmentUrls: assignmentUrls,
     emailReplyTo: domain.content.contact?.value,
+    customMaxPapersName: 'Custom_Max_Papers',
+    trackStatusConfig: {
+      submissionTrackname: 'research_area',
+      registrationTrackName: 'research_area',
+      registrationFormName: 'Registration',
+      roles: ['Reviewers', 'Area_Chairs', 'Senior_Area_Chairs']
+    },
     submissionContentFields: [
       {
         field: 'flagged_for_desk_reject_verification',
