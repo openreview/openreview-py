@@ -66,7 +66,7 @@ if (areaChairName) {
 }
 
 return {
-  component: 'ProgramChairConsole',
+  component: 'ARRProgramChairConsole',
   version: 1,
   properties: {
     header: {
