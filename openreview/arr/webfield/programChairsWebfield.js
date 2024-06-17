@@ -66,7 +66,7 @@ if (areaChairName) {
 }
 
 return {
-  component: 'ProgramChairConsole',
+  component: 'ARRProgramChairConsole',
   version: 1,
   properties: {
     header: {
@@ -99,7 +99,8 @@ return {
     anonReviewerName: domain.content.reviewers_anon_name?.value,
     anonAreaChairName: domain.content.area_chairs_anon_name?.value,
     secondaryAreaChairName: domain.content.secondary_area_chairs_name?.value,
-    secondaryAnonAreaChairName: domain.content.secondary_area_chairs_anon_name?.value,     
+    secondaryAnonAreaChairName: domain.content.secondary_area_chairs_anon_name?.value,
+    seniorAreaChairName: domain.content.senior_area_chairs_name?.value,
     scoresName: 'Affinity_Score',
     shortPhrase: domain.content.subtitle?.value,
     enableQuerySearch: true,
@@ -111,6 +112,13 @@ return {
     requestFormId: domain.content.request_form_id?.value,
     assignmentUrls: assignmentUrls,
     emailReplyTo: domain.content.contact?.value,
+    customMaxPapersName: 'Custom_Max_Papers',
+    trackStatusConfig: {
+      submissionTrackname: 'research_area',
+      registrationTrackName: 'research_area',
+      registrationFormName: 'Registration',
+      roles: ['Reviewers', 'Area_Chairs', 'Senior_Area_Chairs']
+    },
     submissionContentFields: [
       {
         field: 'flagged_for_desk_reject_verification',

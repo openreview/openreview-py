@@ -2520,6 +2520,8 @@ class InvitationBuilder(object):
         for field in content:
             if field in hidden_field_names:
                 content[field]['readers'] = [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
+                if field in ['authors', 'authorids'] and only_accepted and self.venue.use_publication_chairs:
+                    content[field]['readers'].append(self.venue.get_publication_chairs_id())
             if field not in hidden_field_names and invitation_content.get(field, {}).get('readers', []):
                 content[field]['readers'] = { 'delete': True }
 
