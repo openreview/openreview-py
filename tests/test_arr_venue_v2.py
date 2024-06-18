@@ -3301,7 +3301,9 @@ class TestARRVenueV2():
             if not existing_note:
                 content = generate_official_review_content(tested_field=tested_field)
             if existing_note:
-                content = existing_note['content']
+                content = {}
+                for key, value in existing_note['content'].items():
+                    content[key] = { 'value': value['value'] }
                 if tested_field:
                     content[tested_field] = {'value':'Yes'}
                     content['ethical_concerns'] = {'value': 'There are concerns with this submission'}
@@ -3329,6 +3331,7 @@ class TestARRVenueV2():
                 'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
                 f"aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Senior_Area_Chairs",
                 f"aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Area_Chairs",
+                review.signatures[0]
             } 
 
             return rev_edit, pc_client_v2.get_note(test_submission.id)
@@ -3446,6 +3449,7 @@ class TestARRVenueV2():
             'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
             f"aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Senior_Area_Chairs",
             f"aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Area_Chairs",
+            review.signatures[0]
         } 
 
         # Edit with ethics flag to double check that authors are present
