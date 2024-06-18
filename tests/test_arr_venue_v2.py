@@ -3334,6 +3334,7 @@ class TestARRVenueV2():
                 'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
                 f"aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Senior_Area_Chairs",
                 f"aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Area_Chairs",
+                review.signatures[0]
             } 
 
             return rev_edit, pc_client_v2.get_note(test_submission.id)
@@ -3451,6 +3452,7 @@ class TestARRVenueV2():
             'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
             f"aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Senior_Area_Chairs",
             f"aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Area_Chairs",
+            review.signatures[0]
         } 
 
         # Edit with ethics flag to double check that authors are present
