@@ -167,7 +167,11 @@ return {
             reply.replyto === reviewId && reply.signatures.some(sig => sig.includes('Authors'))
           )
           const revRepliesToAuthorReplies = authorReplies.map(authorReply => 
-            replies.filter(reply => reply.replyto === authorReply.id && reply.signatures.some(sig => sig.includes(anonId)))
+            replies.filter(
+              reply => reply.replyto === authorReply.id &&
+              reply.signatures.some(sig => sig.includes(anonId)) &&
+              reply.invitations.some(inv => inv.includes('Official_Comment'))
+            )
           ).flat()
 
           if (reviewId.length > 0 && revRepliesToAuthorReplies.length < authorReplies.length) {
