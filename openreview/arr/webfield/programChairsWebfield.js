@@ -204,22 +204,18 @@ return {
         `
       },
       {
-        label: 'Registered Reviewers with Zero Load', filterFunc: `
+        label: 'Reviewers with Zero Load', filterFunc: `
         const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
         if (registrationNotes.length <= 0) {
           return false
         }
 
-        const registrationForm = registrationNotes.filter(note => {
-          const invitations = note?.invitations ?? []
-          return invitations.some(inv => inv.includes('Reviewers/-/Registration'))
-        })
         const maxLoadForm = registrationNotes.filter(note => {
           const invitations = note?.invitations ?? []
           return invitations.some(inv => inv.includes('Reviewers/-/Max_Load_And_Unavailability_Request'))
         })
         
-        if (registrationForm.length <= 0 || maxLoadForm.length <= 0) {
+        if (maxLoadForm.length <= 0) {
           return false
         }
 
