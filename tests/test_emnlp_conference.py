@@ -412,6 +412,18 @@ Please note that responding to this email will direct your reply to pc@emnlp.org
         authors_group = openreview_client.get_group('EMNLP/2023/Conference/Authors')
         assert 'EMNLP/2023/Conference/Submission5/Authors' not in authors_group.members
 
+        invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission5/-/Revision')
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.invitations == [
+            "EMNLP/2023/Conference/-/Revision",
+            "EMNLP/2023/Conference/-/Deletion_Expiration"
+        ]
+
+        invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission5/-/Deletion')
+        assert invitation.invitations == [
+            "EMNLP/2023/Conference/-/Deletion"
+        ]
+
         # restore submission
         deletion_edit = test_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Deletion',
             signatures=['EMNLP/2023/Conference/Submission5/Authors'],
@@ -443,6 +455,18 @@ Please note that responding to this email will direct your reply to pc@emnlp.org
 
         authors_group = openreview_client.get_group('EMNLP/2023/Conference/Authors')
         assert 'EMNLP/2023/Conference/Submission5/Authors' in authors_group.members
+
+        invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission5/-/Revision')
+        assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.invitations == [
+            "EMNLP/2023/Conference/-/Revision",
+            "EMNLP/2023/Conference/-/Deletion_Expiration"
+        ]
+
+        invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission5/-/Deletion')
+        assert invitation.invitations == [
+            "EMNLP/2023/Conference/-/Deletion"
+        ]
 
         revision_due_date = now + datetime.timedelta(days=10)
 
