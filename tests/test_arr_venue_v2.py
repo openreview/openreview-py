@@ -3306,7 +3306,9 @@ class TestARRVenueV2():
             if not existing_note:
                 content = generate_official_review_content(tested_field=tested_field)
             if existing_note:
-                content = existing_note['content']
+                content = {}
+                for key, value in existing_note['content'].items():
+                    content[key] = { 'value': value['value'] }
                 if tested_field:
                     content[tested_field] = {'value':'Yes'}
                     content['ethical_concerns'] = {'value': 'There are concerns with this submission'}
