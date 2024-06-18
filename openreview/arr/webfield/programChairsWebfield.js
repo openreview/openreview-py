@@ -157,20 +157,18 @@ return {
 
         return row.notesInfo.some(obj => {
           const reviewId = obj?.officialReview?.id ?? ''
+          if (reviewId.length <= 0) {
+            return false
+          }
+  
           const anonId = obj?.officialReview?.anonymousId ?? ''
           const replies = obj?.note?.details?.replies ?? []
           const authorReplies = replies.filter(reply => 
             reply.replyto === reviewId && reply.signatures.some(sig => sig.includes('Authors'))
           )
-          console.log(replies)
-          console.log(authorReplies)
           const revRepliesToAuthorReplies = authorReplies.map(authorReply => 
             replies.filter(reply => reply.replyto === authorReply.id && reply.signatures.some(sig => sig.includes(anonId)))
           ).flat()
-
-          if (reviewId.length <= 0) {
-            return false
-          }
 
           if (reviewId.length > 0 && revRepliesToAuthorReplies.length < authorReplies.length) {
             return true
