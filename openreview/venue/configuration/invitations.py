@@ -940,7 +940,7 @@ class WorkflowInvitations():
                             'param': {
                                 'type': 'string[]',
                                 'regex': '.+',
-                                'default': ['Accept (Oral), Accept (Poster), Reject']
+                                'default': ['Accept (Oral)', 'Accept (Poster)', 'Reject']
                             }
                         }
                     },
