@@ -3052,13 +3052,6 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     },                    
                     'readers': self.journal.get_under_review_submission_readers('${2/number}'),
                     'content': {
-                        'assigned_action_editor': {
-                            'value': {
-                                'param': {
-                                    'type': 'string'
-                                }
-                            }
-                        },
                         '_bibtex': {
                             'value': {
                                 'param': {
@@ -4491,21 +4484,17 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         )
 
         ## Change the edit readers
-        for edit in self.client.get_note_edits(note.id, invitation=revision_invitation_id, sort='tmdate:asc'):
-            edit.readers = self.journal.get_under_review_submission_readers(note.number)
-            edit.note.mdate = None
-            edit.note.cdate = None
-            edit.note.forum = None
-            self.client.post_edit(edit)
-
-        ## Change first edit readers
-        for edit in self.client.get_note_edits(note.id, invitation=self.journal.get_author_submission_id(), sort='tmdate:asc'):
-            edit.invitation = self.journal.get_meta_invitation_id()
-            edit.signatures = [self.journal.venue_id]
-            edit.readers = self.journal.get_under_review_submission_readers(note.number)
-            edit.note.mdate = None
-            edit.note.cdate = None
-            self.client.post_edit(edit)         
+        for edit in self.client.get_note_edits(note.id, sort='tmdate:asc'):
+            new_readers = self.journal.get_under_review_submission_readers(note.number)
+            if new_readers != edit.readers:
+                edit.readers = new_readers
+                edit.note.mdate = None
+                edit.note.cdate = None
+                edit.note.forum = None
+                if edit.invitation == self.journal.get_author_submission_id():
+                    edit.invitation = self.journal.get_meta_invitation_id()
+                    edit.signatures = [self.journal.venue_id]
+                self.client.post_edit(edit)
 
     def set_comment_invitation(self):
         venue_id = self.journal.venue_id
