@@ -77,6 +77,7 @@ class Venue(object):
         self.use_publication_chairs = False
         self.source_submissions_query_mapping = {}
         self.sac_paper_assignments = False
+        self.preferred_emails_groups = []
 
     def get_id(self):
         return self.venue_id
@@ -378,7 +379,10 @@ class Venue(object):
             return f'{self.venue_id}/Rejected_{submission_invitation_name}'
         if self.submission_stage:
             return f'{self.venue_id}/Rejected_{self.submission_stage.name}'
-        return f'{self.venue_id}/Rejected_Submission' 
+        return f'{self.venue_id}/Rejected_Submission'
+
+    def get_preferred_emails_invitation_id(self):
+        return f'{self.venue_id}/-/Preferred_Emails' 
 
     def get_submissions(self, venueid=None, accepted=False, sort='tmdate', details=None):
         if accepted:

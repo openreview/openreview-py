@@ -78,7 +78,8 @@ class TestICMLConference():
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
-                'submission_license': ['CC BY 4.0']
+                'submission_license': ['CC BY 4.0'],
+                'preferred_emails_groups': ['ICML.cc/2023/Conference/Senior_Area_Chairs', 'ICML.cc/2023/Conference/Area_Chairs', 'ICML.cc/2023/Conference/Reviewers'],
             }))
 
         helpers.await_queue()
@@ -110,6 +111,7 @@ class TestICMLConference():
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Expertise_Selection')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Expertise_Selection')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Senior_Area_Chairs/-/Expertise_Selection')
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/-/Preferred_Emails')
 
         sac_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
@@ -579,6 +581,21 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2023/Conference/Reviewers", reviewer_client.token, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert 'You have agreed to review up to 1 submission' in header.text
+
+        ## compute preferred emails
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Preferred_Emails',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Preferred_Emails-0-0', count=2)
+
+        ## Check preferred emails
+        assert openreview_client.get_edges_count(invitation='ICML.cc/2023/Conference/-/Preferred_Emails') == 9         
 
     def test_registrations(self, client, openreview_client, helpers, test_client, request_page, selenium):
 

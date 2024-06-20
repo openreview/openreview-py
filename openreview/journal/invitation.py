@@ -6489,6 +6489,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             date_processes=[{
                 'dates': ["#{4/cdate} + 3000"],
                 'script': self.get_process_content('process/preferred_emails_process.py')
+            }, {
+                'cron': '0 0 * * *',
+                'script': self.get_process_content('process/preferred_emails_process.py')
             }]
         )
 
