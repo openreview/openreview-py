@@ -13,16 +13,18 @@ def process(client, invitation):
 
 
     users = []
+    store_ac_emails = area_chairs_id in preferred_emails_groups
+    store_reviewer_emails = reviewers_id in preferred_emails_groups
 
     if senior_area_chairs_id in preferred_emails_groups:
         print('Get profiles for all the senior area chairs')
         users += client.get_group(senior_area_chairs_id).members
 
-    if area_chairs_id in preferred_emails_groups:
+    if store_ac_emails:
         print('Get profiles for all the area chairs')
         users += client.get_group(area_chairs_id).members
 
-    if reviewers_id in preferred_emails_groups:
+    if store_reviewer_emails:
         print('Get profiles for all the reviewers')
         users += client.get_group(reviewers_id).members
 
@@ -30,9 +32,9 @@ def process(client, invitation):
     groups = client.get_all_groups(prefix=venue_id + '/' + submission_name)
 
     for group in groups:
-        if area_chairs_anon_name and f'/{area_chairs_anon_name}' in group.id:
+        if store_ac_emails and f'/{area_chairs_anon_name}' in group.id:
             users += group.members
-        elif reviewers_anon_name and f'/{reviewers_anon_name}' in group.id:
+        elif store_reviewer_emails and f'/{reviewers_anon_name}' in group.id:
             users += group.members
 
     if authors_id in preferred_emails_groups:
