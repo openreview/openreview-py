@@ -3540,6 +3540,9 @@ Best,
 
         helpers.await_queue_edit(openreview_client, invitation='V2.cc/2030/Conference/-/Withdrawn_Submission')
 
+        authors_accepted_group = openreview_client.get_group('V2.cc/2030/Conference/Authors/Accepted')
+        assert 'V2.cc/2030/Conference/Submission1/Authors' not in authors_accepted_group.members
+
         pc_openreview_client = openreview.api.OpenReviewClient(username='tom_venue@mail.com', password=helpers.strong_password)
 
         # reverse withdrawal
@@ -3559,6 +3562,9 @@ Best,
         assert note.readers == ["everyone"]
         assert 'readers' not in note.content['authors']
         assert 'readers' not in note.content['authorids']
+
+        authors_accepted_group = openreview_client.get_group('V2.cc/2030/Conference/Authors/Accepted')
+        assert 'V2.cc/2030/Conference/Submission1/Authors' in authors_accepted_group.members
 
         #desk-reject paper
         desk_reject_note = pc_openreview_client.post_note_edit(invitation=f'V2.cc/2030/Conference/Submission1/-/Desk_Rejection',
@@ -3589,6 +3595,9 @@ Best,
 
         helpers.await_queue_edit(openreview_client, invitation='V2.cc/2030/Conference/-/Desk_Rejected_Submission')
 
+        authors_accepted_group = openreview_client.get_group('V2.cc/2030/Conference/Authors/Accepted')
+        assert 'V2.cc/2030/Conference/Submission1/Authors' not in authors_accepted_group.members
+
         # reverse desk-rejection
         desk_rejection_reversion_note = pc_openreview_client.post_note_edit(invitation='V2.cc/2030/Conference/Submission1/-/Desk_Rejection_Reversion',
                                     signatures=['V2.cc/2030/Conference/Program_Chairs'],
@@ -3606,6 +3615,9 @@ Best,
         assert note.readers == ["everyone"]
         assert 'readers' not in note.content['authors']
         assert 'readers' not in note.content['authorids']
+
+        authors_accepted_group = openreview_client.get_group('V2.cc/2030/Conference/Authors/Accepted')
+        assert 'V2.cc/2030/Conference/Submission1/Authors' not in authors_accepted_group.members
 
     def test_accepted_papers_meta_review_ratings(self, client, test_client, helpers, venue, openreview_client):
 
