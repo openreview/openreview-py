@@ -541,6 +541,9 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             ))
         helpers.await_queue_edit(openreview_client, edit_id=updated_submission_note_1['id'])
 
+        messages = openreview_client.get_messages(subject='[TMLR] Revision posted on submission 1: Paper title UPDATED')
+        assert len(messages) == 3
+
         note = openreview_client.get_note(note_id_1)
         assert note
         assert note.number == 1
@@ -804,6 +807,9 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         note = openreview_client.get_note(note_id_1)
         assert note
         assert note.number == 1
+
+        messages = openreview_client.get_messages(subject='[TMLR] Revision posted on submission 1: Paper title UPDATED')
+        assert len(messages) == 7        
 
         ## Check active invitations
         invitations = joelle_client.get_invitations(replyForum=note_id_1)
@@ -1932,7 +1938,24 @@ The TMLR Editors-in-Chief
 
 Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
+        
+        ## Update submission 1 again
+        updated_submission_note_1 = test_client.post_note_edit(invitation='TMLR/Paper1/-/Revision',
+            signatures=['TMLR/Paper1/Authors'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title UPDATED' },
+                    'supplementary_material': { 'value': '/attachment/' + 'z' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests VERSION 3'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' },
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=updated_submission_note_1['id'])
 
+        messages = openreview_client.get_messages(subject='[TMLR] Revision posted on submission 1: Paper title UPDATED')
+        assert len(messages) == 15        
 
         ## Edit a review and don't release the review again
         review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',

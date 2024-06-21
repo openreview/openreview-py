@@ -758,7 +758,10 @@ class Journal(object):
         if note.ddate:
             return
 
-        action = 'posted' if note.tcdate == note.tmdate else 'edited'
+        if note.id == forum.id:
+            action = 'posted' if edit.tcdate == edit.tmdate else 'edited'
+        else:
+            action = 'posted' if note.tcdate == note.tmdate else 'edited'
 
         readers = note.readers
         nonreaders = [edit.tauthor]
