@@ -2515,7 +2515,7 @@ class TestARRVenueV2():
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "A Name"}
+                    "reviewer_certification": {"value": "Yes"}
                 }
             )
         )
@@ -2541,7 +2541,7 @@ class TestARRVenueV2():
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "A Name"}
+                    "reviewer_certification": {"value": "Yes"}
                 }
             )
         )        
@@ -2574,7 +2574,7 @@ class TestARRVenueV2():
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "A Name"}
+                    "reviewer_certification": {"value": "Yes"}
                 }
             )
         )
@@ -2603,7 +2603,7 @@ class TestARRVenueV2():
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "A Name"}
+                    "reviewer_certification": {"value": "Yes"}
                 }
             )
         )
@@ -3293,7 +3293,7 @@ class TestARRVenueV2():
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "A Name"}
+                    "reviewer_certification": {"value": "Yes"}
                 }
                 ret_content['ethical_concerns'] = {'value': 'There are no concerns with this submission'}
 
@@ -3332,12 +3332,7 @@ class TestARRVenueV2():
             time.sleep(2) ## Wait for flag process functions
 
             review = pc_client_v2.get_note(id=rev_edit['note']['id'])
-            assert set(review.content['reviewer_certification']['readers']) == {
-                'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
-                f"aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Senior_Area_Chairs",
-                f"aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Area_Chairs",
-                review.signatures[0]
-            } 
+            assert 'readers' not in review.content['reviewer_certification']
 
             return rev_edit, pc_client_v2.get_note(test_submission.id)
         
@@ -3450,12 +3445,7 @@ class TestARRVenueV2():
 
         review = openreview_client.get_note(reviewer_edit['note']['id'])
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Authors' in review.readers
-        assert set(review.content['reviewer_certification']['readers']) == {
-            'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
-            f"aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Senior_Area_Chairs",
-            f"aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Area_Chairs",
-            review.signatures[0]
-        } 
+        assert 'readers' not in review.content['reviewer_certification'] 
 
         # Edit with ethics flag to double check that authors are present
         _, test_submission = post_official_review(user_client, review_inv, user, tested_field='needs_ethics_review', existing_note=reviewer_edit['note'])
