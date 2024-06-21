@@ -4605,7 +4605,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
 
-        edits = openreview_client.get_note_edits(note_id_11, sort='tmdate:desc')
+        edits = openreview_client.get_note_edits(note_id_11, sort='tcdate:desc')
         assert len(edits) == 3
         assert edits[0].invitation == 'TMLR/-/Under_Review'
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
