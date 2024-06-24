@@ -759,7 +759,7 @@ class WorkflowInvitations():
                             }
                         }
                     },
-                    'stage_name': {
+                    'name': {
                         'order': 2,
                         'description': 'Stage Name, use underscores to represent spaces',
                         'value': {
@@ -910,7 +910,7 @@ class WorkflowInvitations():
                             }
                         }
                     },
-                    'stage_name': {
+                    'name': {
                         'order': 2,
                         'description': 'Stage Name, use underscores to represent spaces',
                         'value': {

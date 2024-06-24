@@ -1,11 +1,12 @@
 def process(client, edit, invitation):
 
     support_user = 'openreview.net/Support'
-    venue = client.get_group(edit.content['venue_id']['value'])
-    request_form_id = venue.get_content_value('request_form_id')
+    venue_id = edit.content['venue_id']['value']
+    venue_group = client.get_group(venue_id)
+    request_form_id = venue_group.get_content_value('request_form_id')
 
     venue = openreview.helpers.get_venue(client, request_form_id, support_user)
-    stage_name = edit.content['stage_name']['value']
+    stage_name = edit.content['name']['value']
     activation_date = datetime.datetime.fromtimestamp(edit.content['activation_date']['value']/1000)
     due_date = datetime.datetime.fromtimestamp(edit.content['due_date']['value']/1000) if 'due_date' in edit.content else None
     expiration_date = datetime.datetime.fromtimestamp(edit.content['expiration_date']['value']/1000) if 'expiration_date' in edit.content else None
@@ -36,6 +37,19 @@ def process(client, edit, invitation):
         venue.edit_invitation_builder.set_edit_deadlines_invitation(venue.get_invitation_id(stage_name))
         venue.edit_invitation_builder.set_edit_content_invitation(venue.get_invitation_id(stage_name))
         venue.edit_invitation_builder.set_edit_reply_readers_invitation(venue.get_invitation_id(stage_name))
+
+        # edit group content
+        group_content = venue_group.content
+        group_content['meta_review_name'] = {'value': stage_name }
+
+        client.post_group_edit(
+            invitation = venue.get_meta_invitation_id(),
+            signatures = [venue_id],
+            group = openreview.api.Group(
+                id = venue_id,
+                content = group_content
+            )
+        )
 
     elif invitation.id.endswith('Official_Comment_Template'):
 

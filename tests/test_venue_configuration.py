@@ -378,7 +378,7 @@ class TestVenueConfiguration():
             domain='ICLR.cc/2025/Conference',
             content={
                 'venue_id': { 'value': 'ICLR.cc/2025/Conference' },
-                'stage_name': { 'value': 'Confidential_Comment' },
+                'name': { 'value': 'Confidential_Comment' },
                 'activation_date': { 'value': cdate },
                 'expiration_date': { 'value': expdate },
                 'participants': { 'value': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs'] },
@@ -507,11 +507,11 @@ class TestVenueConfiguration():
             domain='ICLR.cc/2025/Conference',
             content={
                 'venue_id': { 'value': 'ICLR.cc/2025/Conference' },
-                'stage_name': { 'value': 'Meta_Review' },
+                'name': { 'value': 'Meta_Review' },
                 'activation_date': { 'value': cdate },
                 'due_date': { 'value': duedate },
                 'expiration_date': { 'value': expdate },
-                'readers': { 'value': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers Submitted']},
+                'readers': { 'value': ['Program_Chairs', 'Senior_Area_Chairs', 'Area_Chairs', 'Reviewers/Submitted']},
                 'content': {
                     'value': {
                         'title': {
@@ -566,7 +566,8 @@ class TestVenueConfiguration():
                             }
                         }
                     }
-                }
+                },
+                'recommendation_field_name': { 'value': 'recommendation' }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], count=1)
@@ -605,7 +606,7 @@ class TestVenueConfiguration():
             domain='ICLR.cc/2025/Conference',
             content={
                 'venue_id': { 'value': 'ICLR.cc/2025/Conference' },
-                'stage_name': { 'value': 'Final_Decision' },
+                'name': { 'value': 'Final_Decision' },
                 'activation_date': { 'value': cdate },
                 'due_date': { 'value': duedate },
                 'decision_options': { 'value': ['Accept', 'Revision Needed', 'Reject'] },
