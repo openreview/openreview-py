@@ -11,6 +11,7 @@ def process(client, edit, invitation):
     submission_name = domain.content['submission_name']['value']
     authors_name = domain.content['authors_name']['value']
     sender = domain.get_content_value('message_sender')
+    decision_name = domain.get_content_value('decision_name')
 
     now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
     submission = client.get_note(edit.note.forum)
@@ -53,3 +54,11 @@ For more information, click here https://openreview.net/forum?id={submission.id}
 
     print(f'Add {paper_group_id}/{authors_name} to {venue_id}/{authors_name}')
     client.add_members_to_group(f'{venue_id}/{authors_name}', f'{paper_group_id}/{authors_name}')
+
+    if decision_name:
+        decision = client.get_notes(forum=submission.id, invitation=f'{venue_id}/{submission_name}{submission.number}/-/{decision_name}')
+        accept_options = domain.get_content_value('accept_decision_options')
+        if decision and openreview.tools.is_accept_decision(decision[0].content['decision']['value'], accept_options):
+            authors_accepted_id = domain.get_content_value('authors_accepted_id')
+            print(f'Add {paper_group_id}/{authors_name} to {authors_accepted_id}')
+            client.add_members_to_group(authors_accepted_id, f'{paper_group_id}/{authors_name}')
