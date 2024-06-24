@@ -47,6 +47,11 @@ class InvitationBuilder(object):
             'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'one week', 2: 'two weeks', 3: 'one month' })
         }
 
+        self.review_reminder_process_with_no_ACK = {
+            'dates': ["#{4/duedate} + " + str(two_weeks)],
+            'script': self.get_super_dateprocess_content('review_reminder_with_no_ACK_script', self.journal.get_meta_invitation_id(), { 0: 'two weeks' })
+        }        
+
         self.ae_reminder_process = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week), "#{4/duedate} + " + str(one_month)],
             'script': self.get_super_dateprocess_content('ae_reminder_script', self.journal.get_meta_invitation_id())
@@ -104,6 +109,7 @@ class InvitationBuilder(object):
         self.set_review_rating_enabling_invitation()
         self.set_expertise_reviewer_invitation()
         self.set_reviewer_message_invitation()
+        self.set_reviewers_archived_invitation()
 
     
     def get_super_process_content(self, field_name):
@@ -185,9 +191,11 @@ class InvitationBuilder(object):
                     for reviewer in reviewers.members:
                         signatures_group = self.client.get_groups(prefix=self.journal.get_reviewers_id(number=note.number, anon=True), member=reviewer)[0]
                         if signatures_group.id not in reviews:
-                            pending_edge = self.client.get_edges(invitation=self.journal.get_reviewer_pending_review_id(), tail=reviewer)[0]
-                            pending_edge.weight -= 1
-                            self.client.post_edge(pending_edge)
+                            pending_edges = self.client.get_edges(invitation=self.journal.get_reviewer_pending_review_id(), tail=reviewer)
+                            if pending_edges:
+                                pending_edge = pending_edges[0]
+                                pending_edge.weight -= 1
+                                self.client.post_edge(pending_edge)
              
 
     def expire_reviewer_responsibility_invitations(self):
@@ -247,6 +255,9 @@ class InvitationBuilder(object):
                     },
                     'reviewer_reminder_script': {
                         'value': self.get_process_content('process/reviewer_reminder_process.py')
+                    },
+                    'review_reminder_with_no_ACK_script': {
+                        'value': self.get_process_content('process/review_reminder_with_no_ACK_process.py')
                     },
                     'author_reminder_script': {
                         'value': self.get_process_content('process/author_reminder_process.py')
@@ -3684,7 +3695,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'maxReplies': 1,
             'duedate': '${2/content/duedate/value}',
             'process': self.process_script,
-            'dateprocesses': [self.reviewer_reminder_process_with_EIC],
+            'dateprocesses': [self.reviewer_reminder_process_with_EIC, self.review_reminder_process_with_no_ACK],
             'edit': {
                 'signatures': { 
                     'param': { 
@@ -6420,4 +6431,36 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'noteNumber': { 'value': note.number }
             },
             signatures=[self.journal.venue_id]
-        )        
+        )
+
+    def set_reviewers_archived_invitation(self):
+
+        if not self.journal.has_archived_reviewers():
+            return
+        
+        venue_id = self.journal.venue_id
+
+        invitation = Invitation(id=self.journal.get_archived_reviewers_member_id(),
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            process=self.get_process_content('process/archived_reviewers_member_process.py'),
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'group': {
+                    'id': self.journal.get_reviewers_archived_id(),
+                    'members': {
+                        'param': {
+                            'regex': '~.*',
+                            'change': 'append'
+                        }
+                    }
+                }
+
+            }
+        )
+
+        self.save_invitation(invitation)                
