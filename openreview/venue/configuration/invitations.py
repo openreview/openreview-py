@@ -628,12 +628,13 @@ class WorkflowInvitations():
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '.*',
+                                'hidden': True
                             }
                         }
                     },
-                    'stage_name': {
+                    'name': {
                         'order': 2,
-                        'description': 'Stage Name, use underscores to represent spaces',
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Meta_Review. This name will be shown in the button users will click to perform this step.',
                         'value': {
                             'param': {
                                 'type': 'string',
@@ -683,12 +684,12 @@ class WorkflowInvitations():
                                 'type': 'string[]',
                                 'input': 'select',
                                 'items': [
-                                    {'value': 'Program Chairs', 'optional': False, 'description': 'Program Chairs'},
-                                    {'value': 'Assigned Senior Area Chairs', 'optional': False, 'description': 'Assigned Senior Area Chairs'},
-                                    {'value': 'Assigned Area Chairs', 'optional': False, 'description': 'Assigned Area Chairs'},
-                                    {'value': 'Assigned Reviewers', 'optional': True, 'description': 'Assigned Reviewers'},
-                                    {'value': 'Assigned Reviewers Submitted', 'optional': True, 'description': 'Assigned reviewers who have submitted a review'},
-                                    {'value': 'Paper Authors', 'optional': True, 'description': 'Paper Authors'},
+                                    {'value': 'Program_Chairs', 'optional': False, 'description': 'Program Chairs'},
+                                    {'value': 'Senior_Area_Chairs', 'optional': False, 'description': 'Assigned Senior Area Chairs (if applicable)'},
+                                    {'value': 'Area_Chairs', 'optional': False, 'description': 'Assigned Area Chairs'},
+                                    {'value': 'Reviewers', 'optional': True, 'description': 'Assigned Reviewers'},
+                                    {'value': 'Reviewers/Submitted', 'optional': True, 'description': 'Assigned reviewers who have submitted a review'},
+                                    {'value': 'Authors', 'optional': True, 'description': 'Paper Authors'},
                                     {'value': 'Everyone', 'optional': True, 'description': 'Public'}
                                 ]
                             }
@@ -699,15 +700,25 @@ class WorkflowInvitations():
                         'value': {
                             'param': {
                                 'type': 'json',
-                                'default': default_content.meta_review_v2,
-                                'optional': True
+                                'default': default_content.meta_review_v2
+                            }
+                        }
+                    },
+                    'recommendation_field_name': {
+                        'order': 8,
+                        'description': 'Name of the field that will store the recommendation. Default is recommendation. This field should be defined in the content field above.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'regex': '.*',
+                                'default': 'recommendation'
                             }
                         }
                     }
                 },
                 'domain': { 'param': { 'regex': '.*' } },
                 'invitation': {
-                    'id': '${2/content/venue_id/value}/-/${2/content/stage_name/value}',
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
                     'signatures': ['${3/content/venue_id/value}'],
                 }
             }

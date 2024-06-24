@@ -15,9 +15,9 @@ def process(client, edit, invitation):
 
         release_to_reviewers = openreview.stages.MetaReviewStage.Readers.NO_REVIEWERS
         reply_readers = edit.content['readers']['value']
-        if 'Assigned Reviewers' in reply_readers:
+        if 'Reviewers' in reply_readers:
             release_to_reviewers = openreview.stages.MetaReviewStage.Readers.REVIEWERS_ASSIGNED
-        elif 'Assigned Reviewers Submitted' in reply_readers:
+        elif 'Reviewers/Submitted' in reply_readers:
             release_to_reviewers = openreview.stages.MetaReviewStage.Readers.REVIEWERS_SUBMITTED
 
         print('Create Meta Review Stage')
@@ -26,9 +26,11 @@ def process(client, edit, invitation):
             start_date = activation_date,
             due_date = due_date,
             exp_date = expiration_date,
-            release_to_authors = 'Paper Authors' in edit.content['readers']['value'],
+            public = 'Everyone' in edit.content['readers']['value'],
+            release_to_authors = 'Authors' in edit.content['readers']['value'],
             release_to_reviewers = release_to_reviewers,
-            content = edit.content['content']['value']
+            content = edit.content['content']['value'],
+            recommendation_field_name = edit.content['recommendation_field_name']['value']
         )
         venue.create_meta_review_stage()
         venue.edit_invitation_builder.set_edit_deadlines_invitation(venue.get_invitation_id(stage_name))
