@@ -3617,7 +3617,7 @@ Best,
         assert 'readers' not in note.content['authorids']
 
         authors_accepted_group = openreview_client.get_group('V2.cc/2030/Conference/Authors/Accepted')
-        assert 'V2.cc/2030/Conference/Submission1/Authors' not in authors_accepted_group.members
+        assert 'V2.cc/2030/Conference/Submission1/Authors' in authors_accepted_group.members
 
     def test_accepted_papers_meta_review_ratings(self, client, test_client, helpers, venue, openreview_client):
 
