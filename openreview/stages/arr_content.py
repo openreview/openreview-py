@@ -1499,15 +1499,14 @@ arr_official_review_content = {
         "order": 22
     },
     "reviewer_certification": {
+        "order": 23,
         "value": {
             "param": {
-                "minLength": 1,
-                "optional": False,
-                "type": "string"
+                "type": "string",
+                "enum": [{ "value": "Yes", "description": "I certify that the review I entered accurately reflects my assessment of the work. If you used any type of automated tool to help you craft your review, I hereby certify that its use was restricted to improving grammar and style, and the substance of the review is either my own work or the work of an acknowledged secondary reviewer."}],
+                "input": "checkbox"
             }
-        },
-        "description": "By filling in your name here you certify that the review you entered accurately reflects your assessment of the work. If you used any type of automated tool to help you craft your review, you hereby certify that its use was restricted to improving grammar and style, and the substance of the review is either your own work or the work of an acknowledged secondary reviewer.",
-        "order": 23
+        }        
     }
 }
 
