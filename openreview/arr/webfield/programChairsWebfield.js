@@ -156,55 +156,40 @@ return {
     },
     reviewerEmailFuncs: [
       {
-        label: 'Reviewers with Unreplied Rebuttals', filterFunc: `
-        console.log(row);
-        if (row.notesInfo.length <= 0){
-          return false;
-        }
-
-        return row.notesInfo.some(obj => {
-          const reviewId = obj?.officialReview?.id ?? ''
-          if (reviewId.length <= 0) {
-            return false
-          }
-  
-          const anonId = obj?.officialReview?.anonymousId ?? ''
-          const replies = obj?.note?.details?.replies ?? []
-          const authorReplies = replies.filter(reply => 
-            reply.replyto === reviewId && reply.signatures.some(sig => sig.includes('Authors'))
-          )
-          const revRepliesToAuthorReplies = authorReplies.map(authorReply => 
-            replies.filter(
-              reply => reply.replyto === authorReply.id &&
-              reply.signatures.some(sig => sig.includes(anonId)) &&
-              reply.invitations.some(inv => inv.includes('Official_Comment'))
-            )
-          ).flat()
-
-          if (reviewId.length > 0 && revRepliesToAuthorReplies.length < authorReplies.length) {
-            return true
-          }
-
-        })
-        `
-      },
-      {
         label: 'Registered Reviewers with Unsubmitted Load', filterFunc: `
         const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
         if (registrationNotes.length <= 0) {
           return false
         }
 
+        const maxLoadForm = registrationNotes.filter(note => {
+          const invitations = note?.invitations ?? []
+          return invitations.some(inv => inv.includes('Reviewers/-/Max_Load_And_Unavailability_Request'))
+        })
         const registrationForm = registrationNotes.filter(note => {
           const invitations = note?.invitations ?? []
           return invitations.some(inv => inv.includes('Reviewers/-/Registration'))
         })
+
+        if (registrationForm.length >= 1 && maxLoadForm.length <= 0) {
+          return true
+        }
+        return false
+        `
+      },
+      {
+        label: 'Reviewers with Unsubmitted Load', filterFunc: `
+        const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
+        if (registrationNotes.length <= 0) {
+          return true
+        }
+
         const maxLoadForm = registrationNotes.filter(note => {
           const invitations = note?.invitations ?? []
           return invitations.some(inv => inv.includes('Reviewers/-/Max_Load_And_Unavailability_Request'))
         })
 
-        if (registrationForm.length >= 1 && maxLoadForm.length <= 0) {
+        if (maxLoadForm.length <= 0) {
           return true
         }
         return false
@@ -231,14 +216,73 @@ return {
     ],
     acEmailFuncs: [
       {
-        label: 'Area Chairs with Unsubmitted Checklists', filterFunc: `
+        label: 'Available Area Chairs with No Assignments and No Emergency Form', filterFunc: `
+        if (row.notes.length > 0){
+          return false;
+        }
+
+        const registrationNotes = row.areaChairProfile?.registrationNotes ?? []
+        if (registrationNotes.length <= 0) {
+          return false
+        }
+
+        const maxLoadForm = registrationNotes.filter(note => {
+          const invitations = note?.invitations ?? []
+          return invitations.some(inv => inv.includes('Area_Chairs/-/Max_Load_And_Unavailability_Request'))
+        })
+        const emergencyForm = registrationNotes.filter(note => {
+          const invitations = note?.invitations ?? []
+          return invitations.some(inv => inv.includes('Area_Chairs/-/Emergency_Metareviewer_Agreement'))
+        })
+
+        if (maxLoadForm.length <= 0 || emergencyForm.length >= 1) {
+          return false
+        }
+
+        const load = typeof maxLoadForm[0].content.maximum_load_this_cycle.value === 'number' ? 
+          maxLoadForm[0].content.maximum_load_this_cycle.value : 
+          parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
+        return load > 0
+        
+        `
+      },
+      {
+        label: 'Available Area Chairs with No Assignments', filterFunc: `
+        console.log(row);
+        if (row.notes.length > 0){
+          return false;
+        }
+
+        const registrationNotes = row.areaChairProfile?.registrationNotes ?? []
+        if (registrationNotes.length <= 0) {
+          return false
+        }
+
+        const maxLoadForm = registrationNotes.filter(note => {
+          const invitations = note?.invitations ?? []
+          return invitations.some(inv => inv.includes('Area_Chairs/-/Max_Load_And_Unavailability_Request'))
+        })
+
+        if (maxLoadForm.length <= 0) {
+          return false
+        }
+
+        const load = typeof maxLoadForm[0].content.maximum_load_this_cycle.value === 'number' ? 
+          maxLoadForm[0].content.maximum_load_this_cycle.value : 
+          parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
+        
+        return load > 0
+        `
+      },
+      {
+        label: 'Area Chairs with Some Unsubmitted Checklists', filterFunc: `
         console.log(row);
         if (row.notes.length <= 0){
           return false;
         }
         
-        return !row.notes.some(obj => {
-          return (obj?.note?.details?.replies ?? []).some(reply => {
+        return row.notes.some(obj => {
+          return !(obj?.note?.details?.replies ?? []).some(reply => {
             return (reply?.invitations ?? []).some(inv => {
               return inv.includes('Action_Editor_Checklist')
             })
@@ -247,22 +291,34 @@ return {
         `
       },
       {
-        label: 'Registered Area Chairs with Unsubmitted Load', filterFunc: `
+        label: 'Area Chairs with No Completed Checklists', filterFunc: `
+        console.log(row);
+        if (row.notes.length <= 0){
+          return false;
+        }
+        
+        return row.notes.every(obj => {
+          return !(obj?.note?.details?.replies ?? []).some(reply => {
+            return (reply?.invitations ?? []).some(inv => {
+              return inv.includes('Action_Editor_Checklist')
+            })
+          })
+        })
+        `
+      },
+      {
+        label: 'Area Chairs with Unsubmitted Load', filterFunc: `
         const registrationNotes = row.areaChairProfile?.registrationNotes ?? []
         if (registrationNotes.length <= 0) {
-          return false
+          return true
         }
 
-        const registrationForm = registrationNotes.filter(note => {
-          const invitations = note?.invitations ?? []
-          return invitations.some(inv => inv.includes('Area_Chairs/-/Registration'))
-        })
         const maxLoadForm = registrationNotes.filter(note => {
           const invitations = note?.invitations ?? []
           return invitations.some(inv => inv.includes('Area_Chairs/-/Max_Load_And_Unavailability_Request'))
         })
 
-        if (registrationForm.length >= 1 && maxLoadForm.length <= 0) {
+        if (maxLoadForm.length <= 0) {
           return true
         }
         return false
