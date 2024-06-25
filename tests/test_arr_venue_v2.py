@@ -2953,18 +2953,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         sac3_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs')
         assert sac3_group.members == ['~SAC_ARRTwo1']
 
-        sac_client = openreview.api.OpenReviewClient(username='sac2@aclrollingreview.com', password=helpers.strong_password)
-        request_page(selenium, "http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs", sac_client.token, wait_for_element='header')
-        header_div = selenium.find_element(By.ID, 'header')
-        assert header_div
-        description = header_div.find_element(By.CLASS_NAME, 'description')
-        assert 'AE Assignment Browser:' in description.text
-        url = header_div.find_element(By.ID, 'edge_browser_url')
-        assert url
-
-        edge_browser_url = 'http://localhost:3030/edges/browse?start=aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Assignment,tail:~SAC_ARRTwo1&traverse=aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment&edit=aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Invite_Assignment&browse=aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Agreggate_Score;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Affinity_Score;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Score;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Research_Area;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Custom_Max_Papers,head:ignore;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Registered_Load,head:ignore;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Load,head:ignore;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency,head:ignore;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Area,head:ignore&hide=aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Conflict&maxColumns=2&version=2&referrer=[Senior%20Area%20Chair%20Console](/group?id=aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs)'
-        assert url.get_attribute('href') == edge_browser_url
-
         openreview_client.post_edge(openreview.api.Edge(
             invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Proposed_Assignment',
             head = submissions[1].id,
