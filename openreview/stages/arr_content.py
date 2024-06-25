@@ -1296,7 +1296,7 @@ arr_official_review_content = {
             }
         },
         "order": 12,
-        "description": "Should this paper be sent for an in-depth ethics review? Before you answer this question, please refer to https://aclrollingreview.org/ethics-flagging-guidelines/ for guidelines on what papers should and shouldn't be flagged. If your answer is yes, then explain why below, and we will try to ensure that it receives a separate ethics review."
+        "description": "Should this paper be sent for an in-depth ethics review? Before you answer this question, please refer to https://aclrollingreview.org/ethics-flagging-guidelines/ for guidelines on what papers should and shouldn't be flagged. If your answer is yes, then ensure you have explained why in the question above, and we will try to ensure that it receives a separate ethics review."
     },
     "reproducibility": {
         "value": {
@@ -1650,7 +1650,7 @@ arr_metareview_content = {
             }
         },
         "order": 9,
-        "description": "Should this paper be sent for an in-depth ethics review? Before you answer this question, please refer to https://aclrollingreview.org/ethics-flagging-guidelines/ for guidelines on what papers should and shouldn't be flagged. If your answer is yes, then explain why below, and we will try to ensure that it receives a separate ethics review."
+        "description": "Should this paper be sent for an in-depth ethics review? Before you answer this question, please refer to https://aclrollingreview.org/ethics-flagging-guidelines/ for guidelines on what papers should and shouldn't be flagged. If your answer is yes, then ensure you have explained why in the question above, and we will try to ensure that it receives a separate ethics review."
     },
     "author_identity_guess": {
         "value": {
