@@ -108,20 +108,20 @@ class TCACommands:
         """
         )
 
-    def get_submission_status(self):
+    def get_submission_status(self, submission_id):
         os.system(
             f"""
-            curl "https://{self.TCA_URL}/api/v1/submissions/c94910f7-630b-412a-9796-16e4007d1f69" \
+            curl "https://{self.TCA_URL}/api/v1/submissions/{submission_id}" \
             -H "X-Turnitin-Integration-Name: {self.TCA_integration_name}" \
             -H "X-Turnitin-Integration-Version: {self.TCA_integration_version}" \
             -H "Authorization: Bearer {self.auth_key}"
         """
         )
 
-    def upload_submission(self):
+    def upload_submission(self, submission_id):
         os.system(
             f"""
-             curl "https://{self.TCA_URL}/api/v1/submissions/c94910f7-630b-412a-9796-16e4007d1f69/original" \
+             curl "https://{self.TCA_URL}/api/v1/submissions/{submission_id}/original" \
             -H "X-Turnitin-Integration-Name: {self.TCA_integration_name}" \
             -H "X-Turnitin-Integration-Version: {self.TCA_integration_version}" \
             -H "Authorization: Bearer {self.auth_key}" \
@@ -131,7 +131,7 @@ class TCACommands:
         """
         )
 
-    def generate_similarity_report(self):
+    def generate_similarity_report(self, submission_id):
         # include index option?
         data_str = """
                 '{{
@@ -169,7 +169,7 @@ class TCACommands:
             """
         os.system(
             f"""
-            curl "https://{self.TCA_URL}/api/v1/submissions/c94910f7-630b-412a-9796-16e4007d1f69/similarity" \
+            curl "https://{self.TCA_URL}/api/v1/submissions/{submission_id}/similarity" \
             -H "X-Turnitin-Integration-Name: {self.TCA_integration_name}" \
             -H "X-Turnitin-Integration-Version: {self.TCA_integration_version}" \
             -H "Authorization: Bearer {self.auth_key}" \
@@ -179,17 +179,17 @@ class TCACommands:
         """
         )
 
-    def get_similarity_report_status(self):
+    def get_similarity_report_status(self, submission_id):
         os.system(
             f"""
-            curl "https://{self.TCA_URL}/api/v1/submissions/c94910f7-630b-412a-9796-16e4007d1f69/similarity" \
+            curl "https://{self.TCA_URL}/api/v1/submissions/{submission_id}/similarity" \
             -H "X-Turnitin-Integration-Name: {self.TCA_integration_name}" \
             -H "X-Turnitin-Integration-Version: {self.TCA_integration_version}" \
             -H "Authorization: Bearer {self.auth_key}"
         """
         )
 
-    def get_viewer_url(self, first_name, last_name):
+    def get_viewer_url(self, submission_id, first_name, last_name):
         data_str = f"""
                     '{{
                         "viewer_user_id": "teacher123",
@@ -224,9 +224,9 @@ class TCACommands:
                         }}
                     }}'
             """
-        os.system(
+        output = os.system(
             f"""
-            curl "https://{self.TCA_URL}/api/v1/submissions/c94910f7-630b-412a-9796-16e4007d1f69/viewer-url" \
+            curl "https://{self.TCA_URL}/api/v1/submissions/{submission_id}/viewer-url" \
             -H "X-Turnitin-Integration-Name: {self.TCA_integration_name}" \
             -H "X-Turnitin-Integration-Version: {self.TCA_integration_version}" \
             -H "Authorization: Bearer {self.auth_key}" \
@@ -241,7 +241,7 @@ class TCACommands:
                     "locale": "en-US"
                 }}'
             """
-        os.system(
+        output = os.system(
             f"""
             curl "https://{self.TCA_URL}/api/v1/submissions/{submission_id}/similarity/pdf" \
             -H "X-Turnitin-Integration-Name: {self.TCA_integration_name}" \
@@ -254,10 +254,10 @@ class TCACommands:
         )
         return pdf_request_id
 
-    def download_pdf(self, download_location):
+    def download_pdf(self, download_location, pdf_request_id):
         os.system(
             f"""
-            curl "https://{self.TCA_URL}/api/v1/submissions/c94910f7-630b-412a-9796-16e4007d1f69/similarity/pdf/f10f2dc7-5222-49f1-9dd0-783405182bbd" \
+            curl "https://{self.TCA_URL}/api/v1/submissions/c94910f7-630b-412a-9796-16e4007d1f69/similarity/pdf/{pdf_request_id}" \
             -H "X-Turnitin-Integration-Name: {self.TCA_integration_name}" \
             -H "X-Turnitin-Integration-Version: {self.TCA_integration_version}" \
             -H "Authorization: Bearer {self.auth_key}" \
