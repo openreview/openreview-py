@@ -28,7 +28,7 @@ def process(client, invitation):
             client.post_message(
                 invitation=journal.get_meta_invitation_id(),
                 recipients=[journal.get_editors_in_chief_id()],
-                subject=f'''[{journal.short_name}] Less than {journal.get_number_of_reviewers()} ACKs for the paper {submission.number}: {submission.content['title']['value']}''',
+                subject=f'''[{journal.short_name}] Fewer than {journal.get_number_of_reviewers()} ACKs for the paper {submission.number}: {submission.content['title']['value']}''',
                 message=f'''Hi {{{{fullname}}}},
 
 This submission has fewer than {journal.get_number_of_reviewers()} reviews and fewer than {journal.get_number_of_reviewers()} ACKs. 
