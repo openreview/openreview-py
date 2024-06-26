@@ -302,7 +302,7 @@ If you would like to change your decision, please follow the link in the previou
         signatures = ['~Super_User1'] ##Temporarily use the super user, until we can get a way to send email to invitees
     )
 
-    if isinstance(conference, openreview.venue.Venue):
+    if isinstance(conference, openreview.venue.Venue) or isinstance(conference, openreview.arr.ARR):
         recruitment_invitation.preprocess = recruitment_pre_preprocess
         remind_recruitment_invitation.preprocess = recruitment_pre_preprocess
 
