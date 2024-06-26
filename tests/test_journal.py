@@ -1601,7 +1601,7 @@ The TMLR Editors-in-Chief
 Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''        
 
-        messages = journal.client.get_messages(subject = '[TMLR] Less than 3 ACKs for the paper 1: Paper title UPDATED')
+        messages = journal.client.get_messages(subject = '[TMLR] Fewer than 3 ACKs for the paper 1: Paper title UPDATED')
         assert len(messages) == 2
 
         ## Check review reminders
