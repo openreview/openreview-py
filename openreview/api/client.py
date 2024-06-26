@@ -32,8 +32,8 @@ class LogRetry(Retry):
         if response:
             if 'application/json' in response.headers.get('Content-Type'):
                 response_string = response.json()
-            if response.text:
-                response_string = response.text
+            elif response.data:
+                response_string = response.data
             else:
                 response_string = response.reason
         print(f"Retrying request: {method} {url}, response: {response_string}, error: {error}")
