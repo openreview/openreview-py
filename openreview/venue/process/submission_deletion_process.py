@@ -9,9 +9,46 @@ def process(client, edit, invitation):
     contact = domain.content['contact']['value']
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     sender = domain.get_content_value('message_sender')
+    deletion_expiration_id = domain.content['deletion_expiration_id']['value']
 
     note = client.get_note(edit.note.id)
     action = 'deleted' if note.ddate else 'restored'
+
+    paper_group_id=f'{venue_id}/{submission_name}{note.number}'
+    authors_group_id=f'{paper_group_id}/{authors_name}'
+
+    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
+    if action == 'deleted':
+
+        invitations = client.get_invitations(replyForum=note.id, prefix=paper_group_id)
+
+        for invitation in invitations:
+            if not invitation.id.endswith('/Deletion'):
+                print(f'Expiring invitation {invitation.id}')
+                client.post_invitation_edit(
+                    invitations=deletion_expiration_id,
+                    invitation=openreview.api.Invitation(id=invitation.id,
+                        expdate=now
+                    )
+                )
+        client.remove_members_from_group(authors_id, authors_group_id)
+
+    elif action == 'restored':
+
+        invitations = client.get_invitations(replyForum=note.id, invitation=deletion_expiration_id, expired=True)
+
+        for expired_invitation in invitations:
+            print(f'Remove expiration invitation {expired_invitation.id}')
+            invitation_edits = client.get_invitation_edits(invitation_id=expired_invitation.id, invitation=deletion_expiration_id)
+            for invitation_edit in invitation_edits:
+                print(f'remove edit {edit.id}')
+                invitation_edit.ddate = now
+                invitation_edit.invitation.expdate = None
+                invitation_edit.invitation.cdate = None
+                client.post_edit(invitation_edit)
+
+        client.add_members_to_group(authors_id, authors_group_id)
 
     action_message = f'''You can restore your submission from the submission's forum: https://openreview.net/forum?id={note.forum}'''
     if action == 'restored':
@@ -27,14 +64,6 @@ Submission Number: {note.number}
 Title: {note.content['title']['value']}{note_abstract}
 
 {action_message}'''
-    
-    paper_group_id=f'{venue_id}/{submission_name}{note.number}'
-    authors_group_id=f'{paper_group_id}/{authors_name}'
-
-    if action == 'restored':
-        client.add_members_to_group(authors_id, authors_group_id)
-    if action == 'deleted':
-        client.remove_members_from_group(authors_id, authors_group_id)
 
     #send tauthor email
     if edit.tauthor.lower() != 'openreview.net':
