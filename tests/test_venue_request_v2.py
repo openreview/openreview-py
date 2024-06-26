@@ -1884,8 +1884,15 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         anon_group_id = anon_groups[0].id
 
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Official_Review1/-/Review_Revision')
-        assert invitation and anon_group_id in invitation.invitees
+        assert invitation and invitation.invitees == ['V2.cc/2030/Conference', anon_group_id]
         assert 'readers' in invitation.edit['note']['content']['final_review_rating']
+        assert invitation.edit['signatures']['param']['items'][0] == {
+            'value': anon_group_id,
+            'optional': True
+        }
+
+        helpers.create_user('tom_venue@mail.com', 'ProgramChair', 'Venue')
+        pc_client = openreview.api.OpenReviewClient(username='tom_venue@mail.com', password=helpers.strong_password)
 
         review = reviewer_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review', sort='number:asc')[0]
         assert review.readers == ['V2.cc/2030/Conference/Program_Chairs',
@@ -1898,7 +1905,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert invitation.edit['note']['forum'] == review.forum
         assert invitation.edit['note']['id'] == review.id
 
-        review_revision = reviewer_client.post_note_edit(
+        review_revision = pc_client.post_note_edit(
             invitation='V2.cc/2030/Conference/Submission1/Official_Review1/-/Review_Revision',
             signatures=[anon_group_id],
             note=Note(
@@ -2562,7 +2569,6 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert submissions and len(submissions) == 3
         submission = submissions[0]
 
-        helpers.create_user('tom_venue@mail.com', 'ProgramChair', 'Venue')
         pc_client = openreview.api.OpenReviewClient(username='tom_venue@mail.com', password=helpers.strong_password)
 
         # Assert that PC does not have access to the Decision invitation
