@@ -16,7 +16,7 @@ import os
 import re
 import time
 import jwt
-import traceback
+import json
 from ..openreview import Profile
 from ..openreview import OpenReviewException
 from .. import tools
@@ -31,7 +31,7 @@ class LogRetry(Retry):
         response_string = 'no response'
         if response:
             if 'application/json' in response.headers.get('Content-Type'):
-                response_string = response.json()
+                response_string = json.loads(response.data.decode('utf-8'))
             elif response.data:
                 response_string = response.data
             else:
@@ -1681,7 +1681,7 @@ class OpenReviewClient(object):
             delete_query['tail'] = tail
         if id: 
             delete_query['id'] = id
-            
+
         delete_query['waitToFinish'] = wait_to_finish
         delete_query['softDelete'] = soft_delete
 
