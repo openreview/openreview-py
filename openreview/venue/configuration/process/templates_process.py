@@ -21,6 +21,8 @@ def process(client, edit, invitation):
         elif 'Reviewers/Submitted' in reply_readers:
             release_to_reviewers = openreview.stages.MetaReviewStage.Readers.REVIEWERS_SUBMITTED
 
+        recommendation_field_name = edit.content['recommendation_field_name']['value']
+
         print('Create Meta Review Stage')
         venue.meta_review_stage = openreview.stages.MetaReviewStage(
             name = stage_name,
@@ -31,16 +33,19 @@ def process(client, edit, invitation):
             release_to_authors = 'Authors' in edit.content['readers']['value'],
             release_to_reviewers = release_to_reviewers,
             content = edit.content['content']['value'],
-            recommendation_field_name = edit.content['recommendation_field_name']['value']
+            recommendation_field_name = recommendation_field_name,
+            child_invitations_name = stage_name
         )
         venue.create_meta_review_stage()
         venue.edit_invitation_builder.set_edit_deadlines_invitation(venue.get_invitation_id(stage_name))
         venue.edit_invitation_builder.set_edit_content_invitation(venue.get_invitation_id(stage_name))
         venue.edit_invitation_builder.set_edit_reply_readers_invitation(venue.get_invitation_id(stage_name))
+        venue.edit_invitation_builder.set_edit_recommendation_field(venue.get_invitation_id(stage_name))
 
         # edit group content
         group_content = venue_group.content
         group_content['meta_review_name'] = {'value': stage_name }
+        group_content['meta_review_recommendation'] = {'value': recommendation_field_name }
 
         client.post_group_edit(
             invitation = venue.get_meta_invitation_id(),

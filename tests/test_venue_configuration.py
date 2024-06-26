@@ -375,7 +375,6 @@ class TestVenueConfiguration():
         edit = pc_client.post_invitation_edit(
             invitations='openreview.net/Support/-/Official_Comment_Template',
             signatures=['~ProgramChair_ICLR1'],
-            domain='ICLR.cc/2025/Conference',
             content={
                 'venue_id': { 'value': 'ICLR.cc/2025/Conference' },
                 'name': { 'value': 'Confidential_Comment' },
@@ -504,10 +503,9 @@ class TestVenueConfiguration():
         edit = pc_client.post_invitation_edit(
             invitations='openreview.net/Support/-/Meta_Review_Template',
             signatures=['~ProgramChair_ICLR1'],
-            domain='ICLR.cc/2025/Conference',
             content={
                 'venue_id': { 'value': 'ICLR.cc/2025/Conference' },
-                'name': { 'value': 'Meta_Review' },
+                'name': { 'value': 'MetaReview' },
                 'activation_date': { 'value': cdate },
                 'due_date': { 'value': duedate },
                 'expiration_date': { 'value': expdate },
@@ -536,7 +534,7 @@ class TestVenueConfiguration():
                                 }
                             }
                         },
-                        'recommendation': {
+                        'AC_recommendation': {
                             'order': 3,
                             'value': {
                                 'param': {
@@ -567,22 +565,40 @@ class TestVenueConfiguration():
                         }
                     }
                 },
-                'recommendation_field_name': { 'value': 'recommendation' }
+                'recommendation_field_name': { 'value': 'AC_recommendation' }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], count=1)
 
-        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Meta_Review')
-        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Meta_Review/Deadlines')
-        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Meta_Review/Form_Fields')
-        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Meta_Review/Readers')
+        venue_group = openreview_client.get_group('ICLR.cc/2025/Conference')
+        assert 'meta_review_name' in venue_group.content and venue_group.content['meta_review_name']['value'] == 'MetaReview'
+        assert 'meta_review_recommendation' in venue_group.content and venue_group.content['meta_review_recommendation']['value'] == 'AC_recommendation'
 
-        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/Meta_Review-0-1', count=1)
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/MetaReview')
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/MetaReview/Deadlines')
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/MetaReview/Form_Fields')
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/MetaReview/Readers')
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/MetaReview/Recommendation_Field')
+
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/MetaReview-0-1', count=1)
+
+        pc_client.post_group_edit(
+            invitation='ICLR.cc/2025/Conference/-/MetaReview/Recommendation_Field',
+            content = {
+                'recommendation_field_name': {
+                    'value':  'recommendation_final'
+                }
+            },
+            group=openreview.api.Group()
+        )
+
+        venue_group = openreview_client.get_group('ICLR.cc/2025/Conference')
+        assert 'meta_review_recommendation' in venue_group.content and venue_group.content['meta_review_recommendation']['value'] == 'recommendation_final'
         
-        invitations = pc_client.get_invitations(invitation='ICLR.cc/2025/Conference/-/Meta_Review')
+        invitations = pc_client.get_invitations(invitation='ICLR.cc/2025/Conference/-/MetaReview')
         assert len(invitations) == 10
 
-        invitation  = openreview_client.get_invitation('ICLR.cc/2025/Conference/Submission1/-/Meta_Review')
+        invitation  = openreview_client.get_invitation('ICLR.cc/2025/Conference/Submission1/-/MetaReview')
         assert invitation.edit['readers'] == [
             "ICLR.cc/2025/Conference/Submission1/Senior_Area_Chairs",
             "ICLR.cc/2025/Conference/Submission1/Area_Chairs",
@@ -603,7 +619,6 @@ class TestVenueConfiguration():
         edit = pc_client.post_invitation_edit(
             invitations='openreview.net/Support/-/Decision_Template',
             signatures=['~ProgramChair_ICLR1'],
-            domain='ICLR.cc/2025/Conference',
             content={
                 'venue_id': { 'value': 'ICLR.cc/2025/Conference' },
                 'name': { 'value': 'Final_Decision' },

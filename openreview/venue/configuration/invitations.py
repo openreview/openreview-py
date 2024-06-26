@@ -716,7 +716,7 @@ class WorkflowInvitations():
                         }
                     }
                 },
-                'domain': { 'param': { 'regex': '.*' } },
+                'domain': '${1/content/venue_id/value}',
                 'invitation': {
                     'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
                     'signatures': ['${3/content/venue_id/value}'],
@@ -756,6 +756,7 @@ class WorkflowInvitations():
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '.*',
+                                'hidden': True
                             }
                         }
                     },
@@ -867,7 +868,7 @@ class WorkflowInvitations():
                         }
                     }
                 },
-                'domain': { 'param': { 'regex': '.*' } },
+                'domain': '${1/content/venue_id/value}',
                 'invitation': {
                     'id': '${2/content/venue_id/value}/-/${2/content/stage_name/value}',
                     'signatures': ['${3/content/venue_id/value}'],
@@ -907,6 +908,7 @@ class WorkflowInvitations():
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '.*',
+                                'hidden': True
                             }
                         }
                     },
@@ -974,8 +976,8 @@ class WorkflowInvitations():
                                 'input': 'select',
                                 'items': [
                                     {'value': 'Program Chairs', 'optional': False, 'description': 'Program Chairs'},
-                                    {'value': 'Assigned Senior Area Chairs', 'optional': False, 'description': 'Assigned Senior Area Chairs'},
-                                    {'value': 'Assigned Area Chairs', 'optional': False, 'description': 'Assigned Area Chairs'},
+                                    {'value': 'Assigned Senior Area Chairs', 'optional': True, 'description': 'Assigned Senior Area Chairs'},
+                                    {'value': 'Assigned Area Chairs', 'optional': True, 'description': 'Assigned Area Chairs'},
                                     {'value': 'Assigned Reviewers', 'optional': True, 'description': 'Assigned Reviewers'},
                                     {'value': 'Paper Authors', 'optional': True, 'description': 'Paper Authors'},
                                     {'value': 'Everyone', 'optional': True, 'description': 'Public'}
@@ -1006,7 +1008,7 @@ class WorkflowInvitations():
                         }
                     }
                 },
-                'domain': { 'param': { 'regex': '.*' } },
+                'domain': '${1/content/venue_id/value}',
                 'invitation': {
                     'id': '${2/content/venue_id/value}/-/${2/content/stage_name/value}',
                     'signatures': ['${3/content/venue_id/value}'],

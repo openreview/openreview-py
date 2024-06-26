@@ -668,6 +668,45 @@ class EditInvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
+    def set_edit_recommendation_field(self, invitation_id):
+
+        venue_id = self.venue_id
+
+        invitation = Invitation(
+            id = invitation_id + '/Recommendation_Field',
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'recommendation_field_name': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'regex': '.*',
+                                'default': 'recommendation'
+                            }
+                        }
+                    }
+                },
+                'group': {
+                    'id': self.venue_id,
+                    'content': {
+                        'meta_review_recommendation': {
+                            'value': '${4/content/recommendation_field_name/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
+
     def set_edit_stage_invitation(self):
 
         venue_id = self.venue_id
