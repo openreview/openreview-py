@@ -4051,11 +4051,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     note=openreview.api.Note(
                         content = {
                             'emergency_reviewing_agreement': { 'value': 'Yes' },
-                            'research_area': { 'value': 'Generation' }
+                            'research_area': { 'value': ['Generation'] }
                         }
                     )
                 )
-            with pytest.raises(openreview.OpenReviewException, match=r'You have agreed to emergency reviewing, please enter your closest relevant research area.'):
+            with pytest.raises(openreview.OpenReviewException, match=r'You have agreed to emergency reviewing, please enter your closest relevant research areas.'):
                 user_note_edit = user_client.post_note_edit(
                     invitation=f'{role}/-/{inv_name}',
                     signatures=[signature],
@@ -4075,7 +4075,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
                         'emergency_load': { 'value': 2 },
-                        'research_area': { 'value': 'Generation' }
+                        'research_area': { 'value': ['Generation'] }
                     }
                 )
             )
@@ -4094,12 +4094,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             if 'Reviewer' in user:
                 assert cmp_edges[user][0] == 6
             assert cmp_original == reg_original + emg_original
+            assert len(area_edges[user]) == 1
             assert area_edges[user][0] == 'Generation'
 
             aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
             score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
             assert all(weight < 10 for weight in score_edges[user])
             assert all(weight < 10 for weight in aggregate_score_edges[user])
+            assert len(score_edges[user]) == 101
 
             # Test editing note
             user_note_edit = user_client.post_note_edit(
@@ -4109,8 +4111,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     id=user_note_edit['note']['id'],
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
-                        'emergency_load': { 'value': 4 },
-                        'research_area': { 'value': 'Machine Translation' }
+                        'emergency_load': { 'value': 6 },
+                        'research_area': { 'value': ['Generation', 'Machine Translation'] }
                     }
                 )
             )
@@ -4123,19 +4125,22 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             area_edges = {o['id']['tail']: [j['label'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Area", groupby='tail', select='label')}
 
             assert all(user in edges for edges in [cmp_edges, reg_edges, emg_edges, area_edges])
-            assert all(len(edges[user]) == 1 for edges in [cmp_edges, reg_edges, emg_edges, area_edges])
+            assert all(len(edges[user]) == 1 for edges in [cmp_edges, reg_edges, emg_edges])
             if 'Reviewer' in user:
                 assert cmp_edges[user][0] == 10
             assert cmp_edges[user][0] != cmp_original
-            assert reg_edges[user][0] != reg_original
+            assert reg_edges[user][0] == reg_original
             assert emg_edges[user][0] != emg_original
             assert cmp_edges[user][0] == reg_edges[user][0] + emg_edges[user][0]
-            assert area_edges[user][0] == 'Machine Translation'
+            assert len(area_edges[user]) == 2
+            assert area_edges[user][0] == 'Generation'
+            assert area_edges[user][1] == 'Machine Translation'
 
             aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
             score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
             assert all(weight < 10 for weight in score_edges[user])
             assert all(weight < 10 for weight in aggregate_score_edges[user])
+            assert len(score_edges[user]) == 101
 
             # Test deleting note
             user_note_edit = user_client.post_note_edit(
@@ -4146,8 +4151,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     ddate=openreview.tools.datetime_millis(now),
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
-                        'emergency_load': { 'value': 4 },
-                        'research_area': { 'value': 'Machine Translation' }
+                        'emergency_load': { 'value': 6 },
+                        'research_area': { 'value': ['Generation', 'Machine Translation'] }
                     }
                 )
             )

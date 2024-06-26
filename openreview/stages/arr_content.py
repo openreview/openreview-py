@@ -1941,13 +1941,13 @@ arr_reviewer_emergency_load_task = {
     "research_area": {
         "value": {
             "param": {
-                "input": "radio",
+                "input": "checkbox",
                 "enum": arr_tracks,
                 "optional": True,
-                "type": "string"
+                "type": "string[]"
             }
         },
-        "description": "Research Areas / Tracks. Select the most relevant research area / track for your expertise",
+        "description": "Research Areas / Tracks. Select the most relevant research areas / tracks for your expertise",
         "order": 3
     }
 }
@@ -1986,13 +1986,13 @@ arr_ac_emergency_load_task = {
     "research_area": {
         "value": {
             "param": {
-                "input": "radio",
+                "input": "checkbox",
                 "enum": arr_tracks,
                 "optional": True,
-                "type": "string"
+                "type": "string[]"
             }
         },
-        "description": "Research Areas / Tracks. Select the most relevant research area / track for your expertise",
+        "description": "Research Areas / Tracks. Select the most relevant research areas / tracks for your expertise",
         "order": 3
     }
 }
