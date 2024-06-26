@@ -31,7 +31,7 @@ def process(client, invitation):
                 subject=f'''[{journal.short_name}] Less than {journal.get_number_of_reviewers()} ACKs for the paper {submission.number}: {submission.content['title']['value']}''',
                 message=f'''Hi {{{{fullname}}}},
 
-This submissions has less than {journal.get_number_of_reviewers()} reviews and less than {journal.get_number_of_reviewers()} ACKs. 
+This submission has fewer than {journal.get_number_of_reviewers()} reviews and fewer than {journal.get_number_of_reviewers()} ACKs. 
 
 Task: {task}
 Submission: {submission.content['title']['value']}
