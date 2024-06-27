@@ -29,38 +29,6 @@ class TestEdges:
             )
         )
 
-        # builder.set_conference_id('NIPS.cc/2020/Workshop/MLITS')
-        # builder.set_submission_stage(public=True)
-        # conference = builder.get_result()
-
-        # # Edge invitation
-        # inv1 = openreview.Invitation(id=conference.id + '/-/affinity', signatures=['~Super_User1'], reply={
-        #     'readers': {
-        #         'values': ['everyone']
-        #     },
-        #     'writers': {
-        #         'values': [conference.id]
-        #     },
-        #     'signatures': {
-        #         'values': ['~Super_User1']
-        #     },
-        #     'content': {
-        #         'head': {
-        #             'type': 'Note'
-        #         },
-        #         'tail': {
-        #             'type': 'Profile',
-        #         },
-        #         'label': {
-        #             'value-radio': ['Very High', 'High', 'Neutral', 'Low', 'Very Low']
-        #         },
-        #         'weight': {
-        #             'value-regex': r'[0-9]+\.[0-9]'
-        #         }
-        #     }
-        # })
-        # inv1 = client.post_invitation(inv1)
-
         note_edit = openreview_client.post_note_edit(
             'openreview.net/-/Edit',
             ['~Super_User1'],
@@ -81,21 +49,6 @@ class TestEdges:
         )
 
         note_id = note_edit['note']['id']
-
-        # Sample note
-        # note = openreview.Note(invitation = conference.get_submission_id(),
-        #     readers = [conference.id],
-        #     writers = [conference.id],
-        #     signatures = ['~SomeFirstName_User1'],
-        #     content = {
-        #         'title': 'Paper title',
-        #         'abstract': 'This is an abstract',
-        #         'authorids': ['test@mail.com'],
-        #         'authors': ['SomeFirstName User'],
-        #         'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
-        #     }
-        # )
-        # note = test_client.post_note(note)
 
         # Edges
         edges = []
@@ -154,7 +107,4 @@ class TestEdges:
 
         openreview_client.delete_edges(invitation='openreview.net/-/Affinity', wait_to_finish=True)
         edges_count_after = openreview_client.get_edges_count(invitation='openreview.net/-/Affinity')
-        assert edges_count_after == 0
-    
-    
-        
+        assert edges_count_after == 0    
