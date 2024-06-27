@@ -1,6 +1,7 @@
 import os
 import requests
 import json
+from datetime import datetime
 
 
 class iThenticateClient:
@@ -10,7 +11,7 @@ class iThenticateClient:
 
         with open(key_path) as key_file:
             self.auth_key = json.load(key_file)["secret"]
-        self.TCA_URL = "aaai.turnitin.com"
+        self.TCA_URL = "openreview.tii-sandbox.com"
         self.TCA_integration_name = "OpenReview Sandbox"
         self.TCA_integration_version = "1.0.0"
         self.headers = {
@@ -40,18 +41,31 @@ class iThenticateClient:
             data=data,
         )
 
-        return response.json()["timestamp"]
+        return response.json()
 
     def create_submission(
-        self, user_id, title, submitter, timestamp, first_name, last_name, email
+        self,
+        owner,
+        title,
+        timestamp,
+        owner_first_name,
+        owner_last_name,
+        owner_email,
+        group_id,
+        group_context,
+        group_type,
+        submitter=None,
+        submitter_first_name=None,
+        submitter_last_name=None,
+        submitter_email=None,
+        extract_text_only=None,
+        owner_permission_set="LEARNER",
+        submitter_permission_set="INSTRUCTOR",
     ):
         data = {
-            "owner": user_id,
+            "owner": owner,
             "title": title,
-            "submitter": submitter,
-            "owner_default_permission_set": "LEARNER",
-            "submitter_default_permission_set": "INSTRUCTOR",
-            "extract_text_only": False,
+            "owner_default_permission_set": owner_permission_set,
             "eula": {
                 "version": "v1beta",
                 "language": "en-US",
@@ -60,52 +74,40 @@ class iThenticateClient:
             "metadata": {
                 "owners": [
                     {
-                        "id": user_id,
-                        "given_name": first_name,
-                        "family_name": last_name,
-                        "email": email,
+                        "id": owner,
+                        "given_name": owner_first_name,
+                        "family_name": owner_last_name,
+                        "email": owner_email,
                     }
                 ],
-                "submitter": {
-                    "id": user_id,
-                    "given_name": first_name,
-                    "family_name": last_name,
-                    "email": email,
-                },
                 "group": {
-                    "id": "b5cf0e76-c1c7-11e8-a355-529269fb1459",
+                    "id": group_id,
                     "name": title,
-                    "type": "ASSIGNMENT",
+                    "type": group_type,
                 },
-                "group_context": {
-                    "id": "c6b196a0-c1c7-11e8-b568-0800200c9a66",
-                    "name": "History 101",
-                    "owners": [
-                        {
-                            "id": "d7cf2650-c1c7-11e8-b568-0800200c9a66",
-                            "family_name": "test_instructor_first_name",
-                            "given_name": "test_instructor_last_name",
-                            "email": "instructor_email@test.com",
-                        },
-                        {
-                            "id": "7a62f070-c265-11e8-b568-0800200c9a66",
-                            "family_name": "test_instructor_2_first_name",
-                            "given_name": "test_instrutor_2_last_name",
-                            "email": "intructor_2_email@test.com",
-                        },
-                    ],
-                },
-                "original_submitted_time": "2012-09-26T13:41:01.205Z",
-                "custom": {"Type": "Final Paper"},
+                "group_context": group_context,
+                "original_submitted_time": datetime.now().isoformat(),
             },
         }
+        if submitter is not None:
+            data["submitter"] = submitter
+            data["submitter_default_permission_set"] = submitter_permission_set
+            data["metadata"]["submitter"] = {
+                "id": submitter,
+                "given_name": submitter_first_name,
+                "family_name": submitter_last_name,
+                "email": submitter_email,
+            }
+        if extract_text_only is not None:
+            data["extract_text_only"] = extract_text_only
+
         headers = self.headers.copy()
         headers["Content-Type"] = "application/json"
         response = requests.post(
             f"https://{self.TCA_URL}/api/v1/submissions", headers=headers, data=data
         )
 
-        return response.json()["id"]
+        return response.json()
 
     def get_submission_status(self, submission_id):
 
@@ -125,42 +127,33 @@ class iThenticateClient:
             headers=headers,
             data=open(file_path, "r").read(),
         )
-        return response.json()["status"]
+        return response.json()
 
-    def generate_similarity_report(self, submission_id):
-        data = {
-            "indexing_settings": {"add_to_index": True},
-            "generation_settings": {
-                "search_repositories": [
-                    "INTERNET",
-                    "SUBMITTED_WORK",
-                    "PUBLICATION",
-                    "CROSSREF",
-                    "CROSSREF_POSTED_CONTENT",
-                ],
-                "submission_auto_excludes": [
-                    "b84b77d1-da0f-4f45-b002-8aec4f4796d6",
-                    "b86de142-bc44-4f95-8467-84af12b89217",
-                ],
-                "auto_exclude_self_matching_scope": "ALL",
-                "priority": "HIGH",
-            },
-            "view_settings": {
-                "exclude_quotes": True,
-                "exclude_bibliography": True,
-                "exclude_citations": False,
-                "exclude_abstract": False,
-                "exclude_methods": False,
-                "exclude_custom_sections": False,
-                "exclude_preprints": False,
-                "exclude_small_matches": 8,
-                "exclude_internet": False,
-                "exclude_publications": False,
-                "exclude_crossref": False,
-                "exclude_crossref_posted_content": False,
-                "exclude_submitted_works": False,
-            },
-        }
+    def generate_similarity_report(
+        self,
+        submission_id,
+        search_repositories,
+        submission_auto_excludes=None,
+        auto_exclude_self_matching_scope=None,
+        priority=None,
+        view_settings=None,
+        indexing_settings=None,
+    ):
+        data = {"generation_settings": {"search_repositories": search_repositories}}
+        if submission_auto_excludes is not None:
+            data["generation_settings"][
+                "submission_auto_excludes"
+            ] = submission_auto_excludes
+        if auto_exclude_self_matching_scope is not None:
+            data["generation_settings"][
+                "auto_exclude_self_matching_scope"
+            ] = auto_exclude_self_matching_scope
+        if priority is not None:
+            data["generation_settings"]["priority"] = priority
+        if view_settings is not None:
+            data["view_settings"] = view_settings
+        if indexing_settings is not None:
+            data["indexing_settings"] = indexing_settings
 
         response = requests.put(
             f"https://{self.TCA_URL}/api/v1/submissions/{submission_id}/similarity",
@@ -177,27 +170,35 @@ class iThenticateClient:
         )
         return response.json()["status"]
 
-    def get_viewer_url(self, submission_id, first_name, last_name):
+    def get_viewer_url(
+        self,
+        submission_id,
+        viewer_id,
+        viewer_default_permission_set,
+        viewer_timestamp,
+        viewer_permissions=None,
+        similarity=None,
+        author_metadata_override=None,
+        sidebar=None,
+    ):
         data = {
-            "viewer_user_id": "teacher123",
+            "viewer_user_id": viewer_id,
             "locale": "en-US",
-            "viewer_default_permission_set": "INSTRUCTOR",
-            "viewer_permissions": {
-                "may_view_submission_full_source": False,
-                "may_view_match_submission_info": False,
-                "may_view_document_details_panel": False,
+            "viewer_default_permission_set": viewer_default_permission_set,
+            "eula": {
+                "version": "v1beta",
+                "accepted_timestamp": viewer_timestamp,
+                "language": "en-US",
             },
-            "similarity": {
-                "default_mode": "match_overview",
-                "modes": {"match_overview": True, "all_sources": True},
-                "view_settings": {"save_changes": True},
-            },
-            "author_metadata_override": {
-                "family_name": last_name,
-                "given_name": first_name,
-            },
-            "sidebar": {"default_mode": "similarity"},
         }
+        if viewer_permissions is not None:
+            data["viewer_permissions"] = viewer_permissions
+        if similarity is not None:
+            data["similarity"] = similarity
+        if viewer_permissions is not None:
+            data["author_metadata_override"] = author_metadata_override
+        if viewer_permissions is not None:
+            data["sidebar"] = sidebar
         headers = self.headers.copy()
         headers["Content-Type"] = "application/json"
         response = requests.get(
@@ -205,9 +206,9 @@ class iThenticateClient:
             headers=headers,
             data=data,
         )
-        return response.json()
+        return response.json()["viewer_url"]
 
-    def generate_pdf(self, submission_id: str) -> str:
+    def generate_pdf(self, submission_id):
         data = {"locale": "en-US"}
         headers = self.headers.copy()
         headers["Content-Type"] = "application/json"
@@ -216,7 +217,7 @@ class iThenticateClient:
             headers=headers,
             data=data,
         )
-        return response.json()["id"]
+        return response.json()
 
     def download_pdf(self, download_location, submission_id, pdf_request_id):
         response = requests.get(
