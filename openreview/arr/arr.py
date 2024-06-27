@@ -537,7 +537,7 @@ class ARR(object):
             replacement=False,
             invitation=openreview.api.Invitation(
                 id=self.venue.get_assignment_id(committee_id, deployed=False, invite=False),
-                preproces=self.invitation_builder.get_process_content('process/proposed_assignment_pre_process.js')
+                preprocess=self.invitation_builder.get_process_content('process/proposed_assignment_pre_process.js')
             )
         )
         return setup_value
