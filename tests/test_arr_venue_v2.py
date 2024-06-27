@@ -155,6 +155,18 @@ class TestARRVenueV2():
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Expertise_Selection')
 
+        post_submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Post_Submission')
+        assert 'TLDR' in post_submission_invitation.edit['note']['content']
+        assert 'preprint' in post_submission_invitation.edit['note']['content']
+        assert 'existing_preprints' in post_submission_invitation.edit['note']['content']
+        assert 'consent_to_share_data' in post_submission_invitation.edit['note']['content']
+        assert 'consent_to_share_submission_details' in post_submission_invitation.edit['note']['content']
+        assert 'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement' in post_submission_invitation.edit['note']['content']
+        assert 'section_2_permission_to_publish_peer_reviewers_content_agreement' in post_submission_invitation.edit['note']['content']
+        assert 'reviewing_volunteers' in post_submission_invitation.edit['note']['content']
+        assert 'reviewing_no_volunteers_reason' in post_submission_invitation.edit['note']['content']
+        assert 'preprint_status' in post_submission_invitation.edit['note']['content']
+
         request_page(selenium, 'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August', pc_client.token, wait_for_element='header')
         header_div = selenium.find_element(By.ID, 'header')
         assert header_div
@@ -227,23 +239,17 @@ class TestARRVenueV2():
         ))
         helpers.await_queue_edit(client, invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision')
 
-        # hide pdf
-        post_submission_note=pc_client.post_note(openreview.Note(
-            content= {
-                'force': 'Yes',
-                'hide_fields': hide_fields,
-                'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)'
-            },
-            forum=request_form_note.id,
-            invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Post_Submission',
-            readers= ['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
-            referent=request_form_note.id,
-            replyto=request_form_note.id,
-            signatures= ['~Program_ARRChair1'],
-            writers= [],
-        ))
-
-        helpers.await_queue()
+        post_submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Post_Submission')
+        assert 'TLDR' in post_submission_invitation.edit['note']['content']
+        assert 'preprint' in post_submission_invitation.edit['note']['content']
+        assert 'existing_preprints' in post_submission_invitation.edit['note']['content']
+        assert 'consent_to_share_data' in post_submission_invitation.edit['note']['content']
+        assert 'consent_to_share_submission_details' in post_submission_invitation.edit['note']['content']
+        assert 'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement' in post_submission_invitation.edit['note']['content']
+        assert 'section_2_permission_to_publish_peer_reviewers_content_agreement' in post_submission_invitation.edit['note']['content']
+        assert 'reviewing_volunteers' in post_submission_invitation.edit['note']['content']
+        assert 'reviewing_no_volunteers_reason' in post_submission_invitation.edit['note']['content']
+        assert 'preprint_status' in post_submission_invitation.edit['note']['content']
 
         request_page(selenium, 'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August', pc_client.token, wait_for_element='header')
         header_div = selenium.find_element(By.ID, 'header')
