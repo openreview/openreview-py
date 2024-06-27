@@ -646,6 +646,7 @@ class WorkflowInvitations():
                     },
                     'activation_date': {
                         'order': 3,
+                        'description': 'When should the meta reviewing of submissions begin?',
                         'value': {
                             'param': {
                                 'type': 'date',
@@ -657,6 +658,7 @@ class WorkflowInvitations():
                     },
                     'due_date': {
                         'order': 4,
+                        'description': 'By when should the meta-reviews be in the system? This is the official, soft deadline area chairs will see.',
                         'value': {
                             'param': {
                                 'type': 'date',
@@ -668,6 +670,7 @@ class WorkflowInvitations():
                     },
                     'expiration_date': {
                         'order': 5,
+                        'description': 'After this date, no more meta reviews can be submitted. This is the hard deadline area chairs will not be able to see.',
                         'value': {
                             'param': {
                                 'type': 'date',
@@ -679,6 +682,7 @@ class WorkflowInvitations():
                     },
                     'readers': {
                         'order': 6,
+                        'description': 'Select who should be able to read the meta reviews as soon as they are posted.',
                         'value': {
                             'param': {
                                 'type': 'string[]',
@@ -697,6 +701,7 @@ class WorkflowInvitations():
                     },
                     'content': {
                         'order': 7,
+                        'description': 'Configure what fields the meta review should contain.',
                         'value': {
                             'param': {
                                 'type': 'json',
@@ -762,7 +767,7 @@ class WorkflowInvitations():
                     },
                     'name': {
                         'order': 2,
-                        'description': 'Stage Name, use underscores to represent spaces',
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Official_Comment. This name will be shown in the button users will click to perform this step.',
                         'value': {
                             'param': {
                                 'type': 'string',
