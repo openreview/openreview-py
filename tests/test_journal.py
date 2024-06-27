@@ -534,6 +534,9 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             ))
         helpers.await_queue_edit(openreview_client, edit_id=updated_submission_note_1['id'])
 
+        messages = openreview_client.get_messages(subject='[TMLR] Revision posted on submission 1: Paper title UPDATED')
+        assert len(messages) == 3
+
         note = openreview_client.get_note(note_id_1)
         assert note
         assert note.number == 1
@@ -645,6 +648,10 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         ae_group = raia_client.get_group(f'{venue_id}/Paper1/Action_Editors')
         assert ae_group.members == ['~Joelle_Pineau1']
 
+        note = joelle_client.get_note(note_id_1)
+        assert note
+        assert note.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'        
+
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Assignment to new TMLR submission 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
@@ -714,7 +721,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         note = joelle_client.get_note(note_id_1)
         assert note
         assert note.odate
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Edit', 'TMLR/-/Under_Review']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -793,6 +800,9 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         note = openreview_client.get_note(note_id_1)
         assert note
         assert note.number == 1
+
+        messages = openreview_client.get_messages(subject='[TMLR] Revision posted on submission 1: Paper title UPDATED')
+        assert len(messages) == 7        
 
         ## Check active invitations
         invitations = joelle_client.get_invitations(replyForum=note_id_1)
@@ -898,7 +908,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         note = joelle_client.get_note(note_id_2)
         assert note
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Desk_Rejected']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Edit', 'TMLR/-/Desk_Rejected']
         assert note.readers == ['TMLR', 'TMLR/Paper2/Action_Editors', 'TMLR/Paper2/Authors']
         assert note.writers == ['TMLR', 'TMLR/Paper2/Action_Editors']
         assert note.signatures == ['TMLR/Paper2/Authors']
@@ -1584,6 +1594,10 @@ The TMLR Editors-in-Chief
 Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''        
 
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-1-0')
+        
+        messages = journal.client.get_messages(subject = '[TMLR] Fewer than 3 ACKs for the paper 1: Paper title UPDATED')
+        assert len(messages) == 2
 
         ## Check review reminders
         raia_client.post_invitation_edit(
@@ -1921,7 +1935,24 @@ The TMLR Editors-in-Chief
 
 Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''
+        
+        ## Update submission 1 again
+        updated_submission_note_1 = test_client.post_note_edit(invitation='TMLR/Paper1/-/Revision',
+            signatures=['TMLR/Paper1/Authors'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title UPDATED' },
+                    'supplementary_material': { 'value': '/attachment/' + 'z' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests VERSION 3'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' },
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=updated_submission_note_1['id'])
 
+        messages = openreview_client.get_messages(subject='[TMLR] Revision posted on submission 1: Paper title UPDATED')
+        assert len(messages) == 15        
 
         ## Edit a review and don't release the review again
         review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
@@ -2422,7 +2453,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/-/Edit', 'TMLR/Paper1/-/Camera_Ready_Revision']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Edit', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -2544,7 +2575,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert note.forum == note_id_1
         assert note.replyto is None
         assert note.pdate
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/-/Edit', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Edit', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -2607,7 +2638,7 @@ note={Featured Certification, Reproducibility Certification, Expert Certificatio
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/-/Edit', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Edit', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -2692,7 +2723,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/-/Edit', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Retracted']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Edit', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Retracted']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -3094,12 +3125,12 @@ Please note that responding to this email will direct your reply to joelle@mails
 
         ## Check pending review edges
         edges = joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews')
-        assert edges == 6
+        assert edges == 5
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Carlos_Mondragon1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 1
-        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 1
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Antony_Bal1')[0].weight == 0
 
         invitation = raia_client.get_invitation(f'{venue_id}/Paper4/-/Official_Recommendation')
         #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
@@ -3252,7 +3283,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert note
         assert note.forum == note_id_4
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Edit', 'TMLR/-/Rejected']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Edit', 'TMLR/-/Under_Review', 'TMLR/-/Rejected']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper4/Authors']
         assert note.signatures == ['TMLR/Paper4/Authors']
@@ -3284,7 +3315,7 @@ note={Rejected}
         assert note
         assert note.forum == note_id_4
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Edit', 'TMLR/-/Rejected', 'TMLR/-/Authors_Release']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Edit', 'TMLR/-/Under_Review', 'TMLR/-/Rejected', 'TMLR/-/Authors_Release']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper4/Authors']
         assert note.signatures == ['TMLR/Paper4/Authors']
@@ -3320,13 +3351,12 @@ note={Rejected}
 
         ## Check pending review edges
         edges_count = joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews')
-        assert edges_count == 6
+        assert edges_count == 5
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Carlos_Mondragon1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Antony_Bal1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 0
-        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 0
 
     def test_eic_submission(self, journal, openreview_client, test_client, helpers):
 
@@ -3944,7 +3974,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         note = test_client.get_note(note_id_6)
         assert note
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Withdrawn']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Edit', 'TMLR/-/Under_Review', 'TMLR/-/Withdrawn']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper6/Authors']
         assert note.signatures == ['TMLR/Paper6/Authors']
@@ -3983,7 +4013,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert note
         assert note.forum == note_id_6
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Withdrawn', 'TMLR/-/Authors_Release']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Edit', 'TMLR/-/Under_Review', 'TMLR/-/Withdrawn', 'TMLR/-/Authors_Release']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper6/Authors']
         assert note.signatures == ['TMLR/Paper6/Authors']
@@ -4276,36 +4306,36 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         ## Check pending review edges
         edges = joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews')
-        assert edges == 6
+        assert edges == 5
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Carlos_Mondragon1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 2
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 0
-        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 2
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Antony_Bal1')[0].weight == 0
 
         note = openreview_client.get_note(note_id_7)
         journal.invitation_builder.expire_paper_invitations(note)
 
         ## Check pending review edges
         edges = joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews')
-        assert edges == 6
+        assert edges == 5
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Carlos_Mondragon1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 1
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 0
-        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 1
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Antony_Bal1')[0].weight == 0
 
         note = openreview_client.get_note(note_id_8)
         journal.invitation_builder.expire_paper_invitations(note)
 
         ## Check pending review edges
         edges = joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews')
-        assert edges == 6
+        assert edges == 5
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Carlos_Mondragon1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 0
-        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Antony_Bal1')[0].weight == 0
 
         # Assign another Action Editor and the submission should be updated
         current_assignment = raia_client.get_edges(invitation='TMLR/Action_Editors/-/Assignment', head=note_id_8)[0]
@@ -4485,12 +4515,12 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         ## Check pending review edges
         edges = joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews')
-        assert edges == 6
+        assert edges == 5
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Carlos_Mondragon1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 1
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 0
-        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Antony_Bal1')[0].weight == 0
 
 
         note = openreview_client.get_note(note_id_10)
@@ -4498,12 +4528,12 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         ## Check pending review edges
         edges = joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews')
-        assert edges == 6
+        assert edges == 5
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Carlos_Mondragon1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 0
-        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Antony_Bal1')[0].weight == 0
 
 
     def test_submission_with_many_authors(self, journal, openreview_client, test_client, helpers):
@@ -4571,8 +4601,8 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
 
-        edits = openreview_client.get_note_edits(note_id_11)
-        assert len(edits) == 2
+        edits = openreview_client.get_note_edits(note_id_11, sort='tcdate:desc')
+        assert len(edits) == 3
         assert edits[0].invitation == 'TMLR/-/Under_Review'
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
               
@@ -4661,7 +4691,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         note = joelle_client.get_note(note_id_12)
         assert note
         assert note.odate
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Edit', 'TMLR/-/Under_Review']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper12/Authors']
         assert note.signatures == ['TMLR/Paper12/Authors']
@@ -4809,8 +4839,27 @@ note={Under review}
             tail='~David_Belanger1',
             label='Unavailable'
         ))        
-        raia_client.remove_members_from_group(raia_client.get_group('TMLR/Reviewers'), '~David_Belanger1')
-        raia_client.add_members_to_group(raia_client.get_group('TMLR/Reviewers/Archived'), '~David_Belanger1')
+        #raia_client.remove_members_from_group(raia_client.get_group('TMLR/Reviewers'), '~David_Belanger1')
+        #raia_client.add_members_to_group(raia_client.get_group('TMLR/Reviewers/Archived'), '~David_Belanger1')
+
+        edit_group = raia_client.post_group_edit(
+            invitation='TMLR/Reviewers/Archived/-/Member',
+            signatures=['TMLR'],
+            group=openreview.api.Group(
+                members={
+                    'append': ['~David_Belanger1']
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit_group['id'])        
+
+        assert '~David_Belanger1' in openreview_client.get_group('TMLR/Reviewers/Archived').members
+        assert '~David_Belanger1' not in openreview_client.get_group('TMLR/Reviewers').members
+        assert openreview_client.get_edges_count(invitation='TMLR/Reviewers/-/Assignment_Availability', tail='~David_Belanger1') == 0
+        assert openreview_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1') == 0
+        assert openreview_client.get_edges_count(invitation='TMLR/Reviewers/-/Custom_Max_Papers', tail='~David_Belanger1') == 0
+
 
         ## Carlos Mondragon
         paper_assignment_edge = joelle_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -4857,6 +4906,8 @@ note={Under review}
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'])
+
+        assert openreview_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1') == 0
 
         carlos_anon_groups=carlos_client.get_groups(prefix=f'{venue_id}/Paper13/Reviewer_.*', signatory='~Carlos_Mondragon1')
         assert len(carlos_anon_groups) == 1

@@ -7,6 +7,8 @@ def process(client, edit, invitation):
     paper_group_id=edit.invitation.split('/-/')[0]
     authors_group_id=f'{paper_group_id}/Authors'
 
+    journal.notify_readers(edit, content_fields=[])
+
     client.post_group_edit(
         invitation = journal.get_meta_invitation_id(),
         readers = [venue_id],

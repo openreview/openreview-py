@@ -19,6 +19,7 @@ from openreview.venue.recruitment import Recruitment
 from openreview.arr.helpers import (
     setup_arr_invitations
 )
+from openreview.stages.arr_content import hide_fields
 
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
@@ -133,6 +134,7 @@ class ARR(object):
         self.venue.source_submissions_query_mapping = self.source_submissions_query_mapping
         self.venue.sac_paper_assignments = self.sac_paper_assignments
 
+        self.submission_stage.hide_fields = self.submission_stage.hide_fields + hide_fields
         self.venue.submission_stage = self.submission_stage
         self.venue.review_stage = self.review_stage
         self.venue.bid_stages = self.bid_stages
@@ -423,7 +425,6 @@ class ARR(object):
 
     # For stage invitations, pass value to inner venue objects
     def create_submission_stage(self):
-        self.venue.submission_stage = self.submission_stage
         stage_value = self.venue.create_submission_stage()
         invitation = self.client.get_invitation(self.get_submission_id())
         invitation.preprocess = self.invitation_builder.get_process_content('process/submission_preprocess.py')

@@ -2332,6 +2332,8 @@ class Edit(object):
         invitation = None,
         nonreaders = None,
         cdate = None,
+        tcdate = None,
+        tmdate = None,
         ddate = None,
         tauthor = None):
 
@@ -2339,6 +2341,8 @@ class Edit(object):
         self.domain = domain
         self.invitations = invitations
         self.cdate = cdate
+        self.tcdate = tcdate
+        self.tmdate = tmdate
         self.ddate = ddate
         self.readers = readers
         self.nonreaders = nonreaders
@@ -2409,6 +2413,8 @@ class Edit(object):
             domain = e.get('domain'),
             invitations = e.get('invitations'),
             cdate = e.get('cdate'),
+            tcdate = e.get('tcdate'),
+            tmdate = e.get('tmdate'),
             ddate = e.get('ddate'),
             readers = e.get('readers'),
             nonreaders = e.get('nonreaders'),
