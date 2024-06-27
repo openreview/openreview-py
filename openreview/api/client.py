@@ -102,7 +102,7 @@ class OpenReviewClient(object):
             'Accept': 'application/json'
         }
 
-        retry_strategy = LogRetry(total=3, backoff_factor=1, status_forcelist=[ 500, 502, 503, 504 ], respect_retry_after_header=False)
+        retry_strategy = LogRetry(total=3, backoff_factor=1, status_forcelist=[ 500, 502, 503, 504 ], respect_retry_after_header=True)
         self.session = requests.Session()
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount('https://', adapter)
