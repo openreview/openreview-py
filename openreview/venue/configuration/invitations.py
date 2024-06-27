@@ -608,7 +608,7 @@ class WorkflowInvitations():
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[self.super_user],
-            process = self.get_process_content('process/templates_process.py'),
+            process=self.get_process_content('process/templates_process.py'),
             edit = {
                 'signatures': {
                     'param': {
@@ -651,7 +651,6 @@ class WorkflowInvitations():
                             'param': {
                                 'type': 'date',
                                 'range': [ 0, 9999999999999 ],
-                                'optional': True,
                                 'deletable': True
                             }
                         }
@@ -734,7 +733,7 @@ class WorkflowInvitations():
     def setup_comment_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/-/Official_Comment_Template'
+        invitation_id = f'{support_group_id}/-/Comment_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
@@ -779,7 +778,7 @@ class WorkflowInvitations():
                     },
                     'activation_date': {
                         'order': 3,
-                        'description': 'When should the comment stage start?',
+                        'description': 'When does official and/or public commentary begin?',
                         'value': {
                             'param': {
                                 'type': 'date',
@@ -791,7 +790,7 @@ class WorkflowInvitations():
                     },
                     'expiration_date': {
                         'order': 4,
-                        'description': 'When should the comment stage end?',
+                        'description': 'When does official and/or public commentary end?',
                         'value': {
                             'param': {
                                 'type': 'date',
@@ -803,7 +802,7 @@ class WorkflowInvitations():
                     },
                     'participants': {
                         'order': 5,
-                        'description': 'Who should be able to participate in the discussion?',
+                        'description': 'Select who should be allowed to post comments on submissions. These will be added as readers automatically.',
                         'value': {
                             'param': {
                                 'type': 'string[]',
@@ -824,7 +823,7 @@ class WorkflowInvitations():
                     },
                     'additional_readers': {
                         'order': 6,
-                        'description': 'Who should be allowed to view comments (but not actively post comments)?',
+                        'description': 'Select who should only be allowed to view the comments on submissions (other than the participants). ',
                         'value': {
                             'param': {
                                 'type': 'string[]',
@@ -844,7 +843,7 @@ class WorkflowInvitations():
                     },
                     'email_program_chairs_about_official_comments': {
                         'order': 7,
-                        'description': 'Should the PCs receive an email for every new comment?',
+                        'description': 'Should the PCs receive an email for each official comment made in the venue? Default is no.',
                         'value': {
                             'param': {
                                 'type': 'string',
@@ -859,7 +858,7 @@ class WorkflowInvitations():
                     },
                     'email_senior_area_chairs_about_official_comments': {
                         'order': 8,
-                        'description': 'Should the SACs (if applicable) receive an email for every new comment?',
+                        'description': 'Should the SACs (if applicable) receive an email for each official comment made in the venue? Default is no.',
                         'value': {
                             'param': {
                                 'type': 'string',
@@ -919,7 +918,7 @@ class WorkflowInvitations():
                     },
                     'name': {
                         'order': 2,
-                        'description': 'Stage Name, use underscores to represent spaces',
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Decision. This name will be shown in the button users will click to perform this step.',
                         'value': {
                             'param': {
                                 'type': 'string',
@@ -931,6 +930,7 @@ class WorkflowInvitations():
                     },
                     'activation_date': {
                         'order': 3,
+                        'description': 'When will the program chairs start posting decisions?',
                         'value': {
                             'param': {
                                 'type': 'date',
@@ -942,11 +942,11 @@ class WorkflowInvitations():
                     },
                     'due_date': {
                         'order': 4,
+                        'description': 'By when should all the decisions be in the system?',
                         'value': {
                             'param': {
                                 'type': 'date',
                                 'range': [ 0, 9999999999999 ],
-                                'optional': True,
                                 'deletable': True
                             }
                         }
@@ -975,6 +975,7 @@ class WorkflowInvitations():
                     },
                     'readers': {
                         'order': 7,
+                        'description': 'Select who should be able to read the decisions as soon as they are posted.',
                         'value': {
                             'param': {
                                 'type': 'string[]',
@@ -987,28 +988,6 @@ class WorkflowInvitations():
                                     {'value': 'Paper Authors', 'optional': True, 'description': 'Paper Authors'},
                                     {'value': 'Everyone', 'optional': True, 'description': 'Public'}
                                 ]
-                            }
-                        }
-                    },
-                    'content': {
-                        'order': 8,
-                        'value': {
-                            'param': {
-                                'type': 'json',
-                                'default': default_content.decision_v2,
-                                'optional': True
-                            }
-                        }
-                    },
-                    'decisions_file': {
-                        'order': 9,
-                        'description': 'Upload a CSV file with decisions. The CSV file should have no header row and one decision per line in the following format: paper_number, decision, comment. The comment is optional.',
-                        'value': {
-                            'param': {
-                                'type': 'file',
-                                'maxSize': 50,
-                                'extensions': ['csv'],
-                                'optional': True
                             }
                         }
                     }

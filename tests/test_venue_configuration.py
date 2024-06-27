@@ -373,7 +373,7 @@ class TestVenueConfiguration():
         expdate = openreview.tools.datetime_millis(now + datetime.timedelta(minutes=28))        
 
         edit = pc_client.post_invitation_edit(
-            invitations='openreview.net/Support/-/Official_Comment_Template',
+            invitations='openreview.net/Support/-/Comment_Template',
             signatures=['~ProgramChair_ICLR1'],
             content={
                 'venue_id': { 'value': 'ICLR.cc/2025/Conference' },
@@ -626,49 +626,13 @@ class TestVenueConfiguration():
                 'due_date': { 'value': duedate },
                 'decision_options': { 'value': ['Accept', 'Revision Needed', 'Reject'] },
                 'accept_decision_options': { 'value': ['Accept'] },
-                'readers': { 'value': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Paper Authors']},
-                'content': {
-                    'value': {
-                        'title': {
-                            'order': 1,
-                            'value': 'Paper Decision'
-                        },
-                        'decision': {
-                            'order': 2,
-                            'description': 'Decision',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'enum': [
-                                        'Accept (Oral)',
-                                        'Accept (Poster)',
-                                        'Reject'
-                                    ],
-                                    'input': 'radio'
-                                }
-                            }
-                        },
-                        'comment': {
-                            'order': 3,
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'markdown': True,
-                                    'input': 'textarea',
-                                    'optional': True,
-                                    'deletable': True
-                                }
-                            }
-                        }
-                    }
-                }
+                'readers': { 'value': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Paper Authors']}
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], count=1)
 
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Final_Decision')
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Final_Decision/Deadlines')
-        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Final_Decision/Form_Fields')
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Final_Decision/Readers')
 
         helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/Final_Decision-0-1', count=1)
