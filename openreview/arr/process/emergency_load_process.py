@@ -38,7 +38,7 @@ def process(client, edit, invitation):
         soft_delete=True
     )
 
-    if edit.note.ddate or "No" in edit.note.content['emergency_reviewing_agreement']:
+    if isinstance(edit.note.ddate, int) or "No" in edit.note.content['emergency_reviewing_agreement']:
         
         if not registered_loads:
             print('No registered load, nothing to do')
