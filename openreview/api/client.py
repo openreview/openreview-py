@@ -56,10 +56,10 @@ class OpenReviewClient(object):
     :type expiresIn: number, optional
     """
     def __init__(self, baseurl = None, username = None, password = None, token= None, tokenExpiresIn=None):
-
-        self.baseurl = baseurl
-        if not self.baseurl:
-           self.baseurl = os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3001')
+        self.baseurl = baseurl if baseurl is not None else os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3001')
+        if 'https://api.openreview.net' in self.baseurl or 'https://devapi.openreview.net' in self.baseurl:
+            correct_baseurl = self.baseurl.replace('api', 'api2')
+            raise OpenReviewException(f'Please use "{correct_baseurl}" as the baseurl for the OpenReview API or use the old client openreview.Client')
         self.groups_url = self.baseurl + '/groups'
         self.login_url = self.baseurl + '/login'
         self.register_url = self.baseurl + '/register'
