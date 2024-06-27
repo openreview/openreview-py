@@ -104,7 +104,10 @@ class Journal(object):
         return self.__get_group_id('Expert_Reviewers')
     
     def get_expert_reviewers_member_id(self):
-        return self.__get_invitation_id(name='Member', prefix=self.get_expert_reviewers_id())    
+        return self.__get_invitation_id(name='Member', prefix=self.get_expert_reviewers_id())
+
+    def get_archived_reviewers_member_id(self):
+        return self.__get_invitation_id(name='Member', prefix=self.get_reviewers_archived_id())        
 
     def get_solicit_reviewers_id(self, number=None, declined=False):
         group_id = self.__get_group_id(self.solicit_reviewers_name, number)
@@ -758,7 +761,10 @@ class Journal(object):
         if note.ddate:
             return
 
-        action = 'posted' if note.tcdate == note.tmdate else 'edited'
+        if note.id == forum.id:
+            action = 'posted' if edit.tcdate == edit.tmdate else 'edited'
+        else:
+            action = 'posted' if note.tcdate == note.tmdate else 'edited'
 
         readers = note.readers
         nonreaders = [edit.tauthor]
