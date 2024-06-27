@@ -3031,7 +3031,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         openreview_client.post_edge(
             rev_2_edge
         )
-        openreview_client.delete_edge(
+        openreview_client.post_edge(
             rev_3_edge
         )
 
