@@ -3026,8 +3026,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         # Revert the data to preserve the rest of the tests
         now = datetime.datetime.utcnow()
-        rev_2_edge.ddate = now
-        rev_3_edge.ddate = now
+        rev_2_edge.ddate = openreview.tools.datetime_millis(now)
+        rev_3_edge.ddate = openreview.tools.datetime_millis(now)
         openreview_client.post_edge(
             rev_2_edge
         )

@@ -529,15 +529,16 @@ class ARR(object):
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None, submission_track=None):
         setup_value = self.venue.setup_committee_matching(committee_id, compute_affinity_scores, compute_conflicts, compute_conflicts_n_years, alternate_matching_group, submission_track)
-        invitation = self.client.get_invitation(self.venue.get_assignment_id(committee_id, deployed=False, invite=False))
-        invitation.preprocess = self.invitation_builder.get_process_content('process/proposed_assignment_pre_process.js')
         self.client.post_invitation_edit(
             invitations=self.venue.get_meta_invitation_id(),
             readers=[self.venue_id],
             writers=[self.venue_id],
             signatures=[self.venue_id],
             replacement=False,
-            invitation=invitation
+            invitation=openreview.api.Invitation(
+                id=self.venue.get_assignment_id(committee_id, deployed=False, invite=False),
+                preproces=self.invitation_builder.get_process_content('process/proposed_assignment_pre_process.js')
+            )
         )
         return setup_value
 
