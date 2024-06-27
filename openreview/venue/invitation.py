@@ -2682,6 +2682,7 @@ class InvitationBuilder(object):
         custom_stage_source = custom_stage.get_source_submissions()
         custom_stage_reply_type = custom_stage.get_reply_type()
         note_writers = None
+        all_signatures = custom_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')
 
         if custom_stage_reply_type == 'reply':
             paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, number='${2/content/noteNumber/value}')
@@ -2732,9 +2733,10 @@ class InvitationBuilder(object):
                 reply_to = None
                 edit_readers = [venue_id, '${2/signatures}']
                 note_readers = None
-                invitees = ['${3/content/replytoSignatures/value}']
+                invitees = [venue_id, '${3/content/replytoSignatures/value}']
                 noninvitees = []
                 note_nonreaders = []
+                all_signatures = ['${7/content/replytoSignatures/value}']
 
         invitation_content = {
             'source': { 'value': custom_stage_source },
@@ -2800,7 +2802,7 @@ class InvitationBuilder(object):
                     'edit': {
                         'signatures': {
                             'param': {
-                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in custom_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')]
+                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in all_signatures]
                             }
                         },
                         'readers': edit_readers,
