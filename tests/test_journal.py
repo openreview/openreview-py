@@ -1601,6 +1601,8 @@ The TMLR Editors-in-Chief
 Please note that responding to this email will direct your reply to tmlr@jmlr.org.
 '''        
 
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-1-0')
+        
         messages = journal.client.get_messages(subject = '[TMLR] Fewer than 3 ACKs for the paper 1: Paper title UPDATED')
         assert len(messages) == 2
 
