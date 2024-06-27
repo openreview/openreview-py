@@ -155,6 +155,18 @@ class TestARRVenueV2():
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Expertise_Selection')
 
+        post_submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Post_Submission')
+        assert 'TLDR' in post_submission_invitation.edit['note']['content']
+        assert 'preprint' in post_submission_invitation.edit['note']['content']
+        assert 'existing_preprints' in post_submission_invitation.edit['note']['content']
+        assert 'consent_to_share_data' in post_submission_invitation.edit['note']['content']
+        assert 'consent_to_share_submission_details' in post_submission_invitation.edit['note']['content']
+        assert 'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement' in post_submission_invitation.edit['note']['content']
+        assert 'section_2_permission_to_publish_peer_reviewers_content_agreement' in post_submission_invitation.edit['note']['content']
+        assert 'reviewing_volunteers' in post_submission_invitation.edit['note']['content']
+        assert 'reviewing_no_volunteers_reason' in post_submission_invitation.edit['note']['content']
+        assert 'preprint_status' in post_submission_invitation.edit['note']['content']
+
         request_page(selenium, 'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August', pc_client.token, wait_for_element='header')
         header_div = selenium.find_element(By.ID, 'header')
         assert header_div
@@ -227,23 +239,17 @@ class TestARRVenueV2():
         ))
         helpers.await_queue_edit(client, invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision')
 
-        # hide pdf
-        post_submission_note=pc_client.post_note(openreview.Note(
-            content= {
-                'force': 'Yes',
-                'hide_fields': hide_fields,
-                'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)'
-            },
-            forum=request_form_note.id,
-            invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Post_Submission',
-            readers= ['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
-            referent=request_form_note.id,
-            replyto=request_form_note.id,
-            signatures= ['~Program_ARRChair1'],
-            writers= [],
-        ))
-
-        helpers.await_queue()
+        post_submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Post_Submission')
+        assert 'TLDR' in post_submission_invitation.edit['note']['content']
+        assert 'preprint' in post_submission_invitation.edit['note']['content']
+        assert 'existing_preprints' in post_submission_invitation.edit['note']['content']
+        assert 'consent_to_share_data' in post_submission_invitation.edit['note']['content']
+        assert 'consent_to_share_submission_details' in post_submission_invitation.edit['note']['content']
+        assert 'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement' in post_submission_invitation.edit['note']['content']
+        assert 'section_2_permission_to_publish_peer_reviewers_content_agreement' in post_submission_invitation.edit['note']['content']
+        assert 'reviewing_volunteers' in post_submission_invitation.edit['note']['content']
+        assert 'reviewing_no_volunteers_reason' in post_submission_invitation.edit['note']['content']
+        assert 'preprint_status' in post_submission_invitation.edit['note']['content']
 
         request_page(selenium, 'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August', pc_client.token, wait_for_element='header')
         header_div = selenium.find_element(By.ID, 'header')
@@ -965,6 +971,116 @@ class TestARRVenueV2():
         )
 
         assert reviewer_five_client.get_note(license_edit['note']['id'])
+
+    def test_ac_recruitment(self, client, openreview_client, helpers, request_page, selenium):
+
+        pc_client = openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+
+        reviewer_details = '''acextra1@aclrollingreview.com, AC ARRExtraOne\nacextra2@aclrollingreview.com, AC ARRExtraOne'''
+        pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'Area_Chairs',
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': '[ARR August 2023] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of ACL ARR 2023 August to serve as {{invitee_role}}.\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
+            readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        assert len(openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members) == 0
+        assert len(openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs/Invited').members) == 2
+
+        messages = openreview_client.get_messages(subject = '[ARR August 2023] Invitation to serve as Area Chair')
+        assert len(messages) == 2
+
+        for message in messages:
+            text = message['content']['text']
+
+            invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+            helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Recruitment', count=2)
+
+        messages = openreview_client.get_messages(subject='[ARR - August 2023] Area Chair Invitation accepted')
+        assert len(messages) == 2
+
+        assert 'acextra1@aclrollingreview.com' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members
+        assert 'acextra2@aclrollingreview.com' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members
+
+        openreview_client.remove_members_from_group(
+            'aclweb.org/ACL/ARR/2023/August/Area_Chairs',
+            [
+                'acextra1@aclrollingreview.com',
+                'acextra2@aclrollingreview.com'
+            ]
+        )
+
+    def test_reviewer_recruitment(self, client, openreview_client, helpers, request_page, selenium):
+
+        pc_client = openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+
+        reviewer_details = '''reviewerextra1@aclrollingreview.com, Reviewer ARRExtraOne
+reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
+'''
+        pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'Reviewers',
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': '[ARR August 2023] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of ACL ARR 2023 August to serve as {{invitee_role}}.\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
+            readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        assert len(openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers/Invited').members) == 2
+        assert len(openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers/Declined').members) == 0
+
+        messages = openreview_client.get_messages(subject = '[ARR August 2023] Invitation to serve as Reviewer')
+        assert len(messages) == 2
+
+        for idx, message in enumerate(messages):
+            text = message['content']['text']
+
+            invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+            if idx == 0:
+                helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+            else:
+                helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
+
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Recruitment', count=2)
+
+        messages = openreview_client.get_messages(subject='[ARR - August 2023] Reviewer Invitation accepted')
+        assert len(messages) == 1
+        messages = openreview_client.get_messages(subject='[ARR - August 2023] Reviewer Invitation declined')
+        assert len(messages) == 1
+
+        assert len(openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers/Invited').members) == 2
+        assert len(openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers/Declined').members) == 1
+
+        assert 'reviewerextra1@aclrollingreview.com' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers').members
+
+        openreview_client.remove_members_from_group(
+            'aclweb.org/ACL/ARR/2023/August/Reviewers',
+            ['reviewerextra1@aclrollingreview.com']
+        )
 
     
     def test_submission_preprocess(self, client, openreview_client, test_client, helpers):
@@ -1933,7 +2049,7 @@ class TestARRVenueV2():
         ))
 
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Post_Submission-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Post_Submission-0-1', count=2)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
 
         assert len(pc_client_v2.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Withdrawal')) == 101
@@ -2515,7 +2631,7 @@ class TestARRVenueV2():
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "A Name"}
+                    "reviewer_certification": {"value": "Yes"}
                 }
             )
         )
@@ -2541,7 +2657,7 @@ class TestARRVenueV2():
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "A Name"}
+                    "reviewer_certification": {"value": "Yes"}
                 }
             )
         )        
@@ -2574,7 +2690,7 @@ class TestARRVenueV2():
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "A Name"}
+                    "reviewer_certification": {"value": "Yes"}
                 }
             )
         )
@@ -2603,7 +2719,7 @@ class TestARRVenueV2():
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "A Name"}
+                    "reviewer_certification": {"value": "Yes"}
                 }
             )
         )
@@ -2842,18 +2958,6 @@ class TestARRVenueV2():
 
         sac3_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs')
         assert sac3_group.members == ['~SAC_ARRTwo1']
-
-        sac_client = openreview.api.OpenReviewClient(username='sac2@aclrollingreview.com', password=helpers.strong_password)
-        request_page(selenium, "http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs", sac_client.token, wait_for_element='header')
-        header_div = selenium.find_element(By.ID, 'header')
-        assert header_div
-        description = header_div.find_element(By.CLASS_NAME, 'description')
-        assert 'AE Assignment Browser:' in description.text
-        url = header_div.find_element(By.ID, 'edge_browser_url')
-        assert url
-
-        edge_browser_url = 'http://localhost:3030/edges/browse?start=aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Assignment,tail:~SAC_ARRTwo1&traverse=aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment&edit=aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Invite_Assignment&browse=aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Agreggate_Score;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Affinity_Score;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Score;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Research_Area;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Custom_Max_Papers,head:ignore;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Registered_Load,head:ignore;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Load,head:ignore;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency,head:ignore;aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Area,head:ignore&hide=aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Conflict&maxColumns=2&version=2&referrer=[Senior%20Area%20Chair%20Console](/group?id=aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs)'
-        assert url.get_attribute('href') == edge_browser_url
 
         openreview_client.post_edge(openreview.api.Edge(
             invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Proposed_Assignment',
@@ -3293,7 +3397,7 @@ class TestARRVenueV2():
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "A Name"}
+                    "reviewer_certification": {"value": "Yes"}
                 }
                 ret_content['ethical_concerns'] = {'value': 'There are no concerns with this submission'}
 
@@ -3332,12 +3436,7 @@ class TestARRVenueV2():
             time.sleep(2) ## Wait for flag process functions
 
             review = pc_client_v2.get_note(id=rev_edit['note']['id'])
-            assert set(review.content['reviewer_certification']['readers']) == {
-                'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
-                f"aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Senior_Area_Chairs",
-                f"aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Area_Chairs",
-                review.signatures[0]
-            } 
+            assert 'readers' not in review.content['reviewer_certification']
 
             return rev_edit, pc_client_v2.get_note(test_submission.id)
         
@@ -3450,12 +3549,7 @@ class TestARRVenueV2():
 
         review = openreview_client.get_note(reviewer_edit['note']['id'])
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Authors' in review.readers
-        assert set(review.content['reviewer_certification']['readers']) == {
-            'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
-            f"aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Senior_Area_Chairs",
-            f"aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Area_Chairs",
-            review.signatures[0]
-        } 
+        assert 'readers' not in review.content['reviewer_certification'] 
 
         # Edit with ethics flag to double check that authors are present
         _, test_submission = post_official_review(user_client, review_inv, user, tested_field='needs_ethics_review', existing_note=reviewer_edit['note'])
@@ -3963,11 +4057,11 @@ class TestARRVenueV2():
                     note=openreview.api.Note(
                         content = {
                             'emergency_reviewing_agreement': { 'value': 'Yes' },
-                            'research_area': { 'value': 'Generation' }
+                            'research_area': { 'value': ['Generation'] }
                         }
                     )
                 )
-            with pytest.raises(openreview.OpenReviewException, match=r'You have agreed to emergency reviewing, please enter your closest relevant research area.'):
+            with pytest.raises(openreview.OpenReviewException, match=r'You have agreed to emergency reviewing, please enter your closest relevant research areas.'):
                 user_note_edit = user_client.post_note_edit(
                     invitation=f'{role}/-/{inv_name}',
                     signatures=[signature],
@@ -3987,7 +4081,7 @@ class TestARRVenueV2():
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
                         'emergency_load': { 'value': 2 },
-                        'research_area': { 'value': 'Generation' }
+                        'research_area': { 'value': ['Generation'] }
                     }
                 )
             )
@@ -4006,12 +4100,14 @@ class TestARRVenueV2():
             if 'Reviewer' in user:
                 assert cmp_edges[user][0] == 6
             assert cmp_original == reg_original + emg_original
+            assert len(area_edges[user]) == 1
             assert area_edges[user][0] == 'Generation'
 
             aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
             score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
             assert all(weight < 10 for weight in score_edges[user])
             assert all(weight < 10 for weight in aggregate_score_edges[user])
+            assert len(score_edges[user]) == 101
 
             # Test editing note
             user_note_edit = user_client.post_note_edit(
@@ -4021,8 +4117,8 @@ class TestARRVenueV2():
                     id=user_note_edit['note']['id'],
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
-                        'emergency_load': { 'value': 4 },
-                        'research_area': { 'value': 'Machine Translation' }
+                        'emergency_load': { 'value': 6 },
+                        'research_area': { 'value': ['Generation', 'Machine Translation'] }
                     }
                 )
             )
@@ -4035,19 +4131,22 @@ class TestARRVenueV2():
             area_edges = {o['id']['tail']: [j['label'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Area", groupby='tail', select='label')}
 
             assert all(user in edges for edges in [cmp_edges, reg_edges, emg_edges, area_edges])
-            assert all(len(edges[user]) == 1 for edges in [cmp_edges, reg_edges, emg_edges, area_edges])
+            assert all(len(edges[user]) == 1 for edges in [cmp_edges, reg_edges, emg_edges])
             if 'Reviewer' in user:
                 assert cmp_edges[user][0] == 10
             assert cmp_edges[user][0] != cmp_original
-            assert reg_edges[user][0] != reg_original
+            assert reg_edges[user][0] == reg_original
             assert emg_edges[user][0] != emg_original
             assert cmp_edges[user][0] == reg_edges[user][0] + emg_edges[user][0]
-            assert area_edges[user][0] == 'Machine Translation'
+            assert len(area_edges[user]) == 2
+            assert area_edges[user][0] == 'Generation'
+            assert area_edges[user][1] == 'Machine Translation'
 
             aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
             score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
             assert all(weight < 10 for weight in score_edges[user])
             assert all(weight < 10 for weight in aggregate_score_edges[user])
+            assert len(score_edges[user]) == 101
 
             # Test deleting note
             user_note_edit = user_client.post_note_edit(
@@ -4058,8 +4157,8 @@ class TestARRVenueV2():
                     ddate=openreview.tools.datetime_millis(now),
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
-                        'emergency_load': { 'value': 4 },
-                        'research_area': { 'value': 'Machine Translation' }
+                        'emergency_load': { 'value': 6 },
+                        'research_area': { 'value': ['Generation', 'Machine Translation'] }
                     }
                 )
             )

@@ -14,6 +14,7 @@ def process(client, edit, invitation):
     desk_rejection_email_pcs = domain.content.get('desk_rejection_email_pcs', {}).get('value')
     program_chairs_id = domain.content['program_chairs_id']['value']
     sender = domain.get_content_value('message_sender')
+    authors_accepted_id = domain.get_content_value('authors_accepted_id')
 
     submission = client.get_note(edit.note.id)
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
@@ -51,6 +52,7 @@ def process(client, edit, invitation):
 
     print(f'Remove {paper_group_id}/{authors_name} from {venue_id}/{authors_name}')
     client.remove_members_from_group(f'{venue_id}/{authors_name}', f'{paper_group_id}/{authors_name}')
+    client.remove_members_from_group(authors_accepted_id, f'{paper_group_id}/{authors_name}')
 
     formatted_committee = [committee.format(number=submission.number) for committee in desk_reject_committee]
     final_committee = []

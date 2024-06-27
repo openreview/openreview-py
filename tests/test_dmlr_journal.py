@@ -386,7 +386,7 @@ Please note that responding to this email will direct your reply to dmlr@jmlr.or
 
         note = andrew_client.get_note(note_id_1)
         assert note
-        assert note.invitations == ['DMLR/-/Submission', 'DMLR/-/Under_Review']
+        assert note.invitations == ['DMLR/-/Submission', 'DMLR/-/Edit', 'DMLR/-/Under_Review']
         assert note.readers == ['DMLR', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
         assert note.writers == ['DMLR', 'DMLR/Paper1/Authors']
         assert note.signatures == ['DMLR/Paper1/Authors']
@@ -417,7 +417,7 @@ note={Under review}
         assert "DMLR/Paper1/-/Moderation" not in [i.id for i in invitations]
 
         edits = openreview_client.get_note_edits(note.id)
-        assert len(edits) == 2
+        assert len(edits) == 3
         for edit in edits:
             assert edit.readers == ['DMLR', 'DMLR/Action_Editors', 'DMLR/Paper1/Reviewers', 'DMLR/Paper1/Authors']
 
@@ -740,7 +740,7 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
         assert note.forum == note_id_1
         assert note.replyto is None
         assert note.pdate
-        assert note.invitations == ['DMLR/-/Submission', 'DMLR/-/Under_Review', 'DMLR/-/Edit', 'DMLR/-/Accepted']
+        assert note.invitations == ['DMLR/-/Submission', 'DMLR/-/Edit', 'DMLR/-/Under_Review', 'DMLR/-/Accepted']
         assert note.readers == ['everyone']
         assert note.writers == ['DMLR']
         assert note.signatures == ['DMLR/Paper1/Authors']

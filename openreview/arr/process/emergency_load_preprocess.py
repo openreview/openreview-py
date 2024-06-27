@@ -7,4 +7,4 @@ def process(client, edit, invitation):
         if not emergency_load:
             raise openreview.OpenReviewException('You have agreed to emergency reviewing, please enter the additional load that you want to be assigned.')
         if not research_area:
-            raise openreview.OpenReviewException('You have agreed to emergency reviewing, please enter your closest relevant research area.')
+            raise openreview.OpenReviewException('You have agreed to emergency reviewing, please enter your closest relevant research areas.')

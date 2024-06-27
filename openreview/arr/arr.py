@@ -19,6 +19,7 @@ from openreview.venue.recruitment import Recruitment
 from openreview.arr.helpers import (
     setup_arr_invitations
 )
+from openreview.stages.arr_content import hide_fields
 
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
@@ -133,6 +134,7 @@ class ARR(object):
         self.venue.source_submissions_query_mapping = self.source_submissions_query_mapping
         self.venue.sac_paper_assignments = self.sac_paper_assignments
 
+        self.submission_stage.hide_fields = self.submission_stage.hide_fields + hide_fields
         self.venue.submission_stage = self.submission_stage
         self.venue.review_stage = self.review_stage
         self.venue.bid_stages = self.bid_stages
@@ -162,6 +164,9 @@ class ARR(object):
 
     def get_short_name(self):
         return self.venue.get_short_name()
+
+    def get_message_sender(self):
+        return self.venue.get_message_sender()
 
     def get_edges_archive_date(self):
         return self.venue.get_edges_archive_date()
@@ -213,6 +218,9 @@ class ARR(object):
 
     def get_constraint_label_id(self, committee_id):
         return self.venue.get_constraint_label_id(committee_id)
+
+    def get_message_id(self, committee_id=None, number=None):
+        return self.venue.get_message_id(committee_id=committee_id, number=number)
 
     def get_recommendation_id(self, committee_id=None):
         return self.venue.get_recommendation_id(committee_id)
@@ -307,6 +315,9 @@ class ARR(object):
     def get_desk_rejected_id(self):
         return self.venue.get_desk_rejected_id()
 
+    def get_group_recruitment_id(self, committee_name):
+        return self.venue.get_group_recruitment_id(committee_name)
+
     def get_participants(self, number=None, with_program_chairs=False, with_authors=False):
         return self.venue.get_participants(number, with_program_chairs, with_authors)
 
@@ -381,9 +392,39 @@ class ARR(object):
     def set_impersonators(self, impersonators):
         return self.venue.set_impersonators(impersonators)
 
+    def recruit_reviewers(self,
+        title,
+        message,
+        invitees = [],
+        reviewers_name = 'Reviewers',
+        remind = False,
+        invitee_names = [],
+        retry_declined = False,
+        contact_info = '',
+        reduced_load_on_decline = None,
+        allow_accept_with_reduced_load = False,
+        default_load= 0,
+        allow_overlap_official_committee = False,
+        accept_recruitment_template=None
+    ):
+        return self.venue.recruit_reviewers(
+            title,
+            message,
+            invitees = invitees,
+            reviewers_name = reviewers_name,
+            remind = remind,
+            invitee_names = invitee_names,
+            retry_declined = retry_declined,
+            contact_info = contact_info,
+            reduced_load_on_decline = reduced_load_on_decline,
+            allow_accept_with_reduced_load = allow_accept_with_reduced_load,
+            default_load= default_load,
+            allow_overlap_official_committee = allow_overlap_official_committee,
+            accept_recruitment_template=accept_recruitment_template
+        )
+
     # For stage invitations, pass value to inner venue objects
     def create_submission_stage(self):
-        self.venue.submission_stage = self.submission_stage
         stage_value = self.venue.create_submission_stage()
         invitation = self.client.get_invitation(self.get_submission_id())
         invitation.preprocess = self.invitation_builder.get_process_content('process/submission_preprocess.py')
@@ -491,6 +532,9 @@ class ARR(object):
 
     def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
         return self.venue.set_assignments(assignment_title,  committee_id, enable_reviewer_reassignment, overwrite)
+
+    def unset_assignments(self, assignment_title, committee_id):
+        return self.venue.unset_assignments(assignment_title, committee_id)
 
     def setup_assignment_recruitment(self, committee_id, hash_seed, due_date, assignment_title=None, invitation_labels={}, email_template=None):
         return self.venue.setup_assignment_recruitment(committee_id,  hash_seed,  due_date, assignment_title, invitation_labels, email_template)
