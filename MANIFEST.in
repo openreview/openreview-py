@@ -10,8 +10,13 @@ include openreview/agora/process/*.py
 include openreview/duplicate_domains.json
 include openreview/journal/process/*.py
 include openreview/journal/webfield/*.js
+include openreview/profile/process/*.py
+include openreview/profile/process/*.js
+include openreview/profile/webfield/*.js
 include openreview/venue/process/*.py
 include openreview/venue/process/*.js
+include openreview/venue/configuration/process/*.py
+include openreview/venue/configuration/webfield/*.js
 include openreview/venue/webfield/*.js
 include openreview/arr/process/*.js
 include openreview/arr/process/*.py

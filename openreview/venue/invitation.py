@@ -152,6 +152,10 @@ class InvitationBuilder(object):
             cdate=submission_cdate,
             duedate=tools.datetime_millis(submission_stage.due_date) if submission_stage.due_date else None,
             expdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None,
+            content = {
+                'email_authors': { 'value': True },
+                'email_pcs': { 'value': self.venue.submission_stage.email_pcs }
+            },
             edit = {
                 'signatures': {
                     'param': {
@@ -495,7 +499,7 @@ class InvitationBuilder(object):
         previous_query = {}
         invitation = tools.get_invitation(self.client, review_invitation_id)
         if invitation:
-            previous_query = invitation.content.get('source_submissions_query', {}).get('value', {})
+            previous_query = invitation.content.get('source_submissions_query', {}).get('value', {}) if invitation.content else {}
 
         source_submissions_query = review_stage.source_submissions_query if review_stage.source_submissions_query else previous_query
 
@@ -860,7 +864,7 @@ class InvitationBuilder(object):
         previous_query = {}
         invitation = tools.get_invitation(self.client, meta_review_invitation_id)
         if invitation:
-            previous_query = invitation.content.get('source_submissions_query', {}).get('value', {})
+            previous_query = invitation.content.get('source_submissions_query', {}).get('value', {}) if invitation.content else {}
 
         source_submissions_query = meta_review_stage.source_submissions_query if meta_review_stage.source_submissions_query else previous_query
 
@@ -1375,7 +1379,7 @@ class InvitationBuilder(object):
   const script = metaInvitation.content.comment_preprocess_script.value;
   eval(`var process = ${script}`);
   await process(client, edit, invitation);
-}''' if comment_stage.check_mandatory_readers and comment_stage.reader_selection else None,
+}''' if comment_stage.check_mandatory_readers and comment_stage.reader_selection else '',
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['comment_process_script']['value']
@@ -2551,7 +2555,7 @@ class InvitationBuilder(object):
 
         hidden_field_names = self.venue.submission_stage.get_hidden_field_names()
         existing_invitation = tools.get_invitation(self.client, revision_invitation_id)
-        invitation_content = existing_invitation.edit['invitation']['edit']['note']['content'] if existing_invitation else {}
+        invitation_content = existing_invitation.edit.get('invitation', {}).get('edit', {}).get('note', {}).get('content', {}) if existing_invitation and existing_invitation.edit else {}
 
         for field in content:
             if field in hidden_field_names:
@@ -3999,7 +4003,12 @@ class InvitationBuilder(object):
                     }
                 },
                 'group': {
-                    'id': venue.get_committee_id_invited(committee_name)
+                    'id': venue.get_committee_id_invited(committee_name),
+                    'content': {
+                        'last_recruitment': {
+                            'value': '${4/tmdate}'
+                        }
+                    }
                 }
             })
         
@@ -4017,44 +4026,58 @@ class InvitationBuilder(object):
                 'signatures': [venue_id],
                 'readers': [venue_id],
                 'writers': [venue_id],
+                'content': {
+                    'reduced_load': {
+                        'value': {
+                            'param': {
+                                'type': 'integer[]',
+                                'optional': True
+                            }
+                        }
+                    },
+                    'recruitment_subject': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'regex': '.+',
+                                'optional': True,
+                                'default': f'[{venue.short_name}] Invitation to serve as {pretty_role}'
+                            }
+                        }
+                    },
+                    'recruitment_template': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 5000,
+                                'input': 'textarea',
+                                'optional': True
+                            }
+                        }
+                    },
+                    'allow_overlap': {
+                        'value': {
+                            'param': {
+                                'type': 'boolean',
+                                'enum': [True, False]
+                            }
+                        }
+                    }
+                },
                 'group': {
                     'id': venue.get_committee_id_invited(committee_name),
                     'content': {
                         'reduced_load': {
-                            'value': {
-                                'param': {
-                                    'type': 'integer[]',
-                                    'optional': True
-                                }
-                            }
+                            'value': '${4/content/reduced_load/value}'
                         },
                         'recruitment_subject': {
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'regex': '.+',
-                                    'optional': True,
-                                    'default': f'[{venue.short_name}] Invitation to serve as {pretty_role}'
-                                }
-                            }
+                            'value': '${4/content/recruitment_subject/value}'
                         },
                         'recruitment_template': {
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'maxLength': 5000,
-                                    'input': 'textarea',
-                                    'optional': True
-                                }
-                            }
+                            'value': '${4/content/recruitment_template/value}'
                         },
                         'allow_overlap': {
-                            'value': {
-                                'param': {
-                                    'type': 'boolean',
-                                    'enum': [True, False]
-                                }
-                            }
+                            'value': '${4/content/allow_overlap/value}'
                         }
                     }
                 }
