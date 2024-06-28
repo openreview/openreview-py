@@ -528,7 +528,19 @@ class ARR(object):
         return self.venue.send_decision_notifications(decision_options,  messages)
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None, submission_track=None):
-        return self.venue.setup_committee_matching(committee_id, compute_affinity_scores, compute_conflicts, compute_conflicts_n_years, alternate_matching_group, submission_track)
+        setup_value = self.venue.setup_committee_matching(committee_id, compute_affinity_scores, compute_conflicts, compute_conflicts_n_years, alternate_matching_group, submission_track)
+        self.client.post_invitation_edit(
+            invitations=self.venue.get_meta_invitation_id(),
+            readers=[self.venue_id],
+            writers=[self.venue_id],
+            signatures=[self.venue_id],
+            replacement=False,
+            invitation=openreview.api.Invitation(
+                id=self.venue.get_assignment_id(committee_id, deployed=False, invite=False),
+                preprocess=self.invitation_builder.get_process_content('process/proposed_assignment_pre_process.js')
+            )
+        )
+        return setup_value
 
     def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
         return self.venue.set_assignments(assignment_title,  committee_id, enable_reviewer_reassignment, overwrite)

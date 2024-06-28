@@ -2996,6 +2996,45 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             label = 'reviewer-assignments'
         ))
 
+        rev_2_edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Proposed_Assignment',
+            head = submissions[0].id,
+            tail = '~Reviewer_ARRTwo1',
+            signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            weight = 1,
+            label = 'reviewer-assignments'
+        ))
+
+        rev_3_edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Proposed_Assignment',
+            head = submissions[0].id,
+            tail = '~Reviewer_ARRThree1',
+            signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            weight = 1,
+            label = 'reviewer-assignments'
+        ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'You cannot assign more than 3 reviewers to this paper'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Proposed_Assignment',
+                head = submissions[0].id,
+                tail = '~Reviewer_ARRFive1',
+                signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                weight = 1,
+                label = 'reviewer-assignments'
+            ))
+
+        # Revert the data to preserve the rest of the tests
+        now = datetime.datetime.utcnow()
+        rev_2_edge.ddate = openreview.tools.datetime_millis(now)
+        rev_3_edge.ddate = openreview.tools.datetime_millis(now)
+        openreview_client.post_edge(
+            rev_2_edge
+        )
+        openreview_client.post_edge(
+            rev_3_edge
+        )
+
         august_venue.set_assignments(assignment_title='reviewer-assignments', committee_id='aclweb.org/ACL/ARR/2023/August/Reviewers')
 
         pc_client.post_note(
