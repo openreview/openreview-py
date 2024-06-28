@@ -323,7 +323,7 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
                                 signatories=[venue_id],
                                 members=[]
                                 )
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/reviewersWebfield.js')) as f:
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/archivedReviewersWebfield.js')) as f:
                 content = f.read()
                 content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
                 content = content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{self.journal.short_name}";')

@@ -9,6 +9,8 @@ const traverseParam = `${replaceReviewerName(domain.content.reviewers_assignment
 const editParam = `${replaceReviewerName(domain.content.reviewers_invite_assignment_id?.value)}`
 const browseInvitations = []
 const assignmentInvitation = domain.content.sac_paper_assignments?.value ? null : domain.content.senior_area_chairs_assignment_id?.value
+const automaticAssignment = domain.content.automatic_reviewer_assignment?.value
+const assignmentUrls = {}
 
 if (domain.content.reviewers_affinity_score_id?.value) {
   browseInvitations.push(replaceReviewerName(domain.content.reviewers_affinity_score_id?.value))
@@ -21,6 +23,12 @@ if (domain.content.reviewers_custom_max_papers_id?.value) {
 }
 
 const otherParams = `&hide=${replaceReviewerName(domain.content.reviewers_conflict_id?.value)}&maxColumns=2&version=2&referrer=[Senior Area Chair Console](/group?id=${entity.id})`
+
+const manualReviewerAssignmentUrl = `/edges/browse?traverse=${traverseParam}&edit=${editParam}&browse=${browseInvitations.join(';')}${otherParams}`
+assignmentUrls[domain.content.reviewers_name?.value] = {
+  manualAssignmentUrl: manualReviewerAssignmentUrl,
+  automaticAssignment: automaticAssignment
+}
 
 return {
   component: 'SeniorAreaChairConsole',
@@ -40,8 +48,12 @@ return {
     deskRejectedVenueId: domain.content.desk_rejected_venue_id?.value,
     submissionName: domain.content.submission_name?.value,
     reviewerName: domain.content.reviewers_name?.value,
+    reviewersId: domain.content.reviewers_id?.value,
+    reviewerAssignmentId: domain.content.reviewers_assignment_id?.value,
+    assignmentUrls: assignmentUrls,    
     anonReviewerName: domain.content.reviewers_anon_name?.value,
     areaChairName: domain.content.area_chairs_name?.value,
+    areaChairsId: domain.content.area_chairs_id?.value,
     anonAreaChairName: domain.content.area_chairs_anon_name?.value,
     secondaryAreaChairName: domain.content.secondary_area_chairs_name?.value,
     secondaryAnonAreaChairName: domain.content.secondary_area_chairs_anon_name?.value, 
@@ -56,6 +68,7 @@ return {
     enableQuerySearch: true,
     emailReplyTo: domain.content.contact?.value,
     edgeBrowserDeployedUrl: `/edges/browse?start=${startParam}&traverse=${traverseParam}&edit=${editParam}&browse=${browseInvitations.join(';')}${otherParams}`,
-    filterFunction: entity.content?.track?.value && `return note.content?.track?.value==="${entity.content?.track?.value}"`
+    filterFunction: entity.content?.track?.value && `return note.content?.track?.value==="${entity.content?.track?.value}"`,
+    preferredEmailInvitationId: domain.content.preferred_emails_id?.value,
   }
 }

@@ -16,7 +16,7 @@ import os
 import re
 import time
 import jwt
-import traceback
+import json
 from ..openreview import Profile
 from ..openreview import OpenReviewException
 from .. import tools
@@ -31,9 +31,9 @@ class LogRetry(Retry):
         response_string = 'no response'
         if response:
             if 'application/json' in response.headers.get('Content-Type'):
-                response_string = response.json()
-            if response.text:
-                response_string = response.text
+                response_string = json.loads(response.data.decode('utf-8'))
+            elif response.data:
+                response_string = response.data
             else:
                 response_string = response.reason
         print(f"Retrying request: {method} {url}, response: {response_string}, error: {error}")
@@ -56,10 +56,10 @@ class OpenReviewClient(object):
     :type expiresIn: number, optional
     """
     def __init__(self, baseurl = None, username = None, password = None, token= None, tokenExpiresIn=None):
-
-        self.baseurl = baseurl
-        if not self.baseurl:
-           self.baseurl = os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3001')
+        self.baseurl = baseurl if baseurl is not None else os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3001')
+        if 'https://api.openreview.net' in self.baseurl or 'https://devapi.openreview.net' in self.baseurl:
+            correct_baseurl = self.baseurl.replace('api', 'api2')
+            raise OpenReviewException(f'Please use "{correct_baseurl}" as the baseurl for the OpenReview API or use the old client openreview.Client')
         self.groups_url = self.baseurl + '/groups'
         self.login_url = self.baseurl + '/login'
         self.register_url = self.baseurl + '/register'
@@ -102,7 +102,7 @@ class OpenReviewClient(object):
             'Accept': 'application/json'
         }
 
-        retry_strategy = LogRetry(total=3, backoff_factor=1, status_forcelist=[ 500, 502, 503, 504 ], respect_retry_after_header=False)
+        retry_strategy = LogRetry(total=3, backoff_factor=1, status_forcelist=[ 500, 502, 503, 504 ], respect_retry_after_header=True)
         self.session = requests.Session()
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount('https://', adapter)
@@ -526,7 +526,7 @@ class OpenReviewClient(object):
 
             profiles_by_email = {}
             for p in full_response:
-                profile_confirmed_emails = p.get('confirmedEmails', [])
+                profile_confirmed_emails = p.get('confirmedEmails', p['content'].get('emailsConfirmed', []))
                 for email in profile_confirmed_emails:
                     profiles_by_email[email] = Profile.from_json(p)
             return profiles_by_email
@@ -1681,7 +1681,7 @@ class OpenReviewClient(object):
             delete_query['tail'] = tail
         if id: 
             delete_query['id'] = id
-            
+
         delete_query['waitToFinish'] = wait_to_finish
         delete_query['softDelete'] = soft_delete
 
@@ -2328,6 +2328,8 @@ class Edit(object):
         invitation = None,
         nonreaders = None,
         cdate = None,
+        tcdate = None,
+        tmdate = None,
         ddate = None,
         tauthor = None,
         content = None):
@@ -2336,6 +2338,8 @@ class Edit(object):
         self.domain = domain
         self.invitations = invitations
         self.cdate = cdate
+        self.tcdate = tcdate
+        self.tmdate = tmdate
         self.ddate = ddate
         self.readers = readers
         self.nonreaders = nonreaders
@@ -2406,6 +2410,8 @@ class Edit(object):
             domain = e.get('domain'),
             invitations = e.get('invitations'),
             cdate = e.get('cdate'),
+            tcdate = e.get('tcdate'),
+            tmdate = e.get('tmdate'),
             ddate = e.get('ddate'),
             readers = e.get('readers'),
             nonreaders = e.get('nonreaders'),

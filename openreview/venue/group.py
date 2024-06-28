@@ -188,6 +188,7 @@ class GroupBuilder(object):
             'desk_rejection_name': { 'value': 'Desk_Rejection'},
             'desk_rejection_email_pcs': { 'value': self.venue.submission_stage.email_pcs_on_desk_reject },
             'desk_rejected_submission_reveal_authors': { 'value': self.venue.submission_stage.desk_rejected_submission_reveal_authors },
+            'deletion_expiration_id': { 'value': self.venue.get_invitation_id('Deletion_Expiration') },
             'automatic_reviewer_assignment': { 'value': self.venue.automatic_reviewer_assignment },
             'decision_heading_map': { 'value': self.venue.decision_heading_map },
             'reviewers_message_submission_id': { 'value': self.venue.get_message_id(number='{number}') },
@@ -196,6 +197,7 @@ class GroupBuilder(object):
 
         if self.venue.preferred_emails_groups:
             content['preferred_emails_groups'] = { 'value': self.venue.preferred_emails_groups }
+            content['preferred_emails_id'] = { 'value': self.venue.get_preferred_emails_invitation_id() }
         
         if self.venue.submission_stage.subject_areas:
             content['subject_areas'] = { 'value': self.venue.submission_stage.subject_areas }

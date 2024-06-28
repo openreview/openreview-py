@@ -310,6 +310,42 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['expdate'] = deletion_expdate
 
         self.save_invitation(invitation, replacement=False)
+
+        expire_invitation = Invitation (
+            id=self.venue.get_invitation_id('Deletion_Expiration'),
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = ['everyone'],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'invitation': {
+                    'id': {
+                        'param': {
+                            'regex': self.venue.get_paper_group_prefix()
+                        }
+                    },
+                    'signatures': [venue_id],
+                    'expdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'deletable': True
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(expire_invitation, replacement=True)
         return invitation
 
     def set_post_submission_invitation(self):
@@ -2646,6 +2682,7 @@ class InvitationBuilder(object):
         custom_stage_source = custom_stage.get_source_submissions()
         custom_stage_reply_type = custom_stage.get_reply_type()
         note_writers = None
+        all_signatures = custom_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')
 
         if custom_stage_reply_type == 'reply':
             paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, number='${2/content/noteNumber/value}')
@@ -2696,9 +2733,10 @@ class InvitationBuilder(object):
                 reply_to = None
                 edit_readers = [venue_id, '${2/signatures}']
                 note_readers = None
-                invitees = ['${3/content/replytoSignatures/value}']
+                invitees = [venue_id, '${3/content/replytoSignatures/value}']
                 noninvitees = []
                 note_nonreaders = []
+                all_signatures = ['${7/content/replytoSignatures/value}']
 
         invitation_content = {
             'source': { 'value': custom_stage_source },
@@ -2764,7 +2802,7 @@ class InvitationBuilder(object):
                     'edit': {
                         'signatures': {
                             'param': {
-                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in custom_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')]
+                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in all_signatures]
                             }
                         },
                         'readers': edit_readers,

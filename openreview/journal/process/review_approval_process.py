@@ -29,9 +29,6 @@ def process(client, edit, invitation):
                                 content={
                                     '_bibtex': {
                                         'value': journal.get_bibtex(submission, journal.under_review_venue_id)
-                                    },
-                                    'assigned_action_editor': {
-                                        'value': ', '.join(paper_action_editor_group.members)
                                     }
                                 }))
 
