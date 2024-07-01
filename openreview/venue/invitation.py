@@ -4178,7 +4178,7 @@ class InvitationBuilder(object):
                     },                                                    
                     'replacement': True,
                     'invitation': {
-                        'id': self.venue.get_message_id(committee_id=self.venue.get_area_chairs_id(), number='${2/content/noteNumber/value}'),
+                        'id': self.venue.get_message_id(number='${2/content/noteNumber/value}', name='Area_Chairs_Message'),
                         'signatures': [ venue_id ],
                         'readers': committee,
                         'writers': [venue_id],
