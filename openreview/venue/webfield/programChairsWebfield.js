@@ -37,6 +37,7 @@ return {
     metaReviewRecommendationName: domain.content.meta_review_recommendation?.value || 'recommendation',
     submissionId: domain.content.submission_id?.value,
     messageSubmissionReviewersInvitationId: domain.content.reviewers_message_submission_id?.value,
+    messageSubmissionAreaChairsInvitationId: domain.content.area_chairs_message_submission_id?.value,
     messageAreaChairsInvitationId: domain.content.area_chairs_message_id?.value,
     messageReviewersInvitationId: domain.content.reviewers_message_id?.value,
     messageSeniorAreaChairsInvitationId: domain.content.meta_invitation_id?.value,
