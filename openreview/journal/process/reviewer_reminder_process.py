@@ -50,6 +50,7 @@ The {journal.short_name} Editors-in-Chief
     if date_index > 0:
         ## get preferred names
         profiles = openreview.tools.get_profiles(client, late_invitees)
+        print('profiles', profiles)
         ## send email to action editors
         print('send email to action editors')
         for profile in profiles:
@@ -80,6 +81,7 @@ The {journal.short_name} Editors-in-Chief
     ## send email to EICs
     if date_index > 2 or days_late == 'one month':
         profiles = openreview.tools.get_profiles(client, late_invitees)
+        print('profiles', profiles)
         for profile in profiles:
             client.post_message(
                 invitation=journal.get_meta_invitation_id(),

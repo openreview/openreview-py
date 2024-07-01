@@ -30,7 +30,8 @@ def process(client, edit, invitation):
         print('Send email to solicit reviewer')
         review_period_length = journal.get_review_period_length(submission)
         duedate = journal.get_due_date(weeks = review_period_length)
-        assigned_action_editor = client.search_profiles(ids=[submission.content['assigned_action_editor']['value'].split(',')[0]])[0]
+        assigned_action_editor = openreview.tools.get_profiles(client, ids_or_emails=[submission.content['assigned_action_editor']['value'].split(',')[0]], with_preferred_emails=journal.get_preferred_emails_invitation_id())[0]
+            
 
         client.post_message(
             invitation=journal.get_meta_invitation_id(),

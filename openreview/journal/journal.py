@@ -325,6 +325,9 @@ class Journal(object):
 
     def get_moderation_id(self, number=None):
         return self.__get_invitation_id(name='Moderation', number=number)
+    
+    def get_preferred_emails_invitation_id(self):
+        return self.__get_invitation_id(name='Preferred_Emails')
 
     def get_reviewer_report_form(self):
         forum_note = self.client.get_notes(invitation=self.get_form_id(), content={ 'title': 'Reviewer Report'})
@@ -1678,7 +1681,7 @@ OpenReview Team'''
             ## Send email to inviter
             subject=f"[{journal.short_name}] Conflict detected between reviewer {user_profile.get_preferred_name(pretty=True)} and paper {submission.number}: {submission.content['title']['value']}"
             message =f'''Hi {{{{fullname}}}},
-A conflict was detected between {user_profile.get_preferred_name(pretty=True)}({user_profile.get_preferred_email()}) and the paper {submission.number} and the assignment can not be done.
+A conflict was detected between {user_profile.get_preferred_name(pretty=True)} and the paper {submission.number} and the assignment can not be done.
 
 If you have any questions, please contact us as info@openreview.net.
 
@@ -1731,7 +1734,7 @@ OpenReview Team'''
                 ## Send email to inviter
                 subject=f'[{short_phrase}] {reviewer_name} {user_profile.get_preferred_name(pretty=True)} signed up and is assigned to paper {submission.number}: {submission.content["title"]["value"]}'
                 message =f'''Hi {{{{fullname}}}},
-The {reviewer_name} {user_profile.get_preferred_name(pretty=True)}({user_profile.get_preferred_email()}) that you invited to review paper {submission.number} has accepted the invitation, signed up and is now assigned to the paper {submission.number}.
+The {reviewer_name} {user_profile.get_preferred_name(pretty=True)} that you invited to review paper {submission.number} has accepted the invitation, signed up and is now assigned to the paper {submission.number}.
 
 OpenReview Team'''
 

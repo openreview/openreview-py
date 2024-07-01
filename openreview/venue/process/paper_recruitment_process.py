@@ -55,7 +55,6 @@ def process(client, edit, invitation):
         raise openreview.OpenReviewException(f'user {user} can not reply to this invitation, invalid status {edge.label}')
 
     preferred_name=user_profile.get_preferred_name(pretty=True) if user_profile else edge.tail
-    preferred_email=user_profile.get_preferred_email() if user_profile else edge.tail
 
     assignment_edges = client.get_edges(invitation=assignment_invitation_id, head=submission.id, tail=edge.tail, label=assignment_title)
 
@@ -130,7 +129,7 @@ OpenReview Team'''
             ## Send email to inviter
             subject=f'[{short_phrase}] Conflict detected between {committee_name} {preferred_name} and paper {submission.number}'
             message =f'''Hi {{{{fullname}}}},
-A conflict was detected between {preferred_name}({user_profile.get_preferred_email()}) and the paper {submission.number} and the assignment can not be done.
+A conflict was detected between {preferred_name} and the paper {submission.number} and the assignment can not be done.
 
 If you have any questions, please contact us as info@openreview.net.
 
@@ -192,7 +191,7 @@ OpenReview Team'''
             ## Send email to inviter
             subject=f'[{short_phrase}] {committee_name} {preferred_name} accepted to review paper {submission.number}'
             message =f'''Hi {{{{fullname}}}},
-The {committee_name} {preferred_name}({preferred_email}) that you invited to review paper {submission.number} has accepted the invitation and is now assigned to the paper {submission.number}.
+The {committee_name} {preferred_name} that you invited to review paper {submission.number} has accepted the invitation and is now assigned to the paper {submission.number}.
 
 OpenReview Team'''
 
@@ -239,7 +238,7 @@ OpenReview Team'''
         ## Send email to inviter
         subject=f'[{short_phrase}] {committee_name} {preferred_name} declined to review paper {submission.number}'
         message =f'''Hi {{{{fullname}}}},
-The {committee_name} {preferred_name}({preferred_email}) that you invited to review paper {submission.number} has declined the invitation.
+The {committee_name} {preferred_name} that you invited to review paper {submission.number} has declined the invitation.
 
 To read their response, please click here: https://openreview.net/forum?id={note.id}
 

@@ -60,6 +60,7 @@ return {
     enableQuerySearch: true,
     emailReplyTo: domain.content.contact?.value,
     reviewerName: domain.content.reviewers_name?.value,
-    anonReviewerName: domain.content.reviewers_anon_name?.value
+    anonReviewerName: domain.content.reviewers_anon_name?.value,
+    preferredEmailInvitationId: domain.content.preferred_emails_id?.value,
   }
 }
