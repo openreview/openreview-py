@@ -4288,6 +4288,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
     
         ## Build missing data
         # AC that has been assigned 2 papers and responded to 1 (checklist) - paper 4 and 5
+        helpers.create_user('ac4@aclrollingreview.com', 'AC', 'ARRFour')
         ac_client = openreview.api.OpenReviewClient(username = 'ac4@aclrollingreview.com', password=helpers.strong_password)
         edge = openreview_client.post_edge(openreview.api.Edge(
             invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment',
