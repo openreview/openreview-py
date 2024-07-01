@@ -154,128 +154,9 @@ return {
       return checklistReplies?.length??0;
       `
     },
-    reviewerEmailFuncs: [
-      {
-        label: 'Registered Reviewers with Unsubmitted Load', filterFunc: `
-        const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
-        if (registrationNotes.length <= 0) {
-          return false
-        }
-
-        const maxLoadForm = registrationNotes.filter(note => {
-          const invitations = note?.invitations ?? []
-          return invitations.some(inv => inv.includes('Reviewers/-/Max_Load_And_Unavailability_Request'))
-        })
-        const registrationForm = registrationNotes.filter(note => {
-          const invitations = note?.invitations ?? []
-          return invitations.some(inv => inv.includes('Reviewers/-/Registration'))
-        })
-
-        if (registrationForm.length >= 1 && maxLoadForm.length <= 0) {
-          return true
-        }
-        return false
-        `
-      },
-      {
-        label: 'Reviewers with Unsubmitted Load', filterFunc: `
-        const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
-        if (registrationNotes.length <= 0) {
-          return true
-        }
-
-        const maxLoadForm = registrationNotes.filter(note => {
-          const invitations = note?.invitations ?? []
-          return invitations.some(inv => inv.includes('Reviewers/-/Max_Load_And_Unavailability_Request'))
-        })
-
-        if (maxLoadForm.length <= 0) {
-          return true
-        }
-        return false
-        `
-      },
-      {
-        label: 'Unregistered Reviewers', filterFunc: `
-        const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
-        if (registrationNotes.length <= 0) {
-          return true
-        }
-
-        const registrationForm = registrationNotes.filter(note => {
-          const invitations = note?.invitations ?? []
-          return invitations.some(inv => inv.includes('Reviewers/-/Registration'))
-        })
-
-        if (registrationForm.length <= 0) {
-          return true
-        }
-        return false
-        `
-      }
-    ],
     acEmailFuncs: [
       {
-        label: 'Available Area Chairs with No Assignments and No Emergency Form', filterFunc: `
-        if (row.notes.length > 0){
-          return false;
-        }
-
-        const registrationNotes = row.areaChairProfile?.registrationNotes ?? []
-        if (registrationNotes.length <= 0) {
-          return false
-        }
-
-        const maxLoadForm = registrationNotes.filter(note => {
-          const invitations = note?.invitations ?? []
-          return invitations.some(inv => inv.includes('Area_Chairs/-/Max_Load_And_Unavailability_Request'))
-        })
-        const emergencyForm = registrationNotes.filter(note => {
-          const invitations = note?.invitations ?? []
-          return invitations.some(inv => inv.includes('Area_Chairs/-/Emergency_Metareviewer_Agreement'))
-        })
-
-        if (maxLoadForm.length <= 0 || emergencyForm.length >= 1) {
-          return false
-        }
-
-        const load = typeof maxLoadForm[0].content.maximum_load_this_cycle.value === 'number' ? 
-          maxLoadForm[0].content.maximum_load_this_cycle.value : 
-          parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
-        return load > 0
-        
-        `
-      },
-      {
-        label: 'Available Area Chairs with No Assignments', filterFunc: `
-        console.log(row);
-        if (row.notes.length > 0){
-          return false;
-        }
-
-        const registrationNotes = row.areaChairProfile?.registrationNotes ?? []
-        if (registrationNotes.length <= 0) {
-          return false
-        }
-
-        const maxLoadForm = registrationNotes.filter(note => {
-          const invitations = note?.invitations ?? []
-          return invitations.some(inv => inv.includes('Area_Chairs/-/Max_Load_And_Unavailability_Request'))
-        })
-
-        if (maxLoadForm.length <= 0) {
-          return false
-        }
-
-        const load = typeof maxLoadForm[0].content.maximum_load_this_cycle.value === 'number' ? 
-          maxLoadForm[0].content.maximum_load_this_cycle.value : 
-          parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
-        
-        return load > 0
-        `
-      },
-      {
-        label: 'Area Chairs with Some Unsubmitted Checklists', filterFunc: `
+        label: 'ACs with assigned checklists, not all completed', filterFunc: `
         console.log(row);
         if (row.notes.length <= 0){
           return false;
@@ -291,7 +172,7 @@ return {
         `
       },
       {
-        label: 'Area Chairs with No Completed Checklists', filterFunc: `
+        label: 'ACs with assigned checklists, none completed', filterFunc: `
         console.log(row);
         if (row.notes.length <= 0){
           return false;
@@ -304,42 +185,6 @@ return {
             })
           })
         })
-        `
-      },
-      {
-        label: 'Area Chairs with Unsubmitted Load', filterFunc: `
-        const registrationNotes = row.areaChairProfile?.registrationNotes ?? []
-        if (registrationNotes.length <= 0) {
-          return true
-        }
-
-        const maxLoadForm = registrationNotes.filter(note => {
-          const invitations = note?.invitations ?? []
-          return invitations.some(inv => inv.includes('Area_Chairs/-/Max_Load_And_Unavailability_Request'))
-        })
-
-        if (maxLoadForm.length <= 0) {
-          return true
-        }
-        return false
-        `
-      },
-      {
-        label: 'Unregistered Area Chairs', filterFunc: `
-        const registrationNotes = row.areaChairProfile?.registrationNotes ?? []
-        if (registrationNotes.length <= 0) {
-          return true
-        }
-
-        const registrationForm = registrationNotes.filter(note => {
-          const invitations = note?.invitations ?? []
-          return invitations.some(inv => inv.includes('Area_Chairs/-/Registration'))
-        })
-
-        if (registrationForm.length <= 0) {
-          return true
-        }
-        return false
         `
       }
     ]
