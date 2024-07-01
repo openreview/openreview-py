@@ -270,7 +270,7 @@ Please note that responding to this email will direct your reply to editors@melb
 
         note = aasa_client.get_note(note_id_1)
         assert note
-        assert note.invitations == ['MELBA/-/Submission', 'MELBA/-/Under_Review']
+        assert note.invitations == ['MELBA/-/Submission', 'MELBA/-/Edit', 'MELBA/-/Under_Review']
 
         edits = openreview_client.get_note_edits(note.id, invitation='MELBA/-/Under_Review')
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)        

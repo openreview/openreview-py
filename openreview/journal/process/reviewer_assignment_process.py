@@ -86,7 +86,7 @@ def process_update(client, edge, invitation, existing_edge):
         if pending_review_edge:
             pending_review_edge.weight += 1
             client.post_edge(pending_review_edge)
-        else:
+        elif official_reviewer:
             client.post_edge(openreview.api.Edge(invitation = journal.get_reviewer_pending_review_id(),
                 signatures = [venue_id],
                 head = journal.get_reviewers_id(),

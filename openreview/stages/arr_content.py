@@ -1296,7 +1296,7 @@ arr_official_review_content = {
             }
         },
         "order": 12,
-        "description": "Should this paper be sent for an in-depth ethics review? We have a small ethics committee that can specially review very challenging papers when it comes to ethical issues. If this seems to be such a paper, then please explain why here, and we will try to ensure that it receives a separate review."
+        "description": "Should this paper be sent for an in-depth ethics review? Before you answer this question, please refer to https://aclrollingreview.org/ethics-flagging-guidelines/ for guidelines on what papers should and shouldn't be flagged. If your answer is yes, then ensure you have explained why in the question above, and we will try to ensure that it receives a separate ethics review."
     },
     "reproducibility": {
         "value": {
@@ -1650,7 +1650,7 @@ arr_metareview_content = {
             }
         },
         "order": 9,
-        "description": "Should this paper be sent for an in-depth ethics review? We have a small ethics committee that can specially review very challenging papers when it comes to ethical issues. If this seems to be such a paper, then please explain why here, and we will try to ensure that it receives a separate review."
+        "description": "Should this paper be sent for an in-depth ethics review? Before you answer this question, please refer to https://aclrollingreview.org/ethics-flagging-guidelines/ for guidelines on what papers should and shouldn't be flagged. If your answer is yes, then ensure you have explained why in the question above, and we will try to ensure that it receives a separate ethics review."
     },
     "author_identity_guess": {
         "value": {
@@ -1941,13 +1941,13 @@ arr_reviewer_emergency_load_task = {
     "research_area": {
         "value": {
             "param": {
-                "input": "radio",
+                "input": "checkbox",
                 "enum": arr_tracks,
                 "optional": True,
-                "type": "string"
+                "type": "string[]"
             }
         },
-        "description": "Research Areas / Tracks. Select the most relevant research area / track for your expertise",
+        "description": "Research Areas / Tracks. Select the most relevant research areas / tracks for your expertise",
         "order": 3
     }
 }
@@ -1986,13 +1986,13 @@ arr_ac_emergency_load_task = {
     "research_area": {
         "value": {
             "param": {
-                "input": "radio",
+                "input": "checkbox",
                 "enum": arr_tracks,
                 "optional": True,
-                "type": "string"
+                "type": "string[]"
             }
         },
-        "description": "Research Areas / Tracks. Select the most relevant research area / track for your expertise",
+        "description": "Research Areas / Tracks. Select the most relevant research areas / tracks for your expertise",
         "order": 3
     }
 }
