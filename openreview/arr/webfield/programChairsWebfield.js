@@ -156,6 +156,38 @@ return {
       })
       return checklistReplies?.length??0;
       `
-    }    
+    },
+    acEmailFuncs: [
+      {
+        label: 'ACs with assigned checklists, not all completed', filterFunc: `
+        if (row.notes.length <= 0){
+          return false;
+        }
+        
+        return row.notes.some(obj => {
+          return !(obj?.note?.details?.replies ?? []).some(reply => {
+            return (reply?.invitations ?? []).some(inv => {
+              return inv.includes('Action_Editor_Checklist')
+            })
+          })
+        })
+        `
+      },
+      {
+        label: 'ACs with assigned checklists, none completed', filterFunc: `
+        if (row.notes.length <= 0){
+          return false;
+        }
+        
+        return row.notes.every(obj => {
+          return !(obj?.note?.details?.replies ?? []).some(reply => {
+            return (reply?.invitations ?? []).some(inv => {
+              return inv.includes('Action_Editor_Checklist')
+            })
+          })
+        })
+        `
+      }
+    ]
   }
 }
