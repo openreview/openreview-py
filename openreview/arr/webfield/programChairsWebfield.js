@@ -66,7 +66,7 @@ if (areaChairName) {
 }
 
 return {
-  component: 'ProgramChairConsole',
+  component: 'ARRProgramChairConsole',
   version: 1,
   properties: {
     header: {
@@ -85,8 +85,11 @@ return {
     metaReviewRecommendationName: domain.content.meta_review_recommendation?.value || 'recommendation',
     submissionId: domain.content.submission_id?.value,
     messageSubmissionReviewersInvitationId: domain.content.reviewers_message_submission_id?.value,
+    messageSubmissionAreaChairsInvitationId: domain.content.area_chairs_message_submission_id?.value,
     messageAreaChairsInvitationId: domain.content.area_chairs_message_id?.value,
     messageReviewersInvitationId: domain.content.reviewers_message_id?.value,
+    messageSeniorAreaChairsInvitationId: domain.content.meta_invitation_id?.value,
+    sacDirectPaperAssignment: domain.content.sac_paper_assignments?.value,    
     submissionVenueId: domain.content.submission_venue_id?.value,
     withdrawnVenueId: domain.content.withdrawn_venue_id?.value,
     deskRejectedVenueId: domain.content.desk_rejected_venue_id?.value,
@@ -112,6 +115,13 @@ return {
     requestFormId: domain.content.request_form_id?.value,
     assignmentUrls: assignmentUrls,
     emailReplyTo: domain.content.contact?.value,
+    customMaxPapersName: 'Custom_Max_Papers',
+    trackStatusConfig: {
+      submissionTrackname: 'research_area',
+      registrationTrackName: 'research_area',
+      registrationFormName: 'Registration',
+      roles: ['Reviewers', 'Area_Chairs', 'Senior_Area_Chairs']
+    },
     submissionContentFields: [
       {
         field: 'flagged_for_desk_reject_verification',
@@ -146,6 +156,38 @@ return {
       })
       return checklistReplies?.length??0;
       `
-    }    
+    },
+    acEmailFuncs: [
+      {
+        label: 'ACs with assigned checklists, not all completed', filterFunc: `
+        if (row.notes.length <= 0){
+          return false;
+        }
+        
+        return row.notes.some(obj => {
+          return !(obj?.note?.details?.replies ?? []).some(reply => {
+            return (reply?.invitations ?? []).some(inv => {
+              return inv.includes('Action_Editor_Checklist')
+            })
+          })
+        })
+        `
+      },
+      {
+        label: 'ACs with assigned checklists, none completed', filterFunc: `
+        if (row.notes.length <= 0){
+          return false;
+        }
+        
+        return row.notes.every(obj => {
+          return !(obj?.note?.details?.replies ?? []).some(reply => {
+            return (reply?.invitations ?? []).some(inv => {
+              return inv.includes('Action_Editor_Checklist')
+            })
+          })
+        })
+        `
+      }
+    ]
   }
 }

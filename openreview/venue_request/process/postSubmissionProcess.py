@@ -9,7 +9,7 @@ def process(client, note, invitation):
     try:
         conference.setup_post_submission_stage(force=note.content['force'] == 'Yes', hide_fields=note.content.get('hide_fields', []))
 
-        if isinstance(conference, openreview.venue.Venue):
+        if isinstance(conference, openreview.venue.Venue) or isinstance(conference, openreview.arr.ARR):
             conference.create_post_submission_stage()
             
         print('Conference: ', conference.get_id())

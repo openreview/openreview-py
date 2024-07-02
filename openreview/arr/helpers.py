@@ -1162,6 +1162,7 @@ class ARRStage(object):
         AUTHORS = 9
         ETHICS_CHAIRS = 10
         ETHICS_REVIEWERS_ASSIGNED = 11
+        SIGNATURE = 12
 
     SUPPORTED_STAGES = {
         'Official_Review': 'Review_Stage',
@@ -1171,15 +1172,6 @@ class ARRStage(object):
         'Blind_Submission_License_Agreement': 'Submission_Revision_Stage'
     }
     FIELD_READERS = {
-        'Official_Review': {
-            'content_name': 'additional_review_form_options',
-            'fields': {
-                'reviewer_certification': [
-                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
-                    Participants.AREA_CHAIRS_ASSIGNED
-                ]
-            }
-        }
     }
     UPDATE_WAIT_TIME = 5
 
@@ -1267,6 +1259,9 @@ class ARRStage(object):
 
                     if ARRStage.Participants.ETHICS_REVIEWERS_ASSIGNED in readers:
                         field_readers.append(venue.get_ethics_reviewers_id('${7/content/noteNumber/value}'))
+
+                    if ARRStage.Participants.SIGNATURE in readers:
+                        field_readers.append('${4/signatures}')
 
                     print(f"setting readers for {content_name}/{field_name} in {self.super_invitation_id}")
                     if self.type == ARRStage.Type.STAGE_NOTE:

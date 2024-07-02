@@ -185,8 +185,8 @@ class Venue(object):
     def get_constraint_label_id(self, committee_id):
         return self.get_invitation_id('Constraint_Label', prefix=committee_id)
 
-    def get_message_id(self, committee_id=None, number=None):
-        return self.get_invitation_id('Message', prefix=committee_id, number=number)
+    def get_message_id(self, committee_id=None, number=None, name='Message'):
+        return self.get_invitation_id(name, prefix=committee_id, number=number)
 
     def get_recommendation_id(self, committee_id=None):
         if not committee_id:
