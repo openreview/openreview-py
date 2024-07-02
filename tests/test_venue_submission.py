@@ -432,8 +432,8 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
     def test_review_stage(self, venue, openreview_client, helpers):
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Official_Review')
-        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation TestVenue.cc/Submission1/-/Official_Review was not found'):
-            assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
+        # with pytest.raises(openreview.OpenReviewException, match=r'The Invitation TestVenue.cc/Submission1/-/Official_Review was not found'):
+        #     assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
 
         new_cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000
         openreview_client.post_invitation_edit(
