@@ -160,7 +160,6 @@ return {
     acEmailFuncs: [
       {
         label: 'ACs with assigned checklists, not all completed', filterFunc: `
-        console.log(row);
         if (row.notes.length <= 0){
           return false;
         }
@@ -176,7 +175,6 @@ return {
       },
       {
         label: 'ACs with assigned checklists, none completed', filterFunc: `
-        console.log(row);
         if (row.notes.length <= 0){
           return false;
         }

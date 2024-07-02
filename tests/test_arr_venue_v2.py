@@ -4285,6 +4285,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
     def test_email_options(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
         submissions = pc_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+        submissions_by_number = {s.number : s for s in submissions}
+        submissions_by_id = {s.id : s for s in submissions}
     
         ## Build missing data
         # AC that has been assigned 2 papers and responded to 1 (checklist) - paper 4 and 5
@@ -4381,10 +4383,79 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ]
 
         area_chairs = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members
+
         ## Test 'ACs with assigned checklists, not all completed'
         send_email('ACs with assigned checklists, not all completed', 'areachair')
-        assert users_with_message('ACs with assigned checklists, not all completed', area_chairs) == {'~AC_ARROne1', '~AC_ARRFour1', '~AC_ARRTwo1'}
+        emailed_users = users_with_message('ACs with assigned checklists, not all completed', area_chairs)
+
+        assignment_edges = {
+            group['id']['tail']: [edge['head'] for edge in group['values']] for group in openreview_client.get_grouped_edges(
+                invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment',
+                groupby='tail',
+                select='head'
+            )
+        }
+
+        acs_with_missing_checklists = set()
+        # Check note data directly
+        for ac in area_chairs:
+            try:
+                assigned_ids = assignment_edges[ac]
+            except KeyError:
+                continue
+            missing_checklists = False
+
+            for sub_id in assigned_ids:
+                paper_number = submissions_by_id[sub_id].number
+                anon_groups = openreview_client.get_groups(
+                    prefix=f'aclweb.org/ACL/ARR/2023/August/Submission{paper_number}/Area_Chair_',
+                    signatory=ac
+                )
+                assert len(anon_groups) == 1
+                anon_sig = anon_groups[0]
+                checklists = openreview_client.get_all_notes(
+                    invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{paper_number}/-/Action_Editor_Checklist",
+                    signature=anon_sig.id
+                )
+                if len(checklists) <= 0:
+                    missing_checklists = True
+            
+            if missing_checklists:
+                acs_with_missing_checklists.add(ac)
+
+        assert emailed_users == acs_with_missing_checklists
+        assert emailed_users == {'~AC_ARROne1', '~AC_ARRFour1', '~AC_ARRTwo1'}
 
         ## Test 'ACs with assigned checklists, none completed'
         send_email('ACs with assigned checklists, none completed', 'areachair')
-        assert users_with_message('ACs with assigned checklists, none completed', area_chairs) == {'~AC_ARRTwo1'}
+        emailed_users = users_with_message('ACs with assigned checklists, none completed', area_chairs)
+
+        acs_with_zero_submitted_checklists = set()
+        for ac in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members:
+            try:
+                assigned_ids = assignment_edges[ac]
+            except KeyError:
+                continue
+            zero_submitted_checklists = True
+
+            for sub_id in assigned_ids:
+                paper_number = submissions_by_id[sub_id].number
+                anon_groups = openreview_client.get_groups(
+                    prefix=f'aclweb.org/ACL/ARR/2023/August/Submission{paper_number}/Area_Chair_',
+                    signatory=ac
+                )
+                assert len(anon_groups) == 1
+                anon_sig = anon_groups[0]
+                checklists = openreview_client.get_all_notes(
+                    invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{paper_number}/-/Action_Editor_Checklist",
+                    signature=anon_sig.id
+                )
+                if len(checklists) > 0:
+                    zero_submitted_checklists = False
+            
+            if zero_submitted_checklists:
+                acs_with_zero_submitted_checklists.add(ac)
+        print(acs_with_zero_submitted_checklists)
+
+        assert emailed_users == {'~AC_ARRTwo1'}
+        assert emailed_users == acs_with_missing_checklists
