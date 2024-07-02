@@ -455,6 +455,8 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Official_Review-0-1', count=2)
 
         invitations = openreview_client.get_invitations(invitation='TestVenue.cc/-/Official_Review')
+        for i in invitations:
+            print(i.id)
         assert len(invitations) == 4
         #assert invitation.cdate == new_cdate
         invitation = openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
