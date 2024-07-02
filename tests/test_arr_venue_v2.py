@@ -4458,4 +4458,4 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         print(acs_with_zero_submitted_checklists)
 
         assert emailed_users == {'~AC_ARRTwo1'}
-        assert emailed_users == acs_with_missing_checklists
+        assert emailed_users == acs_with_zero_submitted_checklists
