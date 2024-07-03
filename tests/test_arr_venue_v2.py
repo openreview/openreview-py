@@ -3782,7 +3782,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'violation_fields' in super_invitation.content['metareview_process_script']['value']
         assert 'You have indicated that this submission needs an ethics review. Please enter a brief justification for your flagging' in super_invitation.content['metareview_preprocess_script']['value']
 
-        openreview_client.add_members_to_group(venue.get_area_chairs_id(number=4), ['~AC_ARROne1'])
+        edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment',
+            head = test_submission.id,
+            tail = '~AC_ARROne1',
+            signatures = ['aclweb.org/ACL/ARR/2023/August/Submission4/Senior_Area_Chairs'],
+            weight = 1
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=edge.id)
         openreview_client.add_members_to_group(venue.get_ethics_reviewers_id(number=4), ['~EthicsReviewer_ARROne1'])
 
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@aclrollingreview.com', password=helpers.strong_password)
@@ -4274,3 +4281,181 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         assert test_client.get_note(rating_edit['note']['id'])
+    
+    def test_email_options(self, client, openreview_client, helpers, test_client, request_page, selenium):
+        pc_client = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        submissions = pc_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+        submissions_by_number = {s.number : s for s in submissions}
+        submissions_by_id = {s.id : s for s in submissions}
+    
+        ## Build missing data
+        # AC that has been assigned 2 papers and responded to 1 (checklist) - paper 4 and 5
+        helpers.create_user('ac4@aclrollingreview.com', 'AC', 'ARRFour')
+        ac_client = openreview.api.OpenReviewClient(username = 'ac4@aclrollingreview.com', password=helpers.strong_password)
+        edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment',
+            head = submissions[4].id,
+            tail = '~AC_ARRFour1',
+            signatures = ['aclweb.org/ACL/ARR/2023/August/Submission5/Senior_Area_Chairs'],
+            weight = 1
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=edge.id)
+
+        edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment',
+            head = submissions[5].id,
+            tail = '~AC_ARRFour1',
+            signatures = ['aclweb.org/ACL/ARR/2023/August/Submission6/Senior_Area_Chairs'],
+            weight = 1
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=edge.id)
+
+        ac_sig = openreview_client.get_groups(
+            prefix=f'aclweb.org/ACL/ARR/2023/August/Submission6/Area_Chair_',
+            signatory='~AC_ARRFour1'
+        )[0]
+        chk_edit = ac_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Submission6/-/Action_Editor_Checklist',
+            signatures=[ac_sig.id],
+            note=openreview.api.Note(
+                content = {
+                    "appropriateness" : { "value" : "Yes" },
+                    "formatting" : { "value" : "Yes" },
+                    "length" : { "value" : "Yes" },
+                    "anonymity" : { "value" : "Yes" },
+                    "responsible_checklist" : { "value" : "Yes" },
+                    "limitations" : { "value" : "Yes" },
+                    "number_of_assignments" : { "value" : "Yes" },
+                    "diversity" : { "value" : "Yes" },
+                    "need_ethics_review" : { "value" : "No" },
+                    "potential_violation_justification" : { "value" : "There are no violations with this submission" },
+                    "ethics_review_justification" : { "value" : "There is an issue" }
+                }
+            )
+        )
+
+        def send_email(email_option, role):
+            request_page(selenium, f"http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August/Program_Chairs#{role}-status", pc_client.token, wait_for_element='header')
+            status_table = selenium.find_element(By.ID, f'{role}-status')
+            reviewer_msg_div = status_table.find_element(By.CLASS_NAME, 'ac-status-menu').find_element(By.ID, f'message-{role}s')
+            modal_content = reviewer_msg_div.find_element(By.CLASS_NAME, 'modal-dialog').find_element(By.CLASS_NAME, 'modal-content')
+            modal_body = modal_content.find_element(By.CLASS_NAME, 'modal-body')
+            modal_form = modal_body.find_element(By.CLASS_NAME, 'form-group')
+            message_button = status_table.find_element(By.CLASS_NAME, 'message-button')
+            message_button.click()
+            message_dropdown = message_button.find_element(By.CLASS_NAME, 'message-button-dropdown')
+            message_menu = message_dropdown.find_element(By.CLASS_NAME, 'dropdown-select__menu-list')
+
+            custom_funcs = message_menu.find_elements(By.XPATH, '*')
+
+            opts = [e for e in custom_funcs if e.text == email_option][0].click()
+            reviewer_msg_div = status_table.find_element(By.CLASS_NAME, 'ac-status-menu').find_element(By.ID, f'message-{role}s')
+            modal_content = reviewer_msg_div.find_element(By.CLASS_NAME, 'modal-dialog').find_element(By.CLASS_NAME, 'modal-content')
+            modal_body = modal_content.find_element(By.CLASS_NAME, 'modal-body')
+            modal_form = modal_body.find_element(By.CLASS_NAME, 'form-group')
+            email_body = modal_form.find_element(By.TAG_NAME, 'textarea')
+
+            modal_footer = modal_content.find_element(By.CLASS_NAME, 'modal-footer')
+            email_body.send_keys(email_option)  
+            next_buttons = modal_footer.find_element(By.CLASS_NAME, 'btn-primary')
+            next_buttons.click()
+            next_buttons.click()
+
+            time.sleep(0.5)
+
+        def users_with_message(email_option, members):
+            profile_ids = set()
+            email_map = { email : profile.id
+                for profile in openreview.tools.get_profiles(
+                    openreview_client,
+                    members
+                )
+                for email in profile.content['emails']
+            }
+            for email, id in email_map.items():
+                if any(message['content']['text'].startswith(email_option) for message in openreview_client.get_messages(to=email)):
+                    profile_ids.add(id)
+            return profile_ids
+
+        ac_email_options = [
+            'ACs with assigned checklists, none completed',
+            'ACs with assigned checklists, not all completed',
+        ]
+
+        area_chairs = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members
+
+        ## Test 'ACs with assigned checklists, not all completed'
+        send_email('ACs with assigned checklists, not all completed', 'areachair')
+        emailed_users = users_with_message('ACs with assigned checklists, not all completed', area_chairs)
+
+        assignment_edges = {
+            group['id']['tail']: [edge['head'] for edge in group['values']] for group in openreview_client.get_grouped_edges(
+                invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment',
+                groupby='tail',
+                select='head'
+            )
+        }
+
+        acs_with_missing_checklists = set()
+        # Check note data directly
+        for ac in area_chairs:
+            try:
+                assigned_ids = assignment_edges[ac]
+            except KeyError:
+                continue
+            missing_checklists = False
+
+            for sub_id in assigned_ids:
+                paper_number = submissions_by_id[sub_id].number
+                anon_groups = openreview_client.get_groups(
+                    prefix=f'aclweb.org/ACL/ARR/2023/August/Submission{paper_number}/Area_Chair_',
+                    signatory=ac
+                )
+                assert len(anon_groups) == 1
+                anon_sig = anon_groups[0]
+                checklists = openreview_client.get_all_notes(
+                    invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{paper_number}/-/Action_Editor_Checklist",
+                    signature=anon_sig.id
+                )
+                if len(checklists) <= 0:
+                    missing_checklists = True
+            
+            if missing_checklists:
+                acs_with_missing_checklists.add(ac)
+
+        assert emailed_users == acs_with_missing_checklists
+        assert emailed_users == {'~AC_ARROne1', '~AC_ARRFour1', '~AC_ARRTwo1'}
+
+        ## Test 'ACs with assigned checklists, none completed'
+        send_email('ACs with assigned checklists, none completed', 'areachair')
+        emailed_users = users_with_message('ACs with assigned checklists, none completed', area_chairs)
+
+        acs_with_zero_submitted_checklists = set()
+        for ac in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members:
+            try:
+                assigned_ids = assignment_edges[ac]
+            except KeyError:
+                continue
+            zero_submitted_checklists = True
+
+            for sub_id in assigned_ids:
+                paper_number = submissions_by_id[sub_id].number
+                anon_groups = openreview_client.get_groups(
+                    prefix=f'aclweb.org/ACL/ARR/2023/August/Submission{paper_number}/Area_Chair_',
+                    signatory=ac
+                )
+                assert len(anon_groups) == 1
+                anon_sig = anon_groups[0]
+                checklists = openreview_client.get_all_notes(
+                    invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{paper_number}/-/Action_Editor_Checklist",
+                    signature=anon_sig.id
+                )
+                if len(checklists) > 0:
+                    zero_submitted_checklists = False
+            
+            if zero_submitted_checklists:
+                acs_with_zero_submitted_checklists.add(ac)
+        print(acs_with_zero_submitted_checklists)
+
+        assert emailed_users == {'~AC_ARRTwo1'}
+        assert emailed_users == acs_with_zero_submitted_checklists

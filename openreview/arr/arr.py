@@ -219,8 +219,8 @@ class ARR(object):
     def get_constraint_label_id(self, committee_id):
         return self.venue.get_constraint_label_id(committee_id)
 
-    def get_message_id(self, committee_id=None, number=None):
-        return self.venue.get_message_id(committee_id=committee_id, number=number)
+    def get_message_id(self, committee_id=None, number=None, name='Message'):
+        return self.venue.get_message_id(committee_id=committee_id, number=number, name=name)
 
     def get_recommendation_id(self, committee_id=None):
         return self.venue.get_recommendation_id(committee_id)

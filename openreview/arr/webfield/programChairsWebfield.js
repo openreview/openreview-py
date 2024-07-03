@@ -85,6 +85,7 @@ return {
     metaReviewRecommendationName: domain.content.meta_review_recommendation?.value || 'recommendation',
     submissionId: domain.content.submission_id?.value,
     messageSubmissionReviewersInvitationId: domain.content.reviewers_message_submission_id?.value,
+    messageSubmissionAreaChairsInvitationId: domain.content.area_chairs_message_submission_id?.value,
     messageAreaChairsInvitationId: domain.content.area_chairs_message_id?.value,
     messageReviewersInvitationId: domain.content.reviewers_message_id?.value,
     messageSeniorAreaChairsInvitationId: domain.content.meta_invitation_id?.value,
@@ -155,6 +156,38 @@ return {
       })
       return checklistReplies?.length??0;
       `
-    }    
+    },
+    acEmailFuncs: [
+      {
+        label: 'ACs with assigned checklists, not all completed', filterFunc: `
+        if (row.notes.length <= 0){
+          return false;
+        }
+        
+        return row.notes.some(obj => {
+          return !(obj?.note?.details?.replies ?? []).some(reply => {
+            return (reply?.invitations ?? []).some(inv => {
+              return inv.includes('Action_Editor_Checklist')
+            })
+          })
+        })
+        `
+      },
+      {
+        label: 'ACs with assigned checklists, none completed', filterFunc: `
+        if (row.notes.length <= 0){
+          return false;
+        }
+        
+        return row.notes.every(obj => {
+          return !(obj?.note?.details?.replies ?? []).some(reply => {
+            return (reply?.invitations ?? []).some(inv => {
+              return inv.includes('Action_Editor_Checklist')
+            })
+          })
+        })
+        `
+      }
+    ]
   }
 }

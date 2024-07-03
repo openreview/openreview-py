@@ -41,6 +41,7 @@ return {
     venueId: domain.id,
     assignmentInvitation: assignmentInvitation,
     messageSubmissionReviewersInvitationId: domain.content.reviewers_message_submission_id?.value,
+    messageSubmissionAreaChairsInvitationId: domain.content.area_chairs_message_submission_id?.value,
     messageAreaChairsInvitationId: domain.content.area_chairs_message_id?.value,
     submissionId: domain.content.submission_id?.value,
     submissionVenueId: domain.content.submission_venue_id?.value,
