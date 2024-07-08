@@ -8,7 +8,7 @@ parameters:
     default: "master"
   openreview-api-v2-branch:
     type: string
-    default: "fix/disable-full-emails"
+    default: "main"
 
 jobs:
   build:
