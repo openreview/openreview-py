@@ -2099,7 +2099,7 @@ class ConferenceBuilder(object):
         for i, g in enumerate(groups[:-1]):
             self.webfield_builder.set_landing_page(g, groups[i-1] if i > 0 else None)
 
-        host = self.client.get_group(id = 'host', details='writable')
+        host = self.client_v2.get_group(id = 'host', details='writable')
         root_id = groups[0].id
         home_group = groups[-1]
         if root_id == root_id.lower():
@@ -2109,7 +2109,7 @@ class ConferenceBuilder(object):
             home_group.host = root_id
             self.client.post_group(home_group)
 
-        venues = self.client.get_group(id = 'venues', details='writable')
+        venues = self.client_v2.get_group(id = 'venues', details='writable')
         if venues.details.get('writable'):
             self.client_v2.add_members_to_group('venues', home_group.id)
 
