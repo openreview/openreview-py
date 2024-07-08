@@ -6471,7 +6471,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'deletable': True
                     }
                 },                
-                'readers': [venue_id, '${2/head}'],
+                'readers': [venue_id, self.journal.get_action_editors_id(), '${2/head}'],
                 'nonreaders': [],
                 'writers': [venue_id, '${2/head}'],
                 'signatures': [venue_id],

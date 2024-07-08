@@ -38,7 +38,7 @@ def process(client, invitation):
                     head=profile.id,
                     tail=profile.get_preferred_email(),
                     signatures=[journal.venue_id],
-                    readers=[journal.venue_id, profile.id],
+                    readers=[journal.venue_id, journal.get_action_editors_id(), profile.id],
                     writers=[journal.venue_id, profile.id]
                 ))
 

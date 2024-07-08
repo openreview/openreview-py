@@ -125,6 +125,7 @@ class GroupBuilder(object):
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + self.journal.reviewers_name + "';")
             content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + self.journal.action_editors_name + "';")
             content = content.replace("var NUMBER_OF_REVIEWERS = 3;", "var NUMBER_OF_REVIEWERS = " + str(self.journal.get_number_of_reviewers()) + ";")
+            content = content.replace("var PREFERRED_EMAILS_ID = '';", "var PREFERRED_EMAILS_ID = '" + self.journal.get_preferred_emails_invitation_id() + "';")
             if self.journal.request_form_id:
                 content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + self.journal.request_form_id + "';")
             if reviewer_report_form:
@@ -213,6 +214,7 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + self.journal.reviewers_name + "';")
             content = content.replace("var SUBMISSION_GROUP_NAME = '';", "var SUBMISSION_GROUP_NAME = '" + self.journal.submission_group_name + "';")
             content = content.replace("var NUMBER_OF_REVIEWERS = 3;", "var NUMBER_OF_REVIEWERS = " + str(self.journal.get_number_of_reviewers()) + ";")
+            content = content.replace("var PREFERRED_EMAILS_ID = '';", "var PREFERRED_EMAILS_ID = '" + self.journal.get_preferred_emails_invitation_id() + "';")
             if self.journal.request_form_id:
                 content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + self.journal.request_form_id + "';")
             if reviewer_report_form:
