@@ -116,6 +116,18 @@ return {
     assignmentUrls: assignmentUrls,
     emailReplyTo: domain.content.contact?.value,
     customMaxPapersName: 'Custom_Max_Papers',
+    customStageInvitations: [
+      {
+          name:'Action_Editor_Checklist',
+          role:'Area_Chairs', 
+          repliesPerSubmission:1
+      },
+        {
+          name:'Reviewer_Checklist',
+          role:'Reviewers', 
+          repliesPerSubmission:3
+      }
+    ],
     trackStatusConfig: {
       submissionTrackname: 'research_area',
       registrationTrackName: 'research_area',
