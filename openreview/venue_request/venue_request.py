@@ -1600,7 +1600,8 @@ class VenueRequest():
                 'description': 'Which API version would you like to use? All new venues should use the latest API version, unless previously discussed. If you are unsure, please select the latest version.',
                 'value-radio': ['1', '2'],
                 'default': '2',
-                'order': 45
+                'order': 45,
+                'hidden': True
             },
             'include_expertise_selection': {
                 'value-radio': ['Yes', 'No'],
