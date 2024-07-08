@@ -4250,6 +4250,9 @@ class InvitationBuilder(object):
 
         venue_id = self.venue_id
 
+        if not self.venue.preferred_emails_groups:
+            return
+
         if openreview.tools.get_invitation(self.client, self.venue.get_preferred_emails_invitation_id()):
             return
 
