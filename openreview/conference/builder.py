@@ -28,7 +28,7 @@ class Conference(object):
 
     def __init__(self, client):
         self.client = client
-        self.client_v2 = openreview.Client(baseurl=openreview.tools.get_base_urls(client)[1], token=client.token)
+        self.client_v2 = openreview.api.OpenReviewClient(baseurl=openreview.tools.get_base_urls(client)[1], token=client.token)
         self.request_form_id = None
         self.support_user = 'OpenReview.net/Support'
         self.venue_revision_name = 'Venue_Revision'
@@ -1843,7 +1843,7 @@ class ConferenceBuilder(object):
 
     def __init__(self, client, support_user=None):
         self.client = client
-        self.client_v2 = openreview.Client(baseurl=openreview.tools.get_base_urls(client)[1], token=client.token)
+        self.client_v2 = openreview.api.OpenReviewClient(baseurl=openreview.tools.get_base_urls(client)[1], token=client.token)
         self.conference = Conference(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
         self.submission_stage = None

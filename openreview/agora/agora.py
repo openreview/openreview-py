@@ -5,7 +5,7 @@ import json
 class Agora(object):
 
     def __init__(self, client, support_group_id, superuser, editor_id):
-        self.client_v2 = openreview.Client(baseurl=openreview.tools.get_base_urls(client)[1], token=client.token)
+        self.client_v2 = openreview.api.OpenReviewClient(baseurl=openreview.tools.get_base_urls(client)[1], token=client.token)
 
         venue_group = openreview.Group(
             id='-Agora',
