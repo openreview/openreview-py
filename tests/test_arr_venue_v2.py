@@ -4291,7 +4291,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ## Build missing data
         # Reviewer who is available and responded to emergency form
         helpers.create_user('reviewer7@aclrollingreview.com', 'Reviewer', 'ARRSeven')
-        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/2023/August', ['~Reviewer_ARRSeven1'])
+        helpers.create_user('reviewer8@aclrollingreview.com', 'Reviewer', 'ARREight')
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/2023/August/Reviewers', ['~Reviewer_ARRSeven1', '~Reviewer_ARREight1'])
         rev_client = openreview.api.OpenReviewClient(username = 'reviewer7@aclrollingreview.com', password=helpers.strong_password)
         rev_client.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request',
@@ -4312,6 +4313,18 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
                     'emergency_load': { 'value': 7 },
                     'research_area': { 'value': ['Generation', 'Machine Translation'] }
+                }
+            )
+        )
+        rev_client = openreview.api.OpenReviewClient(username = 'reviewer8@aclrollingreview.com', password=helpers.strong_password)
+        rev_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request',
+            signatures=['~Reviewer_ARREight1'],
+            note=openreview.api.Note(
+                content = {
+                    'maximum_load_this_cycle': { 'value': 6 },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' }
                 }
             )
         )
@@ -4414,11 +4427,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
     
         ## Test 'Available Reviewers with No Assignments'
         send_email('Available Reviewers with No Assignments', 'reviewer')
-        assert users_with_message('Available Reviewers with No Assignments', reviewers) == {'~Reviewer_ARROne1', '~Reviewer_ARRSeven1'}
+        assert users_with_message('Available Reviewers with No Assignments', reviewers) == {'~Reviewer_ARREight1', '~Reviewer_ARRSeven1'}
 
         ## Test 'Available Reviewers with No Assignments and No Emergency Reviewing Response'
         send_email('Available Reviewers with No Assignments and No Emergency Reviewing Response', 'reviewer')
-        assert users_with_message('Available Reviewers with No Assignments and No Emergency Reviewing Response', reviewers) == {'~Reviewer_ARROne1'}
+        assert users_with_message('Available Reviewers with No Assignments and No Emergency Reviewing Response', reviewers) == {'~Reviewer_ARREight1'}
 
         ac_email_options = [
             'ACs with assigned checklists, none completed',
