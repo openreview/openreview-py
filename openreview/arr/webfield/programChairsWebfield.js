@@ -255,42 +255,6 @@ return {
           })
         })
         `
-      },
-      {
-        label: 'Area Chairs with Unsubmitted Load', filterFunc: `
-        const registrationNotes = row.areaChairProfile?.registrationNotes ?? []
-        if (registrationNotes.length <= 0) {
-          return true
-        }
-
-        const maxLoadForm = registrationNotes.filter(note => {
-          const invitations = note?.invitations ?? []
-          return invitations.some(inv => inv.includes('Area_Chairs/-/Max_Load_And_Unavailability_Request'))
-        })
-
-        if (maxLoadForm.length <= 0) {
-          return true
-        }
-        return false
-        `
-      },
-      {
-        label: 'Unregistered Area Chairs', filterFunc: `
-        const registrationNotes = row.areaChairProfile?.registrationNotes ?? []
-        if (registrationNotes.length <= 0) {
-          return true
-        }
-
-        const registrationForm = registrationNotes.filter(note => {
-          const invitations = note?.invitations ?? []
-          return invitations.some(inv => inv.includes('Area_Chairs/-/Registration'))
-        })
-
-        if (registrationForm.length <= 0) {
-          return true
-        }
-        return false
-        `
       }
     ]
   }

@@ -4285,6 +4285,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
     def test_email_options(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
         submissions = pc_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+        submissions_by_number = {s.number : s for s in submissions}
+        submissions_by_id = {s.id : s for s in submissions}
     
         ## Build missing data
         # Reviewer who is available and responded to emergency form
@@ -4311,23 +4313,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 }
             )
         )
-
-        helpers.create_user('ac4@aclrollingreview.com', 'AC', 'ARRFour')
-        helpers.create_user('ac5@aclrollingreview.com', 'AC', 'ARRFive') # AC with no load
-        helpers.create_user('ac6@aclrollingreview.com', 'AC', 'ARRSix')
-        helpers.create_user('ac7@aclrollingreview.com', 'AC', 'ARRSeven')
-        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs', [
-            '~AC_ARRFour1',
-            '~AC_ARRFive1',
-            '~AC_ARRSix1',
-            '~AC_ARRSeven1',
-        ])
-        # AC that has been assigned 2 papers and responded to 1 (checklist) - paper 4 and 5
-    
-        pc_client = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        submissions = pc_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
-        submissions_by_number = {s.number : s for s in submissions}
-        submissions_by_id = {s.id : s for s in submissions}
     
         ## Build missing data
         # AC that has been assigned 2 papers and responded to 1 (checklist) - paper 4 and 5
