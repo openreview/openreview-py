@@ -5,15 +5,25 @@ async function process(client, edge, invitation) {
   const domain = groups[0]
   const venueId = domain.id
   const submissionName = domain.content.submission_name?.value
+  const quota = domain.content.assignment_quota?.value
   const reviewName = invitation.content.review_name?.value
   const reviewersAnonName = invitation.content.reviewers_anon_name?.value
   const reviewersName = invitation.content.reviewers_name?.value
+  const inviteAssignmentId = invitation.id.replace('Assignment', 'Invite_Assignment')
 
   const { notes } = await client.getNotes({ id: edge.head })
   const submission = notes[0]
   const submissionGroupId = `${venueId}/${submissionName}${submission.number}`
 
   if (!edge.ddate) {
+    const [{ edges: inviteAssignmentEdges }, { edges: assignmentEdges }] = await Promise.all([
+        client.getEdges({ invitation: inviteAssignmentId, head: edge.head }),
+        client.getEdges({ invitation: edge.invitation, head: edge.head })
+    ])
+
+    if (inviteAssignmentEdges.length + assignmentEdges.length >= quota) {
+      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not make assignment, total assignments and invitations must not exceed ${quota}` }))
+    }
     const { count } = await client.getGroups({ id: `${submissionGroupId}/${reviewersName}` })
     if ( count === 0) {
       return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not make assignment, submission ${reviewersName} group not found.` }))

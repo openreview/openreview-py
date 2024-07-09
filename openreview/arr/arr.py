@@ -557,7 +557,31 @@ class ARR(object):
         return setup_value
 
     def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
-        return self.venue.set_assignments(assignment_title,  committee_id, enable_reviewer_reassignment, overwrite)
+        setup_value = self.venue.set_assignments(assignment_title,  committee_id, enable_reviewer_reassignment, overwrite)
+        if committee_id == self.get_reviewers_id():
+            self.client.post_invitation_edit(
+                invitations=self.venue.get_meta_invitation_id(),
+                readers=[self.venue_id],
+                writers=[self.venue_id],
+                signatures=[self.venue_id],
+                replacement=False,
+                invitation=openreview.api.Invitation(
+                    id=self.venue.get_assignment_id(committee_id, deployed=True, invite=False),
+                    preprocess=self.invitation_builder.get_process_content('process/assignment_pre_process.js')
+                )
+            )
+            self.client.post_invitation_edit(
+                invitations=self.venue.get_meta_invitation_id(),
+                readers=[self.venue_id],
+                writers=[self.venue_id],
+                signatures=[self.venue_id],
+                replacement=False,
+                invitation=openreview.api.Invitation(
+                    id=self.venue.get_assignment_id(committee_id, deployed=False, invite=True),
+                    preprocess=self.invitation_builder.get_process_content('process/invite_assignment_pre_process.js')
+                )
+            )
+        return setup_value
 
     def unset_assignments(self, assignment_title, committee_id):
         return self.venue.unset_assignments(assignment_title, committee_id)

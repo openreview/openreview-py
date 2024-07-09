@@ -3035,7 +3035,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             rev_3_edge
         )
 
-        august_venue.set_assignments(assignment_title='reviewer-assignments', committee_id='aclweb.org/ACL/ARR/2023/August/Reviewers')
+        august_venue.set_assignments(assignment_title='reviewer-assignments', committee_id='aclweb.org/ACL/ARR/2023/August/Reviewers', overwrite=True, enable_reviewer_reassignment=True)
 
         pc_client.post_note(
             openreview.Note(
@@ -3099,6 +3099,54 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Share_Proposed_Assignments-0-1', count=1)
+
+        # Test quota limits on reviewer assignments
+        test_reviewers = [
+            '~Reviewer_ARROne1',
+            '~Reviewer_ARRTwo1',
+            '~Reviewer_ARRThree1'
+        ]
+        existing_edges = []
+        for idx, reviewer_id in enumerate(test_reviewers):
+            inv_ending, label = 'Assignment', None
+            if idx == 1:
+                inv_ending = 'Invite_Assignment'
+                label = 'Invitation Sent'
+            existing_edges.append(
+                openreview_client.post_edge(openreview.api.Edge(
+                    invitation = f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/{inv_ending}',
+                    head = submissions[1].id,
+                    tail = reviewer_id,
+                    signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                    weight = 1,
+                    label = label
+                ))
+            )
+            helpers.await_queue_edit(openreview_client, edit_id=existing_edges[-1].id)
+
+        ## Test errors
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, total assignments and invitations must not exceed 3'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment',
+                head = submissions[1].id,
+                tail = '~Reviewer_ARRFour1',
+                signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                weight = 1
+            ))
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not invite assignment, total assignments and invitations must not exceed 3'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Invite_Assignment',
+                head = submissions[1].id,
+                tail = 'invitereviewer@aclrollingreview.org',
+                signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                weight = 0,
+                label = "Invitation Sent"
+            ))
+
+        ## Clean up data
+        for edge in existing_edges:
+            edge.ddate = openreview.tools.datetime_millis(now)
+            openreview_client.post_edge(edge)
 
     def test_checklists(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
