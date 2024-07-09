@@ -34,7 +34,7 @@ def process_update(client, edge, invitation, existing_edge):
 
         if journal.assigned_AE_venue_id == note.content['venueid']['value']:
             content['venueid'] = { 'value': journal.assigning_AE_venue_id }
-            content['venue'] = { 'delete': True }
+            content['venue'] = { 'value': f'{journal.short_name} Assigning AE' }
 
 
         if content:

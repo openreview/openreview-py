@@ -271,7 +271,7 @@ class TestICLRConference():
         # Author revises submission license
         author_client = openreview.api.OpenReviewClient(username='peter@mail.com', password=helpers.strong_password)
         revision_note = author_client.post_note_edit(
-            invitation = f'ICLR.cc/2024/Conference/Submission{submission.number}/-/Revision',
+            invitation = f'ICLR.cc/2024/Conference/Submission{submission.number}/-/Full_Submission',
             signatures = [f'ICLR.cc/2024/Conference/Submission{submission.number}/Authors'],
             note = openreview.api.Note(
                 license = 'CC0 1.0',
@@ -331,9 +331,9 @@ class TestICLRConference():
         helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Desk_Rejection-0-1', count=2)
 
         # Author can't revise license after paper deadline
-        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation ICLR.cc/2024/Conference/Submission1/-/Revision has expired'):
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation ICLR.cc/2024/Conference/Submission1/-/Full_Submission has expired'):
             revision_note = author_client.post_note_edit(
-                invitation = f'ICLR.cc/2024/Conference/Submission{submission.number}/-/Revision',
+                invitation = f'ICLR.cc/2024/Conference/Submission{submission.number}/-/Full_Submission',
                 signatures = [f'ICLR.cc/2024/Conference/Submission{submission.number}/Authors'],
                 note = openreview.api.Note(
                     license = 'CC BY 4.0',

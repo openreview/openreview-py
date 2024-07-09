@@ -89,7 +89,7 @@ class TestNonAnonymousVenue():
     def test_post_submission_stage(self, venue, openreview_client, helpers):
                 
         venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS, SubmissionStage.Readers.AREA_CHAIRS]
-        venue.submission_stage.exp_date = datetime.datetime.utcnow() + datetime.timedelta(seconds = 60)
+        venue.submission_stage.exp_date = datetime.datetime.utcnow() + datetime.timedelta(seconds = 90)
         venue.create_submission_stage()
 
         helpers.await_queue_edit(openreview_client, 'TestNonAnonymousVenue.cc/-/Post_Submission-0-0')
