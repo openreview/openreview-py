@@ -426,7 +426,7 @@ class OpenReviewClient(object):
         else:
             raise OpenReviewException(['Profile Not Found'])
 
-    def get_profiles(self, trash=None, with_blocked=None, offset=None, limit=None, sort=None):
+    def get_profiles(self, trash=None, with_blocked=None, current_institution_domain=None, offset=None, limit=None, after=None, sort=None, with_count=None):
         """
         Get a list of Profiles
 
@@ -451,13 +451,41 @@ class OpenReviewClient(object):
             params['offset'] = offset
         if limit is not None:
             params['limit'] = limit
+        if after is not None:
+            params['after'] = after
         if sort is not None:
             params['sort'] = sort
+        if current_institution_domain:
+            params['currentInstitutionDomain'] = current_institution_domain
 
         response = self.session.get(self.profiles_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
-        return [Profile.from_json(p) for p in response.json()['profiles']]
+        profiles =  [Profile.from_json(p) for p in response.json()['profiles']]
+
+        if with_count and params.get('offset') is None:
+            return profiles, response.json()['count']
+
+        return profiles        
     
+    def get_all_profiles(self, 
+            with_blocked = None,
+            current_institution_domain = None,
+            with_count=False
+            ):
+        """
+
+        """
+
+        params = {}
+        if with_blocked:
+            params['with_blocked'] = with_blocked
+        if current_institution_domain:
+            params['current_institution_domain'] = current_institution_domain
+        if with_count:
+            params['with_count'] = with_count
+
+        return list(tools.efficient_iterget(self.get_profiles, desc='Getting V2 Profiles', **params))
+
     def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None, fullname=None, relation=None, use_ES = False):
         """
         Gets a list of profiles using either their ids or corresponding emails
