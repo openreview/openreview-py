@@ -153,7 +153,7 @@ def get_profile(client, value, with_publications=False):
     return profile
 
 
-def get_profiles(client, ids_or_emails, with_publications=False, with_relations=False, as_dict=False):
+def get_profiles(client, ids_or_emails, current_institution_domain=None, with_publications=False, with_relations=False, as_dict=False):
     '''
     Helper function that repeatedly queries for profiles, given IDs and emails.
     Useful for getting more Profiles than the server will return by default (1000)
@@ -204,7 +204,12 @@ def get_profiles(client, ids_or_emails, with_publications=False, with_relations=
                 })
             profile_by_id[profile.id] = profile
             profile_by_id_or_email[email] = profile
- 
+
+    ## Get profiles by current institution domain
+    if current_institution_domain:
+        domain_profiles = client.get_all_profiles(current_institution_domain=current_institution_domain, with_blocked=True)
+        for profile in domain_profiles:
+            process_profile(profile)
 
     ## Get publications for all the profiles
     profiles = list(profile_by_id.values())
