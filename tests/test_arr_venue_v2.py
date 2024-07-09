@@ -4287,22 +4287,27 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         submissions = pc_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
     
         ## Build missing data
-        # Reviewers who have completed the registration form, but have not answered the available load form
+        # Reviewer who is available and responded to emergency form
         helpers.create_user('reviewer7@aclrollingreview.com', 'Reviewer', 'ARRSeven')
-        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/2023/August/Reviewers', ['~Reviewer_ARRSeven1'])
-        reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer7@aclrollingreview.com', password=helpers.strong_password)
-        reviewer_client.post_note_edit(
-            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Registration',
+        rev_client = openreview.api.OpenReviewClient(username = 'reviewer7@aclrollingreview.com', password=helpers.strong_password)
+        rev_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request',
             signatures=['~Reviewer_ARRSeven1'],
             note=openreview.api.Note(
                 content = {
-                    'profile_confirmed': { 'value': 'Yes' },
-                    'expertise_confirmed': { 'value': 'Yes' },
-                    'domains': { 'value': 'Yes' },
-                    'emails': { 'value': 'Yes' },
-                    'DBLP': { 'value': 'Yes' },
-                    'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Generation', 'Information Extraction'] },
+                    'maximum_load_this_cycle': { 'value': 6 },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
+                }
+            )
+        )
+        rev_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Reviewer_Agreement',
+            signatures=['~Reviewer_ARRSeven1'],
+            note=openreview.api.Note(
+                content = {
+                    'emergency_reviewing_agreement': { 'value': 'Yes' },
+                    'emergency_load': { 'value': 7 },
+                    'research_area': { 'value': 'Generation' }
                 }
             )
         )
@@ -4414,24 +4419,19 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             return profile_ids
 
         reviewer_email_options = [
-            'Registered Reviewers with Unsubmitted Load',
-            'Reviewers with Unsubmitted Load',
-            'Unregistered Reviewers'
+            'Available Reviewers with No Assignments',
+            'Available Reviewers with No Assignments and No Emergency Reviewing Response'
         ]
 
         reviewers = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers').members
     
-        ## Test 'Registered Reviewers with Unsubmitted Load'
-        send_email('Registered Reviewers with Unsubmitted Load', 'reviewer')
-        assert users_with_message('Registered Reviewers with Unsubmitted Load', reviewers) == {'~Reviewer_ARRSeven1'}
+        ## Test 'Available Reviewers with No Assignments'
+        send_email('Available Reviewers with No Assignments', 'reviewer')
+        assert users_with_message('Available Reviewers with No Assignments', reviewers) == {'~Reviewer_ARROne1', '~Reviewer_ARRSeven1'}
 
-        ## Test 'Reviewers with Unsubmitted Load'
-        send_email('Reviewers with Unsubmitted Load', 'reviewer')
-        assert users_with_message('Reviewers with Unsubmitted Load', reviewers) == {'~Reviewer_ARRFour1', '~Reviewer_ARRSix1', '~Reviewer_ARRSeven1', '~Reviewer_ARRThree1'}
-
-        ## Test 'Unregistered Reviewers'
-        send_email('Unregistered Reviewers', 'reviewer')
-        assert users_with_message('Unregistered Reviewers', reviewers) == {'~Reviewer_ARRFour1', '~Reviewer_ARRSix1', '~Reviewer_ARRFive1', '~Reviewer_ARRThree1'}
+        ## Test 'Available Reviewers with No Assignments and No Emergency Reviewing Response'
+        send_email('Available Reviewers with No Assignments and No Emergency Reviewing Response', 'reviewer')
+        assert users_with_message('Available Reviewers with No Assignments and No Emergency Reviewing Response', reviewers) == {'~Reviewer_ARROne1'}
 
         ac_email_options = [
             'ACs with assigned checklists, none completed',

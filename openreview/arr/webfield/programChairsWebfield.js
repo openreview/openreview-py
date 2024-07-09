@@ -171,7 +171,11 @@ return {
     },
     reviewerEmailFuncs: [
       {
-        label: 'Registered Reviewers with Unsubmitted Load', filterFunc: `
+        label: 'Available Reviewers with No Assignments', filterFunc: `
+        if (row.notesInfo.length > 0){
+          return false;
+        }
+
         const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
         if (registrationNotes.length <= 0) {
           return false
@@ -181,51 +185,43 @@ return {
           const invitations = note?.invitations ?? []
           return invitations.some(inv => inv.includes('Reviewers/-/Max_Load_And_Unavailability_Request'))
         })
-        const registrationForm = registrationNotes.filter(note => {
-          const invitations = note?.invitations ?? []
-          return invitations.some(inv => inv.includes('Reviewers/-/Registration'))
-        })
-
-        if (registrationForm.length >= 1 && maxLoadForm.length <= 0) {
-          return true
+        if (maxLoadForm.length <= 0) {
+          return false
         }
-        return false
+
+        const load = typeof maxLoadForm[0].content.maximum_load_this_cycle.value === 'number' ? 
+          maxLoadForm[0].content.maximum_load_this_cycle.value : 
+          parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
+        return load > 0
         `
       },
       {
-        label: 'Reviewers with Unsubmitted Load', filterFunc: `
+        label: 'Available Reviewers with No Assignments and No Emergency Reviewing Response', filterFunc: `
+        if (row.notesInfo.length > 0){
+          return false;
+        }
+
         const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
         if (registrationNotes.length <= 0) {
-          return true
+          return false
         }
 
         const maxLoadForm = registrationNotes.filter(note => {
           const invitations = note?.invitations ?? []
           return invitations.some(inv => inv.includes('Reviewers/-/Max_Load_And_Unavailability_Request'))
         })
-
-        if (maxLoadForm.length <= 0) {
-          return true
-        }
-        return false
-        `
-      },
-      {
-        label: 'Unregistered Reviewers', filterFunc: `
-        const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
-        if (registrationNotes.length <= 0) {
-          return true
-        }
-
-        const registrationForm = registrationNotes.filter(note => {
+        const emergencyForm = registrationNotes.filter(note => {
           const invitations = note?.invitations ?? []
-          return invitations.some(inv => inv.includes('Reviewers/-/Registration'))
+          return invitations.some(inv => inv.includes('Reviewers/-/Emergency_Reviewer_Agreement'))
         })
-
-        if (registrationForm.length <= 0) {
-          return true
+        if (maxLoadForm.length <= 0 || emergencyForm.length > 0) {
+          return false
         }
-        return false
+
+        const load = typeof maxLoadForm[0].content.maximum_load_this_cycle.value === 'number' ? 
+          maxLoadForm[0].content.maximum_load_this_cycle.value : 
+          parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
+        return load > 0
         `
       }
     ],
