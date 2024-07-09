@@ -209,7 +209,7 @@ Please note that responding to this email will direct your reply to tacl@venue.o
 
         note = graham_client.get_note(note_id_1)
         assert note
-        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Under_Review']
+        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Edit', 'TACL/-/Under_Review']
         assert note.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert note.writers == ['TACL', 'TACL/Paper1/Authors']
         assert note.signatures == ['TACL/Paper1/Authors']
@@ -240,7 +240,7 @@ note={Under review}
         assert "TACL/Paper1/-/Moderation" not in [i.id for i in invitations]
 
         edits = openreview_client.get_note_edits(note.id)
-        assert len(edits) == 3
+        assert len(edits) == 4
         for edit in edits:
             assert edit.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
 
@@ -605,7 +605,7 @@ Please note that responding to this email will direct your reply to graham@mails
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Under_Review', 'TACL/-/Edit', 'TACL/Paper1/-/Camera_Ready_Revision']
+        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Edit', 'TACL/-/Under_Review', 'TACL/Paper1/-/Camera_Ready_Revision']
         assert note.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert note.writers == ['TACL', 'TACL/Paper1/Authors']
         assert note.signatures == ['TACL/Paper1/Authors']
@@ -636,7 +636,7 @@ Please note that responding to this email will direct your reply to graham@mails
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Under_Review', 'TACL/-/Edit', 'TACL/Paper1/-/Camera_Ready_Revision', 'TACL/-/Accepted']
+        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Edit', 'TACL/-/Under_Review', 'TACL/Paper1/-/Camera_Ready_Revision', 'TACL/-/Accepted']
         assert note.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert note.writers == ['TACL']
         assert note.signatures == ['TACL/Paper1/Authors']
@@ -660,7 +660,7 @@ note={Featured Certification, Reproducibility Certification}
 }'''
 
         edits = openreview_client.get_note_edits(note.id)
-        assert len(edits) == 6
+        assert len(edits) == 7
         for edit in edits:
             assert edit.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
 
@@ -728,7 +728,7 @@ note={Featured Certification, Reproducibility Certification}
 
         note = test_client.get_note(note_id_2)
         assert note
-        assert note.invitations == ['TACL/-/Submission', 'TACL/-/Under_Review', 'TACL/-/Withdrawn']
+        assert note.invitations == ['TACL/-/Submission', 'TACL/-/Edit', 'TACL/-/Under_Review', 'TACL/-/Withdrawn']
         assert note.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper2/Reviewers', 'TACL/Paper2/Authors']
         assert note.writers == ['TACL', 'TACL/Paper2/Authors']
         assert note.signatures == ['TACL/Paper2/Authors']
@@ -748,7 +748,7 @@ note={Withdrawn}
         helpers.await_queue_edit(openreview_client, invitation='TACL/-/Withdrawn')
 
         edits = openreview_client.get_note_edits(note.id)
-        assert len(edits) == 3
+        assert len(edits) == 4
         for edit in edits:
             assert edit.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper2/Reviewers', 'TACL/Paper2/Authors']
 

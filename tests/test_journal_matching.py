@@ -259,8 +259,11 @@ class TestJournalMatching():
         assert len(openreview_client.get_messages(to = 'ana@prada.com', subject = '[CARP] Assignment to new CARP submission 1: Paper title 1')) == 1
 
         assert openreview_client.get_note(submissions[0].id).content['venueid']['value'] == 'CARP/Assigned_AE'
+        assert openreview_client.get_note(submissions[0].id).content['venue']['value'] == 'CARP Assigned AE'
         assert openreview_client.get_note(submissions[1].id).content['venueid']['value'] == 'CARP/Assigned_AE'
+        assert openreview_client.get_note(submissions[1].id).content['venue']['value'] == 'CARP Assigned AE'
         assert openreview_client.get_note(submissions[2].id).content['venueid']['value'] == 'CARP/Assigned_AE'
+        assert openreview_client.get_note(submissions[2].id).content['venue']['value'] == 'CARP Assigned AE'
 
         assigning_submissions = openreview_client.get_notes(content={ 'venueid': 'CARP/Assigning_AE' })
         assert len(assigning_submissions) == 0
@@ -275,8 +278,11 @@ class TestJournalMatching():
         helpers.await_queue_edit(openreview_client, edit_id=assignments[2]['values'][0]['id'], count=2)            
 
         assert openreview_client.get_note(submissions[0].id).content['venueid']['value'] == 'CARP/Assigning_AE'
+        assert openreview_client.get_note(submissions[0].id).content['venue']['value'] == 'CARP Assigning AE'
         assert openreview_client.get_note(submissions[1].id).content['venueid']['value'] == 'CARP/Assigning_AE'
+        assert openreview_client.get_note(submissions[1].id).content['venue']['value'] == 'CARP Assigning AE'
         assert openreview_client.get_note(submissions[2].id).content['venueid']['value'] == 'CARP/Assigning_AE'
+        assert openreview_client.get_note(submissions[2].id).content['venue']['value'] == 'CARP Assigning AE'
 
         assert len(openreview_client.get_messages(to = 'ana@prada.com', subject = '[CARP] You have been unassigned from CARP submission 1: Paper title 1')) == 1
 
@@ -299,8 +305,11 @@ class TestJournalMatching():
         assert len(openreview_client.get_messages(to = 'ana@prada.com', subject = '[CARP] Assignment to new CARP submission 1: Paper title 1')) == 2
 
         assert openreview_client.get_note(submissions[0].id).content['venueid']['value'] == 'CARP/Assigned_AE'
+        assert openreview_client.get_note(submissions[0].id).content['venue']['value'] == 'CARP Assigned AE'
         assert openreview_client.get_note(submissions[1].id).content['venueid']['value'] == 'CARP/Assigned_AE'
+        assert openreview_client.get_note(submissions[1].id).content['venue']['value'] == 'CARP Assigned AE'
         assert openreview_client.get_note(submissions[2].id).content['venueid']['value'] == 'CARP/Assigned_AE'
+        assert openreview_client.get_note(submissions[2].id).content['venue']['value'] == 'CARP Assigned AE'
 
         assigning_submissions = openreview_client.get_notes(content={ 'venueid': 'CARP/Assigning_AE' })
         assert len(assigning_submissions) == 0

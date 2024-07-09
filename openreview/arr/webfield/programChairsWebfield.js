@@ -85,8 +85,11 @@ return {
     metaReviewRecommendationName: domain.content.meta_review_recommendation?.value || 'recommendation',
     submissionId: domain.content.submission_id?.value,
     messageSubmissionReviewersInvitationId: domain.content.reviewers_message_submission_id?.value,
+    messageSubmissionAreaChairsInvitationId: domain.content.area_chairs_message_submission_id?.value,
     messageAreaChairsInvitationId: domain.content.area_chairs_message_id?.value,
     messageReviewersInvitationId: domain.content.reviewers_message_id?.value,
+    messageSeniorAreaChairsInvitationId: domain.content.meta_invitation_id?.value,
+    sacDirectPaperAssignment: domain.content.sac_paper_assignments?.value,    
     submissionVenueId: domain.content.submission_venue_id?.value,
     withdrawnVenueId: domain.content.withdrawn_venue_id?.value,
     deskRejectedVenueId: domain.content.desk_rejected_venue_id?.value,
@@ -113,6 +116,18 @@ return {
     assignmentUrls: assignmentUrls,
     emailReplyTo: domain.content.contact?.value,
     customMaxPapersName: 'Custom_Max_Papers',
+    customStageInvitations: [
+      {
+          name:'Action_Editor_Checklist',
+          role:'Area_Chairs', 
+          repliesPerSubmission:1
+      },
+        {
+          name:'Reviewer_Checklist',
+          role:'Reviewers', 
+          repliesPerSubmission:3
+      }
+    ],
     trackStatusConfig: {
       submissionTrackname: 'research_area',
       registrationTrackName: 'research_area',
@@ -216,67 +231,7 @@ return {
     ],
     acEmailFuncs: [
       {
-        label: 'Available Area Chairs with No Assignments and No Emergency Form', filterFunc: `
-        if (row.notes.length > 0){
-          return false;
-        }
-
-        const registrationNotes = row.areaChairProfile?.registrationNotes ?? []
-        if (registrationNotes.length <= 0) {
-          return false
-        }
-
-        const maxLoadForm = registrationNotes.filter(note => {
-          const invitations = note?.invitations ?? []
-          return invitations.some(inv => inv.includes('Area_Chairs/-/Max_Load_And_Unavailability_Request'))
-        })
-        const emergencyForm = registrationNotes.filter(note => {
-          const invitations = note?.invitations ?? []
-          return invitations.some(inv => inv.includes('Area_Chairs/-/Emergency_Metareviewer_Agreement'))
-        })
-
-        if (maxLoadForm.length <= 0 || emergencyForm.length >= 1) {
-          return false
-        }
-
-        const load = typeof maxLoadForm[0].content.maximum_load_this_cycle.value === 'number' ? 
-          maxLoadForm[0].content.maximum_load_this_cycle.value : 
-          parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
-        return load > 0
-        
-        `
-      },
-      {
-        label: 'Available Area Chairs with No Assignments', filterFunc: `
-        console.log(row);
-        if (row.notes.length > 0){
-          return false;
-        }
-
-        const registrationNotes = row.areaChairProfile?.registrationNotes ?? []
-        if (registrationNotes.length <= 0) {
-          return false
-        }
-
-        const maxLoadForm = registrationNotes.filter(note => {
-          const invitations = note?.invitations ?? []
-          return invitations.some(inv => inv.includes('Area_Chairs/-/Max_Load_And_Unavailability_Request'))
-        })
-
-        if (maxLoadForm.length <= 0) {
-          return false
-        }
-
-        const load = typeof maxLoadForm[0].content.maximum_load_this_cycle.value === 'number' ? 
-          maxLoadForm[0].content.maximum_load_this_cycle.value : 
-          parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
-        
-        return load > 0
-        `
-      },
-      {
-        label: 'Area Chairs with Some Unsubmitted Checklists', filterFunc: `
-        console.log(row);
+        label: 'ACs with assigned checklists, not all completed', filterFunc: `
         if (row.notes.length <= 0){
           return false;
         }
@@ -291,8 +246,7 @@ return {
         `
       },
       {
-        label: 'Area Chairs with No Completed Checklists', filterFunc: `
-        console.log(row);
+        label: 'ACs with assigned checklists, none completed', filterFunc: `
         if (row.notes.length <= 0){
           return false;
         }

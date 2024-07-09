@@ -70,7 +70,7 @@ return {
       showEdgeBrowserUrl: domain.content.enable_reviewers_reassignment?.value,
       proposedAssignmentTitle: reviewerAssignmentTitle,
       edgeBrowserProposedUrl: `/edges/browse?start=${startParam}&traverse=${traverseProposedParam}&edit=${replaceReviewerName(domain.content.reviewers_proposed_assignment_id?.value)},label:${reviewerAssignmentTitle};${replaceReviewerName(domain.content.reviewers_invite_assignment_id?.value)}&browse=${browseProposedInvitations.join(';')}${otherParams}`,
-      edgeBrowserDeployedUrl: `/edges/browse?start=${startParam}&traverse=${traverseParam}&edit=${replaceReviewerName(domain.content.reviewers_invite_assignment_id?.value)}&browse=${browseInvitations.join(';')}${otherParams}`,
+      edgeBrowserDeployedUrl: `/edges/browse?start=${startParam}&traverse=${traverseParam}&edit=${replaceReviewerName(domain.content.reviewers_invite_assignment_id?.value)};${replaceReviewerName(domain.content.reviewers_assignment_id?.value)}&browse=${browseInvitations.join(';')}${otherParams}`,
     },
     submissionInvitationId: domain.content.submission_id?.value,
     messageSubmissionReviewersInvitationId: domain.content.reviewers_message_submission_id?.value,

@@ -208,6 +208,7 @@ class GroupBuilder(object):
             content['area_chairs_recruitment_id'] = { 'value': self.venue.get_recruitment_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_assignment_id'] = { 'value': self.venue.get_assignment_id(self.venue.get_area_chairs_id(), deployed=True) }
             content['area_chairs_message_id'] =  { 'value': self.venue.get_message_id(committee_id=self.venue.get_area_chairs_id()) }
+            content['area_chairs_message_submission_id'] = { 'value': self.venue.get_message_id(committee_id=self.venue.get_area_chairs_id('{number}')) }
 
         if self.venue.use_secondary_area_chairs:
             content['secondary_area_chairs_name'] = { 'value': self.venue.secondary_area_chairs_name }

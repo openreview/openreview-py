@@ -200,7 +200,7 @@ class TestNeurIPSTrackConference():
         
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/-/Post_Submission-0-0')
-        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/-/Revision-0-0')
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/-/Full_Submission-0-0')
 
         notes = test_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission' }, sort='number:desc')
         assert len(notes) == 5
@@ -208,14 +208,14 @@ class TestNeurIPSTrackConference():
         assert notes[0].readers == ['NeurIPS.cc/2023/Track/Datasets_and_Benchmarks', 'NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission5/Authors']
         assert notes[0].content['keywords']['readers'] == ['NeurIPS.cc/2023/Track/Datasets_and_Benchmarks', 'NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission5/Authors']
 
-        assert test_client.get_invitation('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission5/-/Revision')
+        assert test_client.get_invitation('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission5/-/Full_Submission')
 
         post_submission =  openreview_client.get_invitation('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/-/Post_Submission')
         assert 'authors' in post_submission.edit['note']['content']
         assert 'authorids' in post_submission.edit['note']['content']
         assert 'keywords' in post_submission.edit['note']['content']
 
-        revision_inv =  test_client.get_invitation('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission4/-/Revision')
+        revision_inv =  test_client.get_invitation('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission4/-/Full_Submission')
 
         assert 'param' in revision_inv.edit['note']['content']['authorids']['value']
         assert 'regex' in revision_inv.edit['note']['content']['authorids']['value']['param']
@@ -225,7 +225,7 @@ class TestNeurIPSTrackConference():
 
 
         ## update submission
-        revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission4/-/Revision',
+        revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission4/-/Full_Submission',
             signatures=['NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission4/Authors'],
             note=openreview.api.Note(
                 content={
@@ -265,7 +265,7 @@ class TestNeurIPSTrackConference():
         author_group = openreview_client.get_group('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission4/Authors')
         assert ['test@mail.com', 'andrew@google.com', 'peter@mail.com', 'melisa@google.com', 'celeste@yahoo.com' ] == author_group.members
 
-        revision_inv =  test_client.get_invitation('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission4/-/Revision')
+        revision_inv =  test_client.get_invitation('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission4/-/Full_Submission')
 
         assert 'param' in revision_inv.edit['note']['content']['authorids']['value']
         assert 'regex' in revision_inv.edit['note']['content']['authorids']['value']['param']

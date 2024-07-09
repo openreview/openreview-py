@@ -34,7 +34,7 @@ def process_update(client, edge, invitation, existing_edge):
 
         if journal.assigned_AE_venue_id == note.content['venueid']['value']:
             content['venueid'] = { 'value': journal.assigning_AE_venue_id }
-            content['venue'] = { 'delete': True }
+            content['venue'] = { 'value': f'{journal.short_name} Assigning AE' }
 
 
         if content:
@@ -71,21 +71,21 @@ def process_update(client, edge, invitation, existing_edge):
         journal.invitation_builder.expire_invitation(journal.get_ae_recommendation_id(number=note.number))
 
         ## add assigned_action_editor
-        content = {}
-        if note.content['venueid']['value'] == journal.under_review_venue_id:
-            content['assigned_action_editor'] = { 'value': edge.tail}
+        content = {
+            'assigned_action_editor': { 'value': edge.tail }
+        }
 
         if journal.assigning_AE_venue_id == note.content['venueid']['value']:
             content['venueid'] = { 'value': journal.assigned_AE_venue_id }
             content['venue'] = { 'value': f'{journal.short_name} Assigned AE' }
 
 
-        if content:
-            client.post_note_edit(invitation= journal.get_meta_invitation_id(),
-                                signatures=[journal.venue_id],
-                                note=openreview.api.Note(id=note.id,
-                                content = content 
-            ))
+        client.post_note_edit(invitation= journal.get_meta_invitation_id(),
+                            signatures=[journal.venue_id],
+                            readers=[journal.venue_id, journal.get_action_editors_id(number=note.number)],
+                            note=openreview.api.Note(id=note.id,
+                            content = content 
+        ))
 
         print('check if the EICs are authors of the submission')
         eics = client.get_group(journal.get_editors_in_chief_id()).members

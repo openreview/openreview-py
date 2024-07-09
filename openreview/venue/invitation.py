@@ -2682,6 +2682,7 @@ class InvitationBuilder(object):
         custom_stage_source = custom_stage.get_source_submissions()
         custom_stage_reply_type = custom_stage.get_reply_type()
         note_writers = None
+        all_signatures = custom_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')
 
         if custom_stage_reply_type == 'reply':
             paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, number='${2/content/noteNumber/value}')
@@ -2732,9 +2733,10 @@ class InvitationBuilder(object):
                 reply_to = None
                 edit_readers = [venue_id, '${2/signatures}']
                 note_readers = None
-                invitees = ['${3/content/replytoSignatures/value}']
+                invitees = [venue_id, '${3/content/replytoSignatures/value}']
                 noninvitees = []
                 note_nonreaders = []
+                all_signatures = ['${7/content/replytoSignatures/value}']
 
         invitation_content = {
             'source': { 'value': custom_stage_source },
@@ -2800,7 +2802,7 @@ class InvitationBuilder(object):
                     'edit': {
                         'signatures': {
                             'param': {
-                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in custom_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')]
+                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in all_signatures]
                             }
                         },
                         'readers': edit_readers,
@@ -4132,6 +4134,73 @@ class InvitationBuilder(object):
         )
 
         self.save_invitation(invitation, replacement=True)
+
+        if self.venue.use_area_chairs:
+            invitation_id = self.venue.get_invitation_id(f'{self.venue.submission_stage.name}_Message', prefix=self.venue.get_area_chairs_id())
+            cdate=tools.datetime_millis(self.venue.submission_stage.second_due_date_exp_date if self.venue.submission_stage.second_due_date_exp_date else self.venue.submission_stage.exp_date)
+            venue_sender = self.venue.get_message_sender()
+
+            committee = [venue_id]
+            committee_signatures = [venue_id, self.venue.get_program_chairs_id()]
+            if self.venue.use_senior_area_chairs:
+                committee.append(self.venue.get_senior_area_chairs_id('${3/content/noteNumber/value}'))
+                committee_signatures.append(self.venue.get_senior_area_chairs_id('${4/content/noteNumber/value}'))
+
+            invitation = Invitation(id=invitation_id,
+                invitees=[venue_id],
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],                                
+                cdate=cdate,
+                date_processes=[{
+                    'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                    'script': self.invitation_edit_process
+                }],
+                edit={
+                    'signatures': [venue_id],
+                    'readers': [venue_id],
+                    'writers': [venue_id],
+                    'content': {    
+                        'noteNumber': {
+                            'value': {
+                                'param': {
+                                    'regex': '.*', 'type': 'integer'
+                                }
+                            }
+                        },
+                        'noteId': {
+                            'value': {
+                                'param': {
+                                    'regex': '.*', 'type': 'string'
+                                }
+                            }
+                        }
+                    },                                                    
+                    'replacement': True,
+                    'invitation': {
+                        'id': self.venue.get_message_id(committee_id=self.venue.get_area_chairs_id('${2/content/noteNumber/value}')),
+                        'signatures': [ venue_id ],
+                        'readers': committee,
+                        'writers': [venue_id],
+                        'invitees': committee,
+                        'cdate': cdate,
+                        'message': {
+                            'replyTo': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
+                            'subject': { 'param': { 'minLength': 1 } },
+                            'message': { 'param': { 'minLength': 1 } },
+                            'groups': { 'param': { 'inGroup': self.venue.get_area_chairs_id('${3/content/noteNumber/value}') } },
+                            'parentGroup': { 'param': { 'const': self.venue.get_area_chairs_id('${3/content/noteNumber/value}') } },
+                            'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
+                            'signature': { 'param': { 'enum': committee_signatures } },
+                            'fromName': venue_sender['fromName'],
+                            'fromEmail': venue_sender['fromEmail']
+                        }
+                    }
+
+                }
+            )
+
+            self.save_invitation(invitation, replacement=True)            
 
         ## invitation to message all reviewers
         invitation = Invitation(id=self.venue.get_message_id(committee_id=self.venue.get_reviewers_id()),
