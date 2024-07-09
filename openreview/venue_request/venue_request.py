@@ -40,7 +40,7 @@ class VenueStages():
         revision_content['homepage_override'] = {
             'order': 22,
             'value-dict': {},
-            'description': 'Override homepage defaults: title, subtitle, deadline, date, website, location. Valid JSON expected.'
+            'description': 'Override homepage defaults: title, subtitle, deadline, date, website, location, instructions. Valid JSON expected. Instructions must be a string, format using markdown. Please see documentation for more detailed instructions.'
         }
         revision_content['source_submissions_query_mapping'] = {
             'order': 23,

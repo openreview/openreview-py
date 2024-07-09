@@ -895,7 +895,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Post_Submission-0-0')
-        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Revision-0-0')
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Full_Submission-0-0')
 
         post_submission_note=pc_client.post_note(openreview.Note(
             content= {
@@ -920,7 +920,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert notes[0].readers == ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Submission5/Authors']
         assert notes[0].content['keywords']['readers'] == ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Submission5/Authors']
 
-        revision_inv =  test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Revision')
+        revision_inv =  test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission5/-/Full_Submission')
         assert revision_inv
         assert ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Submission5/Authors'] == revision_inv.readers
         assert 'readers' in revision_inv.edit['note']['content']['authors']
@@ -960,7 +960,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         helpers.await_queue_edit(openreview_client, edit_id=pc_revision['id'])
 
-        revision_inv =  test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission4/-/Revision')
+        revision_inv =  test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission4/-/Full_Submission')
         assert revision_inv.edit['note']['content']['authors']['value'] == [
           'SomeFirstName User',
           'Peter SomeLastName',
@@ -974,7 +974,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
           'celeste@yahoo.com'
         ]
 
-        revision_inv = test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission2/-/Revision')
+        revision_inv = test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission2/-/Full_Submission')
         assert revision_inv.edit['note']['content']['authors']['value'] == [
           'SomeFirstName User',
           'Peter SomeLastName',
@@ -990,7 +990,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
           '~Melisa_Gilbert2'
         ]
 
-        revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission2/-/Revision',
+        revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission2/-/Full_Submission',
             signatures=['NeurIPS.cc/2023/Conference/Submission2/Authors'],
             note=openreview.api.Note(
                 content={
@@ -1022,7 +1022,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         ]
 
         ## update submission
-        revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission4/-/Revision',
+        revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission4/-/Full_Submission',
             signatures=['NeurIPS.cc/2023/Conference/Submission4/Authors'],
             note=openreview.api.Note(
                 content={
@@ -1076,7 +1076,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         ))
 
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Revision-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Full_Submission-0-1', count=4)
 
         notes = test_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Conference/Submission' }, sort='number:desc')
         assert len(notes) == 4

@@ -422,7 +422,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         editUrl: decision ? ('/forum?id=' + submission.id + '&noteId=' + decision.id + '&referrer=' + referrerUrl) : null
       },
       tasks: { invitations: tasks, forumId: submission.id },
-      status: submission.content.venue.value
+      status: submission.content.venue?.value
     });
 
   });
