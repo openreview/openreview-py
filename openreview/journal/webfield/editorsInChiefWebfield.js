@@ -816,7 +816,7 @@ var formatData = function(
           return a.tcdate - b.tcdate;
         })
       },
-      status: submission.content.venue.value
+      status: submission.content.venue?.value
     });
   });
 

@@ -493,7 +493,7 @@ class Venue(object):
 
         if self.submission_stage.second_due_date:
             stage = self.submission_stage
-            submission_revision_stage = openreview.stages.SubmissionRevisionStage(name='Revision',
+            submission_revision_stage = openreview.stages.SubmissionRevisionStage(name='Full_Submission',
                 start_date=stage.exp_date,
                 due_date=stage.second_due_date,
                 additional_fields=stage.second_deadline_additional_fields if stage.second_deadline_additional_fields else stage.additional_fields,
