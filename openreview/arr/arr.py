@@ -388,19 +388,6 @@ class ARR(object):
 
         setup_arr_invitations(self.invitation_builder)
 
-        self.client.post_group_edit(
-            invitation=self.get_meta_invitation_id(),
-            signatures=[self.venue_id],
-            group=openreview.api.Group(
-                id=self.venue_id,
-                content={
-                    'assignment_quota': {
-                        'value': 3 ## Should we add this value to the request form?
-                    }
-                }
-            )
-        )
-
         return setup_value
 
     def set_impersonators(self, impersonators):

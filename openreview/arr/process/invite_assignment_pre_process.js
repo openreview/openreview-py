@@ -3,7 +3,7 @@ async function process(client, edge, invitation) {
 
   const { groups } = await client.getGroups({ id: edge.domain })
   const domain = groups[0]
-  const quota = domain.content.assignment_quota?.value
+  const quota = domain.content.reviewer_assignment_quota?.value
   const reviewersId = invitation.content.match_group?.value
   const assignmentInvitationId = invitation.content.assignment_invitation_id?.value
   const conflictInvitationId = invitation.content.conflict_invitation_id?.value
