@@ -303,7 +303,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_group(self, id):
+    def get_group(self, id, details=None):
         """
         Get a single Group by id if available
 
@@ -317,7 +317,7 @@ class OpenReviewClient(object):
 
         >>> group = client.get_group('your-email@domain.com')
         """
-        response = self.session.get(self.groups_url, params = {'id':id}, headers = self.headers)
+        response = self.session.get(self.groups_url, params = {'id':id, 'details': details}, headers = self.headers)
         response = self.__handle_response(response)
         g = response.json()['groups'][0]
         group = Group.from_json(g)
