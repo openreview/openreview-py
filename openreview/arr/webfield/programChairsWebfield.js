@@ -116,6 +116,18 @@ return {
     assignmentUrls: assignmentUrls,
     emailReplyTo: domain.content.contact?.value,
     customMaxPapersName: 'Custom_Max_Papers',
+    customStageInvitations: [
+      {
+          name:'Action_Editor_Checklist',
+          role:'Area_Chairs', 
+          repliesPerSubmission:1
+      },
+        {
+          name:'Reviewer_Checklist',
+          role:'Reviewers', 
+          repliesPerSubmission:3
+      }
+    ],
     trackStatusConfig: {
       submissionTrackname: 'research_area',
       registrationTrackName: 'research_area',
@@ -157,6 +169,62 @@ return {
       return checklistReplies?.length??0;
       `
     },
+    reviewerEmailFuncs: [
+      {
+        label: 'Available Reviewers with No Assignments', filterFunc: `
+        if (row.notesInfo.length > 0){
+          return false;
+        }
+
+        const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
+        if (registrationNotes.length <= 0) {
+          return false
+        }
+
+        const maxLoadForm = registrationNotes.filter(note => {
+          const invitations = note?.invitations ?? []
+          return invitations.some(inv => inv.includes('Reviewers/-/Max_Load_And_Unavailability_Request'))
+        })
+        if (maxLoadForm.length <= 0) {
+          return false
+        }
+
+        const load = typeof maxLoadForm[0].content.maximum_load_this_cycle.value === 'number' ? 
+          maxLoadForm[0].content.maximum_load_this_cycle.value : 
+          parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
+        return load > 0
+        `
+      },
+      {
+        label: 'Available Reviewers with No Assignments and No Emergency Reviewing Response', filterFunc: `
+        if (row.notesInfo.length > 0){
+          return false;
+        }
+
+        const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
+        if (registrationNotes.length <= 0) {
+          return false
+        }
+
+        const maxLoadForm = registrationNotes.filter(note => {
+          const invitations = note?.invitations ?? []
+          return invitations.some(inv => inv.includes('Reviewers/-/Max_Load_And_Unavailability_Request'))
+        })
+        const emergencyForm = registrationNotes.filter(note => {
+          const invitations = note?.invitations ?? []
+          return invitations.some(inv => inv.includes('Reviewers/-/Emergency_Reviewer_Agreement'))
+        })
+        if (maxLoadForm.length <= 0 || emergencyForm.length > 0) {
+          return false
+        }
+
+        const load = typeof maxLoadForm[0].content.maximum_load_this_cycle.value === 'number' ? 
+          maxLoadForm[0].content.maximum_load_this_cycle.value : 
+          parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
+        return load > 0
+        `
+      }
+    ],
     acEmailFuncs: [
       {
         label: 'ACs with assigned checklists, not all completed', filterFunc: `

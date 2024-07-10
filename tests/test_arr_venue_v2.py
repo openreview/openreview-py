@@ -4337,6 +4337,47 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         submissions_by_id = {s.id : s for s in submissions}
     
         ## Build missing data
+        # Reviewer who is available and responded to emergency form
+        helpers.create_user('reviewer7@aclrollingreview.com', 'Reviewer', 'ARRSeven')
+        helpers.create_user('reviewer8@aclrollingreview.com', 'Reviewer', 'ARREight')
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/2023/August/Reviewers', ['~Reviewer_ARRSeven1', '~Reviewer_ARREight1'])
+        rev_client = openreview.api.OpenReviewClient(username = 'reviewer7@aclrollingreview.com', password=helpers.strong_password)
+        rev_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request',
+            signatures=['~Reviewer_ARRSeven1'],
+            note=openreview.api.Note(
+                content = {
+                    'maximum_load_this_cycle': { 'value': 6 },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' }
+                }
+            )
+        )
+        rev_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Reviewer_Agreement',
+            signatures=['~Reviewer_ARRSeven1'],
+            note=openreview.api.Note(
+                content = {
+                    'emergency_reviewing_agreement': { 'value': 'Yes' },
+                    'emergency_load': { 'value': 7 },
+                    'research_area': { 'value': ['Generation', 'Machine Translation'] }
+                }
+            )
+        )
+        rev_client = openreview.api.OpenReviewClient(username = 'reviewer8@aclrollingreview.com', password=helpers.strong_password)
+        rev_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request',
+            signatures=['~Reviewer_ARREight1'],
+            note=openreview.api.Note(
+                content = {
+                    'maximum_load_this_cycle': { 'value': 6 },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' }
+                }
+            )
+        )
+    
+        ## Build missing data
         # AC that has been assigned 2 papers and responded to 1 (checklist) - paper 4 and 5
         helpers.create_user('ac4@aclrollingreview.com', 'AC', 'ARRFour')
         ac_client = openreview.api.OpenReviewClient(username = 'ac4@aclrollingreview.com', password=helpers.strong_password)
@@ -4424,6 +4465,21 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 if any(message['content']['text'].startswith(email_option) for message in openreview_client.get_messages(to=email)):
                     profile_ids.add(id)
             return profile_ids
+
+        reviewer_email_options = [
+            'Available Reviewers with No Assignments',
+            'Available Reviewers with No Assignments and No Emergency Reviewing Response'
+        ]
+
+        reviewers = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers').members
+    
+        ## Test 'Available Reviewers with No Assignments'
+        send_email('Available Reviewers with No Assignments', 'reviewer')
+        assert users_with_message('Available Reviewers with No Assignments', reviewers) == {'~Reviewer_ARREight1', '~Reviewer_ARRSeven1'}
+
+        ## Test 'Available Reviewers with No Assignments and No Emergency Reviewing Response'
+        send_email('Available Reviewers with No Assignments and No Emergency Reviewing Response', 'reviewer')
+        assert users_with_message('Available Reviewers with No Assignments and No Emergency Reviewing Response', reviewers) == {'~Reviewer_ARREight1'}
 
         ac_email_options = [
             'ACs with assigned checklists, none completed',
