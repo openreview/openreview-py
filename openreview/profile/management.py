@@ -665,7 +665,8 @@ class ProfileManagement():
                                         'type': 'file',
                                         'maxSize': 50,
                                         'extensions': ['pdf'],
-                                        'optional': True
+                                        'optional': True,
+                                        'deletable': True
                                     }
                                 }
                             },
@@ -676,7 +677,8 @@ class ProfileManagement():
                                     'param': {
                                         'type': 'string',
                                         'regex': '(http|https):\/\/.+',
-                                        'optional': True
+                                        'optional': True,
+                                        'deletable': True
                                     }
                                 }
                             },
