@@ -153,10 +153,13 @@ def get_profile(client, value, with_publications=False):
     return profile
 
 
-def get_profiles(client, ids_or_emails, with_publications=False, with_relations=False, with_preferred_emails=False, as_dict=False):
+def get_profiles(client, ids_or_emails, with_publications=False, with_relations=False, with_preferred_emails=None, as_dict=False):
     '''
     Helper function that repeatedly queries for profiles, given IDs and emails.
     Useful for getting more Profiles than the server will return by default (1000)
+
+    :param with_preferred_emails: invitation id to get the edges where the preferred emails are stored
+    :type with_preferred_emails: str
     '''
     ids = []
     emails = []
@@ -250,7 +253,7 @@ def get_profiles(client, ids_or_emails, with_publications=False, with_relations=
                 if relation_profile:
                     relation['profile_id'] = relation_profile.id
 
-    if with_preferred_emails:
+    if with_preferred_emails is not None:
 
         preferred_email_by_id = { g['id']['head']: g['values'][0]['tail'] for g in client.get_grouped_edges(invitation=with_preferred_emails, groupby='head', select='tail')}
 
