@@ -477,7 +477,7 @@ class OpenReviewClient(object):
         :param last: Last name of user
         :type last: str, optional
 
-        :return: List of profiles, if emails is present then a dictionary of { email: profiles } is returned. If confirmedEmails is present then a dictionary of { email: profile } is returned
+        :return: List of profiles, if emails is present then a dictionary of { emails: profiles } is returned. If confirmedEmails is present then a dictionary of { confirmedEmails: profile } is returned
         :rtype: list[Profile]
         """
 
