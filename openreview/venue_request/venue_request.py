@@ -1617,6 +1617,12 @@ class VenueRequest():
                 'order': 47,
                 'required': False,
                 'hidden': True
+            },
+            'reviewer_assignment_quota': {
+                'value-radio': [3, 4, 5],
+                'order': 48,
+                'required': False,
+                'hidden': True
             }
         }
 

@@ -77,6 +77,7 @@ class Venue(object):
         self.use_publication_chairs = False
         self.source_submissions_query_mapping = {}
         self.sac_paper_assignments = False
+        self.reviewer_assignment_quota = None
 
     def get_id(self):
         return self.venue_id
