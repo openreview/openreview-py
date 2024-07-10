@@ -1424,6 +1424,7 @@ class CustomStage(object):
         AUTHORS = 9
         ETHICS_CHAIRS = 10
         ETHICS_REVIEWERS_ASSIGNED = 11
+        SIGNATURES = 12
 
     class Source(Enum):
         ALL_SUBMISSIONS = 0
@@ -1523,7 +1524,7 @@ class CustomStage(object):
         if conference.use_ethics_reviewers and self.Participants.ETHICS_REVIEWERS_ASSIGNED in self.readers:
             readers.append(conference.get_ethics_reviewers_id(number))
 
-        if self.allow_de_anonymization:
+        if self.allow_de_anonymization or self.Participants.SIGNATURES in self.readers:
             readers.append('${3/signatures}')
 
         return readers
@@ -1531,7 +1532,7 @@ class CustomStage(object):
     def get_nonreaders(self, conference, number):
         nonreaders = []
 
-        if conference.use_area_chairs and self.Participants.AREA_CHAIRS_ASSIGNED in self.readers and conference.use_secondary_area_chairs and self.Participants.SECONDARY_AREA_CHAIRS not in self.readers:
+        if conference.use_area_chairs and self.Participants.AREA_CHAIRS_ASSIGNED in self.invitees and conference.use_secondary_area_chairs and self.Participants.SECONDARY_AREA_CHAIRS not in self.readers:
             nonreaders.append(conference.get_secondary_area_chairs_id(number))
 
         return nonreaders

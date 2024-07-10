@@ -584,7 +584,7 @@ class TestCVPRConference():
             due_date=due_date,
             exp_date=due_date + datetime.timedelta(days=1),
             invitees=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
-            readers=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
+            readers=[openreview.stages.CustomStage.Participants.SIGNATURES],
             content={
                 'rating': {
                     'order': 1,
@@ -640,7 +640,7 @@ class TestCVPRConference():
         assert invitation.edit['note']['replyto'] == reviews[0]['id']
         assert invitation.edit['note']['readers'] == [
             'thecvf.com/CVPR/2024/Conference/Program_Chairs',
-            'thecvf.com/CVPR/2024/Conference/Submission1/Area_Chairs'
+            '${3/signatures}'
         ]
         assert invitation.edit['note']['nonreaders'] == ['thecvf.com/CVPR/2024/Conference/Submission1/Secondary_Area_Chairs']
 
@@ -661,6 +661,9 @@ class TestCVPRConference():
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=rating_edit['id'])
+
+        assert rating_edit['note']['readers'] == ['thecvf.com/CVPR/2024/Conference/Program_Chairs', ac_anon_group_id]
+        assert rating_edit['note']['nonreaders'] == ['thecvf.com/CVPR/2024/Conference/Submission1/Secondary_Area_Chairs']
 
         invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/Submission1/Official_Review2/-/Rating')
 
@@ -683,7 +686,7 @@ class TestCVPRConference():
         assert len(notes) == 1
         assert notes[0].readers == [
             'thecvf.com/CVPR/2024/Conference/Program_Chairs',
-            'thecvf.com/CVPR/2024/Conference/Submission1/Area_Chairs'
+            ac_anon_group_id
         ]
         assert notes[0].nonreaders == [
             'thecvf.com/CVPR/2024/Conference/Submission1/Secondary_Area_Chairs',
