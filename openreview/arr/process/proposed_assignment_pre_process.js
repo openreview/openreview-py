@@ -4,6 +4,7 @@ async function process(client, edge, invitation) {
   const committeeName = invitation.content.committee_name?.value;
   const { groups } = await client.getGroups({ id: invitation.domain });
   const domain = groups[0];
+  const quota = domain.content.reviewer_assignment_quota?.value
 
   const customMaxPapersId = domain.content[committeeName.toLowerCase() + '_custom_max_papers_id']?.value;
 
@@ -39,7 +40,7 @@ async function process(client, edge, invitation) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Max Papers allowed reached for ${Tools.getPreferredName(profile)}` }));
   }
 
-  if ((submissionEdges.length + 1) > 3 && committeeName.includes('Reviewers')) {
+  if ((submissionEdges.length + 1) > quota && committeeName.includes('Reviewers')) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `You cannot assign more than 3 reviewers to this paper` }));
   }
 
