@@ -46,7 +46,7 @@ def process_update(client, edge, invitation, existing_edge):
             else:
                 print('No SAC assignments found')
 
-        signature=f'{openreview.tools.pretty_id(edge.signatures[0])}({edge.tauthor})'
+        signature=f'{openreview.tools.pretty_id(edge.signatures[0])}'
 
         if venue_id in edge.signatures or program_chairs_id in edge.signatures:
             signature=f'{openreview.tools.pretty_id(program_chairs_id)}'

@@ -16,6 +16,7 @@ var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
 var JOURNAL_REQUEST_ID = '';
 var REVIEWER_REPORT_ID = '';
 var NUMBER_OF_REVIEWERS = 3;
+var PREFERRED_EMAILS_ID = '';
 
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var REVIEWERS_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Assignment';
@@ -403,6 +404,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         reviewers: reviewerStatus,
         expandReviewerList: true,
         sendReminder: true,
+        showPreferredEmail: PREFERRED_EMAILS_ID,
         referrer: referrerUrl,
         actions: (submission.content.venueid.value == UNDER_REVIEW_STATUS && reviewerAssignmentInvitation) ? [
           {
@@ -582,7 +584,8 @@ var renderData = function(venueStatusData) {
       $('.console-table th').eq(4).css('width', '22%'); // Action Editor Decision
       $('.console-table th').eq(5).css('width', '20%'); // Tasks
       $('.console-table th').eq(6).css('width', '11%'); // Status
-    }
+    },
+    preferredEmailsInvitationId: PREFERRED_EMAILS_ID
   });
 
   // Action Editor Tasks Tab

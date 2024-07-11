@@ -69,6 +69,7 @@ return {
     enableQuerySearch: true,
     emailReplyTo: domain.content.contact?.value,
     edgeBrowserDeployedUrl: `/edges/browse?start=${startParam}&traverse=${traverseParam}&edit=${editParam}&browse=${browseInvitations.join(';')}${otherParams}`,
-    filterFunction: entity.content?.track?.value && `return note.content?.track?.value==="${entity.content?.track?.value}"`
+    filterFunction: entity.content?.track?.value && `return note.content?.track?.value==="${entity.content?.track?.value}"`,
+    preferredEmailInvitationId: domain.content.preferred_emails_id?.value,
   }
 }
