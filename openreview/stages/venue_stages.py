@@ -1532,7 +1532,7 @@ class CustomStage(object):
     def get_nonreaders(self, conference, number):
         nonreaders = []
 
-        if conference.use_area_chairs and self.Participants.AREA_CHAIRS_ASSIGNED in self.invitees and conference.use_secondary_area_chairs and self.Participants.SECONDARY_AREA_CHAIRS not in self.readers:
+        if conference.use_area_chairs and self.Participants.AREA_CHAIRS_ASSIGNED in self.readers and conference.use_secondary_area_chairs and self.Participants.SECONDARY_AREA_CHAIRS not in self.readers:
             nonreaders.append(conference.get_secondary_area_chairs_id(number))
 
         return nonreaders

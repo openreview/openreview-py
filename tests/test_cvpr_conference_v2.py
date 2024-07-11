@@ -642,7 +642,7 @@ class TestCVPRConference():
             'thecvf.com/CVPR/2024/Conference/Program_Chairs',
             '${3/signatures}'
         ]
-        assert invitation.edit['note']['nonreaders'] == ['thecvf.com/CVPR/2024/Conference/Submission1/Secondary_Area_Chairs']
+        assert 'nonreaders' not in invitation.edit['note']
 
         ac_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)
         ac_anon_groups = ac_client.get_groups(prefix='thecvf.com/CVPR/2024/Conference/Submission1/Area_Chair_', signatory='~AC_CVPROne1')
@@ -663,7 +663,7 @@ class TestCVPRConference():
         helpers.await_queue_edit(openreview_client, edit_id=rating_edit['id'])
 
         assert rating_edit['note']['readers'] == ['thecvf.com/CVPR/2024/Conference/Program_Chairs', ac_anon_group_id]
-        assert rating_edit['note']['nonreaders'] == ['thecvf.com/CVPR/2024/Conference/Submission1/Secondary_Area_Chairs']
+        assert 'nonreaders' not in rating_edit['note']
 
         invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/Submission1/Official_Review2/-/Rating')
 
@@ -688,9 +688,7 @@ class TestCVPRConference():
             'thecvf.com/CVPR/2024/Conference/Program_Chairs',
             ac_anon_group_id
         ]
-        assert notes[0].nonreaders == [
-            'thecvf.com/CVPR/2024/Conference/Submission1/Secondary_Area_Chairs',
-        ]
+        assert notes[0].nonreaders is None
         assert notes[0].signatures == [ac_anon_group_id]
 
     def test_secondary_ac_assignment(self, openreview_client, helpers, client):
