@@ -52,7 +52,7 @@ def process_update(client, edge, invitation, existing_edge):
         baseurl = 'https://openreview.net' #Always pointing to the live site so we don't send more invitations with localhost
 
         # build the URL to send in the message
-        invitation_url = f'{baseurl}/invitation?id={recruitment_invitation_id}&user={user_profile.id}&key={hashkey}&submission_id={submission.id}&inviter={edge.tauthor}'
+        invitation_url = f'{baseurl}/invitation?id={recruitment_invitation_id}&user={user_profile.id}&key={hashkey}&submission_id={submission.id}&inviter={inviter_profile.id}'
 
         invitation_links = f'''Please respond the invitation clicking the following link:
 
@@ -68,8 +68,7 @@ def process_update(client, edge, invitation, existing_edge):
                 abstract=submission.content.get('abstract', {}).get('value'),
                 invitation_url=invitation_url,
                 inviter_id=inviter_id,
-                inviter_name=inviter_preferred_name,
-                inviter_email=edge.tauthor
+                inviter_name=inviter_preferred_name
             )
         else:
             abstract_string = f'''
@@ -85,7 +84,7 @@ You were invited {action_string} the paper number: {submission.number}, title: "
 Thanks,
 
 {inviter_id}
-{inviter_preferred_name} ({edge.tauthor})'''
+{inviter_preferred_name}'''
 
         
         if paper_reviewer_invited_id:
@@ -152,6 +151,6 @@ While we appreciate your help, we no longer need you {action_string} this paper.
 Thanks,
 
 {inviter_id}
-{inviter_preferred_name} ({edge.tauthor})'''
+{inviter_preferred_name}'''
 
         response = client.post_message(subject, [user_profile.id], message, invitation=meta_invitation_id, signature=domain.id, replyTo=contact, sender=sender)
