@@ -40,7 +40,7 @@ class VenueStages():
         revision_content['homepage_override'] = {
             'order': 22,
             'value-dict': {},
-            'description': 'Override homepage defaults: title, subtitle, deadline, date, website, location. Valid JSON expected.'
+            'description': 'Override homepage defaults: title, subtitle, deadline, date, website, location, instructions. Valid JSON expected. Instructions must be a string, format using markdown. Please see documentation for more detailed instructions.'
         }
         revision_content['source_submissions_query_mapping'] = {
             'order': 23,
@@ -1356,7 +1356,8 @@ class VenueRequest():
             'Submission Deadline': {
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'description': 'By when do authors need to submit their manuscripts? Please specify the due date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
-                'order': 16
+                'order': 16,
+                'required': True
             },
             'Venue Start Date': {
                 'description': 'What date does the venue start? Please enter a time and date in GMT using the following format: YYYY/MM/DD (e.g. 2019/01/31)',
@@ -1600,7 +1601,8 @@ class VenueRequest():
                 'description': 'Which API version would you like to use? All new venues should use the latest API version, unless previously discussed. If you are unsure, please select the latest version.',
                 'value-radio': ['1', '2'],
                 'default': '2',
-                'order': 45
+                'order': 45,
+                'hidden': True
             },
             'include_expertise_selection': {
                 'value-radio': ['Yes', 'No'],
@@ -1613,6 +1615,12 @@ class VenueRequest():
                 'value-radio': ['Yes', 'No'],
                 'default': 'No',
                 'order': 47,
+                'required': False,
+                'hidden': True
+            },
+            'preferred_emails_groups': {
+                'values-regex': '.*',
+                'order': 48,
                 'required': False,
                 'hidden': True
             }

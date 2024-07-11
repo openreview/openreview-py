@@ -303,7 +303,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_group(self, id):
+    def get_group(self, id, details=None):
         """
         Get a single Group by id if available
 
@@ -317,7 +317,7 @@ class OpenReviewClient(object):
 
         >>> group = client.get_group('your-email@domain.com')
         """
-        response = self.session.get(self.groups_url, params = {'id':id}, headers = self.headers)
+        response = self.session.get(self.groups_url, params = {'id':id, 'details': details}, headers = self.headers)
         response = self.__handle_response(response)
         g = response.json()['groups'][0]
         group = Group.from_json(g)
@@ -477,7 +477,7 @@ class OpenReviewClient(object):
         :param last: Last name of user
         :type last: str, optional
 
-        :return: List of profiles, if emails is present then a dictionary of { email: profiles } is returned. If confirmedEmails is present then a dictionary of { email: profile } is returned
+        :return: List of profiles, if emails is present then a dictionary of { emails: profiles } is returned. If confirmedEmails is present then a dictionary of { confirmedEmails: profile } is returned
         :rtype: list[Profile]
         """
 
@@ -520,15 +520,15 @@ class OpenReviewClient(object):
         if confirmedEmails:
             full_response = []
             for email_batch in batches(confirmedEmails):
-                response = self.session.post(self.profiles_search_url, json = {'emails': email_batch}, headers = self.headers)
+                response = self.session.post(self.profiles_search_url, json = {'confirmedEmails': email_batch}, headers = self.headers)
                 response = self.__handle_response(response)
                 full_response.extend(response.json()['profiles'])
 
             profiles_by_email = {}
             for p in full_response:
-                profile = Profile.from_json(p)
-                if p['email'] in profile.content['emailsConfirmed']:
-                    profiles_by_email[p['email']] = profile
+                profile_confirmed_emails = p.get('confirmedEmails', p['content'].get('emailsConfirmed', []))
+                for email in profile_confirmed_emails:
+                    profiles_by_email[email] = Profile.from_json(p)
             return profiles_by_email
 
         if ids:
